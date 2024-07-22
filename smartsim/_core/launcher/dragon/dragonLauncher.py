@@ -340,12 +340,12 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
 # TODO: Remove this registry and move back to builder file after fixing
 #       circular import caused by `DragonLauncher.supported_rs`
 # -----------------------------------------------------------------------------
-from smartsim.settings.builders.launch.dragon import DragonArgBuilder
+from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 from smartsim.settings.dispatch import ExecutableProtocol, dispatch
 
 
 def _as_run_request_view(
-    run_req_args: DragonArgBuilder,
+    run_req_args: DragonLaunchArguments,
     exe: ExecutableProtocol,
     env: t.Mapping[str, str | None],
 ) -> DragonRunRequestView:
@@ -369,5 +369,7 @@ def _as_run_request_view(
     )
 
 
-dispatch(DragonArgBuilder, with_format=_as_run_request_view, to_launcher=DragonLauncher)
+dispatch(
+    DragonLaunchArguments, with_format=_as_run_request_view, to_launcher=DragonLauncher
+)
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

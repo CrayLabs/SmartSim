@@ -1,8 +1,8 @@
 import pytest
 
 from smartsim.settings import BatchSettings
+from smartsim.settings.arguments.batch.pbs import QsubBatchArguments
 from smartsim.settings.batchCommand import SchedulerType
-from smartsim.settings.builders.batch.pbs import QsubBatchArgBuilder
 
 
 def test_scheduler_str():
@@ -35,7 +35,7 @@ def test_scheduler_str():
 )
 def test_create_pbs_batch(function, value, flag, result):
     pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.Pbs)
-    assert isinstance(pbsScheduler.scheduler_args, QsubBatchArgBuilder)
+    assert isinstance(pbsScheduler.scheduler_args, QsubBatchArguments)
     getattr(pbsScheduler.scheduler_args, function)(*value)
     assert pbsScheduler.scheduler_args._scheduler_args[flag] == result
 

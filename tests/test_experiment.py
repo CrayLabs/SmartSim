@@ -39,7 +39,7 @@ from smartsim.entity import _mock, entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import dispatch, launchSettings
-from smartsim.settings.builders import launchArgBuilder
+from smartsim.settings.arguments import launchArguments
 
 pytestmark = pytest.mark.group_a
 
@@ -62,7 +62,7 @@ def job_maker(monkeypatch):
     def iter_jobs():
         for i in itertools.count():
             settings = launchSettings.LaunchSettings("local")
-            monkeypatch.setattr(settings, "_arg_builder", MockLaunchArgs(i))
+            monkeypatch.setattr(settings, "_arguments", MockLaunchArgs(i))
             yield job.Job(EchoHelloWorldEntity(), settings)
 
     jobs = iter_jobs()
@@ -92,7 +92,7 @@ class NoOpRecordLauncher(dispatch.LauncherProtocol):
 
 @dataclasses.dataclass(frozen=True)
 class LaunchRecord:
-    launch_args: launchArgBuilder.LaunchArgBuilder
+    launch_args: launchArguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
 
@@ -104,7 +104,7 @@ class LaunchRecord:
         return cls(args, entity, env)
 
 
-class MockLaunchArgs(launchArgBuilder.LaunchArgBuilder):
+class MockLaunchArgs(launchArguments.LaunchArguments):
     def __init__(self, count):
         super().__init__({})
         self.count = count

@@ -3,7 +3,7 @@ import pytest
 from smartsim._core.launcher.dragon.dragonLauncher import _as_run_request_view
 from smartsim._core.schemas.dragonRequests import DragonRunRequestView
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.dragon import DragonArgBuilder
+from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -26,7 +26,7 @@ def test_launcher_str():
 )
 def test_dragon_class_methods(function, value, flag, result):
     dragonLauncher = LaunchSettings(launcher=LauncherType.Dragon)
-    assert isinstance(dragonLauncher._arg_builder, DragonArgBuilder)
+    assert isinstance(dragonLauncher._arguments, DragonLaunchArguments)
     getattr(dragonLauncher.launch_args, function)(*value)
     assert dragonLauncher.launch_args._launch_args[flag] == result
 
@@ -39,7 +39,7 @@ NOT_SET = object()
 def test_formatting_launch_args_into_request(
     mock_echo_executable, nodes, tasks_per_node
 ):
-    args = DragonArgBuilder({})
+    args = DragonLaunchArguments({})
     if nodes is not NOT_SET:
         args.set_nodes(nodes)
     if tasks_per_node is not NOT_SET:

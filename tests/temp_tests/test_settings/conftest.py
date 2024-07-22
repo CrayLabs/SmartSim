@@ -27,7 +27,7 @@
 import pytest
 
 from smartsim.settings import dispatch
-from smartsim.settings.builders import launchArgBuilder as launch
+from smartsim.settings.arguments import launchArguments as launch
 
 
 @pytest.fixture
@@ -40,13 +40,13 @@ def mock_echo_executable():
 
 
 @pytest.fixture
-def settings_builder():
-    class _SettingsBuilder(launch.LaunchArgBuilder):
+def mock_launch_args():
+    class _MockLaunchArgs(launch.LaunchArguments):
         def set(self, arg, val): ...
         def launcher_str(self):
-            return "Mock Settings Builder"
+            return "mock-laucnh-args"
 
-    yield _SettingsBuilder({})
+    yield _MockLaunchArgs({})
 
 
 @pytest.fixture

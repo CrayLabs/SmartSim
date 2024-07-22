@@ -33,14 +33,14 @@ from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_forma
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 _as_pals_command = make_shell_format_fn(run_command="mpiexec")
 
 
 @dispatch(with_format=_as_pals_command, to_launcher=ShellLauncher)
-class PalsMpiexecArgBuilder(LaunchArgBuilder):
+class PalsMpiexecLaunchArguments(LaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Pals.value

@@ -33,7 +33,7 @@ from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_forma
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 _as_mpirun_command = make_shell_format_fn("mpirun")
@@ -41,7 +41,7 @@ _as_mpiexec_command = make_shell_format_fn("mpiexec")
 _as_orterun_command = make_shell_format_fn("orterun")
 
 
-class _BaseMPIArgBuilder(LaunchArgBuilder):
+class _BaseMPILaunchArguments(LaunchArguments):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""
         return {"wd", "wdir"}
@@ -219,21 +219,21 @@ class _BaseMPIArgBuilder(LaunchArgBuilder):
 
 
 @dispatch(with_format=_as_mpirun_command, to_launcher=ShellLauncher)
-class MpiArgBuilder(_BaseMPIArgBuilder):
+class MpirunLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpirun.value
 
 
 @dispatch(with_format=_as_mpiexec_command, to_launcher=ShellLauncher)
-class MpiexecArgBuilder(_BaseMPIArgBuilder):
+class MpiexecLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpiexec.value
 
 
 @dispatch(with_format=_as_orterun_command, to_launcher=ShellLauncher)
-class OrteArgBuilder(_BaseMPIArgBuilder):
+class OrterunLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Orterun.value

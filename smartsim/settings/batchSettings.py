@@ -32,12 +32,12 @@ import typing as t
 from smartsim.log import get_logger
 
 from .._core.utils.helpers import fmt_dict
+from .arguments import BatchArguments
+from .arguments.batch.lsf import BsubBatchArguments
+from .arguments.batch.pbs import QsubBatchArguments
+from .arguments.batch.slurm import SlurmBatchArguments
 from .baseSettings import BaseSettings
 from .batchCommand import SchedulerType
-from .builders import BatchArgBuilder
-from .builders.batch.lsf import BsubBatchArgBuilder
-from .builders.batch.pbs import QsubBatchArgBuilder
-from .builders.batch.slurm import SlurmBatchArgBuilder
 from .common import StringArgument
 
 logger = get_logger(__name__)
@@ -54,7 +54,7 @@ class BatchSettings(BaseSettings):
             self._batch_scheduler = SchedulerType(batch_scheduler)
         except ValueError:
             raise ValueError(f"Invalid scheduler type: {batch_scheduler}") from None
-        self._arg_builder = self._get_arg_builder(scheduler_args)
+        self._arguments = self._get_arguments(scheduler_args)
         self.env_vars = env_vars or {}
 
     @property
@@ -68,9 +68,9 @@ class BatchSettings(BaseSettings):
         return self._batch_scheduler.value
 
     @property
-    def scheduler_args(self) -> BatchArgBuilder:
+    def scheduler_args(self) -> BatchArguments:
         """Return the batch argument translator."""
-        return self._arg_builder
+        return self._arguments
 
     @property
     def env_vars(self) -> StringArgument:
@@ -82,16 +82,20 @@ class BatchSettings(BaseSettings):
         """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arg_builder(
-        self, scheduler_args: StringArgument | None
-    ) -> BatchArgBuilder:
-        """Map the Scheduler to the BatchArgBuilder"""
+    def _get_arguments(self, scheduler_args: StringArgument | None) -> BatchArguments:
+        """Map the Scheduler to the BatchArguments. This method should only be
+        called once during construction.
+
+        :param scheduler_args: A mapping of arguments names to values to be
+            used to initialize the arguments
+        :returns: The appropriate type for the settings instance.
+        """
         if self._batch_scheduler == SchedulerType.Slurm:
-            return SlurmBatchArgBuilder(scheduler_args)
+            return SlurmBatchArguments(scheduler_args)
         elif self._batch_scheduler == SchedulerType.Lsf:
-            return BsubBatchArgBuilder(scheduler_args)
+            return BsubBatchArguments(scheduler_args)
         elif self._batch_scheduler == SchedulerType.Pbs:
-            return QsubBatchArgBuilder(scheduler_args)
+            return QsubBatchArguments(scheduler_args)
         else:
             raise ValueError(f"Invalid scheduler type: {self._batch_scheduler}")
 
@@ -100,7 +104,7 @@ class BatchSettings(BaseSettings):
 
         :return: batch arguments for Sbatch
         """
-        return self._arg_builder.format_batch_args()
+        return self._arguments.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nScheduler: {self.scheduler}{self.scheduler_args}"

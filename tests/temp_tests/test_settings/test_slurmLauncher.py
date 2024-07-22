@@ -1,7 +1,10 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.slurm import SlurmArgBuilder, _as_srun_command
+from smartsim.settings.arguments.launch.slurm import (
+    SlurmLaunchArguments,
+    _as_srun_command,
+)
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -83,7 +86,7 @@ def test_launcher_str():
 )
 def test_slurm_class_methods(function, value, flag, result):
     slurmLauncher = LaunchSettings(launcher=LauncherType.Slurm)
-    assert isinstance(slurmLauncher.launch_args, SlurmArgBuilder)
+    assert isinstance(slurmLauncher.launch_args, SlurmLaunchArguments)
     getattr(slurmLauncher.launch_args, function)(*value)
     assert slurmLauncher.launch_args._launch_args[flag] == result
 
@@ -250,9 +253,9 @@ def test_set_het_groups(monkeypatch):
     monkeypatch.setenv("SLURM_HET_SIZE", "4")
     slurmLauncher = LaunchSettings(launcher=LauncherType.Slurm)
     slurmLauncher.launch_args.set_het_group([1])
-    assert slurmLauncher._arg_builder._launch_args["het-group"] == "1"
+    assert slurmLauncher._arguments._launch_args["het-group"] == "1"
     slurmLauncher.launch_args.set_het_group([3, 2])
-    assert slurmLauncher._arg_builder._launch_args["het-group"] == "3,2"
+    assert slurmLauncher._arguments._launch_args["het-group"] == "3,2"
     with pytest.raises(ValueError):
         slurmLauncher.launch_args.set_het_group([4])
 
@@ -289,5 +292,5 @@ def test_set_het_groups(monkeypatch):
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected):
-    cmd = _as_srun_command(SlurmArgBuilder(args), mock_echo_executable, {})
+    cmd = _as_srun_command(SlurmLaunchArguments(args), mock_echo_executable, {})
     assert tuple(cmd) == expected

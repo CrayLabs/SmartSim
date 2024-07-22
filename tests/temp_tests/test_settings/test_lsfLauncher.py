@@ -1,7 +1,10 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.lsf import JsrunArgBuilder, _as_jsrun_command
+from smartsim.settings.arguments.launch.lsf import (
+    JsrunLaunchArguments,
+    _as_jsrun_command,
+)
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -24,7 +27,7 @@ def test_launcher_str():
 )
 def test_lsf_class_methods(function, value, flag, result):
     lsfLauncher = LaunchSettings(launcher=LauncherType.Lsf)
-    assert isinstance(lsfLauncher._arg_builder, JsrunArgBuilder)
+    assert isinstance(lsfLauncher._arguments, JsrunLaunchArguments)
     getattr(lsfLauncher.launch_args, function)(*value)
     assert lsfLauncher.launch_args._launch_args[flag] == result
 
@@ -32,7 +35,7 @@ def test_lsf_class_methods(function, value, flag, result):
 def test_format_env_vars():
     env_vars = {"OMP_NUM_THREADS": None, "LOGGING": "verbose"}
     lsfLauncher = LaunchSettings(launcher=LauncherType.Lsf, env_vars=env_vars)
-    assert isinstance(lsfLauncher._arg_builder, JsrunArgBuilder)
+    assert isinstance(lsfLauncher._arguments, JsrunLaunchArguments)
     formatted = lsfLauncher.format_env_vars()
     assert formatted == ["-E", "OMP_NUM_THREADS", "-E", "LOGGING=verbose"]
 
@@ -47,7 +50,7 @@ def test_launch_args():
         "np": 100,
     }
     lsfLauncher = LaunchSettings(launcher=LauncherType.Lsf, launch_args=launch_args)
-    assert isinstance(lsfLauncher._arg_builder, JsrunArgBuilder)
+    assert isinstance(lsfLauncher._arguments, JsrunLaunchArguments)
     formatted = lsfLauncher.format_launch_args()
     result = [
         "--latency_priority=gpu-gpu",
@@ -92,5 +95,5 @@ def test_launch_args():
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected):
-    cmd = _as_jsrun_command(JsrunArgBuilder(args), mock_echo_executable, {})
+    cmd = _as_jsrun_command(JsrunLaunchArguments(args), mock_echo_executable, {})
     assert tuple(cmd) == expected

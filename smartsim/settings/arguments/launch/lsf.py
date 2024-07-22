@@ -33,14 +33,14 @@ from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_forma
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 _as_jsrun_command = make_shell_format_fn(run_command="jsrun")
 
 
 @dispatch(with_format=_as_jsrun_command, to_launcher=ShellLauncher)
-class JsrunArgBuilder(LaunchArgBuilder):
+class JsrunLaunchArguments(LaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Lsf.value

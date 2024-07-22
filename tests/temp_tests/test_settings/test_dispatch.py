@@ -44,36 +44,36 @@ def format_fn(args, exe, env):
 
 
 @pytest.fixture
-def expected_dispatch_registry(mock_launcher, settings_builder):
+def expected_dispatch_registry(mock_launcher, mock_launch_args):
     yield {
-        type(settings_builder): dispatch._DispatchRegistration(
+        type(mock_launch_args): dispatch._DispatchRegistration(
             format_fn, type(mock_launcher)
         )
     }
 
 
 def test_declaritive_form_dispatch_declaration(
-    mock_launcher, settings_builder, expected_dispatch_registry
+    mock_launcher, mock_launch_args, expected_dispatch_registry
 ):
     d = dispatch.Dispatcher()
-    assert type(settings_builder) == d.dispatch(
+    assert type(mock_launch_args) == d.dispatch(
         with_format=format_fn, to_launcher=type(mock_launcher)
-    )(type(settings_builder))
+    )(type(mock_launch_args))
     assert d._dispatch_registry == expected_dispatch_registry
 
 
 def test_imperative_form_dispatch_declaration(
-    mock_launcher, settings_builder, expected_dispatch_registry
+    mock_launcher, mock_launch_args, expected_dispatch_registry
 ):
     d = dispatch.Dispatcher()
     assert None == d.dispatch(
-        type(settings_builder), to_launcher=type(mock_launcher), with_format=format_fn
+        type(mock_launch_args), to_launcher=type(mock_launcher), with_format=format_fn
     )
     assert d._dispatch_registry == expected_dispatch_registry
 
 
 def test_dispatchers_from_same_registry_do_not_cross_polute(
-    mock_launcher, settings_builder, expected_dispatch_registry
+    mock_launcher, mock_launch_args, expected_dispatch_registry
 ):
     some_starting_registry = {}
     d1 = dispatch.Dispatcher(dispatch_registry=some_starting_registry)
@@ -86,14 +86,14 @@ def test_dispatchers_from_same_registry_do_not_cross_polute(
     )
 
     d2.dispatch(
-        type(settings_builder), with_format=format_fn, to_launcher=type(mock_launcher)
+        type(mock_launch_args), with_format=format_fn, to_launcher=type(mock_launcher)
     )
     assert d1._dispatch_registry == {}
     assert d2._dispatch_registry == expected_dispatch_registry
 
 
 def test_copied_dispatchers_do_not_cross_pollute(
-    mock_launcher, settings_builder, expected_dispatch_registry
+    mock_launcher, mock_launch_args, expected_dispatch_registry
 ):
     some_starting_registry = {}
     d1 = dispatch.Dispatcher(dispatch_registry=some_starting_registry)
@@ -106,7 +106,7 @@ def test_copied_dispatchers_do_not_cross_pollute(
     )
 
     d2.dispatch(
-        type(settings_builder), to_launcher=type(mock_launcher), with_format=format_fn
+        type(mock_launch_args), to_launcher=type(mock_launcher), with_format=format_fn
     )
     assert d1._dispatch_registry == {}
     assert d2._dispatch_registry == expected_dispatch_registry
@@ -145,12 +145,12 @@ def test_dispatch_overwriting(
     add_dispatch,
     expected_ctx,
     mock_launcher,
-    settings_builder,
+    mock_launch_args,
     expected_dispatch_registry,
 ):
     d = dispatch.Dispatcher(dispatch_registry=expected_dispatch_registry)
     with expected_ctx:
-        add_dispatch(d, type(settings_builder), type(mock_launcher))
+        add_dispatch(d, type(mock_launch_args), type(mock_launcher))
 
 
 @pytest.mark.parametrize(
@@ -161,12 +161,12 @@ def test_dispatch_overwriting(
     ),
 )
 def test_dispatch_can_retrieve_dispatch_info_from_dispatch_registry(
-    expected_dispatch_registry, mock_launcher, settings_builder, type_or_instance
+    expected_dispatch_registry, mock_launcher, mock_launch_args, type_or_instance
 ):
     d = dispatch.Dispatcher(dispatch_registry=expected_dispatch_registry)
     assert dispatch._DispatchRegistration(
         format_fn, type(mock_launcher)
-    ) == d.get_dispatch(type_or_instance(settings_builder))
+    ) == d.get_dispatch(type_or_instance(mock_launch_args))
 
 
 @pytest.mark.parametrize(
@@ -177,13 +177,13 @@ def test_dispatch_can_retrieve_dispatch_info_from_dispatch_registry(
     ),
 )
 def test_dispatch_raises_if_settings_type_not_registered(
-    settings_builder, type_or_instance
+    mock_launch_args, type_or_instance
 ):
     d = dispatch.Dispatcher(dispatch_registry={})
     with pytest.raises(
         TypeError, match="No dispatch for `.+?(?=`)` has been registered"
     ):
-        d.get_dispatch(type_or_instance(settings_builder))
+        d.get_dispatch(type_or_instance(mock_launch_args))
 
 
 class LauncherABC(abc.ABC):
@@ -323,13 +323,13 @@ def test_launcher_adapter_correctly_adapts_input_to_launcher(input_, map_, expec
     ),
 )
 def test_dispatch_registration_can_configure_adapter_for_existing_launcher_instance(
-    request, settings_builder, buffer_writer_dispatch, launcher_instance, ctx
+    request, mock_launch_args, buffer_writer_dispatch, launcher_instance, ctx
 ):
     if isinstance(launcher_instance, str):
         launcher_instance = request.getfixturevalue(launcher_instance)
     with ctx:
         adapter = buffer_writer_dispatch.create_adapter_from_launcher(
-            launcher_instance, settings_builder
+            launcher_instance, mock_launch_args
         )
         assert adapter._adapted_launcher is launcher_instance
 
@@ -375,7 +375,7 @@ def test_dispatch_registration_can_configure_adapter_for_existing_launcher_insta
     ),
 )
 def test_dispatch_registration_configures_first_compatible_launcher_from_sequence_of_launchers(
-    request, settings_builder, buffer_writer_dispatch, launcher_instances, ctx
+    request, mock_launch_args, buffer_writer_dispatch, launcher_instances, ctx
 ):
     def resolve_instance(inst):
         return request.getfixturevalue(inst) if isinstance(inst, str) else inst
@@ -384,24 +384,24 @@ def test_dispatch_registration_configures_first_compatible_launcher_from_sequenc
 
     with ctx:
         adapter = buffer_writer_dispatch.configure_first_compatible_launcher(
-            with_settings=settings_builder, from_available_launchers=launcher_instances
+            with_settings=mock_launch_args, from_available_launchers=launcher_instances
         )
 
 
 def test_dispatch_registration_can_create_a_laucher_for_an_experiment_and_can_reconfigure_it_later(
-    settings_builder, buffer_writer_dispatch
+    mock_launch_args, buffer_writer_dispatch
 ):
     class MockExperiment: ...
 
     exp = MockExperiment()
     adapter_1 = buffer_writer_dispatch.create_new_launcher_configuration(
-        for_experiment=exp, with_settings=settings_builder
+        for_experiment=exp, with_settings=mock_launch_args
     )
     assert type(adapter_1._adapted_launcher) == buffer_writer_dispatch.launcher_type
     existing_launcher = adapter_1._adapted_launcher
 
     adapter_2 = buffer_writer_dispatch.create_adapter_from_launcher(
-        existing_launcher, settings_builder
+        existing_launcher, mock_launch_args
     )
     assert type(adapter_2._adapted_launcher) == buffer_writer_dispatch.launcher_type
     assert adapter_1._adapted_launcher is adapter_2._adapted_launcher

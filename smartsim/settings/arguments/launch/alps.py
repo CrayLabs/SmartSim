@@ -33,14 +33,14 @@ from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_forma
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 _as_aprun_command = make_shell_format_fn(run_command="aprun")
 
 
 @dispatch(with_format=_as_aprun_command, to_launcher=ShellLauncher)
-class AprunArgBuilder(LaunchArgBuilder):
+class AprunLaunchArguments(LaunchArguments):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""
         return {"wdir"}

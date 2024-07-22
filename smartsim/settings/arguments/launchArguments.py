@@ -37,7 +37,7 @@ from ..._core.utils.helpers import fmt_dict
 logger = get_logger(__name__)
 
 
-class LaunchArgBuilder(ABC):
+class LaunchArguments(ABC):
     """Abstract base class that defines all generic launcher
     argument methods that are not supported.  It is the
     responsibility of child classes for each launcher to translate
@@ -45,10 +45,9 @@ class LaunchArgBuilder(ABC):
     """
 
     def __init__(self, launch_args: t.Dict[str, str | None] | None) -> None:
-        """Initialize a new `LaunchArgBuilder` instance.
+        """Initialize a new `LaunchArguments` instance.
 
-        :param launch_args: A mapping of argument to be used to initialize the
-            argument builder.
+        :param launch_args: A mapping of arguments to values to pre-initialize
         """
         self._launch_args = copy.deepcopy(launch_args) or {}
 

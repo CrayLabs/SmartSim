@@ -32,15 +32,19 @@ import typing as t
 from smartsim.log import get_logger
 
 from .._core.utils.helpers import fmt_dict
+from .arguments import LaunchArguments
+from .arguments.launch.alps import AprunLaunchArguments
+from .arguments.launch.dragon import DragonLaunchArguments
+from .arguments.launch.local import LocalLaunchArguments
+from .arguments.launch.lsf import JsrunLaunchArguments
+from .arguments.launch.mpi import (
+    MpiexecLaunchArguments,
+    MpirunLaunchArguments,
+    OrterunLaunchArguments,
+)
+from .arguments.launch.pals import PalsMpiexecLaunchArguments
+from .arguments.launch.slurm import SlurmLaunchArguments
 from .baseSettings import BaseSettings
-from .builders import LaunchArgBuilder
-from .builders.launch.alps import AprunArgBuilder
-from .builders.launch.dragon import DragonArgBuilder
-from .builders.launch.local import LocalArgBuilder
-from .builders.launch.lsf import JsrunArgBuilder
-from .builders.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
-from .builders.launch.pals import PalsMpiexecArgBuilder
-from .builders.launch.slurm import SlurmArgBuilder
 from .common import StringArgument
 from .launchCommand import LauncherType
 
@@ -58,7 +62,7 @@ class LaunchSettings(BaseSettings):
             self._launcher = LauncherType(launcher)
         except ValueError:
             raise ValueError(f"Invalid launcher type: {launcher}")
-        self._arg_builder = self._get_arg_builder(launch_args)
+        self._arguments = self._get_arguments(launch_args)
         self.env_vars = env_vars or {}
 
     @property
@@ -67,9 +71,9 @@ class LaunchSettings(BaseSettings):
         return self._launcher.value
 
     @property
-    def launch_args(self) -> LaunchArgBuilder:
+    def launch_args(self) -> LaunchArguments:
         """Return the launch argument translator."""
-        return self._arg_builder
+        return self._arguments
 
     @launch_args.setter
     def launch_args(self, args: t.Mapping[str, str]) -> None:
@@ -88,32 +92,32 @@ class LaunchSettings(BaseSettings):
         """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arg_builder(self, launch_args: StringArgument | None) -> LaunchArgBuilder:
-        """Map the Launcher to the LaunchArgBuilder. This method should only be
+    def _get_arguments(self, launch_args: StringArgument | None) -> LaunchArguments:
+        """Map the Launcher to the LaunchArguments. This method should only be
         called once during construction.
 
-        :param launch_args: A mapping of argument to be used to initialize the
-            argument builder.
-        :returns: The appropriate argument builder for the settings instance.
+        :param launch_args: A mapping of arguments names to values to be used
+            to initialize the arguments
+        :returns: The appropriate type for the settings instance.
         """
         if self._launcher == LauncherType.Slurm:
-            return SlurmArgBuilder(launch_args)
+            return SlurmLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Mpiexec:
-            return MpiexecArgBuilder(launch_args)
+            return MpiexecLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Mpirun:
-            return MpiArgBuilder(launch_args)
+            return MpirunLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Orterun:
-            return OrteArgBuilder(launch_args)
+            return OrterunLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Alps:
-            return AprunArgBuilder(launch_args)
+            return AprunLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Lsf:
-            return JsrunArgBuilder(launch_args)
+            return JsrunLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Pals:
-            return PalsMpiexecArgBuilder(launch_args)
+            return PalsMpiexecLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Dragon:
-            return DragonArgBuilder(launch_args)
+            return DragonLaunchArguments(launch_args)
         elif self._launcher == LauncherType.Local:
-            return LocalArgBuilder(launch_args)
+            return LocalLaunchArguments(launch_args)
         else:
             raise ValueError(f"Invalid launcher type: {self._launcher}")
 
@@ -143,7 +147,7 @@ class LaunchSettings(BaseSettings):
         """Build bash compatible environment variable string for Slurm
         :returns: the formatted string of environment variables
         """
-        return self._arg_builder.format_env_vars(self._env_vars)
+        return self._arguments.format_env_vars(self._env_vars)
 
     def format_comma_sep_env_vars(self) -> t.Union[t.Tuple[str, t.List[str]], None]:
         """Build environment variable string for Slurm
@@ -152,7 +156,7 @@ class LaunchSettings(BaseSettings):
         for more information on this, see the slurm documentation for srun
         :returns: the formatted string of environment variables
         """
-        return self._arg_builder.format_comma_sep_env_vars(self._env_vars)
+        return self._arguments.format_comma_sep_env_vars(self._env_vars)
 
     def format_launch_args(self) -> t.Union[t.List[str], None]:
         """Return formatted launch arguments
@@ -160,7 +164,7 @@ class LaunchSettings(BaseSettings):
         literally with no formatting.
         :return: list run arguments for these settings
         """
-        return self._arg_builder.format_launch_args()
+        return self._arguments.format_launch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nLauncher: {self.launcher}{self.launch_args}"

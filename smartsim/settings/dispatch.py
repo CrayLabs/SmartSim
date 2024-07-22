@@ -39,11 +39,11 @@ from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
     from smartsim.experiment import Experiment
-    from smartsim.settings.builders import LaunchArgBuilder
+    from smartsim.settings.arguments import LaunchArguments
 
 _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
-_DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArgBuilder")
+_DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArguments")
 _LaunchableT = t.TypeVar("_LaunchableT")
 
 _EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
@@ -59,15 +59,14 @@ _UnkownType: TypeAlias = t.NoReturn
 @t.final
 class Dispatcher:
     """A class capable of deciding which launcher type should be used to launch
-    a given settings builder type.
+    a given settings type.
     """
 
     def __init__(
         self,
         *,
         dispatch_registry: (
-            t.Mapping[type[LaunchArgBuilder], _DispatchRegistration[t.Any, t.Any]]
-            | None
+            t.Mapping[type[LaunchArguments], _DispatchRegistration[t.Any, t.Any]] | None
         ) = None,
     ) -> None:
         self._dispatch_registry = (
@@ -104,8 +103,8 @@ class Dispatcher:
         to_launcher: type[LauncherProtocol[_LaunchableT]],
         allow_overwrite: bool = False,
     ) -> t.Callable[[type[_DispatchableT]], type[_DispatchableT]] | None:
-        """A type safe way to add a mapping of settings builder to launcher to
-        handle the settings at launch time.
+        """A type safe way to add a mapping of settings type to launcher type
+        to handle a settings instance at launch time.
         """
         err_msg: str | None = None
         if getattr(to_launcher, "_is_protocol", False):
@@ -135,8 +134,8 @@ class Dispatcher:
     def get_dispatch(
         self, args: _DispatchableT | type[_DispatchableT]
     ) -> _DispatchRegistration[_DispatchableT, _UnkownType]:
-        """Find a type of launcher that is registered as being able to launch
-        the output of the provided builder
+        """Find a type of launcher that is registered as being able to launch a
+        settings instance of the provided type
         """
         if not isinstance(args, type):
             args = type(args)
@@ -252,9 +251,9 @@ class LauncherProtocol(t.Protocol[_T_contra]):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[LaunchArgBuilder, t.Sequence[str]]:
+) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
     def impl(
-        args: LaunchArgBuilder, exe: ExecutableProtocol, _env: _EnvironMappingType
+        args: LaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
     ) -> t.Sequence[str]:
         return (
             (
