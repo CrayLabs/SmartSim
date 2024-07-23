@@ -1,3 +1,0 @@
-some text before
-some params are ;VALID; and others are ;INVALID; but we mostly encounter ;VALID; params
-some text after

@@ -30,10 +30,9 @@ import filecmp
 import os
 import pathlib
 import pickle
-
+import shutil
 from glob import glob
 from os import path as osp
-import shutil
 
 import pytest
 
@@ -167,7 +166,8 @@ def test_copy_op_file(test_dir):
 
 
 def test_copy_op_dirs(test_dir):
-    """Test the oeprations that copies an entire directory tree source to a new location destination"""
+    """Test the operation that copies an entire directory tree source to a new location destination
+    that already exists"""
 
     to_copy = os.path.join(test_dir, "to_copy")
     os.mkdir(to_copy)
@@ -186,7 +186,7 @@ def test_copy_op_dirs(test_dir):
     os.mkdir(entity_path)
 
     parser = get_parser()
-    cmd = f"copy {to_copy} {entity_path}"
+    cmd = f"copy {to_copy} {entity_path} --dirs_exist_ok"
     args = cmd.split()
     ns = parser.parse_args(args)
 
@@ -208,6 +208,45 @@ def test_copy_op_dirs(test_dir):
     os.rmdir(pathlib.Path(test_dir) / "to_copy")
     os.remove(pathlib.Path(entity_path) / "copy_file.txt")
     os.remove(pathlib.Path(entity_path) / "copy_file_2.txt")
+    os.rmdir(pathlib.Path(test_dir) / "entity_name")
+
+
+def test_copy_op_dirs_file_exists_error(test_dir):
+    """Test that a FileExistsError is raised when copying a directory tree source to a new location destination
+    when the destination already exists, and the flag --dirs_exist_ok is not included
+    """
+
+    to_copy = os.path.join(test_dir, "to_copy")
+    os.mkdir(to_copy)
+
+    # write some test files in the dir
+    source_file = pathlib.Path(to_copy) / "copy_file.txt"
+    with open(source_file, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy1")
+
+    source_file_2 = pathlib.Path(to_copy) / "copy_file_2.txt"
+    with open(source_file_2, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy2")
+
+    # entity_path to be the dest dir
+    entity_path = os.path.join(test_dir, "entity_name")
+    os.mkdir(entity_path)
+
+    parser = get_parser()
+    # command does not include the --dirs_exist_ok flag
+    cmd = f"copy {to_copy} {entity_path}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    # Execute copy
+    with pytest.raises(FileExistsError) as ex:
+        file_operations.copy(ns)
+    assert f"File exists" in ex.value.args
+
+    # Clean up
+    os.remove(pathlib.Path(to_copy) / "copy_file.txt")
+    os.remove(pathlib.Path(to_copy) / "copy_file_2.txt")
+    os.rmdir(pathlib.Path(test_dir) / "to_copy")
     os.rmdir(pathlib.Path(test_dir) / "entity_name")
 
 
@@ -462,10 +501,6 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
 
     tag = ";"
 
-    conf_path = fileutils.get_test_conf_path(osp.join("tagged_tests", "marked/"))
-    # retrieve files to compare after test
-    correct_path = fileutils.get_test_conf_path(osp.join("tagged_tests", "correct/"))
-
     conf_path = fileutils.get_test_conf_path(
         osp.join("generator_files", "easy", "marked/")
     )
@@ -479,7 +514,7 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
     assert osp.isdir(test_dir)
 
     tagged_files = sorted(glob(test_dir + "/*"))
-    correct_files = sorted(glob(correct_path + "*"))
+    correct_files = sorted(glob(correct_path + "/*"))
 
     # Pickle the dictionary
     pickled_dict = pickle.dumps(param_dict)
@@ -511,10 +546,9 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
 
 
 def test_configure_invalid_tags(fileutils):
-
-    # = /home/users/putko/scratch/SmartSim/tests/test_configs/tagged_tests/invalidtag.txt
+    """Test configure operation with an invalid tag"""
     tagged_file = fileutils.get_test_conf_path(
-        osp.join("tagged_tests", "invalidtag.txt")
+        osp.join("generator_files", "easy", "marked", "invalidtag.txt")
     )
 
     tag = ";"

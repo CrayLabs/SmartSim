@@ -26,14 +26,12 @@
 
 import argparse
 import base64
-import collections
 import functools
 import os
 import pathlib
 import pickle
-import re
 import shutil
-
+import typing as t
 from typing import Callable
 
 from ...log import get_logger
@@ -45,11 +43,29 @@ using command line arguments.
 """
 
 
-def _abspath(s: str) -> pathlib.Path:
-    p = pathlib.Path(s)
-    if not p.is_absolute():
-        raise ValueError(f"path `{p}` must be absolute")
-    return p
+def _abspath(input_path: str) -> pathlib.Path:
+    """Helper function to check that paths are absolute"""
+    path = pathlib.Path(input_path)
+    if not path.is_absolute():
+        raise ValueError(f"path `{path}` must be absolute")
+    return path
+
+
+def _make_substitution(
+    tag_name: str, replacement: str | int | float, tag_delimiter: str
+) -> Callable[[str], str]:
+    """Helper function to replace tags"""
+    return lambda s: s.replace(
+        f"{tag_delimiter}{tag_name}{tag_delimiter}", str(replacement)
+    )
+
+
+def _replace_tags_in(
+    item: str,
+    substitutions: t.Sequence[Callable[[str], str]],
+) -> str:
+    """Helper function to derive the lines in which to make the substitutions"""
+    return functools.reduce(lambda a, fn: fn(a), substitutions, item)
 
 
 def move(parsed_args: argparse.Namespace) -> None:
@@ -94,16 +110,26 @@ def copy(parsed_args: argparse.Namespace) -> None:
     Sample usage:
     .. highlight:: bash
     .. code-block:: bash
-            python -m smartsim._core.entrypoints.file_operations \
-                copy /absolute/file/source/path /absolute/file/dest/path
+            python -m smartsim._core.entrypoints.file_operations copy \
+                /absolute/file/source/path /absolute/file/dest/path \
+                --dirs_exist_ok
 
     /absolute/file/source/path: Path to directory, or path to file to
         copy to a new location
     /absolute/file/dest/path: Path to destination directory or path to
         destination file
+    --dirs_exist_ok: if the flag is included, the copying operation will 
+        continue if the destination directory and files alrady exist, 
+        and will be overwritten by corresponding files. If the flag is 
+        not includedm and the destination file already exists, a
+        FileExistsError will be raised
     """
     if os.path.isdir(parsed_args.source):
-        shutil.copytree(parsed_args.source, parsed_args.dest, dirs_exist_ok=True)
+        shutil.copytree(
+            parsed_args.source,
+            parsed_args.dest,
+            dirs_exist_ok=parsed_args.dirs_exist_ok,
+        )
     else:
         shutil.copyfile(parsed_args.source, parsed_args.dest)
 
@@ -160,37 +186,13 @@ def configure(parsed_args: argparse.Namespace) -> None:
     if not isinstance(param_dict, dict):
         raise TypeError("param dict is not a valid dictionary")
 
-    def _get_prev_value(tagged_line: str) -> str:
-        split_tag = tagged_line.split(tag_delimiter)
-        return split_tag[1]
-
-    def make_substitution(tag_name: str, replacement: str) -> Callable[[str], str]:
-        return lambda s: s.replace(
-            f"{tag_delimiter}{tag_name}{tag_delimiter}", str(replacement)
-        )
-
-    def _is_ensemble_spec(tagged_line: str, application_params: dict[str, str]) -> bool:
-        prev_val = _get_prev_value(tagged_line)
-        return prev_val in application_params
-
-    edited = []
-    # used_params = {}
+    substitutions = tuple(
+        _make_substitution(k, v, tag_delimiter) for k, v in param_dict.items()
+    )
 
     # Set the lines to iterate over
     with open(parsed_args.source, "r+", encoding="utf-8") as file_stream:
-        lines = file_stream.readlines()
-
-    unused_tags = collections.defaultdict(list)
-
-    substitutions = tuple(make_substitution(k, v) for k, v in param_dict.items())
-    replace_tags_in = lambda s: functools.reduce(lambda a, fn: fn(a), substitutions, s)
-
-    edited = [replace_tags_in(line) for line in lines]
-
-    for tag, value in unused_tags.items():
-        missing_tag_message = f"Unused tag {tag} on line(s): {str(value)}"
-        logger.warning(missing_tag_message)
-    lines = edited
+        lines = [_replace_tags_in(line, substitutions) for line in file_stream]
 
     # write configured file to destination specified
     with open(parsed_args.dest, "w+", encoding="utf-8") as file_stream:
@@ -222,6 +224,7 @@ def get_parser() -> argparse.ArgumentParser:
     copy_parser.set_defaults(func=copy)
     copy_parser.add_argument("source", type=_abspath)
     copy_parser.add_argument("dest", type=_abspath)
+    copy_parser.add_argument("--dirs_exist_ok", action="store_true")
 
     # Subparser for symlink op
     symlink_parser = subparsers.add_parser("symlink")
