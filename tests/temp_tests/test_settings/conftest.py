@@ -24,39 +24,34 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from unittest.mock import Mock
-
 import pytest
 
 from smartsim.settings import dispatch
-from smartsim.settings.builders import launchArgBuilder as launch
+from smartsim.settings.arguments import launchArguments as launch
 
 
 @pytest.fixture
-def echo_executable_like():
-    class _ExeLike(launch.ExecutableLike):
+def mock_echo_executable():
+    class _MockExe(dispatch.ExecutableProtocol):
         def as_program_arguments(self):
             return ("echo", "hello", "world")
 
-    yield _ExeLike()
+    yield _MockExe()
 
 
 @pytest.fixture
-def settings_builder():
-    class _SettingsBuilder(launch.LaunchArgBuilder):
-        def launcher_str(self):
-            return "Mock Settings Builder"
-
+def mock_launch_args():
+    class _MockLaunchArgs(launch.LaunchArguments):
         def set(self, arg, val): ...
-        def finalize(self, exe, env):
-            return Mock()
+        def launcher_str(self):
+            return "mock-laucnh-args"
 
-    yield _SettingsBuilder({})
+    yield _MockLaunchArgs({})
 
 
 @pytest.fixture
-def launcher_like():
-    class _LuancherLike(dispatch.LauncherLike):
+def mock_launcher():
+    class _MockLauncher(dispatch.LauncherProtocol):
         def start(self, launchable):
             return dispatch.create_job_id()
 
@@ -64,4 +59,4 @@ def launcher_like():
         def create(cls, exp):
             return cls()
 
-    yield _LuancherLike()
+    yield _MockLauncher()

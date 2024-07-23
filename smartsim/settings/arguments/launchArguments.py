@@ -37,10 +37,7 @@ from ..._core.utils.helpers import fmt_dict
 logger = get_logger(__name__)
 
 
-_T = t.TypeVar("_T")
-
-
-class LaunchArgBuilder(ABC, t.Generic[_T]):
+class LaunchArguments(ABC):
     """Abstract base class that defines all generic launcher
     argument methods that are not supported.  It is the
     responsibility of child classes for each launcher to translate
@@ -48,6 +45,10 @@ class LaunchArgBuilder(ABC, t.Generic[_T]):
     """
 
     def __init__(self, launch_args: t.Dict[str, str | None] | None) -> None:
+        """Initialize a new `LaunchArguments` instance.
+
+        :param launch_args: A mapping of arguments to values to pre-initialize
+        """
         self._launch_args = copy.deepcopy(launch_args) or {}
 
     @abstractmethod
@@ -56,11 +57,12 @@ class LaunchArgBuilder(ABC, t.Generic[_T]):
 
     @abstractmethod
     def set(self, arg: str, val: str | None) -> None:
-        """Set the launch arguments"""
+        """Set a launch argument
 
-    @abstractmethod
-    def finalize(self, exe: ExecutableLike, env: t.Mapping[str, str | None], job_execution_path: str) -> t.Tuple[t.Sequence[str], str]:
-        """Prepare an entity for launch using the built options"""
+        :param arg: The argument name to set
+        :param val: The value to set the argument to as a `str` (if
+            applicable). Otherwise `None`
+        """
 
     def format_launch_args(self) -> t.Union[t.List[str], None]:
         """Build formatted launch arguments"""
@@ -95,8 +97,3 @@ class LaunchArgBuilder(ABC, t.Generic[_T]):
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nLaunch Arguments:\n{fmt_dict(self._launch_args)}"
         return string
-
-
-class ExecutableLike(t.Protocol):
-    @abstractmethod
-    def as_program_arguments(self) -> t.Sequence[str]: ...

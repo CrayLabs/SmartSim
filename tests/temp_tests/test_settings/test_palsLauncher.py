@@ -1,7 +1,10 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.pals import PalsMpiexecArgBuilder
+from smartsim.settings.arguments.launch.pals import (
+    PalsMpiexecLaunchArguments,
+    _as_pals_command,
+)
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -46,7 +49,7 @@ def test_launcher_str():
 )
 def test_pals_class_methods(function, value, flag, result):
     palsLauncher = LaunchSettings(launcher=LauncherType.Pals)
-    assert isinstance(palsLauncher.launch_args, PalsMpiexecArgBuilder)
+    assert isinstance(palsLauncher.launch_args, PalsMpiexecLaunchArguments)
     getattr(palsLauncher.launch_args, function)(*value)
     assert palsLauncher.launch_args._launch_args[flag] == result
     assert palsLauncher.format_launch_args() == ["--" + flag, str(result)]
@@ -102,7 +105,8 @@ def test_invalid_hostlist_format():
         ),
     ),
 )
-def test_formatting_launch_args(echo_executable_like, args, expected, test_dir):
-    cmd, path = PalsMpiexecArgBuilder(args).finalize(echo_executable_like, {}, test_dir)
+
+def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+    cmd, path = _as_pals_command(PalsMpiexecLaunchArguments(args), mock_echo_executable, {})
     assert tuple(cmd) == expected
     assert path == test_dir

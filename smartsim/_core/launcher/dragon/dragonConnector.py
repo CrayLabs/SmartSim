@@ -522,6 +522,22 @@ def _dragon_cleanup(
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
+    """Return the path at which a user should set up a dragon server.
+
+    The order of path resolution is:
+        1) If the the user has set a global dragon path via
+           `Config.dragon_server_path` use that without alteration.
+        2) Use the `fallback` path which should be the path to an existing
+           directory. Append the default dragon server subdirectory defined by
+           `Config.dragon_default_subdir`
+
+    Currently this function will raise if a user attempts to specify multiple
+    dragon server paths via `:` seperation.
+
+    :param fallback: The path to an existing directory on the file system to
+                     use if the global dragon directory is not set.
+    :returns: The path to directory in which the dragon server should run.
+    """
     config = get_config()
     dragon_server_path = config.dragon_server_path or os.path.join(
         fallback, config.dragon_default_subdir

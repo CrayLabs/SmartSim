@@ -1,7 +1,10 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.local import LocalArgBuilder
+from smartsim.settings.arguments.launch.local import (
+    LocalLaunchArguments,
+    _as_local_command,
+)
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -110,10 +113,10 @@ def test_format_env_vars():
         "D": "12",
     }
     localLauncher = LaunchSettings(launcher=LauncherType.Local, env_vars=env_vars)
-    assert isinstance(localLauncher._arg_builder, LocalArgBuilder)
+    assert isinstance(localLauncher._arguments, LocalLaunchArguments)
     assert localLauncher.format_env_vars() == ["A=a", "B=", "C=", "D=12"]
 
 
-def test_formatting_returns_original_exe(echo_executable_like):
-    cmd = LocalArgBuilder({}).finalize(echo_executable_like, {})
+def test_formatting_returns_original_exe(mock_echo_executable):
+    cmd = _as_local_command(LocalLaunchArguments({}), mock_echo_executable, {})
     assert tuple(cmd) == ("echo", "hello", "world")

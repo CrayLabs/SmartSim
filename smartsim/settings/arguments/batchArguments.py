@@ -37,7 +37,7 @@ from ..._core.utils.helpers import fmt_dict
 logger = get_logger(__name__)
 
 
-class BatchArgBuilder(ABC):
+class BatchArguments(ABC):
     """Abstract base class that defines all generic scheduler
     argument methods that are not supported.  It is the
     responsibility of child classes for each launcher to translate

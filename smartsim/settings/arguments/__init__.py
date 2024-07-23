@@ -24,12 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .lsf import BsubBatchArgBuilder
-from .pbs import QsubBatchArgBuilder
-from .slurm import SlurmBatchArgBuilder
+from .batchArguments import BatchArguments
+from .launchArguments import LaunchArguments
 
-__all__ = [
-    "BsubBatchArgBuilder",
-    "QsubBatchArgBuilder",
-    "SlurmBatchArgBuilder",
-]
+__all__ = ["LaunchArguments", "BatchArguments"]

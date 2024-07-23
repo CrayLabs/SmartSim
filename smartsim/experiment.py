@@ -29,7 +29,6 @@
 from __future__ import annotations
 
 import datetime
-import itertools
 import os
 import os.path as osp
 import textwrap
@@ -39,9 +38,8 @@ from os import environ, getcwd
 from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import first
-from smartsim.error.errors import SSUnsupportedError
-from smartsim.settings.dispatch import default_dispatcher
+from smartsim.error import errors
+from smartsim.settings.dispatch import DEFAULT_DISPATCHER
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
@@ -55,15 +53,14 @@ from .entity import (
 )
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
-from .settings import BatchSettings, Container, RunSettings
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.builders.launchArgBuilder import (
-        ExecutableLike,
-        LaunchArgBuilder,
+    from smartsim.settings.dispatch import (
+        Dispatcher,
+        ExecutableProtocol,
+        LauncherProtocol,
     )
-    from smartsim.settings.dispatch import Dispatcher, LauncherLike
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -113,13 +110,7 @@ class Experiment:
     and utilized throughout runtime.
     """
 
-    def __init__(
-        self,
-        name: str,
-        exp_path: str | None = None,
-        *,  # Keyword arguments only
-        settings_dispatcher: Dispatcher = default_dispatcher,
-    ):
+    def __init__(self, name: str, exp_path: str | None = None):
         """Initialize an Experiment instance.
 
         With the default settings, the Experiment will use the
@@ -159,9 +150,6 @@ class Experiment:
 
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
-        :param settings_dispatcher: The dispatcher the experiment will use to
-            figure determine how to launch a job. If none is provided, the
-            experiment will use the default dispatcher.
         """
         self.name = name
         if exp_path:
@@ -174,6 +162,8 @@ class Experiment:
             exp_path = osp.join(getcwd(), name)
 
         self.exp_path = exp_path
+        """The path under which the experiment operate"""
+        
         self.run_ID = (
             "run-"
             + datetime.datetime.now().strftime("%H:%M:%S")
@@ -181,52 +171,64 @@ class Experiment:
             + datetime.datetime.now().strftime("%Y-%m-%d")
         )
 
-        # TODO: Remove this! The contoller is becoming obsolete
+        # TODO: Remove this! The controller is becoming obsolete
         self._control = Controller(launcher="local")
-        self._dispatcher = settings_dispatcher
 
-        self._active_launchers: set[LauncherLike[t.Any]] = set()
+        self._active_launchers: set[LauncherProtocol[t.Any]] = set()
         """The active launchers created, used, and reused by the experiment"""
 
-        self.fs_identifiers: t.Set[str] = set()
+        self._fs_identifiers: t.Set[str] = set()
+        """Set of feature store identifiers currently in use by this
+        experiment"""
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
+        """Switch to specify if telemetry data should be produced for this
+        experiment"""
 
-    def start_jobs(self, *jobs: Job) -> tuple[LaunchedJobID, ...]:
-        """WIP: replacemnt method to launch jobs using the new API"""
+    def start_jobs(
+        self, job: Job, *jobs: Job, dispatcher: Dispatcher = DEFAULT_DISPATCHER
+    ) -> tuple[LaunchedJobID, ...]:
+        """Execute a collection of `Job` instances.
 
-        if not jobs:
-            raise TypeError(
-                f"{type(self).__name__}.start_jobs() missing at least 1 required "
-                "positional argument"
-            )
+        :param job: The job instance to start
+        :param jobs: A collection of other job instances to start
+        :param dispatcher: The dispatcher that should be used to determine how
+            to start a job based on its settings. If not specified it will
+            default to a dispatcher pre-configured by SmartSim.
+        :returns: A sequence of ids with order corresponding to the sequence of
+            jobs that can be used to query or alter the status of that
+            particular execution of the job.
+        """
 
         def _start(job: Job) -> LaunchedJobID:
-            builder: LaunchArgBuilder[t.Any] = job.launch_settings.launch_args
-            launcher_type = self._dispatcher.get_launcher_for(builder)
-            launcher = first(
-                lambda launcher: type(launcher) is launcher_type,
-                self._active_launchers,
-            )
-            if launcher is None:
-                launcher = launcher_type.create(self)
-                self._active_launchers.add(launcher)
-            job_execution_path = self._generate(job)
+            args = job.launch_settings.launch_args
+            env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            # FIXME: Opting out of type check here. Fix this later!!
-            # TODO: Very much dislike that we have to pass in attrs off of `job`
-            #       into `builder`, which is itself an attr of an attr of `job`.
-            #       Why is `Job` not generic based on launch arg builder?
-            # FIXME: Remove this dangerous cast after `SmartSimEntity` conforms
-            #        to protocol
+            # FIXME: Remove this cast after `SmartSimEntity` conforms to
+            #        protocol. For now, live with the "dangerous" type cast
             # ---------------------------------------------------------------------
-            exe_like = t.cast("ExecutableLike", job.entity)
-            finalized = builder.finalize(
-                exe_like, job.launch_settings.env_vars, job_execution_path
-            )
+            exe = t.cast("ExecutableProtocol", job.entity)
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            return launcher.start(finalized)
+            dispatch = dispatcher.get_dispatch(args)
 
-        return tuple(map(_start, jobs))
+            try:
+                launch_config = dispatch.configure_first_compatible_launcher(
+                    from_available_launchers=self._active_launchers,
+                    with_settings=args,
+                )
+            except errors.LauncherNotFoundError:
+                launch_config = dispatch.create_new_launcher_configuration(
+                    for_experiment=self, with_settings=args
+                )
+            # Save the underlying launcher instance. That way we do not need to
+            # spin up a launcher instance for each individual job, and it makes
+            # it easier to monitor job statuses
+            # pylint: disable-next=protected-access
+            self._active_launchers.add(launch_config._adapted_launcher)
+            #job_execution_path = self._generate(job)
+
+            return launch_config.start(exe, env)
+
+        return _start(job), *map(_start, jobs)
 
     @_contextualize
     def start(
@@ -592,8 +594,8 @@ class Experiment:
             === Launch Summary ===
             Experiment: {self.name}
             Experiment Path: {self.exp_path}
-            Launchers:
-            {textwrap.indent("  - ", launcher_list)}
+            Launcher(s):
+            {textwrap.indent("  - ", launcher_list) if launcher_list else "  <None>"}
             """)
 
         if manifest.applications:
@@ -612,7 +614,7 @@ class Experiment:
         def create_entity_dir(
             entity: t.Union[FeatureStore, Application, Ensemble]
         ) -> None:
-            if not os.path.isdir(entity.path):
+            if not osp.isdir(entity.path):
                 os.makedirs(entity.path)
 
         for application in start_manifest.applications:
@@ -629,11 +631,11 @@ class Experiment:
 
     def _append_to_fs_identifier_list(self, fs_identifier: str) -> None:
         """Check if fs_identifier already exists when calling create_feature_store"""
-        if fs_identifier in self.fs_identifiers:
+        if fs_identifier in self._fs_identifiers:
             logger.warning(
                 f"A feature store with the identifier {fs_identifier} has already been made "
                 "An error will be raised if multiple Feature Stores are started "
                 "with the same identifier"
             )
         # Otherwise, add
-        self.fs_identifiers.add(fs_identifier)
+        self._fs_identifiers.add(fs_identifier)

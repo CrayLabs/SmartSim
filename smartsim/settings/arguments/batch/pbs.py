@@ -34,12 +34,12 @@ from smartsim.log import get_logger
 from ....error import SSConfigError
 from ...batchCommand import SchedulerType
 from ...common import StringArgument
-from ..batchArgBuilder import BatchArgBuilder
+from ..batchArguments import BatchArguments
 
 logger = get_logger(__name__)
 
 
-class QsubBatchArgBuilder(BatchArgBuilder):
+class QsubBatchArguments(BatchArguments):
     def scheduler_str(self) -> str:
         """Get the string representation of the scheduler"""
         return SchedulerType.Pbs.value

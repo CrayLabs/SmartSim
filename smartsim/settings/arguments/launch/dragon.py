@@ -26,23 +26,16 @@
 
 from __future__ import annotations
 
-import os
-import typing as t
-
-from smartsim._core.schemas.dragonRequests import DragonRunRequestView
 from smartsim.log import get_logger
 
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
-
-if t.TYPE_CHECKING:
-    from smartsim.settings.builders.launchArgBuilder import ExecutableLike
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 
 
-class DragonArgBuilder(LaunchArgBuilder[DragonRunRequestView]):
+class DragonLaunchArguments(LaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Dragon.value
@@ -67,28 +60,3 @@ class DragonArgBuilder(LaunchArgBuilder[DragonRunRequestView]):
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
-
-    def finalize(
-        self,
-        exe: ExecutableLike,
-        env: t.Mapping[str, str | None],
-        job_execution_path: str,
-    ) -> DragonRunRequestView:
-        exe_, *args = exe.as_program_arguments()
-        return DragonRunRequestView(
-            exe=exe_,
-            exe_args=args,
-            # FIXME: Currently this is hard coded because the schema requires
-            #        it, but in future, it is almost certainly necessary that
-            #        this will need to be injected by the user or by us to have
-            #        the command execute next to any generated files. A similar
-            #        problem exists for the other settings.
-            # TODO: Find a way to inject this path
-            path=job_execution_path,
-            env=env,
-            # TODO: Not sure how this info is injected
-            name=None,
-            output_file=None,
-            error_file=None,
-            **self._launch_args,
-        )
