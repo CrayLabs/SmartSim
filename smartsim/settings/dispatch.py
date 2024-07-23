@@ -275,12 +275,13 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-
-    def start(self, command: t.Sequence[str],  job_execution_path: str) -> LaunchedJobID:
+    def start(self, command: t.Sequence[str], job_execution_path: str) -> LaunchedJobID:
         id_ = create_job_id()
         exe, *rest = command
         # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=job_execution_path)
+        self._launched[id_] = sp.Popen(
+            (helpers.expand_exe_path(exe), *rest), cwd=job_execution_path
+        )
         return id_
 
     @classmethod

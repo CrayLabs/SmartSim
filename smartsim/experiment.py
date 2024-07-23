@@ -163,13 +163,14 @@ class Experiment:
 
         self.exp_path = exp_path
         """The path under which the experiment operate"""
-        
+
         self.run_ID = (
             "run-"
             + datetime.datetime.now().strftime("%H:%M:%S")
             + "-"
             + datetime.datetime.now().strftime("%Y-%m-%d")
         )
+        """Create the run id for the Experiment"""
 
         # TODO: Remove this! The controller is becoming obsolete
         self._control = Controller(launcher="local")
@@ -224,9 +225,9 @@ class Experiment:
             # it easier to monitor job statuses
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
-            #job_execution_path = self._generate(job)
+            job_execution_path = self._generate(job)
 
-            return launch_config.start(exe, env)
+            return launch_config.start(exe, env, job_execution_path)
 
         return _start(job), *map(_start, jobs)
 

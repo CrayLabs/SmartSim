@@ -348,6 +348,7 @@ def _as_run_request_view(
     run_req_args: DragonLaunchArguments,
     exe: ExecutableProtocol,
     env: t.Mapping[str, str | None],
+    path: str,
 ) -> DragonRunRequestView:
     exe_, *args = exe.as_program_arguments()
     return DragonRunRequestView(
@@ -359,7 +360,7 @@ def _as_run_request_view(
         #        the command execute next to any generated files. A similar
         #        problem exists for the other settings.
         # TODO: Find a way to inject this path
-        path=os.getcwd(),
+        path=path,
         env=env,
         # TODO: Not sure how this info is injected
         name=None,

@@ -30,9 +30,9 @@ import typing as t
 from copy import deepcopy
 
 from smartsim._core.commands.launchCommands import LaunchCommands
+from smartsim._core.utils.helpers import create_short_id_str
 from smartsim.launchable.basejob import BaseJob
 from smartsim.settings import LaunchSettings
-from smartsim._core.utils.helpers import create_short_id_str
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
@@ -55,13 +55,14 @@ class Job(BaseJob):
         entity: SmartSimEntity,
         launch_settings: LaunchSettings,
         name: str = "job",
-        **kwargs: t.Any,
+        *,
+        ensemble_name: str = None,
     ):
         super().__init__()
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
         self._name = deepcopy(name)
-        self._ensemble_name = kwargs.get('ensemble_name', None)
+        self._ensemble_name = ensemble_name
         if self._ensemble_name is not None:
             self._ensemble_name += f"-{create_short_id_str()}"
         # TODO: self.warehouse_runner = JobWarehouseRunner

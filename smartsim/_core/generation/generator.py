@@ -77,7 +77,7 @@ class Generator:
         """
         log_path = os.path.join(gen_path, "log")
         return log_path
-    
+
     def _generate_job_path(self, job: Job, gen_path: str, run_ID: str) -> str:
         """
         Generates the path for a job based on its type and ensemble name (if applicable).
@@ -89,7 +89,9 @@ class Generator:
         """
         if job._ensemble_name is None:
             job_type = f"{job.__class__.__name__.lower()}s"
-            entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
+            entity_type = (
+                f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
+            )
             path = os.path.join(
                 gen_path,
                 run_ID,
@@ -100,7 +102,9 @@ class Generator:
             )
         else:
             job_type = "ensembles"
-            entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
+            entity_type = (
+                f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
+            )
             path = os.path.join(
                 gen_path,
                 run_ID,

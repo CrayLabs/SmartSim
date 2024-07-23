@@ -185,7 +185,6 @@ def test_invalid_exclude_hostlist_format():
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
-    cmd, path = _as_aprun_command(AprunLaunchArguments(args), mock_echo_executable, {})
+def test_formatting_launch_args(mock_echo_executable, args, expected):
+    cmd = _as_aprun_command(AprunLaunchArguments(args), mock_echo_executable, {})
     assert tuple(cmd) == expected
-    assert path == test_dir

@@ -9,7 +9,7 @@ from smartsim import Experiment
 from smartsim._core.generation.generator import Generator
 from smartsim.entity import Application, Ensemble
 from smartsim.launchable import Job, JobGroup
-from smartsim.settings.builders.launch import SlurmArgBuilder
+from smartsim.settings.arguments.launch import SlurmLaunchArguments
 from smartsim.settings.dispatch import Dispatcher
 from smartsim.settings.launchSettings import LaunchSettings
 
@@ -21,6 +21,8 @@ class NoOpLauncher:
 
     def start(self, _):
         return "anything"
+
+def make_shell_format_fn(run_command: str | None): ...
 
 class EchoApp:
     def as_program_arguments(self):
@@ -89,12 +91,13 @@ def test_generate_job_directory(gen_instance_for_job):
 
 def test_full_exp_generate_job_directory(test_dir, job_instance):
     no_op_dispatch = Dispatcher()
-    no_op_dispatch.dispatch(SlurmArgBuilder, to_launcher=NoOpLauncher)
+    no_op_dispatch.dispatch(SlurmLaunchArguments, with_format=make_shell_format_fn("run_command"), to_launcher=NoOpLauncher)
     no_op_exp = Experiment(
-        name="No-Op-Exp", exp_path=test_dir, settings_dispatcher=no_op_dispatch
+        name="No-Op-Exp", exp_path=test_dir
     )
     job_execution_path = no_op_exp._generate(job_instance)
     assert osp.isdir(job_execution_path)
+
 
 def test_generate_ensemble_directory(test_dir, wlmutils):
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
