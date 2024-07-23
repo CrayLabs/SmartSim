@@ -501,10 +501,7 @@ class DragonBackend:
 
                 logger.debug(f"Step id {step_id} allocated on {hosts}")
 
-                global_policy = dragon_policy.Policy(
-                    placement=dragon_policy.Policy.Placement.HOST_NAME,
-                    host_name=hosts[0],
-                )
+                global_policy = self.create_run_policy(request, hosts[0])
                 options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
                 grp = dragon_process_group.ProcessGroup(
                     restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy

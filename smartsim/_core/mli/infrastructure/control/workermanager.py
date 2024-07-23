@@ -31,6 +31,7 @@ import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
+from dragon.managed_memory import MemoryAlloc, MemoryPool
 
 # pylint: enable=import-error
 
@@ -41,6 +42,7 @@ import multiprocessing as mp
 import os
 import socket
 import sys
+import time
 import typing as t
 
 from .....log import get_logger
@@ -170,19 +172,21 @@ class WorkerManager(Service):
         """Device on which workers need to run"""
         self._cached_models: dict[str, t.Any] = {}
         """Dictionary of previously loaded models"""
+        self._mem_pool = MemoryPool(size=1024**3, fname="wm_mempool", uid=123458)
         self._request_dispatcher: RequestDispatcher = RequestDispatcher(
             batch_timeout=batch_timeout,
             batch_size=batch_size,
             incoming_channel=self._task_queue,
             comm_channel_type=comm_channel_type,
             feature_store=self._feature_store,
+            mem_pool=self._mem_pool,
         )
         """Dispatcher used to batch requests"""
         self._device_manager: DeviceManager = DeviceManager(
-            [WorkerDevice(f"gpu:{idx}") for idx in range(4)]
+            [WorkerDevice(f"gpu:{idx}") for idx in [3]]
         )
         self._device_idx: int = 0
-        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=False)
+        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
 
         try:
             mp.set_start_method("dragon")
@@ -192,17 +196,19 @@ class WorkerManager(Service):
         self._dispatcher_process = self._create_local_dispatcher_process()
 
     def _create_local_dispatcher_process(self) -> dragon_process_group.ProcessGroup:
-        dispatcher_cpus = 16
+        wm_cpus = 0
         if sys.platform != "darwin":
             self_affinity: list[int] = list(os.sched_getaffinity(os.getpid()))
-            os.sched_setaffinity(os.getpid(), self_affinity[:-dispatcher_cpus])
+            wm_cpus = len(self_affinity) // 2
+            os.sched_setaffinity(os.getpid(), self_affinity[:wm_cpus])
         else:
             self_affinity: list[int] = []
+        disp_affinity = self_affinity[wm_cpus:]
         global_policy = dragon_policy.Policy(
             placement=dragon_policy.Policy.Placement.HOST_NAME,
             host_name=socket.gethostname(),
             affinity=dragon_policy.Policy.Affinity.SPECIFIC,
-            cpu_affinity=self_affinity[-dispatcher_cpus:],
+            cpu_affinity=disp_affinity,
         )
         options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
         grp = dragon_process_group.ProcessGroup(
@@ -212,7 +218,7 @@ class WorkerManager(Service):
             placement=dragon_policy.Policy.Placement.HOST_NAME,
             host_name=socket.gethostname(),
             affinity=dragon_policy.Policy.Affinity.SPECIFIC,
-            cpu_affinity=self_affinity[-dispatcher_cpus:],
+            cpu_affinity=disp_affinity,
         )
         tmp_proc = dragon_process.ProcessTemplate(
             target=self._request_dispatcher.run,
@@ -235,13 +241,21 @@ class WorkerManager(Service):
         """Executes calls to the machine learning worker implementation to complete
         the inference pipeline"""
 
-        batch: InferenceBatch = self._request_dispatcher.task_queue.get()
+        pre_batch_time = time.perf_counter()
+        try:
+            batch: InferenceBatch = self._request_dispatcher.task_queue.get(
+                timeout=0.001
+            )
+        except Exception:
+            return
 
-        self._perf_timer.start_timings()
+        self._perf_timer.start_timings(
+            "flush_requests", time.perf_counter() - pre_batch_time
+        )
+
         if batch is None or 0 == len(batch.requests):
             return
 
-        self._perf_timer.measure_time("flush_requests")
         device: WorkerDevice = next(
             self._device_manager.get_free_device(
                 worker=self._worker,
@@ -275,14 +289,15 @@ class WorkerManager(Service):
         self._perf_timer.measure_time("execute")
 
         try:
-            transformed_outputs = self._worker.transform_output(batch, execute_result)
+            transformed_outputs = self._worker.transform_output(
+                batch, execute_result, self._perf_timer
+            )
         except Exception as e:
             for request in batch.requests:
                 exception_handler(
                     e, request.callback, "Failed while transforming the output."
                 )
             return
-        self._perf_timer.measure_time("transform_output")
 
         for request, transformed_output in zip(batch.requests, transformed_outputs):
             reply = InferenceReply()
@@ -325,8 +340,8 @@ class WorkerManager(Service):
 
         self._perf_timer.end_timings()
 
-        # if self._perf_timer.max_length == 4 * 801:
-        #     self._perf_timer.print_timings(True)
+        if self._perf_timer.max_length == 801:
+            self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""

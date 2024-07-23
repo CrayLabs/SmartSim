@@ -19,7 +19,7 @@ transport: t.Literal["hsta", "tcp"] = "hsta"
 
 os.environ["SMARTSIM_DRAGON_TRANSPORT"] = transport
 
-exp_path = os.path.join(filedir, f"MLI_proto_batch_{transport.upper()}")
+exp_path = os.path.join(filedir, f"MLI_proto_{transport.upper()}")
 os.makedirs(exp_path, exist_ok=True)
 exp = Experiment("MLI_proto", launcher="dragon", exp_path=exp_path)
 
@@ -35,6 +35,11 @@ worker_manager_rs: DragonRunSettings = exp.create_run_settings(
         torch_worker_str,
     ],
 )
+aff = []
+for i in range(32):
+    aff.append(i)
+    # aff.append(i+64)
+worker_manager_rs.set_cpu_affinity(aff)
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
@@ -42,7 +47,9 @@ app_rs: DragonRunSettings = exp.create_run_settings(
     sys.executable,
     exe_args=[app_script_name, "--device", device],
 )
-app_rs.set_tasks_per_node(4)
+app_rs.set_tasks_per_node(1)
+
+
 app = exp.create_model("app", run_settings=app_rs)
 app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
 

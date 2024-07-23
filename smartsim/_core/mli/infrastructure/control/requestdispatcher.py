@@ -27,6 +27,7 @@
 # pylint: disable=import-error
 # pylint: disable-next=unused-import
 import dragon
+from dragon.managed_memory import MemoryAlloc, MemoryPool
 from dragon.mpbridge.queues import DragonQueue
 
 # pylint: enable=import-error
@@ -38,7 +39,6 @@ import multiprocessing as mp
 import time
 import typing as t
 import uuid
-from concurrent.futures import Future, ThreadPoolExecutor
 from queue import Empty, Full, Queue
 from threading import RLock
 from types import TracebackType
@@ -46,7 +46,7 @@ from types import TracebackType
 from packaging.version import Version
 
 from .....error import SmartSimError
-from .....log import ContextThread, get_logger
+from .....log import get_logger
 from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
@@ -284,6 +284,7 @@ class RequestDispatcher:
         self,
         batch_timeout: float,
         batch_size: int,
+        mem_pool: MemoryPool,
         incoming_channel: t.Optional[CommChannelBase],
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
         feature_store: t.Optional[FeatureStore] = None,
@@ -300,8 +301,9 @@ class RequestDispatcher:
         self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
         self._feature_store = feature_store
         self._comm_channel_type = comm_channel_type
-        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=False)
+        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
         self._worker = TorchWorker()
+        self._mem_pool = mem_pool
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
@@ -374,6 +376,9 @@ class RequestDispatcher:
 
                 self._perf_timer.end_timings()
 
+            if self._perf_timer.max_length == 801:
+                self._perf_timer.print_timings(True)
+
     @property
     def task_queue(self) -> DragonQueue:
         return self._outgoing_queue
@@ -426,7 +431,6 @@ class RequestDispatcher:
     def flush_requests(self) -> None:
         for queue in self._queues:
             if queue.ready and queue.acquire(blocking=False):
-                self._perf_timer.start_timings()
                 self._perf_timer.measure_time("find_queue")
                 try:
                     batch = InferenceBatch(
@@ -440,7 +444,7 @@ class RequestDispatcher:
                 )
                 self._perf_timer.measure_time("fetch_input")
                 transformed_inputs = self._worker.transform_input(
-                    batch=batch, fetch_results=fetch_results
+                    batch=batch, fetch_results=fetch_results, mem_pool=self._mem_pool
                 )
                 self._perf_timer.measure_time("transform_input")
                 batch.inputs = transformed_inputs
@@ -450,4 +454,3 @@ class RequestDispatcher:
 
                 self._outgoing_queue.put(batch)
                 self._perf_timer.measure_time("put")
-                self._perf_timer.end_timings()

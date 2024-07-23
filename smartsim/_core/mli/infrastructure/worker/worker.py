@@ -28,8 +28,11 @@ import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from dragon.managed_memory import MemoryAlloc, MemoryPool
+
 from .....error import SmartSimError
 from .....log import get_logger
+from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...mli_schemas.model.model_capnp import Model
@@ -95,10 +98,13 @@ class LoadModelResult:
 class TransformInputResult:
     """A wrapper around a transformed batchinput"""
 
-    def __init__(self, result: t.Any, slices: list[slice]) -> None:
+    def __init__(
+        self, result: t.Any, slices: list[slice], dims: list[list[int]]
+    ) -> None:
         """Initialize the object"""
         self.transformed = result
         self.slices = slices
+        self.dims = dims
 
 
 class ExecuteResult:
@@ -275,7 +281,9 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_input(
-        batch: InferenceBatch, fetch_results: list[FetchInputResult]
+        batch: InferenceBatch,
+        fetch_results: list[FetchInputResult],
+        mem_pool: MemoryPool,
     ) -> TransformInputResult:
         """Given a collection of data, perform a transformation on the data
         :param request: The request that triggered the pipeline
@@ -299,7 +307,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_output(
-        batch: InferenceBatch, execute_result: ExecuteResult
+        batch: InferenceBatch, execute_result: ExecuteResult, perf_timer: PerfTimer
     ) -> t.List[TransformOutputResult]:
         """Given inference results, perform transformations required to
         transmit results to the requestor.

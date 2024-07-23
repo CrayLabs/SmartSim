@@ -52,6 +52,8 @@ torch.set_num_threads(1)
 
 logger = get_logger("App")
 
+CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
+
 class ProtoClient:
     def __init__(self, timing_on: bool):
         comm = MPI.COMM_WORLD
@@ -70,8 +72,6 @@ class ProtoClient:
         self._from_worker_ch_serialized = self._from_worker_ch.serialize()
         self._to_worker_ch = Channel.make_process_local()
 
-        self._start = None
-        self._interm = None
         self._perf_timer: PerfTimer = PerfTimer(debug=False, timing_on=timing_on, prefix=f"a{rank}_")
 
     def run_model(self, model: bytes | str, batch: torch.Tensor):
@@ -95,10 +95,13 @@ class ProtoClient:
         self._perf_timer.measure_time("build_request")
         request_bytes = MessageHandler.serialize_request(request)
         self._perf_timer.measure_time("serialize_request")
+        tensor_bytes = [bytes(tensor.data) for tensor in tensors]
+        # tensor_bytes = [tensor.reshape(-1).view(numpy.uint8).data for tensor in tensors]
+        self._perf_timer.measure_time("serialize_tensor")
         with self._to_worker_fli.sendh(timeout=None, stream_channel=self._to_worker_ch) as to_sendh:
             to_sendh.send_bytes(request_bytes)
-            for t in tensors:
-                to_sendh.send_bytes(t.tobytes()) #TODO NOT FAST ENOUGH!!!
+            for tb in tensor_bytes:
+                to_sendh.send_bytes(tb) #TODO NOT FAST ENOUGH!!!
                 # to_sendh.send_bytes(bytes(t.data))
 
         self._perf_timer.measure_time("send")
@@ -158,14 +161,24 @@ if __name__ == "__main__":
     client = ProtoClient(timing_on=True)
     client.set_model(resnet.name, resnet.model)
 
+    pt_model = torch.jit.load(io.BytesIO(initial_bytes=(resnet.model))).to("cuda:0")
+
     TOTAL_ITERATIONS = 100
 
-    for log2_bsize in range(7):
+    for log2_bsize in range(8):
         b_size: int = 2**log2_bsize
         logger.info(f"Batch size: {b_size}")
         for iteration_number in range(TOTAL_ITERATIONS + int(b_size==1)):
             logger.info(f"Iteration: {iteration_number}")
-            client.run_model(resnet.name, resnet.get_batch(b_size))
+            batch = resnet.get_batch(b_size)
+            remote_result = client.run_model(resnet.name, batch)
             logger.info(client._perf_timer.get_last("total_time"))
+            if CHECK_RESULTS_AND_MAKE_ALL_SLOWER:
+                local_res = pt_model(batch.to("cuda:0"))
+                err_norm = torch.linalg.vector_norm(torch.flatten(remote_result).to("cuda:0")-torch.flatten(local_res), ord=1).cpu()
+                res_norm = torch.linalg.vector_norm(remote_result, ord=1).item()
+                local_res_norm = torch.linalg.vector_norm(local_res, ord=1).item()
+                logger.info(f"Avg norm of error {err_norm.item()/b_size} compared to result norm of {res_norm/b_size}:{local_res_norm/b_size}")
+                torch.cuda.synchronize()
 
     client.print_timings(to_file=True)

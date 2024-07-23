@@ -25,13 +25,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import io
-from concurrent.futures import Future, ThreadPoolExecutor
 
 import numpy as np
 import torch
+from dragon.managed_memory import MemoryAlloc, MemoryPool
 
 from .....error import SmartSimError
 from .....log import get_logger
+from ....utils.timings import PerfTimer
 from ...mli_schemas.tensor import tensor_capnp
 from .worker import (
     ExecuteResult,
@@ -44,8 +45,8 @@ from .worker import (
     TransformOutputResult,
 )
 
-torch.set_num_threads(4)
-torch.set_num_interop_threads(2)
+torch.set_num_threads(1)
+torch.set_num_interop_threads(4)
 logger = get_logger(__name__)
 
 
@@ -69,14 +70,17 @@ class TorchWorker(MachineLearningWorkerBase):
             device = device.replace(old, new)
 
         buffer = io.BytesIO(initial_bytes=model_bytes)
-        model = torch.jit.load(buffer, map_location=device)  # type: ignore
-        model.eval()
+        with torch.no_grad():
+            model = torch.jit.load(buffer, map_location=device)  # type: ignore
+            model.eval()
         result = LoadModelResult(model)
         return result
 
     @staticmethod
     def transform_input(
-        batch: InferenceBatch, fetch_results: list[FetchInputResult]
+        batch: InferenceBatch,
+        fetch_results: list[FetchInputResult],
+        mem_pool: MemoryPool,
     ) -> TransformInputResult:
         results: list[torch.Tensor] = []
         total_samples = 0
@@ -100,7 +104,7 @@ class TorchWorker(MachineLearningWorkerBase):
             slices.append(slice(total_samples, total_samples + num_samples))
             total_samples = total_samples + num_samples
 
-            if res_idx == len(fetch_results)-1:
+            if res_idx == len(fetch_results) - 1:
                 # For each tensor in the last input, get remaining dimensions
                 # Assumptions: all inputs have the same number of tensors and
                 # last N-1 dimensions match across inputs for corresponding tensors
@@ -112,65 +116,32 @@ class TorchWorker(MachineLearningWorkerBase):
                     all_dtypes.append(str(tensor_desc.dataType))
 
         for result_tensor_idx, (dims, dtype) in enumerate(zip(all_dims, all_dtypes)):
-            # List comprehension concatenation can be faster sometimes
-            all_bytes = b"".join(
-                [
-                    fetch_result.inputs[result_tensor_idx]
-                    for fetch_result in fetch_results
-                ]
-            )
-
-            results.append(
-                torch.from_numpy(
-                    np.frombuffer(
-                        all_bytes,
-                        dtype=dtype,
-                    ).reshape(dims)
+            itemsize = np.empty((1), dtype=dtype).itemsize
+            alloc_size = int(np.prod(dims) * itemsize)
+            try:
+                mem_alloc = mem_pool.alloc(alloc_size)
+                mem_view = mem_alloc.get_memview()
+                mem_view[:alloc_size] = b"".join(
+                    [
+                        fetch_result.inputs[result_tensor_idx]
+                        for fetch_result in fetch_results
+                    ]
                 )
-            )
+            except Exception as e:
+                print(e)
+                raise e
+            # results.append(
+            #     torch.from_numpy(
+            #         np.frombuffer(
+            #             all_bytes,
+            #             dtype=dtype,
+            #         ).reshape(dims)
+            #     )
+            # )
 
-        return TransformInputResult(results, slices)
+            results.append(mem_alloc.serialize())
 
-    # @staticmethod
-    # def _transform_input(
-    #     batch: InferenceBatch, fetch_results: list[FetchInputResult]
-    # ) -> TransformInputResult:
-    #     results: list[list[torch.Tensor]] = []
-    #     start = 0
-    #     slices: list[slice] = []
-
-    #     for fetch_result in fetch_results:
-    #         partial_result = []
-    #         if fetch_result.meta is None:
-    #             raise ValueError("Cannot reconstruct tensor without meta information")
-    #         for idx, (item, item_meta) in enumerate(
-    #             zip(fetch_result.inputs, fetch_result.meta)
-    #         ):
-    #             tensor_desc: tensor_capnp.TensorDescriptor = item_meta
-    #             partial_result.append(
-    #                 torch.tensor(
-    #                     np.frombuffer(item, dtype=str(tensor_desc.dataType))
-    #                 ).reshape(tuple(dim for dim in tensor_desc.dimensions))
-    #             )
-    #             if idx == 0:
-    #                 num_samples = tensor_desc.dimensions[0]
-    #                 slices.append(slice(start, start + num_samples))
-    #                 start = start + num_samples
-    #         results.append(partial_result)
-
-    #     result: list[torch.Tensor] = []
-    #     if len(batch.requests) > 1:
-    #         for t_idx in range(len(results[0])):
-    #             result.append(
-    #                 torch.concatenate(
-    #                     [partial_result[t_idx] for partial_result in results]
-    #                 )
-    #             )
-    #     else:
-    #         result = results[0]
-
-    #     return TransformInputResult(result, slices)
-    # return data # note: this fails copy test!
+        return TransformInputResult(results, slices, all_dims)
 
     # pylint: disable-next=unused-argument
     @staticmethod
@@ -185,34 +156,60 @@ class TorchWorker(MachineLearningWorkerBase):
         device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
         for old, new in device_to_torch.items():
             device = device.replace(old, new)
+
+        tensors = []
+        mem_allocs = []
+        for transformed, dims in zip(
+            transform_result.transformed, transform_result.dims
+        ):
+            mem_alloc = MemoryAlloc.attach(transformed)
+            mem_allocs.append(mem_alloc)
+            tensors.append(
+                torch.from_numpy(
+                    np.frombuffer(
+                        mem_alloc.get_memview()[0 : np.prod(dims) * 4], dtype=np.float32
+                    ).reshape(dims)
+                )
+            )
+
         model: torch.nn.Module = load_result.model
-        model.eval()
-        # print([tensor.shape for tensor in transform_result.transformed])
-        # torch.cuda.empty_cache()
-        results = [
-            model(tensor.to(device)).detach() for tensor in transform_result.transformed
-        ]
+        with torch.no_grad():
+            model.eval()
+            results = [
+                model(tensor.to(device, non_blocking=True)).detach()
+                for tensor in tensors
+            ]
+
+        torch.cuda.synchronize(3)
 
         transform_result.transformed = []
 
         execute_result = ExecuteResult(results, transform_result.slices)
+        for mem_alloc in mem_allocs:
+            mem_alloc.free()
         return execute_result
 
     @staticmethod
     def transform_output(
         batch: InferenceBatch,
         execute_result: ExecuteResult,
+        perf_timer: PerfTimer,
     ) -> list[TransformOutputResult]:
         transformed_list: list[TransformOutputResult] = []
+        cpu_predictions = [
+            prediction.cpu() for prediction in execute_result.predictions
+        ]
+        perf_timer.measure_time("to_cpu")
         for result_slice in execute_result.slices:
-            transformed = [
-                item[result_slice].cpu().numpy().tobytes()
-                for item in execute_result.predictions
-            ]
-            # todo: need the shape from latest schemas added here.
-            transformed_list.append(
-                TransformOutputResult(transformed, None, "c", "float32")
-            )  # fixme
+            transformed = []
+            for cpu_item in cpu_predictions:
+                transformed.append(cpu_item[result_slice].numpy().tobytes())
+                perf_timer.measure_time("serialize_tensor")
+
+                # todo: need the shape from latest schemas added here.
+                transformed_list.append(
+                    TransformOutputResult(transformed, None, "c", "float32")
+                )  # fixme
 
         execute_result.predictions = []
 
