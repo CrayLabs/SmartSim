@@ -347,8 +347,8 @@ from smartsim.settings.dispatch import ExecutableProtocol, dispatch
 def _as_run_request_view(
     run_req_args: DragonLaunchArguments,
     exe: ExecutableProtocol,
-    env: t.Mapping[str, str | None],
     path: str,
+    env: t.Mapping[str, str | None],
 ) -> DragonRunRequestView:
     exe_, *args = exe.as_program_arguments()
     return DragonRunRequestView(

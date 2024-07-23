@@ -124,7 +124,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     def __init__(self):
         path = tempfile.TemporaryDirectory()
         self._finalizer = weakref.finalize(self, path.cleanup)
-        super().__init__("test-entity", path, _mock.Mock())
+        super().__init__("test-entity", _mock.Mock())
 
     def __eq__(self, other):
         if type(self) is not type(other):

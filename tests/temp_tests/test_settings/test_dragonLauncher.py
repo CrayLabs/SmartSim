@@ -44,7 +44,7 @@ def test_formatting_launch_args_into_request(
         args.set_nodes(nodes)
     if tasks_per_node is not NOT_SET:
         args.set_tasks_per_node(tasks_per_node)
-    req = _as_run_request_view(args, mock_echo_executable, {}, test_dir)
+    req = _as_run_request_view(args, mock_echo_executable, test_dir, {})
 
     args = {
         k: v

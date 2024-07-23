@@ -56,7 +56,7 @@ class Job(BaseJob):
         launch_settings: LaunchSettings,
         name: str = "job",
         *,
-        ensemble_name: str = None,
+        ensemble_name: t.Optional[str] = None,
     ):
         super().__init__()
         self._entity = deepcopy(entity)

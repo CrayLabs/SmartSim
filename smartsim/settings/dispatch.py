@@ -48,10 +48,10 @@ _LaunchableT = t.TypeVar("_LaunchableT")
 
 _EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
 _FormatterType: TypeAlias = t.Callable[
-    [_DispatchableT, "ExecutableProtocol", _EnvironMappingType], _LaunchableT
+    [_DispatchableT, "ExecutableProtocol", str,  _EnvironMappingType], _LaunchableT
 ]
 _LaunchConfigType: TypeAlias = (
-    "_LauncherAdapter[ExecutableProtocol, _EnvironMappingType]"
+    "_LauncherAdapter[ExecutableProtocol, _EnvironMappingType, str]"
 )
 _UnkownType: TypeAlias = t.NoReturn
 
@@ -185,8 +185,8 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
                 f"exactly `{self.launcher_type}`"
             )
 
-        def format_(exe: ExecutableProtocol, env: _EnvironMappingType) -> _LaunchableT:
-            return self.formatter(settings, exe, env)
+        def format_(exe: ExecutableProtocol, env: _EnvironMappingType, path: str) -> _LaunchableT:
+            return self.formatter(settings, exe, path, env)
 
         return _LauncherAdapter(launcher, format_)
 
@@ -251,10 +251,10 @@ class LauncherProtocol(t.Protocol[_T_contra]):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
+) -> _FormatterType[LaunchArguments, tuple[t.Sequence[str],str]]:
     def impl(
-        args: LaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
-    ) -> t.Sequence[str]:
+        args: LaunchArguments, exe: ExecutableProtocol, path: str, _env: _EnvironMappingType
+    ) -> t.Tuple[t.Sequence[str], str]:
         return (
             (
                 run_command,
@@ -264,7 +264,7 @@ def make_shell_format_fn(
             )
             if run_command is not None
             else exe.as_program_arguments()
-        )
+        ), path
 
     return impl
 
@@ -274,13 +274,13 @@ class ShellLauncher:
 
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
-
-    def start(self, command: t.Sequence[str], job_execution_path: str) -> LaunchedJobID:
+    def start(self, payload: tuple[t.Sequence[str], str]) -> LaunchedJobID:
+        command, path = payload
         id_ = create_job_id()
         exe, *rest = command
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen(
-            (helpers.expand_exe_path(exe), *rest), cwd=job_execution_path
+            (helpers.expand_exe_path(exe), *rest), cwd=path
         )
         return id_
 
