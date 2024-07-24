@@ -137,7 +137,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
 
 def test_start_raises_if_no_args_supplied(experiment):
     with pytest.raises(TypeError, match="missing 1 required positional argument"):
-        experiment.start_jobs()
+        experiment.start()
 
 
 # fmt: off
@@ -154,7 +154,7 @@ def test_start_raises_if_no_args_supplied(experiment):
 def test_start_can_launch_jobs(experiment, job_maker, dispatcher, make_jobs, num_jobs):
     jobs = make_jobs(job_maker, num_jobs)
     assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
-    launched_ids = experiment.start_jobs(*jobs, dispatcher=dispatcher)
+    launched_ids = experiment.start(*jobs, dispatcher=dispatcher)
     assert len(experiment._active_launchers) == 1, "Unexpected number of launchers"
     (launcher,) = experiment._active_launchers
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
@@ -178,7 +178,7 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
     job = job_maker()
     ids_to_launches = {
-        experiment.start_jobs(job, dispatcher=dispatcher)[0]: LaunchRecord.from_job(job)
+        experiment.start(job, dispatcher=dispatcher)[0]: LaunchRecord.from_job(job)
         for _ in range(num_starts)
     }
     assert len(experiment._active_launchers) == 1, "Did not reuse the launcher"
