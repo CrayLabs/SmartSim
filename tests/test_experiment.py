@@ -47,8 +47,13 @@ pytestmark = pytest.mark.group_a
 @pytest.fixture
 def experiment(test_dir, monkeypatch):
     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
-    # manually perfer to monkey path out where we want to generate to know and calc
-    # duplicate both tests
+    monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/{job._name}")
+    yield exp
+
+
+@pytest.fixture
+def experiment_patch_path(test_dir, monkeypatch):
+    exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
     monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/{job._name}")
     yield exp
 
