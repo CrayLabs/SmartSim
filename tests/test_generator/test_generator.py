@@ -13,7 +13,6 @@ from smartsim.settings.arguments.launch import SlurmLaunchArguments
 from smartsim.settings.dispatch import Dispatcher
 from smartsim.settings.launchSettings import LaunchSettings
 
-
 class NoOpLauncher:
     @classmethod
     def create(cls, _):
@@ -47,7 +46,7 @@ def gen_instance_for_job(test_dir, wlmutils) -> Generator:
 
 @pytest.fixture
 def job_group_instance(test_dir, wlmutils) -> Generator:
-    """Fixture to create an instance of Generator."""
+    """Fixture to create an instance of JobGroup."""
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     application_1 = Application("app_name_1", exe="python", run_settings="RunSettings")
     application_2 = Application("app_name_2", exe="python", run_settings="RunSettings")
@@ -56,8 +55,8 @@ def job_group_instance(test_dir, wlmutils) -> Generator:
 
 
 @pytest.fixture
-def job_instance(test_dir, wlmutils) -> Generator:
-    """Fixture to create an instance of Generator."""
+def job_instance(wlmutils) -> Generator:
+    """Fixture to create an instance of Job."""
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     job = Job(EchoApp(), launch_settings)
     return job
@@ -84,12 +83,14 @@ def test_log_file_path(gen_instance_for_job):
 
 
 def test_generate_job_directory(gen_instance_for_job):
+    """Test that Job directory was created."""
     gen_instance_for_job.generate_experiment()
     assert osp.isdir(gen_instance_for_job.path)
     assert osp.isdir(gen_instance_for_job.log_path)
 
 
 def test_full_exp_generate_job_directory(test_dir, job_instance):
+    """Test that Job directory was created from Experiment."""
     no_op_dispatch = Dispatcher()
     no_op_dispatch.dispatch(SlurmLaunchArguments, with_format=make_shell_format_fn("run_command"), to_launcher=NoOpLauncher)
     no_op_exp = Experiment(

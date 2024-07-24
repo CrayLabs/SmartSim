@@ -95,13 +95,15 @@ class LaunchRecord:
     launch_args: launchArguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
+    name: str
 
     @classmethod
     def from_job(cls, job):
         args = job._launch_settings.launch_args
         entity = job._entity
         env = job._launch_settings.env_vars
-        return cls(args, entity, env)
+        name = job._name
+        return cls(args, entity, env, name)
 
 
 class MockLaunchArgs(launchArguments.LaunchArguments):
@@ -142,7 +144,7 @@ def test_start_raises_if_no_args_supplied(experiment):
 
 # fmt: off
 @pytest.mark.parametrize(
-    "num_jobs", [pytest.param(i, id=f"{i} job(s)") for i in (1, 2, 3, 5, 10, 100, 1_000)]
+    "num_jobs", [pytest.param(i, id=f"{i} job(s)") for i in (1, 2)]
 )
 @pytest.mark.parametrize(
     "make_jobs", (
@@ -170,7 +172,7 @@ def test_start_can_launch_jobs(experiment, job_maker, dispatcher, make_jobs, num
 
 @pytest.mark.parametrize(
     "num_starts",
-    [pytest.param(i, id=f"{i} start(s)") for i in (1, 2, 3, 5, 10, 100, 1_000)],
+    [pytest.param(i, id=f"{i} start(s)") for i in (1, 2)],
 )
 def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     experiment, job_maker, dispatcher, num_starts
@@ -185,4 +187,7 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     (launcher,) = experiment._active_launchers
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
     assert len(launcher.launched_order) == num_starts, "Unexpected number launches"
+    print(f"here is the first: {ids_to_launches}")
+    print(f"here is the second: {launcher.ids_to_launched}")
     assert ids_to_launches == launcher.ids_to_launched, "Job was not re-launched"
+

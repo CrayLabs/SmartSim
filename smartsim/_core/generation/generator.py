@@ -49,8 +49,8 @@ logger.propagate = False
 
 class Generator:
     """The primary job of the generator is to create the file structure
-    for a SmartSim experiment. The Generator is also responsible for reading
-    and writing into configuration files.
+    for a SmartSim Experiment. The Generator is also responsible for
+    writing files into a Job directory.
     """
 
     def __init__(self, gen_path: str, run_ID: str, job: Job) -> None:
@@ -62,31 +62,35 @@ class Generator:
         configuration, and file copying within the job directory.
 
         :param gen_path: Path in which files need to be generated
-        :param job: Reference to a SmartSimEntity and LaunchSettings
+        :param job: Reference to a name, SmartSimEntity and LaunchSettings
         """
         self.job = job
+        # Generate the job folder path
         self.path = self._generate_job_path(job, gen_path, run_ID)
+        # Generate the log folder path
         self.log_path = self._generate_log_path(gen_path)
 
     def _generate_log_path(self, gen_path: str) -> str:
         """
-        Generates the path for logs.
+        Generate the path for the log folder.
 
-        :param gen_path: The base path for job generation
-        :returns str: The generated path for the log directory.
+        :param gen_path: The base path job generation
+        :returns str: The generated path for the log directory
         """
         log_path = os.path.join(gen_path, "log")
         return log_path
 
     def _generate_job_path(self, job: Job, gen_path: str, run_ID: str) -> str:
         """
-        Generates the path for a job based on its type and ensemble name (if applicable).
+        Generates the directory path for a job based on its creation type
+        (whether created via ensemble or job init).
 
         :param job: The Job object
         :param gen_path: The base path for job generation
-        :param run_ID: The unique run ID
+        :param run_ID: The experiments unique run ID
         :returns str: The generated path for the job.
         """
+        # Attr set in Job to check if Job was created by an Ensemble
         if job._ensemble_name is None:
             job_type = f"{job.__class__.__name__.lower()}s"
             entity_type = (
@@ -100,6 +104,7 @@ class Generator:
                 entity_type,
                 "run",
             )
+        # Job was created via Ensemble
         else:
             job_type = "ensembles"
             entity_type = (
@@ -148,11 +153,11 @@ class Generator:
         return join(self.path, "smartsim_params.txt")
 
     def generate_experiment(self) -> str:
-        """Run ensemble and experiment file structure generation
+        """Generate the directories
 
         Generate the file structure for a SmartSim experiment. This
         includes the writing and configuring of input files for a
-        application.
+        job.
 
         To have files or directories present in the created entity
         directories, such as datasets or input files, call
