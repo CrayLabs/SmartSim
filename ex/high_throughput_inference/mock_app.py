@@ -154,6 +154,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Mock application")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
     resnet = ResNetWrapper("resnet50", f"resnet50.{args.device.upper()}.pt")
@@ -165,7 +166,7 @@ if __name__ == "__main__":
 
     TOTAL_ITERATIONS = 100
 
-    for log2_bsize in range(8):
+    for log2_bsize in range(args.log_max_batchsize):
         b_size: int = 2**log2_bsize
         logger.info(f"Batch size: {b_size}")
         for iteration_number in range(TOTAL_ITERATIONS + int(b_size==1)):

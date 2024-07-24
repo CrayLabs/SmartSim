@@ -9,11 +9,12 @@ from smartsim.settings import DragonRunSettings
 import time
 import typing as t
 
-device = "gpu"
+DEVICE = "gpu"
+NUM_RANKS = 4
 filedir = os.path.dirname(__file__)
 worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
 app_script_name = os.path.join(filedir, "mock_app.py")
-model_name = os.path.join(filedir, f"resnet50.{device.upper()}.pt")
+model_name = os.path.join(filedir, f"resnet50.{DEVICE.upper()}.pt")
 
 transport: t.Literal["hsta", "tcp"] = "hsta"
 
@@ -30,9 +31,13 @@ worker_manager_rs: DragonRunSettings = exp.create_run_settings(
     [
         worker_manager_script_name,
         "--device",
-        device,
+        DEVICE,
         "--worker_class",
         torch_worker_str,
+        "--batch_size",
+        str(NUM_RANKS),
+        "--batch_timeout",
+        str(0.001),
     ],
 )
 aff = []
@@ -46,9 +51,9 @@ worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
 app_rs: DragonRunSettings = exp.create_run_settings(
     sys.executable,
-    exe_args=[app_script_name, "--device", device],
+    exe_args=[app_script_name, "--device", DEVICE, "--log_max_batchsize", str(7)],
 )
-app_rs.set_tasks_per_node(1)
+app_rs.set_tasks_per_node(NUM_RANKS)
 
 
 app = exp.create_model("app", run_settings=app_rs)

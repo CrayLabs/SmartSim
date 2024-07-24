@@ -121,7 +121,11 @@ class PerfTimer:
 
     def print_timings(self, to_file: bool = False) -> None:
         print(" ".join(self._timings.keys()))
-        value_array = np.array(list(self._timings.values()), dtype=float)
+        try:
+            value_array = np.array(list(self._timings.values()), dtype=float)
+        except Exception as e:
+            logger.exception(e)
+            return
         value_array = np.transpose(value_array)
         if self._debug:
             for i in range(value_array.shape[0]):

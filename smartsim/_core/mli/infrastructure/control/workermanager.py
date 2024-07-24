@@ -161,7 +161,7 @@ class WorkerManager(Service):
         """Device on which workers need to run"""
 
         self._device_manager: t.Optional[DeviceManager] = None
-        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=False)
 
     def _on_start(self) -> None:
         self._device_manager = DeviceManager(

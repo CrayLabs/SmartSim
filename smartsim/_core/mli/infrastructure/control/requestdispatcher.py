@@ -253,6 +253,7 @@ class BatchQueue(Queue[InferenceRequest]):
             return False
         return self.full() or (self._waited_time >= self._batch_timeout)
 
+
     def make_disposable(self) -> None:
         self._disposable = True
 
@@ -310,7 +311,7 @@ class RequestDispatcher(Service):
         )
         """a feature store to retrieve models from"""
         self._comm_channel_type = comm_channel_type
-        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=False)
         self._worker = worker_type()
         self._mem_pool = mem_pool
 
