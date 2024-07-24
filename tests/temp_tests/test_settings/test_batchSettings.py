@@ -28,6 +28,8 @@ import pytest
 from smartsim.settings import BatchSettings
 from smartsim.settings.batchCommand import SchedulerType
 
+pytestmark = pytest.mark.group_a
+
 
 @pytest.mark.parametrize(
     "scheduler_enum",
