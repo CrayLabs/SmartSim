@@ -24,11 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=import-error
+from dragon.managed_memory import MemoryPool
+
+# isort: off
+# isort: on
+
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from dragon.managed_memory import MemoryAlloc, MemoryPool
 
 from .....error import SmartSimError
 from .....log import get_logger

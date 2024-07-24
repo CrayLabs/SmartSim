@@ -28,6 +28,8 @@ import io
 
 import numpy as np
 import torch
+
+# pylint: disable=import-error
 from dragon.managed_memory import MemoryAlloc, MemoryPool
 
 from .....error import SmartSimError

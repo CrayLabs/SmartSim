@@ -27,7 +27,7 @@
 # pylint: disable=import-error
 # pylint: disable-next=unused-import
 import dragon
-from dragon.managed_memory import MemoryAlloc, MemoryPool
+from dragon.managed_memory import MemoryPool
 from dragon.mpbridge.queues import DragonQueue
 
 # pylint: enable=import-error
@@ -45,14 +45,19 @@ from types import TracebackType
 
 from packaging.version import Version
 
+from smartsim._core.entrypoints.service import Service
 from .....error import SmartSimError
 from .....log import get_logger
 from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
+from ...infrastructure.environmentloader import EnvironmentConfigLoader
 from ...infrastructure.storage.featurestore import FeatureStore
-from ...infrastructure.worker.torch_worker import TorchWorker
-from ...infrastructure.worker.worker import InferenceBatch, InferenceRequest
+from ...infrastructure.worker.worker import (
+    InferenceBatch,
+    InferenceRequest,
+    MachineLearningWorkerBase,
+)
 from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
 from ...mli_schemas.response.response_capnp import ResponseBuilder
@@ -279,17 +284,17 @@ class BatchQueue(Queue[InferenceRequest]):
         return self.qsize() == 0
 
 
-class RequestDispatcher:
+class RequestDispatcher(Service):
     def __init__(
         self,
         batch_timeout: float,
         batch_size: int,
         mem_pool: MemoryPool,
-        incoming_channel: t.Optional[CommChannelBase],
+        config_loader: EnvironmentConfigLoader,
+        worker_type: t.Type[MachineLearningWorkerBase],
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
-        feature_store: t.Optional[FeatureStore] = None,
     ) -> None:
-        mp.set_start_method("dragon")
+        super().__init__(as_service=True, cooldown=1)
         self._queues: list[BatchQueue] = []
         self._active_queues: dict[str, BatchQueue] = {}
         self._model_last_version: dict[str, Version] = {}
@@ -297,12 +302,16 @@ class RequestDispatcher:
         self._batch_timeout = batch_timeout
         self._batch_size = batch_size
         self._queue_swap_lock: t.Optional[RLock] = None
-        self._incoming_channel = incoming_channel
+        self._incoming_channel = config_loader.get_queue()
+        """the queue the manager monitors for new tasks"""
         self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
-        self._feature_store = feature_store
+        self._feature_store: t.Optional[FeatureStore] = (
+            config_loader.get_feature_store()
+        )
+        """a feature store to retrieve models from"""
         self._comm_channel_type = comm_channel_type
         self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
-        self._worker = TorchWorker()
+        self._worker = worker_type()
         self._mem_pool = mem_pool
 
     def _validate_request(self, request: InferenceRequest) -> bool:
@@ -336,48 +345,49 @@ class RequestDispatcher:
 
         return True
 
-    def run(self) -> None:
+    def _on_start(self) -> None:
         self._queue_swap_lock = RLock()
         if self._incoming_channel is None:
             raise SmartSimError("No incoming channel for dispatcher")
-        while True:
-            try:
-                bytes_list: t.List[bytes] = self._incoming_channel.recv()
-            except Exception:
-                pass
-            else:
-                if not bytes_list:
-                    exception_handler(
-                        ValueError("No request data found"),
-                        None,
-                        "No request data found.",
-                    )
 
-                request_bytes = bytes_list[0]
-                tensor_bytes_list = bytes_list[1:]
-                self._perf_timer.start_timings()
+    def _on_iteration(self) -> None:
+        try:
+            bytes_list: t.List[bytes] = self._incoming_channel.recv()
+        except Exception:
+            pass
+        else:
+            if not bytes_list:
+                exception_handler(
+                    ValueError("No request data found"),
+                    None,
+                    "No request data found.",
+                )
 
-                request = deserialize_message(request_bytes, self._comm_channel_type)
-                if request.input_meta and tensor_bytes_list:
-                    request.raw_inputs = tensor_bytes_list
+            request_bytes = bytes_list[0]
+            tensor_bytes_list = bytes_list[1:]
+            self._perf_timer.start_timings()
 
-                self._perf_timer.measure_time("deserialize_message")
-                if not self._validate_request(request):
-                    continue
+            request = deserialize_message(request_bytes, self._comm_channel_type)
+            if request.input_meta and tensor_bytes_list:
+                request.raw_inputs = tensor_bytes_list
 
-                self._perf_timer.measure_time("validate_request")
-                self.dispatch(request)
+            self._perf_timer.measure_time("deserialize_message")
+            if not self._validate_request(request):
+                return
 
-                self._perf_timer.measure_time("dispatch")
-            finally:
-                self.flush_requests()
-                # TODO: implement this
-                # self.remove_queues()
+            self._perf_timer.measure_time("validate_request")
+            self.dispatch(request)
 
-                self._perf_timer.end_timings()
+            self._perf_timer.measure_time("dispatch")
+        finally:
+            self.flush_requests()
+            # TODO: implement this
+            # self.remove_queues()
 
-            if self._perf_timer.max_length == 801:
-                self._perf_timer.print_timings(True)
+            self._perf_timer.end_timings()
+
+        if self._perf_timer.max_length == 801:
+            self._perf_timer.print_timings(True)
 
     @property
     def task_queue(self) -> DragonQueue:
@@ -454,3 +464,6 @@ class RequestDispatcher:
 
                 self._outgoing_queue.put(batch)
                 self._perf_timer.measure_time("put")
+
+    def _can_shutdown(self) -> bool:
+        return False

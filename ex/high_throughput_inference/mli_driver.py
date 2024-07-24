@@ -38,7 +38,8 @@ worker_manager_rs: DragonRunSettings = exp.create_run_settings(
 aff = []
 for i in range(32):
     aff.append(i)
-    # aff.append(i+64)
+    aff.append(i+64)
+
 worker_manager_rs.set_cpu_affinity(aff)
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])

@@ -27,11 +27,6 @@
 # pylint: disable=import-error
 # pylint: disable-next=unused-import
 import dragon
-import dragon.infrastructure.policy as dragon_policy
-import dragon.infrastructure.process_desc as dragon_process_desc
-import dragon.native.process as dragon_process
-import dragon.native.process_group as dragon_process_group
-from dragon.managed_memory import MemoryAlloc, MemoryPool
 
 # pylint: enable=import-error
 
@@ -39,9 +34,6 @@ from dragon.managed_memory import MemoryAlloc, MemoryPool
 # isort: on
 
 import multiprocessing as mp
-import os
-import socket
-import sys
 import time
 import typing as t
 
@@ -61,7 +53,6 @@ from ...infrastructure.worker.worker import (
 from ...message_handler import MessageHandler
 from ...mli_schemas.response.response_capnp import ResponseBuilder
 from .devicemanager import DeviceManager, WorkerDevice
-from .requestdispatcher import RequestDispatcher
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.model.model_capnp import Model
@@ -109,7 +100,6 @@ def build_reply(reply: InferenceReply) -> ResponseBuilder:
         custom_attributes=None,
     )
 
-
 def exception_handler(
     exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
 ) -> None:
@@ -139,13 +129,12 @@ class WorkerManager(Service):
     def __init__(
         self,
         config_loader: EnvironmentConfigLoader,
-        worker: MachineLearningWorkerBase,
+        worker_type: t.Type[MachineLearningWorkerBase],
+        task_queue: "mp.Queue[InferenceBatch]",
         as_service: bool = False,
         cooldown: int = 0,
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
         device: t.Literal["cpu", "gpu"] = "cpu",
-        batch_timeout: float = 0.0,
-        batch_size: int = 1,
     ) -> None:
         """Initialize the WorkerManager
         :param config_loader: Environment config loader that loads the task queue and
@@ -158,84 +147,26 @@ class WorkerManager(Service):
         """
         super().__init__(as_service, cooldown)
 
-        self._task_queue: t.Optional[CommChannelBase] = config_loader.get_queue()
+        self._task_queue = task_queue
         """the queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()
         )
         """a feature store to retrieve models from"""
-        self._worker = worker
+        self._worker = worker_type()
         """The ML Worker implementation"""
         self._comm_channel_type = comm_channel_type
         """The type of communication channel to construct for callbacks"""
         self._device = device
         """Device on which workers need to run"""
-        self._cached_models: dict[str, t.Any] = {}
-        """Dictionary of previously loaded models"""
-        self._mem_pool = MemoryPool(size=1024**3, fname="wm_mempool", uid=123458)
-        self._request_dispatcher: RequestDispatcher = RequestDispatcher(
-            batch_timeout=batch_timeout,
-            batch_size=batch_size,
-            incoming_channel=self._task_queue,
-            comm_channel_type=comm_channel_type,
-            feature_store=self._feature_store,
-            mem_pool=self._mem_pool,
-        )
-        """Dispatcher used to batch requests"""
-        self._device_manager: DeviceManager = DeviceManager(
-            [WorkerDevice(f"gpu:{idx}") for idx in [3]]
-        )
-        self._device_idx: int = 0
+
+        self._device_manager: t.Optional[DeviceManager] = None
         self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
 
-        try:
-            mp.set_start_method("dragon")
-        except RuntimeError:
-            pass
-
-        self._dispatcher_process = self._create_local_dispatcher_process()
-
-    def _create_local_dispatcher_process(self) -> dragon_process_group.ProcessGroup:
-        wm_cpus = 0
-        if sys.platform != "darwin":
-            self_affinity: list[int] = list(os.sched_getaffinity(os.getpid()))
-            wm_cpus = len(self_affinity) // 2
-            os.sched_setaffinity(os.getpid(), self_affinity[:wm_cpus])
-        else:
-            self_affinity: list[int] = []
-        disp_affinity = self_affinity[wm_cpus:]
-        global_policy = dragon_policy.Policy(
-            placement=dragon_policy.Policy.Placement.HOST_NAME,
-            host_name=socket.gethostname(),
-            affinity=dragon_policy.Policy.Affinity.SPECIFIC,
-            cpu_affinity=disp_affinity,
-        )
-        options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
-        grp = dragon_process_group.ProcessGroup(
-            restart=False, pmi_enabled=True, policy=global_policy
-        )
-        local_policy = dragon_policy.Policy(
-            placement=dragon_policy.Policy.Placement.HOST_NAME,
-            host_name=socket.gethostname(),
-            affinity=dragon_policy.Policy.Affinity.SPECIFIC,
-            cpu_affinity=disp_affinity,
-        )
-        tmp_proc = dragon_process.ProcessTemplate(
-            target=self._request_dispatcher.run,
-            args=[],
-            cwd=os.getcwd(),
-            policy=local_policy,
-            options=options,
-        )
-        grp.add_process(nproc=1, template=tmp_proc)
-        grp.init()
-        return grp
-
     def _on_start(self) -> None:
-        self._dispatcher_process.start()
-
-    def _on_shutdown(self) -> None:
-        self._dispatcher_process.join()
+        self._device_manager = DeviceManager(
+            [WorkerDevice(f"gpu:{idx}") for idx in [3]]
+        )
 
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
@@ -243,9 +174,7 @@ class WorkerManager(Service):
 
         pre_batch_time = time.perf_counter()
         try:
-            batch: InferenceBatch = self._request_dispatcher.task_queue.get(
-                timeout=0.001
-            )
+            batch: InferenceBatch = self._task_queue.get(timeout=0.0001)
         except Exception:
             return
 
@@ -256,6 +185,8 @@ class WorkerManager(Service):
         if batch is None or 0 == len(batch.requests):
             return
 
+        if self._device_manager is None:
+            raise ValueError("No Device Manager available: did you call _on_start()")
         device: WorkerDevice = next(
             self._device_manager.get_free_device(
                 worker=self._worker,
