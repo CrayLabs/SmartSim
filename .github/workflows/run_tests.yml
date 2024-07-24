@@ -67,6 +67,11 @@ jobs:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
 
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py_v }}
+
       - name: Check Test Files are Marked
         run: |
           diff <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
@@ -74,11 +79,6 @@ jobs:
                  | sort) \
                <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
                  | sort)
-
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.py_v }}
 
       - name: Install build-essentials for Ubuntu
         if: contains( matrix.os, 'ubuntu' )
