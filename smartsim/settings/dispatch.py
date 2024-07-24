@@ -142,7 +142,7 @@ class Dispatcher:
         dispatch_ = self._dispatch_registry.get(args, None)
         if dispatch_ is None:
             raise TypeError(
-                f"No dispatch for `{type(args).__name__}` has been registered "
+                f"No dispatch for `{args.__name__}` has been registered "
                 f"has been registered with {type(self).__name__} `{self}`"
             )
         # Note the sleight-of-hand here: we are secretly casting a type of
@@ -160,11 +160,16 @@ class Dispatcher:
 @t.final
 @dataclasses.dataclass(frozen=True)
 class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
+    """An entry into the `Dispatcher`'s dispatch registry. This class is simply
+    a wrapper around a launcher and how to format a `_DispatchableT` instance
+    to be launched by the afore mentioned launcher.
+    """
+
     formatter: _FormatterType[_DispatchableT, _LaunchableT]
     launcher_type: type[LauncherProtocol[_LaunchableT]]
 
     def _is_compatible_launcher(self, launcher: LauncherProtocol[t.Any]) -> bool:
-        # Disabling because we want to match the the type of the dispatch
+        # Disabling because we want to match the type of the dispatch
         # *exactly* as specified by the user
         # pylint: disable-next=unidiomatic-typecheck
         return type(launcher) is self.launcher_type
@@ -172,12 +177,28 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
     def create_new_launcher_configuration(
         self, for_experiment: Experiment, with_settings: _DispatchableT
     ) -> _LaunchConfigType:
+        """Create a new instance of a launcher for an experiment that the
+        provided settings where set to dispatch to, and configure it with the
+        provided launch settings.
+
+        :param for_experiment: The experiment responsible creating the launcher
+        :param with_settings: The settings with which to configure the newly
+            created launcher
+        :returns: A configured launcher
+        """
         launcher = self.launcher_type.create(for_experiment)
         return self.create_adapter_from_launcher(launcher, with_settings)
 
     def create_adapter_from_launcher(
         self, launcher: LauncherProtocol[_LaunchableT], settings: _DispatchableT
     ) -> _LaunchConfigType:
+        """Creates configured launcher from an existing launcher using the provided settings
+
+        :param launcher: A launcher that the type of `settings` has been
+            configured to dispatch to.
+        :param settings: A settings with which to configure the launcher.
+        :returns: A configured launcher.
+        """
         if not self._is_compatible_launcher(launcher):
             raise TypeError(
                 f"Cannot create launcher adapter from launcher `{launcher}` "
@@ -195,6 +216,16 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
         with_settings: _DispatchableT,
         from_available_launchers: t.Iterable[LauncherProtocol[t.Any]],
     ) -> _LaunchConfigType:
+        """Configure the first compatible adapter launch to launch with the
+        provided settings. Launchers are iterated and discarded from the
+        iterator until the iterator is exhausted.
+
+        :param with_settings: The settings with which to configure the launcher
+        :param from_available_launchers: An iterable that yields launcher instances
+        :raises errors.LauncherNotFoundError: No compatible launcher was
+            yielded from the provided iterator.
+        :returns: A launcher configured with the provided settings.
+        """
         launcher = helpers.first(self._is_compatible_launcher, from_available_launchers)
         if launcher is None:
             raise errors.LauncherNotFoundError(

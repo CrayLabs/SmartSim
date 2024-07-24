@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import copy
+import textwrap
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -38,16 +39,15 @@ logger = get_logger(__name__)
 
 
 class LaunchArguments(ABC):
-    """Abstract base class that defines all generic launcher
-    argument methods that are not supported.  It is the
-    responsibility of child classes for each launcher to translate
-    the input parameter to a properly formatted launcher argument.
+    """Abstract base class for launcher arguments. It is the responsibility of
+    child classes for each launcher to add methods to set input parameters and
+    to maintain valid state between parameters set by a user.
     """
 
     def __init__(self, launch_args: t.Dict[str, str | None] | None) -> None:
         """Initialize a new `LaunchArguments` instance.
 
-        :param launch_args: A mapping of arguments to values to pre-initialize
+        :param launch_args: A mapping of arguments to (optional) values
         """
         self._launch_args = copy.deepcopy(launch_args) or {}
 
@@ -95,5 +95,10 @@ class LaunchArguments(ABC):
         return None
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nLaunch Arguments:\n{fmt_dict(self._launch_args)}"
-        return string
+        return textwrap.dedent(f"""\
+            Launch Arguments:
+                Launcher: {self.launcher_str()}
+                Name: {type(self).__name__}
+                Arguments:
+                {fmt_dict(self._launch_args)}
+            """)

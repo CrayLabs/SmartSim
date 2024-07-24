@@ -199,11 +199,15 @@ class Experiment:
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             dispatch = dispatcher.get_dispatch(args)
             try:
+                # Check to see if one of the existing launchers can be
+                # configured to handle the launch arguments ...
                 launch_config = dispatch.configure_first_compatible_launcher(
                     from_available_launchers=self._active_launchers,
                     with_settings=args,
                 )
             except errors.LauncherNotFoundError:
+                # ... otherwise create a new launcher that _can_ handle the
+                # launch arguments and configure _that_ one
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_settings=args
                 )
