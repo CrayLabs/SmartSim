@@ -43,17 +43,36 @@ if t.TYPE_CHECKING:
 
 _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
+
 _DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArguments")
+"""Any type of luanch arguments, typically used when the type bound by the type
+argument is a key a `Dispatcher` dispatch registry
+"""
 _LaunchableT = t.TypeVar("_LaunchableT")
+"""Any type, typically used to bind to a type accepted as the input parameter
+to the to the `LauncherProtocol.start` method
+"""
 
 _EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
+"""A mapping of user provided mapping of environment variables in which to run
+a job
+"""
 _FormatterType: TypeAlias = t.Callable[
     [_DispatchableT, "ExecutableProtocol", _EnvironMappingType], _LaunchableT
 ]
+"""A callable that is capable of formatting the components of a job into a type
+capable of being launched by a launcher.
+"""
 _LaunchConfigType: TypeAlias = (
     "_LauncherAdapter[ExecutableProtocol, _EnvironMappingType]"
 )
+"""A launcher adapater that has configured a launcher to launch the components
+of a job with some pre-determined launch settings
+"""
 _UnkownType: TypeAlias = t.NoReturn
+"""A type alias for a bottom type. Use this to inform a user that the parameter
+a parameter should never be set or a callable will never return
+"""
 
 
 @t.final
@@ -69,6 +88,14 @@ class Dispatcher:
             t.Mapping[type[LaunchArguments], _DispatchRegistration[t.Any, t.Any]] | None
         ) = None,
     ) -> None:
+        """Initialize a new `Dispatcher`
+
+        :param dispatch_registry: A pre-configured dispatch registry that the
+            dispatcher should use. This registry is not type checked and is
+            used blindly. This registry is shallow copied, meaning that adding
+            into the original registry after construction will not mutate the
+            state of the registry.
+        """
         self._dispatch_registry = (
             dict(dispatch_registry) if dispatch_registry is not None else {}
         )
@@ -237,11 +264,22 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
 
 @t.final
 class _LauncherAdapter(t.Generic[Unpack[_Ts]]):
+    """An adapter class that will wrap a launcher and allow for a unique
+    signature of for its `start` method
+    """
+
     def __init__(
         self,
         launcher: LauncherProtocol[_LaunchableT],
         map_: t.Callable[[Unpack[_Ts]], _LaunchableT],
     ) -> None:
+        """Initialize a launcher adapter
+
+        :param launcher: The launcher instance this class should wrap
+        :param map_: A callable with arguments for the new `start` method that
+            can translate them into the expected launching type for the wrapped
+            launcher.
+        """
         # NOTE: We need to cast off the `_LaunchableT` -> `Any` in the
         #       `__init__` method signature to hide the transform from users of
         #       this class. If possible, this type should not be exposed to
@@ -250,6 +288,12 @@ class _LauncherAdapter(t.Generic[Unpack[_Ts]]):
         self._adapted_launcher: LauncherProtocol[t.Any] = launcher
 
     def start(self, *args: Unpack[_Ts]) -> LaunchedJobID:
+        """Start a new job through the wrapped launcher using the custom
+        `start` signature
+
+        :param args: The custom start arguments
+        :returns: The launched job id provided by the wrapped launcher
+        """
         payload = self._adapt(*args)
         return self._adapted_launcher.start(payload)
 

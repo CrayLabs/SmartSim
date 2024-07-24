@@ -41,7 +41,10 @@ logger = get_logger(__name__)
 
 class QsubBatchArguments(BatchArguments):
     def scheduler_str(self) -> str:
-        """Get the string representation of the scheduler"""
+        """Get the string representation of the scheduler
+
+        :returns: The string representation of the scheduler
+        """
         return SchedulerType.Pbs.value
 
     def set_nodes(self, num_nodes: int) -> None:
@@ -113,7 +116,7 @@ class QsubBatchArguments(BatchArguments):
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
-        :return: batch arguments for Qsub
+        :return: batch arguments for `qsub`
         :raises ValueError: if options are supplied without values
         """
         opts, batch_arg_copy = self._create_resource_list(self._scheduler_args)
@@ -170,5 +173,10 @@ class QsubBatchArguments(BatchArguments):
         return res, batch_arg_copy
 
     def set(self, key: str, value: str | None) -> None:
-        # Store custom arguments in the launcher_args
+        """Set an arbitrary launch argument
+
+        :param key: The launch argument
+        :param value: A string representation of the value for the launch
+            argument (if applicable), otherwise `None`
+        """
         self._scheduler_args[key] = value

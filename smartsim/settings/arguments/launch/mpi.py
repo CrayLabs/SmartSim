@@ -43,7 +43,10 @@ _as_orterun_command = make_shell_format_fn("orterun")
 
 class _BaseMPILaunchArguments(LaunchArguments):
     def _reserved_launch_args(self) -> set[str]:
-        """Return reserved launch arguments."""
+        """Return reserved launch arguments.
+
+        :returns: The set of reserved launcher arguments
+        """
         return {"wd", "wdir"}
 
     def set_task_map(self, task_mapping: str) -> None:
@@ -203,7 +206,12 @@ class _BaseMPILaunchArguments(LaunchArguments):
         return args
 
     def set(self, key: str, value: str | None) -> None:
-        """Set the launch arguments"""
+        """Set an arbitrary launch argument
+
+        :param key: The launch argument
+        :param value: A string representation of the value for the launch
+            argument (if applicable), otherwise `None`
+        """
         set_check_input(key, value)
         if key in self._reserved_launch_args():
             logger.warning(
@@ -221,19 +229,28 @@ class _BaseMPILaunchArguments(LaunchArguments):
 @dispatch(with_format=_as_mpirun_command, to_launcher=ShellLauncher)
 class MpirunLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Mpirun.value
 
 
 @dispatch(with_format=_as_mpiexec_command, to_launcher=ShellLauncher)
 class MpiexecLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Mpiexec.value
 
 
 @dispatch(with_format=_as_orterun_command, to_launcher=ShellLauncher)
 class OrterunLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Orterun.value

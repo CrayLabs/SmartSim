@@ -65,7 +65,14 @@ class LaunchArguments(ABC):
         """
 
     def format_launch_args(self) -> t.Union[t.List[str], None]:
-        """Build formatted launch arguments"""
+        """Build formatted launch arguments
+
+        .. warning::
+            This method will be removed from this class in a future ticket
+
+        :returns: The launch arguments formatted as a list or `None` if the
+            arguments cannot be formatted.
+        """
         logger.warning(
             f"format_launcher_args() not supported for {self.launcher_str()}."
         )
@@ -78,6 +85,15 @@ class LaunchArguments(ABC):
         Slurm takes exports in comma separated lists
         the list starts with all as to not disturb the rest of the environment
         for more information on this, see the slurm documentation for srun
+
+        .. warning::
+            The return value described in this docstring does not match the
+            type hint, but I have no idea how this is supposed to be used or
+            how to resolve the descrepency. I'm not going to try and fix it and
+            the point is moot as this method is almost certainly going to be
+            removed in a later ticket.
+
+        :param env_vars: An environment mapping
         :returns: the formatted string of environment variables
         """
         logger.warning(
@@ -89,6 +105,11 @@ class LaunchArguments(ABC):
         self, env_vars: t.Dict[str, t.Optional[str]]
     ) -> t.Union[t.List[str], None]:
         """Build bash compatible environment variable string for Slurm
+
+        .. warning::
+            This method will be removed from this class in a future ticket
+
+        :param env_vars: An environment mapping
         :returns: the formatted string of environment variables
         """
         logger.warning(f"format_env_vars() not supported for {self.launcher_str()}.")
