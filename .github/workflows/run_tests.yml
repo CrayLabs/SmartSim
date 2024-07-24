@@ -67,6 +67,14 @@ jobs:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
 
     steps:
+      - name: Check Test Files are Marked
+        run: |
+          diff <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | xargs grep -l 'pytestmark' \
+                 | sort) \
+               <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | sort)
+
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
