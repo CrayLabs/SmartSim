@@ -187,7 +187,6 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
 
         def format_(exe: ExecutableProtocol, env: _EnvironMappingType, path: str) -> _LaunchableT:
             return self.formatter(settings, exe, path, env)
-
         return _LauncherAdapter(launcher, format_)
 
     def configure_first_compatible_launcher(

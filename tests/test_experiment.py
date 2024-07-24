@@ -45,14 +45,18 @@ pytestmark = pytest.mark.group_a
 
 
 @pytest.fixture
-def experiment(test_dir):
-    yield Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
+def experiment(test_dir, monkeypatch):
+    exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
+    # manually perfer to monkey path out where we want to generate to know and calc
+    # duplicate both tests
+    monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/{job._name}")
+    yield exp
 
 
 @pytest.fixture
 def dispatcher():
     d = dispatch.Dispatcher()
-    to_record = lambda *a: LaunchRecord(*a)
+    to_record = lambda settings, exe, path, env: LaunchRecord(settings, exe, env, path)
     d.dispatch(MockLaunchArgs, with_format=to_record, to_launcher=NoOpRecordLauncher)
     yield d
 
@@ -84,6 +88,8 @@ class NoOpRecordLauncher(dispatch.LauncherProtocol):
         return cls(exp)
 
     def start(self, record: LaunchRecord):
+        assert isinstance(record.path, str)
+        assert isinstance(record.env, dict)
         id_ = dispatch.create_job_id()
         self.launched_order.append(record)
         self.ids_to_launched[id_] = record
@@ -95,15 +101,15 @@ class LaunchRecord:
     launch_args: launchArguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
-    name: str
+    path: str
 
     @classmethod
     def from_job(cls, job):
         args = job._launch_settings.launch_args
         entity = job._entity
         env = job._launch_settings.env_vars
-        name = job._name
-        return cls(args, entity, env, name)
+        path = f"/tmp/{job._name}"
+        return cls(args, entity, env, path)
 
 
 class MockLaunchArgs(launchArguments.LaunchArguments):
@@ -187,7 +193,4 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     (launcher,) = experiment._active_launchers
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
     assert len(launcher.launched_order) == num_starts, "Unexpected number launches"
-    print(f"here is the first: {ids_to_launches}")
-    print(f"here is the second: {launcher.ids_to_launched}")
     assert ids_to_launches == launcher.ids_to_launched, "Job was not re-launched"
-
