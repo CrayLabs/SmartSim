@@ -75,13 +75,6 @@ class LaunchSettings(BaseSettings):
         """Return the launch argument translator."""
         return self._arguments
 
-    @launch_args.setter
-    def launch_args(self, args: t.Mapping[str, str]) -> None:
-        """Update the launch arguments."""
-        self.launch_args._launch_args.clear()
-        for k, v in args.items():
-            self.launch_args.set(k, v)
-
     @property
     def env_vars(self) -> dict[str, str | None]:
         """Return an immutable list of attached environment variables."""
