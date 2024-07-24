@@ -24,9 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
+
 from smartsim._core.commands.command import Command
 from smartsim._core.commands.commandList import CommandList
 from smartsim.settings.launchCommand import LauncherType
+
+pytestmark = pytest.mark.group_a
 
 salloc_cmd = Command(launcher=LauncherType.Slurm, command=["salloc", "-N", "1"])
 srun_cmd = Command(launcher=LauncherType.Slurm, command=["srun", "-n", "1"])
