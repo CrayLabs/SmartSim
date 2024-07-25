@@ -242,7 +242,7 @@ class Versioner:
     ``smart build`` command to determine which dependency versions
     to look for and download.
 
-    Default versions for SmartSim, SmartRedis, Redis, and RedisAI are
+    Default versions for SmartSim, Redis, and RedisAI are
     all set here. Setting a default version for RedisAI also dictates
     default versions of the machine learning libraries.
     """
@@ -252,7 +252,6 @@ class Versioner:
 
     # Versions
     SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.7.0"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.3"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
@@ -284,7 +283,6 @@ class Versioner:
     def as_dict(self, fs_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
         pkg_map = {
             "SMARTSIM": self.SMARTSIM,
-            "SMARTREDIS": self.SMARTREDIS,
             fs_name: self.REDIS,
             "REDISAI": self.REDISAI,
             "TORCH": self.TORCH,

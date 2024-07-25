@@ -29,6 +29,7 @@ from __future__ import annotations
 import os
 import typing as t
 
+from smartsim._core.schemas.dragonRequests import DragonRunPolicy
 from smartsim.types import LaunchedJobID
 
 from ...._core.launcher.stepMapping import StepMap
@@ -133,10 +134,13 @@ class DragonLauncher(WLMLauncher):
         self._connector.connect_to_dragon()  # pylint: disable=protected-access
         return self
 
-    def start(self, req_args: DragonRunRequestView) -> LaunchedJobID:
+    def start(
+        self, args_and_policy: tuple[DragonRunRequestView, DragonRunPolicy]
+    ) -> LaunchedJobID:
+        req_args, policy = args_and_policy
         self._connector.load_persisted_env()
         merged_env = self._connector.merge_persisted_env(os.environ.copy())
-        req = DragonRunRequest(**dict(req_args), current_env=merged_env)
+        req = DragonRunRequest(**dict(req_args), current_env=merged_env, policy=policy)
         res = _assert_schema_type(self._connector.send_request(req), DragonRunResponse)
         return LaunchedJobID(res.step_id)
 
@@ -188,17 +192,21 @@ class DragonLauncher(WLMLauncher):
             self._connector.load_persisted_env()
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
+            policy = DragonRunPolicy.from_run_args(run_args)
             step_id = self.start(
-                DragonRunRequestView(
-                    exe=cmd[0],
-                    exe_args=cmd[1:],
-                    path=step.cwd,
-                    name=step.name,
-                    nodes=nodes,
-                    tasks_per_node=tasks_per_node,
-                    env=req_env,
-                    output_file=out,
-                    error_file=err,
+                (
+                    DragonRunRequestView(
+                        exe=cmd[0],
+                        exe_args=cmd[1:],
+                        path=step.cwd,
+                        name=step.name,
+                        nodes=nodes,
+                        tasks_per_node=tasks_per_node,
+                        env=req_env,
+                        output_file=out,
+                        error_file=err,
+                    ),
+                    policy,
                 )
             )
         else:
@@ -344,32 +352,43 @@ from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 from smartsim.settings.dispatch import ExecutableProtocol, dispatch
 
 
-def _as_run_request_view(
+def _as_run_request_args_and_policy(
     run_req_args: DragonLaunchArguments,
     exe: ExecutableProtocol,
     env: t.Mapping[str, str | None],
-) -> DragonRunRequestView:
+) -> tuple[DragonRunRequestView, DragonRunPolicy]:
+    # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    # FIXME: This type is 100% unacceptable, but I don't want to spend too much
+    #        time on fixing the dragon launcher API. Something that we need to
+    #        revisit in the future though.
     exe_, *args = exe.as_program_arguments()
-    return DragonRunRequestView(
-        exe=exe_,
-        exe_args=args,
-        # FIXME: Currently this is hard coded because the schema requires
-        #        it, but in future, it is almost certainly necessary that
-        #        this will need to be injected by the user or by us to have
-        #        the command execute next to any generated files. A similar
-        #        problem exists for the other settings.
-        # TODO: Find a way to inject this path
-        path=os.getcwd(),
-        env=env,
-        # TODO: Not sure how this info is injected
-        name=None,
-        output_file=None,
-        error_file=None,
-        **run_req_args._launch_args,
+    run_args = dict[str, "int | str | float | None"](run_req_args._launch_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
+    return (
+        DragonRunRequestView(
+            exe=exe_,
+            exe_args=args,
+            # FIXME: Currently this is hard coded because the schema requires
+            #        it, but in future, it is almost certainly necessary that
+            #        this will need to be injected by the user or by us to have
+            #        the command execute next to any generated files. A similar
+            #        problem exists for the other settings.
+            # TODO: Find a way to inject this path
+            path=os.getcwd(),
+            env=env,
+            # TODO: Not sure how this info is injected
+            name=None,
+            output_file=None,
+            error_file=None,
+            **run_args,
+        ),
+        policy,
     )
 
 
 dispatch(
-    DragonLaunchArguments, with_format=_as_run_request_view, to_launcher=DragonLauncher
+    DragonLaunchArguments,
+    with_format=_as_run_request_args_and_policy,
+    to_launcher=DragonLauncher,
 )
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
