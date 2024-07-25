@@ -125,17 +125,17 @@ def service_as_dragon_proc(
         cpu_affinity=cpu_affinity,
         gpu_affinity=gpu_affinity,
     )
-    proc = dragon_process.Process(
+    return dragon_process.Process(
         target=service.execute,
         args=[],
         cwd=os.getcwd(),
         policy=local_policy,
         options=options,
-        stderr=dragon_process.Popen.PIPE,
+        stderr=dragon_process.Popen.STDOUT,
         stdout=dragon_process.Popen.STDOUT,
     )
 
-    return proc
+
 
 
 if __name__ == "__main__":
@@ -199,28 +199,45 @@ if __name__ == "__main__":
         config_loader=ss_config_loader,
     )
 
-    worker_manager = create_worker_manager(
-        worker_type=arg_worker_type,
-        config_loader=ss_config_loader,
-        device=args.device,
-        dispatcher_queue=dispatcher.task_queue,
-    )
+    wms = []
+    worker_device = args.device
+    for wm_idx in range(args.num_workers):
+        # if args.num_workers > 0:
+        #     worker_device = f"{args.device}:{wm_idx}"
+        worker_manager = create_worker_manager(
+            worker_type=arg_worker_type,
+            config_loader=ss_config_loader,
+            device=worker_device,
+            dispatcher_queue=dispatcher.task_queue,
+        )
+        wms.append(worker_manager)
 
     wm_affinity: list[int] = []
     disp_affinity: list[int] = []
-    if sys.platform != "darwin":
-        curr_affinity: list[int] = list(os.sched_getaffinity(os.getpid()))
-        wm_cpus = 3 * len(curr_affinity) // 4
-        disp_affinity = curr_affinity[wm_cpus:]
-        wm_affinity = curr_affinity[:wm_cpus]
+
+    # This is hardcoded for a specific type of node!
+    gpu_to_cpu_aff: dict[int, list[int]] = {}
+    gpu_to_cpu_aff[0] = list(range(48,64)) + list(range(112,128))
+    gpu_to_cpu_aff[1] = list(range(32,48)) + list(range(96,112))
+    gpu_to_cpu_aff[2] = list(range(16,32)) + list(range(80,96))
+    gpu_to_cpu_aff[3] = list(range(0,16)) + list(range(64,80))
+
+    worker_manager_procs = []
+    for worker_idx in range(args.num_workers):
+        wm_cpus = len(gpu_to_cpu_aff[worker_idx]) - 4
+        wm_affinity = gpu_to_cpu_aff[worker_idx][:wm_cpus]
+        disp_affinity.extend(gpu_to_cpu_aff[worker_idx][wm_cpus:])
+        worker_manager_procs.append(service_as_dragon_proc(
+                worker_manager, cpu_affinity=wm_affinity, gpu_affinity=[worker_idx]
+            ))
 
     dispatcher_proc = service_as_dragon_proc(dispatcher, cpu_affinity=disp_affinity, gpu_affinity=[])
-    worker_manager_proc = service_as_dragon_proc(
-        worker_manager, cpu_affinity=wm_affinity, gpu_affinity=[]
-    )
 
-    dispatcher_proc.start()
-    worker_manager_proc.start()
+    # TODO: use ProcessGroup and restart=True?
+    all_procs = [dispatcher_proc, *worker_manager_procs]
 
-    while all(proc.is_alive for proc in [dispatcher_proc, worker_manager_proc]):
+    for proc in all_procs:
+        proc.start()
+
+    while all(proc.is_alive for proc in all_procs):
         time.sleep(1)

@@ -10,7 +10,8 @@ import time
 import typing as t
 
 DEVICE = "gpu"
-NUM_RANKS = 4
+NUM_RANKS = 1
+NUM_WORKERS = 1
 filedir = os.path.dirname(__file__)
 worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
 app_script_name = os.path.join(filedir, "mock_app.py")
@@ -35,17 +36,18 @@ worker_manager_rs: DragonRunSettings = exp.create_run_settings(
         "--worker_class",
         torch_worker_str,
         "--batch_size",
-        str(NUM_RANKS),
+        str(NUM_RANKS//NUM_WORKERS),
         "--batch_timeout",
-        str(0.001),
+        str(0.002),
+        "--num_workers",
+        str(NUM_WORKERS)
     ],
 )
+
 aff = []
-for i in range(32):
-    aff.append(i)
-    aff.append(i+64)
 
 worker_manager_rs.set_cpu_affinity(aff)
+
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 

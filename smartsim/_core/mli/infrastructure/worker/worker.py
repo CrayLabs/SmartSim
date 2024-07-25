@@ -34,10 +34,8 @@ import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-
 from .....error import SmartSimError
 from .....log import get_logger
-from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...mli_schemas.model.model_capnp import Model
@@ -101,15 +99,19 @@ class LoadModelResult:
 
 
 class TransformInputResult:
-    """A wrapper around a transformed batchinput"""
+    """A wrapper around a transformed batch of input tensors"""
 
     def __init__(
         self, result: t.Any, slices: list[slice], dims: list[list[int]]
     ) -> None:
         """Initialize the object"""
         self.transformed = result
+        """List of Dragon MemoryAlloc objects on which the tensors are stored"""
         self.slices = slices
+        """Each slice represents which portion of the input tensors belongs to
+        which request"""
         self.dims = dims
+        """Dimension of the transformed tensors"""
 
 
 class ExecuteResult:
@@ -174,7 +176,7 @@ class MachineLearningWorkerCore:
         batch: InferenceBatch, feature_store: t.Optional[FeatureStore]
     ) -> FetchModelResult:
         """Given a resource key, retrieve the raw model from a feature store
-        :param batc: The batch of requests that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param feature_store: The feature store used for persistence
         :return: Raw bytes of the model"""
 
@@ -206,7 +208,7 @@ class MachineLearningWorkerCore:
     ) -> t.List[FetchInputResult]:
         """Given a collection of ResourceKeys, identify the physical location
         and input metadata
-        :param request: The request that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param feature_store: The feature store used for persistence
         :return: the fetched input"""
         fetch_results = []
@@ -290,9 +292,11 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         fetch_results: list[FetchInputResult],
         mem_pool: MemoryPool,
     ) -> TransformInputResult:
-        """Given a collection of data, perform a transformation on the data
+        """Given a collection of data, perform a transformation on the data and put
+        the raw tensor data on a MemoryPool allocation.
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
+        :param mem_pool: The memory pool used to access batched input tensors
         :return: The transformed inputs wrapped in a InputTransformResult"""
 
     @staticmethod
@@ -304,18 +308,19 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         device: str,
     ) -> ExecuteResult:
         """Execute an ML model on inputs transformed for use by the model
-        :param request: The request that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param load_result: The result of loading the model onto device memory
         :param transform_result: The result of transforming inputs for model consumption
+        :param device: The device on which the model will be executed
         :return: The result of inference wrapped in an ExecuteResult"""
 
     @staticmethod
     @abstractmethod
     def transform_output(
-        batch: InferenceBatch, execute_result: ExecuteResult, perf_timer: PerfTimer
+        batch: InferenceBatch, execute_result: ExecuteResult
     ) -> t.List[TransformOutputResult]:
         """Given inference results, perform transformations required to
         transmit results to the requestor.
-        :param request: The request that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
-        :return:"""
+        :return: A list of transformed outputs"""

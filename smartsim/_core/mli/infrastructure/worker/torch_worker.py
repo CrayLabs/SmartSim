@@ -34,7 +34,6 @@ from dragon.managed_memory import MemoryAlloc, MemoryPool
 
 from .....error import SmartSimError
 from .....log import get_logger
-from ....utils.timings import PerfTimer
 from ...mli_schemas.tensor import tensor_capnp
 from .worker import (
     ExecuteResult,
@@ -120,26 +119,14 @@ class TorchWorker(MachineLearningWorkerBase):
         for result_tensor_idx, (dims, dtype) in enumerate(zip(all_dims, all_dtypes)):
             itemsize = np.empty((1), dtype=dtype).itemsize
             alloc_size = int(np.prod(dims) * itemsize)
-            try:
-                mem_alloc = mem_pool.alloc(alloc_size)
-                mem_view = mem_alloc.get_memview()
-                mem_view[:alloc_size] = b"".join(
-                    [
-                        fetch_result.inputs[result_tensor_idx]
-                        for fetch_result in fetch_results
-                    ]
-                )
-            except Exception as e:
-                print(e)
-                raise e
-            # results.append(
-            #     torch.from_numpy(
-            #         np.frombuffer(
-            #             all_bytes,
-            #             dtype=dtype,
-            #         ).reshape(dims)
-            #     )
-            # )
+            mem_alloc = mem_pool.alloc(alloc_size)
+            mem_view = mem_alloc.get_memview()
+            mem_view[:alloc_size] = b"".join(
+                [
+                    fetch_result.inputs[result_tensor_idx]
+                    for fetch_result in fetch_results
+                ]
+            )
 
             results.append(mem_alloc.serialize())
 
@@ -182,8 +169,6 @@ class TorchWorker(MachineLearningWorkerBase):
                 for tensor in tensors
             ]
 
-        torch.cuda.synchronize(3)
-
         transform_result.transformed = []
 
         execute_result = ExecuteResult(results, transform_result.slices)
@@ -195,18 +180,15 @@ class TorchWorker(MachineLearningWorkerBase):
     def transform_output(
         batch: InferenceBatch,
         execute_result: ExecuteResult,
-        perf_timer: PerfTimer,
     ) -> list[TransformOutputResult]:
         transformed_list: list[TransformOutputResult] = []
         cpu_predictions = [
             prediction.cpu() for prediction in execute_result.predictions
         ]
-        perf_timer.measure_time("to_cpu")
         for result_slice in execute_result.slices:
             transformed = []
             for cpu_item in cpu_predictions:
                 transformed.append(cpu_item[result_slice].numpy().tobytes())
-                perf_timer.measure_time("serialize_tensor")
 
                 # todo: need the shape from latest schemas added here.
                 transformed_list.append(

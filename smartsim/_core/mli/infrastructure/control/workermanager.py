@@ -100,6 +100,7 @@ def build_reply(reply: InferenceReply) -> ResponseBuilder:
         custom_attributes=None,
     )
 
+
 def exception_handler(
     exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
 ) -> None:
@@ -139,20 +140,23 @@ class WorkerManager(Service):
         """Initialize the WorkerManager
         :param config_loader: Environment config loader that loads the task queue and
         feature store
-        :param workers: A worker to manage
+        :param worker_type: The type of worker to manage
+        :param task_queue: Queue from witch the batched requests have to be pulled
         :param as_service: Specifies run-once or run-until-complete behavior of service
         :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
         :param comm_channel_type: The type of communication channel used for callbacks
+        :param device: The device on which the Worker should run. Every worker manager
+        is assigned one single GPU (if available), thus the device should have no index.
         """
         super().__init__(as_service, cooldown)
 
         self._task_queue = task_queue
-        """the queue the manager monitors for new tasks"""
+        """The dispatcher queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()
         )
-        """a feature store to retrieve models from"""
+        """A feature store to retrieve models from"""
         self._worker = worker_type()
         """The ML Worker implementation"""
         self._comm_channel_type = comm_channel_type
@@ -161,13 +165,14 @@ class WorkerManager(Service):
         """Device on which workers need to run"""
 
         self._device_manager: t.Optional[DeviceManager] = None
-        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=False)
+        """Object responsible for model caching and device access"""
+        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
+        """Performance timer"""
 
     def _on_start(self) -> None:
-        self._device_manager = DeviceManager(
-            [WorkerDevice(f"gpu:{idx}") for idx in [3]]
-        )
+        self._device_manager = DeviceManager([WorkerDevice(self._device)])
 
+    # pylint: disable-next=too-many-statements
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
         the inference pipeline"""
@@ -220,9 +225,7 @@ class WorkerManager(Service):
         self._perf_timer.measure_time("execute")
 
         try:
-            transformed_outputs = self._worker.transform_output(
-                batch, execute_result, self._perf_timer
-            )
+            transformed_outputs = self._worker.transform_output(batch, execute_result)
         except Exception as e:
             for request in batch.requests:
                 exception_handler(

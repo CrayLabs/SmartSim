@@ -107,11 +107,12 @@ class ProtoClient:
         self._perf_timer.measure_time("send")
         with self._from_worker_ch.recvh(timeout=None) as from_recvh:
             resp = from_recvh.recv_bytes(timeout=None)
-            self._perf_timer.measure_time("receive")
+            self._perf_timer.measure_time("receive_response")
             response = MessageHandler.deserialize_response(resp)
             self._perf_timer.measure_time("deserialize_response")
             # list of data blobs? recv depending on the len(response.result.descriptors)?
-            data_blob = from_recvh.recv_bytes(timeout=None)
+            data_blob: bytes = from_recvh.recv_bytes(timeout=None)
+            self._perf_timer.measure_time("receive_tensor")
             result = torch.from_numpy(
                 numpy.frombuffer(
                     data_blob,
@@ -166,7 +167,7 @@ if __name__ == "__main__":
 
     TOTAL_ITERATIONS = 100
 
-    for log2_bsize in range(args.log_max_batchsize):
+    for log2_bsize in range(args.log_max_batchsize+1):
         b_size: int = 2**log2_bsize
         logger.info(f"Batch size: {b_size}")
         for iteration_number in range(TOTAL_ITERATIONS + int(b_size==1)):

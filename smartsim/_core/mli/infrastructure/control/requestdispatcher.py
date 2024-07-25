@@ -43,9 +43,8 @@ from queue import Empty, Full, Queue
 from threading import RLock
 from types import TracebackType
 
-from packaging.version import Version
-
 from smartsim._core.entrypoints.service import Service
+
 from .....error import SmartSimError
 from .....log import get_logger
 from ....utils.timings import PerfTimer
@@ -190,23 +189,46 @@ class WorkerDevice:
 
 class BatchQueue(Queue[InferenceRequest]):
     def __init__(self, batch_timeout: float, batch_size: int, model_key: str) -> None:
+        """Queue used to store inference requests waiting to be batched and
+        sent to Worker Managers.
+        :param batch_timeout: Time in seconds that has to be waited before flushing a
+        non-full queue. The time of the firt item put is 0 seconds.
+        :param batch_size: Total capacity of the queue.
+        :param model_key: Key of the model which needs to be executed on the queued
+        requests
+        """
         super().__init__(maxsize=batch_size)
         self._batch_timeout = batch_timeout
+        """Time in seconds that has to be waited before flushing a non-full queue.
+        The time of the firt item put is 0 seconds."""
         self._batch_size = batch_size
+        """Total capacity of the queue."""
         self._first_put: t.Optional[float] = None
+        """Time at which the first item was put on the queue"""
         self._disposable = False
+        """Whether the queue will not be used again and can be deleted.
+        A disposable queue is always full."""
         self._model_key = model_key
+        """Key of the model which needs to be executed on the queued requets"""
         self._flush_lock = RLock()
+        """Lock used to make sure only one process can flush the queue (unused now)"""
         self._id = str(uuid.uuid4())
+        """Id of queue"""
 
     @property
     def queue_id(self) -> str:
+        """ID of this queue"""
         return self._id
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
+        """Acquire queue lock to flush
+        :param blocking: whether to block on lock acquisition
+        :param timeout: Time to wait if blocking, before raising exception
+        """
         return self._flush_lock.acquire(blocking=blocking, timeout=timeout)
 
     def release(self) -> None:
+        """Release queue lock"""
         self._flush_lock.release()
 
     def __enter__(self) -> None:
@@ -222,6 +244,7 @@ class BatchQueue(Queue[InferenceRequest]):
 
     @property
     def model_key(self) -> str:
+        """Key of the model which needs to be run on the queued requests"""
         return self._model_key
 
     def put(
@@ -230,6 +253,11 @@ class BatchQueue(Queue[InferenceRequest]):
         block: bool = False,
         timeout: t.Optional[float] = 0.0,
     ) -> None:
+        """Put an inference request in the queue
+        :param item: The request
+        :param block: Whether to block when trying to put the item
+        :param timeout: Time to wait if block==True
+        """
         if not self.acquire(blocking=False):
             raise Full
         try:
@@ -249,19 +277,24 @@ class BatchQueue(Queue[InferenceRequest]):
 
     @property
     def ready(self) -> bool:
+        """True if the queue can be flushed"""
         if self.empty():
             return False
         return self.full() or (self._waited_time >= self._batch_timeout)
 
-
     def make_disposable(self) -> None:
+        """Set this queue as disposable, and never use it again after it gets flushed"""
         self._disposable = True
 
     @property
     def disposable(self) -> bool:
+        """Whether this queue can be used to put items or should be deleted"""
         return self.empty() and self._disposable
 
     def flush(self) -> list[t.Any]:
+        """Get all requests from queue
+        :return: Requests waiting to be executed
+        """
         num_items = self.qsize()
         self._first_put = None
         items = []
@@ -275,6 +308,7 @@ class BatchQueue(Queue[InferenceRequest]):
         return items
 
     def full(self) -> bool:
+        """Return True if the queue has reached its maximum capacity"""
         if self._disposable:
             return True
         if self._batch_size <= 0:
@@ -282,6 +316,7 @@ class BatchQueue(Queue[InferenceRequest]):
         return self.qsize() >= self._batch_size
 
     def empty(self) -> bool:
+        """Return True if the queue has 0 elements"""
         return self.qsize() == 0
 
 
@@ -295,25 +330,46 @@ class RequestDispatcher(Service):
         worker_type: t.Type[MachineLearningWorkerBase],
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
     ) -> None:
-        super().__init__(as_service=True, cooldown=1)
+        """The RquestDispatcher intercepts inference requests, stages them in
+        queues and batches them together before making them available to Worker
+        Managers.
+        :param batch_timeout: Time in seconds that has to be waited before flushing a
+        non-full queue after having put at least one item on it.
+        :param batch_size: Total capacity of each batch queue.
+        :param mem_pool: Memory pool used to share batched input tensors with worker
+        managers
+        :param config_loader: Object to load configuration from environment
+        :param worker_type: Type of worker to instantiate to batch inputs
+        :param comm_channel_type: Type of channel used to get requests
+        """
+        super().__init__(as_service=False, cooldown=1)
         self._queues: list[BatchQueue] = []
+        """All batch queues"""
         self._active_queues: dict[str, BatchQueue] = {}
-        self._model_last_version: dict[str, Version] = {}
-        self._model_name_to_key: dict[str, str] = {}
+        """Mapping telling which queue is the recipient of requets for a given model
+        key"""
         self._batch_timeout = batch_timeout
+        """Time in seconds that has to be waited before flushing a non-full queue"""
         self._batch_size = batch_size
+        """Total capacity of each batch queue."""
         self._queue_swap_lock: t.Optional[RLock] = None
+        """Lock used to swap the active queue for a key"""
         self._incoming_channel = config_loader.get_queue()
-        """the queue the manager monitors for new tasks"""
+        """The channel the dispatcher monitors for new tasks"""
         self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
+        """The queue on which batched inference requests are placed"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()
         )
-        """a feature store to retrieve models from"""
+        """A feature store to retrieve models from"""
         self._comm_channel_type = comm_channel_type
-        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=False)
+        """The type of the channel used to receive requests"""
         self._worker = worker_type()
+        """The worker used to batch inputs"""
         self._mem_pool = mem_pool
+        """Memory pool used to share batched input tensors with the Worker Managers"""
+        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=False)
+        """Performance timer"""
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
@@ -348,10 +404,12 @@ class RequestDispatcher(Service):
 
     def _on_start(self) -> None:
         self._queue_swap_lock = RLock()
+
+    def _on_iteration(self) -> None:
+
         if self._incoming_channel is None:
             raise SmartSimError("No incoming channel for dispatcher")
 
-    def _on_iteration(self) -> None:
         try:
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
         except Exception:
@@ -392,11 +450,12 @@ class RequestDispatcher(Service):
 
     @property
     def task_queue(self) -> DragonQueue:
+        """The queue on which batched requests are placed"""
         return self._outgoing_queue
 
     def _swap_queue(self, model_key: str) -> None:
         if self._queue_swap_lock is None:
-            raise SmartSimError("Queue was not locked")
+            raise SmartSimError("Queues were not locked")
         with self._queue_swap_lock:
             for queue in self._queues:
                 if queue.model_key == model_key and not queue.full():
@@ -409,6 +468,9 @@ class RequestDispatcher(Service):
             return
 
     def dispatch(self, request: InferenceRequest) -> None:
+        """Assign a request to a batch queue
+        :param request: the request to place
+        """
         if request.raw_model is not None:
             logger.info("Direct inference requested, creating tmp queue")
             tmp_id = f"_tmp_{str(uuid.uuid4())}"
@@ -429,17 +491,10 @@ class RequestDispatcher(Service):
                 except (Full, KeyError):
                     self._swap_queue(request.model_key)
 
-    def _update_model_version(self, model: Model) -> None:
-        if not model.version:
-            return
-        if (
-            model.name not in self._model_last_version
-            or Version(model.version) > self._model_last_version[model.name]
-        ):
-            self._model_last_version[model.name] = Version(model.version)
-            return
-
     def flush_requests(self) -> None:
+        """Get all requests from queues which are ready to be flushed. Place all
+        aviable request batches in the outgoing queue.
+        """
         for queue in self._queues:
             if queue.ready and queue.acquire(blocking=False):
                 self._perf_timer.measure_time("find_queue")
