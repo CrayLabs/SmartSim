@@ -31,17 +31,19 @@ from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.utils import b64decode, b64encode
 from dragon.globalservices.api_setup import connect_to_infrastructure
+
 # isort: on
 import argparse
 import base64
 import cloudpickle
-import pickle
+import optparse
 import os
 
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import DragonFeatureStore
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
+from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+    DragonFeatureStore,
+)
 from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 
@@ -75,22 +77,22 @@ if __name__ == "__main__":
     to_worker_fli_serialized = to_worker_fli.serialize()
     ddict["to_worker_fli"] = to_worker_fli_serialized
 
-    torch_worker = cloudpickle.loads(base64.b64decode(args.worker_class.encode('ascii')))()
+    worker_type_name = base64.b64decode(args.worker_class.encode("ascii"))
+    torch_worker = cloudpickle.loads(worker_type_name)()
 
-    dfs = DragonFeatureStore(ddict)
-    comm_channel = DragonFLIChannel(to_worker_fli_serialized)
-
-    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(dfs)).decode("utf-8")
     os.environ["SSQueue"] = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
 
-    config_loader = EnvironmentConfigLoader()
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=DragonCommChannel,
+        queue_factory=DragonFLIChannel.from_descriptor,
+    )
 
     worker_manager = WorkerManager(
         config_loader=config_loader,
         worker=torch_worker,
         as_service=True,
         cooldown=10,
-        comm_channel_type=DragonCommChannel,
-        device = args.device,
+        device=args.device,
     )
     worker_manager.execute()

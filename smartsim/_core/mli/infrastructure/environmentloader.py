@@ -24,16 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
 import os
-import pickle
 import typing as t
 
-from dragon.fli import FLInterface  # pylint: disable=all
-
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
-from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -45,45 +40,55 @@ class EnvironmentConfigLoader:
     into the WorkerManager.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        featurestore_factory: t.Callable[[str], FeatureStore],
+        callback_factory: t.Callable[[bytes], CommChannelBase],
+        queue_factory: t.Callable[[str], CommChannelBase],
+    ) -> None:
         self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
-        self.feature_stores: t.Optional[t.Dict[str, FeatureStore]] = None
-        self.queue: t.Optional[DragonFLIChannel] = None
-        self._feature_store_prefix = "SSFeatureStore"
+        """The descriptor used to attach to the incoming event queue"""
+        self.queue: t.Optional[CommChannelBase] = None
+        """The attached incoming event queue channel"""
+        self._backbone_descriptor: t.Optional[str] = os.getenv("SS_DRG_DDICT", None)
+        """The descriptor used to attach to the backbone feature store"""
+        self.backbone: t.Optional[FeatureStore] = None
+        """The attached backbone feature store"""
+        self._featurestore_factory = featurestore_factory
+        """A factory method to instantiate a FeatureStore"""
+        self._callback_factory = callback_factory
+        """A factory method to instantiate a concrete CommChannelBase
+        for inference callbacks"""
+        self._queue_factory = queue_factory
+        """A factory method to instantiate a concrete CommChannelBase
+        for inference requests"""
 
-    def _load_feature_store(self, env_var: str) -> FeatureStore:
-        """Load a feature store from a descriptor
-        :param descriptor: The descriptor of the feature store
-        :returns: The hydrated feature store"""
-        logger.debug(f"Loading feature store from env: {env_var}")
+    def get_backbone(self) -> t.Optional[FeatureStore]:
+        """Create the backbone feature store using the descriptor found in
+        an environment variable"""
+        descriptor = self._backbone_descriptor or os.getenv("SS_DRG_DDICT", None)
+        if self._featurestore_factory is None:
+            logger.warning("No feature store factory is configured")
+            return None
 
-        value = os.getenv(env_var)
-        if not value:
-            raise SmartSimError(
-                f"Empty feature store descriptor in environment: {env_var}"
-            )
+        if descriptor is not None:
+            self.backbone = self._featurestore_factory(descriptor)
+            self._backbone_descriptor = descriptor
+        return self.backbone
 
-        try:
-            return t.cast(FeatureStore, pickle.loads(base64.b64decode(value)))
-        except:
-            raise SmartSimError(
-                f"Invalid feature store descriptor in environment: {env_var}"
-            )
-
-    def get_feature_stores(self) -> t.Dict[str, FeatureStore]:
-        """Loads multiple Feature Stores by scanning environment for variables
-        prefixed with `SSFeatureStore`"""
-        if not self.feature_stores:
-            env_vars = [var for var in os.environ if var.startswith(self._feature_store_prefix)]
-            stores = [self._load_feature_store(var) for var in env_vars]
-            self.feature_stores = {fs.descriptor: fs for fs in stores}
-        return self.feature_stores
-
-    def get_queue(self, sender_supplied: bool = True) -> t.Optional[DragonFLIChannel]:
+    def get_queue(self) -> t.Optional[CommChannelBase]:
         """Returns the Queue previously set in SSQueue"""
-        if self._queue_descriptor is not None:
-            self.queue = DragonFLIChannel(
-                fli_desc=base64.b64decode(self._queue_descriptor),
-                sender_supplied=sender_supplied,
-            )
+        descriptor = self._queue_descriptor or os.getenv("SSQueue", None)
+        if self._queue_factory is None:
+            logger.warning("No queue factory is configured")
+            return None
+
+        if descriptor is not None:
+            # , sender_supplied: bool = True
+            # self.queue = DragonFLIChannel(
+            #     fli_desc=base64.b64decode(descriptor),
+            #     sender_supplied=sender_supplied,
+            # )
+            self.queue = self._queue_factory(descriptor)
+            self._queue_descriptor = descriptor
         return self.queue

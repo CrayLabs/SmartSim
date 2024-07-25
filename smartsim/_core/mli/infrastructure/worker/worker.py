@@ -159,7 +159,7 @@ class MachineLearningWorkerCore:
     @staticmethod
     def deserialize_message(
         data_blob: bytes,
-        channel_type: t.Type[CommChannelBase],
+        callback_factory: t.Callable[[bytes], CommChannelBase],
     ) -> InferenceRequest:
         """Deserialize a message from a byte stream into an InferenceRequest
         :param data_blob: The byte stream to deserialize
@@ -179,7 +179,7 @@ class MachineLearningWorkerCore:
             model_bytes = request.model.data
 
         callback_key = request.replyChannel.descriptor
-        comm_channel = channel_type(callback_key)
+        comm_channel = callback_factory(callback_key)
         input_keys: t.Optional[t.List[FeatureStoreKey]] = None
         input_bytes: t.Optional[t.List[bytes]] = None
         output_keys: t.Optional[t.List[FeatureStoreKey]] = None

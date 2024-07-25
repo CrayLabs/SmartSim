@@ -26,13 +26,15 @@
 
 import typing as t
 
-import smartsim.error as sse
+# pylint: disable=import-error
+# isort: off
+import dragon.data.ddict.ddict as dragon_ddict
+
+# isort: on
+
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim.error import SmartSimError
 from smartsim.log import get_logger
-
-if t.TYPE_CHECKING:
-    from dragon.data.ddict.ddict import DDict
-
 
 logger = get_logger(__name__)
 
@@ -40,7 +42,7 @@ logger = get_logger(__name__)
 class DragonFeatureStore(FeatureStore):
     """A feature store backed by a dragon distributed dictionary"""
 
-    def __init__(self, storage: "DDict") -> None:
+    def __init__(self, storage: "dragon_ddict.DDict") -> None:
         """Initialize the DragonFeatureStore instance"""
         self._storage = storage
 
@@ -54,7 +56,7 @@ class DragonFeatureStore(FeatureStore):
             raise ex
         except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence
-            raise sse.SmartSimError(
+            raise SmartSimError(
                 f"Could not get value for existing key {key}, error:\n{ex}"
             ) from ex
 
@@ -76,3 +78,25 @@ class DragonFeatureStore(FeatureStore):
         the feature store
         :returns: A descriptor encoded as a string"""
         return str(self._storage.serialize())
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: str,
+        # b64encoded: bool = False,
+    ) -> "DragonFeatureStore":
+        # import dragon.data.ddict.ddict as dragon_ddict  # pylint: disable=import-outside-toplevel
+
+        # # if b64encoded:
+        # #     descriptor = base64.b64decode(descriptor).encode("utf-8")
+        # # ddict = DDict.attach(descriptor)
+        # # ddict.attach(descriptor)
+
+        # storage = dragon_ddict.DDict()
+        # storage.attach(descriptor)
+        # return DragonFeatureStore(storage)
+
+        if descriptor is None:
+            print("foo")
+            return None
+        return DragonFeatureStore({"tmp": "here"})

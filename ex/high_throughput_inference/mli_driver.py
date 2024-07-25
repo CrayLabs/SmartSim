@@ -1,5 +1,4 @@
-
-
+import argparse
 import os
 import base64
 import cloudpickle
@@ -26,11 +25,23 @@ exp = Experiment("MLI_proto", launcher="dragon", exp_path=exp_path)
 
 torch_worker_str = base64.b64encode(cloudpickle.dumps(TorchWorker)).decode("ascii")
 
-worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_script_name, "--device", device, "--worker_class", torch_worker_str])
+worker_manager_rs = exp.create_run_settings(
+    sys.executable,
+    [
+        worker_manager_script_name,
+        "--device",
+        device,
+        "--worker_class",
+        torch_worker_str,
+    ],
+)
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
-app_rs = exp.create_run_settings(sys.executable, exe_args = [app_script_name, "--device", device])
+app_rs = exp.create_run_settings(
+    sys.executable,
+    exe_args=[app_script_name, "--device", device],
+)
 app = exp.create_model("app", run_settings=app_rs)
 app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
 

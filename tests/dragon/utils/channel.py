@@ -62,3 +62,14 @@ class FileSystemCommChannel(CommChannelBase):
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
         ...
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: t.Union[str, bytes],
+    ) -> "FileSystemCommChannel":
+        if isinstance(descriptor, str):
+            path = pathlib.Path(descriptor)
+        else:
+            path = pathlib.Path(descriptor.decode("utf-8"))
+        return FileSystemCommChannel(path)

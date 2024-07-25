@@ -24,11 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import time
 import typing as t
 
-from .....error import SmartSimError
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+
 from .....log import get_logger
 from ....entrypoints.service import Service
 from ...comm.channel.channel import CommChannelBase
@@ -41,14 +41,15 @@ from ...infrastructure.worker.worker import (
     MachineLearningWorkerBase,
 )
 from ...message_handler import MessageHandler
-from ...mli_schemas.response.response_capnp import Response, ResponseBuilder
+from ...mli_schemas.response.response_capnp import ResponseBuilder
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
 
-    from smartsim._core.mli.mli_schemas.model.model_capnp import Model
+    # from smartsim._core.mli.mli_schemas.model.model_capnp import Model
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
-    from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
+
+    # from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
 
@@ -95,9 +96,10 @@ class WorkerManager(Service):
         self,
         config_loader: EnvironmentConfigLoader,
         worker: MachineLearningWorkerBase,
+        # fs_factory: t.Callable[[str], FeatureStore],
         as_service: bool = False,
         cooldown: int = 0,
-        comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
+        # comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
         device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
@@ -115,14 +117,18 @@ class WorkerManager(Service):
         """the queue the manager monitors for new tasks"""
         self._worker = worker
         """The ML Worker implementation"""
-        self._comm_channel_type = comm_channel_type
+        self._callback_factory = config_loader._callback_factory
         """The type of communication channel to construct for callbacks"""
         self._device = device
         """Device on which workers need to run"""
         self._cached_models: dict[str, t.Any] = {}
         """Dictionary of previously loaded models"""
-        self._feature_stores = config_loader.get_feature_stores()
+        self._feature_stores: t.Dict[str, FeatureStore] = {}
         """A collection of attached feature stores"""
+        self._fs_factory = config_loader._featurestore_factory
+        """A factory method to create a desired feature store client type"""
+        self._backbone: t.Optional[FeatureStore] = config_loader.get_backbone()
+        """The backbone feature store"""
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
         """Ensures that all feature stores required by the request are available
@@ -139,10 +145,16 @@ class WorkerManager(Service):
         fs_actual = {item.descriptor for item in self._feature_stores.values()}
         fs_missing = fs_desired - fs_actual
 
-        # exit if all desired feature stores are not available
-        if fs_missing:
-            logger.error(f"Missing feature store(s): {fs_missing}")
+        if self._fs_factory is None:
+            logger.warning("No feature store factory configured")
             return False
+
+        # create the feature stores we need to service request
+        if fs_missing:
+            logger.info(f"Missing feature store(s): {fs_missing}")
+            for descriptor in fs_missing:
+                feature_store = self._fs_factory(descriptor)
+                self._feature_stores[descriptor] = feature_store
 
         return True
 
@@ -212,7 +224,7 @@ class WorkerManager(Service):
 
         interm = time.perf_counter()  # timing
         request = self._worker.deserialize_message(
-            request_bytes, self._comm_channel_type
+            request_bytes, self._callback_factory
         )
 
         if request.input_meta and tensor_bytes_list:
@@ -234,6 +246,12 @@ class WorkerManager(Service):
                     "Could not find model key or model.",
                 )
                 return
+
+            # if request.model_key.descriptor not in self._feature_stores:
+            #     self._fs_factory(request.model_key.descriptor)
+            # todo: decide if we should load here or in _check_feature_stores.
+            # todo: should i raise error here?
+
             if request.model_key.key in self._cached_models:
                 timings.append(time.perf_counter() - interm)  # timing
                 interm = time.perf_counter()  # timing
@@ -265,7 +283,9 @@ class WorkerManager(Service):
                     self._cached_models[request.model_key.key] = model_result.model
                 except Exception as e:
                     exception_handler(
-                        e, request.callback, "Failed while loading the model."
+                        e,
+                        request.callback,
+                        "Failed while loading model from feature store.",
                     )
                     return
 
@@ -290,7 +310,9 @@ class WorkerManager(Service):
                 )
             except Exception as e:
                 exception_handler(
-                    e, request.callback, "Failed while loading the model."
+                    e,
+                    request.callback,
+                    "Failed while loading model from feature store.",
                 )
                 return
 

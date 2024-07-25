@@ -30,7 +30,7 @@ import dragon.channels as dch
 
 # isort: on
 
-import sys
+import base64
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
@@ -70,3 +70,13 @@ class DragonFLIChannel(cch.CommChannelBase):
                 except fli.FLIEOT as exc:
                     eot = True
         return messages
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: str,
+    ) -> "DragonFLIChannel":
+        return DragonFLIChannel(
+            fli_desc=base64.b64decode(descriptor),
+            sender_supplied=True,
+        )

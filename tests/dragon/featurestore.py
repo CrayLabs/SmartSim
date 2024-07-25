@@ -115,7 +115,24 @@ class FileSystemFeatureStore(FeatureStore):
         """Return a unique identifier enabling a client to connect to
         the feature store
         :returns: A descriptor encoded as a string"""
-        return "in-memory-fs"
+        if not self._storage_dir:
+            raise ValueError("No storage path configured")
+        return self._storage_dir.as_posix()
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: str,
+        # b64encoded: bool = False,
+    ) -> "FileSystemFeatureStore":
+        # if b64encoded:
+        #     descriptor = base64.b64decode(descriptor).encode("utf-8")
+        path = pathlib.Path(descriptor)
+        if not path.is_dir():
+            raise ValueError("FileSystemFeatureStore requires a directory path")
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        return FileSystemFeatureStore(path)
 
 
 class DragonDict:

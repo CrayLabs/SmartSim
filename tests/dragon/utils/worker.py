@@ -47,7 +47,7 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
 
     @staticmethod
     def load_model(
-        request: mliw.InferenceRequest, fetch_result: mliw.FetchModelResult
+        request: mliw.InferenceRequest, fetch_result: mliw.FetchModelResult, device: str
     ) -> mliw.LoadModelResult:
         model_bytes = fetch_result.model_bytes or request.raw_model
         if not model_bytes:
@@ -61,6 +61,7 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
     def transform_input(
         request: mliw.InferenceRequest,
         fetch_result: mliw.FetchInputResult,
+        device: str,
     ) -> mliw.TransformInputResult:
         # extra metadata for assembly can be found in request.input_meta
         raw_inputs = request.raw_inputs or fetch_result.inputs
@@ -93,6 +94,7 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
     def transform_output(
         request: mliw.InferenceRequest,
         execute_result: mliw.ExecuteResult,
+        result_device: str,
     ) -> mliw.TransformOutputResult:
         # transformed = [item.clone() for item in execute_result.predictions]
         # return OutputTransformResult(transformed)
