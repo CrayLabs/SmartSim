@@ -342,7 +342,7 @@ class RequestDispatcher(Service):
         :param worker_type: Type of worker to instantiate to batch inputs
         :param comm_channel_type: Type of channel used to get requests
         """
-        super().__init__(as_service=False, cooldown=1)
+        super().__init__(as_service=True, cooldown=1)
         self._queues: list[BatchQueue] = []
         """All batch queues"""
         self._active_queues: dict[str, BatchQueue] = {}
@@ -368,7 +368,7 @@ class RequestDispatcher(Service):
         """The worker used to batch inputs"""
         self._mem_pool = mem_pool
         """Memory pool used to share batched input tensors with the Worker Managers"""
-        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=False)
+        self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
         """Performance timer"""
 
     def _validate_request(self, request: InferenceRequest) -> bool:
@@ -413,7 +413,7 @@ class RequestDispatcher(Service):
         try:
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
         except Exception:
-            pass
+            self._perf_timer.start_timings()
         else:
             if not bytes_list:
                 exception_handler(
