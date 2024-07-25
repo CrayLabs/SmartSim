@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import typing as t
 
+from typing_extensions import override
+
 from smartsim.log import get_logger
 
 from ...common import StringArgument, set_check_input
@@ -56,9 +58,36 @@ class DragonArgBuilder(LaunchArgBuilder):
         """
         self.set("tasks-per-node", str(tasks_per_node))
 
+    @override
     def set(self, key: str, value: str | None) -> None:
         """Set the launch arguments"""
         set_check_input(key, value)
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
+
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
+
+        :param feature_list: a collection of strings representing the required
+         node features. Currently supported node features are: "gpu"
+        """
+        if isinstance(feature_list, str):
+            feature_list = feature_list.strip().split()
+        elif not all(isinstance(feature, str) for feature in feature_list):
+            raise TypeError("feature_list must be string or list of strings")
+        self.set("node-feature", ",".join(feature_list))
+
+    def set_cpu_affinity(self, devices: t.List[int]) -> None:
+        """Set the CPU affinity for this job
+
+        :param devices: list of CPU indices to execute on
+        """
+        self.set("cpu-affinity", ",".join(str(device) for device in devices))
+
+    def set_gpu_affinity(self, devices: t.List[int]) -> None:
+        """Set the GPU affinity for this job
+
+        :param devices: list of GPU indices to execute on.
+        """
+        self.set("gpu-affinity", ",".join(str(device) for device in devices))

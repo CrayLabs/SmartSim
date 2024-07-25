@@ -191,8 +191,6 @@ class FeatureStore(EntityList[FSNode]):
 
         Extra configurations for RedisAI
 
-        See https://oss.redis.com/redisai/configuration/
-
         :param path: path to location of ``FeatureStore`` directory
         :param port: TCP/IP port
         :param interface: network interface(s)
