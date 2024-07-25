@@ -545,11 +545,12 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
             assert filecmp.cmp(written, correct)
 
 
-def test_configure_invalid_tags(fileutils):
+def test_configure_invalid_tags(fileutils, test_dir):
     """Test configure operation with an invalid tag"""
-    tagged_file = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "marked", "invalidtag.txt")
-    )
+    generator_files = pathlib.Path(fileutils.get_test_conf_path("generator_files"))
+    tagged_file = generator_files / "easy/marked/invalidtag.txt"
+    correct_file = generator_files / "easy/correct/invalidtag.txt"
+    target_file = pathlib.Path(test_dir, "target.txt")
 
     tag = ";"
     param_dict = {"VALID": "valid"}
@@ -560,11 +561,12 @@ def test_configure_invalid_tags(fileutils):
     # Encode the pickled dictionary with Base64
     encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
     parser = get_parser()
-    cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
+    cmd = f"configure {tagged_file} {target_file} {tag} {encoded_dict}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     file_operations.configure(ns)
+    assert filecmp.cmp(correct_file, target_file)
 
 
 def test_configure_not_absolute():
