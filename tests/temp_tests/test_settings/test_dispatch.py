@@ -384,7 +384,7 @@ def test_dispatch_registration_configures_first_compatible_launcher_from_sequenc
 
     with ctx:
         adapter = buffer_writer_dispatch.configure_first_compatible_launcher(
-            with_settings=mock_launch_args, from_available_launchers=launcher_instances
+            with_arguments=mock_launch_args, from_available_launchers=launcher_instances
         )
 
 
@@ -395,7 +395,7 @@ def test_dispatch_registration_can_create_a_laucher_for_an_experiment_and_can_re
 
     exp = MockExperiment()
     adapter_1 = buffer_writer_dispatch.create_new_launcher_configuration(
-        for_experiment=exp, with_settings=mock_launch_args
+        for_experiment=exp, with_arguments=mock_launch_args
     )
     assert type(adapter_1._adapted_launcher) == buffer_writer_dispatch.launcher_type
     existing_launcher = adapter_1._adapted_launcher

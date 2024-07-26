@@ -38,7 +38,7 @@ from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
 from smartsim.error import errors
-from smartsim.settings.dispatch import DEFAULT_DISPATCHER
+from smartsim.settings import dispatch
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
@@ -55,11 +55,7 @@ from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.dispatch import (
-        Dispatcher,
-        ExecutableProtocol,
-        LauncherProtocol,
-    )
+    from smartsim.settings.dispatch import ExecutableProtocol, LauncherProtocol
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -168,27 +164,38 @@ class Experiment:
 
         self._fs_identifiers: t.Set[str] = set()
         """Set of feature store identifiers currently in use by this
-        experiment"""
+        experiment
+        """
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
         """Switch to specify if telemetry data should be produced for this
-        experiment"""
+        experiment
+        """
 
-    def start(
-        self, job: Job, *jobs: Job, dispatcher: Dispatcher = DEFAULT_DISPATCHER
-    ) -> tuple[LaunchedJobID, ...]:
+    def start(self, *jobs: Job) -> tuple[LaunchedJobID, ...]:
         """Execute a collection of `Job` instances.
 
-        :param job: The job instance to start
         :param jobs: A collection of other job instances to start
-        :param dispatcher: The dispatcher that should be used to determine how
-            to start a job based on its settings. If not specified it will
-            default to a dispatcher pre-configured by SmartSim.
         :returns: A sequence of ids with order corresponding to the sequence of
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
+        return self._dispatch(dispatch.DEFAULT_DISPATCHER, *jobs)
 
-        def _start(job: Job) -> LaunchedJobID:
+    def _dispatch(
+        self, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
+    ) -> tuple[LaunchedJobID, ...]:
+        """Dispatch a series of jobs with a particular dispatcher
+
+        :param dispatcher: The dispatcher that should be used to determine how
+            to start a job based on its launch settings.
+        :param job: The first job instance to dispatch
+        :param jobs: A collection of other job instances to dispatch
+        :returns: A sequence of ids with order corresponding to the sequence of
+            jobs that can be used to query or alter the status of that
+            particular dispatch of the job.
+        """
+
+        def execute_dispatch(job: Job) -> LaunchedJobID:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -203,13 +210,13 @@ class Experiment:
                 # configured to handle the launch arguments ...
                 launch_config = dispatch.configure_first_compatible_launcher(
                     from_available_launchers=self._active_launchers,
-                    with_settings=args,
+                    with_arguments=args,
                 )
             except errors.LauncherNotFoundError:
                 # ... otherwise create a new launcher that _can_ handle the
                 # launch arguments and configure _that_ one
                 launch_config = dispatch.create_new_launcher_configuration(
-                    for_experiment=self, with_settings=args
+                    for_experiment=self, with_arguments=args
                 )
             # Save the underlying launcher instance. That way we do not need to
             # spin up a launcher instance for each individual job, and it makes
@@ -218,7 +225,7 @@ class Experiment:
             self._active_launchers.add(launch_config._adapted_launcher)
             return launch_config.start(exe, env)
 
-        return _start(job), *map(_start, jobs)
+        return execute_dispatch(job), *map(execute_dispatch, jobs)
 
     @_contextualize
     def generate(

@@ -79,6 +79,24 @@ a parameter should never be set or a callable will never return
 class Dispatcher:
     """A class capable of deciding which launcher type should be used to launch
     a given settings type.
+
+    The `Dispatcher` class maintains a type safe API for adding and retrieving
+    a settings type into the underlying mapping. It does this through two main
+    methods: `Dispatcher.dispatch` and `Dispatcher.get_dispatch`.
+
+    `Dispatcher.dispatch` takes in a dispatchable type, a launcher type that is
+    capable of launching a launchable type and formatting function that maps an
+    instance of the dispatchable type to an instance of the launchable type.
+    The dispatcher will then take these components and then enter them into its
+    dispatch registry. `Dispatcher.dispatch` can also be used as a decorator,
+    to automatically add a dispatchable type dispatch to a dispatcher at type
+    creation time.
+
+    `Dispatcher.get_dispatch` takes a dispatchable type or instance as a
+    parameter, and will attempt to look up, in its dispatch registry, how to
+    dispatch that type. It will then return an object that can configure a
+    launcher of the expected launcher type. If the dispatchable type was never
+    registered a `TypeError` will be raised.
     """
 
     def __init__(
@@ -105,7 +123,7 @@ class Dispatcher:
         return type(self)(dispatch_registry=self._dispatch_registry)
 
     @t.overload
-    def dispatch(
+    def dispatch(  # Signature when used as a decorator
         self,
         args: None = ...,
         *,
@@ -114,7 +132,7 @@ class Dispatcher:
         allow_overwrite: bool = ...,
     ) -> t.Callable[[type[_DispatchableT]], type[_DispatchableT]]: ...
     @t.overload
-    def dispatch(
+    def dispatch(  # Signature when used as a method
         self,
         args: type[_DispatchableT],
         *,
@@ -122,7 +140,7 @@ class Dispatcher:
         to_launcher: type[LauncherProtocol[_LaunchableT]],
         allow_overwrite: bool = ...,
     ) -> None: ...
-    def dispatch(
+    def dispatch(  # Actual implementation
         self,
         args: type[_DispatchableT] | None = None,
         *,
@@ -202,7 +220,7 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
         return type(launcher) is self.launcher_type
 
     def create_new_launcher_configuration(
-        self, for_experiment: Experiment, with_settings: _DispatchableT
+        self, for_experiment: Experiment, with_arguments: _DispatchableT
     ) -> _LaunchConfigType:
         """Create a new instance of a launcher for an experiment that the
         provided settings where set to dispatch to, and configure it with the
@@ -214,12 +232,13 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
         :returns: A configured launcher
         """
         launcher = self.launcher_type.create(for_experiment)
-        return self.create_adapter_from_launcher(launcher, with_settings)
+        return self.create_adapter_from_launcher(launcher, with_arguments)
 
     def create_adapter_from_launcher(
-        self, launcher: LauncherProtocol[_LaunchableT], settings: _DispatchableT
+        self, launcher: LauncherProtocol[_LaunchableT], arguments: _DispatchableT
     ) -> _LaunchConfigType:
-        """Creates configured launcher from an existing launcher using the provided settings
+        """Creates configured launcher from an existing launcher using the
+        provided settings.
 
         :param launcher: A launcher that the type of `settings` has been
             configured to dispatch to.
@@ -234,13 +253,13 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
             )
 
         def format_(exe: ExecutableProtocol, env: _EnvironMappingType) -> _LaunchableT:
-            return self.formatter(settings, exe, env)
+            return self.formatter(arguments, exe, env)
 
         return _LauncherAdapter(launcher, format_)
 
     def configure_first_compatible_launcher(
         self,
-        with_settings: _DispatchableT,
+        with_arguments: _DispatchableT,
         from_available_launchers: t.Iterable[LauncherProtocol[t.Any]],
     ) -> _LaunchConfigType:
         """Configure the first compatible adapter launch to launch with the
@@ -259,13 +278,47 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
                 f"No launcher of exactly type `{self.launcher_type.__name__}` "
                 "could be found from provided launchers"
             )
-        return self.create_adapter_from_launcher(launcher, with_settings)
+        return self.create_adapter_from_launcher(launcher, with_arguments)
 
 
 @t.final
 class _LauncherAdapter(t.Generic[Unpack[_Ts]]):
-    """An adapter class that will wrap a launcher and allow for a unique
-    signature of for its `start` method
+    """The launcher adapter is an adapter class takes a launcher that is
+    capable of launching some type `LaunchableT` and a function with a generic
+    argument list that returns a `LaunchableT`. The launcher adapter will then
+    provide `start` method that will have the same argument list as the
+    provided function and launch the output through the provided launcher.
+
+    For example, the launcher adapter could be used like so:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        class SayHelloLauncher(LauncherProtocol[str]):
+            ...
+            def start(self, title: str):
+                ...
+                print(f"Hello, {title}")
+                ...
+            ...
+
+        @dataclasses.dataclass
+        class Person:
+            name: str
+            honorific: str
+
+            def full_title(self) -> str:
+                return f"{honorific}. {self.name}"
+
+        mark = Person("Jim", "Mr")
+        sally = Person("Sally", "Ms")
+        matt = Person("Matt", "Dr")
+        hello_person_launcher = _LauncherAdapter(SayHelloLauncher,
+                                                 Person.full_title)
+
+        hello_person_launcher.start(mark)   # prints: "Hello, Mr. Mark"
+        hello_person_launcher.start(sally)  # prints: "Hello, Ms. Sally"
+        hello_person_launcher.start(matt)   # prints: "Hello, Dr. Matt"
     """
 
     def __init__(
@@ -299,10 +352,17 @@ class _LauncherAdapter(t.Generic[Unpack[_Ts]]):
 
 
 DEFAULT_DISPATCHER: t.Final = Dispatcher()
+"""A global `Dispatcher` instance that SmartSim automatically configures to
+launch its built in launchables
+"""
+
 # Disabling because we want this to look and feel like a top level function,
 # but don't want to have a second copy of the nasty overloads
 # pylint: disable-next=invalid-name
 dispatch: t.Final = DEFAULT_DISPATCHER.dispatch
+"""Function that can be used as a decorator to add a dispatch registration into
+`DEFAULT_DISPATCHER`.
+"""
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -327,6 +387,35 @@ class LauncherProtocol(t.Protocol[_T_contra]):
 def make_shell_format_fn(
     run_command: str | None,
 ) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
+    """A function that builds a function that formats a `LaunchArguments` as a
+    shell executable sequence of strings for a given launching utility.
+
+    Example usage:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        echo_hello_world: ExecutableProtocol = ...
+        env = {}
+        slurm_args: SlurmLaunchArguments = ...
+        slurm_args.set_nodes(3)
+
+        as_srun_command = make_shell_format_fn("srun")
+        fmt_cmd = as_srun_command(slurm_args, echo_hello_world, env)
+        print(list(fmt_cmd))
+        # prints: "['srun', '--nodes=3', '--', 'echo', 'Hello World!']"
+
+    .. note::
+        This function was/is a kind of slap-dash implementation, and is likely
+        to change or be removed entierely as more functionality is added to the
+        shell launcher. Use with caution and at your own risk!
+
+    :param run_command: Name or path of the launching utility to invoke with
+        the arguments.
+    :returns: A function to format an arguments, an executable, and an
+        environment as a shell launchable sequence for strings.
+    """
+
     def impl(
         args: LaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
     ) -> t.Sequence[str]:

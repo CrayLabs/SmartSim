@@ -45,11 +45,13 @@ pytestmark = pytest.mark.group_a
 
 
 @pytest.fixture
-def experiment(test_dir):
+def experiment(monkeypatch, test_dir, dispatcher):
     """A simple experiment instance with a unique name anda unique name and its
     own directory to be used by tests
     """
-    yield Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
+    exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
+    monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
+    yield exp
 
 
 @pytest.fixture
@@ -206,13 +208,12 @@ def test_start_raises_if_no_args_supplied(experiment):
 def test_start_can_launch_jobs(
     experiment: Experiment,
     job_maker: JobMakerType,
-    dispatcher: dispatch.Dispatcher,
     make_jobs: t.Callable[[JobMakerType, int], tuple[job.Job, ...]],
     num_jobs: int,
 ) -> None:
     jobs = make_jobs(job_maker, num_jobs)
     assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
-    launched_ids = experiment.start(*jobs, dispatcher=dispatcher)
+    launched_ids = experiment.start(*jobs)
     assert len(experiment._active_launchers) == 1, "Unexpected number of launchers"
     (launcher,) = experiment._active_launchers
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
@@ -238,16 +239,12 @@ def test_start_can_launch_jobs(
     [pytest.param(i, id=f"{i} start(s)") for i in (1, 2, 3, 5, 10, 100, 1_000)],
 )
 def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
-    experiment: Experiment,
-    job_maker: JobMakerType,
-    dispatcher: dispatch.Dispatcher,
-    num_starts: int,
+    experiment: Experiment, job_maker: JobMakerType, num_starts: int
 ) -> None:
     assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
     job = job_maker()
     ids_to_launches = {
-        experiment.start(job, dispatcher=dispatcher)[0]: LaunchRecord.from_job(job)
-        for _ in range(num_starts)
+        experiment.start(job)[0]: LaunchRecord.from_job(job) for _ in range(num_starts)
     }
     assert len(experiment._active_launchers) == 1, "Did not reuse the launcher"
     (launcher,) = experiment._active_launchers
