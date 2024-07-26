@@ -248,6 +248,3 @@ def test_generate_configure(fileutils, wlmutils,test_dir):
     # Validate that smartsim params files exists
     smartsim_params_path = osp.join(job_path, "smartsim_params.txt")
     assert osp.isfile(smartsim_params_path)
-    
-    
-    

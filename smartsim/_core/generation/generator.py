@@ -190,10 +190,12 @@ class Generator:
         with open(self.log_file, mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
+
         # Prevent access to type FeatureStore entities
         if isinstance(self.job.entity, Application) and self.job.entity.files:
             # Perform file system operations on attached files
             self._build_operations()
+
         # Return Job directory path
         return self.path
 
@@ -207,12 +209,9 @@ class Generator:
         :param app: The application for which operations are generated.
         :return: A list of lists containing file system operations.
         """
-        if self.job.entity.files.link:
-            self._get_symlink_file_system_operation(self.job.entity, self.path)
-        if self.job.entity.files.tagged:
-            self._write_tagged_entity_files(self.job.entity)
-        if self.job.entity.files.copy:
-            self._get_copy_file_system_operation(self.job.entity, self.path)
+        self._get_symlink_file_system_operation(self.job.entity, self.path)
+        self._write_tagged_entity_files(self.job.entity)
+        self._get_copy_file_system_operation(self.job.entity, self.path)
 
 
     @staticmethod
@@ -222,8 +221,8 @@ class Generator:
         :param linked_file: The file to be copied.
         :return: A list of copy file system operations.
         """
+        parser = get_parser()
         for src in app.files.copy:
-            parser = get_parser()
             if Path(src).is_dir:
                 cmd = f"copy {src} {dest} --dirs_exist_ok"
             else:
@@ -240,31 +239,17 @@ class Generator:
         :param linked_file: The file to be symlinked.
         :return: A list of symlink file system operations.
         """
+        parser = get_parser()
         for sym in app.files.link:
-            # Check if path is a directory
-            if Path(sym).is_dir():
-                # Normalize the path to remove trailing slashes
-                normalized_path = os.path.normpath(sym)
-                # Get the parent directory (last folder)
-                parent_dir = os.path.basename(normalized_path)
-                dest = Path(dest) / parent_dir
-                parser = get_parser()
-                cmd = f"symlink {sym} {dest}"
-                args = cmd.split()
-                ns = parser.parse_args(args)
-                file_operations.symlink(ns)
-            # Path is a file
-            else:
-                # Normalize the path to remove trailing slashes
-                normalized_path = os.path.normpath(sym)
-                # Get the parent directory (last folder)
-                parent_file = os.path.basename(normalized_path)
-                new_dest = os.path.join(dest,parent_file)
-                parser = get_parser()
-                cmd = f"symlink {sym} {new_dest}"
-                args = cmd.split()
-                ns = parser.parse_args(args)
-                file_operations.symlink(ns)
+            # Normalize the path to remove trailing slashes
+            normalized_path = os.path.normpath(sym)
+            # Get the parent directory (last folder)
+            parent_dir = os.path.basename(normalized_path)
+            dest = Path(dest) / parent_dir
+            cmd = f"symlink {sym} {dest}"
+            args = cmd.split()
+            ns = parser.parse_args(args)
+            file_operations.symlink(ns)
                 
 
 
@@ -277,50 +262,45 @@ class Generator:
 
         :param entity: a Application instance
         """
-        # if app.files:
-        #     to_write = []
-
-        #     def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
-        #         """Using a TaggedFileHierarchy, reproduce the tagged file
-        #         directory structure
-
-        #         :param tagged: a TaggedFileHierarchy to be built as a
-        #                        directory structure
-        #         """
-        #         for file in tagged.files:
-        #             dst_path = path.join(self.path, tagged.base, path.basename(file))
-        #             shutil.copyfile(file, dst_path)
-        #             to_write.append(dst_path)
-
-        #         for tagged_dir in tagged.dirs:
-        #             mkdir(
-        #                 path.join(
-        #                     self.path, tagged.base, path.basename(tagged_dir.base)
-        #                 )
-        #             )
-        #             _build_tagged_files(tagged_dir)
-
-        #     if app.files.tagged_hierarchy:
-        #         _build_tagged_files(app.files.tagged_hierarchy)
-
-            # Configure param file
         if app.files.tagged:
-            # copy files to job directory
-            for file in app.files.tagged:
-                # Copy the contents of a source to a destination folder
-                shutil.copy(file, self.path)
+            to_write = []
+
+            def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
+                """Using a TaggedFileHierarchy, reproduce the tagged file
+                directory structure
+
+                :param tagged: a TaggedFileHierarchy to be built as a
+                               directory structure
+                """
+                for file in tagged.files:
+                    dst_path = path.join(self.path, tagged.base, path.basename(file))
+                    print(dst_path)
+                    shutil.copyfile(file, dst_path)
+                    to_write.append(dst_path)
+
+                for tagged_dir in tagged.dirs:
+                    mkdir(
+                        path.join(
+                            self.path, tagged.base, path.basename(tagged_dir.base)
+                        )
+                    )
+                    _build_tagged_files(tagged_dir)
+            if app.files.tagged_hierarchy:
+                _build_tagged_files(app.files.tagged_hierarchy)
+            
             # Pickle the dictionary
             pickled_dict = pickle.dumps(app.params)
+            # Default tag delimiter
             tag = ";"
             # Encode the pickled dictionary with Base64
             encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
-            tagged_files = sorted(glob(self.path + "/*"))
-            for tagged_file in tagged_files:
-                parser = get_parser()
-                cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
+            parser = get_parser()
+            for dest_path in to_write:
+                cmd = f"configure {dest_path} {dest_path} {tag} {encoded_dict}"
                 args = cmd.split()
                 ns = parser.parse_args(args)
                 file_operations.configure(ns)
+
             # TODO address in ticket 723
             # self._log_params(entity, files_to_params)
 
