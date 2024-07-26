@@ -35,6 +35,7 @@ import pickle
 import shutil
 import typing as t
 from typing import Callable
+from os import path as osp
 
 from ...log import get_logger
 
@@ -133,7 +134,7 @@ def copy(parsed_args: argparse.Namespace) -> None:
             dirs_exist_ok=parsed_args.dirs_exist_ok,
         )
     else:
-        shutil.copyfile(parsed_args.source, parsed_args.dest)
+        shutil.copy(parsed_args.source, parsed_args.dest)
 
 
 def symlink(parsed_args: argparse.Namespace) -> None:

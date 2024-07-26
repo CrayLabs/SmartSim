@@ -28,7 +28,9 @@ import base64
 import os
 import pathlib
 import shutil
+import pickle
 import typing as t
+from glob import glob
 from datetime import datetime
 from distutils import dir_util  # pylint: disable=deprecated-module
 from logging import DEBUG, INFO
@@ -36,12 +38,16 @@ from os import mkdir, path, symlink
 from os.path import join, relpath
 
 from tabulate import tabulate
+from pathlib import Path
 
 from ...database import FeatureStore
 from ...entity import Application, TaggedFilesHierarchy
 from ...launchable import Job, JobGroup
 from ...log import get_logger
 from ..utils.helpers import create_short_id_str
+
+from ..entrypoints import file_operations
+from ..entrypoints.file_operations import get_parser
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -172,9 +178,11 @@ class Generator:
         e.g. ``THERMO=;90;``
 
         """
+        # Create Job directory
         pathlib.Path(self.path).mkdir(exist_ok=True, parents=True)
+        # Creat Job log directory
         pathlib.Path(self.log_path).mkdir(exist_ok=True, parents=True)
-
+        
         # The log_file only keeps track of the last generation
         # this is to avoid gigantic files in case the user repeats
         # generation several times. The information is anyhow
@@ -182,19 +190,15 @@ class Generator:
         with open(self.log_file, mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
-
-        # TODO update this to execute the file operations when entrypoint is merged in
-        # if isinstance(Application, type(self.job.entity)):
-        #     file_operation_list = self.build_operations()
-        #     self.execute_file_operations(file_operation_list)
+        # Prevent access to type FeatureStore entities
+        if isinstance(self.job.entity, Application) and self.job.entity.files:
+            # Perform file system operations on attached files
+            self._build_operations()
+        # Return Job directory path
         return self.path
 
-    # TODO update this to execute the file operations when entrypoint is merged in
-    def execute_file_operations(
-        self, file_ops: t.Sequence[t.Sequence[str]]
-    ) -> None: ...
 
-    def build_operations(self) -> t.Sequence[t.Sequence[str]]:
+    def _build_operations(self) -> t.Sequence[t.Sequence[str]]:
         """This method generates file system operations based on the provided application.
         It processes three types of operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods and appends the results
@@ -203,27 +207,69 @@ class Generator:
         :param app: The application for which operations are generated.
         :return: A list of lists containing file system operations.
         """
-        application_files = self.job.entity.files
-        file_operation_list: t.List[t.Sequence[str]] = []
-        # Generate copy file system operations
-        file_operation_list.extend(
-            self._get_copy_file_system_operation(file_copy)
-            for file_copy in application_files.copy
-        )
-        # Generate symlink file system operations
-        file_operation_list.extend(
-            self._get_symlink_file_system_operation(file_link)
-            for file_link in application_files.link
-        )
-        # Generate configure file system operations
-        file_operation_list.extend(
-            self._write_tagged_entity_files(file_configure)
-            for file_configure in application_files.tagged
-        )
-        return file_operation_list
+        if self.job.entity.files.link:
+            self._get_symlink_file_system_operation(self.job.entity, self.path)
+        if self.job.entity.files.tagged:
+            self._write_tagged_entity_files(self.job.entity)
+        if self.job.entity.files.copy:
+            self._get_copy_file_system_operation(self.job.entity, self.path)
+
+
+    @staticmethod
+    def _get_copy_file_system_operation(app: Application, dest: str) -> None:
+        """Get copy file system operation for a file.
+
+        :param linked_file: The file to be copied.
+        :return: A list of copy file system operations.
+        """
+        for src in app.files.copy:
+            parser = get_parser()
+            if Path(src).is_dir:
+                cmd = f"copy {src} {dest} --dirs_exist_ok"
+            else:
+                cmd = f"copy {src} {dest}"
+            args = cmd.split()
+            ns = parser.parse_args(args)
+            file_operations.copy(ns)
+
+
+    @staticmethod
+    def _get_symlink_file_system_operation(app: Application, dest: str) -> None:
+        """Get symlink file system operation for a file.
+
+        :param linked_file: The file to be symlinked.
+        :return: A list of symlink file system operations.
+        """
+        for sym in app.files.link:
+            # Check if path is a directory
+            if Path(sym).is_dir():
+                # Normalize the path to remove trailing slashes
+                normalized_path = os.path.normpath(sym)
+                # Get the parent directory (last folder)
+                parent_dir = os.path.basename(normalized_path)
+                dest = Path(dest) / parent_dir
+                parser = get_parser()
+                cmd = f"symlink {sym} {dest}"
+                args = cmd.split()
+                ns = parser.parse_args(args)
+                file_operations.symlink(ns)
+            # Path is a file
+            else:
+                # Normalize the path to remove trailing slashes
+                normalized_path = os.path.normpath(sym)
+                # Get the parent directory (last folder)
+                parent_file = os.path.basename(normalized_path)
+                new_dest = os.path.join(dest,parent_file)
+                parser = get_parser()
+                cmd = f"symlink {sym} {new_dest}"
+                args = cmd.split()
+                ns = parser.parse_args(args)
+                file_operations.symlink(ns)
+                
+
 
     # TODO update this to execute the file operations when entrypoint is merged in
-    def _write_tagged_entity_files(self, configure_file: str) -> t.Sequence[str]:
+    def _write_tagged_entity_files(self, app: Application) -> None:
         """Read, configure and write the tagged input files for
            a Application instance within an ensemble. This function
            specifically deals with the tagged files attached to
@@ -231,7 +277,7 @@ class Generator:
 
         :param entity: a Application instance
         """
-        # if entity.files:
+        # if app.files:
         #     to_write = []
 
         #     def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
@@ -242,48 +288,41 @@ class Generator:
         #                        directory structure
         #         """
         #         for file in tagged.files:
-        #             dst_path = path.join(entity.path, tagged.base, path.basename(file))
+        #             dst_path = path.join(self.path, tagged.base, path.basename(file))
         #             shutil.copyfile(file, dst_path)
         #             to_write.append(dst_path)
 
         #         for tagged_dir in tagged.dirs:
         #             mkdir(
         #                 path.join(
-        #                     entity.path, tagged.base, path.basename(tagged_dir.base)
+        #                     self.path, tagged.base, path.basename(tagged_dir.base)
         #                 )
         #             )
         #             _build_tagged_files(tagged_dir)
 
-        #     if entity.files.tagged_hierarchy:
-        #         _build_tagged_files(entity.files.tagged_hierarchy)
+        #     if app.files.tagged_hierarchy:
+        #         _build_tagged_files(app.files.tagged_hierarchy)
 
-        #     # write in changes to configurations
-        #     if isinstance(entity, Application):
-        #         files_to_params = self._writer.configure_tagged_application_files(
-        #             to_write, entity.params
-        #         )
-        #         self._log_params(entity, files_to_params)
-        return ["temporary", "config"]
-
-    # TODO replace with entrypoint operation
-    @staticmethod
-    def _get_copy_file_system_operation(copy_file: str) -> t.Sequence[str]:
-        """Get copy file system operation for a file.
-
-        :param linked_file: The file to be copied.
-        :return: A list of copy file system operations.
-        """
-        return ["temporary", "copy"]
-
-    # TODO replace with entrypoint operation
-    @staticmethod
-    def _get_symlink_file_system_operation(linked_file: str) -> t.Sequence[str]:
-        """Get symlink file system operation for a file.
-
-        :param linked_file: The file to be symlinked.
-        :return: A list of symlink file system operations.
-        """
-        return ["temporary", "link"]
+            # Configure param file
+        if app.files.tagged:
+            # copy files to job directory
+            for file in app.files.tagged:
+                # Copy the contents of a source to a destination folder
+                shutil.copy(file, self.path)
+            # Pickle the dictionary
+            pickled_dict = pickle.dumps(app.params)
+            tag = ";"
+            # Encode the pickled dictionary with Base64
+            encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
+            tagged_files = sorted(glob(self.path + "/*"))
+            for tagged_file in tagged_files:
+                parser = get_parser()
+                cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
+                args = cmd.split()
+                ns = parser.parse_args(args)
+                file_operations.configure(ns)
+            # TODO address in ticket 723
+            # self._log_params(entity, files_to_params)
 
     # TODO to be refactored in ticket 723
     # def _log_params(
