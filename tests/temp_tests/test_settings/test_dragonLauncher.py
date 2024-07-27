@@ -25,8 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
+from smartsim._core.launcher.dragon.dragonLauncher import (
+    _as_run_request_args_and_policy,
+)
+from smartsim._core.schemas.dragonRequests import DragonRunPolicy, DragonRunRequestView
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.dragon import DragonArgBuilder
+from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -43,12 +47,59 @@ def test_launcher_str():
     [
         pytest.param("set_nodes", (2,), "2", "nodes", id="set_nodes"),
         pytest.param(
-            "set_tasks_per_node", (2,), "2", "tasks-per-node", id="set_tasks_per_node"
+            "set_tasks_per_node", (2,), "2", "tasks_per_node", id="set_tasks_per_node"
         ),
     ],
 )
 def test_dragon_class_methods(function, value, flag, result):
     dragonLauncher = LaunchSettings(launcher=LauncherType.Dragon)
-    assert isinstance(dragonLauncher._arg_builder, DragonArgBuilder)
+    assert isinstance(dragonLauncher._arguments, DragonLaunchArguments)
     getattr(dragonLauncher.launch_args, function)(*value)
     assert dragonLauncher.launch_args._launch_args[flag] == result
+
+
+NOT_SET = object()
+
+
+@pytest.mark.parametrize("nodes", (NOT_SET, 20, 40))
+@pytest.mark.parametrize("tasks_per_node", (NOT_SET, 1, 20))
+@pytest.mark.parametrize("cpu_affinity", (NOT_SET, [1], [1, 2, 3]))
+@pytest.mark.parametrize("gpu_affinity", (NOT_SET, [1], [1, 2, 3]))
+def test_formatting_launch_args_into_request(
+    mock_echo_executable, nodes, tasks_per_node, cpu_affinity, gpu_affinity
+):
+    launch_args = DragonLaunchArguments({})
+    if nodes is not NOT_SET:
+        launch_args.set_nodes(nodes)
+    if tasks_per_node is not NOT_SET:
+        launch_args.set_tasks_per_node(tasks_per_node)
+    if cpu_affinity is not NOT_SET:
+        launch_args.set_cpu_affinity(cpu_affinity)
+    if gpu_affinity is not NOT_SET:
+        launch_args.set_gpu_affinity(gpu_affinity)
+    req, policy = _as_run_request_args_and_policy(launch_args, mock_echo_executable, {})
+
+    expected_args = {
+        k: v
+        for k, v in {
+            "nodes": nodes,
+            "tasks_per_node": tasks_per_node,
+        }.items()
+        if v is not NOT_SET
+    }
+    expected_run_req = DragonRunRequestView(
+        exe="echo", exe_args=["hello", "world"], path="/tmp", env={}, **expected_args
+    )
+    assert req.exe == expected_run_req.exe
+    assert req.exe_args == expected_run_req.exe_args
+    assert req.nodes == expected_run_req.nodes
+    assert req.tasks_per_node == expected_run_req.tasks_per_node
+    assert req.hostlist == expected_run_req.hostlist
+    assert req.pmi_enabled == expected_run_req.pmi_enabled
+
+    expected_run_policy_args = {
+        k: v
+        for k, v in {"cpu_affinity": cpu_affinity, "gpu_affinity": gpu_affinity}.items()
+        if v is not NOT_SET
+    }
+    assert policy == DragonRunPolicy(**expected_run_policy_args)

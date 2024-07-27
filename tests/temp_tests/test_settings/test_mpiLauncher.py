@@ -29,10 +29,13 @@ import itertools
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.mpi import (
-    MpiArgBuilder,
-    MpiexecArgBuilder,
-    OrteArgBuilder,
+from smartsim.settings.arguments.launch.mpi import (
+    MpiexecLaunchArguments,
+    MpirunLaunchArguments,
+    OrterunLaunchArguments,
+    _as_mpiexec_command,
+    _as_mpirun_command,
+    _as_orterun_command,
 )
 from smartsim.settings.launchCommand import LauncherType
 
@@ -130,9 +133,9 @@ def test_launcher_str(launcher):
                     ),
                 )
                 for l in (
-                    [LauncherType.Mpirun, MpiArgBuilder],
-                    [LauncherType.Mpiexec, MpiexecArgBuilder],
-                    [LauncherType.Orterun, OrteArgBuilder],
+                    [LauncherType.Mpirun, MpirunLaunchArguments],
+                    [LauncherType.Mpiexec, MpiexecLaunchArguments],
+                    [LauncherType.Orterun, OrterunLaunchArguments],
                 )
             )
         )
@@ -140,7 +143,7 @@ def test_launcher_str(launcher):
 )
 def test_mpi_class_methods(l, function, value, flag, result):
     mpiSettings = LaunchSettings(launcher=l[0])
-    assert isinstance(mpiSettings._arg_builder, l[1])
+    assert isinstance(mpiSettings._arguments, l[1])
     getattr(mpiSettings.launch_args, function)(*value)
     assert mpiSettings.launch_args._launch_args[flag] == result
 
@@ -233,3 +236,53 @@ def test_invalid_hostlist_format(launcher):
         mpiSettings.launch_args.set_hostlist([5])
     with pytest.raises(TypeError):
         mpiSettings.launch_args.set_hostlist(5)
+
+
+@pytest.mark.parametrize(
+    "cls, fmt, cmd",
+    (
+        pytest.param(
+            MpirunLaunchArguments, _as_mpirun_command, "mpirun", id="w/ mpirun"
+        ),
+        pytest.param(
+            MpiexecLaunchArguments, _as_mpiexec_command, "mpiexec", id="w/ mpiexec"
+        ),
+        pytest.param(
+            OrterunLaunchArguments, _as_orterun_command, "orterun", id="w/ orterun"
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "args, expected",
+    (
+        pytest.param({}, ("--", "echo", "hello", "world"), id="Empty Args"),
+        pytest.param(
+            {"n": "1"},
+            ("--n", "1", "--", "echo", "hello", "world"),
+            id="Short Arg",
+        ),
+        pytest.param(
+            {"host": "myhost"},
+            ("--host", "myhost", "--", "echo", "hello", "world"),
+            id="Long Arg",
+        ),
+        pytest.param(
+            {"v": None},
+            ("--v", "--", "echo", "hello", "world"),
+            id="Short Arg (No Value)",
+        ),
+        pytest.param(
+            {"verbose": None},
+            ("--verbose", "--", "echo", "hello", "world"),
+            id="Long Arg (No Value)",
+        ),
+        pytest.param(
+            {"n": "1", "host": "myhost"},
+            ("--n", "1", "--host", "myhost", "--", "echo", "hello", "world"),
+            id="Short and Long Args",
+        ),
+    ),
+)
+def test_formatting_launch_args(mock_echo_executable, cls, fmt, cmd, args, expected):
+    fmt_cmd = fmt(cls(args), mock_echo_executable, {})
+    assert tuple(fmt_cmd) == (cmd,) + expected

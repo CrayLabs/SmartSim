@@ -24,9 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import annotations
+from .lsf import BsubBatchArguments
+from .pbs import QsubBatchArguments
+from .slurm import SlurmBatchArguments
 
-import typing as t
-
-TODO = t.Any  # TODO: remove this after refactor
-LaunchedJobID = t.NewType("LaunchedJobID", str)
+__all__ = [
+    "BsubBatchArguments",
+    "QsubBatchArguments",
+    "SlurmBatchArguments",
+]

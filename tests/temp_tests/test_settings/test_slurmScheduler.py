@@ -26,8 +26,8 @@
 import pytest
 
 from smartsim.settings import BatchSettings
+from smartsim.settings.arguments.batch.slurm import SlurmBatchArguments
 from smartsim.settings.batchCommand import SchedulerType
-from smartsim.settings.builders.batch.slurm import SlurmBatchArgBuilder
 
 pytestmark = pytest.mark.group_a
 
@@ -84,7 +84,7 @@ def test_create_sbatch():
     slurmScheduler = BatchSettings(
         batch_scheduler=SchedulerType.Slurm, scheduler_args=batch_args
     )
-    assert isinstance(slurmScheduler._arg_builder, SlurmBatchArgBuilder)
+    assert isinstance(slurmScheduler._arguments, SlurmBatchArguments)
     args = slurmScheduler.format_batch_args()
     assert args == ["--exclusive", "--oversubscribe"]
 
@@ -132,6 +132,5 @@ def test_sbatch_manual():
     slurmScheduler.scheduler_args.set_account("A3531")
     slurmScheduler.scheduler_args.set_walltime("10:00:00")
     formatted = slurmScheduler.format_batch_args()
-    print(f"here: {formatted}")
     result = ["--nodes=5", "--account=A3531", "--time=10:00:00"]
     assert formatted == result

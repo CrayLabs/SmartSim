@@ -29,21 +29,30 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
+from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
 
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
+_as_pals_command = make_shell_format_fn(run_command="mpiexec")
 
 
-class PalsMpiexecArgBuilder(LaunchArgBuilder):
+@dispatch(with_format=_as_pals_command, to_launcher=ShellLauncher)
+class PalsMpiexecLaunchArguments(LaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Pals.value
 
     def _reserved_launch_args(self) -> set[str]:
-        """Return reserved launch arguments."""
+        """Return reserved launch arguments.
+
+        :returns: The set of reserved launcher arguments
+        """
         return {"wdir", "wd"}
 
     def set_cpu_binding_type(self, bind_type: str) -> None:
@@ -136,14 +145,17 @@ class PalsMpiexecArgBuilder(LaunchArgBuilder):
         return args
 
     def set(self, key: str, value: str | None) -> None:
-        """Set the launch arguments"""
+        """Set an arbitrary launch argument
+
+        :param key: The launch argument
+        :param value: A string representation of the value for the launch
+            argument (if applicable), otherwise `None`
+        """
         set_check_input(key, value)
         if key in self._reserved_launch_args():
             logger.warning(
-                (
-                    f"Could not set argument '{key}': "
-                    f"it is a reserved argument of '{type(self).__name__}'"
-                )
+                f"Could not set argument '{key}': "
+                f"it is a reserved argument of '{type(self).__name__}'"
             )
             return
         if key in self._launch_args and key != self._launch_args[key]:

@@ -182,7 +182,6 @@ extras_require = {
         "types-tqdm",
         "types-tensorflow==2.12.0.9",
         "types-setuptools",
-        "typing_extensions>=4.1.0,<4.6",
     ],
     "docs": [
         "Sphinx==6.2.1",
@@ -226,6 +225,7 @@ setup(
         "pygithub>=2.3.0",
         "numpy<2",
         "smartredis>=0.5,<0.6",
+        "typing_extensions>=4.1.0,<4.6",
     ],
     cmdclass={
         "build_py": SmartSimBuild,

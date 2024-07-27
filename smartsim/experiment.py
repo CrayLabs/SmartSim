@@ -26,15 +26,19 @@
 
 # pylint: disable=too-many-lines
 
+from __future__ import annotations
+
 import os
 import os.path as osp
+import textwrap
 import typing as t
 from os import environ, getcwd
 
 from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
-from smartsim.error.errors import SSUnsupportedError
+from smartsim.error import errors
+from smartsim.settings import dispatch
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
@@ -48,8 +52,11 @@ from .entity import (
 )
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
-from .settings import BatchSettings, Container, RunSettings
-from .wlm import detect_launcher
+
+if t.TYPE_CHECKING:
+    from smartsim.launchable.job import Job
+    from smartsim.settings.dispatch import ExecutableProtocol, LauncherProtocol
+    from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
 
@@ -98,19 +105,14 @@ class Experiment:
     and utilized throughout runtime.
     """
 
-    def __init__(
-        self,
-        name: str,
-        exp_path: t.Optional[str] = None,
-        launcher: str = "local",
-    ):
+    def __init__(self, name: str, exp_path: str | None = None):
         """Initialize an Experiment instance.
 
         With the default settings, the Experiment will use the
         local launcher, which will start all Experiment created
         instances on the localhost.
 
-        Example of initializing an Experiment with the local launcher
+        Example of initializing an Experiment
 
         .. highlight:: python
         .. code-block:: python
@@ -143,10 +145,6 @@ class Experiment:
 
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
-        :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "lsf", "sge", or "local". If set to "auto",
-                         an attempt will be made to find an available launcher
-                         on the system.
         """
         self.name = name
         if exp_path:
@@ -159,135 +157,75 @@ class Experiment:
             exp_path = osp.join(getcwd(), name)
 
         self.exp_path = exp_path
+        """The path under which the experiment operate"""
 
-        self._launcher = launcher.lower()
+        self._active_launchers: set[LauncherProtocol[t.Any]] = set()
+        """The active launchers created, used, and reused by the experiment"""
 
-        if self._launcher == "auto":
-            self._launcher = detect_launcher()
-        if self._launcher == "cobalt":
-            raise SSUnsupportedError("Cobalt launcher is no longer supported.")
-
-        if launcher == "dragon":
-            self._set_dragon_server_path()
-
-        self._control = Controller(launcher=self._launcher)
-
-        self.fs_identifiers: t.Set[str] = set()
+        self._fs_identifiers: t.Set[str] = set()
+        """Set of feature store identifiers currently in use by this
+        experiment
+        """
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
-
-    def _set_dragon_server_path(self) -> None:
-        """Set path for dragon server through environment varialbes"""
-        if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
-            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
-                self.exp_path, CONFIG.dragon_default_subdir
-            )
-
-    @_contextualize
-    def start(
-        self,
-        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        block: bool = True,
-        summary: bool = False,
-        kill_on_interrupt: bool = True,
-    ) -> None:
-        """Start passed instances using Experiment launcher
-
-        Any instance ``Application``, ``Ensemble`` or ``FeatureStore``
-        instance created by the Experiment can be passed as
-        an argument to the start method.
-
-        .. highlight:: python
-        .. code-block:: python
-
-            exp = Experiment(name="my_exp", launcher="slurm")
-            settings = exp.create_run_settings(exe="./path/to/binary")
-            application = exp.create_application("my_application", settings)
-            exp.start(application)
-
-        Multiple entity instances can also be passed to the start method
-        at once no matter which type of instance they are. These will
-        all be launched together.
-
-        .. highlight:: python
-        .. code-block:: python
-
-            exp.start(application_1, application_2, fs, ensemble, block=True)
-            # alternatively
-            stage_1 = [application_1, application_2, fs, ensemble]
-            exp.start(*stage_1, block=True)
-
-
-        If `block==True` the Experiment will poll the launched instances
-        at runtime until all non-feature store jobs have completed. Feature store
-        jobs *must* be killed by the user by passing them to
-        ``Experiment.stop``. This allows for multiple stages of a workflow
-        to produce to and consume from the same FeatureStore feature store.
-
-        If `kill_on_interrupt=True`, then all jobs launched by this
-        experiment are guaranteed to be killed when ^C (SIGINT) signal is
-        received. If `kill_on_interrupt=False`, then it is not guaranteed
-        that all jobs launched by this experiment will be killed, and the
-        zombie processes will need to be manually killed.
-
-        :param block: block execution until all non-feature store
-                       jobs are finished
-        :param summary: print a launch summary prior to launch
-        :param kill_on_interrupt: flag for killing jobs when ^C (SIGINT)
-                                  signal is received.
+        """Switch to specify if telemetry data should be produced for this
+        experiment
         """
-        start_manifest = Manifest(*args)
-        self._create_entity_dir(start_manifest)
-        try:
-            if summary:
-                self._launch_summary(start_manifest)
-            self._control.start(
-                exp_name=self.name,
-                exp_path=self.exp_path,
-                manifest=start_manifest,
-                block=block,
-                kill_on_interrupt=kill_on_interrupt,
-            )
-        except SmartSimError as e:
-            logger.error(e)
-            raise
 
-    @_contextualize
-    def stop(
-        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> None:
-        """Stop specific instances launched by this ``Experiment``
+    def start(self, *jobs: Job) -> tuple[LaunchedJobID, ...]:
+        """Execute a collection of `Job` instances.
 
-        Instances of ``Application``, ``Ensemble`` and ``FeatureStore``
-        can all be passed as arguments to the stop method.
-
-        Whichever launcher was specified at Experiment initialization
-        will be used to stop the instance. For example, which using
-        the slurm launcher, this equates to running `scancel` on the
-        instance.
-
-        Example
-
-        .. highlight:: python
-        .. code-block:: python
-
-            exp.stop(application)
-            # multiple
-            exp.stop(application_1, application_2, fs, ensemble)
-
-        :param args: One or more SmartSimEntity or EntitySequence objects.
-        :raises TypeError: if wrong type
-        :raises SmartSimError: if stop request fails
+        :param jobs: A collection of other job instances to start
+        :returns: A sequence of ids with order corresponding to the sequence of
+            jobs that can be used to query or alter the status of that
+            particular execution of the job.
         """
-        stop_manifest = Manifest(*args)
-        try:
-            for entity in stop_manifest.applications:
-                self._control.stop_entity(entity)
-            fss = stop_manifest.fss
-            for fs in fss:
-                self._control.stop_fs(fs)
-        except SmartSimError as e:
-            logger.error(e)
-            raise
+        return self._dispatch(dispatch.DEFAULT_DISPATCHER, *jobs)
+
+    def _dispatch(
+        self, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
+    ) -> tuple[LaunchedJobID, ...]:
+        """Dispatch a series of jobs with a particular dispatcher
+
+        :param dispatcher: The dispatcher that should be used to determine how
+            to start a job based on its launch settings.
+        :param job: The first job instance to dispatch
+        :param jobs: A collection of other job instances to dispatch
+        :returns: A sequence of ids with order corresponding to the sequence of
+            jobs that can be used to query or alter the status of that
+            particular dispatch of the job.
+        """
+
+        def execute_dispatch(job: Job) -> LaunchedJobID:
+            args = job.launch_settings.launch_args
+            env = job.launch_settings.env_vars
+            # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            # FIXME: Remove this cast after `SmartSimEntity` conforms to
+            #        protocol. For now, live with the "dangerous" type cast
+            # ---------------------------------------------------------------------
+            exe = t.cast("ExecutableProtocol", job.entity)
+            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            dispatch = dispatcher.get_dispatch(args)
+            try:
+                # Check to see if one of the existing launchers can be
+                # configured to handle the launch arguments ...
+                launch_config = dispatch.configure_first_compatible_launcher(
+                    from_available_launchers=self._active_launchers,
+                    with_arguments=args,
+                )
+            except errors.LauncherNotFoundError:
+                # ... otherwise create a new launcher that _can_ handle the
+                # launch arguments and configure _that_ one
+                launch_config = dispatch.create_new_launcher_configuration(
+                    for_experiment=self, with_arguments=args
+                )
+            # Save the underlying launcher instance. That way we do not need to
+            # spin up a launcher instance for each individual job, and it makes
+            # it easier to monitor job statuses
+            # pylint: disable-next=protected-access
+            self._active_launchers.add(launch_config._adapted_launcher)
+            return launch_config.start(exe, env)
+
+        return execute_dispatch(job), *map(execute_dispatch, jobs)
 
     @_contextualize
     def generate(
@@ -323,128 +261,6 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_contextualize
-    def poll(
-        self, interval: int = 10, verbose: bool = True, kill_on_interrupt: bool = True
-    ) -> None:
-        """Monitor jobs through logging to stdout.
-
-        This method should only be used if jobs were launched
-        with ``Experiment.start(block=False)``
-
-        The internal specified will control how often the
-        logging is performed, not how often the polling occurs.
-        By default, internal polling is set to every second for
-        local launcher jobs and every 10 seconds for all other
-        launchers.
-
-        If internal polling needs to be slower or faster based on
-        system or site standards, set the ``SMARTSIM_JM_INTERNAL``
-        environment variable to control the internal polling interval
-        for SmartSim.
-
-        For more verbose logging output, the ``SMARTSIM_LOG_LEVEL``
-        environment variable can be set to `debug`
-
-        If `kill_on_interrupt=True`, then all jobs launched by this
-        experiment are guaranteed to be killed when ^C (SIGINT) signal is
-        received. If `kill_on_interrupt=False`, then it is not guaranteed
-        that all jobs launched by this experiment will be killed, and the
-        zombie processes will need to be manually killed.
-
-        :param interval: frequency (in seconds) of logging to stdout
-        :param verbose: set verbosity
-        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
-        :raises SmartSimError: if poll request fails
-        """
-        try:
-            self._control.poll(interval, verbose, kill_on_interrupt=kill_on_interrupt)
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    @_contextualize
-    def finished(self, entity: SmartSimEntity) -> bool:
-        """Query if a job has completed.
-
-        An instance of ``application`` or ``Ensemble`` can be passed
-        as an argument.
-
-        Passing ``FeatureStore`` will return an error as a
-        feature store deployment is never finished until stopped
-        by the user.
-
-        :param entity: object launched by this ``Experiment``
-        :returns: True if the job has finished, False otherwise
-        :raises SmartSimError: if entity has not been launched
-                               by this ``Experiment``
-        """
-        try:
-            return self._control.finished(entity)
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    @_contextualize
-    def get_status(
-        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> t.List[SmartSimStatus]:
-        """Query the status of launched entity instances
-
-        Return a smartsim.status string representing
-        the status of the launched instance.
-
-        .. highlight:: python
-        .. code-block:: python
-
-            exp.get_status(application)
-
-        As with an Experiment method, multiple instance of
-        varying types can be passed to and all statuses will
-        be returned at once.
-
-        .. highlight:: python
-        .. code-block:: python
-
-            statuses = exp.get_status(application, ensemble, featurestore)
-            complete = [s == smartsim.status.STATUS_COMPLETED for s in statuses]
-            assert all(complete)
-
-        :returns: status of the instances passed as arguments
-        :raises SmartSimError: if status retrieval fails
-        """
-        try:
-            manifest = Manifest(*args)
-            statuses: t.List[SmartSimStatus] = []
-            for entity in manifest.applications:
-                statuses.append(self._control.get_entity_status(entity))
-            for entity_list in manifest.all_entity_lists:
-                statuses.extend(self._control.get_entity_list_status(entity_list))
-            return statuses
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    @_contextualize
-    def reconnect_feature_store(self, checkpoint: str) -> FeatureStore:
-        """Reconnect to a running ``FeatureStore``
-
-        This method can be used to connect to a ``FeatureStore`` deployment
-        that was launched by a previous ``Experiment``. This can be
-        helpful in the case where separate runs of an ``Experiment``
-        wish to use the same ``FeatureStore`` instance currently
-        running on a system.
-
-        :param checkpoint: the `smartsim_db.dat` file created
-                           when an ``FeatureStore`` is launched
-        """
-        try:
-            feature_store = self._control.reload_saved_fs(checkpoint)
-            return feature_store
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
     def preview(
         self,
         *args: t.Any,
@@ -474,9 +290,6 @@ class Experiment:
             output to stdout. Defaults to None.
         """
 
-        # Retrieve any active feature store jobs
-        active_fsjobs = self._control.active_feature_store_jobs
-
         preview_manifest = Manifest(*args)
 
         previewrenderer.render(
@@ -485,12 +298,7 @@ class Experiment:
             verbosity_level,
             output_format,
             output_filename,
-            active_fsjobs,
         )
-
-    @property
-    def launcher(self) -> str:
-        return self._launcher
 
     @_contextualize
     def summary(self, style: str = "github") -> str:
@@ -504,7 +312,6 @@ class Experiment:
                        https://github.com/astanin/python-tabulate
         :return: tabulate string of ``Experiment`` history
         """
-        values = []
         headers = [
             "Name",
             "Entity-Type",
@@ -514,21 +321,8 @@ class Experiment:
             "Status",
             "Returncode",
         ]
-        for job in self._control.get_jobs().values():
-            for run in range(job.history.runs + 1):
-                values.append(
-                    [
-                        job.entity.name,
-                        job.entity.type,
-                        job.history.jids[run],
-                        run,
-                        f"{job.history.job_times[run]:.4f}",
-                        job.history.statuses[run],
-                        job.history.returns[run],
-                    ]
-                )
         return tabulate(
-            values,
+            [],
             headers,
             showindex=True,
             tablefmt=style,
@@ -544,35 +338,11 @@ class Experiment:
         """
         return self._telemetry_cfg
 
-    def _launch_summary(self, manifest: Manifest) -> None:
-        """Experiment pre-launch summary of entities that will be launched
-
-        :param manifest: Manifest of deployables.
-        """
-
-        summary = "\n\n=== Launch Summary ===\n"
-        summary += f"Experiment: {self.name}\n"
-        summary += f"Experiment Path: {self.exp_path}\n"
-        summary += f"Launcher: {self._launcher}\n"
-        if manifest.applications:
-            summary += f"Applications: {len(manifest.applications)}\n"
-
-        if self._control.feature_store_active:
-            summary += "Feature Store Status: active\n"
-        elif manifest.fss:
-            summary += "Feature Store Status: launching\n"
-        else:
-            summary += "Feature Store Status: inactive\n"
-
-        summary += f"\n{str(manifest)}"
-
-        logger.info(summary)
-
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
         def create_entity_dir(
             entity: t.Union[FeatureStore, Application, Ensemble]
         ) -> None:
-            if not os.path.isdir(entity.path):
+            if not osp.isdir(entity.path):
                 os.makedirs(entity.path)
 
         for application in start_manifest.applications:
@@ -589,11 +359,11 @@ class Experiment:
 
     def _append_to_fs_identifier_list(self, fs_identifier: str) -> None:
         """Check if fs_identifier already exists when calling create_feature_store"""
-        if fs_identifier in self.fs_identifiers:
+        if fs_identifier in self._fs_identifiers:
             logger.warning(
                 f"A feature store with the identifier {fs_identifier} has already been made "
                 "An error will be raised if multiple Feature Stores are started "
                 "with the same identifier"
             )
         # Otherwise, add
-        self.fs_identifiers.add(fs_identifier)
+        self._fs_identifiers.add(fs_identifier)

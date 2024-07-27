@@ -26,7 +26,10 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.alps import AprunArgBuilder
+from smartsim.settings.arguments.launch.alps import (
+    AprunLaunchArguments,
+    _as_aprun_command,
+)
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -111,14 +114,14 @@ def test_launcher_str():
 )
 def test_alps_class_methods(function, value, flag, result):
     alpsLauncher = LaunchSettings(launcher=LauncherType.Alps)
-    assert isinstance(alpsLauncher._arg_builder, AprunArgBuilder)
+    assert isinstance(alpsLauncher._arguments, AprunLaunchArguments)
     getattr(alpsLauncher.launch_args, function)(*value)
     assert alpsLauncher.launch_args._launch_args[flag] == result
 
 
 def test_set_verbose_launch():
     alpsLauncher = LaunchSettings(launcher=LauncherType.Alps)
-    assert isinstance(alpsLauncher._arg_builder, AprunArgBuilder)
+    assert isinstance(alpsLauncher._arguments, AprunLaunchArguments)
     alpsLauncher.launch_args.set_verbose_launch(True)
     assert alpsLauncher.launch_args._launch_args == {"debug": "7"}
     alpsLauncher.launch_args.set_verbose_launch(False)
@@ -127,7 +130,7 @@ def test_set_verbose_launch():
 
 def test_set_quiet_launch():
     aprunLauncher = LaunchSettings(launcher=LauncherType.Alps)
-    assert isinstance(aprunLauncher._arg_builder, AprunArgBuilder)
+    assert isinstance(aprunLauncher._arguments, AprunLaunchArguments)
     aprunLauncher.launch_args.set_quiet_launch(True)
     assert aprunLauncher.launch_args._launch_args == {"quiet": None}
     aprunLauncher.launch_args.set_quiet_launch(False)
@@ -137,7 +140,7 @@ def test_set_quiet_launch():
 def test_format_env_vars():
     env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose"}
     aprunLauncher = LaunchSettings(launcher=LauncherType.Alps, env_vars=env_vars)
-    assert isinstance(aprunLauncher._arg_builder, AprunArgBuilder)
+    assert isinstance(aprunLauncher._arguments, AprunLaunchArguments)
     aprunLauncher.update_env({"OMP_NUM_THREADS": "10"})
     formatted = aprunLauncher.format_env_vars()
     result = ["-e", "OMP_NUM_THREADS=10", "-e", "LOGGING=verbose"]
@@ -174,3 +177,39 @@ def test_invalid_exclude_hostlist_format():
         alpsLauncher.launch_args.set_excluded_hosts([5])
     with pytest.raises(TypeError):
         alpsLauncher.launch_args.set_excluded_hosts(5)
+
+
+@pytest.mark.parametrize(
+    "args, expected",
+    (
+        pytest.param({}, ("aprun", "--", "echo", "hello", "world"), id="Empty Args"),
+        pytest.param(
+            {"N": "1"},
+            ("aprun", "-N", "1", "--", "echo", "hello", "world"),
+            id="Short Arg",
+        ),
+        pytest.param(
+            {"cpus-per-pe": "1"},
+            ("aprun", "--cpus-per-pe=1", "--", "echo", "hello", "world"),
+            id="Long Arg",
+        ),
+        pytest.param(
+            {"q": None},
+            ("aprun", "-q", "--", "echo", "hello", "world"),
+            id="Short Arg (No Value)",
+        ),
+        pytest.param(
+            {"quiet": None},
+            ("aprun", "--quiet", "--", "echo", "hello", "world"),
+            id="Long Arg (No Value)",
+        ),
+        pytest.param(
+            {"N": "1", "cpus-per-pe": "123"},
+            ("aprun", "-N", "1", "--cpus-per-pe=123", "--", "echo", "hello", "world"),
+            id="Short and Long Args",
+        ),
+    ),
+)
+def test_formatting_launch_args(mock_echo_executable, args, expected):
+    cmd = _as_aprun_command(AprunLaunchArguments(args), mock_echo_executable, {})
+    assert tuple(cmd) == expected

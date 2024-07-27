@@ -30,6 +30,7 @@ import os
 import typing as t
 
 from smartsim._core.schemas.dragonRequests import DragonRunPolicy
+from smartsim.types import LaunchedJobID
 
 from ...._core.launcher.stepMapping import StepMap
 from ....error import LauncherError, SmartSimError
@@ -44,6 +45,7 @@ from ....settings import (
 from ....status import SmartSimStatus
 from ...schemas import (
     DragonRunRequest,
+    DragonRunRequestView,
     DragonRunResponse,
     DragonStopRequest,
     DragonStopResponse,
@@ -56,6 +58,11 @@ from ..slurm.slurmLauncher import SlurmLauncher
 from ..step import DragonBatchStep, DragonStep, LocalStep, Step
 from ..stepInfo import StepInfo
 from .dragonConnector import DragonConnector, _SchemaT
+
+if t.TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from smartsim.experiment import Experiment
 
 logger = get_logger(__name__)
 
@@ -74,9 +81,9 @@ class DragonLauncher(WLMLauncher):
     the Job Manager to interact with it.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, server_path: str | os.PathLike[str]) -> None:
         super().__init__()
-        self._connector = DragonConnector()
+        self._connector = DragonConnector(server_path)
         """Connector used to start and interact with the Dragon server"""
         self._slurm_launcher = SlurmLauncher()
         """Slurm sub-launcher, used only for batch jobs"""
@@ -120,6 +127,22 @@ class DragonLauncher(WLMLauncher):
             managed=step_map.managed,
         )
         sublauncher.add_step_to_mapping_table(name, sublauncher_step_map)
+
+    @classmethod
+    def create(cls, exp: Experiment) -> Self:
+        self = cls(exp.exp_path)
+        self._connector.connect_to_dragon()  # pylint: disable=protected-access
+        return self
+
+    def start(
+        self, args_and_policy: tuple[DragonRunRequestView, DragonRunPolicy]
+    ) -> LaunchedJobID:
+        req_args, policy = args_and_policy
+        self._connector.load_persisted_env()
+        merged_env = self._connector.merge_persisted_env(os.environ.copy())
+        req = DragonRunRequest(**dict(req_args), current_env=merged_env, policy=policy)
+        res = _assert_schema_type(self._connector.send_request(req), DragonRunResponse)
+        return LaunchedJobID(res.step_id)
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
@@ -167,15 +190,12 @@ class DragonLauncher(WLMLauncher):
             run_args = step.run_settings.run_args
             req_env = step.run_settings.env_vars
             self._connector.load_persisted_env()
-            merged_env = self._connector.merge_persisted_env(os.environ.copy())
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
-
             policy = DragonRunPolicy.from_run_args(run_args)
-
-            response = _assert_schema_type(
-                self._connector.send_request(
-                    DragonRunRequest(
+            step_id = self.start(
+                (
+                    DragonRunRequestView(
                         exe=cmd[0],
                         exe_args=cmd[1:],
                         path=step.cwd,
@@ -183,15 +203,12 @@ class DragonLauncher(WLMLauncher):
                         nodes=nodes,
                         tasks_per_node=tasks_per_node,
                         env=req_env,
-                        current_env=merged_env,
                         output_file=out,
                         error_file=err,
-                        policy=policy,
-                    )
-                ),
-                DragonRunResponse,
+                    ),
+                    policy,
+                )
             )
-            step_id = str(response.step_id)
         else:
             # pylint: disable-next=consider-using-with
             out_strm = open(out, "w+", encoding="utf-8")
@@ -325,3 +342,53 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
     if not isinstance(obj, typ):
         raise TypeError(f"Expected schema of type `{typ}`, but got {type(obj)}")
     return obj
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# TODO: Remove this registry and move back to builder file after fixing
+#       circular import caused by `DragonLauncher.supported_rs`
+# -----------------------------------------------------------------------------
+from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
+from smartsim.settings.dispatch import ExecutableProtocol, dispatch
+
+
+def _as_run_request_args_and_policy(
+    run_req_args: DragonLaunchArguments,
+    exe: ExecutableProtocol,
+    env: t.Mapping[str, str | None],
+) -> tuple[DragonRunRequestView, DragonRunPolicy]:
+    # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    # FIXME: This type is 100% unacceptable, but I don't want to spend too much
+    #        time on fixing the dragon launcher API. Something that we need to
+    #        revisit in the future though.
+    exe_, *args = exe.as_program_arguments()
+    run_args = dict[str, "int | str | float | None"](run_req_args._launch_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
+    return (
+        DragonRunRequestView(
+            exe=exe_,
+            exe_args=args,
+            # FIXME: Currently this is hard coded because the schema requires
+            #        it, but in future, it is almost certainly necessary that
+            #        this will need to be injected by the user or by us to have
+            #        the command execute next to any generated files. A similar
+            #        problem exists for the other settings.
+            # TODO: Find a way to inject this path
+            path=os.getcwd(),
+            env=env,
+            # TODO: Not sure how this info is injected
+            name=None,
+            output_file=None,
+            error_file=None,
+            **run_args,
+        ),
+        policy,
+    )
+
+
+dispatch(
+    DragonLaunchArguments,
+    with_format=_as_run_request_args_and_policy,
+    to_launcher=DragonLauncher,
+)
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

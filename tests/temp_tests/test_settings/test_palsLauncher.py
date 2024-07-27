@@ -27,7 +27,10 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.pals import PalsMpiexecArgBuilder
+from smartsim.settings.arguments.launch.pals import (
+    PalsMpiexecLaunchArguments,
+    _as_pals_command,
+)
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -72,7 +75,7 @@ def test_launcher_str():
 )
 def test_pals_class_methods(function, value, flag, result):
     palsLauncher = LaunchSettings(launcher=LauncherType.Pals)
-    assert isinstance(palsLauncher.launch_args, PalsMpiexecArgBuilder)
+    assert isinstance(palsLauncher.launch_args, PalsMpiexecLaunchArguments)
     getattr(palsLauncher.launch_args, function)(*value)
     assert palsLauncher.launch_args._launch_args[flag] == result
     assert palsLauncher.format_launch_args() == ["--" + flag, str(result)]
@@ -95,3 +98,39 @@ def test_invalid_hostlist_format():
         palsLauncher.launch_args.set_hostlist([5])
     with pytest.raises(TypeError):
         palsLauncher.launch_args.set_hostlist(5)
+
+
+@pytest.mark.parametrize(
+    "args, expected",
+    (
+        pytest.param({}, ("mpiexec", "--", "echo", "hello", "world"), id="Empty Args"),
+        pytest.param(
+            {"n": "1"},
+            ("mpiexec", "--n", "1", "--", "echo", "hello", "world"),
+            id="Short Arg",
+        ),
+        pytest.param(
+            {"host": "myhost"},
+            ("mpiexec", "--host", "myhost", "--", "echo", "hello", "world"),
+            id="Long Arg",
+        ),
+        pytest.param(
+            {"v": None},
+            ("mpiexec", "--v", "--", "echo", "hello", "world"),
+            id="Short Arg (No Value)",
+        ),
+        pytest.param(
+            {"verbose": None},
+            ("mpiexec", "--verbose", "--", "echo", "hello", "world"),
+            id="Long Arg (No Value)",
+        ),
+        pytest.param(
+            {"n": "1", "host": "myhost"},
+            ("mpiexec", "--n", "1", "--host", "myhost", "--", "echo", "hello", "world"),
+            id="Short and Long Args",
+        ),
+    ),
+)
+def test_formatting_launch_args(mock_echo_executable, args, expected):
+    cmd = _as_pals_command(PalsMpiexecLaunchArguments(args), mock_echo_executable, {})
+    assert tuple(cmd) == expected

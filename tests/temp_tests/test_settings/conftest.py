@@ -24,12 +24,39 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .lsf import BsubBatchArgBuilder
-from .pbs import QsubBatchArgBuilder
-from .slurm import SlurmBatchArgBuilder
+import pytest
 
-__all__ = [
-    "BsubBatchArgBuilder",
-    "QsubBatchArgBuilder",
-    "SlurmBatchArgBuilder",
-]
+from smartsim.settings import dispatch
+from smartsim.settings.arguments import launchArguments as launch
+
+
+@pytest.fixture
+def mock_echo_executable():
+    class _MockExe(dispatch.ExecutableProtocol):
+        def as_program_arguments(self):
+            return ("echo", "hello", "world")
+
+    yield _MockExe()
+
+
+@pytest.fixture
+def mock_launch_args():
+    class _MockLaunchArgs(launch.LaunchArguments):
+        def set(self, arg, val): ...
+        def launcher_str(self):
+            return "mock-laucnh-args"
+
+    yield _MockLaunchArgs({})
+
+
+@pytest.fixture
+def mock_launcher():
+    class _MockLauncher(dispatch.LauncherProtocol):
+        def start(self, launchable):
+            return dispatch.create_job_id()
+
+        @classmethod
+        def create(cls, exp):
+            return cls()
+
+    yield _MockLauncher()

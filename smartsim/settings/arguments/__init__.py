@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .batchArgBuilder import BatchArgBuilder
-from .launchArgBuilder import LaunchArgBuilder
+from .batchArguments import BatchArguments
+from .launchArguments import LaunchArguments
 
-__all__ = ["LaunchArgBuilder", "BatchArgBuilder"]
+__all__ = ["LaunchArguments", "BatchArguments"]
