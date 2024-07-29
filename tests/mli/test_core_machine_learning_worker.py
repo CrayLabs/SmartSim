@@ -85,12 +85,12 @@ def persist_torch_tensor(test_dir: str) -> pathlib.Path:
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
-def test_fetch_model_disk(persist_torch_model: pathlib.Path) -> None:
+def test_fetch_model_disk(persist_torch_model: pathlib.Path, test_dir: str) -> None:
     """Verify that the ML worker successfully retrieves a model
     when given a valid (file system) key"""
     worker = MachineLearningWorkerCore
     key = str(persist_torch_model)
-    feature_store = FileSystemFeatureStore()
+    feature_store = FileSystemFeatureStore(test_dir)
     fsd = feature_store.descriptor
     feature_store[str(persist_torch_model)] = persist_torch_model.read_bytes()
 
