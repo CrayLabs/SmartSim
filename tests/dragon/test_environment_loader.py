@@ -26,7 +26,6 @@
 
 import pytest
 
-
 dragon = pytest.importorskip("dragon")
 
 import dragon.utils as du
@@ -34,13 +33,12 @@ from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import DragonFLIError, FLInterface
 
+from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
-
-from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
-
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -53,7 +51,7 @@ pytestmark = pytest.mark.dragon
         pytest.param(b"new byte string"),
     ],
 )
-def test_environment_loader_attach_FLI(content: bytes, monkeypatch: pytest.MonkeyPatch):
+def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.MonkeyPatch):
     """A descriptor can be stored, loaded, and reattached"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
@@ -62,18 +60,18 @@ def test_environment_loader_attach_FLI(content: bytes, monkeypatch: pytest.Monke
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
     config_queue = config.get_queue()
 
-    new_sender = config_queue.send(content)
+    _ = config_queue.send(content)
 
     old_recv = queue.recvh()
     result, _ = old_recv.recv_bytes()
     assert result == content
 
 
-def test_environment_loader_serialize_FLI(monkeypatch: pytest.MonkeyPatch):
+def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
     """The serialized descriptors of a loaded and unloaded
     queue are the same"""
     chan = Channel.make_process_local()
@@ -83,55 +81,35 @@ def test_environment_loader_serialize_FLI(monkeypatch: pytest.MonkeyPatch):
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
     config_queue = config.get_queue()
     assert config_queue._fli.serialize() == queue.serialize()
 
 
-def test_environment_loader_FLI_fails(monkeypatch: pytest.MonkeyPatch):
+def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
     """An incorrect serialized descriptor will fails to attach"""
     monkeypatch.setenv("SSQueue", "randomstring")
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonCommChannel.from_descriptor,
+        callback_factory=None,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
 
     with pytest.raises(DragonFLIError):
-        config_queue = config.get_queue()
+        config.get_queue()
 
 
-def test_environment_loader_backbone_load_fs(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str
-):
-    """Verify the file system feature store is loaded correctly by
-    the EnvironmentConfigLoader to demonstrate fs_factory correctness"""
-    fs = DragonFeatureStore(DDict())
-    monkeypatch.setenv("SS_DRG_DDICT", fs.descriptor)
-
-    config = EnvironmentConfigLoader(
-        featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonCommChannel.from_descriptor,
-    )
-
-    backbone = config.get_backbone()
-    assert backbone is not None
-
-
-def test_environment_loader_backbone_load_dfs(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str
-):
+def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
     """Verify the dragon feature store is loaded correctly by
     the EnvironmentConfigLoader to demonstrate fs_factory correctness"""
-    fs = DragonFeatureStore(DDict())
-    monkeypatch.setenv("SS_DRG_DDICT", fs.descriptor)
+    feature_store = DragonFeatureStore(DDict())
+    monkeypatch.setenv("SS_DRG_DDICT", feature_store.descriptor)
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonCommChannel.from_descriptor,
+        callback_factory=None,
+        queue_factory=None,
     )
 
     backbone = config.get_backbone()
@@ -146,5 +124,5 @@ def test_environment_variables_not_set():
         callback_factory=DragonCommChannel.from_descriptor,
         queue_factory=DragonCommChannel.from_descriptor,
     )
-    assert config.get_backbone() == None
-    assert config.get_queue() == None
+    assert config.get_backbone() is None
+    assert config.get_queue() is None
