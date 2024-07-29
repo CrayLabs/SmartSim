@@ -27,27 +27,26 @@
 import base64
 import os
 import pathlib
-import shutil
 import pickle
+import shutil
 import typing as t
-from glob import glob
 from datetime import datetime
 from distutils import dir_util  # pylint: disable=deprecated-module
+from glob import glob
 from logging import DEBUG, INFO
 from os import mkdir, path, symlink
 from os.path import join, relpath
+from pathlib import Path
 
 from tabulate import tabulate
-from pathlib import Path
 
 from ...database import FeatureStore
 from ...entity import Application, TaggedFilesHierarchy
 from ...launchable import Job, JobGroup
 from ...log import get_logger
-from ..utils.helpers import create_short_id_str
-
 from ..entrypoints import file_operations
 from ..entrypoints.file_operations import get_parser
+from ..utils.helpers import create_short_id_str
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -182,7 +181,7 @@ class Generator:
         pathlib.Path(self.path).mkdir(exist_ok=True, parents=True)
         # Creat Job log directory
         pathlib.Path(self.log_path).mkdir(exist_ok=True, parents=True)
-        
+
         # The log_file only keeps track of the last generation
         # this is to avoid gigantic files in case the user repeats
         # generation several times. The information is anyhow
@@ -199,8 +198,7 @@ class Generator:
         # Return Job directory path
         return self.path
 
-
-    def _build_operations(self) -> t.Sequence[t.Sequence[str]]:
+    def _build_operations(self) -> None:
         """This method generates file system operations based on the provided application.
         It processes three types of operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods and appends the results
@@ -209,10 +207,11 @@ class Generator:
         :param app: The application for which operations are generated.
         :return: A list of lists containing file system operations.
         """
-        self._get_symlink_file_system_operation(self.job.entity, self.path)
-        self._write_tagged_entity_files(self.job.entity)
-        self._get_copy_file_system_operation(self.job.entity, self.path)
-
+        app = t.cast(Application, self.job.entity)
+        self._get_symlink_file_system_operation(app, self.path)
+        self._write_tagged_entity_files(app, self.path)
+        if app.files:
+            self._get_copy_file_system_operation(app, self.path)
 
     @staticmethod
     def _get_copy_file_system_operation(app: Application, dest: str) -> None:
@@ -231,7 +230,6 @@ class Generator:
             ns = parser.parse_args(args)
             file_operations.copy(ns)
 
-
     @staticmethod
     def _get_symlink_file_system_operation(app: Application, dest: str) -> None:
         """Get symlink file system operation for a file.
@@ -245,16 +243,15 @@ class Generator:
             normalized_path = os.path.normpath(sym)
             # Get the parent directory (last folder)
             parent_dir = os.path.basename(normalized_path)
-            dest = Path(dest) / parent_dir
+            dest = os.path.join(dest, parent_dir)
             cmd = f"symlink {sym} {dest}"
             args = cmd.split()
             ns = parser.parse_args(args)
             file_operations.symlink(ns)
-                
-
 
     # TODO update this to execute the file operations when entrypoint is merged in
-    def _write_tagged_entity_files(self, app: Application) -> None:
+    @staticmethod
+    def _write_tagged_entity_files(app: Application, dest: str) -> None:
         """Read, configure and write the tagged input files for
            a Application instance within an ensemble. This function
            specifically deals with the tagged files attached to
@@ -273,21 +270,18 @@ class Generator:
                                directory structure
                 """
                 for file in tagged.files:
-                    dst_path = path.join(self.path, tagged.base, path.basename(file))
+                    dst_path = path.join(dest, tagged.base, path.basename(file))
                     print(dst_path)
                     shutil.copyfile(file, dst_path)
                     to_write.append(dst_path)
 
                 for tagged_dir in tagged.dirs:
-                    mkdir(
-                        path.join(
-                            self.path, tagged.base, path.basename(tagged_dir.base)
-                        )
-                    )
+                    mkdir(path.join(dest, tagged.base, path.basename(tagged_dir.base)))
                     _build_tagged_files(tagged_dir)
+
             if app.files.tagged_hierarchy:
                 _build_tagged_files(app.files.tagged_hierarchy)
-            
+
             # Pickle the dictionary
             pickled_dict = pickle.dumps(app.params)
             # Default tag delimiter
