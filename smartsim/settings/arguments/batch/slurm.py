@@ -40,7 +40,10 @@ logger = get_logger(__name__)
 
 class SlurmBatchArguments(BatchArguments):
     def scheduler_str(self) -> str:
-        """Get the string representation of the scheduler"""
+        """Get the string representation of the scheduler
+
+        :returns: The string representation of the scheduler
+        """
         return SchedulerType.Slurm.value
 
     def set_walltime(self, walltime: str) -> None:
@@ -120,7 +123,7 @@ class SlurmBatchArguments(BatchArguments):
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
-        :return: batch arguments for Sbatch
+        :return: batch arguments for `sbatch`
         """
         opts = []
         # TODO add restricted here
@@ -139,5 +142,11 @@ class SlurmBatchArguments(BatchArguments):
         return opts
 
     def set(self, key: str, value: str | None) -> None:
+        """Set an arbitrary scheduler argument
+
+        :param key: The launch argument
+        :param value: A string representation of the value for the launch
+            argument (if applicable), otherwise `None`
+        """
         # Store custom arguments in the launcher_args
         self._scheduler_args[key] = value

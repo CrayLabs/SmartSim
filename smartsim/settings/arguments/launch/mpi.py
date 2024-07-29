@@ -29,19 +29,15 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
-from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArguments import LaunchArguments
+from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
-_as_mpirun_command = make_shell_format_fn("mpirun")
-_as_mpiexec_command = make_shell_format_fn("mpiexec")
-_as_orterun_command = make_shell_format_fn("orterun")
 
 
-class _BaseMPILaunchArguments(LaunchArguments):
+class _BaseMPIArgBuilder(LaunchArgBuilder):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""
         return {"wd", "wdir"}
@@ -218,22 +214,37 @@ class _BaseMPILaunchArguments(LaunchArguments):
         self._launch_args[key] = value
 
 
-@dispatch(with_format=_as_mpirun_command, to_launcher=ShellLauncher)
-class MpirunLaunchArguments(_BaseMPILaunchArguments):
+class MpiArgBuilder(_BaseMPIArgBuilder):
+    def __init__(
+        self,
+        launch_args: t.Dict[str, str | None] | None,
+    ) -> None:
+        super().__init__(launch_args)
+
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpirun.value
 
 
-@dispatch(with_format=_as_mpiexec_command, to_launcher=ShellLauncher)
-class MpiexecLaunchArguments(_BaseMPILaunchArguments):
+class MpiexecArgBuilder(_BaseMPIArgBuilder):
+    def __init__(
+        self,
+        launch_args: t.Dict[str, str | None] | None,
+    ) -> None:
+        super().__init__(launch_args)
+
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpiexec.value
 
 
-@dispatch(with_format=_as_orterun_command, to_launcher=ShellLauncher)
-class OrterunLaunchArguments(_BaseMPILaunchArguments):
+class OrteArgBuilder(_BaseMPIArgBuilder):
+    def __init__(
+        self,
+        launch_args: t.Dict[str, str | None] | None,
+    ) -> None:
+        super().__init__(launch_args)
+
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Orterun.value

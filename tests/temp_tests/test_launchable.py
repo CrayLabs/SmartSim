@@ -36,6 +36,7 @@ from smartsim.launchable.mpmdjob import MPMDJob
 from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings import LaunchSettings
 
+pytestmark = pytest.mark.group_a
 # TODO replace with LaunchSettings
 
 

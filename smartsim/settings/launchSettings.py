@@ -67,29 +67,38 @@ class LaunchSettings(BaseSettings):
 
     @property
     def launcher(self) -> str:
-        """The launcher type"""
+        """The launcher type
+
+        :returns: The launcher type's string representation
+        """
         return self._launcher.value
 
     @property
     def launch_args(self) -> LaunchArguments:
-        """Return the launch argument translator."""
+        """The launch argument
+
+        :returns: The launch arguments
+        """
         return self._arguments
 
-    @launch_args.setter
-    def launch_args(self, args: t.Mapping[str, str]) -> None:
-        """Update the launch arguments."""
-        self.launch_args._launch_args.clear()
-        for k, v in args.items():
-            self.launch_args.set(k, v)
-
     @property
-    def env_vars(self) -> dict[str, str | None]:
-        """Return an immutable list of attached environment variables."""
+    def env_vars(self) -> t.Mapping[str, str | None]:
+        """A mapping of environment variables to set or remove. This mapping is
+        a deep copy of the mapping used by the settings and as such altering
+        will not mutate the settings.
+
+        :returns: An environment mapping
+        """
         return copy.deepcopy(self._env_vars)
 
     @env_vars.setter
     def env_vars(self, value: dict[str, str | None]) -> None:
-        """Set the environment variables."""
+        """Set the environment variables to a new mapping. This setter will
+        make a copy of the mapping and as such altering the original mapping
+        will not mutate the settings.
+
+        :param value: The new environment mapping
+        """
         self._env_vars = copy.deepcopy(value)
 
     def _get_arguments(self, launch_args: StringArgument | None) -> LaunchArguments:

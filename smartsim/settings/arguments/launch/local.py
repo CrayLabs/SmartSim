@@ -42,13 +42,17 @@ _as_local_command = make_shell_format_fn(run_command=None)
 @dispatch(with_format=_as_local_command, to_launcher=ShellLauncher)
 class LocalLaunchArguments(LaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Local.value
 
     def format_env_vars(self, env_vars: StringArgument) -> t.Union[t.List[str], None]:
-        """Build environment variable string
+        """Build bash compatible sequence of strings to specify an environment
 
-        :returns: formatted list of strings to export variables
+        :param env_vars: An environment mapping
+        :returns: the formatted string of environment variables
         """
         formatted = []
         for key, val in env_vars.items():
@@ -70,7 +74,12 @@ class LocalLaunchArguments(LaunchArguments):
         return formatted
 
     def set(self, key: str, value: str | None) -> None:
-        """Set the launch arguments"""
+        """Set an arbitrary launch argument
+
+        :param key: The launch argument
+        :param value: A string representation of the value for the launch
+            argument (if applicable), otherwise `None`
+        """
         set_check_input(key, value)
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
