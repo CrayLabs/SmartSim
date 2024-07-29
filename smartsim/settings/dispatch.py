@@ -252,8 +252,10 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
                 f"exactly `{self.launcher_type}`"
             )
 
-        def format_(exe: ExecutableProtocol, env: _EnvironMappingType) -> _LaunchableT:
-            return self.formatter(arguments, exe, env)
+        def format_(
+            exe: ExecutableProtocol, env: _EnvironMappingType, path: str
+        ) -> _LaunchableT:
+            return self.formatter(arguments, exe, path, env)
 
         return _LauncherAdapter(launcher, format_)
 
@@ -417,7 +419,10 @@ def make_shell_format_fn(
     """
 
     def impl(
-        args: LaunchArguments, exe: ExecutableProtocol, path: str, _env: _EnvironMappingType
+        args: LaunchArguments,
+        exe: ExecutableProtocol,
+        path: str,
+        _env: _EnvironMappingType,
     ) -> t.Sequence[str]:
         return (
             (

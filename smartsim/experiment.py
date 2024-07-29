@@ -28,8 +28,6 @@
 
 from __future__ import annotations
 
-from __future__ import annotations
-
 import datetime
 import os
 import os.path as osp
@@ -161,7 +159,7 @@ class Experiment:
 
         self.exp_path = exp_path
         """The path under which the experiment operate"""
-        
+
         self._run_ID = (
             "run-"
             + datetime.datetime.now().strftime("%H:%M:%S")
