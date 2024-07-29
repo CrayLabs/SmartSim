@@ -106,7 +106,7 @@ def setup_worker_manager_model_bytes(
     )
 
     tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
-    output_key = MessageHandler.build_tensor_key("key", f"{test_dir}/out")
+    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
     model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
     request = MessageHandler.build_request(
         test_dir, model, [tensor_key], [output_key], [], None
@@ -144,7 +144,7 @@ def setup_worker_manager_model_key(
     )
 
     tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
-    output_key = MessageHandler.build_tensor_key("key", f"{test_dir}/out")
+    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
     model_key = MessageHandler.build_model_key(
         "model key", app_feature_store.descriptor
     )
