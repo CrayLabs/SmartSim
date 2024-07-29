@@ -28,7 +28,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-
 dragon = pytest.importorskip("dragon")
 
 import dragon.utils as du
