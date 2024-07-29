@@ -58,13 +58,13 @@ _EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
 a job
 """
 _FormatterType: TypeAlias = t.Callable[
-    [_DispatchableT, "ExecutableProtocol", _EnvironMappingType], _LaunchableT
+    [_DispatchableT, "ExecutableProtocol", str, _EnvironMappingType], _LaunchableT
 ]
 """A callable that is capable of formatting the components of a job into a type
 capable of being launched by a launcher.
 """
 _LaunchConfigType: TypeAlias = (
-    "_LauncherAdapter[ExecutableProtocol, _EnvironMappingType]"
+    "_LauncherAdapter[ExecutableProtocol, _EnvironMappingType, str]"
 )
 """A launcher adapater that has configured a launcher to launch the components
 of a job with some pre-determined launch settings
@@ -388,7 +388,7 @@ class LauncherProtocol(t.Protocol[_T_contra]):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
+) -> _FormatterType[LaunchArguments, tuple[t.Sequence[str], str]]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 
@@ -423,7 +423,7 @@ def make_shell_format_fn(
         exe: ExecutableProtocol,
         path: str,
         _env: _EnvironMappingType,
-    ) -> t.Sequence[str]:
+    ) -> t.Tuple[t.Sequence[str], str]:
         return (
             (
                 run_command,
@@ -444,7 +444,8 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    def start(self, command: t.Sequence[str]) -> LaunchedJobID:
+    # TODO inject path here
+    def start(self, command: tuple[t.Sequence[str], str]) -> LaunchedJobID:
         id_ = create_job_id()
         exe, *rest = command
         print(f"here is the path: {rest}")

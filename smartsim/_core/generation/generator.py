@@ -42,6 +42,7 @@ from tabulate import tabulate
 
 from ...database import FeatureStore
 from ...entity import Application, TaggedFilesHierarchy
+from ...entity.files import EntityFiles
 from ...launchable import Job, JobGroup
 from ...log import get_logger
 from ..entrypoints import file_operations
@@ -191,7 +192,7 @@ class Generator:
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
         # Prevent access to type FeatureStore entities
-        if isinstance(self.job.entity, Application) and self.job.entity.files:
+        if isinstance(self.job.entity, Application):
             # Perform file system operations on attached files
             self._build_operations()
 
@@ -210,8 +211,7 @@ class Generator:
         app = t.cast(Application, self.job.entity)
         self._get_symlink_file_system_operation(app, self.path)
         self._write_tagged_entity_files(app, self.path)
-        if app.files:
-            self._get_copy_file_system_operation(app, self.path)
+        self._get_copy_file_system_operation(app, self.path)
 
     @staticmethod
     def _get_copy_file_system_operation(app: Application, dest: str) -> None:
@@ -220,9 +220,11 @@ class Generator:
         :param linked_file: The file to be copied.
         :return: A list of copy file system operations.
         """
+        if app.files is None:
+            return
         parser = get_parser()
         for src in app.files.copy:
-            if Path(src).is_dir:
+            if Path(src).is_dir: # TODO figure this out, or how to replace
                 cmd = f"copy {src} {dest} --dirs_exist_ok"
             else:
                 cmd = f"copy {src} {dest}"
@@ -237,6 +239,8 @@ class Generator:
         :param linked_file: The file to be symlinked.
         :return: A list of symlink file system operations.
         """
+        if app.files is None:
+            return
         parser = get_parser()
         for sym in app.files.link:
             # Normalize the path to remove trailing slashes
@@ -259,6 +263,8 @@ class Generator:
 
         :param entity: a Application instance
         """
+        if app.files is None:
+            return
         if app.files.tagged:
             to_write = []
 
