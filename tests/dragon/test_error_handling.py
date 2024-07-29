@@ -28,7 +28,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 
 dragon = pytest.importorskip("dragon")
 
@@ -37,6 +36,7 @@ from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 
+from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
