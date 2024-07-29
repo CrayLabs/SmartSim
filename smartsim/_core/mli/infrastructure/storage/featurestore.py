@@ -29,6 +29,10 @@ from abc import ABC, abstractmethod
 
 from pydantic import BaseModel, Field
 
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
+
 
 class FeatureStoreKey(BaseModel):
     """A key,descriptor pair enabling retrieval of an item from a feature store"""

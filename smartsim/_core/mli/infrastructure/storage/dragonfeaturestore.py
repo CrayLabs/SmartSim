@@ -85,18 +85,9 @@ class DragonFeatureStore(FeatureStore):
         descriptor: str,
         # b64encoded: bool = False,
     ) -> "DragonFeatureStore":
-        # import dragon.data.ddict.ddict as dragon_ddict  # pylint: disable=import-outside-toplevel
 
-        # # if b64encoded:
-        # #     descriptor = base64.b64decode(descriptor).encode("utf-8")
-        # # ddict = DDict.attach(descriptor)
-        # # ddict.attach(descriptor)
-
-        # storage = dragon_ddict.DDict()
-        # storage.attach(descriptor)
-        # return DragonFeatureStore(storage)
-
-        if descriptor is None:
-            print("foo")
-            return None
-        return DragonFeatureStore({"tmp": "here"})
+        try:
+            return DragonFeatureStore(dragon_ddict.DDict.attach(descriptor))
+        except:
+            print(f"error creating dragon feature store: {descriptor}")
+            raise

@@ -29,6 +29,9 @@ import typing as t
 
 import smartsim.error as sse
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 
 class MemoryFeatureStore(FeatureStore):
@@ -69,9 +72,13 @@ class FileSystemFeatureStore(FeatureStore):
     """Alternative feature store implementation for testing. Stores all
     data on the file system"""
 
-    def __init__(self, storage_dir: t.Optional[pathlib.Path] = None) -> None:
+    def __init__(
+        self, storage_dir: t.Optional[t.Union[pathlib.Path, str]] = None
+    ) -> None:
         """Initialize the FileSystemFeatureStore instance
         :param storage_dir: (optional) root directory to store all data relative to"""
+        if isinstance(storage_dir, str):
+            storage_dir = pathlib.Path(storage_dir)
         self._storage_dir = storage_dir
 
     def __getitem__(self, key: str) -> bytes:
@@ -127,33 +134,14 @@ class FileSystemFeatureStore(FeatureStore):
     ) -> "FileSystemFeatureStore":
         # if b64encoded:
         #     descriptor = base64.b64decode(descriptor).encode("utf-8")
-        path = pathlib.Path(descriptor)
-        if not path.is_dir():
-            raise ValueError("FileSystemFeatureStore requires a directory path")
-        if not path.exists():
+        try:
+            path = pathlib.Path(descriptor)
             path.mkdir(parents=True, exist_ok=True)
-        return FileSystemFeatureStore(path)
-
-
-class DragonDict:
-    """Mock implementation of a dragon dictionary"""
-
-    def __init__(self) -> None:
-        """Initialize the mock DragonDict instance"""
-        self._storage: t.Dict[bytes, t.Any] = {}
-
-    def __getitem__(self, key: bytes) -> t.Any:
-        """Retrieve an item using key
-        :param key: Unique key of an item to retrieve from the feature store"""
-        return self._storage[key]
-
-    def __setitem__(self, key: bytes, value: t.Any) -> None:
-        """Assign a value using key
-        :param key: Unique key of an item to set in the feature store
-        :param value: Value to persist in the feature store"""
-        self._storage[key] = value
-
-    def __contains__(self, key: bytes) -> bool:
-        """Return `True` if the key is found, `False` otherwise
-        :param key: Unique key of an item to retrieve from the feature store"""
-        return key in self._storage
+            if not path.is_dir():
+                raise ValueError("FileSystemFeatureStore requires a directory path")
+            if not path.exists():
+                path.mkdir(parents=True, exist_ok=True)
+            return FileSystemFeatureStore(path)
+        except:
+            logger.error(f"Error while creating FileSystemFeatureStore: {descriptor}")
+            raise

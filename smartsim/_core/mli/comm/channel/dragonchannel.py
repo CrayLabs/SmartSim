@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import sys
 import typing as t
 
@@ -59,3 +60,14 @@ class DragonCommChannel(cch.CommChannelBase):
         with self._channel.recvh(timeout=None) as recvh:
             message_bytes: bytes = recvh.recv_bytes(timeout=None)
             return [message_bytes]
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: str,
+    ) -> "DragonCommChannel":
+        try:
+            return DragonCommChannel(base64.b64decode(descriptor))
+        except:
+            print(f"failed to create dragon comm channel: {descriptor}")
+            raise

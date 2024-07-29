@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pathlib
+import threading
 import typing as t
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
@@ -38,6 +39,8 @@ class FileSystemCommChannel(CommChannelBase):
 
     def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
         """Initialize the FileSystemCommChannel instance"""
+        self._lock = threading.RLock()
+
         if not isinstance(key, bytes):
             super().__init__(key.as_posix().encode("utf-8"))
             self._file_path = key
@@ -56,20 +59,28 @@ class FileSystemCommChannel(CommChannelBase):
         logger.debug(
             f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
         )
-        self._file_path.write_bytes(value)
+        with self._lock:
+            self._file_path.write_bytes(value)
 
     def recv(self) -> bytes:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
-        ...
+        with self._lock:
+            if self._file_path.exists():
+                incoming = self._file_path.read_bytes()
+                self._file_path.unlink()
+                return incoming
 
     @classmethod
     def from_descriptor(
         cls,
         descriptor: t.Union[str, bytes],
     ) -> "FileSystemCommChannel":
-        if isinstance(descriptor, str):
-            path = pathlib.Path(descriptor)
-        else:
-            path = pathlib.Path(descriptor.decode("utf-8"))
-        return FileSystemCommChannel(path)
+        try:
+            if isinstance(descriptor, str):
+                path = pathlib.Path(descriptor)
+            else:
+                path = pathlib.Path(descriptor.decode("utf-8"))
+            return FileSystemCommChannel(path)
+        except:
+            print("failed to create FS comm channel: {descriptor}")

@@ -76,7 +76,11 @@ class DragonFLIChannel(cch.CommChannelBase):
         cls,
         descriptor: str,
     ) -> "DragonFLIChannel":
-        return DragonFLIChannel(
-            fli_desc=base64.b64decode(descriptor),
-            sender_supplied=True,
-        )
+        try:
+            return DragonFLIChannel(
+                fli_desc=base64.b64decode(descriptor),
+                sender_supplied=True,
+            )
+        except:
+            logger.error(f"Error while creating DragonFLIChannel: {descriptor}")
+            raise

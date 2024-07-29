@@ -83,12 +83,7 @@ class EnvironmentConfigLoader:
             logger.warning("No queue factory is configured")
             return None
 
-        if descriptor is not None:
-            # , sender_supplied: bool = True
-            # self.queue = DragonFLIChannel(
-            #     fli_desc=base64.b64decode(descriptor),
-            #     sender_supplied=sender_supplied,
-            # )
+        if descriptor is not None and descriptor:
             self.queue = self._queue_factory(descriptor)
             self._queue_descriptor = descriptor
         return self.queue
