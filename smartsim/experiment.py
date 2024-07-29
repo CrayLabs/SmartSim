@@ -161,6 +161,14 @@ class Experiment:
 
         self.exp_path = exp_path
         """The path under which the experiment operate"""
+        
+        self._run_ID = (
+            "run-"
+            + datetime.datetime.now().strftime("%H:%M:%S")
+            + "-"
+            + datetime.datetime.now().strftime("%Y-%m-%d")
+        )
+        """Create the run id for the Experiment"""
 
         self._active_launchers: set[LauncherProtocol[t.Any]] = set()
         """The active launchers created, used, and reused by the experiment"""
@@ -226,7 +234,9 @@ class Experiment:
             # it easier to monitor job statuses
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
-            return launch_config.start(exe, env)
+            # Generate the Job directory and return generated path
+            job_execution_path = self._generate(job)
+            return launch_config.start(exe, env, job_execution_path)
 
         return execute_dispatch(job), *map(execute_dispatch, jobs)
 
@@ -235,28 +245,26 @@ class Experiment:
         self,
         job: Job,
     ) -> str:
-        """Generate the file structure for an ``Experiment``
+        """Generate the file structure for a ``Job``
 
-        ``Experiment.generate`` creates directories for each entity
-        passed to organize Experiments that launch many entities.
+        ``Experiment._generate`` creates directories for the job
+        passed.
 
-        If files or directories are attached to ``application`` objects
+        If files or directories are attached an ``application`` object
         using ``application.attach_generator_files()``, those files or
         directories will be symlinked, copied, or configured and
-        written into the created directory for that instance.
+        written into the created directory for that Job instance.
 
-        Instances of ``application``, ``Ensemble`` and ``FeatureStore``
-        can all be passed as arguments to the generate method.
+        An instance of ``Job`` can be passed as an argument to
+        the protected generate member.
 
-        :param tag: tag used in `to_configure` generator files
-        :param overwrite: overwrite existing folders and contents
-        :param verbose: log parameter settings to std out
+        :param job: Job to generate file structure for
+        :returns: a str path
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
-            if tag:
-                generator.set_tag(tag)
-            generator.generate_experiment(*args)
+            generator = Generator(self.exp_path, self._run_ID, job)
+            job_path = generator.generate_experiment()
+            return job_path
         except SmartSimError as e:
             logger.error(e)
             raise

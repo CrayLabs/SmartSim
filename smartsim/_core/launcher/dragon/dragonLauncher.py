@@ -355,6 +355,7 @@ from smartsim.settings.dispatch import ExecutableProtocol, dispatch
 def _as_run_request_args_and_policy(
     run_req_args: DragonLaunchArguments,
     exe: ExecutableProtocol,
+    path: str,
     env: t.Mapping[str, str | None],
 ) -> tuple[DragonRunRequestView, DragonRunPolicy]:
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -374,7 +375,7 @@ def _as_run_request_args_and_policy(
             #        the command execute next to any generated files. A similar
             #        problem exists for the other settings.
             # TODO: Find a way to inject this path
-            path=os.getcwd(),
+            path=path,
             env=env,
             # TODO: Not sure how this info is injected
             name=None,

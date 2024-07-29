@@ -29,17 +29,24 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
+from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
+_as_mpirun_command = make_shell_format_fn("mpirun")
+_as_mpiexec_command = make_shell_format_fn("mpiexec")
+_as_orterun_command = make_shell_format_fn("orterun")
 
 
-class _BaseMPIArgBuilder(LaunchArgBuilder):
+class _BaseMPILaunchArguments(LaunchArguments):
     def _reserved_launch_args(self) -> set[str]:
-        """Return reserved launch arguments."""
+        """Return reserved launch arguments.
+
+        :returns: The set of reserved launcher arguments
+        """
         return {"wd", "wdir"}
 
     def set_task_map(self, task_mapping: str) -> None:
@@ -199,7 +206,12 @@ class _BaseMPIArgBuilder(LaunchArgBuilder):
         return args
 
     def set(self, key: str, value: str | None) -> None:
-        """Set the launch arguments"""
+        """Set an arbitrary launch argument
+
+        :param key: The launch argument
+        :param value: A string representation of the value for the launch
+            argument (if applicable), otherwise `None`
+        """
         set_check_input(key, value)
         if key in self._reserved_launch_args():
             logger.warning(
@@ -214,37 +226,31 @@ class _BaseMPIArgBuilder(LaunchArgBuilder):
         self._launch_args[key] = value
 
 
-class MpiArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
+@dispatch(with_format=_as_mpirun_command, to_launcher=ShellLauncher)
+class MpirunLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Mpirun.value
 
 
-class MpiexecArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
+@dispatch(with_format=_as_mpiexec_command, to_launcher=ShellLauncher)
+class MpiexecLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Mpiexec.value
 
 
-class OrteArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
+@dispatch(with_format=_as_orterun_command, to_launcher=ShellLauncher)
+class OrterunLaunchArguments(_BaseMPILaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Orterun.value

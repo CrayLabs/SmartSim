@@ -417,7 +417,7 @@ def make_shell_format_fn(
     """
 
     def impl(
-        args: LaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
+        args: LaunchArguments, exe: ExecutableProtocol, path: str, _env: _EnvironMappingType
     ) -> t.Sequence[str]:
         return (
             (
@@ -428,7 +428,7 @@ def make_shell_format_fn(
             )
             if run_command is not None
             else exe.as_program_arguments()
-        )
+        ), path
 
     return impl
 
@@ -442,6 +442,7 @@ class ShellLauncher:
     def start(self, command: t.Sequence[str]) -> LaunchedJobID:
         id_ = create_job_id()
         exe, *rest = command
+        print(f"here is the path: {rest}")
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
         return id_

@@ -28,18 +28,23 @@ from __future__ import annotations
 
 import typing as t
 
+from typing_extensions import override
+
 from smartsim.log import get_logger
 
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArgBuilder import LaunchArgBuilder
+from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 
 
-class DragonArgBuilder(LaunchArgBuilder):
+class DragonLaunchArguments(LaunchArguments):
     def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
+        """Get the string representation of the launcher
+
+        :returns: The string representation of the launcher
+        """
         return LauncherType.Dragon.value
 
     def set_nodes(self, nodes: int) -> None:
@@ -54,11 +59,43 @@ class DragonArgBuilder(LaunchArgBuilder):
 
         :param tasks_per_node: number of tasks per node
         """
-        self.set("tasks-per-node", str(tasks_per_node))
+        self.set("tasks_per_node", str(tasks_per_node))
 
+    @override
     def set(self, key: str, value: str | None) -> None:
-        """Set the launch arguments"""
+        """Set an arbitrary launch argument
+
+        :param key: The launch argument
+        :param value: A string representation of the value for the launch
+            argument (if applicable), otherwise `None`
+        """
         set_check_input(key, value)
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
+
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
+
+        :param feature_list: a collection of strings representing the required
+         node features. Currently supported node features are: "gpu"
+        """
+        if isinstance(feature_list, str):
+            feature_list = feature_list.strip().split()
+        elif not all(isinstance(feature, str) for feature in feature_list):
+            raise TypeError("feature_list must be string or list of strings")
+        self.set("node-feature", ",".join(feature_list))
+
+    def set_cpu_affinity(self, devices: t.List[int]) -> None:
+        """Set the CPU affinity for this job
+
+        :param devices: list of CPU indices to execute on
+        """
+        self.set("cpu-affinity", ",".join(str(device) for device in devices))
+
+    def set_gpu_affinity(self, devices: t.List[int]) -> None:
+        """Set the GPU affinity for this job
+
+        :param devices: list of GPU indices to execute on.
+        """
+        self.set("gpu-affinity", ",".join(str(device) for device in devices))

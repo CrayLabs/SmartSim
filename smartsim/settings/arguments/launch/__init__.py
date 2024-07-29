@@ -11,9 +11,9 @@ __all__ = [
     "DragonLaunchArguments",
     "LocalLaunchArguments",
     "JsrunLaunchArguments",
-    "MpiLaunchArguments",
+    "MpirunLaunchArguments",
     "MpiexecLaunchArguments",
-    "OrteLaunchArguments",
+    "OrterunLaunchArguments",
     "PalsMpiexecLaunchArguments",
     "SlurmLaunchArguments",
 ]
