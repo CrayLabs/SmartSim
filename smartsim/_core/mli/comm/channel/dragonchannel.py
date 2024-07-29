@@ -69,5 +69,5 @@ class DragonCommChannel(cch.CommChannelBase):
         try:
             return DragonCommChannel(base64.b64decode(descriptor))
         except:
-            print(f"failed to create dragon comm channel: {descriptor}")
+            logger.error(f"Failed to create dragon comm channel: {descriptor}")
             raise

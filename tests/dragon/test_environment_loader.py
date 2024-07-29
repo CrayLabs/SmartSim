@@ -24,11 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pathlib
-
 import pytest
 
-from tests.mli.channel import FileSystemCommChannel
 
 dragon = pytest.importorskip("dragon")
 
@@ -42,7 +39,8 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
 
-from .featurestore import FileSystemFeatureStore
+from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
+
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -63,8 +61,8 @@ def test_environment_loader_attach_FLI(content: bytes, monkeypatch: pytest.Monke
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=FileSystemCommChannel.from_descriptor,
+        callback_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonCommChannel.from_descriptor,
     )
     config_queue = config.get_queue()
 
@@ -84,8 +82,8 @@ def test_environment_loader_serialize_FLI(monkeypatch: pytest.MonkeyPatch):
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=FileSystemCommChannel.from_descriptor,
+        callback_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonCommChannel.from_descriptor,
     )
     config_queue = config.get_queue()
     assert config_queue._fli.serialize() == queue.serialize()
@@ -96,8 +94,8 @@ def test_environment_loader_FLI_fails(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("SSQueue", "randomstring")
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=FileSystemCommChannel.from_descriptor,
+        callback_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonCommChannel.from_descriptor,
     )
 
     with pytest.raises(DragonFLIError):
@@ -109,13 +107,13 @@ def test_environment_loader_backbone_load_fs(
 ):
     """Verify the file system feature store is loaded correctly by
     the EnvironmentConfigLoader to demonstrate fs_factory correctness"""
-    fs = FileSystemFeatureStore(pathlib.Path(test_dir))
+    fs = DragonFeatureStore(DDict())
     monkeypatch.setenv("SS_DRG_DDICT", fs.descriptor)
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=FileSystemCommChannel.from_descriptor,
+        callback_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonCommChannel.from_descriptor,
     )
 
     backbone = config.get_backbone()
@@ -132,8 +130,8 @@ def test_environment_loader_backbone_load_dfs(
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=FileSystemCommChannel.from_descriptor,
+        callback_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonCommChannel.from_descriptor,
     )
 
     backbone = config.get_backbone()
@@ -145,8 +143,8 @@ def test_environment_variables_not_set():
     variables are not set"""
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=FileSystemCommChannel.from_descriptor,
+        callback_factory=DragonCommChannel.from_descriptor,
+        queue_factory=DragonCommChannel.from_descriptor,
     )
     assert config.get_backbone() == None
     assert config.get_queue() == None

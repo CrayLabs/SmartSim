@@ -89,5 +89,5 @@ class DragonFeatureStore(FeatureStore):
         try:
             return DragonFeatureStore(dragon_ddict.DDict.attach(descriptor))
         except:
-            print(f"error creating dragon feature store: {descriptor}")
+            logger.error(f"Error creating dragon feature store: {descriptor}")
             raise
