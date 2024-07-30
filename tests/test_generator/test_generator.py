@@ -1,4 +1,3 @@
-import datetime
 import filecmp
 import os
 import pathlib
@@ -12,9 +11,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.generation.generator import Generator
 from smartsim.entity import Application, Ensemble
-from smartsim.launchable import Job, JobGroup
-from smartsim.settings.arguments.launch import SlurmLaunchArguments
-from smartsim.settings.dispatch import Dispatcher
+from smartsim.launchable import Job
 from smartsim.settings.launchSettings import LaunchSettings
 
 # TODO test ensemble copy, config, symlink when ensemble.attach_generator_files added
@@ -37,12 +34,10 @@ class NoOpLauncher:
         return "anything"
 
 
-# Mock Shell Format fn
-def make_shell_format_fn(run_command: str | None): ...
-
-
 # Mock Application
 class EchoApp:
+    name = "echo_app"
+
     def as_program_arguments(self):
         return ["echo", "Hello", "World!"]
 
@@ -84,26 +79,44 @@ def test_log_file_path(generator_instance):
     assert generator_instance.log_file == expected_path
 
 
-def test_generate_job_directory(generator_instance):
+def test_generate_job_directory(test_dir, wlmutils):
     """Test that Job directory was created."""
-    generator_instance.generate_experiment()
-    assert osp.isdir(generator_instance.path)
-    assert osp.isdir(generator_instance.log_path)
-    assert osp.isfile(osp.join(generator_instance.path, "smartsim_params.txt"))
+    experiment_path = osp.join(test_dir, "experiment_name")
+    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
+    app = Application("app_name", exe="python", run_settings="RunSettings")
+    job = Job(app, launch_settings)
+    run_ID = "mock_run"
+    gen = Generator(gen_path=experiment_path, run_ID=run_ID, job=job)
+    gen.generate_experiment()
+    expected_run_path = (
+        pathlib.Path(experiment_path)
+        / run_ID
+        / f"{job.__class__.__name__.lower()}s"
+        / app.name
+        / "run"
+    )
+    expected_log_path = (
+        pathlib.Path(experiment_path)
+        / run_ID
+        / f"{job.__class__.__name__.lower()}s"
+        / app.name
+        / "log"
+    )
+    assert gen.path == str(expected_run_path)
+    assert gen.log_path == str(expected_log_path)
+    assert osp.isdir(expected_run_path)
+    assert osp.isdir(expected_log_path)
+    assert osp.isfile(osp.join(expected_run_path, "smartsim_params.txt"))
 
 
 def test_exp_private_generate_method_app(test_dir, job_instance):
     """Test that Job directory was created from Experiment."""
-    no_op_dispatch = Dispatcher()
-    no_op_dispatch.dispatch(
-        SlurmLaunchArguments,
-        with_format=make_shell_format_fn("run_command"),
-        to_launcher=NoOpLauncher,
-    )
     no_op_exp = Experiment(name="No-Op-Exp", exp_path=test_dir)
     job_execution_path = no_op_exp._generate(job_instance)
     assert osp.isdir(job_execution_path)
-    assert osp.isdir(pathlib.Path(no_op_exp.exp_path) / "log")
+    head, _ = os.path.split(job_execution_path)
+    expected_log_path = pathlib.Path(head) / "log"
+    assert osp.isdir(expected_log_path)
     assert osp.isfile(osp.join(job_execution_path, "smartsim_params.txt"))
 
 
@@ -224,7 +237,7 @@ def test_generate_configure(fileutils, wlmutils, test_dir):
     for written, correct in zip(configured_files, correct_files):
         assert filecmp.cmp(written, correct)
     # Validate that log file exists
-    assert osp.isdir(pathlib.Path(experiment_path) / "log")
+    assert osp.isdir(gen.log_path)
     # Validate that smartsim params files exists
     smartsim_params_path = osp.join(job_path, "smartsim_params.txt")
     assert osp.isfile(smartsim_params_path)
@@ -235,17 +248,13 @@ def test_exp_private_generate_method_ensemble(test_dir, wlmutils):
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     job_list = ensemble.as_jobs(launch_settings)
-    no_op_dispatch = Dispatcher()
-    no_op_dispatch.dispatch(
-        launch_settings,
-        with_format=make_shell_format_fn("run_command"),
-        to_launcher=NoOpLauncher,
-    )
     no_op_exp = Experiment(name="No-Op-Exp", exp_path=test_dir)
     for job in job_list:
         job_execution_path = no_op_exp._generate(job)
+        head, _ = os.path.split(job_execution_path)
+        expected_log_path = pathlib.Path(head) / "log"
         assert osp.isdir(job_execution_path)
-        assert osp.isdir(pathlib.Path(no_op_exp.exp_path) / "log")
+        assert osp.isdir(pathlib.Path(expected_log_path))
 
 
 def test_generate_ensemble_directory(test_dir, wlmutils):
@@ -257,4 +266,4 @@ def test_generate_ensemble_directory(test_dir, wlmutils):
         gen = Generator(gen_path=test_dir, run_ID=run_ID, job=job)
         gen.generate_experiment()
         assert osp.isdir(gen.path)
-        assert osp.isdir(pathlib.Path(test_dir) / "log")
+        assert osp.isdir(pathlib.Path(gen.log_path))

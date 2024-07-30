@@ -54,17 +54,12 @@ class Job(BaseJob):
         self,
         entity: SmartSimEntity,
         launch_settings: LaunchSettings,
-        name: str = "job",
-        *,
-        ensemble_name: t.Optional[str] = None,
+        name: str = None,
     ):
         super().__init__()
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
-        self._name = deepcopy(name)
-        self._ensemble_name = ensemble_name
-        if self._ensemble_name is not None:
-            self._ensemble_name += f"-{create_short_id_str()}"
+        self._name = deepcopy(name) if name else deepcopy(entity.name)
         # TODO: self.warehouse_runner = JobWarehouseRunner
 
     # TODO do we want the user to be allowed to reset the Job name? Therefore, add setter
