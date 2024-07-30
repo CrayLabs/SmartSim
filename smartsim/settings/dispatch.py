@@ -450,7 +450,8 @@ class ShellLauncher:
         args, path = command
         exe, *rest = args
         # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path)
+        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path, env={}, stdin=None, stdout=None)
+        # env accepts a dictionary
         return id_
 
     @classmethod
