@@ -123,21 +123,20 @@ def test_generate_copy_file(fileutils, wlmutils, test_dir):
     assert osp.isfile(expected_file)
 
 
-# TODO FLAGGED
-# def test_generate_copy_directory(fileutils, wlmutils, test_dir):
-#     # Create the Job and attach generator file
-#     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-#     app = Application("name", "python", "RunSettings")
-#     copy_dir = get_gen_file(fileutils, "to_copy_dir")
-#     app.attach_generator_files(to_copy=copy_dir)
-#     job = Job(app, launch_settings)
+def test_generate_copy_directory(fileutils, wlmutils, test_dir):
+    # Create the Job and attach generator file
+    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
+    app = Application("name", "python", "RunSettings")
+    copy_dir = get_gen_file(fileutils, "to_copy_dir")
+    app.attach_generator_files(to_copy=copy_dir)
+    job = Job(app, launch_settings)
 
-#     # Create the experiment
-#     experiment_path = osp.join(test_dir, "experiment_name")
-#     gen = Generator(gen_path=experiment_path, run_ID="temp_run", job=job)
-#     gen.generate_experiment()
-#     expected_file = pathlib.Path(gen.path) / "to_copy_dir" / "mock.txt"
-#     assert osp.isfile(expected_file)
+    # Create the experiment
+    experiment_path = osp.join(test_dir, "experiment_name")
+    gen = Generator(gen_path=experiment_path, run_ID="temp_run", job=job)
+    gen.generate_experiment()
+    expected_file = pathlib.Path(gen.path) / "mock.txt"
+    assert osp.isfile(expected_file)
 
 
 def test_generate_symlink_directory(fileutils, wlmutils, test_dir):
@@ -165,11 +164,6 @@ def test_generate_symlink_directory(fileutils, wlmutils, test_dir):
 
 
 def test_generate_symlink_file(fileutils, wlmutils, test_dir):
-    assert osp.isfile(
-        pathlib.Path(
-            "/lus/sonexion/richaama/Matt/SmartSim/tests/test_configs/generator_files/to_symlink_dir/mock2.txt"
-        )
-    )
     # Create the Job and attach generator file
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     app = Application("name", "python", "RunSettings")
@@ -234,9 +228,6 @@ def test_generate_configure(fileutils, wlmutils, test_dir):
     # Validate that smartsim params files exists
     smartsim_params_path = osp.join(job_path, "smartsim_params.txt")
     assert osp.isfile(smartsim_params_path)
-
-
-# Ensemble Tests
 
 
 def test_exp_private_generate_method_ensemble(test_dir, wlmutils):
