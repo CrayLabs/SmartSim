@@ -447,10 +447,10 @@ class ShellLauncher:
     # TODO inject path here
     def start(self, command: tuple[t.Sequence[str], str]) -> LaunchedJobID:
         id_ = create_job_id()
-        exe, *rest = command
-        print(f"here is the path: {rest}")
+        args, path = command
+        exe, *rest = args
         # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
+        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path)
         return id_
 
     @classmethod

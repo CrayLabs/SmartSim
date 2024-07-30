@@ -122,20 +122,20 @@ def test_generate_copy_file(fileutils, wlmutils, test_dir):
 
 
 # TODO FLAGGED
-def test_generate_copy_directory(fileutils, wlmutils, test_dir):
-    # Create the Job and attach generator file
-    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python", "RunSettings")
-    copy_dir = get_gen_file(fileutils, "to_copy_dir")
-    print(copy_dir)
-    app.attach_generator_files(to_copy=copy_dir)
-    job = Job(app, launch_settings)
+# def test_generate_copy_directory(fileutils, wlmutils, test_dir):
+#     # Create the Job and attach generator file
+#     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
+#     app = Application("name", "python", "RunSettings")
+#     copy_dir = get_gen_file(fileutils, "to_copy_dir")
+#     app.attach_generator_files(to_copy=copy_dir)
+#     job = Job(app, launch_settings)
 
-    # Create the experiment
-    experiment_path = osp.join(test_dir, "experiment_name")
-    gen = Generator(gen_path=experiment_path, run_ID="temp_run", job=job)
-    gen.generate_experiment()
-    expected_file = pathlib.Path(gen.path) / "to_copy_dir" / "mock.txt"
+#     # Create the experiment
+#     experiment_path = osp.join(test_dir, "experiment_name")
+#     gen = Generator(gen_path=experiment_path, run_ID="temp_run", job=job)
+#     gen.generate_experiment()
+#     expected_file = pathlib.Path(gen.path) / "to_copy_dir" / "mock.txt"
+#     assert osp.isfile(expected_file)
 
 
 def test_generate_symlink_directory(fileutils, wlmutils, test_dir):

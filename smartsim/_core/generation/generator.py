@@ -64,10 +64,11 @@ class Generator:
 
         The Generator class is responsible for creating Job directories.
         It ensures that paths adhere to SmartSim path standards. Additionally,
-        it creates a log directory for telemetry data and handles symlinking,
-        configuration, and file copying within the job directory.
+        it creates a log directory for telemetry data to handle symlinking,
+        configuration, and file copying to the job directory.
 
         :param gen_path: Path in which files need to be generated
+        :param run_ID: The id of the Experiment
         :param job: Reference to a name, SmartSimEntity and LaunchSettings
         """
         self.job = job
@@ -162,10 +163,9 @@ class Generator:
         """Generate the directories
 
         Generate the file structure for a SmartSim experiment. This
-        includes the writing and configuring of input files for a
-        job.
+        includes writing and configuring input files for a job.
 
-        To have files or directories present in the created entity
+        To have files or directories present in the created job
         directories, such as datasets or input files, call
         ``entity.attach_generator_files`` prior to generation. See
         ``entity.attach_generator_files`` for more information on
@@ -217,14 +217,14 @@ class Generator:
     def _get_copy_file_system_operation(app: Application, dest: str) -> None:
         """Get copy file system operation for a file.
 
-        :param linked_file: The file to be copied.
-        :return: A list of copy file system operations.
+        :param app: The Application attached to the Job
+        :param dest: Path to copy files
         """
         if app.files is None:
             return
         parser = get_parser()
         for src in app.files.copy:
-            if Path(src).is_dir: # TODO figure this out, or how to replace
+            if os.path.isdir(src):
                 cmd = f"copy {src} {dest} --dirs_exist_ok"
             else:
                 cmd = f"copy {src} {dest}"
@@ -236,8 +236,8 @@ class Generator:
     def _get_symlink_file_system_operation(app: Application, dest: str) -> None:
         """Get symlink file system operation for a file.
 
-        :param linked_file: The file to be symlinked.
-        :return: A list of symlink file system operations.
+        :param app: The Application attached to the Job
+        :param dest: Path to symlink files
         """
         if app.files is None:
             return
@@ -261,7 +261,8 @@ class Generator:
            specifically deals with the tagged files attached to
            an Ensemble.
 
-        :param entity: a Application instance
+        :param app: The Application attached to the Job
+        :param dest: Path to configure files
         """
         if app.files is None:
             return
