@@ -20,6 +20,8 @@ from smartsim.settings.launchSettings import LaunchSettings
 # TODO test ensemble copy, config, symlink when ensemble.attach_generator_files added
 # TODO remove ensemble tests and replace with JobGroup when start jobgroup is supported
 
+pytestmark = pytest.mark.group_a
+
 
 def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(osp.join("generator_files", filename))
