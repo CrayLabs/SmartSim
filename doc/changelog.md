@@ -30,6 +30,7 @@ To be released at some future point in time
 
 Description
 
+- Fix dragon installation bug
 - Fix internal host name representation for Dragon backend
 - Make dependencies more discoverable in setup.py
 - Add hardware pinning capability when using dragon
@@ -41,6 +42,11 @@ Description
 - Remove broken oss.redis.com URI blocking documentation generation
 
 Detailed Notes
+
+- Fixed a bug in the dragon installer where a too-relaxed path is 
+  searched for wheels. The resulting list may cause the wrong wheel to be
+  installed or may report failures when it attempts to install old wheels.
+  ([SmartSim-PRXXX](https://github.com/CrayLabs/SmartSim/pull/XXX))
 
 - setup.py used to define dependencies in a way that was not amenable
   to code scanning tools. Direct dependencies now appear directly

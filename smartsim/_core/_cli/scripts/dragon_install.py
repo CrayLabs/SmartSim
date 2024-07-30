@@ -156,14 +156,18 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
     :param working_dir: location in file system where assets should be written
     :param asset: GitHub release asset to retrieve
     :returns: path to the downloaded asset"""
-    if working_dir.exists() and list(working_dir.rglob("*.whl")):
-        return working_dir
+
+    target_dir = working_dir / str(asset.id)
+    if target_dir.exists() and list(target_dir.rglob("*.whl")):
+        return target_dir
+
+    target_dir.mkdir(parents=True)
 
     archive = WebTGZ(asset.browser_download_url)
-    archive.extract(working_dir)
+    archive.extract(target_dir)
 
-    logger.debug(f"Retrieved {asset.browser_download_url} to {working_dir}")
-    return working_dir
+    logger.debug(f"Retrieved {asset.browser_download_url} to {target_dir}")
+    return target_dir
 
 
 def install_package(asset_dir: pathlib.Path) -> int:
