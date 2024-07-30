@@ -46,8 +46,7 @@ Detailed Notes
 - Fixed a bug in the dragon installer where a too-relaxed path is 
   searched for wheels. The resulting list may cause the wrong wheel to be
   installed or may report failures when it attempts to install old wheels.
-  ([SmartSim-PRXXX](https://github.com/CrayLabs/SmartSim/pull/XXX))
-
+  ([SmartSim-PR651](https://github.com/CrayLabs/SmartSim/pull/651))
 - setup.py used to define dependencies in a way that was not amenable
   to code scanning tools. Direct dependencies now appear directly
   in the setup call and the definition of the SmartRedis version
