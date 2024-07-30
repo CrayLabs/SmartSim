@@ -26,15 +26,18 @@
 
 from __future__ import annotations
 
+import collections.abc
 import dataclasses
 import subprocess as sp
 import typing as t
 import uuid
 
+import psutil
 from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
 
 from smartsim._core.utils import helpers
 from smartsim.error import errors
+from smartsim.status import SmartSimStatus
 from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
@@ -378,10 +381,13 @@ class ExecutableProtocol(t.Protocol):
     def as_program_arguments(self) -> t.Sequence[str]: ...
 
 
-class LauncherProtocol(t.Protocol[_T_contra]):
-    def start(self, launchable: _T_contra, /) -> LaunchedJobID: ...
+class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
     @classmethod
     def create(cls, exp: Experiment, /) -> Self: ...
+    def start(self, launchable: _T_contra, /) -> LaunchedJobID: ...
+    def get_status(
+        self, *launched_ids: LaunchedJobID
+    ) -> tuple[SmartSimStatus, ...]: ...
 
 
 def make_shell_format_fn(
@@ -445,6 +451,34 @@ class ShellLauncher:
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
         return id_
+
+    def get_status(self, *launched_ids: LaunchedJobID) -> tuple[SmartSimStatus, ...]:
+        return tuple(map(self._get_status, launched_ids))
+
+    def _get_status(self, id_: LaunchedJobID, /) -> SmartSimStatus:
+        if (proc := self._launched.get(id_)) is None:
+            msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
+            raise errors.UnrecognizedLaunchedJobError(msg)
+        ret_code = proc.poll()
+        if ret_code is None:
+            status = psutil.Process(proc.pid).status()
+            return {
+                psutil.STATUS_RUNNING: SmartSimStatus.STATUS_RUNNING,
+                psutil.STATUS_SLEEPING: SmartSimStatus.STATUS_RUNNING,
+                psutil.STATUS_WAKING: SmartSimStatus.STATUS_RUNNING,
+                psutil.STATUS_DISK_SLEEP: SmartSimStatus.STATUS_RUNNING,
+                psutil.STATUS_DEAD: SmartSimStatus.STATUS_FAILED,
+                psutil.STATUS_TRACING_STOP: SmartSimStatus.STATUS_PAUSED,
+                psutil.STATUS_WAITING: SmartSimStatus.STATUS_PAUSED,
+                psutil.STATUS_STOPPED: SmartSimStatus.STATUS_PAUSED,
+                psutil.STATUS_LOCKED: SmartSimStatus.STATUS_PAUSED,
+                psutil.STATUS_PARKED: SmartSimStatus.STATUS_PAUSED,
+                psutil.STATUS_IDLE: SmartSimStatus.STATUS_PAUSED,
+                psutil.STATUS_ZOMBIE: SmartSimStatus.STATUS_COMPLETED,
+            }.get(status, SmartSimStatus.STATUS_UNKNOWN)
+        if ret_code == 0:
+            return SmartSimStatus.STATUS_COMPLETED
+        return SmartSimStatus.STATUS_FAILED
 
     @classmethod
     def create(cls, _: Experiment) -> Self:

@@ -28,6 +28,8 @@
 
 from __future__ import annotations
 
+import collections
+import itertools
 import os
 import os.path as osp
 import textwrap
@@ -159,9 +161,12 @@ class Experiment:
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
-        self._active_launchers: set[LauncherProtocol[t.Any]] = set()
-        """The active launchers created, used, and reused by the experiment"""
-
+        self._active_launchers = collections.defaultdict[
+            "LauncherProtocol[t.Any]", set["LaunchedJobID"]
+        ](set)
+        """The active launchers created, used, and reused by the experiment,
+        mapping to launched job ids that were launched with this instance
+        """
         self._fs_identifiers: t.Set[str] = set()
         """Set of feature store identifiers currently in use by this
         experiment
@@ -218,14 +223,27 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            # Save the underlying launcher instance. That way we do not need to
-            # spin up a launcher instance for each individual job, and it makes
-            # it easier to monitor job statuses
+            id_ = launch_config.start(exe, env)
+            # Save the underlying launcher instance and launched job id. That
+            # way we do not need to spin up a launcher instance for each
+            # individual job, and the experiment can monitor job statuses.
             # pylint: disable-next=protected-access
-            self._active_launchers.add(launch_config._adapted_launcher)
-            return launch_config.start(exe, env)
+            self._active_launchers[launch_config._adapted_launcher].add(id_)
+            return id_
 
         return execute_dispatch(job), *map(execute_dispatch, jobs)
+
+    def get_status(self, *ids: LaunchedJobID) -> tuple[SmartSimStatus, ...]:
+        ids_ = set(ids)
+        to_query = {
+            launcher: tuple(launched & ids_)
+            for launcher, launched in self._active_launchers.items()
+        }
+        # TODO: validate that ids map to 0 or 1 launcher
+        stats_zips = (zip(ids, l.get_status(*ids)) for l, ids in to_query.items())
+        stats_map = dict(itertools.chain.from_iterable(stats_zips))
+        stats = (stats_map.get(i, SmartSimStatus.STATUS_NEVER_STARTED) for i in ids)
+        return tuple(stats)
 
     @_contextualize
     def generate(

@@ -28,6 +28,7 @@ from enum import Enum
 
 
 class SmartSimStatus(Enum):
+    STATUS_UNKNOWN = "Unknown"
     STATUS_RUNNING = "Running"
     STATUS_COMPLETED = "Completed"
     STATUS_CANCELLED = "Cancelled"
