@@ -103,7 +103,7 @@ class WorkerManager(Service):
         :param as_service: Specifies run-once or run-until-complete behavior of service
         :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
-        :param comm_channel_type: The type of communication channel used for callbacks
+        :param device: The type of hardware the workers must be executed on
         """
         super().__init__(as_service, cooldown)
 
