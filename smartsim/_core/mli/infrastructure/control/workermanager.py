@@ -122,7 +122,8 @@ class WorkerManager(Service):
         self._fs_factory = config_loader._featurestore_factory
         """A factory method to create a desired feature store client type"""
         self._backbone: t.Optional[FeatureStore] = config_loader.get_backbone()
-        """The backbone feature store"""
+        """A standalone, system-created feature store used to share internal
+        information among MLI components"""
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
         """Ensures that all feature stores required by the request are available
