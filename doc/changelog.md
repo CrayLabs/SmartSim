@@ -33,7 +33,7 @@ Detailed Notes
   caused runtime failures. The build actions were tweaked to include
   all optional dependencies to be considered by pip during resolution.
   Additionally, the numpy version was capped on dragon installations.
-  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+  ([SmartSim-PR653](https://github.com/CrayLabs/SmartSim/pull/653))
 - setup.py used to define dependencies in a way that was not amenable
   to code scanning tools. Direct dependencies now appear directly
   in the setup call and the definition of the SmartRedis version
