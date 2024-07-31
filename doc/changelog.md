@@ -15,6 +15,7 @@ To be released at some future point in time
 
 Description
 
+- Mitigate dependency installation issues
 - Fix internal host name representation for Dragon backend
 - Make dependencies more discoverable in setup.py
 - Add hardware pinning capability when using dragon
@@ -27,6 +28,12 @@ Description
 
 Detailed Notes
 
+- Installation of mypy or dragon in separate build actions caused
+  some dependencies (typing_extensions, numpy) to be upgraded and
+  caused runtime failures. The build actions were tweaked to include
+  all optional dependencies to be considered by pip during resolution.
+  Additionally, the numpy version was capped on dragon installations.
+  ([SmartSim-PR653](https://github.com/CrayLabs/SmartSim/pull/653))
 - setup.py used to define dependencies in a way that was not amenable
   to code scanning tools. Direct dependencies now appear directly
   in the setup call and the definition of the SmartRedis version
