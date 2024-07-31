@@ -45,6 +45,7 @@ from ...mli_schemas.response.response_capnp import ResponseBuilder
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
+
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger(__name__)
