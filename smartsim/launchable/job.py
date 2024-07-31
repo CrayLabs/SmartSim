@@ -54,7 +54,7 @@ class Job(BaseJob):
         self,
         entity: SmartSimEntity,
         launch_settings: LaunchSettings,
-        name: str = None,
+        name: str | None = None,
     ):
         super().__init__()
         self._entity = deepcopy(entity)

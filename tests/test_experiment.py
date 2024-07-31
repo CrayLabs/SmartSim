@@ -44,17 +44,6 @@ from smartsim.settings.arguments import launchArguments
 pytestmark = pytest.mark.group_a
 
 
-# TODO make sure dispatcher is patched
-# @pytest.fixture
-# def experiment(monkeypatch, test_dir, dispatcher):
-#     """A simple experiment instance with a unique name anda unique name and its
-#     own directory to be used by tests
-#     """
-#     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
-#     monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/{job._name}")
-#     yield exp
-
-
 @pytest.fixture
 def experiment(monkeypatch, test_dir, dispatcher):
     """A simple experiment instance with a unique name anda unique name and its
@@ -62,15 +51,8 @@ def experiment(monkeypatch, test_dir, dispatcher):
     """
     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
     monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
-    monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/{job._name}")
+    monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/job")
     yield exp
-
-
-# @pytest.fixture
-# def patch_experiment_job_path(test_dir, monkeypatch):
-#     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
-#     monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/{job._name}")
-#     yield exp
 
 
 @pytest.fixture
