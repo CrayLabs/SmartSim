@@ -92,10 +92,8 @@ class WorkerManager(Service):
         self,
         config_loader: EnvironmentConfigLoader,
         worker: MachineLearningWorkerBase,
-        # fs_factory: t.Callable[[str], FeatureStore],
         as_service: bool = False,
         cooldown: int = 0,
-        # comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
         device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
