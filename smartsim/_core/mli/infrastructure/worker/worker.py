@@ -163,7 +163,8 @@ class MachineLearningWorkerCore:
     ) -> InferenceRequest:
         """Deserialize a message from a byte stream into an InferenceRequest
         :param data_blob: The byte stream to deserialize
-        :param channel_type: Type to be used for callback communications
+        :param callback_factory: A factory method that can create an instance
+        of the desired concrete comm channel type
         :returns: The raw input message deserialized into an InferenceRequest
         """
         request = MessageHandler.deserialize_request(data_blob)
