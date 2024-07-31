@@ -162,7 +162,7 @@ class Experiment:
 
         self._run_ID = (
             "run-"
-            + datetime.datetime.now().strftime("%H:%M:%S")
+            + datetime.datetime.now().strftime("%H-%M-%S")
             + "-"
             + datetime.datetime.now().strftime("%Y-%m-%d")
         )

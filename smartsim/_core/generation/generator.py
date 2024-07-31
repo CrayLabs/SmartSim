@@ -75,17 +75,24 @@ class Generator:
         # Generate the job folder path
         self.path = self._generate_job_path(job, gen_path, run_ID)
         # Generate the log folder path
-        self.log_path = self._generate_log_path(gen_path)
+        self.log_path = self._generate_log_path(job, gen_path, run_ID)
 
-    def _generate_log_path(self, gen_path: str) -> str:
+    def _generate_log_path(self, job: Job, gen_path: str, run_ID: str) -> str:
         """
         Generate the path for the log folder.
 
         :param gen_path: The base path job generation
         :returns str: The generated path for the log directory
         """
-        log_path = os.path.join(gen_path, "log")
-        return log_path
+        job_type = f"{job.__class__.__name__.lower()}s"
+        path = os.path.join(
+            gen_path,
+            run_ID,
+            job_type,
+            job.name,
+            "log",
+        )
+        return path
 
     def _generate_job_path(self, job: Job, gen_path: str, run_ID: str) -> str:
         """
@@ -97,35 +104,14 @@ class Generator:
         :param run_ID: The experiments unique run ID
         :returns str: The generated path for the job.
         """
-        # Attr set in Job to check if Job was created by an Ensemble
-        if job._ensemble_name is None:
-            job_type = f"{job.__class__.__name__.lower()}s"
-            entity_type = (
-                f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
-            )
-            path = os.path.join(
-                gen_path,
-                run_ID,
-                job_type,
-                f"{job.name}-{create_short_id_str()}",
-                entity_type,
-                "run",
-            )
-        # Job was created via Ensemble
-        else:
-            job_type = "ensembles"
-            entity_type = (
-                f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
-            )
-            path = os.path.join(
-                gen_path,
-                run_ID,
-                job_type,
-                job._ensemble_name,
-                f"{job.name}",
-                entity_type,
-                "run",
-            )
+        job_type = f"{job.__class__.__name__.lower()}s"
+        path = os.path.join(
+            gen_path,
+            run_ID,
+            job_type,
+            job.name,
+            "run",
+        )
         return path
 
     @property
