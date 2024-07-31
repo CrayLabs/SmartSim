@@ -83,9 +83,10 @@ class DragonFeatureStore(FeatureStore):
     def from_descriptor(
         cls,
         descriptor: str,
-        # b64encoded: bool = False,
     ) -> "DragonFeatureStore":
-
+        """A factory method that creates an instance from a descriptor string
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached DragonFeatureStore"""
         try:
             return DragonFeatureStore(dragon_ddict.DDict.attach(descriptor))
         except:

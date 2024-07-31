@@ -66,6 +66,9 @@ class DragonCommChannel(cch.CommChannelBase):
         cls,
         descriptor: str,
     ) -> "DragonCommChannel":
+        """A factory method that creates an instance from a descriptor string
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached DragonCommChannel"""
         try:
             return DragonCommChannel(base64.b64decode(descriptor))
         except:

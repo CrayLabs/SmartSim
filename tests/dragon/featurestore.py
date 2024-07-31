@@ -130,10 +130,10 @@ class FileSystemFeatureStore(FeatureStore):
     def from_descriptor(
         cls,
         descriptor: str,
-        # b64encoded: bool = False,
     ) -> "FileSystemFeatureStore":
-        # if b64encoded:
-        #     descriptor = base64.b64decode(descriptor).encode("utf-8")
+        """A factory method that creates an instance from a descriptor string
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached FileSystemFeatureStore"""
         try:
             path = pathlib.Path(descriptor)
             path.mkdir(parents=True, exist_ok=True)

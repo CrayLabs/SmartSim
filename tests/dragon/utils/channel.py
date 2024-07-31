@@ -76,6 +76,9 @@ class FileSystemCommChannel(CommChannelBase):
         cls,
         descriptor: t.Union[str, bytes],
     ) -> "FileSystemCommChannel":
+        """A factory method that creates an instance from a descriptor string
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached FileSystemCommChannel"""
         try:
             if isinstance(descriptor, str):
                 path = pathlib.Path(descriptor)
