@@ -119,7 +119,9 @@ jobs:
         if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset == 'dragon' )
         run: |
           smart build --device cpu --onnx --dragon -v
-          echo "LD_LIBRARY_PATH=$(python -c 'import site; print(site.getsitepackages()[0])')/smartsim/_core/.dragon/dragon-0.9/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          SP=$(python -c 'import site; print(site.getsitepackages()[0])')/smartsim/_core/config/dragon/.env
+          LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
+          echo "LD_LIBRARY_PATH=$LLP:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
         if: contains( matrix.os, 'macos-14' )

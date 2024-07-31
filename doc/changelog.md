@@ -30,6 +30,7 @@ To be released at some future point in time
 
 Description
 
+- Fix dragon installation bug
 - Mitigate dependency installation issues
 - Fix internal host name representation for Dragon backend
 - Make dependencies more discoverable in setup.py
@@ -43,6 +44,10 @@ Description
 
 Detailed Notes
 
+- Fixed a bug in the dragon installer where a too-relaxed path is 
+  searched for wheels. The resulting list may cause the wrong wheel to be
+  installed or may report failures when it attempts to install old wheels.
+  ([SmartSim-PR652](https://github.com/CrayLabs/SmartSim/pull/652))
 - Installation of mypy or dragon in separate build actions caused
   some dependencies (typing_extensions, numpy) to be upgraded and
   caused runtime failures. The build actions were tweaked to include
