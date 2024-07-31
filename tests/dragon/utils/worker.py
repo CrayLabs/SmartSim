@@ -96,35 +96,9 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
         execute_result: mliw.ExecuteResult,
         result_device: str,
     ) -> mliw.TransformOutputResult:
-        # transformed = [item.clone() for item in execute_result.predictions]
-        # return OutputTransformResult(transformed)
-
-        # transformed = [item.bytes() for item in execute_result.predictions]
-
-        # OutputTransformResult.transformed SHOULD be a list of
-        # capnproto Tensors Or tensor descriptors accompanying bytes
-
         # send the original tensors...
         execute_result.predictions = [t.detach() for t in execute_result.predictions]
         # todo: solve sending all tensor metadata that coincisdes with each prediction
         return mliw.TransformOutputResult(
             execute_result.predictions, [1], "c", "float32"
         )
-        # return OutputTransformResult(transformed)
-
-    # @staticmethod
-    # def serialize_reply(
-    #     request: InferenceRequest, results: OutputTransformResult
-    # ) -> t.Any:
-    #     # results = IntegratedTorchWorker._prepare_outputs(results.outputs)
-    #     # return results
-    #     return None
-    #     # response = MessageHandler.build_response(
-    #     #     status=200,  # todo: are we satisfied with 0/1 (success, fail)
-    #     #     # todo: if not detailed messages, this shouldn't be returned.
-    #     #     message="success",
-    #     #     result=results,
-    #     #     custom_attributes=None,
-    #     # )
-    #     # serialized_resp = MessageHandler.serialize_response(response)
-    #     # return serialized_resp
