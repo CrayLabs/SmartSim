@@ -180,8 +180,6 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
         integrated_worker,
         as_service=True,
         cooldown=5,
-        # comm_channel_type=FileSystemCommChannel,
-        # featurestore_factory=FileSystemFeatureStore.from_descriptor,
         device="cpu",
     )
 
@@ -203,7 +201,7 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     )
     msg_pump.start()
 
-    # # create a process to process commands
+    # create a process to execute commands
     process = mp.Process(target=worker_manager.execute)
     process.start()
     process.join(timeout=5)
