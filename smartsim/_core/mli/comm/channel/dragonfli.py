@@ -77,7 +77,8 @@ class DragonFLIChannel(cch.CommChannelBase):
         descriptor: str,
     ) -> "DragonFLIChannel":
         """A factory method that creates an instance from a descriptor string
-        :param descriptor: The descriptor that uniquely identifies the resource"""
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached DragonFLIChannel"""
         try:
             return DragonFLIChannel(
                 fli_desc=base64.b64decode(descriptor),
