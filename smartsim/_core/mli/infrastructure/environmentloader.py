@@ -36,15 +36,14 @@ logger = get_logger(__name__)
 
 class EnvironmentConfigLoader:
     """
-    Facilitates the loading of a FeatureStore and Queue
-    into the WorkerManager.
+    Facilitates the loading of a FeatureStore and Queue into the WorkerManager.
     """
 
     def __init__(
         self,
-        featurestore_factory: t.Callable[[str], FeatureStore],
-        callback_factory: t.Callable[[bytes], CommChannelBase],
-        queue_factory: t.Callable[[str], CommChannelBase],
+        featurestore_factory: t.Optional[t.Callable[[str], FeatureStore]] = None,
+        callback_factory: t.Optional[t.Callable[[bytes], CommChannelBase]] = None,
+        queue_factory: t.Optional[t.Callable[[str], CommChannelBase]] = None,
     ) -> None:
         """Initialize the config loader instance with the factories necessary for
         creating additional objects.
@@ -53,14 +52,10 @@ class EnvironmentConfigLoader:
         given a descriptor
         :param callback_factory: A factory method that produces a callback
         channel given a descriptor
-        :param featurestore_factory: A factory method that produces a queue
+        :param queue_factory: A factory method that produces a queue
         channel given a descriptor"""
-        self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
-        """The descriptor used to attach to the incoming event queue"""
         self.queue: t.Optional[CommChannelBase] = None
         """The attached incoming event queue channel"""
-        self._backbone_descriptor: t.Optional[str] = os.getenv("SS_DRG_DDICT", None)
-        """The descriptor used to attach to the backbone feature store"""
         self.backbone: t.Optional[FeatureStore] = None
         """The attached backbone feature store"""
         self._featurestore_factory = featurestore_factory
@@ -76,27 +71,33 @@ class EnvironmentConfigLoader:
         """Attach to the backbone feature store using the descriptor found in
         an environment variable. The backbone is a standalone, system-created
         feature store used to share internal information among MLI components
+
         :returns: The attached feature store via SS_DRG_DDICT"""
-        descriptor = self._backbone_descriptor or os.getenv("SS_DRG_DDICT", None)
+        descriptor = os.getenv("SS_DRG_DDICT", "")
+
+        if not descriptor:
+            logger.warning("No backbone descriptor is configured")
+
         if self._featurestore_factory is None:
             logger.warning("No feature store factory is configured")
             return None
 
-        if descriptor is not None:
-            self.backbone = self._featurestore_factory(descriptor)
-            self._backbone_descriptor = descriptor
+        self.backbone = self._featurestore_factory(descriptor)
         return self.backbone
 
     def get_queue(self) -> t.Optional[CommChannelBase]:
         """Attach to a queue-like communication channel using the descriptor
         found in an environment variable.
+
         :returns: The attached queue specified via SSQueue"""
-        descriptor = self._queue_descriptor or os.getenv("SSQueue", None)
+        descriptor = os.getenv("SSQueue", "")
+
+        if not descriptor:
+            logger.warning("No queue descriptor is configured")
+
         if self._queue_factory is None:
             logger.warning("No queue factory is configured")
             return None
 
-        if descriptor is not None and descriptor:
-            self.queue = self._queue_factory(descriptor)
-            self._queue_descriptor = descriptor
+        self.queue = self._queue_factory(descriptor)
         return self.queue
