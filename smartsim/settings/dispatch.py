@@ -30,6 +30,7 @@ import dataclasses
 import subprocess as sp
 import typing as t
 import uuid
+import os
 
 from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
 
@@ -424,6 +425,7 @@ def make_shell_format_fn(
         path: str,
         _env: _EnvironMappingType,
     ) -> t.Tuple[t.Sequence[str], str]:
+        print(exe)
         return (
             (
                 run_command,
@@ -446,12 +448,15 @@ class ShellLauncher:
 
     # TODO inject path here
     def start(self, command: tuple[t.Sequence[str], str]) -> LaunchedJobID:
+        print(command)
         id_ = create_job_id()
         args, path = command
-        exe, *rest = args
+        print(f"is dir: {os.path.isdir(path)}")
+        print(f"located: {os.getcwd()}")
+        exe, *rest = args # break out popen as much as possible for debugging
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path, env={}, stdin=None, stdout=None)
-        # env accepts a dictionary
+        # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 
     @classmethod

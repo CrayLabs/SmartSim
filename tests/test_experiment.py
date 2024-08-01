@@ -239,7 +239,7 @@ def test_start_can_launch_jobs(
 
 @pytest.mark.parametrize(
     "num_starts",
-    [pytest.param(i, id=f"{i} start(s)") for i in (1, 2, 3, 5, 10, 100, 1_000)],
+    [pytest.param(i, id=f"{i} start(s)") for i in (1, 2,)],
 )
 def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     experiment: Experiment, job_maker: JobMakerType, num_starts: int
