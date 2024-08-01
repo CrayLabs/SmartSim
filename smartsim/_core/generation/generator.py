@@ -35,6 +35,9 @@ from glob import glob
 from logging import DEBUG, INFO
 from os import mkdir, path, symlink
 from os.path import join, relpath
+import subprocess
+import sys
+
 
 from tabulate import tabulate
 
@@ -187,7 +190,6 @@ class Generator:
         :param app: The application for which operations are generated.
         :return: A list of lists containing file system operations.
         """
-        return
         app = t.cast(Application, job.entity)
         self._get_symlink_file_system_operation(app, job_path)
         self._write_tagged_entity_files(app, job_path)
@@ -202,15 +204,11 @@ class Generator:
         """
         if app.files is None:
             return
-        parser = get_parser()
         for src in app.files.copy:
             if os.path.isdir(src):
-                cmd = f"copy {src} {dest} --dirs_exist_ok"
+                subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "copy", src, dest, "--dirs_exist_ok"])
             else:
-                cmd = f"copy {src} {dest}"
-            args = cmd.split()
-            ns = parser.parse_args(args)
-            file_operations.copy(ns)
+                subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "copy", src, dest])
 
     @staticmethod
     def _get_symlink_file_system_operation(app: Application, dest: str) -> None:
@@ -222,16 +220,13 @@ class Generator:
         if app.files is None:
             return
         parser = get_parser()
-        for sym in app.files.link:
-            # Normalize the path to remove trailing slashes
-            normalized_path = os.path.normpath(sym)
-            # Get the parent directory (last folder)
+        for src in app.files.link:
+            # # Normalize the path to remove trailing slashes
+            normalized_path = os.path.normpath(src)
+            # # Get the parent directory (last folder)
             parent_dir = os.path.basename(normalized_path)
             dest = os.path.join(dest, parent_dir)
-            cmd = f"symlink {sym} {dest}"
-            args = cmd.split()
-            ns = parser.parse_args(args)
-            file_operations.symlink(ns)
+            subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "symlink", src, dest])
 
     @staticmethod
     def _write_tagged_entity_files(app: Application, dest: str) -> None:
@@ -275,10 +270,11 @@ class Generator:
             encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
             parser = get_parser()
             for dest_path in to_write:
-                cmd = f"configure {dest_path} {dest_path} {tag} {encoded_dict}"
-                args = cmd.split()
-                ns = parser.parse_args(args)
-                file_operations.configure(ns)
+                subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "configure", dest_path, dest_path, tag, encoded_dict])
+                # cmd = f"configure {dest_path} {dest_path} {tag} {encoded_dict}"
+                # args = cmd.split()
+                # ns = parser.parse_args(args)
+                # file_operations.configure(ns)
 
             # TODO address in ticket 723
             # self._log_params(entity, files_to_params)
