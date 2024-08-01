@@ -255,6 +255,9 @@ class BufferWriterLauncher(dispatch.LauncherProtocol[list[str]]):
         self.buf.writelines(f"{s}\n" for s in strs)
         return dispatch.create_job_id()
 
+    def get_status(self, *ids):
+        raise NotImplementedError
+
 
 class BufferWriterLauncherSubclass(BufferWriterLauncher): ...
 

@@ -235,12 +235,37 @@ class Experiment:
 
     def get_status(self, *ids: LaunchedJobID) -> tuple[SmartSimStatus, ...]:
         ids_ = set(ids)
-        to_query = {
-            launcher: tuple(launched & ids_)
-            for launcher, launched in self._active_launchers.items()
-        }
-        # TODO: validate that ids map to 0 or 1 launcher
-        stats_zips = (zip(ids, l.get_status(*ids)) for l, ids in to_query.items())
+        to_query = tuple(
+            (launcher, requested_ids)
+            for launcher, launched_ids in self._active_launchers.items()
+            if (requested_ids := launched_ids & ids_)
+        )
+
+        iter_req_ids = (ids for _, ids in to_query)
+        combs = itertools.combinations(iter_req_ids, 2)
+        intersections = (set_1 & set_2 for set_1, set_2 in combs)
+        ambiguous = set(itertools.chain.from_iterable(intersections))
+        if any(ambiguous):
+            formatted = textwrap.indent("\n".join(ambiguous), "  - ")
+            raise ValueError(textwrap.dedent(f"""\
+                Ambiguous ID(s) Detected:
+                {formatted}
+
+                These ID(s) were exact matches for ID(s) issued by two or more
+                launchers. This typically happens when a custom launcher has
+                been registered with SmartSim, but does not issue sufficiently
+                unique launched job ids. If this is the case, please make sure
+                that launched job ids issued are globally unique!
+
+                If you are not using a custom launcher, and this error
+                persists, please file an issue at the following link, and we'll
+                be sure to help address the problem as soon as possible:
+
+                https://github.com/CrayLabs/SmartSim/issues
+                """))
+
+        ids_as_sequence = ((l, tuple(ids)) for l, ids in to_query)
+        stats_zips = (zip(ids, l.get_status(*ids)) for l, ids in ids_as_sequence)
         stats_map = dict(itertools.chain.from_iterable(stats_zips))
         stats = (stats_map.get(i, SmartSimStatus.STATUS_NEVER_STARTED) for i in ids)
         return tuple(stats)

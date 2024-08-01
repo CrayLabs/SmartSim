@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import abc
 import collections.abc
 import dataclasses
 import subprocess as sp
@@ -383,8 +384,11 @@ class ExecutableProtocol(t.Protocol):
 
 class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
     @classmethod
+    @abc.abstractmethod
     def create(cls, exp: Experiment, /) -> Self: ...
+    @abc.abstractmethod
     def start(self, launchable: _T_contra, /) -> LaunchedJobID: ...
+    @abc.abstractmethod
     def get_status(
         self, *launched_ids: LaunchedJobID
     ) -> tuple[SmartSimStatus, ...]: ...
