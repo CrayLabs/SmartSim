@@ -50,8 +50,8 @@ from subprocess import SubprocessError
 if t.TYPE_CHECKING:
     from typing_extensions import Never
 
-# NOTE: This will be imported by setup.py and hence no smartsim related
-# items should be imported into this file.
+from .platform import OperatingSystem, Device, Architecture, Platform
+
 
 # TODO: check cmake version and use system if possible to avoid conflicts
 

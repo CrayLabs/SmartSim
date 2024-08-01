@@ -35,6 +35,7 @@ import pathlib
 import platform
 import typing as t
 
+_PathLike = t.Union[str, pathlib.Path]
 _Platform = t.TypeVar("_Platform", bound="Platform")
 _PlatformDependencies = t.TypeVar("_PlatformDependencies", bound="PlatformDependencies")
 
@@ -144,12 +145,12 @@ class MLPackage(BaseModel):
     version: str
     pip_index: str
     package: t.List[str]
-    lib_source: t.Union[HttpUrl, os.PathLike]
+    lib_source: t.Union[HttpUrl, _PathLike]
 
     def set_custom_index(self, index: str):
         self.pip_index = index
 
-    def set_lib_source(self, source: t.Union[HttpUrl, os.PathLike]):
+    def set_lib_source(self, source: t.Union[HttpUrl, _PathLike]):
         self.lib_source = source
 
 
@@ -158,7 +159,7 @@ class PlatformDependencies(BaseModel):
     ml_packages: t.Dict[str, MLPackage]
 
     @classmethod
-    def from_json_file(cls, json_file: os.PathLike) -> _PlatformDependencies:
+    def from_json_file(cls, json_file: _PathLike) -> _PlatformDependencies:
         with open(json_file, "r") as f:
             config_json = json.load(json_file)
         platform = Platform.from_str(**config_json["platform"])
@@ -168,14 +169,17 @@ class PlatformDependencies(BaseModel):
         return cls(platform, ml_packages)
 
 
-def load_platform_configs(
-        config_file_path: os.PathLike=resources.files("smartsim._core._install.configs")
-) -> t.Dict[Platform, PlatformDependencies]:
+def load_platform_configs(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformDependencies]:
 
     configs = {}
+    print(config_file_path)
+    print(list(config_file_path.glob("*.json")))
+
     for file in config_file_path.glob("*.json"):
+        print(file)
         dependencies = PlatformDependencies.from_json_file(file)
         configs[dependencies.platform] = dependencies
     return configs
 
-DEFAULT_CONFIGS = load_platform_configs
+DEFAULT_CONFIG_PATH = pathlib.Path(resources.files("smartsim._core._install.configs").as_file())
+DEFAULT_CONFIGS = load_platform_configs(DEFAULT_CONFIG_PATH)
