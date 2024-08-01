@@ -174,23 +174,21 @@ def install_package(asset_dir: pathlib.Path) -> int:
     """Install the package found in `asset_dir` into the current python environment
 
     :param asset_dir: path to a decompressed archive contents for a release asset"""
-    wheels = asset_dir.rglob("*.whl")
-    wheel_path = next(wheels, None)
-    if not wheel_path:
-        logger.error(f"No wheel found for package in {asset_dir}")
+    found_wheels = list(asset_dir.rglob("*.whl"))
+    if not found_wheels:
+        logger.error(f"No wheel(s) found for package in {asset_dir}")
         return 1
 
-    create_dotenv(wheel_path.parent)
+    create_dotenv(found_wheels[0].parent)
 
-    while wheel_path is not None:
-        logger.info(f"Installing package: {wheel_path.absolute()}")
+    try:
+        wheels = list(map(str, found_wheels))
+        logger.info("Installing packages:\n%s", "\n".join(wheels))
 
-        try:
-            pip("install", "--force-reinstall", str(wheel_path), "numpy<2")
-            wheel_path = next(wheels, None)
-        except Exception:
-            logger.error(f"Unable to install from {asset_dir}")
-            return 1
+        pip("install", *wheels)
+    except Exception:
+        logger.error(f"Unable to install from {asset_dir}")
+        return 1
 
     return 0
 
