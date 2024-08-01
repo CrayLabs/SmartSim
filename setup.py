@@ -95,12 +95,6 @@ buildenv_spec = importlib.util.spec_from_file_location("buildenv", str(buildenv_
 buildenv = importlib.util.module_from_spec(buildenv_spec)
 buildenv_spec.loader.exec_module(buildenv)
 
-# import builder module
-builder_path = _install_dir.joinpath("builder.py")
-builder_spec = importlib.util.spec_from_file_location("builder", str(builder_path))
-builder = importlib.util.module_from_spec(builder_spec)
-builder_spec.loader.exec_module(builder)
-
 # helper classes for building dependencies that are
 # also utilized by the Smart CLI
 build_env = buildenv.BuildEnv(checks=False)
@@ -128,46 +122,7 @@ smartsim_version = versions.write_version(setup_path)
 class BuildError(Exception):
     pass
 
-
-# Hacky workaround for solving CI build "purelib" issue
-# see https://github.com/google/or-tools/issues/616
-class InstallPlatlib(install):
-    def finalize_options(self):
-        super().finalize_options()
-        if self.distribution.has_ext_modules():
-            self.install_lib = self.install_platlib
-
-
-class SmartSimBuild(build_py):
-    def run(self):
-        database_builder = builder.DatabaseBuilder(
-            build_env(), build_env.MALLOC, build_env.JOBS
-        )
-        if not database_builder.is_built:
-            database_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
-
-            database_builder.cleanup()
-
-        # run original build_py command
-        super().run()
-
-
-# Tested with wheel v0.29.0
-class BinaryDistribution(Distribution):
-    """Distribution which always forces a binary package with platform name
-
-    We use this because we want to pre-package Redis for certain
-    platforms to use.
-    """
-
-    def has_ext_modules(_placeholder):
-        return True
-
-
 # Define needed dependencies for the installation
-
-# Add SmartRedis at specific version
-# install_requires.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
@@ -232,13 +187,8 @@ setup(
         "numpy<2",
         "smartredis>=0.5,<0.6",
     ],
-    cmdclass={
-        "build_py": SmartSimBuild,
-        "install": InstallPlatlib,
-    },
     zip_safe=False,
     extras_require=extras_require,
-    distclass=BinaryDistribution,
     entry_points={
         "console_scripts": [
             "smart = smartsim._core._cli.__main__:main",
