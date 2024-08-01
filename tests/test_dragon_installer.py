@@ -177,7 +177,7 @@ def test_retrieve_cached(
     mock_webtgz_extract(None, expected_output_dir)
 
     # get modification time of directory holding the "downloaded" archive
-    ts1 = test_archive.parent.stat().st_mtime
+    ts1 = expected_output_dir.stat().st_ctime
 
     requester = Requester(
         auth=None,
@@ -203,7 +203,7 @@ def test_retrieve_cached(
     # show that retrieving an asset w/a different ID results in ignoring
     # other wheels from prior downloads in the parent directory of the asset
     asset_path = retrieve_asset(test_archive.parent, asset)
-    ts2 = asset_path.stat().st_mtime
+    ts2 = asset_path.stat().st_ctime
 
     # NOTE: the file should be written to a subdir based on the asset ID
     assert (
