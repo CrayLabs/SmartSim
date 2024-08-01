@@ -27,7 +27,6 @@
 # pylint: disable=too-many-lines
 
 import concurrent.futures
-import enum
 import fileinput
 import itertools
 import os
@@ -83,71 +82,6 @@ def expand_exe_path(exe: str) -> str:
 
 class BuildError(Exception):
     pass
-
-
-class Architecture(enum.Enum):
-    X64 = ("x86_64", "amd64")
-    ARM64 = ("arm64",)
-
-    @classmethod
-    def from_str(cls, string: str, /) -> "Architecture":
-        string = string.lower()
-        for type_ in cls:
-            if string in type_.value:
-                return type_
-        raise BuildError(f"Unrecognized or unsupported architecture: {string}")
-
-
-class Device(enum.Enum):
-    CPU = "cpu"
-    CUDA118 = "cuda118"
-    CUDA121 = "cuda121"
-
-    @classmethod
-    def from_string(cls, str_: str) -> "Device":
-        str_ = str_.lower()
-        if str_ == "gpu":
-            # TODO: auto detect which device to use
-            #       currently hard coded to `cuda11`
-            return cls.CUDA118
-        return cls(str_)
-
-    def is_gpu(self) -> bool:
-        return self != type(self).CPU
-
-    def is_cuda(self) -> bool:
-        cls = type(self)
-        return self in (cls.CUDA118, cls.CUDA121)
-
-    def torch_suffix(self) -> str:
-        cls = type(self)
-        try:
-            return {
-                cls.CPU: "cpu",
-                cls.CUDA118: "cu118",
-                cls.CUDA121: "cu121",
-            }[self]
-        except KeyError:
-            raise BuildError(f"Unkown Torch Suffix for device {self}") from None
-
-
-class OperatingSystem(enum.Enum):
-    LINUX = ("linux", "linux2")
-    DARWIN = ("darwin",)
-
-    @classmethod
-    def from_str(cls, string: str, /) -> "OperatingSystem":
-        string = string.lower()
-        for type_ in cls:
-            if string in type_.value:
-                return type_
-        raise BuildError(f"Unrecognized or unsupported operating system: {string}")
-
-
-class Platform(t.NamedTuple):
-    os: OperatingSystem
-    architecture: Architecture
-
 
 class Builder:
     """Base class for building third-party libraries"""
@@ -1145,3 +1079,7 @@ def _assert_never(
         if message is None
         else message
     )
+
+
+
+
