@@ -43,7 +43,10 @@ class DragonFLIChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon FLI Channel"""
 
     def __init__(self, fli_desc: bytes, sender_supplied: bool = True) -> None:
-        """Initialize the DragonFLIChannel instance"""
+        """Initialize the DragonFLIChannel instance
+        :param fli_desc: the descriptor of the FLI channel to attach
+        :param sender_supplied: flag indicating if the FLI uses sender-supplied streams
+        """
         super().__init__(fli_desc)
         # todo: do we need memory pool information to construct the channel correctly?
         self._fli: "fli" = fli.FLInterface.attach(fli_desc)
