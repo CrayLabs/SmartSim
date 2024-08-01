@@ -64,7 +64,7 @@ class EnvironmentConfigLoader:
         for inference requests"""
 
     def get_backbone(self) -> t.Optional[FeatureStore]:
-        """Create the backbone feature store using the descriptor found in
+        """Attach to the backbone feature store using the descriptor found in
         an environment variable. The backbone is a standalone, system-created
         feature store used to share internal information among MLI components"""
         descriptor = self._backbone_descriptor or os.getenv("SS_DRG_DDICT", None)
