@@ -160,14 +160,6 @@ class Experiment:
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
-        self._run_ID = (
-            "run-"
-            + datetime.datetime.now().strftime("%H-%M-%S")
-            + "-"
-            + datetime.datetime.now().strftime("%Y-%m-%d")
-        )
-        """Create the run id for the Experiment"""
-
         self._active_launchers: set[LauncherProtocol[t.Any]] = set()
         """The active launchers created, used, and reused by the experiment"""
 
@@ -188,10 +180,12 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        return self._dispatch(dispatch.DEFAULT_DISPATCHER, *jobs)
+        run_id = datetime.datetime.now().strftime("run-%H:%M:%ST%Y-%m-%d")
+        """Create the run id for Experiment.start"""
+        return self._dispatch(Generator(self.exp_path, run_id), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
-        self, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
+        self, generator: Generator, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 
@@ -204,7 +198,7 @@ class Experiment:
             particular dispatch of the job.
         """
 
-        def execute_dispatch(job: Job) -> LaunchedJobID:
+        def execute_dispatch(generator: Generator, job: Job) -> LaunchedJobID:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -233,16 +227,13 @@ class Experiment:
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
             # Generate the Job directory and return generated path
-            job_execution_path = self._generate(job)
+            job_execution_path = self._generate(generator, job)
             return launch_config.start(exe, env, job_execution_path)
 
-        return execute_dispatch(job), *map(execute_dispatch, jobs)
+        return execute_dispatch(generator, job), *map(execute_dispatch, jobs)
 
     @_contextualize
-    def _generate(
-        self,
-        job: Job,
-    ) -> str:
+    def _generate(self, generator: Generator, job: Job) -> str:
         """Generate the file structure for a ``Job``
 
         ``Experiment._generate`` creates directories for the job
@@ -260,8 +251,7 @@ class Experiment:
         :returns: a str path
         """
         try:
-            generator = Generator(self.exp_path, self._run_ID, job)
-            job_path = generator.generate_experiment()
+            job_path = generator.generate_job(job)
             return job_path
         except SmartSimError as e:
             logger.error(e)

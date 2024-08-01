@@ -14,8 +14,8 @@ from smartsim.entity import Application, Ensemble
 from smartsim.launchable import Job
 from smartsim.settings.launchSettings import LaunchSettings
 
-# TODO test ensemble copy, config, symlink when ensemble.attach_generator_files added
-# TODO remove ensemble tests and replace with JobGroup when start jobgroup is supported
+# TODO Test ensemble copy, config, symlink when Ensemble.attach_generator_files added
+# TODO Add JobGroup tests when JobGroup becomes a Launchable
 
 pytestmark = pytest.mark.group_a
 
@@ -80,33 +80,38 @@ def test_log_file_path(generator_instance):
 
 
 def test_generate_job_directory(test_dir, wlmutils):
-    """Test that Job directory was created."""
+    """Test Generator.generate_job"""
+    # Experiment path
     experiment_path = osp.join(test_dir, "experiment_name")
+    # Create Job
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     app = Application("app_name", exe="python", run_settings="RunSettings")
     job = Job(app, launch_settings)
-    run_ID = "mock_run"
-    gen = Generator(gen_path=experiment_path, run_ID=run_ID, job=job)
-    gen.generate_experiment()
+    # Mock start id
+    run_id = "mock_run"
+    # Generator instance
+    gen = Generator(exp_path=experiment_path, run_id=run_id)
+    # Call Generator.generate_job
+    job_path = gen.generate_job(job)
+    assert isinstance(job_path, pathlib.Path)
     expected_run_path = (
         pathlib.Path(experiment_path)
-        / run_ID
+        / run_id
         / f"{job.__class__.__name__.lower()}s"
         / app.name
         / "run"
     )
+    assert job_path == expected_run_path
     expected_log_path = (
         pathlib.Path(experiment_path)
-        / run_ID
+        / run_id
         / f"{job.__class__.__name__.lower()}s"
         / app.name
         / "log"
     )
-    assert gen.path == str(expected_run_path)
-    assert gen.log_path == str(expected_log_path)
     assert osp.isdir(expected_run_path)
     assert osp.isdir(expected_log_path)
-    assert osp.isfile(osp.join(expected_run_path, "smartsim_params.txt"))
+    assert osp.isfile(osp.join(expected_log_path, "smartsim_params.txt"))
 
 
 def test_exp_private_generate_method_app(test_dir, job_instance):
@@ -267,3 +272,8 @@ def test_generate_ensemble_directory(test_dir, wlmutils):
         gen.generate_experiment()
         assert osp.isdir(gen.path)
         assert osp.isdir(pathlib.Path(gen.log_path))
+
+
+def test_dummy(test_dir, job_instance):
+    exp = Experiment(name="exp-name", exp_path=test_dir)
+    exp.start(job_instance)

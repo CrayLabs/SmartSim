@@ -30,12 +30,8 @@ import typing as t
 from copy import deepcopy
 
 from smartsim._core.commands.launchCommands import LaunchCommands
-from smartsim._core.utils.helpers import create_short_id_str
 from smartsim.launchable.basejob import BaseJob
 from smartsim.settings import LaunchSettings
-
-if t.TYPE_CHECKING:
-    from smartsim.entity.entity import SmartSimEntity
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
@@ -59,14 +55,12 @@ class Job(BaseJob):
         super().__init__()
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
-        self._name = deepcopy(name) if name else deepcopy(entity.name)
-        # TODO: self.warehouse_runner = JobWarehouseRunner
+        self._name = name if name else entity.name
 
-    # TODO do we want the user to be allowed to reset the Job name? Therefore, add setter
     @property
     def name(self) -> str:
         """Retrieves the name of the Job."""
-        return deepcopy(self._name)
+        return self._name
 
     @property
     def entity(self) -> SmartSimEntity:

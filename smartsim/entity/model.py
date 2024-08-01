@@ -75,7 +75,6 @@ class Application(SmartSimEntity):
         :param exe_args: executable arguments
         :param params: application parameters for writing into configuration files or
                        to be passed as command line arguments to executable.
-        :param path: path to output, error, and configuration files
         :param run_settings: launcher settings specified in the experiment
         :param params_as_args: list of parameters which have to be
                                interpreted as command line arguments to

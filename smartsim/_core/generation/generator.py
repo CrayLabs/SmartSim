@@ -31,23 +31,19 @@ import pickle
 import shutil
 import typing as t
 from datetime import datetime
-from distutils import dir_util  # pylint: disable=deprecated-module
 from glob import glob
 from logging import DEBUG, INFO
 from os import mkdir, path, symlink
 from os.path import join, relpath
-from pathlib import Path
 
 from tabulate import tabulate
 
-from ...database import FeatureStore
 from ...entity import Application, TaggedFilesHierarchy
 from ...entity.files import EntityFiles
-from ...launchable import Job, JobGroup
+from ...launchable import Job
 from ...log import get_logger
 from ..entrypoints import file_operations
 from ..entrypoints.file_operations import get_parser
-from ..utils.helpers import create_short_id_str
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -59,7 +55,7 @@ class Generator:
     writing files into a Job directory.
     """
 
-    def __init__(self, gen_path: str, run_ID: str, job: Job) -> None:
+    def __init__(self, exp_path: str, run_id: str) -> None:
         """Initialize a generator object
 
         The Generator class is responsible for creating Job directories.
@@ -71,48 +67,11 @@ class Generator:
         :param run_ID: The id of the Experiment
         :param job: Reference to a name, SmartSimEntity and LaunchSettings
         """
-        self.job = job
-        # Generate the job folder path
-        self.path = self._generate_job_path(job, gen_path, run_ID)
-        # Generate the log folder path
-        self.log_path = self._generate_log_path(job, gen_path, run_ID)
+        self.exp_path = pathlib.Path(exp_path)
+        """The path under which the experiment operate"""
+        self.run_id = run_id
+        """The runID for Experiment.start"""
 
-    def _generate_log_path(self, job: Job, gen_path: str, run_ID: str) -> str:
-        """
-        Generate the path for the log folder.
-
-        :param gen_path: The base path job generation
-        :returns str: The generated path for the log directory
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        path = os.path.join(
-            gen_path,
-            run_ID,
-            job_type,
-            job.name,
-            "log",
-        )
-        return path
-
-    def _generate_job_path(self, job: Job, gen_path: str, run_ID: str) -> str:
-        """
-        Generates the directory path for a job based on its creation type
-        (whether created via ensemble or job init).
-
-        :param job: The Job object
-        :param gen_path: The base path for job generation
-        :param run_ID: The experiments unique run ID
-        :returns str: The generated path for the job.
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        path = os.path.join(
-            gen_path,
-            run_ID,
-            job_type,
-            job.name,
-            "run",
-        )
-        return path
 
     @property
     def log_level(self) -> int:
@@ -135,17 +94,16 @@ class Generator:
         else:
             return default_log_level
 
-    @property
-    def log_file(self) -> str:
+    def log_file(self, log_path: str) -> str:
         """Returns the location of the file
         summarizing the parameters used for the last generation
         of all generated entities.
 
         :returns: path to file with parameter settings
         """
-        return join(self.path, "smartsim_params.txt")
+        return join(log_path, "smartsim_params.txt")
 
-    def generate_experiment(self) -> str:
+    def generate_job(self, job: Job) -> str:
         """Generate the directories
 
         Generate the file structure for a SmartSim experiment. This
@@ -164,28 +122,63 @@ class Generator:
         e.g. ``THERMO=;90;``
 
         """
-        # Create Job directory
-        pathlib.Path(self.path).mkdir(exist_ok=True, parents=True)
-        # Creat Job log directory
-        pathlib.Path(self.log_path).mkdir(exist_ok=True, parents=True)
+        job_path = self._generate_job_path(job)
+        log_path = self._generate_log_path(job)
 
-        # The log_file only keeps track of the last generation
-        # this is to avoid gigantic files in case the user repeats
-        # generation several times. The information is anyhow
-        # redundant, as it is also written in each entity's dir
-        with open(self.log_file, mode="w", encoding="utf-8") as log_file:
+        with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        # Prevent access to type FeatureStore entities
-        if isinstance(self.job.entity, Application):
-            # Perform file system operations on attached files
-            self._build_operations()
+        # Perform file system operations on attached files
+        self._build_operations(job, job_path)
 
         # Return Job directory path
-        return self.path
+        return job_path
 
-    def _build_operations(self) -> None:
+
+    def _generate_job_path(self, job: Job) -> str:
+        """
+        Generates the directory path for a job based on its creation type
+        (whether created via ensemble or job init).
+
+        :param job: The Job object
+        :param gen_path: The base path for job generation
+        :param run_ID: The experiments unique run ID
+        :returns str: The generated path for the job.
+        """
+        job_type = f"{job.__class__.__name__.lower()}s"
+        job_path = (
+            self.exp_path /
+            self.run_id /
+            job_type /
+            job.name /
+            "run"
+        )
+        # Create Job directory
+        job_path.mkdir(exist_ok=True, parents=True)
+        return job_path
+
+
+    def _generate_log_path(self, job: Job) -> str:
+        """
+        Generate the path for the log folder.
+
+        :param gen_path: The base path job generation
+        :returns str: The generated path for the log directory
+        """
+        job_type = f"{job.__class__.__name__.lower()}s"
+        log_path = (
+            self.exp_path /
+            self.run_id /
+            job_type /
+            job.name /
+            "log"
+        )
+        log_path.mkdir(exist_ok=True, parents=True)
+        return log_path
+
+    
+    def _build_operations(self, job: Job, job_path: str) -> None:
         """This method generates file system operations based on the provided application.
         It processes three types of operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods and appends the results
@@ -194,10 +187,11 @@ class Generator:
         :param app: The application for which operations are generated.
         :return: A list of lists containing file system operations.
         """
-        app = t.cast(Application, self.job.entity)
-        self._get_symlink_file_system_operation(app, self.path)
-        self._write_tagged_entity_files(app, self.path)
-        self._get_copy_file_system_operation(app, self.path)
+        return
+        app = t.cast(Application, job.entity)
+        self._get_symlink_file_system_operation(app, job_path)
+        self._write_tagged_entity_files(app, job_path)
+        self._get_copy_file_system_operation(app, job_path)
 
     @staticmethod
     def _get_copy_file_system_operation(app: Application, dest: str) -> None:
@@ -239,7 +233,6 @@ class Generator:
             ns = parser.parse_args(args)
             file_operations.symlink(ns)
 
-    # TODO update this to execute the file operations when entrypoint is merged in
     @staticmethod
     def _write_tagged_entity_files(app: Application, dest: str) -> None:
         """Read, configure and write the tagged input files for
@@ -264,7 +257,6 @@ class Generator:
                 """
                 for file in tagged.files:
                     dst_path = path.join(dest, tagged.base, path.basename(file))
-                    print(dst_path)
                     shutil.copyfile(file, dst_path)
                     to_write.append(dst_path)
 
