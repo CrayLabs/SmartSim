@@ -41,9 +41,9 @@ class EnvironmentConfigLoader:
 
     def __init__(
         self,
-        featurestore_factory: t.Optional[t.Callable[[str], FeatureStore]] = None,
-        callback_factory: t.Optional[t.Callable[[bytes], CommChannelBase]] = None,
-        queue_factory: t.Optional[t.Callable[[str], CommChannelBase]] = None,
+        featurestore_factory: t.Callable[[str], FeatureStore],
+        callback_factory: t.Callable[[bytes], CommChannelBase],
+        queue_factory: t.Callable[[str], CommChannelBase],
     ) -> None:
         """Initialize the config loader instance with the factories necessary for
         creating additional objects.

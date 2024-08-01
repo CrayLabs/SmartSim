@@ -235,7 +235,11 @@ class WorkerManager(Service):
             request.raw_inputs = tensor_bytes_list
 
         if not self._validate_request(request):
-            return
+            exception_handler(
+                ValueError("Error validating the request"),
+                request.callback,
+                "Error validating the request.",
+            )
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
