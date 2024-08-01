@@ -24,15 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from pydantic import HttpUrl, BaseModel
-from collections import namedtuple
+import importlib.resources as pkg_resources
+from pydantic import HttpUrl
+from pydantic.dataclasses import dataclass
 
 import enum
-import importlib.resources as resources
 import json
 import os
 import pathlib
 import platform
+import textwrap
 import typing as t
 
 _PathLike = t.Union[str, pathlib.Path]
@@ -43,8 +44,8 @@ class UnsupportedError(Exception):
     pass
 
 class Architecture(enum.Enum):
-    X64 = ("x86_64", "amd64")
-    ARM64 = ("arm64",)
+    X64 = "x86_64"
+    ARM64 = "arm64"
 
     @classmethod
     def from_str(cls, string: str, /) -> "Architecture":
@@ -66,7 +67,7 @@ class Device(enum.Enum):
     ROCM57 = "rocm-5.7"
 
     @classmethod
-    def from_string(cls, str_: str) -> "Device":
+    def from_str(cls, str_: str) -> "Device":
         str_ = str_.lower()
         if str_ == "gpu":
             # TODO: auto detect which device to use
@@ -112,8 +113,8 @@ class Device(enum.Enum):
 
 
 class OperatingSystem(enum.Enum):
-    LINUX = ("linux", "linux2",)
-    DARWIN = ("darwin",)
+    LINUX = "linux"
+    DARWIN = "darwin"
 
     @classmethod
     def from_str(cls, string: str, /) -> "OperatingSystem":
@@ -127,24 +128,34 @@ class OperatingSystem(enum.Enum):
     def autodetect(cls) -> "OperatingSystem":
         return cls.from_str(platform.system())
 
-class Platform(BaseModel):
+@dataclass(frozen=True)
+class Platform:
     os: OperatingSystem
     architecture: Architecture
     device: Device
 
     @classmethod
-    def from_str(cls, os_str: str, architecture_str: str, device_str: str) -> _Platform:
+    def from_str(cls, os: str, architecture: str, device: str) -> _Platform:
         return cls(
-            OperatingSystem.from_str(os_str),
-            Architecture.from_str(architecture_str),
-            Device.from_str(device_str)
+            OperatingSystem.from_str(os),
+            Architecture.from_str(architecture),
+            Device.from_str(device)
         )
+    
+    def __repr__(self):
+        output = [
+            self.os.name,
+            self.architecture.name,
+            self.device.name,
+        ]
+        return "-".join(output)
 
-class MLPackage(BaseModel):
+@dataclass
+class MLBackend:
     name: str
     version: str
     pip_index: str
-    package: t.List[str]
+    python_packages: t.List[str]
     lib_source: t.Union[HttpUrl, _PathLike]
 
     def set_custom_index(self, index: str):
@@ -153,33 +164,52 @@ class MLPackage(BaseModel):
     def set_lib_source(self, source: t.Union[HttpUrl, _PathLike]):
         self.lib_source = source
 
+    def __repr__(self):
+        output = [
+            f"Name: {self.name}",
+            f"Version: {self.version}",
+            f"Source: {self.lib_source}",
+            "Python packages:",
+            textwrap.indent("\n".join(self.python_packages), "\t"),
+        ]
+        return "\n".join(output)
 
-class PlatformDependencies(BaseModel):
+
+@dataclass
+class PlatformDependencies:
     platform: Platform
-    ml_packages: t.Dict[str, MLPackage]
+    ml_backends: t.Dict[str, MLBackend]
 
     @classmethod
     def from_json_file(cls, json_file: _PathLike) -> _PlatformDependencies:
         with open(json_file, "r") as f:
-            config_json = json.load(json_file)
+            config_json = json.load(f)
         platform = Platform.from_str(**config_json["platform"])
-        ml_packages = {
-            ml_package["name"]:MLPackage(**ml_package) for ml_package in config_json["ml_packages"]
+        ml_backends = {
+            backend["name"]: MLBackend(**backend) for backend in config_json["ml_backends"]
         }
-        return cls(platform, ml_packages)
+        return cls(platform, ml_backends)
+    
+    def __repr__(self):
+        output = [
+            f"\nPlatform: {str(self.platform)}",
+            "ML Packages:",
+        ]
+        for backend in self.ml_backends.values():
+            output += [textwrap.indent(str(backend), "\t")]
+            output += ["\n"]
+
+        return "\n".join(output)
 
 
-def load_platform_configs(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformDependencies]:
+def load_platforms(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformDependencies]:
 
     configs = {}
-    print(config_file_path)
-    print(list(config_file_path.glob("*.json")))
 
     for file in config_file_path.glob("*.json"):
-        print(file)
         dependencies = PlatformDependencies.from_json_file(file)
         configs[dependencies.platform] = dependencies
     return configs
 
-DEFAULT_CONFIG_PATH = pathlib.Path(resources.files("smartsim._core._install.configs").as_file())
-DEFAULT_CONFIGS = load_platform_configs(DEFAULT_CONFIG_PATH)
+DEFAULT_PLATFORM_PATH = pkg_resources.files("smartsim") / "_core" / "_install" / "platforms"
+DEFAULT_PLATFORMS = load_platforms(DEFAULT_PLATFORM_PATH)

@@ -1,14 +1,15 @@
 {
-    "os":"linux",
-    "architecture":"x86_64",
-    "device":"rocm-5.7",
-
-    "ml_packages": [
+    "platform":{
+        "os":"linux",
+        "architecture":"x86_64",
+        "device":"cpu"
+    },
+    "ml_backends": [
         {
             "name": "libtorch",
             "version": "2.2.2",
             "pip_index": "https://download.pytorch.org/whl/cpu",
-            "packages": [
+            "python_packages": [
                 "torch<=2.3.1",
                 "torchvision<=0.18.1",
                 "torchaudio<=2.3.1"
@@ -19,7 +20,7 @@
             "name": "libtensorflow",
             "version": "2.15",
             "pip_index": "",
-            "packages": [
+            "python_packages": [
                 "tensorflow<=2.15"
             ],
             "lib_source": "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.15.0.tar.gz"
@@ -28,7 +29,7 @@
             "name": "onnxruntime",
             "version": "1.18.1",
             "pip_index": "",
-            "packages": [
+            "python_packages": [
                 "onnx<=1.16",
                 "skl2onnx",
                 "scikit-learn",
