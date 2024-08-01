@@ -46,6 +46,15 @@ class EnvironmentConfigLoader:
         callback_factory: t.Callable[[bytes], CommChannelBase],
         queue_factory: t.Callable[[str], CommChannelBase],
     ) -> None:
+        """Initialize the config loader instance with the factories necessary for
+        creating additional objects.
+
+        :param featurestore_factory: A factory method that produces a feature store
+        given a descriptor
+        :param callback_factory: A factory method that produces a callback
+        channel given a descriptor
+        :param featurestore_factory: A factory method that produces a queue
+        channel given a descriptor"""
         self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
         """The descriptor used to attach to the incoming event queue"""
         self.queue: t.Optional[CommChannelBase] = None
@@ -66,7 +75,8 @@ class EnvironmentConfigLoader:
     def get_backbone(self) -> t.Optional[FeatureStore]:
         """Attach to the backbone feature store using the descriptor found in
         an environment variable. The backbone is a standalone, system-created
-        feature store used to share internal information among MLI components"""
+        feature store used to share internal information among MLI components
+        :returns: The attached feature store via SS_DRG_DDICT"""
         descriptor = self._backbone_descriptor or os.getenv("SS_DRG_DDICT", None)
         if self._featurestore_factory is None:
             logger.warning("No feature store factory is configured")
@@ -78,7 +88,9 @@ class EnvironmentConfigLoader:
         return self.backbone
 
     def get_queue(self) -> t.Optional[CommChannelBase]:
-        """Returns the Queue previously set in SSQueue"""
+        """Attach to a queue-like communication channel using the descriptor
+        found in an environment variable.
+        :returns: The attached queue specified via SSQueue"""
         descriptor = self._queue_descriptor or os.getenv("SSQueue", None)
         if self._queue_factory is None:
             logger.warning("No queue factory is configured")

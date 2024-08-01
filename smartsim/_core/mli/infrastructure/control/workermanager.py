@@ -128,7 +128,9 @@ class WorkerManager(Service):
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
         """Ensures that all feature stores required by the request are available
-        :param request: The request to validate"""
+        :param request: The request to validate
+        :returns: False if feature store validation fails for the request, True otherwise
+        """
         # collect all feature stores required by the request
         fs_model: t.Set[str] = set()
         if request.model_key:
@@ -147,7 +149,7 @@ class WorkerManager(Service):
 
         # create the feature stores we need to service request
         if fs_missing:
-            logger.info(f"Missing feature store(s): {fs_missing}")
+            logger.debug(f"Adding feature store(s): {fs_missing}")
             for descriptor in fs_missing:
                 feature_store = self._fs_factory(descriptor)
                 self._feature_stores[descriptor] = feature_store
@@ -156,7 +158,9 @@ class WorkerManager(Service):
 
     def _check_model(self, request: InferenceRequest) -> bool:
         """Ensure that a model is available for the request
-        :param request: The request to validate"""
+        :param request: The request to validate
+        :returns: False if model validation fails for the request, True otherwise
+        """
         if request.model_key or request.raw_model:
             return True
 
@@ -165,7 +169,9 @@ class WorkerManager(Service):
 
     def _check_inputs(self, request: InferenceRequest) -> bool:
         """Ensure that inputs are available for the request
-        :param request: The request to validate"""
+        :param request: The request to validate
+        :returns: False if input validation fails for the request, True otherwise
+        """
         if request.input_keys or request.raw_inputs:
             return True
 
@@ -174,7 +180,9 @@ class WorkerManager(Service):
 
     def _check_callback(self, request: InferenceRequest) -> bool:
         """Ensure that a callback channel is available for the request
-        :param request: The request to validate"""
+        :param request: The request to validate
+        :returns: False if callback validation fails for the request, True otherwise
+        """
         if request.callback is not None:
             return True
 
@@ -184,7 +192,7 @@ class WorkerManager(Service):
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
         :param request: The request to validate
-        :return: True if the request is valid, False otherwise"""
+        :return: False if the request fails any validation checks, True otherwise"""
         checks = [
             self._check_feature_stores(request),
             self._check_model(request),

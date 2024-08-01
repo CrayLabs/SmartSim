@@ -38,7 +38,8 @@ class FileSystemCommChannel(CommChannelBase):
     """Passes messages by writing to a file"""
 
     def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
-        """Initialize the FileSystemCommChannel instance"""
+        """Initialize the FileSystemCommChannel instance
+        :param key: a path to the root directory of the feature store"""
         self._lock = threading.RLock()
         if not isinstance(key, bytes):
             super().__init__(key.as_posix().encode("utf-8"))
