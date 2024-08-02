@@ -44,6 +44,7 @@ class DragonFLIChannel(cch.CommChannelBase):
 
     def __init__(self, fli_desc: bytes, sender_supplied: bool = True) -> None:
         """Initialize the DragonFLIChannel instance
+
         :param fli_desc: the descriptor of the FLI channel to attach
         :param sender_supplied: flag indicating if the FLI uses sender-supplied streams
         """
@@ -56,12 +57,14 @@ class DragonFLIChannel(cch.CommChannelBase):
 
     def send(self, value: bytes) -> None:
         """Send a message through the underlying communication channel
+
         :param value: The value to send"""
         with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
             sendh.send_bytes(value)
 
     def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
+
         :returns: the received message"""
         messages = []
         eot = False
@@ -80,6 +83,7 @@ class DragonFLIChannel(cch.CommChannelBase):
         descriptor: str,
     ) -> "DragonFLIChannel":
         """A factory method that creates an instance from a descriptor string
+
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFLIChannel"""
         try:

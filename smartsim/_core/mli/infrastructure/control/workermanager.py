@@ -98,6 +98,7 @@ class WorkerManager(Service):
         device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
+
         :param config_loader: Environment config loader that loads the task queue and
         feature store
         :param workers: A worker to manage
@@ -128,6 +129,7 @@ class WorkerManager(Service):
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
         """Ensures that all feature stores required by the request are available
+
         :param request: The request to validate
         :returns: False if feature store validation fails for the request, True otherwise
         """
@@ -158,6 +160,7 @@ class WorkerManager(Service):
 
     def _check_model(self, request: InferenceRequest) -> bool:
         """Ensure that a model is available for the request
+
         :param request: The request to validate
         :returns: False if model validation fails for the request, True otherwise
         """
@@ -169,6 +172,7 @@ class WorkerManager(Service):
 
     def _check_inputs(self, request: InferenceRequest) -> bool:
         """Ensure that inputs are available for the request
+
         :param request: The request to validate
         :returns: False if input validation fails for the request, True otherwise
         """
@@ -180,6 +184,7 @@ class WorkerManager(Service):
 
     def _check_callback(self, request: InferenceRequest) -> bool:
         """Ensure that a callback channel is available for the request
+
         :param request: The request to validate
         :returns: False if callback validation fails for the request, True otherwise
         """
@@ -190,7 +195,8 @@ class WorkerManager(Service):
         return False
 
     def _validate_request(self, request: InferenceRequest) -> bool:
-        """Ensure the request can be processed.
+        """Ensure the request can be processed
+
         :param request: The request to validate
         :return: False if the request fails any validation checks, True otherwise"""
         checks = [
@@ -204,6 +210,7 @@ class WorkerManager(Service):
 
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
+
         the inference pipeline"""
         logger.debug("executing worker manager pipeline")
 

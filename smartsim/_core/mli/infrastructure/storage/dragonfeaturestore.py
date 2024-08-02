@@ -48,6 +48,7 @@ class DragonFeatureStore(FeatureStore):
 
     def __getitem__(self, key: str) -> t.Union[str, bytes]:
         """Retrieve an item using key
+
         :param key: Unique key of an item to retrieve from the feature store"""
         try:
             value: t.Union[str, bytes] = self._storage[key]
@@ -62,20 +63,22 @@ class DragonFeatureStore(FeatureStore):
 
     def __setitem__(self, key: str, value: t.Union[str, bytes]) -> None:
         """Assign a value using key
+
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
         self._storage[key] = value
 
     def __contains__(self, key: str) -> bool:
         """Membership operator to test for a key existing within the feature store.
-        Return `True` if the key is found, `False` otherwise
-        :param key: Unique key of an item to retrieve from the feature store"""
+
+        :param key: Unique key of an item to retrieve from the feature store
+        :returns: `True` if the key is found, `False` otherwise"""
         return key in self._storage
 
     @property
     def descriptor(self) -> str:
-        """Return a unique identifier enabling a client to connect to
-        the feature store
+        """A unique identifier enabling a client to connect to the feature store
+
         :returns: A descriptor encoded as a string"""
         return str(self._storage.serialize())
 
@@ -85,6 +88,7 @@ class DragonFeatureStore(FeatureStore):
         descriptor: str,
     ) -> "DragonFeatureStore":
         """A factory method that creates an instance from a descriptor string
+
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFeatureStore"""
         try:

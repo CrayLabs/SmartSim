@@ -42,11 +42,13 @@ class CommChannelBase(ABC):
     @abstractmethod
     def send(self, value: bytes) -> None:
         """Send a message through the underlying communication channel
+
         :param value: The value to send"""
 
     @abstractmethod
     def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
+
         :returns: the received message"""
 
     @property

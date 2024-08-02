@@ -56,6 +56,7 @@ class DragonCommChannel(cch.CommChannelBase):
 
     def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
+
         :returns: the received message"""
         with self._channel.recvh(timeout=None) as recvh:
             message_bytes: bytes = recvh.recv_bytes(timeout=None)
@@ -67,6 +68,7 @@ class DragonCommChannel(cch.CommChannelBase):
         descriptor: str,
     ) -> "DragonCommChannel":
         """A factory method that creates an instance from a descriptor string
+
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonCommChannel"""
         try:

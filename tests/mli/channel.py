@@ -39,6 +39,7 @@ class FileSystemCommChannel(CommChannelBase):
 
     def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
         """Initialize the FileSystemCommChannel instance
+
         :param key: a path to the root directory of the feature store"""
         self._lock = threading.RLock()
         if not isinstance(key, bytes):
@@ -55,6 +56,7 @@ class FileSystemCommChannel(CommChannelBase):
 
     def send(self, value: bytes) -> None:
         """Send a message throuh the underlying communication channel
+
         :param value: The value to send"""
         logger.debug(
             f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
@@ -64,6 +66,7 @@ class FileSystemCommChannel(CommChannelBase):
 
     def recv(self) -> bytes:
         """Receieve a message through the underlying communication channel
+
         :returns: the received message"""
         with self._lock:
             if self._file_path.exists():
@@ -77,6 +80,7 @@ class FileSystemCommChannel(CommChannelBase):
         descriptor: str,
     ) -> "FileSystemCommChannel":
         """A factory method that creates an instance from a descriptor string
+
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached FileSystemCommChannel"""
         try:
