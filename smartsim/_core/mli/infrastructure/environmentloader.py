@@ -72,8 +72,8 @@ class EnvironmentConfigLoader:
         an environment variable. The backbone is a standalone, system-created
         feature store used to share internal information among MLI components
 
-        :returns: The attached feature store via SS_DRG_DDICT"""
-        descriptor = os.getenv("SS_DRG_DDICT", "")
+        :returns: The attached feature store via SS_INFRA_BACKBONE"""
+        descriptor = os.getenv("SS_INFRA_BACKBONE", "")
 
         if not descriptor:
             logger.warning("No backbone descriptor is configured")

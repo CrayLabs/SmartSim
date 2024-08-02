@@ -521,7 +521,7 @@ class DragonBackend:
                         env={
                             **request.current_env,
                             **request.env,
-                            "SS_DRG_DDICT": self.infra_ddict,
+                            "SS_INFRA_BACKBONE": self.infra_ddict,
                         },
                         stdout=dragon_process.Popen.PIPE,
                         stderr=dragon_process.Popen.PIPE,

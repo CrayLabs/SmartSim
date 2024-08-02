@@ -91,7 +91,7 @@ def setup_worker_manager_model_bytes(
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("SS_DRG_DDICT", backbone_descriptor)
+    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
 
     worker_manager = WorkerManager(
         EnvironmentConfigLoader(
@@ -129,7 +129,7 @@ def setup_worker_manager_model_key(
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("SS_DRG_DDICT", backbone_descriptor)
+    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
 
     worker_manager = WorkerManager(
         EnvironmentConfigLoader(

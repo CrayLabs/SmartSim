@@ -101,10 +101,10 @@ def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
-    """Verify the dragon feature store is loaded correctly by
-    the EnvironmentConfigLoader to demonstrate fs_factory correctness"""
+    """Verify the dragon feature store is loaded correctly by the
+    EnvironmentConfigLoader to demonstrate featurestore_factory correctness"""
     feature_store = DragonFeatureStore(DDict())
-    monkeypatch.setenv("SS_DRG_DDICT", feature_store.descriptor)
+    monkeypatch.setenv("SS_INFRA_BACKBONE", feature_store.descriptor)
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,

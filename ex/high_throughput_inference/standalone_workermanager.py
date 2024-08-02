@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     connect_to_infrastructure()
-    ddict_str = os.environ["SS_DRG_DDICT"]
+    ddict_str = os.environ["SS_INFRA_BACKBONE"]
     ddict = DDict.attach(ddict_str)
 
     to_worker_channel = Channel.make_process_local()
