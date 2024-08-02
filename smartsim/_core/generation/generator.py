@@ -33,20 +33,14 @@ import typing as t
 from datetime import datetime
 from glob import glob
 from logging import DEBUG, INFO
-from os import mkdir, path, symlink
+from os import mkdir, path
 from os.path import join, relpath
 import subprocess
 import sys
 
-
-from tabulate import tabulate
-
 from ...entity import Application, TaggedFilesHierarchy
-from ...entity.files import EntityFiles
 from ...launchable import Job
 from ...log import get_logger
-from ..entrypoints import file_operations
-from ..entrypoints.file_operations import get_parser
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -97,7 +91,7 @@ class Generator:
         else:
             return default_log_level
 
-    def log_file(self, log_path: str) -> str:
+    def log_file(self, log_path: pathlib.Path) -> str:
         """Returns the location of the file
         summarizing the parameters used for the last generation
         of all generated entities.
@@ -106,7 +100,7 @@ class Generator:
         """
         return join(log_path, "smartsim_params.txt")
 
-    def generate_job(self, job: Job) -> str:
+    def generate_job(self, job: Job) -> pathlib.Path:
         """Generate the directories
 
         Generate the file structure for a SmartSim experiment. This
@@ -125,28 +119,28 @@ class Generator:
         e.g. ``THERMO=;90;``
 
         """
+        # Generate ../job_name/run directory
         job_path = self._generate_job_path(job)
+        # Generate ../job_name/log directory
         log_path = self._generate_log_path(job)
 
         with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        # Perform file system operations on attached files
+        # Perform file system operations
         self._build_operations(job, job_path)
 
-        # Return Job directory path
+        # Return job path
         return job_path
 
 
-    def _generate_job_path(self, job: Job) -> str:
+    def _generate_job_path(self, job: Job) -> pathlib.Path:
         """
         Generates the directory path for a job based on its creation type
         (whether created via ensemble or job init).
 
         :param job: The Job object
-        :param gen_path: The base path for job generation
-        :param run_ID: The experiments unique run ID
         :returns str: The generated path for the job.
         """
         job_type = f"{job.__class__.__name__.lower()}s"
@@ -162,11 +156,11 @@ class Generator:
         return job_path
 
 
-    def _generate_log_path(self, job: Job) -> str:
+    def _generate_log_path(self, job: Job) -> pathlib.Path:
         """
         Generate the path for the log folder.
 
-        :param gen_path: The base path job generation
+        :param job: The Job object
         :returns str: The generated path for the log directory
         """
         job_type = f"{job.__class__.__name__.lower()}s"
@@ -181,7 +175,7 @@ class Generator:
         return log_path
 
     
-    def _build_operations(self, job: Job, job_path: str) -> None:
+    def _build_operations(self, job: Job, job_path: pathlib.Path) -> None:
         """This method generates file system operations based on the provided application.
         It processes three types of operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods and appends the results
@@ -191,12 +185,12 @@ class Generator:
         :return: A list of lists containing file system operations.
         """
         app = t.cast(Application, job.entity)
-        self._get_symlink_file_system_operation(app, job_path)
-        self._write_tagged_entity_files(app, job_path)
-        self._get_copy_file_system_operation(app, job_path)
+        self._symlink_files(job.entity, job_path)
+        self._write_tagged_files(job.entity, job_path)
+        self._copy_files(job.entity, job_path)
 
     @staticmethod
-    def _get_copy_file_system_operation(app: Application, dest: str) -> None:
+    def _copy_files(app: Application, dest: pathlib.Path) -> None:
         """Get copy file system operation for a file.
 
         :param app: The Application attached to the Job
@@ -211,7 +205,7 @@ class Generator:
                 subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "copy", src, dest])
 
     @staticmethod
-    def _get_symlink_file_system_operation(app: Application, dest: str) -> None:
+    def _symlink_files(app: Application, dest: pathlib.Path) -> None:
         """Get symlink file system operation for a file.
 
         :param app: The Application attached to the Job
@@ -219,17 +213,16 @@ class Generator:
         """
         if app.files is None:
             return
-        parser = get_parser()
         for src in app.files.link:
             # # Normalize the path to remove trailing slashes
             normalized_path = os.path.normpath(src)
             # # Get the parent directory (last folder)
             parent_dir = os.path.basename(normalized_path)
-            dest = os.path.join(dest, parent_dir)
-            subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "symlink", src, dest])
+            new_dest = os.path.join(str(dest), parent_dir)
+            subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "symlink", src, new_dest])
 
     @staticmethod
-    def _write_tagged_entity_files(app: Application, dest: str) -> None:
+    def _write_tagged_files(app: Application, dest: pathlib.Path) -> None:
         """Read, configure and write the tagged input files for
            a Application instance within an ensemble. This function
            specifically deals with the tagged files attached to
@@ -268,7 +261,6 @@ class Generator:
             tag = ";"
             # Encode the pickled dictionary with Base64
             encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
-            parser = get_parser()
             for dest_path in to_write:
                 subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "configure", dest_path, dest_path, tag, encoded_dict])
                 # cmd = f"configure {dest_path} {dest_path} {tag} {encoded_dict}"

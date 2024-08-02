@@ -49,7 +49,7 @@ def generator_instance(test_dir, wlmutils) -> Generator:
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     app = Application("app_name", exe="python", run_settings="RunSettings")
     job = Job(app, launch_settings)
-    return Generator(gen_path=experiment_path, run_ID="mock_run", job=job)
+    return Generator(exp_path=experiment_path, run_id="mock_run")
 
 
 @pytest.fixture
@@ -60,17 +60,16 @@ def job_instance(wlmutils) -> Job:
     return job
 
 
-def test_default_log_level(generator_instance):
+def test_default_log_level(generator_instance, monkeypatch):
     """Test if the default log level is INFO."""
+    monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "info")
     assert generator_instance.log_level == INFO
 
 
-def test_debug_log_level(generator_instance):
+def test_debug_log_level(generator_instance,monkeypatch):
     """Test if the log level is DEBUG when environment variable is set to "debug"."""
-    environ["SMARTSIM_LOG_LEVEL"] = "debug"
+    monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "debug")
     assert generator_instance.log_level == DEBUG
-    # Clean up: unset the environment variable
-    environ.pop("SMARTSIM_LOG_LEVEL", None)
 
 
 def test_log_file_path(generator_instance):
