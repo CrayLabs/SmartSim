@@ -189,6 +189,8 @@ class Experiment:
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 
+        :param generator: The Generator holds the run_id and experiment
+            path for use when producing job directories.
         :param dispatcher: The dispatcher that should be used to determine how
             to start a job based on its launch settings.
         :param job: The first job instance to dispatch
@@ -226,7 +228,7 @@ class Experiment:
             # it easier to monitor job statuses
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
-            # Generate the Job directory and return generated path
+            # Generate the job directory and return the generated job path
             job_execution_path = self._generate(generator, job)
             return launch_config.start(exe, env, job_execution_path)
 
@@ -234,21 +236,23 @@ class Experiment:
 
     @_contextualize
     def _generate(self, generator: Generator, job: Job) -> str:
-        """Generate the file structure for a ``Job``
+        """Generate the directory and file structure for a ``Job``
 
-        ``Experiment._generate`` creates directories for the job
-        passed.
+        ``Experiment._generate`` calls the appropriate Generator
+        function to create a directory for the passed job.
 
-        If files or directories are attached an ``application`` object
-        using ``application.attach_generator_files()``, those files or
-        directories will be symlinked, copied, or configured and
-        written into the created directory for that Job instance.
+        If files or directories are attached to an ``application`` object
+        associated with the Job using ``application.attach_generator_files()``,
+        those files or directories will be symlinked, copied, or configured and
+        written into the created job directory
 
-        An instance of ``Job`` can be passed as an argument to
-        the protected generate member.
+        An instance of ``Generator`` and ``Job`` can be passed as an argument to
+        the protected _generate member.
 
-        :param job: Job to generate file structure for
-        :returns: a str path
+        :param generator: Generator that holds the run_id and experiment
+            path for use when producing the job directory.
+        :param job: Job to generate file structure.
+        :returns: The generated Job path.
         """
         try:
             job_path = generator.generate_job(job)
