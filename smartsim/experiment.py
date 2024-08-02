@@ -234,6 +234,26 @@ class Experiment:
         return execute_dispatch(job), *map(execute_dispatch, jobs)
 
     def get_status(self, *ids: LaunchedJobID) -> tuple[SmartSimStatus, ...]:
+        """Get the status of jobs launched through the `Experiment` from their
+        launched job id returned when calling `Experiment.start`.
+
+        The `Experiment` will map the launched ID back to the launcher that
+        started the job and request a status update. The order of the returned
+        statuses exactly matches the order of the launched job ids.
+
+        If the `Experiment` cannot find any launcher that started the job
+        associated with the launched job id, then a
+        `SmartSimStatus.STATUS_NEVER_STARTED` status is returned for that id.
+
+        If the experiment maps the launched job id to multiple launchers, then
+        a `ValueError` is raised. This should only happen in the case when
+        launched job ids issued by user defined launcher are not sufficiently
+        unique.
+
+        :param ids: A sequence of launched job ids issued by the experiment.
+        :returns: A tuple of statuses with order respective of the order of the
+            calling arguments.
+        """
         ids_ = set(ids)
         to_query = tuple(
             (launcher, requested_ids)

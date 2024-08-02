@@ -243,7 +243,7 @@ def test_register_dispatch_to_launcher_types(request, cls, ctx):
         d.dispatch(to_launcher=cls, with_format=format_fn)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class BufferWriterLauncher(dispatch.LauncherProtocol[list[str]]):
     buf: io.StringIO
 
