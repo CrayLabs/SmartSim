@@ -104,4 +104,4 @@ class Ensemble(entity.CompoundEntity):
         apps = self._create_applications()
         if not apps:
             raise ValueError("There are no members as part of this ensemble")
-        return tuple(Job(app, settings, app.name) for app in enumerate(apps, 1))
+        return tuple(Job(app, settings, app.name) for app in apps)

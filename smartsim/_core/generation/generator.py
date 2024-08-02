@@ -70,27 +70,6 @@ class Generator:
         """The runID for Experiment.start"""
 
 
-    @property
-    def log_level(self) -> int:
-        """Determines the log level based on the value of the environment
-        variable SMARTSIM_LOG_LEVEL.
-
-        If the environment variable is set to "debug", returns the log level DEBUG.
-        Otherwise, returns the default log level INFO.
-
-        :return: Log level (DEBUG or INFO)
-        """
-        # Get the value of the environment variable SMARTSIM_LOG_LEVEL
-        env_log_level = os.getenv("SMARTSIM_LOG_LEVEL")
-
-        # Set the default log level to INFO
-        default_log_level = INFO
-
-        if env_log_level == "debug":
-            return DEBUG
-        else:
-            return default_log_level
-
     def log_file(self, log_path: pathlib.Path) -> str:
         """Returns the location of the file
         summarizing the parameters used for the last generation

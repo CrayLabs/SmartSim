@@ -38,6 +38,7 @@ import pytest
 from smartsim.entity import _mock, entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
+from smartsim._core.generation import Generator
 from smartsim.settings import dispatch, launchSettings
 from smartsim.settings.arguments import launchArguments
 
@@ -51,7 +52,7 @@ def experiment(monkeypatch, test_dir, dispatcher):
     """
     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
     monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
-    monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/job")
+    monkeypatch.setattr(exp, "_generate", lambda gen, job: (Generator(test_dir, "temp_run"), f"/tmp/job"))
     yield exp
 
 
