@@ -154,7 +154,7 @@ class Generator:
         self._write_tagged_files(app, job_path)
 
     @staticmethod
-    def _copy_files(files: EntityFiles | None, dest: pathlib.Path) -> None:
+    def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
         """Perform copy file sys operations on a list of files.
 
         :param app: The Application attached to the Job
@@ -189,7 +189,7 @@ class Generator:
                 )
 
     @staticmethod
-    def _symlink_files(files: EntityFiles | None, dest: pathlib.Path) -> None:
+    def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
         """Perform symlink file sys operations on a list of files.
 
         :param app: The Application attached to the Job
