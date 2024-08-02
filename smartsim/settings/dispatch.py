@@ -45,7 +45,7 @@ if t.TYPE_CHECKING:
 _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
 
-_WorkingDirectory: TypeAlias = str | os.PathLike[str]
+_WorkingDirectory: TypeAlias = t.Union[str, os.PathLike[str]]
 """A type alias for a Jobs working directory. Paths may be strings or
 PathLike objects.
 """
