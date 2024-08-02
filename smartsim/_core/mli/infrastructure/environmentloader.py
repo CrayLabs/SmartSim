@@ -77,6 +77,7 @@ class EnvironmentConfigLoader:
 
         if not descriptor:
             logger.warning("No backbone descriptor is configured")
+            return None
 
         if self._featurestore_factory is None:
             logger.warning("No feature store factory is configured")
@@ -94,6 +95,7 @@ class EnvironmentConfigLoader:
 
         if not descriptor:
             logger.warning("No queue descriptor is configured")
+            return None
 
         if self._queue_factory is None:
             logger.warning("No queue factory is configured")
