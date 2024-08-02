@@ -112,6 +112,8 @@ def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
         queue_factory=None,
     )
 
+    print(f"calling config.get_backbone: `{feature_store.descriptor}`")
+
     backbone = config.get_backbone()
     assert backbone is not None
 
