@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Fix dragon package installation bug
 - Adjust schemas for better performance
 - Add TorchWorker first implementation and mock inference app example
 - Add error handling in Worker Manager pipeline
