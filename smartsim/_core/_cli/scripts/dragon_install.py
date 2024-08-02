@@ -2,10 +2,10 @@ import os
 import pathlib
 import sys
 import typing as t
+from urllib.request import urlretrieve
 
 from github import Github
 from github.GitReleaseAsset import GitReleaseAsset
-from urllib.request import urlretrieve
 
 from smartsim._core._cli.utils import pip
 from smartsim._core._install.builder import WebTGZ
@@ -169,11 +169,25 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
     # grab a copy of the complete asset
     asset_path = download_dir / str(asset.name)
     download_url = asset.browser_download_url
+    if "0.91" not in asset.name:
+        if "3.9" in python_version():
+            logger.debug("I want to snake the original w/3.9 rpm")
+            # download_url = "https://arti.hpc.amslabs.hpecorp.net/ui/native/dragon-rpm-master-local/dev/master/sle15_sp3_pe/x86_64/dragon-0.91-py3.11.5-1d600977c.rpm"
+            ...  # temp no-op
+        elif "3.10" in python_version():
+            logger.debug("snaking original w/3.10 rpm")
+            download_url = "https://drive.usercontent.google.com/download?id=1dyScGNomzoPO8-bC8i6zaIbOOhsL83Sp&export=download&authuser=0&confirm=t&uuid=6068afeb-14fd-4303-90a5-498b316d3cce&at=APZUnTWTIf9Tl7Yt8tcdKyodnydV:1722641072921"
+        elif "3.11" in python_version():
+            logger.debug("snaking original w/3.11rpm")
+            download_url = "https://drive.usercontent.google.com/download?id=1vhUXLIu06-RPA_N3wWmi42avnawzizZZ&export=download&authuser=0&confirm=t&uuid=04c920cb-2e66-4762-8e0f-8ad57e0cbbdf&at=APZUnTUKtCv_BgYOkWAaHqoPpGLd:1722640947383"
+    else:
+        logger.debug(f"the name was: {asset.name}")
+
     try:
         urlretrieve(download_url, str(asset_path))
         logger.debug(f"Retrieved asset {asset.name} to {download_url}")
     except Exception:
-        logger.warning(f"Unable to download asset from: {download_url}")
+        logger.exception(f"Unable to download asset from: {download_url}")
 
     # extract the asset
     archive = WebTGZ(download_url)
