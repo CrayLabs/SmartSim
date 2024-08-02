@@ -29,14 +29,15 @@ import os
 import pathlib
 import pickle
 import shutil
+import subprocess
+import sys
 import typing as t
 from datetime import datetime
 from os import mkdir, path
 from os.path import join
-import subprocess
-import sys
 
 from ...entity import Application, TaggedFilesHierarchy
+from ...entity.files import EntityFiles
 from ...launchable import Job
 from ...log import get_logger
 
@@ -66,7 +67,6 @@ class Generator:
         self.run_id = run_id
         """The runID for Experiment.start"""
 
-
     def log_file(self, log_path: pathlib.Path) -> str:
         """Returns the location of the file
         summarizing the parameters used for the generation
@@ -77,7 +77,7 @@ class Generator:
         """
         return join(log_path, "smartsim_params.txt")
 
-    def generate_job(self, job: Job) -> pathlib.Path:
+    def generate_job(self, job: Job, job_index: int) -> pathlib.Path:
         """Generate the Job directory
 
         Generate the file structure for a SmartSim Job. This
@@ -95,9 +95,9 @@ class Generator:
 
         """
         # Generate ../job_name/run directory
-        job_path = self._generate_job_path(job)
+        job_path = self._generate_job_path(job, job_index)
         # Generate ../job_name/log directory
-        log_path = self._generate_log_path(job)
+        log_path = self._generate_log_path(job, job_index)
 
         # Create and write to the parameter settings file
         with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
@@ -110,8 +110,7 @@ class Generator:
         # Return Job path
         return job_path
 
-
-    def _generate_job_path(self, job: Job) -> pathlib.Path:
+    def _generate_job_path(self, job: Job, job_index: int) -> pathlib.Path:
         """
         Generate the run directory for a Job.
 
@@ -120,18 +119,13 @@ class Generator:
         """
         job_type = f"{job.__class__.__name__.lower()}s"
         job_path = (
-            self.exp_path /
-            self.run_id /
-            job_type /
-            job.name /
-            "run"
+            self.exp_path / self.run_id / job_type / f"{job.name}-{job_index}" / "run"
         )
         # Create Job directory
         job_path.mkdir(exist_ok=True, parents=True)
         return job_path
 
-
-    def _generate_log_path(self, job: Job) -> pathlib.Path:
+    def _generate_log_path(self, job: Job, job_index: int) -> pathlib.Path:
         """
         Generate the log directory for a Job.
 
@@ -140,16 +134,11 @@ class Generator:
         """
         job_type = f"{job.__class__.__name__.lower()}s"
         log_path = (
-            self.exp_path /
-            self.run_id /
-            job_type /
-            job.name /
-            "log"
+            self.exp_path / self.run_id / job_type / f"{job.name}-{job_index}" / "log"
         )
         log_path.mkdir(exist_ok=True, parents=True)
         return log_path
 
-    
     def _build_operations(self, job: Job, job_path: pathlib.Path) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
         It processes three types of file system ops: to_copy, to_symlink, and to_configure.
@@ -160,44 +149,72 @@ class Generator:
         :param job_path: Path to the Jobs run directory
         """
         app = t.cast(Application, job.entity)
-        self._copy_files(job.entity, job_path)
-        self._symlink_files(job.entity, job_path)
-        self._write_tagged_files(job.entity, job_path)
+        self._copy_files(app.files, job_path)
+        self._symlink_files(app.files, job_path)
+        self._write_tagged_files(app, job_path)
 
     @staticmethod
-    def _copy_files(app: Application, dest: pathlib.Path) -> None:
+    def _copy_files(files: EntityFiles | None, dest: pathlib.Path) -> None:
         """Perform copy file sys operations on a list of files.
 
         :param app: The Application attached to the Job
         :param dest: Path to the Jobs run directory
         """
         # Return if no files are attached
-        if app.files is None:
+        if files is None:
             return
-        for src in app.files.copy:
+        for src in files.copy:
             if os.path.isdir(src):
-                subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "copy", src, dest, "--dirs_exist_ok"])
+                subprocess.run(
+                    args=[
+                        sys.executable,
+                        "-m",
+                        "smartsim._core.entrypoints.file_operations",
+                        "copy",
+                        src,
+                        dest,
+                        "--dirs_exist_ok",
+                    ]
+                )
             else:
-                subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "copy", src, dest])
+                subprocess.run(
+                    args=[
+                        sys.executable,
+                        "-m",
+                        "smartsim._core.entrypoints.file_operations",
+                        "copy",
+                        src,
+                        dest,
+                    ]
+                )
 
     @staticmethod
-    def _symlink_files(app: Application, dest: pathlib.Path) -> None:
+    def _symlink_files(files: EntityFiles | None, dest: pathlib.Path) -> None:
         """Perform symlink file sys operations on a list of files.
 
         :param app: The Application attached to the Job
         :param dest: Path to the Jobs run directory
         """
         # Return if no files are attached
-        if app.files is None:
+        if files is None:
             return
-        for src in app.files.link:
+        for src in files.link:
             # Normalize the path to remove trailing slashes
             normalized_path = os.path.normpath(src)
             # Get the parent directory (last folder)
             parent_dir = os.path.basename(normalized_path)
             # Create destination
             new_dest = os.path.join(str(dest), parent_dir)
-            subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "symlink", src, new_dest])
+            subprocess.run(
+                args=[
+                    sys.executable,
+                    "-m",
+                    "smartsim._core.entrypoints.file_operations",
+                    "symlink",
+                    src,
+                    new_dest,
+                ]
+            )
 
     @staticmethod
     def _write_tagged_files(app: Application, dest: pathlib.Path) -> None:
@@ -240,7 +257,18 @@ class Generator:
             # Encode the pickled dictionary with Base64
             encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
             for dest_path in to_write:
-                subprocess.run(args=[sys.executable, "-m", "smartsim._core.entrypoints.file_operations", "configure", dest_path, dest_path, tag, encoded_dict])
+                subprocess.run(
+                    args=[
+                        sys.executable,
+                        "-m",
+                        "smartsim._core.entrypoints.file_operations",
+                        "configure",
+                        dest_path,
+                        dest_path,
+                        tag,
+                        encoded_dict,
+                    ]
+                )
 
             # TODO address in ticket 723
             # self._log_params(entity, files_to_params)

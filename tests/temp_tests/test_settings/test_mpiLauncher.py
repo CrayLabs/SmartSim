@@ -286,6 +286,6 @@ def test_invalid_hostlist_format(launcher):
 def test_formatting_launch_args(
     mock_echo_executable, cls, fmt, cmd, args, expected, test_dir
 ):
-    fmt_cmd, path = fmt(cls(args), mock_echo_executable, test_dir, {})
+    path, fmt_cmd = fmt(cls(args), mock_echo_executable, test_dir, {})
     assert tuple(fmt_cmd) == (cmd,) + expected
     assert path == test_dir

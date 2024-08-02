@@ -31,6 +31,7 @@ from __future__ import annotations
 import datetime
 import os
 import os.path as osp
+import pathlib
 import textwrap
 import typing as t
 from os import environ, getcwd
@@ -182,10 +183,16 @@ class Experiment:
         """
         run_id = datetime.datetime.now().strftime("run-%H:%M:%ST%Y-%m-%d")
         """Create the run id for Experiment.start"""
-        return self._dispatch(Generator(self.exp_path, run_id), dispatch.DEFAULT_DISPATCHER, *jobs)
+        return self._dispatch(
+            Generator(self.exp_path, run_id), dispatch.DEFAULT_DISPATCHER, *jobs
+        )
 
     def _dispatch(
-        self, generator: Generator, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
+        self,
+        generator: Generator,
+        dispatcher: dispatch.Dispatcher,
+        job: Job,
+        *jobs: Job,
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 
@@ -200,7 +207,8 @@ class Experiment:
             particular dispatch of the job.
         """
 
-        def execute_dispatch(generator: Generator, job: Job) -> LaunchedJobID:
+        def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
+            print(job)
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -229,13 +237,15 @@ class Experiment:
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
             # Generate the job directory and return the generated job path
-            job_execution_path = self._generate(generator, job)
-            return launch_config.start(exe, env, job_execution_path)
+            job_execution_path = self._generate(generator, job, idx)
+            return launch_config.start(exe, job_execution_path, env)
 
-        return execute_dispatch(generator, job), *map(execute_dispatch, jobs)
+        return execute_dispatch(generator, job, 0), *(
+            execute_dispatch(generator, job, idx) for idx, job in enumerate(jobs, 1)
+        )
 
     @_contextualize
-    def _generate(self, generator: Generator, job: Job) -> str:
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
         """Generate the directory and file structure for a ``Job``
 
         ``Experiment._generate`` calls the appropriate Generator
@@ -255,7 +265,7 @@ class Experiment:
         :returns: The generated Job path.
         """
         try:
-            job_path = generator.generate_job(job)
+            job_path = generator.generate_job(job, job_index)
             return job_path
         except SmartSimError as e:
             logger.error(e)
@@ -337,22 +347,6 @@ class Experiment:
         :returns: configuration of telemetry for this entity
         """
         return self._telemetry_cfg
-
-    def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(
-            entity: t.Union[FeatureStore, Application, Ensemble]
-        ) -> None:
-            if not osp.isdir(entity.path):
-                os.makedirs(entity.path)
-
-        for application in start_manifest.applications:
-            create_entity_dir(application)
-
-        for feature_store in start_manifest.fss:
-            create_entity_dir(feature_store)
-
-        for ensemble in start_manifest.ensembles:
-            create_entity_dir(ensemble)
 
     def __str__(self) -> str:
         return self.name
