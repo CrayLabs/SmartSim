@@ -28,6 +28,7 @@ import abc
 import contextlib
 import dataclasses
 import io
+import sys
 
 import pytest
 
@@ -246,6 +247,9 @@ def test_register_dispatch_to_launcher_types(request, cls, ctx):
 @dataclasses.dataclass(frozen=True)
 class BufferWriterLauncher(dispatch.LauncherProtocol[list[str]]):
     buf: io.StringIO
+
+    if sys.version_info < (3, 10):
+        __hash__ = object.__hash__
 
     @classmethod
     def create(cls, exp):
