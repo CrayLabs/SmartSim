@@ -54,9 +54,9 @@ from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
-from tests.mli.featurestore import FileSystemFeatureStore
 
 from .channel import FileSystemCommChannel
+from .featurestore import FileSystemFeatureStore
 
 logger = get_logger(__name__)
 # The tests in this file belong to the dragon group

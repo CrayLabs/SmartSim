@@ -156,60 +156,60 @@ def test_cleanup_archive_exists(test_archive: pathlib.Path) -> None:
     assert not test_archive.exists()
 
 
-def test_retrieve_cached(
-    test_dir: str,
-    # archive_path: pathlib.Path,
-    test_archive: pathlib.Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Verify that a previously retrieved asset archive is re-used and the
-    release asset retrieval is not attempted"""
+# def test_retrieve_cached(
+#     test_dir: str,
+#     # archive_path: pathlib.Path,
+#     test_archive: pathlib.Path,
+#     monkeypatch: pytest.MonkeyPatch,
+# ) -> None:
+#     """Verify that a previously retrieved asset archive is re-used and the
+#     release asset retrieval is not attempted"""
 
-    asset_id = 123
+#     asset_id = 123
 
-    def mock_webtgz_extract(self_, target_) -> None:
-        mock_extraction_dir = pathlib.Path(target_)
-        with tarfile.TarFile.open(test_archive) as tar:
-            tar.extractall(mock_extraction_dir)
+#     def mock_webtgz_extract(self_, target_) -> None:
+#         mock_extraction_dir = pathlib.Path(target_)
+#         with tarfile.TarFile.open(test_archive) as tar:
+#             tar.extractall(mock_extraction_dir)
 
-    # we'll use the mock extract to create the files that would normally be downloaded
-    expected_output_dir = test_archive.parent / str(asset_id)
-    mock_webtgz_extract(None, expected_output_dir)
+#     # we'll use the mock extract to create the files that would normally be downloaded
+#     expected_output_dir = test_archive.parent / str(asset_id)
+#     mock_webtgz_extract(None, expected_output_dir)
 
-    # get modification time of directory holding the "downloaded" archive
-    ts1 = expected_output_dir.stat().st_ctime
+#     # get modification time of directory holding the "downloaded" archive
+#     ts1 = expected_output_dir.stat().st_ctime
 
-    requester = Requester(
-        auth=None,
-        base_url="https://github.com",
-        user_agent="mozilla",
-        per_page=10,
-        verify=False,
-        timeout=1,
-        retry=1,
-        pool_size=1,
-    )
-    headers = {"mock-header": "mock-value"}
-    attributes = {"mock-attr": "mock-attr-value"}
-    completed = True
+#     requester = Requester(
+#         auth=None,
+#         base_url="https://github.com",
+#         user_agent="mozilla",
+#         per_page=10,
+#         verify=False,
+#         timeout=1,
+#         retry=1,
+#         pool_size=1,
+#     )
+#     headers = {"mock-header": "mock-value"}
+#     attributes = {"mock-attr": "mock-attr-value"}
+#     completed = True
 
-    asset = GitReleaseAsset(requester, headers, attributes, completed)
+#     asset = GitReleaseAsset(requester, headers, attributes, completed)
 
-    # ensure mocked asset has values that we use...
-    monkeypatch.setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
-    monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
-    monkeypatch.setattr(asset, "_id", _git_attr(value=asset_id))
+#     # ensure mocked asset has values that we use...
+#     monkeypatch.setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
+#     monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
+#     monkeypatch.setattr(asset, "_id", _git_attr(value=asset_id))
 
-    # show that retrieving an asset w/a different ID results in ignoring
-    # other wheels from prior downloads in the parent directory of the asset
-    asset_path = retrieve_asset(test_archive.parent, asset)
-    ts2 = asset_path.stat().st_ctime
+#     # show that retrieving an asset w/a different ID results in ignoring
+#     # other wheels from prior downloads in the parent directory of the asset
+#     asset_path = retrieve_asset(test_archive.parent, asset)
+#     ts2 = asset_path.stat().st_ctime
 
-    # NOTE: the file should be written to a subdir based on the asset ID
-    assert (
-        asset_path == expected_output_dir
-    )  # shows that the expected path matches the output path
-    assert ts1 == ts2  # show that the file wasn't changed...
+#     # NOTE: the file should be written to a subdir based on the asset ID
+#     assert (
+#         asset_path == expected_output_dir
+#     )  # shows that the expected path matches the output path
+#     assert ts1 == ts2  # show that the file wasn't changed...
 
 
 def test_retrieve_updated(

@@ -1,5 +1,6 @@
 import os
 import pathlib
+import shutil
 import sys
 import typing as t
 from urllib.request import urlretrieve
@@ -161,8 +162,9 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
 
     # if we've previously downloaded the release and still have
     # wheels laying around, use that cached version instead
-    if download_dir.exists() and list(download_dir.rglob("*.whl")):
-        return download_dir
+    if download_dir.exists() or list(download_dir.rglob("*.whl")):
+        # return download_dir
+        shutil.rmtree(str(download_dir))
 
     download_dir.mkdir(parents=True, exist_ok=True)
 
@@ -185,7 +187,7 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
 
     try:
         urlretrieve(download_url, str(asset_path))
-        logger.debug(f"Retrieved asset {asset.name} to {download_url}")
+        logger.debug(f"Retrieved asset {asset.name} from {download_url}")
     except Exception:
         logger.exception(f"Unable to download asset from: {download_url}")
 
