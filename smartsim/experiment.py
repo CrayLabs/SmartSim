@@ -31,6 +31,7 @@ from __future__ import annotations
 import datetime
 import os
 import os.path as osp
+import pathlib
 import textwrap
 import typing as t
 from os import environ, getcwd
@@ -160,14 +161,6 @@ class Experiment:
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
-        self._run_ID = (
-            "run-"
-            + datetime.datetime.now().strftime("%H-%M-%S")
-            + "-"
-            + datetime.datetime.now().strftime("%Y-%m-%d")
-        )
-        """Create the run id for the Experiment"""
-
         self._active_launchers: set[LauncherProtocol[t.Any]] = set()
         """The active launchers created, used, and reused by the experiment"""
 
@@ -188,13 +181,23 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        return self._dispatch(dispatch.DEFAULT_DISPATCHER, *jobs)
+        run_id = datetime.datetime.now().strftime("run-%H:%M:%ST%Y-%m-%d")
+        """Create the run id for Experiment.start"""
+        return self._dispatch(
+            Generator(self.exp_path, run_id), dispatch.DEFAULT_DISPATCHER, *jobs
+        )
 
     def _dispatch(
-        self, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
+        self,
+        generator: Generator,
+        dispatcher: dispatch.Dispatcher,
+        job: Job,
+        *jobs: Job,
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 
+        :param generator: The Generator holds the run_id and experiment
+            path for use when producing job directories.
         :param dispatcher: The dispatcher that should be used to determine how
             to start a job based on its launch settings.
         :param job: The first job instance to dispatch
@@ -204,7 +207,8 @@ class Experiment:
             particular dispatch of the job.
         """
 
-        def execute_dispatch(job: Job) -> LaunchedJobID:
+        def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
+            print(job)
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -232,36 +236,36 @@ class Experiment:
             # it easier to monitor job statuses
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
-            # Generate the Job directory and return generated path
-            job_execution_path = self._generate(job)
-            return launch_config.start(exe, env, job_execution_path)
+            # Generate the job directory and return the generated job path
+            job_execution_path = self._generate(generator, job, idx)
+            return launch_config.start(exe, job_execution_path, env)
 
-        return execute_dispatch(job), *map(execute_dispatch, jobs)
+        return execute_dispatch(generator, job, 0), *(
+            execute_dispatch(generator, job, idx) for idx, job in enumerate(jobs, 1)
+        )
 
     @_contextualize
-    def _generate(
-        self,
-        job: Job,
-    ) -> str:
-        """Generate the file structure for a ``Job``
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
+        """Generate the directory and file structure for a ``Job``
 
-        ``Experiment._generate`` creates directories for the job
-        passed.
+        ``Experiment._generate`` calls the appropriate Generator
+        function to create a directory for the passed job.
 
-        If files or directories are attached an ``application`` object
-        using ``application.attach_generator_files()``, those files or
-        directories will be symlinked, copied, or configured and
-        written into the created directory for that Job instance.
+        If files or directories are attached to an ``application`` object
+        associated with the Job using ``application.attach_generator_files()``,
+        those files or directories will be symlinked, copied, or configured and
+        written into the created job directory
 
-        An instance of ``Job`` can be passed as an argument to
-        the protected generate member.
+        An instance of ``Generator`` and ``Job`` can be passed as an argument to
+        the protected _generate member.
 
-        :param job: Job to generate file structure for
-        :returns: a str path
+        :param generator: Generator that holds the run_id and experiment
+            path for use when producing the job directory.
+        :param job: Job to generate file structure.
+        :returns: The generated Job path.
         """
         try:
-            generator = Generator(self.exp_path, self._run_ID, job)
-            job_path = generator.generate_experiment()
+            job_path = generator.generate_job(job, job_index)
             return job_path
         except SmartSimError as e:
             logger.error(e)
@@ -343,22 +347,6 @@ class Experiment:
         :returns: configuration of telemetry for this entity
         """
         return self._telemetry_cfg
-
-    def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(
-            entity: t.Union[FeatureStore, Application, Ensemble]
-        ) -> None:
-            if not osp.isdir(entity.path):
-                os.makedirs(entity.path)
-
-        for application in start_manifest.applications:
-            create_entity_dir(application)
-
-        for feature_store in start_manifest.fss:
-            create_entity_dir(feature_store)
-
-        for ensemble in start_manifest.ensembles:
-            create_entity_dir(ensemble)
 
     def __str__(self) -> str:
         return self.name

@@ -19,16 +19,16 @@ class JobGroup(BaseJobGroup):
     def __init__(
         self,
         jobs: t.List[BaseJob],
-        name: str = "jobGroup",
+        name: str = "job_group",
     ) -> None:
         super().__init__()
         self._jobs = deepcopy(jobs)
-        self._name = deepcopy(name)
+        self._name = name
 
     @property
     def name(self) -> str:
         """Retrieves the name of the JobGroup."""
-        return deepcopy(self._name)
+        return self._name
 
     @property
     def jobs(self) -> t.List[BaseJob]:

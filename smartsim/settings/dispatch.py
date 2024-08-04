@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 import subprocess as sp
 import typing as t
 import uuid
@@ -45,6 +46,11 @@ if t.TYPE_CHECKING:
 _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
 
+_WorkingDirectory: TypeAlias = t.Union[str, os.PathLike[str]]
+"""A type alias for a Jobs working directory. Paths may be strings or
+PathLike objects.
+"""
+
 _DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArguments")
 """Any type of luanch arguments, typically used when the type bound by the type
 argument is a key a `Dispatcher` dispatch registry
@@ -59,13 +65,14 @@ _EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
 a job
 """
 _FormatterType: TypeAlias = t.Callable[
-    [_DispatchableT, "ExecutableProtocol", str, _EnvironMappingType], _LaunchableT
+    [_DispatchableT, "ExecutableProtocol", _WorkingDirectory, _EnvironMappingType],
+    _LaunchableT,
 ]
 """A callable that is capable of formatting the components of a job into a type
 capable of being launched by a launcher.
 """
 _LaunchConfigType: TypeAlias = (
-    "_LauncherAdapter[ExecutableProtocol, _EnvironMappingType, str]"
+    "_LauncherAdapter[ExecutableProtocol, _WorkingDirectory, _EnvironMappingType]"
 )
 """A launcher adapater that has configured a launcher to launch the components
 of a job with some pre-determined launch settings
@@ -254,7 +261,9 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
             )
 
         def format_(
-            exe: ExecutableProtocol, env: _EnvironMappingType, path: str
+            exe: ExecutableProtocol,
+            path: str | os.PathLike[str],
+            env: _EnvironMappingType,
         ) -> _LaunchableT:
             return self.formatter(arguments, exe, path, env)
 
@@ -389,7 +398,7 @@ class LauncherProtocol(t.Protocol[_T_contra]):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[LaunchArguments, tuple[t.Sequence[str], str]]:
+) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 
@@ -422,11 +431,10 @@ def make_shell_format_fn(
     def impl(
         args: LaunchArguments,
         exe: ExecutableProtocol,
-        path: str,
+        path: str | os.PathLike[str],
         _env: _EnvironMappingType,
-    ) -> t.Tuple[t.Sequence[str], str]:
-        print(exe)
-        return (
+    ) -> t.Tuple[str | os.PathLike[str], t.Sequence[str]]:
+        return path, (
             (
                 run_command,
                 *(args.format_launch_args() or ()),
@@ -435,7 +443,7 @@ def make_shell_format_fn(
             )
             if run_command is not None
             else exe.as_program_arguments()
-        ), path
+        )
 
     return impl
 
@@ -447,13 +455,12 @@ class ShellLauncher:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
     # TODO inject path here
-    def start(self, command: tuple[t.Sequence[str], str]) -> LaunchedJobID:
-        print(command)
+    def start(
+        self, command: tuple[str | os.PathLike[str], t.Sequence[str]]
+    ) -> LaunchedJobID:
         id_ = create_job_id()
-        args, path = command
-        print(f"is dir: {os.path.isdir(path)}")
-        print(f"located: {os.getcwd()}")
-        exe, *rest = args # break out popen as much as possible for debugging
+        path, args = command
+        exe, *rest = args
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path, env={}, stdin=None, stdout=None)
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id

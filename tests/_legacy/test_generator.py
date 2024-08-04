@@ -74,46 +74,46 @@ def test_ensemble(fileutils, test_dir):
         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
 
 
-# def test_ensemble_overwrite(fileutils, test_dir):
-#     exp = Experiment("gen-test-overwrite", launcher="local")
+def test_ensemble_overwrite(fileutils, test_dir):
+    exp = Experiment("gen-test-overwrite", launcher="local")
 
-#     gen = Generator(test_dir, overwrite=True)
+    gen = Generator(test_dir, overwrite=True)
 
-#     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-#     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
+    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
+    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
 
-#     config = get_gen_file(fileutils, "in.atm")
-#     ensemble.attach_generator_files(to_configure=[config])
-#     gen.generate_experiment(ensemble)
+    config = get_gen_file(fileutils, "in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    gen.generate_experiment(ensemble)
 
-#     # re generate without overwrite
-#     config = get_gen_file(fileutils, "in.atm")
-#     ensemble.attach_generator_files(to_configure=[config])
-#     gen.generate_experiment(ensemble)
+    # re generate without overwrite
+    config = get_gen_file(fileutils, "in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    gen.generate_experiment(ensemble)
 
-#     assert len(ensemble) == 9
-#     assert osp.isdir(osp.join(test_dir, "test"))
-#     for i in range(9):
-#         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
+    assert len(ensemble) == 9
+    assert osp.isdir(osp.join(test_dir, "test"))
+    for i in range(9):
+        assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
 
 
-# def test_ensemble_overwrite_error(fileutils, test_dir):
-#     exp = Experiment("gen-test-overwrite-error", launcher="local")
+def test_ensemble_overwrite_error(fileutils, test_dir):
+    exp = Experiment("gen-test-overwrite-error", launcher="local")
 
-#     gen = Generator(test_dir)
+    gen = Generator(test_dir)
 
-#     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-#     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
+    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
+    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
 
-#     config = get_gen_file(fileutils, "in.atm")
-#     ensemble.attach_generator_files(to_configure=[config])
-#     gen.generate_experiment(ensemble)
+    config = get_gen_file(fileutils, "in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    gen.generate_experiment(ensemble)
 
-#     # re generate without overwrite
-#     config = get_gen_file(fileutils, "in.atm")
-#     ensemble.attach_generator_files(to_configure=[config])
-#     with pytest.raises(FileExistsError):
-#         gen.generate_experiment(ensemble)
+    # re generate without overwrite
+    config = get_gen_file(fileutils, "in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    with pytest.raises(FileExistsError):
+        gen.generate_experiment(ensemble)
 
 
 def test_full_exp(fileutils, test_dir, wlmutils):
@@ -166,142 +166,142 @@ def test_dir_files(fileutils, test_dir):
         assert osp.isfile(osp.join(application_path, "test.in"))
 
 
-# def test_print_files(fileutils, test_dir, capsys):
-#     """Test the stdout print of files attached to an ensemble"""
+def test_print_files(fileutils, test_dir, capsys):
+    """Test the stdout print of files attached to an ensemble"""
 
-#     exp = Experiment("print-attached-files-test", test_dir, launcher="local")
+    exp = Experiment("print-attached-files-test", test_dir, launcher="local")
 
-#     ensemble = exp.create_ensemble("dir_test", replicas=1, run_settings=rs)
-#     ensemble.entities = []
+    ensemble = exp.create_ensemble("dir_test", replicas=1, run_settings=rs)
+    ensemble.entities = []
 
-#     ensemble.print_attached_files()
-#     captured = capsys.readouterr()
-#     assert captured.out == "The ensemble is empty, no files to show.\n"
+    ensemble.print_attached_files()
+    captured = capsys.readouterr()
+    assert captured.out == "The ensemble is empty, no files to show.\n"
 
-#     params = {"THERMO": [10, 20], "STEPS": [20, 30]}
-#     ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-#     gen_dir = get_gen_file(fileutils, "test_dir")
-#     symlink_dir = get_gen_file(fileutils, "to_symlink_dir")
-#     copy_dir = get_gen_file(fileutils, "to_copy_dir")
+    params = {"THERMO": [10, 20], "STEPS": [20, 30]}
+    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
+    gen_dir = get_gen_file(fileutils, "test_dir")
+    symlink_dir = get_gen_file(fileutils, "to_symlink_dir")
+    copy_dir = get_gen_file(fileutils, "to_copy_dir")
 
-#     ensemble.print_attached_files()
-#     captured = capsys.readouterr()
-#     expected_out = (
-#         tabulate(
-#             [
-#                 [application.name, "No file attached to this application."]
-#                 for application in ensemble.applications
-#             ],
-#             headers=["Application name", "Files"],
-#             tablefmt="grid",
-#         )
-#         + "\n"
-#     )
+    ensemble.print_attached_files()
+    captured = capsys.readouterr()
+    expected_out = (
+        tabulate(
+            [
+                [application.name, "No file attached to this application."]
+                for application in ensemble.applications
+            ],
+            headers=["Application name", "Files"],
+            tablefmt="grid",
+        )
+        + "\n"
+    )
 
-#     assert captured.out == expected_out
+    assert captured.out == expected_out
 
-#     ensemble.attach_generator_files()
-#     ensemble.print_attached_files()
-#     captured = capsys.readouterr()
-#     expected_out = (
-#         tabulate(
-#             [
-#                 [application.name, "No file attached to this entity."]
-#                 for application in ensemble.applications
-#             ],
-#             headers=["Application name", "Files"],
-#             tablefmt="grid",
-#         )
-#         + "\n"
-#     )
-#     assert captured.out == expected_out
+    ensemble.attach_generator_files()
+    ensemble.print_attached_files()
+    captured = capsys.readouterr()
+    expected_out = (
+        tabulate(
+            [
+                [application.name, "No file attached to this entity."]
+                for application in ensemble.applications
+            ],
+            headers=["Application name", "Files"],
+            tablefmt="grid",
+        )
+        + "\n"
+    )
+    assert captured.out == expected_out
 
-#     ensemble.attach_generator_files(
-#         to_configure=[gen_dir, copy_dir], to_copy=copy_dir, to_symlink=symlink_dir
-#     )
+    ensemble.attach_generator_files(
+        to_configure=[gen_dir, copy_dir], to_copy=copy_dir, to_symlink=symlink_dir
+    )
 
-#     expected_out = tabulate(
-#         [
-#             ["Copy", copy_dir],
-#             ["Symlink", symlink_dir],
-#             ["Configure", f"{gen_dir}\n{copy_dir}"],
-#         ],
-#         headers=["Strategy", "Files"],
-#         tablefmt="grid",
-#     )
+    expected_out = tabulate(
+        [
+            ["Copy", copy_dir],
+            ["Symlink", symlink_dir],
+            ["Configure", f"{gen_dir}\n{copy_dir}"],
+        ],
+        headers=["Strategy", "Files"],
+        tablefmt="grid",
+    )
 
-#     assert all(
-#         str(application.files) == expected_out for application in ensemble.applications
-#     )
+    assert all(
+        str(application.files) == expected_out for application in ensemble.applications
+    )
 
-#     expected_out_multi = (
-#         tabulate(
-#             [[application.name, expected_out] for application in ensemble.applications],
-#             headers=["Application name", "Files"],
-#             tablefmt="grid",
-#         )
-#         + "\n"
-#     )
-#     ensemble.print_attached_files()
+    expected_out_multi = (
+        tabulate(
+            [[application.name, expected_out] for application in ensemble.applications],
+            headers=["Application name", "Files"],
+            tablefmt="grid",
+        )
+        + "\n"
+    )
+    ensemble.print_attached_files()
 
-#     captured = capsys.readouterr()
-#     assert captured.out == expected_out_multi
-
-
-# def test_multiple_tags(fileutils, test_dir):
-#     """Test substitution of multiple tagged parameters on same line"""
-
-#     exp = Experiment("test-multiple-tags", test_dir)
-#     application_params = {"port": 6379, "password": "unbreakable_password"}
-#     application_settings = RunSettings("bash", "multi_tags_template.sh")
-#     parameterized_application = exp.create_application(
-#         "multi-tags", run_settings=application_settings, params=application_params
-#     )
-#     config = get_gen_file(fileutils, "multi_tags_template.sh")
-#     parameterized_application.attach_generator_files(to_configure=[config])
-#     exp.generate(parameterized_application, overwrite=True)
-#     exp.start(parameterized_application, block=True)
-
-#     with open(osp.join(parameterized_application.path, "multi-tags.out")) as f:
-#         log_content = f.read()
-#         assert "My two parameters are 6379 and unbreakable_password, OK?" in log_content
+    captured = capsys.readouterr()
+    assert captured.out == expected_out_multi
 
 
-# def test_generation_log(fileutils, test_dir):
-#     """Test that an error is issued when a tag is unused and make_fatal is True"""
+def test_multiple_tags(fileutils, test_dir):
+    """Test substitution of multiple tagged parameters on same line"""
 
-#     exp = Experiment("gen-log-test", test_dir, launcher="local")
+    exp = Experiment("test-multiple-tags", test_dir)
+    application_params = {"port": 6379, "password": "unbreakable_password"}
+    application_settings = RunSettings("bash", "multi_tags_template.sh")
+    parameterized_application = exp.create_application(
+        "multi-tags", run_settings=application_settings, params=application_params
+    )
+    config = get_gen_file(fileutils, "multi_tags_template.sh")
+    parameterized_application.attach_generator_files(to_configure=[config])
+    exp.generate(parameterized_application, overwrite=True)
+    exp.start(parameterized_application, block=True)
 
-#     params = {"THERMO": [10, 20], "STEPS": [10, 20]}
-#     ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-#     conf_file = get_gen_file(fileutils, "in.atm")
-#     ensemble.attach_generator_files(to_configure=conf_file)
+    with open(osp.join(parameterized_application.path, "multi-tags.out")) as f:
+        log_content = f.read()
+        assert "My two parameters are 6379 and unbreakable_password, OK?" in log_content
 
-#     def not_header(line):
-#         """you can add other general checks in here"""
-#         return not line.startswith("Generation start date and time:")
 
-#     exp.generate(ensemble, verbose=True)
+def test_generation_log(fileutils, test_dir):
+    """Test that an error is issued when a tag is unused and make_fatal is True"""
 
-#     log_file = osp.join(test_dir, "smartsim_params.txt")
-#     ground_truth = get_gen_file(
-#         fileutils, osp.join("log_params", "smartsim_params.txt")
-#     )
+    exp = Experiment("gen-log-test", test_dir, launcher="local")
 
-#     with open(log_file) as f1, open(ground_truth) as f2:
-#         assert not not_header(f1.readline())
-#         f1 = filter(not_header, f1)
-#         f2 = filter(not_header, f2)
-#         assert all(x == y for x, y in zip(f1, f2))
+    params = {"THERMO": [10, 20], "STEPS": [10, 20]}
+    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
+    conf_file = get_gen_file(fileutils, "in.atm")
+    ensemble.attach_generator_files(to_configure=conf_file)
 
-#     for entity in ensemble:
-#         assert filecmp.cmp(
-#             osp.join(entity.path, "smartsim_params.txt"),
-#             get_gen_file(
-#                 fileutils,
-#                 osp.join("log_params", "dir_test", entity.name, "smartsim_params.txt"),
-#             ),
-#         )
+    def not_header(line):
+        """you can add other general checks in here"""
+        return not line.startswith("Generation start date and time:")
+
+    exp.generate(ensemble, verbose=True)
+
+    log_file = osp.join(test_dir, "smartsim_params.txt")
+    ground_truth = get_gen_file(
+        fileutils, osp.join("log_params", "smartsim_params.txt")
+    )
+
+    with open(log_file) as f1, open(ground_truth) as f2:
+        assert not not_header(f1.readline())
+        f1 = filter(not_header, f1)
+        f2 = filter(not_header, f2)
+        assert all(x == y for x, y in zip(f1, f2))
+
+    for entity in ensemble:
+        assert filecmp.cmp(
+            osp.join(entity.path, "smartsim_params.txt"),
+            get_gen_file(
+                fileutils,
+                osp.join("log_params", "dir_test", entity.name, "smartsim_params.txt"),
+            ),
+        )
 
 
 def test_config_dir(fileutils, test_dir):
@@ -364,18 +364,18 @@ def test_no_gen_if_symlink_to_dir(fileutils):
         ensemble.attach_generator_files(to_configure=config)
 
 
-# def test_no_file_overwrite():
-#     exp = Experiment("test_no_file_overwrite", launcher="local")
-#     ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
-#     with pytest.raises(ValueError):
-#         ensemble.attach_generator_files(
-#             to_configure=["/normal/file.txt", "/path/to/smartsim_params.txt"]
-#         )
-#     with pytest.raises(ValueError):
-#         ensemble.attach_generator_files(
-#             to_symlink=["/normal/file.txt", "/path/to/smartsim_params.txt"]
-#         )
-#     with pytest.raises(ValueError):
-#         ensemble.attach_generator_files(
-#             to_copy=["/normal/file.txt", "/path/to/smartsim_params.txt"]
-#         )
+def test_no_file_overwrite():
+    exp = Experiment("test_no_file_overwrite", launcher="local")
+    ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
+    with pytest.raises(ValueError):
+        ensemble.attach_generator_files(
+            to_configure=["/normal/file.txt", "/path/to/smartsim_params.txt"]
+        )
+    with pytest.raises(ValueError):
+        ensemble.attach_generator_files(
+            to_symlink=["/normal/file.txt", "/path/to/smartsim_params.txt"]
+        )
+    with pytest.raises(ValueError):
+        ensemble.attach_generator_files(
+            to_copy=["/normal/file.txt", "/path/to/smartsim_params.txt"]
+        )

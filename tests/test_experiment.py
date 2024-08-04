@@ -35,6 +35,7 @@ import weakref
 
 import pytest
 
+from smartsim._core.generation import Generator
 from smartsim.entity import _mock, entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
@@ -51,7 +52,7 @@ def experiment(monkeypatch, test_dir, dispatcher):
     """
     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
     monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
-    monkeypatch.setattr(exp, "_generate", lambda job: f"/tmp/job")
+    monkeypatch.setattr(exp, "_generate", lambda gen, job, idx: "/tmp/job", "1")
     yield exp
 
 
@@ -180,7 +181,6 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
 
     def __init__(self):
         path = tempfile.TemporaryDirectory()
-        self._finalizer = weakref.finalize(self, path.cleanup)
         super().__init__("test-entity", _mock.Mock())
 
     def __eq__(self, other):
@@ -215,6 +215,7 @@ def test_start_can_launch_jobs(
     num_jobs: int,
 ) -> None:
     jobs = make_jobs(job_maker, num_jobs)
+    print(jobs)
     assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
     launched_ids = experiment.start(*jobs)
     assert len(experiment._active_launchers) == 1, "Unexpected number of launchers"
