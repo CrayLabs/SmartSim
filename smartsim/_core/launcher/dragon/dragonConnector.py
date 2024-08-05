@@ -57,6 +57,11 @@ from ...schemas import (
 )
 from ...utils.network import find_free_port, get_best_interface_and_address
 
+if t.TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from smartsim.experiment import Experiment
+
 logger = get_logger(__name__)
 
 _SchemaT = t.TypeVar("_SchemaT", bound=t.Union[DragonRequest, DragonResponse])
@@ -69,29 +74,27 @@ class DragonConnector:
     to start a Dragon server and communicate with it.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, path: str | os.PathLike[str]) -> None:
         self._context: zmq.Context[t.Any] = zmq.Context.instance()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
         self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
         config = get_config()
         self._reset_timeout(config.dragon_server_timeout)
+
+        # TODO: We should be able to make these "non-optional"
+        #       by simply moving the impl of
+        #       `DragonConnectior.connect_to_dragon` to this method. This is
+        #       fine as we expect the that method should only be called once
+        #       without hitting a guard clause.
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._dragon_head_process: t.Optional[subprocess.Popen[bytes]] = None
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
-        self._dragon_server_path = config.dragon_server_path
+        self._dragon_server_path = _resolve_dragon_path(path)
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         self._env_vars: t.Dict[str, str] = {}
-        if self._dragon_server_path is None:
-            raise SmartSimError(
-                "DragonConnector could not find the dragon server path. "
-                "This should not happen if the Connector was started by an "
-                "experiment.\nIf the DragonConnector was started manually, "
-                "then the environment variable SMARTSIM_DRAGON_SERVER_PATH "
-                "should be set to an existing directory."
-            )
 
     @property
     def is_connected(self) -> bool:
@@ -293,8 +296,7 @@ class DragonConnector:
                 "Establishing connection with Dragon server or starting a new one..."
             )
 
-            path = _resolve_dragon_path(self._dragon_server_path)
-
+            path = self._dragon_server_path
             self._connect_to_existing_server(path)
             if self.is_connected:
                 return
@@ -520,8 +522,25 @@ def _dragon_cleanup(
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
-    dragon_server_path = get_config().dragon_server_path or os.path.join(
-        fallback, ".smartsim", "dragon"
+    """Return the path at which a user should set up a dragon server.
+
+    The order of path resolution is:
+        1) If the the user has set a global dragon path via
+           `Config.dragon_server_path` use that without alteration.
+        2) Use the `fallback` path which should be the path to an existing
+           directory. Append the default dragon server subdirectory defined by
+           `Config.dragon_default_subdir`
+
+    Currently this function will raise if a user attempts to specify multiple
+    dragon server paths via `:` seperation.
+
+    :param fallback: The path to an existing directory on the file system to
+                     use if the global dragon directory is not set.
+    :returns: The path to directory in which the dragon server should run.
+    """
+    config = get_config()
+    dragon_server_path = config.dragon_server_path or os.path.join(
+        fallback, config.dragon_default_subdir
     )
     dragon_server_paths = dragon_server_path.split(":")
     if len(dragon_server_paths) > 1:

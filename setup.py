@@ -140,13 +140,13 @@ class InstallPlatlib(install):
 
 class SmartSimBuild(build_py):
     def run(self):
-        database_builder = builder.DatabaseBuilder(
+        feature_store_builder = builder.FeatureStoreBuilder(
             build_env(), build_env.MALLOC, build_env.JOBS
         )
-        if not database_builder.is_built:
-            database_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
+        if not feature_store_builder.is_built:
+            feature_store_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
 
-            database_builder.cleanup()
+            feature_store_builder.cleanup()
 
         # run original build_py command
         super().run()
@@ -163,11 +163,6 @@ class BinaryDistribution(Distribution):
     def has_ext_modules(_placeholder):
         return True
 
-
-# Define needed dependencies for the installation
-
-# Add SmartRedis at specific version
-# install_requires.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
@@ -187,7 +182,6 @@ extras_require = {
         "types-tqdm",
         "types-tensorflow==2.12.0.9",
         "types-setuptools",
-        "typing_extensions>=4.1.0",
     ],
     "docs": [
         "Sphinx==6.2.1",
@@ -231,6 +225,7 @@ setup(
         "pygithub>=2.3.0",
         "numpy<2",
         "smartredis>=0.5,<0.6",
+        "typing_extensions>=4.1.0,<4.6",
     ],
     cmdclass={
         "build_py": SmartSimBuild,

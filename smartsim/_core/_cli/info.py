@@ -29,12 +29,12 @@ def execute(
         end="\n\n",
     )
 
-    print("Orchestrator Configuration:")
-    db_path = _utils.get_db_path()
-    db_table = [["Installed", _fmt_installed_db(db_path)]]
-    if db_path:
-        db_table.append(["Location", str(db_path)])
-    print(tabulate(db_table, tablefmt="fancy_outline"), end="\n\n")
+    print("FeatureStore Configuration:")
+    fs_path = _utils.get_fs_path()
+    fs_table = [["Installed", _fmt_installed_fs(fs_path)]]
+    if fs_path:
+        fs_table.append(["Location", str(fs_path)])
+    print(tabulate(fs_table, tablefmt="fancy_outline"), end="\n\n")
 
     print("Redis AI Configuration:")
     rai_path = _helpers.redis_install_base().parent / "redisai.so"
@@ -72,11 +72,11 @@ def execute(
     return os.EX_OK
 
 
-def _fmt_installed_db(db_path: t.Optional[pathlib.Path]) -> str:
-    if db_path is None:
+def _fmt_installed_fs(fs_path: t.Optional[pathlib.Path]) -> str:
+    if fs_path is None:
         return _MISSING_DEP
-    db_name, _ = db_path.name.split("-", 1)
-    return _helpers.colorize(db_name.upper(), "green")
+    fs_name, _ = fs_path.name.split("-", 1)
+    return _helpers.colorize(fs_name.upper(), "green")
 
 
 def _fmt_installed_redis_ai(rai_path: pathlib.Path) -> str:

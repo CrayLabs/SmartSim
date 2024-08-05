@@ -44,7 +44,7 @@ def freeze_model(
     smartredis.client.set_model_from_file() method.
 
     This utiliy function provides everything users need to take
-    a trained model and put it inside an ``orchestrator`` instance
+    a trained model and put it inside an ``featurestore`` instance
 
     :param model: TensorFlow or Keras model
     :param output_dir: output dir to save model file to
@@ -86,7 +86,7 @@ def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]
     smartredis.client.set_model() method.
 
     This utiliy function provides everything users need to take
-    a trained model and put it inside an ``orchestrator`` instance.
+    a trained model and put it inside an ``featurestore`` instance.
 
     :param model: TensorFlow or Keras model
     :return: serialized model, model input layer names, model output layer names

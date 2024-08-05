@@ -12,12 +12,12 @@
     {% set model = ensemble.models[0] %}
     - Model Name: {{ model.name }} -
         {%- include 'model.template' %}
-        {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
+        {%- if model.run_settings.colocated_fs_settings or manifest.fss %}
         Client Configuration:
-            {%- if model.run_settings.colocated_db_settings %}
+            {%- if model.run_settings.colocated_fs_settings %}
             {%- include "clientconfigcolo.template" %}
             {%- endif %}
-            {%- if manifest.dbs %}
+            {%- if manifest.fss %}
             {%- include "clientconfig.template" %}
             {%- endif %}
             {%- endif %}
@@ -25,12 +25,12 @@
         {% set model = ensemble.models[(ensemble.models | length)-1] %}
     - Model Name: {{ model.name }} -
         {%- include 'model.template' %}
-            {% if model.run_settings.colocated_db_settings or manifest.dbs %}
+            {% if model.run_settings.colocated_fs_settings or manifest.fss %}
         Client Configuration:
-            {%- if model.run_settings.colocated_db_settings %}
+            {%- if model.run_settings.colocated_fs_settings %}
             {%- include "clientconfigcolo.template" %}
             {%- endif %}
-            {%- if manifest.dbs %}
+            {%- if manifest.fss %}
             {%- include "clientconfig.template" %}
             {%- endif %}
             {%- endif %}
@@ -38,12 +38,12 @@
     {% for model in ensemble %}
     - Model Name: {{ model.name }} -
         {%- include 'model.template' %}
-        {% if model.run_settings.colocated_db_settings or manifest.dbs %}
+        {% if model.run_settings.colocated_fs_settings or manifest.fss %}
         Client Configuration:
-              {%- if model.run_settings.colocated_db_settings %}
+              {%- if model.run_settings.colocated_fs_settings %}
                 {%- include "clientconfigcolo.template" %}
             {%- endif %}
-            {%- if manifest.dbs %}
+            {%- if manifest.fss %}
             {%- include "clientconfig.template" %}
             {%- endif %}
             {%- endif %}

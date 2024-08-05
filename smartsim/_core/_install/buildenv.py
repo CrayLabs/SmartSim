@@ -280,10 +280,10 @@ class Versioner:
     TENSORFLOW = Version_(REDISAI.tensorflow)
     ONNX = Version_(REDISAI.onnx)
 
-    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
+    def as_dict(self, fs_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
         pkg_map = {
             "SMARTSIM": self.SMARTSIM,
-            db_name: self.REDIS,
+            fs_name: self.REDIS,
             "REDISAI": self.REDISAI,
             "TORCH": self.TORCH,
             "TENSORFLOW": self.TENSORFLOW,

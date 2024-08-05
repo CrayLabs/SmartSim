@@ -23,348 +23,241 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
-import os.path as osp
-import pathlib
-import shutil
+
+from __future__ import annotations
+
+import dataclasses
+import itertools
+import tempfile
 import typing as t
+import uuid
+import weakref
 
 import pytest
 
-from smartsim import Experiment
-from smartsim._core.config import CONFIG
-from smartsim._core.config.config import Config
-from smartsim._core.utils import serialize
-from smartsim.database import Orchestrator
-from smartsim.entity import Model
-from smartsim.error import SmartSimError
-from smartsim.error.errors import SSUnsupportedError
-from smartsim.settings import RunSettings
-from smartsim.status import SmartSimStatus
+from smartsim.entity import _mock, entity
+from smartsim.experiment import Experiment
+from smartsim.launchable import job
+from smartsim.settings import dispatch, launchSettings
+from smartsim.settings.arguments import launchArguments
 
-if t.TYPE_CHECKING:
-    import conftest
+pytestmark = pytest.mark.group_a
 
 
-# The tests in this file belong to the slow_tests group
-pytestmark = pytest.mark.slow_tests
+@pytest.fixture
+def experiment(monkeypatch, test_dir, dispatcher):
+    """A simple experiment instance with a unique name anda unique name and its
+    own directory to be used by tests
+    """
+    exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
+    monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
+    yield exp
 
 
-def test_model_prefix(test_dir: str) -> None:
-    exp_name = "test_prefix"
-    exp = Experiment(exp_name)
-
-    model = exp.create_model(
-        "model",
-        path=test_dir,
-        run_settings=RunSettings("python"),
-        enable_key_prefixing=True,
+@pytest.fixture
+def dispatcher():
+    """A pre-configured dispatcher to be used by experiments that simply
+    dispatches any jobs with `MockLaunchArgs` to a `NoOpRecordLauncher`
+    """
+    d = dispatch.Dispatcher()
+    to_record: dispatch._FormatterType[MockLaunchArgs, LaunchRecord] = (
+        lambda settings, exe, env: LaunchRecord(settings, exe, env)
     )
-    assert model._key_prefixing_enabled == True
+    d.dispatch(MockLaunchArgs, with_format=to_record, to_launcher=NoOpRecordLauncher)
+    yield d
 
 
-def test_model_no_name():
-    exp = Experiment("test_model_no_name")
-    with pytest.raises(AttributeError):
-        _ = exp.create_model(name=None, run_settings=RunSettings("python"))
+@pytest.fixture
+def job_maker(monkeypatch):
+    """A fixture to generate a never ending stream of `Job` instances each
+    configured with a unique `MockLaunchArgs` instance, but identical
+    executable.
+    """
+
+    def iter_jobs():
+        for i in itertools.count():
+            settings = launchSettings.LaunchSettings("local")
+            monkeypatch.setattr(settings, "_arguments", MockLaunchArgs(i))
+            yield job.Job(EchoHelloWorldEntity(), settings)
+
+    jobs = iter_jobs()
+    yield lambda: next(jobs)
 
 
-def test_ensemble_no_name():
-    exp = Experiment("test_ensemble_no_name")
-    with pytest.raises(AttributeError):
-        _ = exp.create_ensemble(
-            name=None, run_settings=RunSettings("python"), replicas=2
-        )
+JobMakerType: t.TypeAlias = t.Callable[[], job.Job]
 
 
-def test_bad_exp_path() -> None:
-    with pytest.raises(NotADirectoryError):
-        exp = Experiment("test", "not-a-directory")
+@dataclasses.dataclass(frozen=True, eq=False)
+class NoOpRecordLauncher(dispatch.LauncherProtocol):
+    """Simple launcher to track the order of and mapping of ids to `start`
+    method calls. It has exactly three attrs:
 
+        - `created_by_experiment`:
+              A back ref to the experiment used when calling
+              `NoOpRecordLauncher.create`.
 
-def test_type_exp_path() -> None:
-    with pytest.raises(TypeError):
-        exp = Experiment("test", ["this-is-a-list-dummy"])
+        - `launched_order`:
+              An append-only list of `LaunchRecord`s that it has "started". Notice
+              that this launcher will not actually open any subprocesses/run any
+              threads/otherwise execute the contents of the record on the system
 
+        - `ids_to_launched`:
+              A mapping where keys are the generated launched id returned from
+              a `NoOpRecordLauncher.start` call and the values are the
+              `LaunchRecord` that was passed into `NoOpRecordLauncher.start` to
+              cause the id to be generated.
 
-def test_stop_type() -> None:
-    """Wrong argument type given to stop"""
-    exp = Experiment("name")
-    with pytest.raises(TypeError):
-        exp.stop("model")
+    This is helpful for testing that launchers are handling the expected input
+    """
 
-
-def test_finished_new_model() -> None:
-    # finished should fail as this model hasn't been
-    # launched yet.
-
-    model = Model("name", {}, "./", RunSettings("python"))
-    exp = Experiment("test")
-    with pytest.raises(ValueError):
-        exp.finished(model)
-
-
-def test_status_typeerror() -> None:
-    exp = Experiment("test")
-    with pytest.raises(TypeError):
-        exp.get_status([])
-
-
-def test_status_pre_launch() -> None:
-    model = Model("name", {}, "./", RunSettings("python"))
-    exp = Experiment("test")
-    assert exp.get_status(model)[0] == SmartSimStatus.STATUS_NEVER_STARTED
-
-
-def test_bad_ensemble_init_no_rs(test_dir: str) -> None:
-    """params supplied without run settings"""
-    exp = Experiment("test", exp_path=test_dir)
-    with pytest.raises(SmartSimError):
-        exp.create_ensemble("name", {"param1": 1})
-
-
-def test_bad_ensemble_init_no_params(test_dir: str) -> None:
-    """params supplied without run settings"""
-    exp = Experiment("test", exp_path=test_dir)
-    with pytest.raises(SmartSimError):
-        exp.create_ensemble("name", run_settings=RunSettings("python"))
-
-
-def test_bad_ensemble_init_no_rs_bs(test_dir: str) -> None:
-    """ensemble init without run settings or batch settings"""
-    exp = Experiment("test", exp_path=test_dir)
-    with pytest.raises(SmartSimError):
-        exp.create_ensemble("name")
-
-
-def test_stop_entity(test_dir: str) -> None:
-    exp_name = "test_stop_entity"
-    exp = Experiment(exp_name, exp_path=test_dir)
-    m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
-    exp.start(m, block=False)
-    assert exp.finished(m) == False
-    exp.stop(m)
-    assert exp.finished(m) == True
-
-
-def test_poll(test_dir: str) -> None:
-    # Ensure that a SmartSimError is not raised
-    exp_name = "test_exp_poll"
-    exp = Experiment(exp_name, exp_path=test_dir)
-    model = exp.create_model(
-        "model", path=test_dir, run_settings=RunSettings("sleep", "5")
+    created_by_experiment: Experiment
+    launched_order: list[LaunchRecord] = dataclasses.field(default_factory=list)
+    ids_to_launched: dict[dispatch.LaunchedJobID, LaunchRecord] = dataclasses.field(
+        default_factory=dict
     )
-    exp.start(model, block=False)
-    exp.poll(interval=1)
-    exp.stop(model)
+
+    __hash__ = object.__hash__
+
+    @classmethod
+    def create(cls, exp):
+        return cls(exp)
+
+    def start(self, record: LaunchRecord):
+        id_ = dispatch.create_job_id()
+        self.launched_order.append(record)
+        self.ids_to_launched[id_] = record
+        return id_
 
 
-def test_summary(test_dir: str) -> None:
-    exp_name = "test_exp_summary"
-    exp = Experiment(exp_name, exp_path=test_dir)
-    m = exp.create_model(
-        "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
-    )
-    exp.start(m)
-    summary_str = exp.summary(style="plain")
-    print(summary_str)
+@dataclasses.dataclass(frozen=True)
+class LaunchRecord:
+    launch_args: launchArguments.LaunchArguments
+    entity: entity.SmartSimEntity
+    env: t.Mapping[str, str | None]
 
-    summary_lines = summary_str.split("\n")
-    assert 2 == len(summary_lines)
+    @classmethod
+    def from_job(cls, job: job.Job):
+        """Create a launch record for what we would expect a launch record to
+        look like having gone through the launching process
 
-    headers, values = [s.split() for s in summary_lines]
-    headers = ["Index"] + headers
+        :param job: A job that has or will be launched through an experiment
+            and dispatched to a `NoOpRecordLauncher`
+        :returns: A `LaunchRecord` that should evaluate to being equivilient to
+            that of the one stored in the `NoOpRecordLauncher`
+        """
+        args = job._launch_settings.launch_args
+        entity = job._entity
+        env = job._launch_settings.env_vars
+        return cls(args, entity, env)
 
-    row = dict(zip(headers, values))
-    assert m.name == row["Name"]
-    assert m.type == row["Entity-Type"]
-    assert 0 == int(row["RunID"])
-    assert 0 == int(row["Returncode"])
+
+class MockLaunchArgs(launchArguments.LaunchArguments):
+    """A `LaunchArguments` subclass that will evaluate as true with another if
+    and only if they were initialized with the same id. In practice this class
+    has no arguments to set.
+    """
+
+    def __init__(self, id_: int):
+        super().__init__({})
+        self.id = id_
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+        return other.id == self.id
+
+    def launcher_str(self):
+        return "test-launch-args"
+
+    def set(self, arg, val): ...
 
 
-def test_launcher_detection(
-    wlmutils: "conftest.WLMUtils", monkeypatch: pytest.MonkeyPatch
+class EchoHelloWorldEntity(entity.SmartSimEntity):
+    """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
+
+    def __init__(self):
+        path = tempfile.TemporaryDirectory()
+        self._finalizer = weakref.finalize(self, path.cleanup)
+        super().__init__("test-entity", path, _mock.Mock())
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+        return self.as_program_arguments() == other.as_program_arguments()
+
+    def as_program_arguments(self):
+        return ("echo", "Hello", "World!")
+
+
+def test_start_raises_if_no_args_supplied(experiment):
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        experiment.start()
+
+
+# fmt: off
+@pytest.mark.parametrize(
+    "num_jobs", [pytest.param(i, id=f"{i} job(s)") for i in (1, 2, 3, 5, 10, 100, 1_000)]
+)
+@pytest.mark.parametrize(
+    "make_jobs", (
+        pytest.param(lambda maker, n: tuple(maker() for _ in range(n)), id="many job instances"),
+        pytest.param(lambda maker, n: (maker(),) * n                  , id="same job instance many times"),
+    ),
+)
+# fmt: on
+def test_start_can_launch_jobs(
+    experiment: Experiment,
+    job_maker: JobMakerType,
+    make_jobs: t.Callable[[JobMakerType, int], tuple[job.Job, ...]],
+    num_jobs: int,
 ) -> None:
-    if wlmutils.get_test_launcher() == "pals":
-        pytest.skip(reason="Launcher detection cannot currently detect pbs vs pals")
-    if wlmutils.get_test_launcher() == "local":
-        monkeypatch.setenv("PATH", "")  # Remove all WLMs from PATH
-    if wlmutils.get_test_launcher() == "dragon":
-        pytest.skip(reason="Launcher detection cannot currently detect dragon")
+    jobs = make_jobs(job_maker, num_jobs)
+    assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
+    launched_ids = experiment.start(*jobs)
+    assert len(experiment._active_launchers) == 1, "Unexpected number of launchers"
+    (launcher,) = experiment._active_launchers
+    assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
+    assert launcher.created_by_experiment is experiment, "Not created by experiment"
+    assert (
+        len(jobs) == len(launcher.launched_order) == len(launched_ids) == num_jobs
+    ), "Inconsistent number of jobs/launched jobs/launched ids/expected number of jobs"
+    expected_launched = [LaunchRecord.from_job(job) for job in jobs]
 
-    exp = Experiment("test-launcher-detection", launcher="auto")
+    # Check that `job_a, job_b, job_c, ...` are started in that order when
+    # calling `experiemnt.start(job_a, job_b, job_c, ...)`
+    assert expected_launched == list(launcher.launched_order), "Unexpected launch order"
 
-    assert exp._launcher == wlmutils.get_test_launcher()
+    # Similarly, check that `id_a, id_b, id_c, ...` corresponds to
+    # `job_a, job_b, job_c, ...` when calling
+    # `id_a, id_b, id_c, ... = experiemnt.start(job_a, job_b, job_c, ...)`
+    expected_id_map = dict(zip(launched_ids, expected_launched))
+    assert expected_id_map == launcher.ids_to_launched, "IDs returned in wrong order"
 
 
-def test_enable_disable_telemetry(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, config: Config
+@pytest.mark.parametrize(
+    "num_starts",
+    [pytest.param(i, id=f"{i} start(s)") for i in (1, 2, 3, 5, 10, 100, 1_000)],
+)
+def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
+    experiment: Experiment, job_maker: JobMakerType, num_starts: int
 ) -> None:
-    # Global telemetry defaults to `on` and can be modified by
-    # setting the value of env var SMARTSIM_FLAG_TELEMETRY to 0/1
-    monkeypatch.setattr(os, "environ", {})
-    exp = Experiment("my-exp", exp_path=test_dir)
-    exp.telemetry.enable()
-    assert exp.telemetry.is_enabled
+    assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
+    job = job_maker()
+    ids_to_launches = {
+        experiment.start(job)[0]: LaunchRecord.from_job(job) for _ in range(num_starts)
+    }
+    assert len(experiment._active_launchers) == 1, "Did not reuse the launcher"
+    (launcher,) = experiment._active_launchers
+    assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
+    assert len(launcher.launched_order) == num_starts, "Unexpected number launches"
 
-    exp.telemetry.disable()
-    assert not exp.telemetry.is_enabled
-
-    exp.telemetry.enable()
-    assert exp.telemetry.is_enabled
-
-    exp.telemetry.disable()
-    assert not exp.telemetry.is_enabled
-
-    exp.start()
-    mani_path = (
-        pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
-    )
-    assert mani_path.exists()
-
-
-def test_telemetry_default(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, config: Config
-) -> None:
-    """Ensure the default values for telemetry configuration match expectation
-    that experiment telemetry is on"""
-
-    # If env var related to telemetry doesn't exist, experiment should default to True
-    monkeypatch.setattr(os, "environ", {})
-    exp = Experiment("my-exp", exp_path=test_dir)
-    assert exp.telemetry.is_enabled
-
-    # If telemetry disabled in env, should get False
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
-    exp = Experiment("my-exp", exp_path=test_dir)
-    assert not exp.telemetry.is_enabled
-
-    # If telemetry enabled in env, should get True
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "1")
-    exp = Experiment("my-exp", exp_path=test_dir)
-    assert exp.telemetry.is_enabled
-
-
-def test_error_on_cobalt() -> None:
-    with pytest.raises(SSUnsupportedError):
-        exp = Experiment("cobalt_exp", launcher="cobalt")
-
-
-def test_default_orch_path(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
-) -> None:
-    """Ensure the default file structure is created for Orchestrator"""
-
-    exp_name = "default-orch-path"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    db = exp.create_database(
-        port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface()
-    )
-    exp.start(db)
-    orch_path = pathlib.Path(test_dir) / db.name
-    assert orch_path.exists()
-    assert db.path == str(orch_path)
-
-
-def test_default_model_path(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
-) -> None:
-    """Ensure the default file structure is created for Model"""
-
-    exp_name = "default-model-path"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    settings = exp.create_run_settings(exe="echo", exe_args="hello")
-    model = exp.create_model(name="model_name", run_settings=settings)
-    exp.start(model)
-    model_path = pathlib.Path(test_dir) / model.name
-    assert model_path.exists()
-    assert model.path == str(model_path)
-
-
-def test_default_ensemble_path(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
-) -> None:
-    """Ensure the default file structure is created for Ensemble"""
-
-    exp_name = "default-ensemble-path"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    settings = exp.create_run_settings(exe="echo", exe_args="hello")
-    ensemble = exp.create_ensemble(
-        name="ensemble_name", run_settings=settings, replicas=2
-    )
-    exp.start(ensemble)
-    ensemble_path = pathlib.Path(test_dir) / ensemble.name
-    assert ensemble_path.exists()
-    assert ensemble.path == str(ensemble_path)
-    for member in ensemble.models:
-        member_path = ensemble_path / member.name
-        assert member_path.exists()
-        assert member.path == str(ensemble_path / member.name)
-
-
-def test_user_orch_path(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
-) -> None:
-    """Ensure a relative path is used to created Orchestrator folder"""
-
-    exp_name = "default-orch-path"
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    db = exp.create_database(
-        port=wlmutils.get_test_port(),
-        interface=wlmutils.get_test_interface(),
-        path="./testing_folder1234",
-    )
-    exp.start(db)
-    orch_path = pathlib.Path(osp.abspath("./testing_folder1234"))
-    assert orch_path.exists()
-    assert db.path == str(orch_path)
-    shutil.rmtree(orch_path)
-
-
-def test_default_model_with_path(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
-) -> None:
-    """Ensure a relative path is used to created Model folder"""
-
-    exp_name = "default-ensemble-path"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    settings = exp.create_run_settings(exe="echo", exe_args="hello")
-    model = exp.create_model(
-        name="model_name", run_settings=settings, path="./testing_folder1234"
-    )
-    exp.start(model)
-    model_path = pathlib.Path(osp.abspath("./testing_folder1234"))
-    assert model_path.exists()
-    assert model.path == str(model_path)
-    shutil.rmtree(model_path)
-
-
-def test_default_ensemble_with_path(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
-) -> None:
-    """Ensure a relative path is used to created Ensemble folder"""
-
-    exp_name = "default-ensemble-path"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    settings = exp.create_run_settings(exe="echo", exe_args="hello")
-    ensemble = exp.create_ensemble(
-        name="ensemble_name",
-        run_settings=settings,
-        path="./testing_folder1234",
-        replicas=2,
-    )
-    exp.start(ensemble)
-    ensemble_path = pathlib.Path(osp.abspath("./testing_folder1234"))
-    assert ensemble_path.exists()
-    assert ensemble.path == str(ensemble_path)
-    for member in ensemble.models:
-        member_path = ensemble_path / member.name
-        assert member_path.exists()
-        assert member.path == str(member_path)
-    shutil.rmtree(ensemble_path)
+    # Check that a single `job` instance can be launched and re-launcherd and
+    # that `id_a, id_b, id_c, ...` corresponds to
+    # `"start_a", "start_b", "start_c", ...` when calling
+    # ```py
+    # id_a = experiment.start(job)  # "start_a"
+    # id_b = experiment.start(job)  # "start_b"
+    # id_c = experiment.start(job)  # "start_c"
+    # ...
+    # ```
+    assert ids_to_launches == launcher.ids_to_launched, "Job was not re-launched"

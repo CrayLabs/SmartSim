@@ -107,12 +107,12 @@ def check_backends_install() -> bool:
     return not bool(msg)
 
 
-def build_database(
+def build_feature_store(
     build_env: BuildEnv, versions: Versioner, keydb: bool, verbose: bool
 ) -> None:
-    # check database installation
-    database_name = "KeyDB" if keydb else "Redis"
-    database_builder = builder.DatabaseBuilder(
+    # check feature store installation
+    feature_store_name = "KeyDB" if keydb else "Redis"
+    feature_store_builder = builder.FeatureStoreBuilder(
         build_env(),
         jobs=build_env.JOBS,
         _os=builder.OperatingSystem.from_str(platform.system()),
@@ -120,14 +120,14 @@ def build_database(
         malloc=build_env.MALLOC,
         verbose=verbose,
     )
-    if not database_builder.is_built:
+    if not feature_store_builder.is_built:
         logger.info(
-            f"Building {database_name} version {versions.REDIS} "
+            f"Building {feature_store_name} version {versions.REDIS} "
             f"from {versions.REDIS_URL}"
         )
-        database_builder.build_from_git(versions.REDIS_URL, versions.REDIS_BRANCH)
-        database_builder.cleanup()
-    logger.info(f"{database_name} build complete!")
+        feature_store_builder.build_from_git(versions.REDIS_URL, versions.REDIS_BRANCH)
+        feature_store_builder.cleanup()
+    logger.info(f"{feature_store_name} build complete!")
 
 
 def build_redis_ai(
@@ -403,9 +403,9 @@ def execute(
         _configure_keydb_build(versions)
 
     if verbose:
-        db_name: DbEngine = "KEYDB" if keydb else "REDIS"
+        fs_name: DbEngine = "KEYDB" if keydb else "REDIS"
         logger.info("Version Information:")
-        vers = versions.as_dict(db_name=db_name)
+        vers = versions.as_dict(fs_name=fs_name)
         version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
@@ -423,7 +423,7 @@ def execute(
     try:
         if not args.only_python_packages:
             # REDIS/KeyDB
-            build_database(build_env, versions, keydb, verbose)
+            build_feature_store(build_env, versions, keydb, verbose)
 
             # REDISAI
             build_redis_ai(

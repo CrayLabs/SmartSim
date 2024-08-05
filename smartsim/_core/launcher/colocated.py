@@ -27,14 +27,14 @@
 import sys
 import typing as t
 
-from ...entity.dbobject import DBModel, DBScript
+from ...entity.dbobject import FSModel, FSScript
 from ...error import SSInternalError
 from ..config import CONFIG
 from ..utils.helpers import create_lockfile_name
 
 
 def write_colocated_launch_script(
-    file_name: str, db_log: str, colocated_settings: t.Dict[str, t.Any]
+    file_name: str, fs_log: str, colocated_settings: t.Dict[str, t.Any]
 ) -> None:
     """Write the colocated launch script
 
@@ -42,11 +42,11 @@ def write_colocated_launch_script(
     is created for this entity.
 
     :param file_name: name of the script to write
-    :param db_log: log file for the db
-    :param colocated_settings: db settings from entity run_settings
+    :param fs_log: log file for the fs
+    :param colocated_settings: fs settings from entity run_settings
     """
 
-    colocated_cmd = _build_colocated_wrapper_cmd(db_log, **colocated_settings)
+    colocated_cmd = _build_colocated_wrapper_cmd(fs_log, **colocated_settings)
 
     with open(file_name, "w", encoding="utf-8") as script_file:
         script_file.write("#!/bin/bash\n")
@@ -78,24 +78,24 @@ def write_colocated_launch_script(
 
 
 def _build_colocated_wrapper_cmd(
-    db_log: str,
+    fs_log: str,
     cpus: int = 1,
     rai_args: t.Optional[t.Dict[str, str]] = None,
-    extra_db_args: t.Optional[t.Dict[str, str]] = None,
+    extra_fs_args: t.Optional[t.Dict[str, str]] = None,
     port: int = 6780,
     ifname: t.Optional[t.Union[str, t.List[str]]] = None,
     custom_pinning: t.Optional[str] = None,
     **kwargs: t.Any,
 ) -> str:
-    """Build the command use to run a colocated DB application
+    """Build the command use to run a colocated fs application
 
-    :param db_log: log file for the db
-    :param cpus: db cpus
+    :param fs_log: log file for the fs
+    :param cpus: fs cpus
     :param rai_args: redisai args
-    :param extra_db_args: extra redis args
-    :param port: port to bind DB to
-    :param ifname: network interface(s) to bind DB to
-    :param db_cpu_list: The list of CPUs that the database should be limited to
+    :param extra_fs_args: extra redis args
+    :param port: port to bind fs to
+    :param ifname: network interface(s) to bind fs to
+    :param fs_cpu_list: The list of CPUs that the feature store should be limited to
     :return: the command to run
     """
     # pylint: disable=too-many-locals
@@ -108,8 +108,8 @@ def _build_colocated_wrapper_cmd(
     lockfile = create_lockfile_name()
 
     # create the command that will be used to launch the
-    # database with the python entrypoint for starting
-    # up the backgrounded db process
+    # feature store with the python entrypoint for starting
+    # up the backgrounded fs process
 
     cmd = [
         sys.executable,
@@ -117,7 +117,7 @@ def _build_colocated_wrapper_cmd(
         "smartsim._core.entrypoints.colocated",
         "+lockfile",
         lockfile,
-        "+db_cpus",
+        "+fs_cpus",
         str(cpus),
     ]
     # Add in the interface if using TCP/IP
@@ -126,12 +126,12 @@ def _build_colocated_wrapper_cmd(
             ifname = [ifname]
         cmd.extend(["+ifname", ",".join(ifname)])
     cmd.append("+command")
-    # collect DB binaries and libraries from the config
+    # collect fs binaries and libraries from the config
 
-    db_cmd = []
+    fs_cmd = []
     if custom_pinning:
-        db_cmd.extend(["taskset", "-c", custom_pinning])
-    db_cmd.extend(
+        fs_cmd.extend(["taskset", "-c", custom_pinning])
+    fs_cmd.extend(
         [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
     )
 
@@ -140,16 +140,16 @@ def _build_colocated_wrapper_cmd(
         if value:
             # RAI wants arguments for inference in all caps
             # ex. THREADS_PER_QUEUE=1
-            db_cmd.append(f"{arg.upper()} {str(value)}")
+            fs_cmd.append(f"{arg.upper()} {str(value)}")
 
-    db_cmd.extend(["--port", str(port)])
+    fs_cmd.extend(["--port", str(port)])
 
     # Add socket and permissions for UDS
     unix_socket = kwargs.get("unix_socket", None)
     socket_permissions = kwargs.get("socket_permissions", None)
 
     if unix_socket and socket_permissions:
-        db_cmd.extend(
+        fs_cmd.extend(
             [
                 "--unixsocket",
                 str(unix_socket),
@@ -162,72 +162,72 @@ def _build_colocated_wrapper_cmd(
             "`unix_socket` and `socket_permissions` must both be defined or undefined."
         )
 
-    db_cmd.extend(
-        ["--logfile", db_log]
+    fs_cmd.extend(
+        ["--logfile", fs_log]
     )  # usually /dev/null, unless debug was specified
-    if extra_db_args:
-        for db_arg, value in extra_db_args.items():
-            # replace "_" with "-" in the db_arg because we use kwargs
+    if extra_fs_args:
+        for fs_arg, value in extra_fs_args.items():
+            # replace "_" with "-" in the fs_arg because we use kwargs
             # for the extra configurations and Python doesn't allow a hyphen
             # in a variable name. All redis and KeyDB configuration options
             # use hyphens in their names.
-            db_arg = db_arg.replace("_", "-")
-            db_cmd.extend([f"--{db_arg}", value])
+            fs_arg = fs_arg.replace("_", "-")
+            fs_cmd.extend([f"--{fs_arg}", value])
 
-    db_models = kwargs.get("db_models", None)
-    if db_models:
-        db_model_cmd = _build_db_model_cmd(db_models)
-        db_cmd.extend(db_model_cmd)
+    fs_models = kwargs.get("fs_models", None)
+    if fs_models:
+        fs_model_cmd = _build_fs_model_cmd(fs_models)
+        fs_cmd.extend(fs_model_cmd)
 
-    db_scripts = kwargs.get("db_scripts", None)
-    if db_scripts:
-        db_script_cmd = _build_db_script_cmd(db_scripts)
-        db_cmd.extend(db_script_cmd)
+    fs_scripts = kwargs.get("fs_scripts", None)
+    if fs_scripts:
+        fs_script_cmd = _build_fs_script_cmd(fs_scripts)
+        fs_cmd.extend(fs_script_cmd)
 
-    cmd.extend(db_cmd)
+    cmd.extend(fs_cmd)
 
     return " ".join(cmd)
 
 
-def _build_db_model_cmd(db_models: t.List[DBModel]) -> t.List[str]:
+def _build_fs_model_cmd(fs_models: t.List[FSModel]) -> t.List[str]:
     cmd = []
-    for db_model in db_models:
-        cmd.append("+db_model")
-        cmd.append(f"--name={db_model.name}")
+    for fs_model in fs_models:
+        cmd.append("+fs_model")
+        cmd.append(f"--name={fs_model.name}")
 
-        # Here db_model.file is guaranteed to exist
-        # because we don't allow the user to pass a serialized DBModel
-        cmd.append(f"--file={db_model.file}")
+        # Here fs_model.file is guaranteed to exist
+        # because we don't allow the user to pass a serialized FSModel
+        cmd.append(f"--file={fs_model.file}")
 
-        cmd.append(f"--backend={db_model.backend}")
-        cmd.append(f"--device={db_model.device}")
-        cmd.append(f"--devices_per_node={db_model.devices_per_node}")
-        cmd.append(f"--first_device={db_model.first_device}")
-        if db_model.batch_size:
-            cmd.append(f"--batch_size={db_model.batch_size}")
-        if db_model.min_batch_size:
-            cmd.append(f"--min_batch_size={db_model.min_batch_size}")
-        if db_model.min_batch_timeout:
-            cmd.append(f"--min_batch_timeout={db_model.min_batch_timeout}")
-        if db_model.tag:
-            cmd.append(f"--tag={db_model.tag}")
-        if db_model.inputs:
-            cmd.append("--inputs=" + ",".join(db_model.inputs))
-        if db_model.outputs:
-            cmd.append("--outputs=" + ",".join(db_model.outputs))
+        cmd.append(f"--backend={fs_model.backend}")
+        cmd.append(f"--device={fs_model.device}")
+        cmd.append(f"--devices_per_node={fs_model.devices_per_node}")
+        cmd.append(f"--first_device={fs_model.first_device}")
+        if fs_model.batch_size:
+            cmd.append(f"--batch_size={fs_model.batch_size}")
+        if fs_model.min_batch_size:
+            cmd.append(f"--min_batch_size={fs_model.min_batch_size}")
+        if fs_model.min_batch_timeout:
+            cmd.append(f"--min_batch_timeout={fs_model.min_batch_timeout}")
+        if fs_model.tag:
+            cmd.append(f"--tag={fs_model.tag}")
+        if fs_model.inputs:
+            cmd.append("--inputs=" + ",".join(fs_model.inputs))
+        if fs_model.outputs:
+            cmd.append("--outputs=" + ",".join(fs_model.outputs))
 
     return cmd
 
 
-def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
+def _build_fs_script_cmd(fs_scripts: t.List[FSScript]) -> t.List[str]:
     cmd = []
-    for db_script in db_scripts:
-        cmd.append("+db_script")
-        cmd.append(f"--name={db_script.name}")
-        if db_script.func:
-            # Notice that here db_script.func is guaranteed to be a str
+    for fs_script in fs_scripts:
+        cmd.append("+fs_script")
+        cmd.append(f"--name={fs_script.name}")
+        if fs_script.func:
+            # Notice that here fs_script.func is guaranteed to be a str
             # because we don't allow the user to pass a serialized function
-            func = db_script.func
+            func = fs_script.func
             sanitized_func = func.replace("\n", "\\n")
             if not (
                 sanitized_func.startswith("'")
@@ -236,9 +236,9 @@ def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
             ):
                 sanitized_func = '"' + sanitized_func + '"'
             cmd.append(f"--func={sanitized_func}")
-        elif db_script.file:
-            cmd.append(f"--file={db_script.file}")
-        cmd.append(f"--device={db_script.device}")
-        cmd.append(f"--devices_per_node={db_script.devices_per_node}")
-        cmd.append(f"--first_device={db_script.first_device}")
+        elif fs_script.file:
+            cmd.append(f"--file={fs_script.file}")
+        cmd.append(f"--device={fs_script.device}")
+        cmd.append(f"--devices_per_node={fs_script.devices_per_node}")
+        cmd.append(f"--first_device={fs_script.first_device}")
     return cmd

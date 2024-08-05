@@ -72,6 +72,14 @@ jobs:
         with:
           python-version: ${{ matrix.py_v }}
 
+      - name: Check Test Files are Marked
+        run: |
+          diff <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | xargs grep -l 'pytestmark' \
+                 | sort) \
+               <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | sort)
+
       - name: Install build-essentials for Ubuntu
         if: contains( matrix.os, 'ubuntu' )
         run: |
@@ -123,8 +131,9 @@ jobs:
         run: |
           make check-mypy
 
-      - name: Run Pylint
-        run: make check-lint
+      # TODO: Re-enable static analysis once API is firmed up
+      # - name: Run Pylint
+      #   run: make check-lint
 
       # Run isort/black style check
       - name: Run isort

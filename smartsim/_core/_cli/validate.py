@@ -128,7 +128,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         type=int,
         default=None,
         help=(
-            "The port on which to run the orchestrator for the mini experiment. "
+            "The port on which to run the feature store for the mini experiment. "
             "If not provided, `smart` will attempt to automatically select an "
             "open port"
         ),
@@ -154,7 +154,7 @@ def test_install(
     exp.telemetry.disable()
     port = find_free_port() if port is None else port
 
-    with _make_managed_local_orc(exp, port) as client:
+    with _make_managed_local_feature_store(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
@@ -192,18 +192,18 @@ def _set_or_del_env_var(var: str, val: t.Optional[str]) -> None:
 
 
 @contextlib.contextmanager
-def _make_managed_local_orc(
+def _make_managed_local_feature_store(
     exp: Experiment, port: int
 ) -> t.Generator[Client, None, None]:
-    """Context managed orc that will be stopped if an exception is raised"""
-    orc = exp.create_database(db_nodes=1, interface="lo", port=port)
-    exp.generate(orc)
-    exp.start(orc)
+    """Context managed feature store that will be stopped if an exception is raised"""
+    feature_store = exp.create_feature_store(fs_nodes=1, interface="lo", port=port)
+    exp.generate(feature_store)
+    exp.start(feature_store)
     try:
-        (client_addr,) = orc.get_address()
+        (client_addr,) = feature_store.get_address()
         yield Client(False, address=client_addr)
     finally:
-        exp.stop(orc)
+        exp.stop(feature_store)
 
 
 def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:

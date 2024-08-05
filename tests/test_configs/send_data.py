@@ -42,7 +42,7 @@ def send_data(key):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--iters", type=int, default=10)
-    parser.add_argument("--name", type=str, default="model")
+    parser.add_argument("--name", type=str, default="application")
     args = parser.parse_args()
 
     # send data in iterations
