@@ -157,7 +157,7 @@ class Experiment:
             exp_path = osp.abspath(exp_path)
         else:
             exp_path = osp.join(getcwd(), name)
-
+        print("got here")
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 

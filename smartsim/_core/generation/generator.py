@@ -163,6 +163,7 @@ class Generator:
         # Return if no files are attached
         if files is None:
             return
+        print(f"type is defined as: {type(files)}")
         for src in files.copy:
             if os.path.isdir(src):
                 subprocess.run(

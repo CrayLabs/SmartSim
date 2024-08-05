@@ -454,15 +454,18 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    # TODO inject path here
     def start(
         self, command: tuple[str | os.PathLike[str], t.Sequence[str]]
     ) -> LaunchedJobID:
         id_ = create_job_id()
         path, args = command
         exe, *rest = args
+        print(f"first value: {(helpers.expand_exe_path(exe), *rest)}")
+        print(f"second value: {path}")
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path, env={}, stdin=None, stdout=None)
+        print(f"did this work: {self._launched[id_]}")
+        print("you got here")
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 
