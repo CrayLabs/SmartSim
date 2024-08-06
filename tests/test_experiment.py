@@ -36,12 +36,13 @@ import weakref
 
 import pytest
 
+from smartsim._core.control.launch_history import LaunchHistory
 from smartsim.entity import _mock, entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import dispatch, launchSettings
 from smartsim.settings.arguments import launchArguments
-from smartsim.status import SmartSimStatus
+from smartsim.status import FailedToFetchStatus, SmartSimStatus
 
 pytestmark = pytest.mark.group_a
 
@@ -217,10 +218,16 @@ def test_start_can_launch_jobs(
     num_jobs: int,
 ) -> None:
     jobs = make_jobs(job_maker, num_jobs)
-    assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 0
+    ), "Initialized w/ launchers"
     launched_ids = experiment.start(*jobs)
-    assert len(experiment._active_launchers) == 1, "Unexpected number of launchers"
-    ((launcher, exp_cached_ids),) = experiment._active_launchers.items()
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 1
+    ), "Unexpected number of launchers"
+    ((launcher, exp_cached_ids),) = (
+        experiment._launch_history.group_by_launcher().items()
+    )
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
     assert launcher.created_by_experiment is experiment, "Not created by experiment"
     assert (
@@ -247,13 +254,19 @@ def test_start_can_launch_jobs(
 def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     experiment: Experiment, job_maker: JobMakerType, num_starts: int
 ) -> None:
-    assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 0
+    ), "Initialized w/ launchers"
     job = job_maker()
     ids_to_launches = {
         experiment.start(job)[0]: LaunchRecord.from_job(job) for _ in range(num_starts)
     }
-    assert len(experiment._active_launchers) == 1, "Did not reuse the launcher"
-    ((launcher, exp_cached_ids),) = experiment._active_launchers.items()
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 1
+    ), "Did not reuse the launcher"
+    ((launcher, exp_cached_ids),) = (
+        experiment._launch_history.group_by_launcher().items()
+    )
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
     assert len(launcher.launched_order) == num_starts, "Unexpected number launches"
 
@@ -288,16 +301,19 @@ class GetStatusLauncher(dispatch.LauncherProtocol):
         raise NotImplementedError("{type(self).__name__} should not start anything")
 
     def get_status(self, *ids: LaunchedJobID):
-        return tuple(self.id_to_status[id_] for id_ in ids)
+        return {id_: self.id_to_status[id_] for id_ in ids}
 
 
 @pytest.fixture
 def make_populated_experment(monkeypatch, experiment):
     def impl(num_active_launchers):
         new_launchers = (GetStatusLauncher() for _ in range(num_active_launchers))
-        launchers_to_status = {l: {*l.id_to_status} for l in new_launchers}
-        active_launchers = experiment._active_launchers | launchers_to_status
-        monkeypatch.setattr(experiment, "_active_launchers", active_launchers)
+        id_to_launcher = {
+            id_: launcher for launcher in new_launchers for id_ in launcher.known_ids
+        }
+        monkeypatch.setattr(
+            experiment, "_launch_history", LaunchHistory(id_to_launcher)
+        )
         return experiment
 
     yield impl
@@ -305,7 +321,7 @@ def make_populated_experment(monkeypatch, experiment):
 
 def test_experiment_can_get_statuses(make_populated_experment):
     exp = make_populated_experment(num_active_launchers=1)
-    (launcher,) = exp._active_launchers
+    (launcher,) = exp._launch_history.iter_past_launchers()
     ids = tuple(launcher.known_ids)
     recieved_stats = exp.get_status(*ids)
     assert len(recieved_stats) == len(ids), "Unexpected number of statuses"
@@ -324,7 +340,7 @@ def test_experiment_can_get_statuses_from_many_launchers(
     exp = make_populated_experment(num_active_launchers=num_launchers)
     launcher_and_rand_ids = (
         (launcher, random.choice(tuple(launcher.id_to_status)))
-        for launcher in exp._active_launchers
+        for launcher in exp._launch_history.iter_past_launchers()
     )
     expected_id_to_stat = {
         id_: launcher.id_to_status[id_] for launcher, id_ in launcher_and_rand_ids
@@ -340,9 +356,12 @@ def test_get_status_returns_not_started_for_unrecognized_ids(
 ):
     exp = make_populated_experment(num_active_launchers=1)
     brand_new_id = dispatch.create_job_id()
-    ((launcher, (id_not_known_by_exp, *rest)),) = exp._active_launchers.items()
-    monkeypatch.setattr(exp, "_active_launchers", {launcher: {*rest}})
-    expected_stats = (SmartSimStatus.STATUS_NEVER_STARTED,) * 2
+    ((launcher, (id_not_known_by_exp, *rest)),) = (
+        exp._launch_history.group_by_launcher().items()
+    )
+    new_history = LaunchHistory({id_: launcher for id_ in rest})
+    monkeypatch.setattr(exp, "_launch_history", new_history)
+    expected_stats = (FailedToFetchStatus.STATUS_NEVER_STARTED,) * 2
     actual_stats = exp.get_status(brand_new_id, id_not_known_by_exp)
     assert expected_stats == actual_stats
 
@@ -360,7 +379,7 @@ def test_get_status_de_dups_ids_passed_to_launchers(
         return calls, impl
 
     exp = make_populated_experment(num_active_launchers=1)
-    ((launcher, (id_, *_)),) = exp._active_launchers.items()
+    ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     calls, tracked_get_status = track_calls(launcher.get_status)
     monkeypatch.setattr(launcher, "get_status", tracked_get_status)
     stats = exp.get_status(id_, id_, id_)
@@ -369,13 +388,3 @@ def test_get_status_de_dups_ids_passed_to_launchers(
     assert len(calls) == 1, "Launcher's `get_status` was called more than once"
     (call,) = calls
     assert call == ((id_,), {}), "IDs were not de-duplicated"
-
-
-def test_get_status_raises_on_ambiguous_job_id(monkeypatch, make_populated_experment):
-    exp = make_populated_experment(num_active_launchers=2)
-    l1, l2 = exp._active_launchers
-    ambiguous_id, *_ = l1.known_ids
-    l2.id_to_status[ambiguous_id] = SmartSimStatus.STATUS_RUNNING
-    exp._active_launchers[l2] = {ambiguous_id}
-    with pytest.raises(ValueError, match=r"Ambiguous ID\(s\) Detected:"):
-        exp.get_status(ambiguous_id)

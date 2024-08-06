@@ -48,6 +48,7 @@ if t.TYPE_CHECKING:
 
 
 _T = t.TypeVar("_T")
+_HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
@@ -434,6 +435,22 @@ def first(predicate: t.Callable[[_T], bool], iterable: t.Iterable[_T]) -> _T | N
               return `True`
     """
     return next((item for item in iterable if predicate(item)), None)
+
+
+def unique(iterable: t.Iterable[_HashableT]) -> t.Iterable[_HashableT]:
+    seen = set()
+    for item in filter(lambda x: x not in seen, iterable):
+        seen.add(item)
+        yield item
+
+
+def group_by(
+    fn: t.Callable[[_T], _HashableT], items: t.Iterable[_T]
+) -> t.Mapping[_HashableT, t.Collection[_T]]:
+    groups = collections.defaultdict[_HashableT, list[_T]](list)
+    for item in items:
+        groups[fn(item)].append(item)
+    return groups
 
 
 @t.final

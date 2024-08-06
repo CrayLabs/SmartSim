@@ -383,15 +383,44 @@ class ExecutableProtocol(t.Protocol):
 
 
 class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
+    """The protocol defining a launcher that can be used by a SmartSim
+    experiment
+    """
+
     @classmethod
     @abc.abstractmethod
-    def create(cls, exp: Experiment, /) -> Self: ...
+    def create(cls, exp: Experiment, /) -> Self:
+        """Create an new launcher instance from and to be used by the passed in
+        experiment instance
+
+        :param: An experiment to use the newly created launcher instance
+        :returns: The newly constructed launcher instance
+        """
+
     @abc.abstractmethod
-    def start(self, launchable: _T_contra, /) -> LaunchedJobID: ...
+    def start(self, launchable: _T_contra, /) -> LaunchedJobID:
+        """Given input that this launcher understands, create a new process and
+        issue a launched job id to query the status of the job in future.
+
+        :param launchable: The input to start a new process
+        :returns: The id to query the status of the process in future
+        """
+
     @abc.abstractmethod
     def get_status(
         self, *launched_ids: LaunchedJobID
-    ) -> tuple[SmartSimStatus, ...]: ...
+    ) -> t.Mapping[LaunchedJobID, SmartSimStatus]:
+        """Given a collection of launched job ids, return a mapping of id to
+        current status of the launched job. If a job id is no recognized by the
+        launcher, a `smartsim.error.errors.LauncherJobNotFound` error should be
+        raised.
+
+        :param launched_ids: The collection of ids of launched jobs to query
+            for current status
+        :raises smartsim.error.errors.LauncherJobNotFound: If at least one of
+            the ids of the `launched_ids` collection is not recognized.
+        :returns: A mapping of launched id to current status
+        """
 
 
 def make_shell_format_fn(
@@ -456,13 +485,15 @@ class ShellLauncher:
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
         return id_
 
-    def get_status(self, *launched_ids: LaunchedJobID) -> tuple[SmartSimStatus, ...]:
-        return tuple(map(self._get_status, launched_ids))
+    def get_status(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, SmartSimStatus]:
+        return {id_: self._get_status(id_) for id_ in launched_ids}
 
     def _get_status(self, id_: LaunchedJobID, /) -> SmartSimStatus:
         if (proc := self._launched.get(id_)) is None:
             msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
-            raise errors.UnrecognizedLaunchedJobError(msg)
+            raise errors.LauncherJobNotFound(msg)
         ret_code = proc.poll()
         if ret_code is None:
             status = psutil.Process(proc.pid).status()

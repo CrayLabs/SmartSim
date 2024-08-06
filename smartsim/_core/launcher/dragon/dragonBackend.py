@@ -690,7 +690,7 @@ class DragonBackend:
             else:
                 self._queued_steps[step_id] = request
                 self._group_infos[step_id] = ProcessGroupInfo(
-                    status=SmartSimStatus.STATUS_NEVER_STARTED
+                    status=SmartSimStatus.STATUS_NEW
                 )
             return DragonRunResponse(step_id=step_id, error_message=err)
 

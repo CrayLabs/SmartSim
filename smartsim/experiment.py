@@ -39,9 +39,10 @@ from os import environ, getcwd
 from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
+from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim.error import errors
 from smartsim.settings import dispatch
-from smartsim.status import SmartSimStatus
+from smartsim.status import FailedToFetchStatus, SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
@@ -57,7 +58,7 @@ from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.dispatch import ExecutableProtocol, LauncherProtocol
+    from smartsim.settings.dispatch import ExecutableProtocol
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -161,12 +162,8 @@ class Experiment:
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
-        self._active_launchers = collections.defaultdict[
-            "LauncherProtocol[t.Any]", set["LaunchedJobID"]
-        ](set)
-        """The active launchers created, used, and reused by the experiment,
-        mapping to launched job ids that were launched with this instance
-        """
+        self._launch_history = _LaunchHistory()
+        """A cache of launchers used and which ids they have issued"""
         self._fs_identifiers: t.Set[str] = set()
         """Set of feature store identifiers currently in use by this
         experiment
@@ -214,7 +211,7 @@ class Experiment:
                 # Check to see if one of the existing launchers can be
                 # configured to handle the launch arguments ...
                 launch_config = dispatch.configure_first_compatible_launcher(
-                    from_available_launchers=self._active_launchers,
+                    from_available_launchers=self._launch_history.iter_past_launchers(),
                     with_arguments=args,
                 )
             except errors.LauncherNotFoundError:
@@ -228,12 +225,14 @@ class Experiment:
             # way we do not need to spin up a launcher instance for each
             # individual job, and the experiment can monitor job statuses.
             # pylint: disable-next=protected-access
-            self._active_launchers[launch_config._adapted_launcher].add(id_)
+            self._launch_history.save_launch(launch_config._adapted_launcher, id_)
             return id_
 
         return execute_dispatch(job), *map(execute_dispatch, jobs)
 
-    def get_status(self, *ids: LaunchedJobID) -> tuple[SmartSimStatus, ...]:
+    def get_status(
+        self, *ids: LaunchedJobID
+    ) -> tuple[SmartSimStatus | FailedToFetchStatus, ...]:
         """Get the status of jobs launched through the `Experiment` from their
         launched job id returned when calling `Experiment.start`.
 
@@ -243,7 +242,8 @@ class Experiment:
 
         If the `Experiment` cannot find any launcher that started the job
         associated with the launched job id, then a
-        `SmartSimStatus.STATUS_NEVER_STARTED` status is returned for that id.
+        `FailedToFetchStatus.STATUS_NEVER_STARTED` status is returned for that
+        id.
 
         If the experiment maps the launched job id to multiple launchers, then
         a `ValueError` is raised. This should only happen in the case when
@@ -254,40 +254,14 @@ class Experiment:
         :returns: A tuple of statuses with order respective of the order of the
             calling arguments.
         """
-        ids_ = set(ids)
-        to_query = tuple(
-            (launcher, requested_ids)
-            for launcher, launched_ids in self._active_launchers.items()
-            if (requested_ids := launched_ids & ids_)
+        to_query = self._launch_history.group_by_launcher(
+            set(ids), unknown_ok=True
+        ).items()
+        stats_iter = (launcher.get_status(*ids).items() for launcher, ids in to_query)
+        stats_map = dict(itertools.chain.from_iterable(stats_iter))
+        stats = (
+            stats_map.get(i, FailedToFetchStatus.STATUS_NEVER_STARTED) for i in ids
         )
-
-        iter_req_ids = (ids for _, ids in to_query)
-        combs = itertools.combinations(iter_req_ids, 2)
-        intersections = (set_1 & set_2 for set_1, set_2 in combs)
-        ambiguous = set(itertools.chain.from_iterable(intersections))
-        if any(ambiguous):
-            formatted = textwrap.indent("\n".join(ambiguous), "  - ")
-            raise ValueError(textwrap.dedent(f"""\
-                Ambiguous ID(s) Detected:
-                {formatted}
-
-                These ID(s) were exact matches for ID(s) issued by two or more
-                launchers. This typically happens when a custom launcher has
-                been registered with SmartSim, but does not issue sufficiently
-                unique launched job ids. If this is the case, please make sure
-                that launched job ids issued are globally unique!
-
-                If you are not using a custom launcher, and this error
-                persists, please file an issue at the following link, and we'll
-                be sure to help address the problem as soon as possible:
-
-                https://github.com/CrayLabs/SmartSim/issues
-                """))
-
-        ids_as_sequence = ((l, tuple(ids)) for l, ids in to_query)
-        stats_zips = (zip(ids, l.get_status(*ids)) for l, ids in ids_as_sequence)
-        stats_map = dict(itertools.chain.from_iterable(stats_zips))
-        stats = (stats_map.get(i, SmartSimStatus.STATUS_NEVER_STARTED) for i in ids)
         return tuple(stats)
 
     @_contextualize
