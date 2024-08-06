@@ -95,6 +95,14 @@ class DragonRunSettings(RunSettings):
 
         self.run_args["node-feature"] = ",".join(feature_list)
 
+    @override
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        """
+        self.run_args["host-list"] = ",".join(host_list)
+
     def set_cpu_affinity(self, devices: t.List[int]) -> None:
         """Set the CPU affinity for this job
 

@@ -45,6 +45,8 @@ import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
+from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
+
 # pylint: enable=import-error
 # isort: on
 from ...._core.config import get_config
@@ -67,6 +69,10 @@ from ....log import get_logger
 from ....status import TERMINAL_STATUSES, SmartSimStatus
 
 logger = get_logger(__name__)
+
+
+# tracking structure for [num_refs, node_name, is_dirty]
+_NodeRefCount = t.List[t.Union[int, str, bool]]
 
 
 class DragonStatus(str, Enum):
@@ -190,41 +196,60 @@ class DragonBackend:
         self._view = DragonBackendView(self)
         logger.debug(self._view.host_desc)
         self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
+        self._prioritizer = NodePrioritizer(self._nodes, self._queue_lock)
 
     @property
     def hosts(self) -> list[str]:
         with self._queue_lock:
             return self._hosts
 
+    # todo: remove
     @property
     def allocated_hosts(self) -> dict[str, str]:
+        """A map of host names to the step id executing on a host
+
+        :returns: Dictionary with host name as key and step id as value"""
         with self._queue_lock:
             return self._allocated_hosts
 
     @property
-    def free_hosts(self) -> t.Deque[str]:
+    def free_hosts(self) -> t.List[str]:
+        """Find hosts that do not have a step assigned
+
+        :returns: List of host names"""
         with self._queue_lock:
-            return self._free_hosts
+            return [str(item[1]) for item in self._prioritizer.unassigned()]
 
     @property
     def group_infos(self) -> dict[str, ProcessGroupInfo]:
+        """Find information pertaining to process groups executing on a host
+
+        :returns: Dictionary with host name as key and group information as value"""
         with self._queue_lock:
             return self._group_infos
 
     def _initialize_hosts(self) -> None:
+        """Prepare metadata about the allocation"""
         with self._queue_lock:
             self._nodes = [
                 dragon_machine.Node(node) for node in dragon_machine.System().nodes
             ]
             self._hosts: t.List[str] = sorted(node.hostname for node in self._nodes)
-            self._cpus = [node.num_cpus for node in self._nodes]
-            self._gpus = [node.num_gpus for node in self._nodes]
-
             """List of hosts available in allocation"""
-            self._free_hosts: t.Deque[str] = collections.deque(self._hosts)
-            """List of hosts on which steps can be launched"""
-            self._allocated_hosts: t.Dict[str, str] = {}
-            """Mapping of hosts on which a step is already running to step ID"""
+            self._cpus = [node.num_cpus for node in self._nodes]
+            """List of cpu-count by node"""
+            self._gpus = [node.num_gpus for node in self._nodes]
+            """List of gpu-count by node"""
+            # NOTE: self._allocated_hosts does NOT support tracking colocated items
+            # and it must be converted into a list of step IDs in the future. Now?
+            self._allocated_hosts: t.Dict[str, str] = {}  # todo: rename to _host_tasks?
+            """Mapping of hosts to an assigned, running step ID"""
+            self._ref_map: t.Dict[str, _NodeRefCount] = {}
+            """Map node names to a ref counter for direct access"""
+            self._cpu_refs: t.List[_NodeRefCount] = []
+            """Track reference counts to CPU-only nodes"""
+            self._gpu_refs: t.List[_NodeRefCount] = []
+            """Track reference counts to GPU nodes"""
 
     def __str__(self) -> str:
         return self.status_message
@@ -233,7 +258,7 @@ class DragonBackend:
     def status_message(self) -> str:
         """Message with status of available nodes and history of launched jobs.
 
-        :returns: Status message
+        :returns: a status message
         """
         return (
             "Dragon server backend update\n"
@@ -245,9 +270,8 @@ class DragonBackend:
 
     @property
     def cooldown_period(self) -> int:
-        """Time (in seconds) the server will wait before shutting down
-
-        when exit conditions are met (see ``should_shutdown()`` for further details).
+        """Time (in seconds) the server will wait before shutting down when
+        exit conditions are met (see ``should_shutdown()`` for further details).
         """
         return self._cooldown_period
 
@@ -281,6 +305,8 @@ class DragonBackend:
         and it requested immediate shutdown, or if it did not request immediate
         shutdown, but all jobs have been executed.
         In both cases, a cooldown period may need to be waited before shutdown.
+
+        :returns: `True` if the server should terminate, otherwise `False`
         """
         if self._shutdown_requested and self._can_shutdown:
             return self._has_cooled_down
@@ -288,7 +314,9 @@ class DragonBackend:
 
     @property
     def current_time(self) -> float:
-        """Current time for DragonBackend object, in seconds since the Epoch"""
+        """Current time for DragonBackend object, in seconds since the Epoch
+
+        :returns: the current timestamp"""
         return time.time()
 
     def _can_honor_policy(
@@ -296,10 +324,63 @@ class DragonBackend:
     ) -> t.Tuple[bool, t.Optional[str]]:
         """Check if the policy can be honored with resources available
         in the allocation.
-        :param request: DragonRunRequest containing policy information
+
+        :param request: `DragonRunRequest` to validate
         :returns: Tuple indicating if the policy can be honored and
         an optional error message"""
         # ensure the policy can be honored
+        if request.policy:
+            if request.policy.cpu_affinity:
+                # make sure some node has enough CPUs
+                available = max(self._cpus)
+                requested = max(request.policy.cpu_affinity)
+                if requested >= available:
+                    return False, "Cannot satisfy request, not enough CPUs available"
+            if request.policy.gpu_affinity:
+                # make sure some node has enough GPUs
+                available = max(self._gpus)
+                requested = max(request.policy.gpu_affinity)
+                if requested >= available:
+                    return False, "Cannot satisfy request, not enough GPUs available"
+        return True, None
+
+    def _can_honor(self, request: DragonRunRequest) -> t.Tuple[bool, t.Optional[str]]:
+        """Check if request can be honored with resources available in
+        the allocation. Currently only checks for total number of nodes,
+        in the future it will also look at other constraints such as memory,
+        accelerators, and so on.
+
+        :param request: `DragonRunRequest` to validate
+        :returns: Tuple indicating if the request can be honored and
+        an optional error message
+        """
+        honorable, err = self._can_honor_state(request)
+        if not honorable:
+            return False, err
+
+        honorable, err = self._can_honor_policy(request)
+        if not honorable:
+            return False, err
+
+        honorable, err = self._can_honor_hosts(request)
+        if not honorable:
+            return False, err
+
+        honorable, err = self._can_honor_affinities(request)
+        if not honorable:
+            return False, err
+
+        return True, None
+
+    def _can_honor_affinities(
+        self, request: DragonRunRequest
+    ) -> t.Tuple[bool, t.Optional[str]]:
+        """Check if the policy can be honored with resources available
+        in the allocation.
+
+        :param request: the DragonRunRequest to verify
+        :returns: Tuple indicating if the request can be honored and
+        an optional error message"""
         if request.policy:
             if request.policy.cpu_affinity:
                 # make sure some node has enough CPUs
@@ -319,40 +400,96 @@ class DragonBackend:
 
         return True, None
 
-    def _can_honor(self, request: DragonRunRequest) -> t.Tuple[bool, t.Optional[str]]:
-        """Check if request can be honored with resources available in the allocation.
+    def _can_honor_hosts(
+        self, request: DragonRunRequest
+    ) -> t.Tuple[bool, t.Optional[str]]:
+        """Check if the current state of the backend process inhibits executing
+        the request.
 
-        Currently only checks for total number of nodes,
-        in the future it will also look at other constraints
-        such as memory, accelerators, and so on.
-        """
+        :param request: `DragonRunRequest` to validate
+        :returns: Tuple indicating if the request can be honored and
+        an optional error message"""
+        # fail if requesting more nodes than the total number available
         if request.nodes > len(self._hosts):
-            message = f"Cannot satisfy request. Requested {request.nodes} nodes, "
-            message += f"but only {len(self._hosts)} nodes are available."
+            message = f"Cannot satisfy request. {request.nodes} requested nodes"
+            message += f"exceeds {len(self._hosts)} available."
             return False, message
+
+        requested_hosts: t.Set[str] = set(self._hosts)
+        if request.hostlist:
+            requested_hosts = {host.strip() for host in request.hostlist.split(",")}
+
+        all_hosts = set(self._hosts)
+        valid_hosts = all_hosts.intersection(requested_hosts)
+        invalid_hosts = requested_hosts - valid_hosts
+
+        if invalid_hosts:
+            logger.warning(f"Some invalid hostnames were requested: {invalid_hosts}")
+
+        # fail if requesting specific hostnames and there aren't enough available
+        if request.nodes > len(valid_hosts):
+            message = f"Cannot satisfy request. Requested {request.nodes} nodes, "
+            message += f"but only {len(valid_hosts)} named hosts are available."
+            return False, message
+
+        return True, None
+
+    def _can_honor_state(
+        self, _request: DragonRunRequest
+    ) -> t.Tuple[bool, t.Optional[str]]:
+        """Check if the current state of the backend process inhibits executing
+        the request.
+        :param _request: the DragonRunRequest to verify
+        :returns: Tuple indicating if the request can be honored and
+        an optional error message"""
         if self._shutdown_requested:
             message = "Cannot satisfy request, server is shutting down."
             return False, message
-
-        honorable, err = self._can_honor_policy(request)
-        if not honorable:
-            return False, err
 
         return True, None
 
     def _allocate_step(
         self, step_id: str, request: DragonRunRequest
     ) -> t.Optional[t.List[str]]:
+        """Identify the hosts on which the request will be executed
 
+        :param step_id: The identifier of a step that will be executed on the host
+        :param request: The request to be executed
+        :returns: A list of selected hostnames"""
+        # ensure at least one host is selected
         num_hosts: int = request.nodes
+
         with self._queue_lock:
-            if num_hosts <= 0 or num_hosts > len(self._free_hosts):
+            if num_hosts <= 0 or num_hosts > len(self._hosts):
+                logger.debug(
+                    f"The number of requested hosts ({num_hosts}) is invalid or"
+                    f" cannot be satisfied with {len(self._hosts)} available nodes"
+                )
                 return None
-            to_allocate = []
-            for _ in range(num_hosts):
-                host = self._free_hosts.popleft()
+
+            hosts = []
+            if request.hostlist:
+                # convert the comma-separated argument into a real list
+                hosts = [host for host in request.hostlist.split(",") if host]
+
+            if hosts:
+                reference_counts = self._prioritizer.next_n_from(num_hosts, hosts)
+            else:
+                filter_on: t.Optional[PrioritizerFilter] = None
+                if request.policy and request.policy.gpu_affinity:
+                    filter_on = PrioritizerFilter.GPU
+                reference_counts = self._prioritizer.next_n(num_hosts, filter_on)
+
+            if len(reference_counts) < num_hosts:
+                # exit if the prioritizer can't identify enough nodes
+                return None
+
+            to_allocate = [str(ref_counter[1]) for ref_counter in reference_counts]
+
+            # track assigning this step to each node
+            for host in to_allocate:
                 self._allocated_hosts[host] = step_id
-                to_allocate.append(host)
+
             return to_allocate
 
     @staticmethod
@@ -392,6 +529,7 @@ class DragonBackend:
         return grp_redir
 
     def _stop_steps(self) -> None:
+        """Trigger termination of all currently executing steps"""
         self._heartbeat()
         with self._queue_lock:
             while len(self._stop_requests) > 0:
@@ -451,6 +589,7 @@ class DragonBackend:
         request: DragonRequest, node_name: str
     ) -> "dragon_policy.Policy":
         """Create a dragon Policy from the request and node name
+
         :param request: DragonRunRequest containing policy information
         :param node_name: Name of the node on which the process will run
         :returns: dragon_policy.Policy object mapped from request properties"""
@@ -586,6 +725,8 @@ class DragonBackend:
                     logger.error(e)
 
     def _refresh_statuses(self) -> None:
+        """Query underlying management system for step status and update
+        stored assigned and unassigned task information"""
         self._heartbeat()
         with self._queue_lock:
             terminated = []
@@ -635,10 +776,10 @@ class DragonBackend:
                     for host in group_info.hosts:
                         logger.debug(f"Releasing host {host}")
                         try:
-                            self._allocated_hosts.pop(host)
+                            self._allocated_hosts.pop(host)  # todo: remove?
                         except KeyError:
                             logger.error(f"Tried to free a non-allocated host: {host}")
-                        self._free_hosts.append(host)
+                        self._prioritizer.decrement(host)
                     group_info.process_group = None
                     group_info.redir_workers = None
 
@@ -662,6 +803,7 @@ class DragonBackend:
         return False
 
     def _update(self) -> None:
+        """Trigger all update queries and update local state database"""
         self._stop_steps()
         self._start_steps()
         self._refresh_statuses()
@@ -749,8 +891,12 @@ class DragonBackend:
 
 
 class DragonBackendView:
-    def __init__(self, backend: DragonBackend):
+    def __init__(self, backend: DragonBackend) -> None:
+        """Initialize the instance
+
+        :param backend: A dragon backend used to produce the view"""
         self._backend = backend
+        """A dragon backend used to produce the view"""
 
     @property
     def host_desc(self) -> str:
@@ -812,9 +958,7 @@ class DragonBackendView:
     @property
     def host_table(self) -> str:
         """Table representation of current state of nodes available
-
-        in the allocation.
-        """
+        in the allocation."""
         headers = ["Host", "Status"]
         hosts = self._backend.hosts
         free_hosts = self._backend.free_hosts

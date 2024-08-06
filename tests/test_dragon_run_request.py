@@ -30,8 +30,10 @@ import textwrap
 import time
 from unittest.mock import MagicMock
 
+import pydantic.error_wrappers
 import pytest
-from pydantic import ValidationError
+
+from smartsim._core.launcher.dragon.pqueue import NodePrioritizer
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -162,9 +164,11 @@ def get_mock_backend(
     from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 
     dragon_backend = DragonBackend(pid=99999)
-    monkeypatch.setattr(
-        dragon_backend, "_free_hosts", collections.deque(dragon_backend._hosts)
-    )
+    # monkeypatch.setattr(
+    #     dragon_backend._prioritizer,
+    #     NodePrioritizer(dragon_backend._hosts, dragon_backend._queue_lock),
+    #     collections.deque(dragon_backend._hosts),
+    # )
 
     return dragon_backend
 
@@ -222,7 +226,6 @@ def set_mock_group_infos(
     }
 
     monkeypatch.setattr(dragon_backend, "_group_infos", group_infos)
-    monkeypatch.setattr(dragon_backend, "_free_hosts", collections.deque(hosts[1:3]))
     monkeypatch.setattr(dragon_backend, "_allocated_hosts", {hosts[0]: "abc123-1"})
     monkeypatch.setattr(dragon_backend, "_running_steps", ["abc123-1"])
 
@@ -269,7 +272,7 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
+    assert len(dragon_backend.free_hosts) == 1
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
 
@@ -281,9 +284,11 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
+    assert len(dragon_backend.free_hosts) == 1
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    # assert dragon_backend._assigned_steps[dragon_backend.hosts[0]] == step_id
+    # assert dragon_backend._assigned_steps[dragon_backend.hosts[1]] == step_id
 
     dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
 
@@ -349,7 +354,7 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(cpu_affinity=[0, 1]),
+        policy=HardwarePolicy(cpu_affinity=[0, 1]),
     )
 
     run_resp = dragon_backend.process_request(run_req)
@@ -366,7 +371,7 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
+    assert len(dragon_backend._prioritizer.unassigned()) == 1
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
 
@@ -378,7 +383,7 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
+    assert len(dragon_backend._priorizer.unassigned()) == 1
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
 
@@ -434,7 +439,7 @@ def test_stop_request(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     assert len(dragon_backend._allocated_hosts) == 0
-    assert len(dragon_backend._free_hosts) == 3
+    assert len(dragon_backend._prioritizer.unassigned()) == 3
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -537,9 +542,33 @@ def test_can_honor(monkeypatch: pytest.MonkeyPatch, num_nodes: int) -> None:
         pmi_enabled=False,
     )
 
-    assert dragon_backend._can_honor(run_req)[0] == (
-        num_nodes <= len(dragon_backend._hosts)
-    )
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    nodes_in_range = num_nodes <= len(dragon_backend._hosts)
+    assert can_honor == nodes_in_range
+    assert error_msg is None if nodes_in_range else error_msg is not None
+
+
+@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
+@pytest.mark.parametrize("num_nodes", [-10, -1, 0])
+def test_can_honor_invalid_num_nodes(
+    monkeypatch: pytest.MonkeyPatch, num_nodes: int
+) -> None:
+    """Verify that requests for invalid numbers of nodes (negative, zero) are rejected"""
+    dragon_backend = get_mock_backend(monkeypatch)
+
+    with pytest.raises(pydantic.error_wrappers.ValidationError) as ex:
+        DragonRunRequest(
+            exe="sleep",
+            exe_args=["5"],
+            path="/a/fake/path",
+            nodes=num_nodes,
+            tasks=1,
+            tasks_per_node=1,
+            env={},
+            current_env={},
+            pmi_enabled=False,
+        )
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -559,7 +588,7 @@ def test_can_honor_cpu_affinity(
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(cpu_affinity=affinity),
+        policy=HardwarePolicy(cpu_affinity=affinity),
     )
 
     assert dragon_backend._can_honor(run_req)[0]
@@ -580,7 +609,7 @@ def test_can_honor_cpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(cpu_affinity=list(range(9))),
+        policy=HardwarePolicy(cpu_affinity=list(range(9))),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -603,7 +632,7 @@ def test_can_honor_gpu_affinity(
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(gpu_affinity=affinity),
+        policy=HardwarePolicy(gpu_affinity=affinity),
     )
 
     assert dragon_backend._can_honor(run_req)[0]
@@ -624,7 +653,7 @@ def test_can_honor_gpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(gpu_affinity=list(range(3))),
+        policy=HardwarePolicy(gpu_affinity=list(range(3))),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -648,7 +677,7 @@ def test_can_honor_gpu_device_not_available(monkeypatch: pytest.MonkeyPatch) -> 
         current_env={},
         pmi_enabled=False,
         # specify GPU device w/no affinity
-        policy=DragonRunPolicy(gpu_affinity=[0]),
+        policy=HardwarePolicy(gpu_affinity=[0]),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -669,23 +698,92 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
     set_mock_group_infos(monkeypatch, dragon_backend)
     hosts = dragon_backend.hosts
 
-    expected_message = textwrap.dedent(f"""\
+    expected_message = textwrap.dedent(
+        f"""\
         Dragon server backend update
         | Host   |  Status  |
-        |--------|----------|
+        |---------|----------|
         | {hosts[0]} |   Busy   |
         | {hosts[1]} |   Free   |
         | {hosts[2]} |   Free   |
         | Step     | Status       | Hosts           |  Return codes  |  Num procs  |
-        |----------|--------------|-------------|----------------|-------------|
+        |----------|--------------|-----------------|----------------|-------------|
         | abc123-1 | Running      | {hosts[0]}         |                |      1      |
         | del999-2 | Cancelled    | {hosts[1]}         |       -9       |      1      |
         | c101vz-3 | Completed    | {hosts[1]},{hosts[2]} |       0        |      2      |
         | 0ghjk1-4 | Failed       | {hosts[2]}         |       -1       |      1      |
-        | ljace0-5 | NeverStarted |                 |                |      0      |""")
+        | ljace0-5 | NeverStarted |                 |                |      0      |"""
+    )
 
     # get rid of white space to make the comparison easier
     actual_msg = dragon_backend.status_message.replace(" ", "")
     expected_message = expected_message.replace(" ", "")
 
     assert actual_msg == expected_message
+
+
+def test_can_honor_hosts_unavailable_hosts(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify that requesting nodes with invalid names causes number of available
+    nodes check to fail due to valid # of named nodes being under num_nodes"""
+    dragon_backend = get_mock_backend(monkeypatch)
+
+    # let's supply 2 invalid and 1 valid hostname
+    actual_hosts = list(dragon_backend._hosts)
+    actual_hosts[0] = f"x{actual_hosts[0]}"
+    actual_hosts[1] = f"x{actual_hosts[1]}"
+
+    host_list = ",".join(actual_hosts)
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=2,  # <----- requesting 2 of 3 available nodes
+        hostlist=host_list,  # <--- only one valid name available
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+        policy=HardwarePolicy(),
+    )
+
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    # confirm the failure is indicated
+    assert not can_honor
+    # confirm failure message indicates number of nodes requested as cause
+    assert "named hosts" in error_msg
+
+
+def test_can_honor_hosts_unavailable_hosts_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify that requesting nodes with invalid names causes number of available
+    nodes check to be reduced but still passes if enough valid named nodes are passed"""
+    dragon_backend = get_mock_backend(monkeypatch)
+
+    # let's supply 2 valid and 1 invalid hostname
+    actual_hosts = list(dragon_backend._hosts)
+    actual_hosts[0] = f"x{actual_hosts[0]}"
+
+    host_list = ",".join(actual_hosts)
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=2,  # <----- requesting 2 of 3 available nodes
+        hostlist=host_list,  # <--- two valid names are available
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+        policy=HardwarePolicy(),
+    )
+
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    # confirm the failure is indicated
+    assert can_honor, error_msg
+    # confirm failure message indicates number of nodes requested as cause
+    assert error_msg is None, error_msg

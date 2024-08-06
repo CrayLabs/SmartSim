@@ -32,6 +32,8 @@ import time
 
 import pytest
 
+from tests.mli.featurestore import FileSystemFeatureStore
+
 torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
