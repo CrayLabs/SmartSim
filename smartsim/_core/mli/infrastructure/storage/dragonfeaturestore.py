@@ -59,7 +59,8 @@ class DragonFeatureStore(FeatureStore):
         try:
             value: t.Union[str, bytes] = self._storage[key]
             return value
-        except KeyError as ex:
+        except KeyError:
+            logger.warning(f"An unknown key was requested: {key}")
             raise
         except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence
