@@ -43,18 +43,24 @@ class DragonFeatureStore(FeatureStore):
     """A feature store backed by a dragon distributed dictionary"""
 
     def __init__(self, storage: "dragon_ddict.DDict") -> None:
-        """Initialize the DragonFeatureStore instance"""
+        """Initialize the DragonFeatureStore instance
+
+        :param storage: A distributed dictionary to be used as the underlying
+        storage mechanism of the feature store"""
         self._storage = storage
 
     def __getitem__(self, key: str) -> t.Union[str, bytes]:
         """Retrieve an item using key
 
-        :param key: Unique key of an item to retrieve from the feature store"""
+        :param key: Unique key of an item to retrieve from the feature store
+        :returns: The value identified by the supplied key
+        :raises KeyError: if the key is not found in the feature store
+        :raises SmartSimError: if retrieval from the feature store fails"""
         try:
             value: t.Union[str, bytes] = self._storage[key]
             return value
         except KeyError as ex:
-            raise ex
+            raise
         except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence
             raise SmartSimError(
@@ -90,9 +96,12 @@ class DragonFeatureStore(FeatureStore):
         """A factory method that creates an instance from a descriptor string
 
         :param descriptor: The descriptor that uniquely identifies the resource
-        :returns: An attached DragonFeatureStore"""
+        :returns: An attached DragonFeatureStore
+        :raises SmartSimError: if attachment to DragonFeatureStore fails"""
         try:
             return DragonFeatureStore(dragon_ddict.DDict.attach(descriptor))
-        except:
+        except Exception as ex:
             logger.error(f"Error creating dragon feature store: {descriptor}")
-            raise
+            raise SmartSimError(
+                f"Error creating dragon feature store: {descriptor}"
+            ) from ex
