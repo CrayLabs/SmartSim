@@ -39,9 +39,9 @@ import base64
 import os
 
 import dragon.channels as dch
-from channel import FileSystemCommChannel
+from .utils.channel import FileSystemCommChannel
+from .featurestore import FileSystemFeatureStore
 from dragon import fli
-from featurestore import FileSystemFeatureStore
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
