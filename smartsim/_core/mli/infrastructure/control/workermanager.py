@@ -146,7 +146,7 @@ class WorkerManager(Service):
         fs_missing = fs_desired - fs_actual
 
         if self._featurestore_factory is None:
-            logger.warning("No feature store factory configured")
+            logger.error("No feature store factory configured")
             return False
 
         # create the feature stores we need to service request
@@ -215,7 +215,7 @@ class WorkerManager(Service):
         logger.debug("executing worker manager pipeline")
 
         if self._task_queue is None:
-            logger.warning("No queue to check for tasks")
+            logger.error("No queue to check for tasks")
             return
 
         timings = []  # timing
