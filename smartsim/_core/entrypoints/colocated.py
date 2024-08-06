@@ -37,14 +37,14 @@ from types import FrameType
 
 import filelock
 import psutil
-from smartredis import Client, ConfigOptions
-from smartredis.error import RedisConnectionError, RedisReplyError
 
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
+
+# TODO add a Client
 
 DBPID = None
 
@@ -61,7 +61,7 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
 def launch_fs_model(client: Client, fs_model: t.List[str]) -> str:
     """Parse options to launch model on local cluster
 
-    :param client: SmartRedis client connected to local FS
+    :param client: client connected to local FS
     :param fs_model: List of arguments defining the model
     :return: Name of model
     """
@@ -125,7 +125,7 @@ def launch_fs_model(client: Client, fs_model: t.List[str]) -> str:
 def launch_fs_script(client: Client, fs_script: t.List[str]) -> str:
     """Parse options to launch script on local cluster
 
-    :param client: SmartRedis client connected to local FS
+    :param client: client connected to local FS
     :param fs_model: List of arguments defining the script
     :return: Name of model
     """
@@ -190,7 +190,7 @@ def main(
         # bind to both addresses if the user specified a network
         # address that exists and is not the loopback address
         cmd = command + [f"--bind {lo_address} {' '.join(ip_addresses)}"]
-        # pin source address to avoid random selection by Redis
+        # pin source address
         cmd += [f"--bind-source-addr {lo_address}"]
 
     # we generally want to catch all exceptions here as
@@ -240,15 +240,11 @@ def main(
 
     try:
         if fs_models or fs_scripts:
-            try:
-                options = ConfigOptions.create_from_environment(fs_identifier)
-                client = Client(options, logger_name="SmartSim")
-                launch_models(client, fs_models)
-                launch_fs_scripts(client, fs_scripts)
-            except (RedisConnectionError, RedisReplyError) as ex:
-                raise SSInternalError(
-                    "Failed to set model or script, could not connect to feature store"
-                ) from ex
+            options = ConfigOptions.create_from_environment(fs_identifier)
+            client = Client(options, logger_name="SmartSim")
+            launch_models(client, fs_models)
+            launch_fs_scripts(client, fs_scripts)
+     
             # Make sure we don't keep this around
             del client
 

@@ -21,7 +21,6 @@ def execute(
         tabulate(
             [
                 ["SmartSim", _fmt_py_pkg_version("smartsim")],
-                ["SmartRedis", _fmt_py_pkg_version("smartredis")],
             ],
             headers=["Name", "Version"],
             tablefmt="fancy_outline",
@@ -36,15 +35,9 @@ def execute(
         fs_table.append(["Location", str(fs_path)])
     print(tabulate(fs_table, tablefmt="fancy_outline"), end="\n\n")
 
-    print("Redis AI Configuration:")
-    rai_path = _helpers.redis_install_base().parent / "redisai.so"
-    rai_table = [["Status", _fmt_installed_redis_ai(rai_path)]]
-    if rai_path.is_file():
-        rai_table.append(["Location", str(rai_path)])
-    print(tabulate(rai_table, tablefmt="fancy_outline"), end="\n\n")
-
     print("Machine Learning Backends:")
-    backends = _helpers.installed_redisai_backends()
+    #TODO: add a backend
+    backends = None
     print(
         tabulate(
             [
@@ -77,12 +70,6 @@ def _fmt_installed_fs(fs_path: t.Optional[pathlib.Path]) -> str:
         return _MISSING_DEP
     fs_name, _ = fs_path.name.split("-", 1)
     return _helpers.colorize(fs_name.upper(), "green")
-
-
-def _fmt_installed_redis_ai(rai_path: pathlib.Path) -> str:
-    if not rai_path.is_file():
-        return _MISSING_DEP
-    return _helpers.colorize("Installed", "green")
 
 
 def _fmt_py_pkg_version(pkg_name: str) -> str:

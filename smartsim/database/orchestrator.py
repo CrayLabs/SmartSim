@@ -35,8 +35,6 @@ from os import environ, getcwd, getenv
 from shlex import split as sh_split
 
 import psutil
-from smartredis import Client, ConfigOptions
-from smartredis.error import RedisReplyError
 
 from .._core.config import CONFIG
 from .._core.utils import fs_is_active
@@ -189,7 +187,7 @@ class FeatureStore(EntityList[FSNode]):
     ) -> None:
         """Initialize an ``FeatureStore`` reference for local launch
 
-        Extra configurations for RedisAI
+        Extra configurations
 
         :param path: path to location of ``FeatureStore`` directory
         :param port: TCP/IP port
@@ -254,22 +252,10 @@ class FeatureStore(EntityList[FSNode]):
             **kwargs,
         )
 
-        # detect if we can find at least the redis binaries. We
-        # don't want to force the user to launch with RedisAI so
-        # it's ok if that isn't present.
         try:
-            # try to obtain redis binaries needed to launch Redis
-            # will raise SSConfigError if not found
-            self._redis_exe  # pylint: disable=W0104
-            self._redis_conf  # pylint: disable=W0104
             CONFIG.database_cli  # pylint: disable=W0104
         except SSConfigError as e:
-            raise SSConfigError(
-                "SmartSim not installed with pre-built extensions (Redis)\n"
-                "Use the `smart` cli tool to install needed extensions\n"
-                "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
-                "See documentation for more information"
-            ) from e
+            ...
 
         if self.launcher != "local":
             self.batch_settings = self._build_batch_settings(
@@ -405,29 +391,6 @@ class FeatureStore(EntityList[FSNode]):
             return False
         return fs_is_active(hosts, self.ports, self.num_shards)
 
-    @property
-    def _rai_module(self) -> t.Tuple[str, ...]:
-        """Get the RedisAI module from third-party installations
-
-        :return: Tuple of args to pass to the FeatureStore exe
-                 to load and configure the RedisAI
-        """
-        module = ["--loadmodule", CONFIG.redisai]
-        if self.queue_threads:
-            module.extend(("THREADS_PER_QUEUE", str(self.queue_threads)))
-        if self.inter_threads:
-            module.extend(("INTER_OP_PARALLELISM", str(self.inter_threads)))
-        if self.intra_threads:
-            module.extend(("INTRA_OP_PARALLELISM", str(self.intra_threads)))
-        return tuple(module)
-
-    @property
-    def _redis_exe(self) -> str:
-        return CONFIG.database_exe
-
-    @property
-    def _redis_conf(self) -> str:
-        return CONFIG.database_conf
 
     @property
     def checkpoint_file(self) -> str:
@@ -620,6 +583,7 @@ class FeatureStore(EntityList[FSNode]):
         """
         self.set_fs_conf("proto-max-bulk-len", str(size))
 
+    # TODO add a new Client
     def set_fs_conf(self, key: str, value: str) -> None:
         """Set any valid configuration at runtime without the need
         to restart the feature store. All configuration parameters
@@ -648,11 +612,7 @@ class FeatureStore(EntityList[FSNode]):
             try:
                 for address in addresses:
                     client.config_set(key, value, address)
-
-            except RedisReplyError:
-                raise SmartSimError(
-                    f"Invalid CONFIG key-value pair ({key}: {value})"
-                ) from None
+                    
             except TypeError:
                 raise TypeError(
                     "Incompatible function arguments. The key and value used for "
@@ -883,13 +843,7 @@ class FeatureStore(EntityList[FSNode]):
     ) -> t.List[str]:
         cmd = [
             "-m",
-            "smartsim._core.entrypoints.redis",  # entrypoint
-            f"+orc-exe={self._redis_exe}",  # redis-server
-            f"+conf-file={self._redis_conf}",  # redis.conf file
-            "+rai-module",  # load redisai.so
-            *self._rai_module,
             f"+name={name}",  # name of node
-            f"+port={port}",  # redis port
             f"+ifname={','.join(self._interfaces)}",  # pass interface to start script
         ]
         if cluster:

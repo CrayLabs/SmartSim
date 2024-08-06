@@ -28,10 +28,10 @@ import typing as t
 
 import numpy as np
 import torch
-from smartredis import Client, Dataset
 
 from smartsim.ml.data import DataDownloader
 
+# TODO add a Client and a Dataset
 
 class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDataset):
     def __init__(self, **kwargs: t.Any) -> None:

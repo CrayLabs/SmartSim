@@ -103,12 +103,12 @@ class SmartCli:
         for item in menu_items:
             self._register_menu_item(item)
 
-
+# TODO: Add new path for dbcli
 def default_cli() -> SmartCli:
     menu = [
         MenuItemConfig(
             "build",
-            "Build SmartSim dependencies (Redis, RedisAI, Dragon, ML runtimes)",
+            "Build SmartSim dependencies (Dragon, ML runtimes)",
             build_execute,
             build_parser,
         ),
@@ -120,7 +120,7 @@ def default_cli() -> SmartCli:
         ),
         MenuItemConfig(
             "dbcli",
-            "Print the path to the redis-cli binary",
+            "Print the path to the -cli binary",
             dbcli_execute,
         ),
         MenuItemConfig(

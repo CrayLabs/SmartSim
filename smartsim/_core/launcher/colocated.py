@@ -80,7 +80,6 @@ def write_colocated_launch_script(
 def _build_colocated_wrapper_cmd(
     fs_log: str,
     cpus: int = 1,
-    rai_args: t.Optional[t.Dict[str, str]] = None,
     extra_fs_args: t.Optional[t.Dict[str, str]] = None,
     port: int = 6780,
     ifname: t.Optional[t.Union[str, t.List[str]]] = None,
@@ -91,8 +90,7 @@ def _build_colocated_wrapper_cmd(
 
     :param fs_log: log file for the fs
     :param cpus: fs cpus
-    :param rai_args: redisai args
-    :param extra_fs_args: extra redis args
+    :param extra_fs_args: extra fs args
     :param port: port to bind fs to
     :param ifname: network interface(s) to bind fs to
     :param fs_cpu_list: The list of CPUs that the feature store should be limited to
@@ -131,16 +129,11 @@ def _build_colocated_wrapper_cmd(
     fs_cmd = []
     if custom_pinning:
         fs_cmd.extend(["taskset", "-c", custom_pinning])
+    # TODO add a new backend
     fs_cmd.extend(
-        [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
+        [CONFIG.database_exe, CONFIG.database_conf]
     )
 
-    # add extra redisAI configurations
-    for arg, value in (rai_args or {}).items():
-        if value:
-            # RAI wants arguments for inference in all caps
-            # ex. THREADS_PER_QUEUE=1
-            fs_cmd.append(f"{arg.upper()} {str(value)}")
 
     fs_cmd.extend(["--port", str(port)])
 
@@ -169,7 +162,7 @@ def _build_colocated_wrapper_cmd(
         for fs_arg, value in extra_fs_args.items():
             # replace "_" with "-" in the fs_arg because we use kwargs
             # for the extra configurations and Python doesn't allow a hyphen
-            # in a variable name. All redis and KeyDB configuration options
+            # in a variable name. All KeyDB configuration options
             # use hyphens in their names.
             fs_arg = fs_arg.replace("_", "-")
             fs_cmd.extend([f"--{fs_arg}", value])

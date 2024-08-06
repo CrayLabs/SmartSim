@@ -37,7 +37,7 @@ from typing import Iterable
 
 from packaging.version import InvalidVersion, Version, parse
 
-DbEngine = t.Literal["REDIS", "KEYDB"]
+DbEngine = t.Literal["KEYDB"]
 
 
 class SetupError(Exception):
@@ -155,73 +155,7 @@ class Version_(str):
 def get_env(var: str, default: str) -> str:
     return os.environ.get(var, default)
 
-
-class RedisAIVersion(Version_):
-    """A subclass of Version_ that holds the dependency sets for RedisAI
-
-    this class serves two purposes:
-
-    1. It is used to populate the [ml] ``extras_require`` of the setup.py.
-    This is because the RedisAI version will determine which ML based
-    dependencies are required.
-
-    2. Used to set the default values for PyTorch, TF, and ONNX
-    given the SMARTSIM_REDISAI env var set by the user.
-
-    NOTE: Torch requires additional information depending on whether
-    CPU or GPU support is requested
-    """
-
-    defaults = {
-        "1.2.7": {
-            "tensorflow": "2.13.1",
-            "onnx": "1.14.1",
-            "skl2onnx": "1.16.0",
-            "onnxmltools": "1.12.0",
-            "scikit-learn": "1.3.2",
-            "torch": "2.0.1",
-            "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu117",
-            "torchvision": "0.15.2",
-        },
-    }
-
-    def __init__(self, vers: str) -> None:  # pylint: disable=super-init-not-called
-        min_rai_version = min(Version_(ver) for ver in self.defaults)
-        if min_rai_version > vers:
-            raise SetupError(
-                f"RedisAI version must be greater than or equal to {min_rai_version}"
-            )
-        if vers not in self.defaults:
-            if vers.startswith("1.2"):
-                # resolve to latest version for 1.2.x
-                # the str representation will still be 1.2.x
-                self.version = "1.2.7"
-            else:
-                raise SetupError(
-                    (
-                        f"Invalid RedisAI version {vers}. Options are "
-                        f"{self.defaults.keys()}"
-                    )
-                )
-        else:
-            self.version = vers
-
-    def __getattr__(self, name: str) -> str:
-        try:
-            return self.defaults[self.version][name]
-        except KeyError:
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{name}'\n\n"
-                "This is likely a problem with the SmartSim build process;"
-                "if this problem persists please log a new issue at "
-                "https://github.com/CrayLabs/SmartSim/issues "
-                "or get in contact with us at "
-                "https://www.craylabs.org/docs/community.html"
-            ) from None
-
-    def get_defaults(self) -> t.Dict[str, str]:
-        return self.defaults[self.version].copy()
+# TODO Add A Version class for the new backend
 
 
 class Versioner:
@@ -242,8 +176,8 @@ class Versioner:
     ``smart build`` command to determine which dependency versions
     to look for and download.
 
-    Default versions for SmartSim, Redis, and RedisAI are
-    all set here. Setting a default version for RedisAI also dictates
+    Default versions for SmartSim are
+    all set here. Setting a default version for { } also dictates
     default versions of the machine learning libraries.
     """
 
@@ -254,49 +188,35 @@ class Versioner:
     SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.7.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
-    # Redis
-    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
-    REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/")
-    REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
-
-    # RedisAI
-    REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.7"))
-    REDISAI_URL = get_env(
-        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
-    )
-    REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
-
-    # ML/DL (based on RedisAI version defaults)
+    # ML/DL
     # torch can be set by the user because we download that for them
-    TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
-    TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
-    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
+    TORCH = Version_(get_env("SMARTSIM_TORCH", None.torch))
+    TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", None.torchvision))
+    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", None.torch_cpu_suffix))
     TORCH_CUDA_SUFFIX = Version_(
-        get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix)
+        get_env("TORCH_CUDA_SUFFIX", None.torch_cuda_suffix)
     )
 
-    # TensorFlow and ONNX only use the defaults, but these are not built into
-    # the RedisAI package and therefore the user is free to pick other versions.
-    TENSORFLOW = Version_(REDISAI.tensorflow)
-    ONNX = Version_(REDISAI.onnx)
+    # TensorFlow and ONNX only use the defaults
 
-    def as_dict(self, fs_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
+    TENSORFLOW = Version_(None.tensorflow)
+    ONNX = Version_(None.onnx)
+
+    # TODO add a new DbEngine
+    def as_dict(self, fs_name: DbEngine = "None") -> t.Dict[str, t.Tuple[str, ...]]:
         pkg_map = {
             "SMARTSIM": self.SMARTSIM,
-            fs_name: self.REDIS,
-            "REDISAI": self.REDISAI,
             "TORCH": self.TORCH,
             "TENSORFLOW": self.TENSORFLOW,
             "ONNX": self.ONNX,
         }
         return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
 
+    # TODO add a backend for ml libraries 
     def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
         """Optional ML/DL dependencies we suggest for the user.
-
-        The defaults are based on the RedisAI version
         """
-        ml_defaults = self.REDISAI.get_defaults()
+        ml_defaults = self.None.get_defaults()
 
         # remove torch-related fields as they are subject to change
         # by having the user change hardware (cpu/gpu)
@@ -352,12 +272,7 @@ class BuildEnv:
     """Environment for building third-party dependencies
 
     BuildEnv provides a method for configuring how the third-party
-    dependencies within SmartSim are built, namely Redis/KeyDB
-    and RedisAI.
-
-    The environment variables listed here can be set to control the
-    Redis build in the pip wheel build as well as the Redis and RedisAI
-    build executed by the CLI.
+    dependencies within SmartSim are built, namely KeyDB.
 
     Build tools are also checked for here and if they are not found
     then a SetupError is raised.

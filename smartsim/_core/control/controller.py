@@ -38,8 +38,6 @@ import threading
 import time
 import typing as t
 
-from smartredis import Client, ConfigOptions
-
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
@@ -48,12 +46,7 @@ from ..._core.utils.helpers import (
     unpack_colo_fs_identifier,
     unpack_fs_identifier,
 )
-from ..._core.utils.redis import (
-    fs_is_active,
-    set_ml_model,
-    set_script,
-    shutdown_fs_node,
-)
+
 from ...database import FeatureStore
 from ...entity import Application, Ensemble, EntitySequence, SmartSimEntity
 from ...error import (

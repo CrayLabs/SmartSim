@@ -35,12 +35,10 @@ import typing as t
 from types import TracebackType
 
 import numpy as np
-from smartredis import Client
 
 from smartsim import Experiment
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install.builder import Device
-from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim._core.utils.network import find_free_port
 from smartsim.log import get_logger
 
@@ -52,6 +50,7 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 # pylint: disable=import-error,import-outside-toplevel
 # mypy: disable-error-code="import"
 
+# TODO add a new Client
 
 if t.TYPE_CHECKING:
     from multiprocessing.connection import Connection
@@ -85,16 +84,17 @@ def execute(
     """Validate the SmartSim installation works as expected given a
     simple experiment
     """
-    backends = installed_redisai_backends()
+    backends = None
     temp_dir = ""
     device = Device(args.device)
     try:
         with contextlib.ExitStack() as ctx:
             temp_dir = ctx.enter_context(_VerificationTempDir(dir=os.getcwd()))
+            # TODO add a new log file to SR_LOG_FILE
             validate_env = {
                 "SR_LOG_LEVEL": os.environ.get("SR_LOG_LEVEL", "INFO"),
                 "SR_LOG_FILE": os.environ.get(
-                    "SR_LOG_FILE", os.path.join(temp_dir, "smartredis.log")
+                    "SR_LOG_FILE", os.path.join(temp_dir, "None.log")
                 ),
             }
             if device == Device.GPU:

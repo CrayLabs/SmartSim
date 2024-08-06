@@ -29,8 +29,6 @@ import typing as t
 from os import environ
 
 import numpy as np
-from smartredis import Client, Dataset
-from smartredis.error import RedisReplyError
 
 from ..error import SSInternalError
 from ..log import get_logger
@@ -75,6 +73,7 @@ class DataInfo:
         self.num_classes = num_classes
         self._ds_name = form_name(self.list_name, "info")
 
+    # TODO add a new Client and Dataset
     def publish(self, client: Client) -> None:
         """Upload DataInfo information to FeatureStore
 
@@ -91,6 +90,7 @@ class DataInfo:
             info_ds.add_meta_scalar("num_classes", self.num_classes)
         client.put_dataset(info_ds)
 
+    # TODO add a new Client
     def download(self, client: Client) -> None:
         """Download DataInfo information from FeatureStore
 
@@ -100,17 +100,9 @@ class DataInfo:
 
         :param client: Client to connect to Feature Store
         """
-        try:
-            info_ds = client.get_dataset(self._ds_name)
-        except RedisReplyError as e:
-            # If the info was not published, proceed with default parameters
-            logger.warning(
-                "Could not retrieve data for DataInfo object, the following "
-                "values will be kept."
-            )
-            logger.error(f"Original error from Redis was {e}")
-            logger.warning(str(self))
-            return
+
+        info_ds = client.get_dataset(self._ds_name)
+  
         self.sample_name = info_ds.get_meta_strings("sample_name")[0]
         field_names = info_ds.get_metadata_field_names()
         if "target_name" in field_names:
@@ -147,7 +139,7 @@ class TrainingDataUploader:
     :param target_name: Name of targets tensor (if needed) in uploaded Datasets
     :param num_classes: Number of classes of targets, if categorical
     :param cluster: Whether the SmartSim FeatureStore is being run as a cluster
-    :param address: Address of Redis DB as <ip_address>:<port>
+    :param address: 
     :param rank: Rank of DataUploader in multi-process application (e.g. MPI rank).
     :param verbose: If output should be logged to screen.
 
@@ -262,7 +254,7 @@ class DataDownloader:
         from DB, assuming it was stored with ``list_name=data_info_or_list_name``
     :param list_name: Name of aggregation list used to upload data
     :param cluster: Whether the FeatureStore will be run as a cluster
-    :param address: Address of Redis client as <ip_address>:<port>
+    :param address:
     :param replica_rank: When StaticDataDownloader is used distributedly,
         indicates the rank of this object
     :param num_replicas: When BatchDownlaoder is used distributedly, indicates
