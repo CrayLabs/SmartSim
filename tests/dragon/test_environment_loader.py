@@ -55,7 +55,7 @@ def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.Monke
     """A descriptor can be stored, loaded, and reattached"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv("SS_QUEUE", du.B64.bytes_to_str(queue.serialize()))
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -76,7 +76,7 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
     queue are the same"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv("SS_QUEUE", du.B64.bytes_to_str(queue.serialize()))
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -89,7 +89,7 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
 
 def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
     """An incorrect serialized descriptor will fails to attach"""
-    monkeypatch.setenv("SSQueue", "randomstring")
+    monkeypatch.setenv("SS_QUEUE", "randomstring")
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=None,

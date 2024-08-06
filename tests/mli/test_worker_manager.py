@@ -165,7 +165,7 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
 
     # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
-    os.environ["SSQueue"] = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+    os.environ["SS_QUEUE"] = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,

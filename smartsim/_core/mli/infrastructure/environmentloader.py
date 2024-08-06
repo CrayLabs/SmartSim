@@ -90,8 +90,8 @@ class EnvironmentConfigLoader:
         """Attach to a queue-like communication channel using the descriptor
         found in an environment variable.
 
-        :returns: The attached queue specified via SSQueue"""
-        descriptor = os.getenv("SSQueue", "")
+        :returns: The attached queue specified via SS_QUEUE"""
+        descriptor = os.getenv("SS_QUEUE", "")
 
         if not descriptor:
             logger.warning("No queue descriptor is configured")
