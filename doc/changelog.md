@@ -15,6 +15,7 @@ To be released at some future point in time
 
 Description
 
+- Remove build of Redis from setup.py
 - Mitigate dependency installation issues
 - Fix internal host name representation for Dragon backend
 - Make dependencies more discoverable in setup.py
@@ -28,6 +29,11 @@ Description
 
 Detailed Notes
 
+- The builder module was included in setup.py to allow us to ship the
+  main Redis binaries (not RedisAI) with installs from PyPI. To
+  allow easier maintenance of this file and enable future complexity
+  this has been removed. The Redis binaries will thus be built
+  by users during the `smart build` step
 - Installation of mypy or dragon in separate build actions caused
   some dependencies (typing_extensions, numpy) to be upgraded and
   caused runtime failures. The build actions were tweaked to include
