@@ -51,21 +51,16 @@ class Generator:
     files into the Job directory.
     """
 
-    def __init__(self, exp_path: str, run_id: str) -> None:
+    def __init__(self, root: str | os.PathLike[str]) -> None:
         """Initialize a generator object
 
-        The Generator class is responsible for creating Job directories.
+        TODO The Generator class is responsible for creating Job directories.
         It ensures that paths adhere to SmartSim path standards. Additionally,
         it creates a run directory to handle symlinking,
         configuration, and file copying to the job directory.
-
-        :param gen_path: Path in which files need to be generated
-        :param run_ID: The id of the Experiment
         """
-        self.exp_path = pathlib.Path(exp_path)
-        """The path under which the experiment operate"""
-        self.run_id = run_id
-        """The runID for Experiment.start"""
+        self.root = root
+        """The root path under which to generate files"""
 
     def log_file(self, log_path: pathlib.Path) -> str:
         """Returns the location of the file
@@ -77,14 +72,12 @@ class Generator:
         """
         return join(log_path, "smartsim_params.txt")
 
-    def generate_job(self, job: Job, job_index: int) -> pathlib.Path:
-        """Generate the Job directory
 
-        Generate the file structure for a SmartSim Job. This
-        includes writing and configuring input files for the entity.
+    def generate_job(self, job: Job, job_path: str, log_path: str):
+        """Write and configure input files for a Job.
 
         To have files or directories present in the created Job
-        directories, such as datasets or input files, call
+        directory, such as datasets or input files, call
         ``entity.attach_generator_files`` prior to generation.
 
         Tagged application files are read, checked for input variables to
@@ -92,52 +85,20 @@ class Generator:
         specified with a tag within the input file itself.
         The default tag is surronding an input value with semicolons.
         e.g. ``THERMO=;90;``
-
+        
+        :param job: The job instance to write and configure files for.
+        :param job_path: The path to the \"run\" directory for the job instance.
+        :param log_path: The path to the \"log\" directory for the job instance.
         """
-        # Generate ../job_name/run directory
-        job_path = self._generate_job_path(job, job_index)
-        # Generate ../job_name/log directory
-        log_path = self._generate_log_path(job, job_index)
 
         # Create and write to the parameter settings file
         with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        # Perform file system ops
+        # Perform file system operations on attached files
         self._build_operations(job, job_path)
 
-        # Return Job path
-        return job_path
-
-    def _generate_job_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """
-        Generate the run directory for a Job.
-
-        :param job: The Job to generate a directory
-        :returns pathlib.Path:: The generated run path for the Job
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        job_path = (
-            self.exp_path / self.run_id / job_type / f"{job.name}-{job_index}" / "run"
-        )
-        # Create Job directory
-        job_path.mkdir(exist_ok=True, parents=True)
-        return job_path
-
-    def _generate_log_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """
-        Generate the log directory for a Job.
-
-        :param job: The Job to generate a directory
-        :returns pathlib.Path:: The generated log path for the Job
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        log_path = (
-            self.exp_path / self.run_id / job_type / f"{job.name}-{job_index}" / "log"
-        )
-        log_path.mkdir(exist_ok=True, parents=True)
-        return log_path
 
     def _build_operations(self, job: Job, job_path: pathlib.Path) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
@@ -151,7 +112,7 @@ class Generator:
         app = t.cast(Application, job.entity)
         self._copy_files(app.files, job_path)
         self._symlink_files(app.files, job_path)
-        self._write_tagged_files(app, job_path)
+        self._write_tagged_files(app.files, app.params, job_path)
 
     @staticmethod
     def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
@@ -217,7 +178,7 @@ class Generator:
             )
 
     @staticmethod
-    def _write_tagged_files(app: Application, dest: pathlib.Path) -> None:
+    def _write_tagged_files(files: t.Union[EntityFiles, None], params: t.Mapping[str, str], dest: pathlib.Path) -> None:
         """Read, configure and write the tagged input files for
            a Job instance. This function specifically deals with the tagged
            files attached to an entity.
@@ -226,9 +187,9 @@ class Generator:
         :param dest: Path to the Jobs run directory
         """
         # Return if no files are attached
-        if app.files is None:
+        if files is None:
             return
-        if app.files.tagged:
+        if files.tagged:
             to_write = []
 
             def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
@@ -247,11 +208,11 @@ class Generator:
                     mkdir(path.join(dest, tagged.base, path.basename(tagged_dir.base)))
                     _build_tagged_files(tagged_dir)
 
-            if app.files.tagged_hierarchy:
-                _build_tagged_files(app.files.tagged_hierarchy)
+            if files.tagged_hierarchy:
+                _build_tagged_files(files.tagged_hierarchy)
 
             # Pickle the dictionary
-            pickled_dict = pickle.dumps(app.params)
+            pickled_dict = pickle.dumps(params)
             # Default tag delimiter
             tag = ";"
             # Encode the pickled dictionary with Base64

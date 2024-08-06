@@ -44,25 +44,34 @@ class MockJob(BaseJob):
         raise NotImplementedError
 
 
+def test_invalid_job_name(wlmutils):
+    job_1 = Job(app_1, wlmutils.get_test_launcher())
+    job_2 = Job(app_2,wlmutils.get_test_launcher())
+    with pytest.raises(ValueError):
+        _ = JobGroup([job_1, job_2], name="")
+    with pytest.raises(ValueError):
+        _ = JobGroup([job_1, job_2], name="name/not/allowed")
+
+
 def test_create_JobGroup():
     job_1 = MockJob()
     job_group = JobGroup([job_1])
     assert len(job_group) == 1
 
 
-def test_getitem_JobGroup():
-    job_1 = Job(app_1, LaunchSettings("slurm"))
-    job_2 = Job(app_2, LaunchSettings("slurm"))
+def test_getitem_JobGroup(wlmutils):
+    job_1 = Job(app_1, wlmutils.get_test_launcher())
+    job_2 = Job(app_2, wlmutils.get_test_launcher())
     job_group = JobGroup([job_1, job_2])
     get_value = job_group[0].entity.name
     assert get_value == job_1.entity.name
 
 
-def test_setitem_JobGroup():
-    job_1 = Job(app_1, LaunchSettings("slurm"))
-    job_2 = Job(app_2, LaunchSettings("slurm"))
+def test_setitem_JobGroup(wlmutils):
+    job_1 = Job(app_1, wlmutils.get_test_launcher())
+    job_2 = Job(app_2, wlmutils.get_test_launcher())
     job_group = JobGroup([job_1, job_2])
-    job_3 = Job(app_3, LaunchSettings("slurm"))
+    job_3 = Job(app_3, wlmutils.get_test_launcher())
     job_group[1] = job_3
     assert len(job_group) == 2
     get_value = job_group[1]

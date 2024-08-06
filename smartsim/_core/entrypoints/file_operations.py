@@ -128,11 +128,15 @@ def copy(parsed_args: argparse.Namespace) -> None:
         FileExistsError will be raised
     """
     if os.path.isdir(parsed_args.source):
+        print("here")
+        print(parsed_args.source)
+        print(parsed_args.dest)
         shutil.copytree(
             parsed_args.source,
             parsed_args.dest,
             dirs_exist_ok=parsed_args.dirs_exist_ok,
         )
+        print(os.listdir(parsed_args.dest))
     else:
         shutil.copy(parsed_args.source, parsed_args.dest)
 

@@ -46,9 +46,7 @@ _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
 
 _WorkingDirectory: TypeAlias = t.Union[str, os.PathLike[str]]
-"""A type alias for a Jobs working directory. Paths may be strings or
-PathLike objects.
-"""
+"""A working directory represented as a string or PathLike object"""
 
 _DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArguments")
 """Any type of luanch arguments, typically used when the type bound by the type
@@ -453,7 +451,6 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    # TODO inject path here
     def start(
         self, command: tuple[str | os.PathLike[str], t.Sequence[str]]
     ) -> LaunchedJobID:

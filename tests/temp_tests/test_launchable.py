@@ -49,6 +49,18 @@ def test_launchable_init():
     launchable = Launchable()
     assert isinstance(launchable, Launchable)
 
+def test_invalid_job_name(wlmutils):
+    entity = Application(
+        "test_name",
+        run_settings=LaunchSettings(wlmutils.get_test_launcher()),
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    settings = LaunchSettings(wlmutils.get_test_launcher())
+    with pytest.raises(ValueError):
+        _ = Job(entity, settings, name="")
+    with pytest.raises(ValueError):
+        _ = Job(entity, settings, name="path/to/name")
 
 def test_job_init():
     entity = Application(

@@ -50,6 +50,19 @@ if t.TYPE_CHECKING:
 _T = t.TypeVar("_T")
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
+def check_name(name: str) -> None:
+    """
+    Checks if the input name is valid.
+
+    :param name: The name to be checked.
+
+    :raises ValueError: If the name contains the path separator (os.path.sep).
+    :raises ValueError: If the name is an empty string.
+    """
+    if os.path.sep in name:
+        raise ValueError("Invalid input: String contains the path separator.")
+    if name == "":
+        raise ValueError("Invalid input: Name cannot be an empty string.")
 
 def unpack_fs_identifier(fs_id: str, token: str) -> t.Tuple[str, str]:
     """Unpack the unformatted feature store identifier

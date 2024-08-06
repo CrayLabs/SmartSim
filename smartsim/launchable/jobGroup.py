@@ -6,6 +6,8 @@ from copy import deepcopy
 from .basejob import BaseJob
 from .baseJobGroup import BaseJobGroup
 
+from .._core.utils.helpers import check_name
+
 if t.TYPE_CHECKING:
     from typing_extensions import Self
 
@@ -23,12 +25,19 @@ class JobGroup(BaseJobGroup):
     ) -> None:
         super().__init__()
         self._jobs = deepcopy(jobs)
+        check_name(name)
         self._name = name
 
     @property
     def name(self) -> str:
         """Retrieves the name of the JobGroup."""
         return self._name
+    
+    @name.setter
+    def name(self, name: str) -> None:
+        """Sets the name of the JobGroup."""
+        check_name(name)
+        self._entity = name
 
     @property
     def jobs(self) -> t.List[BaseJob]:
