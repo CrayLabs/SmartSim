@@ -80,7 +80,8 @@ if __name__ == "__main__":
     worker_type_name = base64.b64decode(args.worker_class.encode("ascii"))
     torch_worker = cloudpickle.loads(worker_type_name)()
 
-    os.environ["SS_QUEUE"] = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+    descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+    os.environ["SS_REQUEST_QUEUE"] = descriptor
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
