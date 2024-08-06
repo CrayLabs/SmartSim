@@ -121,7 +121,7 @@ class WorkerManager(Service):
         """Dictionary of previously loaded models"""
         self._feature_stores: t.Dict[str, FeatureStore] = {}
         """A collection of attached feature stores"""
-        self._fs_factory = config_loader._featurestore_factory
+        self._featurestore_factory = config_loader._featurestore_factory
         """A factory method to create a desired feature store client type"""
         self._backbone: t.Optional[FeatureStore] = config_loader.get_backbone()
         """A standalone, system-created feature store used to share internal
@@ -145,7 +145,7 @@ class WorkerManager(Service):
         fs_actual = {item.descriptor for item in self._feature_stores.values()}
         fs_missing = fs_desired - fs_actual
 
-        if self._fs_factory is None:
+        if self._featurestore_factory is None:
             logger.warning("No feature store factory configured")
             return False
 
@@ -153,7 +153,7 @@ class WorkerManager(Service):
         if fs_missing:
             logger.debug(f"Adding feature store(s): {fs_missing}")
             for descriptor in fs_missing:
-                feature_store = self._fs_factory(descriptor)
+                feature_store = self._featurestore_factory(descriptor)
                 self._feature_stores[descriptor] = feature_store
 
         return True
@@ -261,11 +261,6 @@ class WorkerManager(Service):
                     "Could not find model key or model.",
                 )
                 return
-
-            # if request.model_key.descriptor not in self._feature_stores:
-            #     self._fs_factory(request.model_key.descriptor)
-            # todo: decide if we should load here or in _check_feature_stores.
-            # todo: should i raise error here?
 
             if request.model_key.key in self._cached_models:
                 timings.append(time.perf_counter() - interm)  # timing
