@@ -128,8 +128,8 @@ def test_generate_copy_directory(wlmutils, get_gen_copy_dir, generator_instance)
     log_path = generator_instance.root / "log"
     log_path.mkdir(parents=True)
     generator_instance.generate_job(job, run_path, log_path)
-    expected_file = run_path / "to_copy_dir"
-    assert osp.isdir(expected_file)
+    expected_folder = run_path / "to_copy_dir"
+    assert osp.isdir(expected_folder)
 
 
 def test_generate_symlink_directory(wlmutils, generator_instance, get_gen_symlink_dir):

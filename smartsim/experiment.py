@@ -182,8 +182,9 @@ class Experiment:
             particular execution of the job.
         """
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
+        """Create the run id"""
         root = pathlib.Path(self.exp_path, run_id)
-        """Create the run id for Experiment.start"""
+        """Generate the root path"""
         return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
@@ -248,16 +249,13 @@ class Experiment:
     ) -> os.PathLike[str]:
         """Generate the directory and file structure for a ``Job``
 
-        ``Experiment._generate`` calls the appropriate Generator
-        function to create a directory for the passed job.
-
         If files or directories are attached to an ``application`` object
         associated with the Job using ``application.attach_generator_files()``,
         those files or directories will be symlinked, copied, or configured and
         written into the created job directory
 
         An instance of ``Generator`` and ``Job`` can be passed as an argument to
-        the protected _generate member.
+        the protected _generate member, as well as the Jobs index.
 
         :param generator: The generator is responsible for creating the job run and log directory.
         :param job: The job instance for which the output is generated.

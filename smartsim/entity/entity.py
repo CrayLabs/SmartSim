@@ -106,7 +106,6 @@ class SmartSimEntity:
         share these attributes.
 
         :param name: Name of the entity
-        :param path: path to output, error, and configuration files
         """
         self.name = name
         self.run_settings = run_settings

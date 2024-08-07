@@ -52,12 +52,12 @@ class Generator:
     """
 
     def __init__(self, root: os.PathLike[str]) -> None:
-        """Initialize a generator object
+        """Initialize a Generator object
 
-        TODO The Generator class is responsible for creating Job directories.
-        It ensures that paths adhere to SmartSim path standards. Additionally,
-        it creates a run directory to handle symlinking,
-        configuration, and file copying to the job directory.
+        The class handles symlinking, copying, and configuration of files
+        associated with a Jobs entity. Additionally, it writes entity parameters
+        used for the specific run into the "smartsim_params.txt" settings file within
+        the Jobs log folder.
         """
         self.root = root
         """The root path under which to generate files"""
@@ -102,7 +102,7 @@ class Generator:
 
     def _build_operations(self, job: Job, job_path: os.PathLike[str]) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
-        It processes three types of file system ops: to_copy, to_symlink, and to_configure.
+        It processes three types of file system operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods that open a subprocess
         to complete each task.
 
@@ -126,8 +126,11 @@ class Generator:
             return
         for src in files.copy:
             if os.path.isdir(src):
+                # Remove basename of source
                 base_source_name = os.path.basename(src)
+                # Attach source basename to destination
                 new_dst_path = os.path.join(dest, base_source_name)
+                # Copy source contents to new destination path
                 subprocess.run(
                     args=[
                         sys.executable,
