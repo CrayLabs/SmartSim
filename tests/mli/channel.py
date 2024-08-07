@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pathlib
+import threading
 import typing as t
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
@@ -37,7 +38,10 @@ class FileSystemCommChannel(CommChannelBase):
     """Passes messages by writing to a file"""
 
     def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
-        """Initialize the FileSystemCommChannel instance"""
+        """Initialize the FileSystemCommChannel instance
+
+        :param key: a path to the root directory of the feature store"""
+        self._lock = threading.RLock()
         if not isinstance(key, bytes):
             super().__init__(key.as_posix().encode("utf-8"))
             self._file_path = key
@@ -52,8 +56,36 @@ class FileSystemCommChannel(CommChannelBase):
 
     def send(self, value: bytes) -> None:
         """Send a message throuh the underlying communication channel
+
         :param value: The value to send"""
         logger.debug(
             f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
         )
-        self._file_path.write_bytes(value)
+        with self._lock:
+            self._file_path.write_bytes(value)
+
+    def recv(self) -> bytes:
+        """Receieve a message through the underlying communication channel
+
+        :returns: the received message"""
+        with self._lock:
+            if self._file_path.exists():
+                incoming = self._file_path.read_bytes()
+                self._file_path.unlink()
+            return incoming
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: str,
+    ) -> "FileSystemCommChannel":
+        """A factory method that creates an instance from a descriptor string
+
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached FileSystemCommChannel"""
+        try:
+            path = pathlib.Path(descriptor)
+            return FileSystemCommChannel(path)
+        except:
+            print(f"failed to create fs comm channel: {descriptor}")
+            raise

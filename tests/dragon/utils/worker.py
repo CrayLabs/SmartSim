@@ -47,7 +47,7 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
 
     @staticmethod
     def load_model(
-        request: mliw.InferenceRequest, fetch_result: mliw.FetchModelResult
+        request: mliw.InferenceRequest, fetch_result: mliw.FetchModelResult, device: str
     ) -> mliw.LoadModelResult:
         model_bytes = fetch_result.model_bytes or request.raw_model
         if not model_bytes:
@@ -61,6 +61,7 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
     def transform_input(
         request: mliw.InferenceRequest,
         fetch_result: mliw.FetchInputResult,
+        device: str,
     ) -> mliw.TransformInputResult:
         # extra metadata for assembly can be found in request.input_meta
         raw_inputs = request.raw_inputs or fetch_result.inputs
@@ -93,36 +94,11 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
     def transform_output(
         request: mliw.InferenceRequest,
         execute_result: mliw.ExecuteResult,
+        result_device: str,
     ) -> mliw.TransformOutputResult:
-        # transformed = [item.clone() for item in execute_result.predictions]
-        # return OutputTransformResult(transformed)
-
-        # transformed = [item.bytes() for item in execute_result.predictions]
-
-        # OutputTransformResult.transformed SHOULD be a list of
-        # capnproto Tensors Or tensor descriptors accompanying bytes
-
         # send the original tensors...
         execute_result.predictions = [t.detach() for t in execute_result.predictions]
         # todo: solve sending all tensor metadata that coincisdes with each prediction
         return mliw.TransformOutputResult(
             execute_result.predictions, [1], "c", "float32"
         )
-        # return OutputTransformResult(transformed)
-
-    # @staticmethod
-    # def serialize_reply(
-    #     request: InferenceRequest, results: OutputTransformResult
-    # ) -> t.Any:
-    #     # results = IntegratedTorchWorker._prepare_outputs(results.outputs)
-    #     # return results
-    #     return None
-    #     # response = MessageHandler.build_response(
-    #     #     status=200,  # todo: are we satisfied with 0/1 (success, fail)
-    #     #     # todo: if not detailed messages, this shouldn't be returned.
-    #     #     message="success",
-    #     #     result=results,
-    #     #     custom_attributes=None,
-    #     # )
-    #     # serialized_resp = MessageHandler.serialize_response(response)
-    #     # return serialized_resp

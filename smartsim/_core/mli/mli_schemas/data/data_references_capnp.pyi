@@ -36,6 +36,7 @@ from typing import Iterator
 
 class ModelKey:
     key: str
+    featureStoreDescriptor: str
     @staticmethod
     @contextmanager
     def from_bytes(
@@ -71,6 +72,7 @@ class ModelKeyBuilder(ModelKey):
 
 class TensorKey:
     key: str
+    featureStoreDescriptor: str
     @staticmethod
     @contextmanager
     def from_bytes(

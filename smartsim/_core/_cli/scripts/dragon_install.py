@@ -1,7 +1,9 @@
 import os
 import pathlib
+import shutil
 import sys
 import typing as t
+from urllib.request import urlretrieve
 
 from github import Github
 from github.GitReleaseAsset import GitReleaseAsset
@@ -160,13 +162,26 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
 
     # if we've previously downloaded the release and still have
     # wheels laying around, use that cached version instead
-    if download_dir.exists() and list(download_dir.rglob("*.whl")):
+    if download_dir.exists() or list(download_dir.rglob("*.whl")):
         return download_dir
 
-    archive = WebTGZ(asset.browser_download_url)
+    download_dir.mkdir(parents=True, exist_ok=True)
+
+    # grab a copy of the complete asset
+    asset_path = download_dir / str(asset.name)
+    download_url = asset.browser_download_url
+
+    try:
+        urlretrieve(download_url, str(asset_path))
+        logger.debug(f"Retrieved asset {asset.name} from {download_url}")
+    except Exception:
+        logger.exception(f"Unable to download asset from: {download_url}")
+
+    # extract the asset
+    archive = WebTGZ(download_url)
     archive.extract(download_dir)
 
-    logger.debug(f"Retrieved {asset.browser_download_url} to {download_dir}")
+    logger.debug(f"Extracted {download_url} to {download_dir}")
     return download_dir
 
 

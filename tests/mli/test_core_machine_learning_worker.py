@@ -31,6 +31,7 @@ import pytest
 import torch
 
 import smartsim.error as sse
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.worker import (
     InferenceRequest,
     MachineLearningWorkerCore,
@@ -84,17 +85,18 @@ def persist_torch_tensor(test_dir: str) -> pathlib.Path:
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
-def test_fetch_model_disk(persist_torch_model: pathlib.Path) -> None:
+def test_fetch_model_disk(persist_torch_model: pathlib.Path, test_dir: str) -> None:
     """Verify that the ML worker successfully retrieves a model
     when given a valid (file system) key"""
     worker = MachineLearningWorkerCore
     key = str(persist_torch_model)
-    feature_store = FileSystemFeatureStore()
+    feature_store = FileSystemFeatureStore(test_dir)
+    fsd = feature_store.descriptor
     feature_store[str(persist_torch_model)] = persist_torch_model.read_bytes()
 
-    request = InferenceRequest(model_key=key)
+    request = InferenceRequest(model_key=FeatureStoreKey(key=key, descriptor=fsd))
 
-    fetch_result = worker.fetch_model(request, feature_store)
+    fetch_result = worker.fetch_model(request, {fsd: feature_store})
     assert fetch_result.model_bytes
     assert fetch_result.model_bytes == persist_torch_model.read_bytes()
 
@@ -104,13 +106,14 @@ def test_fetch_model_disk_missing() -> None:
     when given an invalid (file system) key"""
     worker = MachineLearningWorkerCore
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
 
     key = "/path/that/doesnt/exist"
 
-    request = InferenceRequest(model_key=key)
+    request = InferenceRequest(model_key=FeatureStoreKey(key=key, descriptor=fsd))
 
     with pytest.raises(sse.SmartSimError) as ex:
-        worker.fetch_model(request, feature_store)
+        worker.fetch_model(request, {fsd: feature_store})
 
     # ensure the error message includes key-identifying information
     assert key in ex.value.args[0]
@@ -127,10 +130,13 @@ def test_fetch_model_feature_store(persist_torch_model: pathlib.Path) -> None:
 
     # put model bytes into the feature store
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
     feature_store[key] = persist_torch_model.read_bytes()
 
-    request = InferenceRequest(model_key=key)
-    fetch_result = worker.fetch_model(request, feature_store)
+    request = InferenceRequest(
+        model_key=FeatureStoreKey(key=key, descriptor=feature_store.descriptor)
+    )
+    fetch_result = worker.fetch_model(request, {fsd: feature_store})
     assert fetch_result.model_bytes
     assert fetch_result.model_bytes == persist_torch_model.read_bytes()
 
@@ -140,17 +146,20 @@ def test_fetch_model_feature_store_missing() -> None:
     when given an invalid (feature store) key"""
     worker = MachineLearningWorkerCore
 
-    bad_key = "some-key"
+    key = "some-key"
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
 
-    request = InferenceRequest(model_key=bad_key)
+    request = InferenceRequest(
+        model_key=FeatureStoreKey(key=key, descriptor=feature_store.descriptor)
+    )
 
     # todo: consider that raising this exception shows impl. replace...
     with pytest.raises(sse.SmartSimError) as ex:
-        worker.fetch_model(request, feature_store)
+        worker.fetch_model(request, {fsd: feature_store})
 
     # ensure the error message includes key-identifying information
-    assert bad_key in ex.value.args[0]
+    assert key in ex.value.args[0]
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
@@ -161,11 +170,14 @@ def test_fetch_model_memory(persist_torch_model: pathlib.Path) -> None:
 
     key = "test-model"
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
     feature_store[key] = persist_torch_model.read_bytes()
 
-    request = InferenceRequest(model_key=key)
+    request = InferenceRequest(
+        model_key=FeatureStoreKey(key=key, descriptor=feature_store.descriptor)
+    )
 
-    fetch_result = worker.fetch_model(request, feature_store)
+    fetch_result = worker.fetch_model(request, {fsd: feature_store})
     assert fetch_result.model_bytes
     assert fetch_result.model_bytes == persist_torch_model.read_bytes()
 
@@ -176,13 +188,16 @@ def test_fetch_input_disk(persist_torch_tensor: pathlib.Path) -> None:
     when given a valid (file system) key"""
     tensor_name = str(persist_torch_tensor)
 
-    request = InferenceRequest(input_keys=[tensor_name])
+    feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
+    request = InferenceRequest(
+        input_keys=[FeatureStoreKey(key=tensor_name, descriptor=fsd)]
+    )
     worker = MachineLearningWorkerCore
 
-    feature_store = MemoryFeatureStore()
     feature_store[tensor_name] = persist_torch_tensor.read_bytes()
 
-    fetch_result = worker.fetch_inputs(request, feature_store)
+    fetch_result = worker.fetch_inputs(request, {fsd: feature_store})
     assert fetch_result.inputs is not None
 
 
@@ -191,16 +206,17 @@ def test_fetch_input_disk_missing() -> None:
     when given an invalid (file system) key"""
     worker = MachineLearningWorkerCore
 
-    key = "/path/that/doesnt/exist"
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
+    key = "/path/that/doesnt/exist"
 
-    request = InferenceRequest(input_keys=[key])
+    request = InferenceRequest(input_keys=[FeatureStoreKey(key=key, descriptor=fsd)])
 
     with pytest.raises(sse.SmartSimError) as ex:
-        worker.fetch_inputs(request, feature_store)
+        worker.fetch_inputs(request, {fsd: feature_store})
 
     # ensure the error message includes key-identifying information
-    assert key in ex.value.args[0]
+    assert key[0] in ex.value.args[0]
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
@@ -211,13 +227,16 @@ def test_fetch_input_feature_store(persist_torch_tensor: pathlib.Path) -> None:
 
     tensor_name = "test-tensor"
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
 
-    request = InferenceRequest(input_keys=[tensor_name])
+    request = InferenceRequest(
+        input_keys=[FeatureStoreKey(key=tensor_name, descriptor=fsd)]
+    )
 
     # put model bytes into the feature store
     feature_store[tensor_name] = persist_torch_tensor.read_bytes()
 
-    fetch_result = worker.fetch_inputs(request, feature_store)
+    fetch_result = worker.fetch_inputs(request, {fsd: feature_store})
     assert fetch_result.inputs
     assert list(fetch_result.inputs)[0][:10] == persist_torch_tensor.read_bytes()[:10]
 
@@ -230,6 +249,7 @@ def test_fetch_multi_input_feature_store(persist_torch_tensor: pathlib.Path) -> 
 
     tensor_name = "test-tensor"
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
 
     # put model bytes into the feature store
     body1 = persist_torch_tensor.read_bytes()
@@ -242,10 +262,14 @@ def test_fetch_multi_input_feature_store(persist_torch_tensor: pathlib.Path) -> 
     feature_store[tensor_name + "3"] = body3
 
     request = InferenceRequest(
-        input_keys=[tensor_name + "1", tensor_name + "2", tensor_name + "3"]
+        input_keys=[
+            FeatureStoreKey(key=tensor_name + "1", descriptor=fsd),
+            FeatureStoreKey(key=tensor_name + "2", descriptor=fsd),
+            FeatureStoreKey(key=tensor_name + "3", descriptor=fsd),
+        ]
     )
 
-    fetch_result = worker.fetch_inputs(request, feature_store)
+    fetch_result = worker.fetch_inputs(request, {fsd: feature_store})
 
     raw_bytes = list(fetch_result.inputs)
     assert raw_bytes
@@ -259,15 +283,16 @@ def test_fetch_input_feature_store_missing() -> None:
     when given an invalid (feature store) key"""
     worker = MachineLearningWorkerCore
 
-    bad_key = "some-key"
+    key = "bad-key"
     feature_store = MemoryFeatureStore()
-    request = InferenceRequest(input_keys=[bad_key])
+    fsd = feature_store.descriptor
+    request = InferenceRequest(input_keys=[FeatureStoreKey(key=key, descriptor=fsd)])
 
     with pytest.raises(sse.SmartSimError) as ex:
-        worker.fetch_inputs(request, feature_store)
+        worker.fetch_inputs(request, {fsd: feature_store})
 
     # ensure the error message includes key-identifying information
-    assert bad_key in ex.value.args[0]
+    assert key in ex.value.args[0]
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
@@ -276,12 +301,13 @@ def test_fetch_input_memory(persist_torch_tensor: pathlib.Path) -> None:
     when given a valid (file system) key"""
     worker = MachineLearningWorkerCore
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
 
-    model_name = "test-model"
-    feature_store[model_name] = persist_torch_tensor.read_bytes()
-    request = InferenceRequest(input_keys=[model_name])
+    key = "test-model"
+    feature_store[key] = persist_torch_tensor.read_bytes()
+    request = InferenceRequest(input_keys=[FeatureStoreKey(key=key, descriptor=fsd)])
 
-    fetch_result = worker.fetch_inputs(request, feature_store)
+    fetch_result = worker.fetch_inputs(request, {fsd: feature_store})
     assert fetch_result.inputs is not None
 
 
@@ -304,18 +330,23 @@ def test_place_outputs() -> None:
 
     key_name = "test-model"
     feature_store = MemoryFeatureStore()
+    fsd = feature_store.descriptor
 
     # create a key to retrieve from the feature store
-    keys = [key_name + "1", key_name + "2", key_name + "3"]
+    keys = [
+        FeatureStoreKey(key=key_name + "1", descriptor=fsd),
+        FeatureStoreKey(key=key_name + "2", descriptor=fsd),
+        FeatureStoreKey(key=key_name + "3", descriptor=fsd),
+    ]
     data = [b"abcdef", b"ghijkl", b"mnopqr"]
 
-    for k, v in zip(keys, data):
-        feature_store[k] = v
+    for fsk, v in zip(keys, data):
+        feature_store[fsk.key] = v
 
     request = InferenceRequest(output_keys=keys)
     transform_result = TransformOutputResult(data, [1], "c", "float32")
 
-    worker.place_output(request, transform_result, feature_store)
+    worker.place_output(request, transform_result, {fsd: feature_store})
 
     for i in range(3):
-        assert feature_store[keys[i]] == data[i]
+        assert feature_store[keys[i].key] == data[i]

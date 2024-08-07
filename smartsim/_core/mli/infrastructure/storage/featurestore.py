@@ -27,6 +27,21 @@
 import typing as t
 from abc import ABC, abstractmethod
 
+from pydantic import BaseModel, Field
+
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
+
+
+class FeatureStoreKey(BaseModel):
+    """A key,descriptor pair enabling retrieval of an item from a feature store"""
+
+    key: str = Field(min_length=1)
+    """The unique key of an item in a feature store"""
+    descriptor: str = Field(min_length=1)
+    """The unique identifier of the feature store containing the key"""
+
 
 class FeatureStore(ABC):
     """Abstract base class providing the common interface for retrieving
@@ -35,16 +50,26 @@ class FeatureStore(ABC):
     @abstractmethod
     def __getitem__(self, key: str) -> t.Union[str, bytes]:
         """Retrieve an item using key
+
         :param key: Unique key of an item to retrieve from the feature store"""
 
     @abstractmethod
     def __setitem__(self, key: str, value: t.Union[str, bytes]) -> None:
         """Assign a value using key
+
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
 
     @abstractmethod
     def __contains__(self, key: str) -> bool:
         """Membership operator to test for a key existing within the feature store.
-        Return `True` if the key is found, `False` otherwise
-        :param key: Unique key of an item to retrieve from the feature store"""
+
+        :param key: Unique key of an item to retrieve from the feature store
+        :returns: `True` if the key is found, `False` otherwise"""
+
+    @property
+    @abstractmethod
+    def descriptor(self) -> str:
+        """Unique identifier enabling a client to connect to the feature store
+
+        :returns: A descriptor encoded as a string"""

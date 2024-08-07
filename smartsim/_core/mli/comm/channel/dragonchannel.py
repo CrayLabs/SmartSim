@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import sys
 import typing as t
 
@@ -55,7 +56,23 @@ class DragonCommChannel(cch.CommChannelBase):
 
     def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
+
         :returns: the received message"""
         with self._channel.recvh(timeout=None) as recvh:
             message_bytes: bytes = recvh.recv_bytes(timeout=None)
             return [message_bytes]
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: str,
+    ) -> "DragonCommChannel":
+        """A factory method that creates an instance from a descriptor string
+
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached DragonCommChannel"""
+        try:
+            return DragonCommChannel(base64.b64decode(descriptor))
+        except:
+            logger.error(f"Failed to create dragon comm channel: {descriptor}")
+            raise

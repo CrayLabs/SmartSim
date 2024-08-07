@@ -35,44 +35,32 @@ import pytest
 torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
+import base64
+import os
+
+import dragon.channels as dch
+from dragon import fli
+
+from smartsim._core.mli.comm.channel.channel import CommChannelBase
+from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.control.workermanager import (
     EnvironmentConfigLoader,
     WorkerManager,
 )
+from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+    DragonFeatureStore,
+)
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .channel import FileSystemCommChannel
 from .featurestore import FileSystemFeatureStore
-from .worker import IntegratedTorchWorker
+from .utils.channel import FileSystemCommChannel
 
 logger = get_logger(__name__)
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
-
-
-def mock_work(worker_manager_queue: "mp.Queue[bytes]") -> None:
-    """Mock event producer for triggering the inference pipeline"""
-    # todo: move to unit tests
-    while True:
-        time.sleep(1)
-        # 1. for demo, ignore upstream and just put stuff into downstream
-        # 2. for demo, only one downstream but we'd normally have to filter
-        #       msg content and send to the correct downstream (worker) queue
-        timestamp = time.time_ns()
-        output_dir = "/lus/bnchlu1/mcbridch/code/ss/_tmp"
-        output_path = pathlib.Path(output_dir)
-
-        mock_channel = output_path / f"brainstorm-{timestamp}.txt"
-        mock_model = output_path / "brainstorm.pt"
-
-        output_path.mkdir(parents=True, exist_ok=True)
-        mock_channel.touch()
-        mock_model.touch()
-
-        msg = f"PyTorch:{mock_model}:MockInputToReplace:{mock_channel}"
-        worker_manager_queue.put(msg.encode("utf-8"))
 
 
 def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
@@ -94,7 +82,7 @@ def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
 
 
 def mock_messages(
-    worker_manager_queue: "mp.Queue[bytes]",
+    worker_manager_queue: CommChannelBase,
     feature_store: FeatureStore,
     feature_store_root_dir: pathlib.Path,
     comm_channel_root_dir: pathlib.Path,
@@ -139,10 +127,11 @@ def mock_messages(
         tensor = torch.randn((1, 2), dtype=torch.float32)
         torch.save(tensor, buffer)
         feature_store[input_key] = buffer.getvalue()
+        fsd = feature_store.descriptor
 
-        message_tensor_output_key = MessageHandler.build_tensor_key(output_key)
-        message_tensor_input_key = MessageHandler.build_tensor_key(input_key)
-        message_model_key = MessageHandler.build_model_key(model_key)
+        message_tensor_output_key = MessageHandler.build_tensor_key(output_key, fsd)
+        message_tensor_input_key = MessageHandler.build_tensor_key(input_key, fsd)
+        message_model_key = MessageHandler.build_model_key(model_key, fsd)
 
         request = MessageHandler.build_request(
             reply_channel=callback_channel.descriptor,
@@ -153,7 +142,7 @@ def mock_messages(
             custom_attributes=None,
         )
         request_bytes = MessageHandler.serialize_request(request)
-        worker_manager_queue.put(request_bytes)
+        worker_manager_queue.send(request_bytes)
 
 
 @pytest.fixture
@@ -171,30 +160,49 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     fs_path = test_path / "feature_store"
     comm_path = test_path / "comm_store"
 
-    config_loader = EnvironmentConfigLoader()
-    integrated_worker = IntegratedTorchWorker()
+    to_worker_channel = dch.Channel.make_process_local()
+    to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
+    to_worker_fli_serialized = to_worker_fli.serialize()
+
+    # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
+    # or test environment may be unable to send messages w/queue
+    descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+    os.environ["SS_REQUEST_QUEUE"] = descriptor
+
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=FileSystemCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
+    )
+    integrated_worker = TorchWorker()
 
     worker_manager = WorkerManager(
         config_loader,
         integrated_worker,
         as_service=True,
-        cooldown=10,
-        comm_channel_type=FileSystemCommChannel,
+        cooldown=5,
+        device="cpu",
     )
+
+    worker_queue = config_loader.get_queue()
+    if worker_queue is None:
+        logger.warn(
+            f"FLI input queue not loaded correctly from config_loader: {config_loader._queue_descriptor}"
+        )
 
     # create a mock client application to populate the request queue
     msg_pump = mp.Process(
         target=mock_messages,
         args=(
-            config_loader.get_queue(),
-            config_loader.get_feature_store(),
+            worker_queue,
+            FileSystemFeatureStore(fs_path),
             fs_path,
             comm_path,
         ),
     )
     msg_pump.start()
 
-    # # create a process to process commands
+    # create a process to execute commands
     process = mp.Process(target=worker_manager.execute)
     process.start()
     process.join(timeout=5)
