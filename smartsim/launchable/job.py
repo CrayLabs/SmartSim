@@ -26,14 +26,14 @@
 
 from __future__ import annotations
 
-import typing as t
 import os
+import typing as t
 from copy import deepcopy
 
 from smartsim._core.commands.launchCommands import LaunchCommands
+from smartsim._core.utils.helpers import check_name
 from smartsim.launchable.basejob import BaseJob
 from smartsim.settings import LaunchSettings
-from smartsim._core.utils.helpers import check_name
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
@@ -52,13 +52,13 @@ class Job(BaseJob):
         self,
         entity: SmartSimEntity,
         launch_settings: LaunchSettings,
-        name: str | None = "job",
+        name: str | None = None,
     ):
         super().__init__()
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
-        check_name(name)
         self._name = name if name else entity.name
+        check_name(self._name)
 
     @property
     def name(self) -> str:
@@ -66,10 +66,10 @@ class Job(BaseJob):
         return self._name
 
     @name.setter
-    def name(self, name: str) -> None:
+    def name(self, name: str | None) -> None:
         """Sets the name of the Job."""
-        check_name(name)
-        self._entity = name
+        self._name = name if name else self._entity.name
+        check_name(self._name)
 
     @property
     def entity(self) -> SmartSimEntity:

@@ -184,9 +184,7 @@ class Experiment:
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
         root = pathlib.Path(self.exp_path, run_id)
         """Create the run id for Experiment.start"""
-        return self._dispatch(
-            Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs
-        )
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
         self,
@@ -245,7 +243,9 @@ class Experiment:
         )
 
     @_contextualize
-    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
+    def _generate(
+        self, generator: Generator, job: Job, job_index: int
+    ) -> os.PathLike[str]:
         """Generate the directory and file structure for a ``Job``
 
         ``Experiment._generate`` calls the appropriate Generator
@@ -276,7 +276,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    def _generate_job_root(self, job: Job, job_index: int, root: str) -> pathlib.Path:
+    def _generate_job_root(
+        self, job: Job, job_index: int, root: os.PathLike[str]
+    ) -> pathlib.Path:
         """Generates the root directory for a specific job instance.
 
         :param job: The Job instance for which the root directory is generated.
@@ -284,11 +286,13 @@ class Experiment:
         :returns: The path to the root directory for the Job instance.
         """
         job_type = f"{job.__class__.__name__.lower()}s"
-        job_path = root / f"{job_type}/{job.name}-{job_index}"
+        job_path = pathlib.Path(root) / f"{job_type}/{job.name}-{job_index}"
         job_path.mkdir(exist_ok=True, parents=True)
-        return job_path
+        return pathlib.Path(job_path)
 
-    def _generate_job_path(self, job: Job, job_index: int, root: str) -> pathlib.Path:
+    def _generate_job_path(
+        self, job: Job, job_index: int, root: os.PathLike[str]
+    ) -> os.PathLike[str]:
         """Generates the path for the \"run\" directory within the root directory
         of a specific job instance.
 
@@ -298,9 +302,11 @@ class Experiment:
         """
         path = self._generate_job_root(job, job_index, root) / "run"
         path.mkdir(exist_ok=False, parents=True)
-        return path
+        return pathlib.Path(path)
 
-    def _generate_log_path(self, job: Job, job_index: int, root: str) -> pathlib.Path:
+    def _generate_log_path(
+        self, job: Job, job_index: int, root: os.PathLike[str]
+    ) -> os.PathLike[str]:
         """
         Generates the path for the \"log\" directory within the root directory of a specific job instance.
 
@@ -310,7 +316,7 @@ class Experiment:
         """
         path = self._generate_job_root(job, job_index, root) / "log"
         path.mkdir(exist_ok=False, parents=True)
-        return path
+        return pathlib.Path(path)
 
     def preview(
         self,

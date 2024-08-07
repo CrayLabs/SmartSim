@@ -51,7 +51,7 @@ class Generator:
     files into the Job directory.
     """
 
-    def __init__(self, root: str | os.PathLike[str]) -> None:
+    def __init__(self, root: os.PathLike[str]) -> None:
         """Initialize a generator object
 
         TODO The Generator class is responsible for creating Job directories.
@@ -62,7 +62,7 @@ class Generator:
         self.root = root
         """The root path under which to generate files"""
 
-    def log_file(self, log_path: pathlib.Path) -> str:
+    def log_file(self, log_path: os.PathLike[str]) -> os.PathLike[str]:
         """Returns the location of the file
         summarizing the parameters used for the generation
         of the entity.
@@ -70,10 +70,11 @@ class Generator:
         :param log_path: Path to log directory
         :returns: Path to file with parameter settings
         """
-        return join(log_path, "smartsim_params.txt")
+        return pathlib.Path(log_path) / "smartsim_params.txt"
 
-
-    def generate_job(self, job: Job, job_path: str, log_path: str):
+    def generate_job(
+        self, job: Job, job_path: os.PathLike[str], log_path: os.PathLike[str]
+    ) -> None:
         """Write and configure input files for a Job.
 
         To have files or directories present in the created Job
@@ -85,7 +86,7 @@ class Generator:
         specified with a tag within the input file itself.
         The default tag is surronding an input value with semicolons.
         e.g. ``THERMO=;90;``
-        
+
         :param job: The job instance to write and configure files for.
         :param job_path: The path to the \"run\" directory for the job instance.
         :param log_path: The path to the \"log\" directory for the job instance.
@@ -99,8 +100,7 @@ class Generator:
         # Perform file system operations on attached files
         self._build_operations(job, job_path)
 
-
-    def _build_operations(self, job: Job, job_path: pathlib.Path) -> None:
+    def _build_operations(self, job: Job, job_path: os.PathLike[str]) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
         It processes three types of file system ops: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods that open a subprocess
@@ -115,7 +115,7 @@ class Generator:
         self._write_tagged_files(app.files, app.params, job_path)
 
     @staticmethod
-    def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
+    def _copy_files(files: t.Union[EntityFiles, None], dest: os.PathLike[str]) -> None:
         """Perform copy file sys operations on a list of files.
 
         :param app: The Application attached to the Job
@@ -126,6 +126,8 @@ class Generator:
             return
         for src in files.copy:
             if os.path.isdir(src):
+                base_source_name = os.path.basename(src)
+                new_dst_path = os.path.join(dest, base_source_name)
                 subprocess.run(
                     args=[
                         sys.executable,
@@ -133,7 +135,7 @@ class Generator:
                         "smartsim._core.entrypoints.file_operations",
                         "copy",
                         src,
-                        dest,
+                        new_dst_path,
                         "--dirs_exist_ok",
                     ]
                 )
@@ -150,7 +152,9 @@ class Generator:
                 )
 
     @staticmethod
-    def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
+    def _symlink_files(
+        files: t.Union[EntityFiles, None], dest: os.PathLike[str]
+    ) -> None:
         """Perform symlink file sys operations on a list of files.
 
         :param app: The Application attached to the Job
@@ -178,7 +182,11 @@ class Generator:
             )
 
     @staticmethod
-    def _write_tagged_files(files: t.Union[EntityFiles, None], params: t.Mapping[str, str], dest: pathlib.Path) -> None:
+    def _write_tagged_files(
+        files: t.Union[EntityFiles, None],
+        params: t.Mapping[str, str],
+        dest: os.PathLike[str],
+    ) -> None:
         """Read, configure and write the tagged input files for
            a Job instance. This function specifically deals with the tagged
            files attached to an entity.

@@ -1,10 +1,10 @@
 import filecmp
+import itertools
 import os
 import pathlib
 from glob import glob
 from os import listdir
 from os import path as osp
-import itertools
 
 import pytest
 
@@ -46,29 +46,25 @@ def test_log_file_path(generator_instance):
     """Test if the log_file function returns the correct log path."""
     base_path = "/tmp"
     expected_path = osp.join(base_path, "smartsim_params.txt")
-    assert generator_instance.log_file(base_path) == expected_path
+    assert generator_instance.log_file(base_path) == pathlib.Path(expected_path)
 
 
-def test_generate_job_directory(test_dir, wlmutils, generator_instance):
+def test_generate_job_directory(wlmutils, generator_instance):
     """Test Generator.generate_job"""
     # Create Job
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("app_name", exe="python", run_settings="RunSettings") # Mock RunSettings
+    app = Application(
+        "app_name", exe="python", run_settings="RunSettings"
+    )  # Mock RunSettings
     job = Job(app, launch_settings)
     # Mock id
     run_id = "mock_run"
     # Create run directory
-    run_path = (
-        generator_instance.root
-        / "run"
-    )
+    run_path = generator_instance.root / "run"
     run_path.mkdir(parents=True)
     assert osp.isdir(run_path)
     # Create log directory
-    log_path = (
-        generator_instance.root
-        / "log"
-    )
+    log_path = generator_instance.root / "log"
     log_path.mkdir(parents=True)
     assert osp.isdir(log_path)
     # Call Generator.generate_job
@@ -76,7 +72,7 @@ def test_generate_job_directory(test_dir, wlmutils, generator_instance):
     # Assert smartsim params file created
     assert osp.isfile(osp.join(log_path, "smartsim_params.txt"))
     # Assert smartsim params correctly written to
-    with open(log_path / "smartsim_params.txt", 'r') as file:
+    with open(log_path / "smartsim_params.txt", "r") as file:
         content = file.read()
         assert "Generation start date and time:" in content
 
@@ -86,7 +82,7 @@ def test_exp_private_generate_method(wlmutils, test_dir, generator_instance):
     # Create Experiment
     exp = Experiment(name="experiment_name", exp_path=test_dir)
     # Create Job
-    app = Application("name", "python", run_settings="RunSettings") # Mock RunSettings
+    app = Application("name", "python", run_settings="RunSettings")  # Mock RunSettings
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     job = Job(app, launch_settings)
     # Generate Job directory
@@ -104,7 +100,7 @@ def test_generate_copy_file(fileutils, wlmutils, generator_instance):
     """Test that attached copy files are copied into Job directory"""
     # Create the Job and attach copy generator file
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python", run_settings="RunSettings") # Mock RunSettings
+    app = Application("name", "python", run_settings="RunSettings")  # Mock RunSettings
     script = fileutils.get_test_conf_path("sleep.py")
     app.attach_generator_files(to_copy=script)
     job = Job(app, launch_settings)
@@ -122,9 +118,8 @@ def test_generate_copy_file(fileutils, wlmutils, generator_instance):
 def test_generate_copy_directory(wlmutils, get_gen_copy_dir, generator_instance):
     # Create the Job and attach generator file
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python", run_settings="RunSettings") # Mock RunSettings
+    app = Application("name", "python", run_settings="RunSettings")  # Mock RunSettings
     app.attach_generator_files(to_copy=get_gen_copy_dir)
-    print(f"what is this: {get_gen_copy_dir}")
     job = Job(app, launch_settings)
 
     # Call Generator.generate_job
@@ -133,14 +128,14 @@ def test_generate_copy_directory(wlmutils, get_gen_copy_dir, generator_instance)
     log_path = generator_instance.root / "log"
     log_path.mkdir(parents=True)
     generator_instance.generate_job(job, run_path, log_path)
-    expected_file = run_path / "mock.txt"
-    assert osp.isfile(expected_file)
+    expected_file = run_path / "to_copy_dir"
+    assert osp.isdir(expected_file)
 
 
 def test_generate_symlink_directory(wlmutils, generator_instance, get_gen_symlink_dir):
     # Create the Job and attach generator file
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python", run_settings="RunSettings") # Mock RunSettings
+    app = Application("name", "python", run_settings="RunSettings")  # Mock RunSettings
     # Attach directory to Application
     app.attach_generator_files(to_symlink=get_gen_symlink_dir)
     # Create Job
@@ -157,7 +152,9 @@ def test_generate_symlink_directory(wlmutils, generator_instance, get_gen_symlin
     assert expected_folder.is_symlink()
     assert os.fspath(expected_folder.resolve()) == osp.realpath(get_gen_symlink_dir)
     # Combine symlinked file list and original file list for comparison
-    for written, correct in itertools.zip_longest(listdir(get_gen_symlink_dir), listdir(expected_folder)):
+    for written, correct in itertools.zip_longest(
+        listdir(get_gen_symlink_dir), listdir(expected_folder)
+    ):
         # For each pair, check if the filenames are equal
         assert written == correct
 
@@ -184,7 +181,9 @@ def test_generate_symlink_file(get_gen_symlink_dir, wlmutils, generator_instance
     expected_file = pathlib.Path(run_path) / "mock2.txt"
     assert osp.isfile(expected_file)
     assert expected_file.is_symlink()
-    assert os.fspath(expected_file.resolve()) == osp.join(osp.realpath(get_gen_symlink_dir), "mock2.txt")
+    assert os.fspath(expected_file.resolve()) == osp.join(
+        osp.realpath(get_gen_symlink_dir), "mock2.txt"
+    )
 
 
 def test_generate_configure(fileutils, wlmutils, generator_instance):
@@ -256,10 +255,9 @@ def test_generate_ensemble_directory(wlmutils, generator_instance):
         # Assert smartsim params file created
         assert osp.isfile(osp.join(log_path, "smartsim_params.txt"))
         # Assert smartsim params correctly written to
-        with open(log_path / "smartsim_params.txt", 'r') as file:
+        with open(log_path / "smartsim_params.txt", "r") as file:
             content = file.read()
             assert "Generation start date and time:" in content
-        
 
 
 def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
@@ -298,8 +296,8 @@ def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_di
     jobs_dir = os.path.join(test_dir, run_dir[0], "jobs")
     job_dir = listdir(jobs_dir)
     for ensemble_dir in job_dir:
-        sym_file_path = os.path.join(jobs_dir, ensemble_dir, "run", "mock.txt")
-        assert osp.isfile(sym_file_path)
+        copy_folder_path = os.path.join(jobs_dir, ensemble_dir, "run", "to_copy_dir")
+        assert osp.isdir(copy_folder_path)
 
 
 def test_generate_ensemble_symlink(

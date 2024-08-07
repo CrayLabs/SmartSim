@@ -46,9 +46,7 @@ class MockJob(BaseJob):
 
 def test_invalid_job_name(wlmutils):
     job_1 = Job(app_1, wlmutils.get_test_launcher())
-    job_2 = Job(app_2,wlmutils.get_test_launcher())
-    with pytest.raises(ValueError):
-        _ = JobGroup([job_1, job_2], name="")
+    job_2 = Job(app_2, wlmutils.get_test_launcher())
     with pytest.raises(ValueError):
         _ = JobGroup([job_1, job_2], name="name/not/allowed")
 
@@ -57,6 +55,14 @@ def test_create_JobGroup():
     job_1 = MockJob()
     job_group = JobGroup([job_1])
     assert len(job_group) == 1
+
+
+def test_name_setter(wlmutils):
+    job_1 = Job(app_1, wlmutils.get_test_launcher())
+    job_2 = Job(app_2, wlmutils.get_test_launcher())
+    job_group = JobGroup([job_1, job_2])
+    job_group.name = "new_name"
+    assert job_group.name == "new_name"
 
 
 def test_getitem_JobGroup(wlmutils):
