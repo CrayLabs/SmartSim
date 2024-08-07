@@ -349,7 +349,7 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
 #       circular import caused by `DragonLauncher.supported_rs`
 # -----------------------------------------------------------------------------
 from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
-from smartsim.settings.dispatch import ExecutableProtocol, dispatch
+from smartsim._core.dispatch import ExecutableProtocol, dispatch
 
 
 def _as_run_request_args_and_policy(

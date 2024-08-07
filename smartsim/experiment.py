@@ -38,7 +38,7 @@ from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
 from smartsim.error import errors
-from smartsim.settings import dispatch
+from smartsim._core import dispatch
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
@@ -55,7 +55,7 @@ from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.dispatch import ExecutableProtocol, LauncherProtocol
+    from smartsim._core.dispatch import ExecutableProtocol, LauncherProtocol
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)

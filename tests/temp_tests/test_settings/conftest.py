@@ -26,7 +26,7 @@
 
 import pytest
 
-from smartsim.settings import dispatch
+from smartsim._core import dispatch
 from smartsim.settings.arguments import launchArguments as launch
 
 

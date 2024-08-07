@@ -32,7 +32,7 @@ import io
 import pytest
 
 from smartsim.error import errors
-from smartsim.settings import dispatch
+from smartsim._core import dispatch
 
 pytestmark = pytest.mark.group_a
 
