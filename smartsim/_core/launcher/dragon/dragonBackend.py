@@ -457,7 +457,6 @@ class DragonBackend:
         if isinstance(request, DragonRunRequest):
             run_request: DragonRunRequest = request
 
-            affinity = dragon_policy.Policy.Affinity.DEFAULT
             cpu_affinity: t.List[int] = []
             gpu_affinity: t.List[int] = []
 
@@ -465,25 +464,20 @@ class DragonBackend:
             if run_request.policy is not None:
                 # Affinities are not mutually exclusive. If specified, both are used
                 if run_request.policy.cpu_affinity:
-                    affinity = dragon_policy.Policy.Affinity.SPECIFIC
                     cpu_affinity = run_request.policy.cpu_affinity
 
                 if run_request.policy.gpu_affinity:
-                    affinity = dragon_policy.Policy.Affinity.SPECIFIC
                     gpu_affinity = run_request.policy.gpu_affinity
             logger.debug(
-                f"Affinity strategy: {affinity}, "
                 f"CPU affinity mask: {cpu_affinity}, "
                 f"GPU affinity mask: {gpu_affinity}"
             )
-            if affinity != dragon_policy.Policy.Affinity.DEFAULT:
-                return dragon_policy.Policy(
-                    placement=dragon_policy.Policy.Placement.HOST_NAME,
-                    host_name=node_name,
-                    affinity=affinity,
-                    cpu_affinity=cpu_affinity,
-                    gpu_affinity=gpu_affinity,
-                )
+            return dragon_policy.Policy(
+                placement=dragon_policy.Policy.Placement.HOST_NAME,
+                host_name=node_name,
+                cpu_affinity=cpu_affinity,
+                gpu_affinity=gpu_affinity,
+            )
 
         return dragon_policy.Policy(
             placement=dragon_policy.Policy.Placement.HOST_NAME,
