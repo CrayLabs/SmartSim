@@ -15,6 +15,7 @@ To be released at some future point in time
 
 Description
 
+- Update codecov to 4.5.0
 - Remove build of Redis from setup.py
 - Mitigate dependency installation issues
 - Fix internal host name representation for Dragon backend
@@ -29,6 +30,8 @@ Description
 
 Detailed Notes
 
+- Update codecov to 4.5.0 to mitigate GitHub action failure
+  ([SmartSim-PR657](https://github.com/CrayLabs/SmartSim/pull/657))
 - The builder module was included in setup.py to allow us to ship the
   main Redis binaries (not RedisAI) with installs from PyPI. To
   allow easier maintenance of this file and enable future complexity
