@@ -181,11 +181,11 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        run_id = datetime.datetime.now().strftime("run-%H:%M:%ST%Y-%m-%d")
-        """Create the run id for Experiment.start"""
-        return self._dispatch(
-            Generator(self.exp_path, run_id), dispatch.DEFAULT_DISPATCHER, *jobs
-        )
+        run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
+        """Create the run id"""
+        root = pathlib.Path(self.exp_path, run_id)
+        """Generate the root path"""
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
         self,
@@ -196,8 +196,8 @@ class Experiment:
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 
-        :param generator: The Generator holds the run_id and experiment
-            path for use when producing job directories.
+        :param generator: The generator is responsible for creating the
+            job run and log directory.
         :param dispatcher: The dispatcher that should be used to determine how
             to start a job based on its launch settings.
         :param job: The first job instance to dispatch
@@ -208,7 +208,6 @@ class Experiment:
         """
 
         def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
-            print(job)
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -245,11 +244,10 @@ class Experiment:
         )
 
     @_contextualize
-    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
+    def _generate(
+        self, generator: Generator, job: Job, job_index: int
+    ) -> os.PathLike[str]:
         """Generate the directory and file structure for a ``Job``
-
-        ``Experiment._generate`` calls the appropriate Generator
-        function to create a directory for the passed job.
 
         If files or directories are attached to an ``application`` object
         associated with the Job using ``application.attach_generator_files()``,
@@ -257,19 +255,66 @@ class Experiment:
         written into the created job directory
 
         An instance of ``Generator`` and ``Job`` can be passed as an argument to
-        the protected _generate member.
+        the protected _generate member, as well as the Jobs index.
 
-        :param generator: Generator that holds the run_id and experiment
-            path for use when producing the job directory.
-        :param job: Job to generate file structure.
-        :returns: The generated Job path.
+        :param generator: The generator is responsible for creating the job run and log directory.
+        :param job: The job instance for which the output is generated.
+        :param job_index: The index of the job instance (used for naming).
+        :returns: The path to the generated output for the job instance.
+        :raises: A SmartSimError if an error occurs during the generation process.
         """
+        # Generate ../job_name/run directory
+        job_path = self._generate_job_path(job, job_index, generator.root)
+        # Generate ../job_name/log directory
+        log_path = self._generate_log_path(job, job_index, generator.root)
         try:
-            job_path = generator.generate_job(job, job_index)
+            generator.generate_job(job, job_path, log_path)
             return job_path
         except SmartSimError as e:
             logger.error(e)
             raise
+
+    def _generate_job_root(
+        self, job: Job, job_index: int, root: os.PathLike[str]
+    ) -> pathlib.Path:
+        """Generates the root directory for a specific job instance.
+
+        :param job: The Job instance for which the root directory is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the root directory for the Job instance.
+        """
+        job_type = f"{job.__class__.__name__.lower()}s"
+        job_path = pathlib.Path(root) / f"{job_type}/{job.name}-{job_index}"
+        job_path.mkdir(exist_ok=True, parents=True)
+        return pathlib.Path(job_path)
+
+    def _generate_job_path(
+        self, job: Job, job_index: int, root: os.PathLike[str]
+    ) -> os.PathLike[str]:
+        """Generates the path for the \"run\" directory within the root directory
+        of a specific job instance.
+
+        :param job (Job): The job instance for which the path is generated.
+        :param job_index (int): The index of the job instance (used for naming).
+        :returns: The path to the \"run\" directory for the job instance.
+        """
+        path = self._generate_job_root(job, job_index, root) / "run"
+        path.mkdir(exist_ok=False, parents=True)
+        return pathlib.Path(path)
+
+    def _generate_log_path(
+        self, job: Job, job_index: int, root: os.PathLike[str]
+    ) -> os.PathLike[str]:
+        """
+        Generates the path for the \"log\" directory within the root directory of a specific job instance.
+
+        :param job: The job instance for which the path is generated.
+        :param job_index: The index of the job instance (used for naming).
+        :returns: The path to the \"log\" directory for the job instance.
+        """
+        path = self._generate_job_root(job, job_index, root) / "log"
+        path.mkdir(exist_ok=False, parents=True)
+        return pathlib.Path(path)
 
     def preview(
         self,

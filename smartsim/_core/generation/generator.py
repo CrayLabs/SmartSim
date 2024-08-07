@@ -51,23 +51,18 @@ class Generator:
     files into the Job directory.
     """
 
-    def __init__(self, exp_path: str, run_id: str) -> None:
-        """Initialize a generator object
+    def __init__(self, root: os.PathLike[str]) -> None:
+        """Initialize a Generator object
 
-        The Generator class is responsible for creating Job directories.
-        It ensures that paths adhere to SmartSim path standards. Additionally,
-        it creates a run directory to handle symlinking,
-        configuration, and file copying to the job directory.
-
-        :param gen_path: Path in which files need to be generated
-        :param run_ID: The id of the Experiment
+        The class handles symlinking, copying, and configuration of files
+        associated with a Jobs entity. Additionally, it writes entity parameters
+        used for the specific run into the "smartsim_params.txt" settings file within
+        the Jobs log folder.
         """
-        self.exp_path = pathlib.Path(exp_path)
-        """The path under which the experiment operate"""
-        self.run_id = run_id
-        """The runID for Experiment.start"""
+        self.root = root
+        """The root path under which to generate files"""
 
-    def log_file(self, log_path: pathlib.Path) -> str:
+    def log_file(self, log_path: os.PathLike[str]) -> os.PathLike[str]:
         """Returns the location of the file
         summarizing the parameters used for the generation
         of the entity.
@@ -75,16 +70,15 @@ class Generator:
         :param log_path: Path to log directory
         :returns: Path to file with parameter settings
         """
-        return join(log_path, "smartsim_params.txt")
+        return pathlib.Path(log_path) / "smartsim_params.txt"
 
-    def generate_job(self, job: Job, job_index: int) -> pathlib.Path:
-        """Generate the Job directory
-
-        Generate the file structure for a SmartSim Job. This
-        includes writing and configuring input files for the entity.
+    def generate_job(
+        self, job: Job, job_path: os.PathLike[str], log_path: os.PathLike[str]
+    ) -> None:
+        """Write and configure input files for a Job.
 
         To have files or directories present in the created Job
-        directories, such as datasets or input files, call
+        directory, such as datasets or input files, call
         ``entity.attach_generator_files`` prior to generation.
 
         Tagged application files are read, checked for input variables to
@@ -93,55 +87,22 @@ class Generator:
         The default tag is surronding an input value with semicolons.
         e.g. ``THERMO=;90;``
 
+        :param job: The job instance to write and configure files for.
+        :param job_path: The path to the \"run\" directory for the job instance.
+        :param log_path: The path to the \"log\" directory for the job instance.
         """
-        # Generate ../job_name/run directory
-        job_path = self._generate_job_path(job, job_index)
-        # Generate ../job_name/log directory
-        log_path = self._generate_log_path(job, job_index)
 
         # Create and write to the parameter settings file
         with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        # Perform file system ops
+        # Perform file system operations on attached files
         self._build_operations(job, job_path)
 
-        # Return Job path
-        return job_path
-
-    def _generate_job_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """
-        Generate the run directory for a Job.
-
-        :param job: The Job to generate a directory
-        :returns pathlib.Path:: The generated run path for the Job
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        job_path = (
-            self.exp_path / self.run_id / job_type / f"{job.name}-{job_index}" / "run"
-        )
-        # Create Job directory
-        job_path.mkdir(exist_ok=True, parents=True)
-        return job_path
-
-    def _generate_log_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """
-        Generate the log directory for a Job.
-
-        :param job: The Job to generate a directory
-        :returns pathlib.Path:: The generated log path for the Job
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        log_path = (
-            self.exp_path / self.run_id / job_type / f"{job.name}-{job_index}" / "log"
-        )
-        log_path.mkdir(exist_ok=True, parents=True)
-        return log_path
-
-    def _build_operations(self, job: Job, job_path: pathlib.Path) -> None:
+    def _build_operations(self, job: Job, job_path: os.PathLike[str]) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
-        It processes three types of file system ops: to_copy, to_symlink, and to_configure.
+        It processes three types of file system operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods that open a subprocess
         to complete each task.
 
@@ -151,10 +112,10 @@ class Generator:
         app = t.cast(Application, job.entity)
         self._copy_files(app.files, job_path)
         self._symlink_files(app.files, job_path)
-        self._write_tagged_files(app, job_path)
+        self._write_tagged_files(app.files, app.params, job_path)
 
     @staticmethod
-    def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
+    def _copy_files(files: t.Union[EntityFiles, None], dest: os.PathLike[str]) -> None:
         """Perform copy file sys operations on a list of files.
 
         :param app: The Application attached to the Job
@@ -166,6 +127,11 @@ class Generator:
         print(f"type is defined as: {type(files)}")
         for src in files.copy:
             if os.path.isdir(src):
+                # Remove basename of source
+                base_source_name = os.path.basename(src)
+                # Attach source basename to destination
+                new_dst_path = os.path.join(dest, base_source_name)
+                # Copy source contents to new destination path
                 subprocess.run(
                     args=[
                         sys.executable,
@@ -173,7 +139,7 @@ class Generator:
                         "smartsim._core.entrypoints.file_operations",
                         "copy",
                         src,
-                        dest,
+                        new_dst_path,
                         "--dirs_exist_ok",
                     ]
                 )
@@ -190,7 +156,9 @@ class Generator:
                 )
 
     @staticmethod
-    def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
+    def _symlink_files(
+        files: t.Union[EntityFiles, None], dest: os.PathLike[str]
+    ) -> None:
         """Perform symlink file sys operations on a list of files.
 
         :param app: The Application attached to the Job
@@ -218,7 +186,11 @@ class Generator:
             )
 
     @staticmethod
-    def _write_tagged_files(app: Application, dest: pathlib.Path) -> None:
+    def _write_tagged_files(
+        files: t.Union[EntityFiles, None],
+        params: t.Mapping[str, str],
+        dest: os.PathLike[str],
+    ) -> None:
         """Read, configure and write the tagged input files for
            a Job instance. This function specifically deals with the tagged
            files attached to an entity.
@@ -227,9 +199,9 @@ class Generator:
         :param dest: Path to the Jobs run directory
         """
         # Return if no files are attached
-        if app.files is None:
+        if files is None:
             return
-        if app.files.tagged:
+        if files.tagged:
             to_write = []
 
             def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
@@ -248,11 +220,11 @@ class Generator:
                     mkdir(path.join(dest, tagged.base, path.basename(tagged_dir.base)))
                     _build_tagged_files(tagged_dir)
 
-            if app.files.tagged_hierarchy:
-                _build_tagged_files(app.files.tagged_hierarchy)
+            if files.tagged_hierarchy:
+                _build_tagged_files(files.tagged_hierarchy)
 
             # Pickle the dictionary
-            pickled_dict = pickle.dumps(app.params)
+            pickled_dict = pickle.dumps(params)
             # Default tag delimiter
             tag = ";"
             # Encode the pickled dictionary with Base64

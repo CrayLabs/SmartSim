@@ -26,10 +26,12 @@
 
 from __future__ import annotations
 
+import os
 import typing as t
 from copy import deepcopy
 
 from smartsim._core.commands.launchCommands import LaunchCommands
+from smartsim._core.utils.helpers import check_name
 from smartsim.launchable.basejob import BaseJob
 from smartsim.settings import LaunchSettings
 
@@ -56,26 +58,37 @@ class Job(BaseJob):
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
         self._name = name if name else entity.name
+        check_name(self._name)
 
     @property
     def name(self) -> str:
         """Retrieves the name of the Job."""
         return self._name
 
+    @name.setter
+    def name(self, name: str | None) -> None:
+        """Sets the name of the Job."""
+        self._name = name if name else self._entity.name
+        check_name(self._name)
+
     @property
     def entity(self) -> SmartSimEntity:
+        """Retrieves the Job entity."""
         return deepcopy(self._entity)
 
     @entity.setter
     def entity(self, value: SmartSimEntity) -> None:
+        """Sets the Job entity."""
         self._entity = deepcopy(value)
 
     @property
     def launch_settings(self) -> LaunchSettings:
+        """Retrieves the Job LaunchSettings."""
         return deepcopy(self._launch_settings)
 
     @launch_settings.setter
     def launch_settings(self, value: LaunchSettings) -> None:
+        """Sets the Job LaunchSettings."""
         self._launch_settings = deepcopy(value)
 
     def get_launch_steps(self) -> LaunchCommands:

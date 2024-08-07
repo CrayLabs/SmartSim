@@ -50,6 +50,18 @@ def test_launchable_init():
     assert isinstance(launchable, Launchable)
 
 
+def test_invalid_job_name(wlmutils):
+    entity = Application(
+        "test_name",
+        run_settings="RunSettings",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )  # Mock RunSettings
+    settings = LaunchSettings(wlmutils.get_test_launcher())
+    with pytest.raises(ValueError):
+        _ = Job(entity, settings, name="path/to/name")
+
+
 def test_job_init():
     entity = Application(
         "test_name",
@@ -63,6 +75,18 @@ def test_job_init():
     assert "echo" in job.entity.exe[0]
     assert "spam" in job.entity.exe_args
     assert "eggs" in job.entity.exe_args
+
+
+def test_name_setter():
+    entity = Application(
+        "test_name",
+        run_settings=LaunchSettings("slurm"),
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    job = Job(entity, LaunchSettings("slurm"))
+    job.name = "new_name"
+    assert job.name == "new_name"
 
 
 def test_job_init_deepcopy():
