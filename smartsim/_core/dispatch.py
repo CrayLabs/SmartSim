@@ -223,7 +223,7 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
         self, for_experiment: Experiment, with_arguments: _DispatchableT
     ) -> _LaunchConfigType:
         """Create a new instance of a launcher for an experiment that the
-        provided settings where set to dispatch to, and configure it with the
+        provided settings were set to dispatch, and configure it with the
         provided launch settings.
 
         :param for_experiment: The experiment responsible creating the launcher
@@ -431,24 +431,6 @@ def make_shell_format_fn(
         )
 
     return impl
-
-
-class ShellLauncher:
-    """Mock launcher for launching/tracking simple shell commands"""
-
-    def __init__(self) -> None:
-        self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
-
-    def start(self, command: t.Sequence[str]) -> LaunchedJobID:
-        id_ = create_job_id()
-        exe, *rest = command
-        # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
-        return id_
-
-    @classmethod
-    def create(cls, _: Experiment) -> Self:
-        return cls()
 
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
