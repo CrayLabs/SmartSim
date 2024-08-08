@@ -45,6 +45,8 @@ from smartsim._core._install.buildenv import (
     Versioner,
 )
 from smartsim._core._install.builder import BuildError, Device
+from smartsim._core._install.platform import Platform, Architecture, Device, OperatingSystem
+from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
@@ -368,14 +370,36 @@ def _configure_keydb_build(versions: Versioner) -> None:
 def execute(
     args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
+
+    # Unpack various arguments
     verbose = args.v
     keydb = args.keydb
     device = Device.from_string(args.device.lower())
     is_dragon_requested = args.dragon
-    # torch and tf build by default
-    pt = not args.no_pt  # pylint: disable=invalid-name
-    tf = not args.no_tf  # pylint: disable=invalid-name
-    onnx = args.onnx
+
+    # The user should never have to specify the OS and Architecture
+    current_platform = Platform(
+        OperatingSystem.autodetect(),
+        Architecture.autodetect(),
+        device
+    )
+
+    # Configure the ML Packages
+    mlpackages = DEFAULT_MLPACKAGES[current_platform].copy()
+    if args.torch_dir:
+        mlpackages["torch"].set_lib_source(args.torch_dir)
+    if args.tensorflow_dir:
+        mlpackages["tensorflow"].set_lib_source(args.tensorflow_dir)
+    if args.onnx_dir:
+        mlpackages["onnxruntime"].set_lib_source(args.onnx_dir)
+
+    # Build all backends by default, pop off the ones that user wants skipped
+    if args.skip_torch:
+        mlpackages.pop("torch")
+    if args.skip_tensorflow:
+        mlpackages.pop("tensorflow")
+    if args.skip_onnxruntime:
+        mlpackages.pop("onnxruntime")
 
     build_env = BuildEnv(checks=True)
     logger.info("Running SmartSim build process...")
@@ -412,27 +436,8 @@ def execute(
         else:
             logger.warning("Dragon installation failed")
 
-    try:
-        if not args.only_python_packages:
-            # REDIS/KeyDB
-            build_database(build_env, versions, keydb, verbose)
-
-            # REDISAI
-            build_redis_ai(
-                build_env,
-                versions,
-                device,
-                pt,
-                tf,
-                onnx,
-                args.torch_dir,
-                args.libtensorflow_dir,
-                verbose=verbose,
-                torch_with_mkl=args.torch_with_mkl,
-            )
-    except (SetupError, BuildError) as e:
-        logger.error(str(e))
-        return os.EX_SOFTWARE
+    # REDIS/KeyDB
+    build_database(build_env, versions, keydb, verbose)
 
     backends = installed_redisai_backends()
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
@@ -476,50 +481,46 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Install the dragon runtime",
     )
     parser.add_argument(
-        "--only_python_packages",
+        "--with-python-packages",
         action="store_true",
-        default=False,
-        help="Only evaluate the python packages (i.e. skip building backends)",
+        help="Install the python packages that match the backends",
     )
     parser.add_argument(
-        "--no_pt",
+        "--skip-torch",
         action="store_true",
-        default=False,
         help="Do not build PyTorch backend",
     )
     parser.add_argument(
-        "--no_tf",
+        "--skip-tensorflow",
         action="store_true",
-        default=False,
         help="Do not build TensorFlow backend",
     )
     parser.add_argument(
-        "--onnx",
+        "--skip-onnx",
         action="store_true",
-        default=False,
         help="Build ONNX backend (off by default)",
     )
     parser.add_argument(
-        "--torch_dir",
+        "--libtorch-dir",
         default=None,
         type=str,
-        help=f"Path to custom <path>/torch/share/cmake/Torch/ directory {warn_usage}",
+        help=f"Path to custom libtorch directory{warn_usage}",
     )
     parser.add_argument(
-        "--libtensorflow_dir",
+        "--libtensorflow-dir",
         default=None,
         type=str,
         help=f"Path to custom libtensorflow directory {warn_usage}",
+    )
+    parser.add_argument(
+        "--onnxruntime-dir",
+        default=None,
+        type=str,
+        help=f"Path to onnxruntime libtensorflow directory {warn_usage}",
     )
     parser.add_argument(
         "--keydb",
         action="store_true",
         default=False,
         help="Build KeyDB instead of Redis",
-    )
-    parser.add_argument(
-        "--no_torch_with_mkl",
-        dest="torch_with_mkl",
-        action="store_false",
-        help="Do not build Torch with Intel MKL",
     )

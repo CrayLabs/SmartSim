@@ -1,4 +1,4 @@
-{
+configs/LinuxX64CPU.json{
     "os":"linux",
     "architecture":"x86_64",
     "device":"rocm-5.7",

@@ -28,18 +28,23 @@ from pydantic import HttpUrl, BaseModel
 from collections import namedtuple
 
 import enum
-import importlib.resources as resources
 import json
 import os
 import pathlib
 import platform
 import typing as t
 
-_PathLike = t.Union[str, pathlib.Path]
-_Platform = t.TypeVar("_Platform", bound="Platform")
-_PlatformDependencies = t.TypeVar("_PlatformDependencies", bound="PlatformDependencies")
+from .types import PathLike
 
-class UnsupportedError(Exception):
+_PlatformType = t.TypeVar("_PlatformType", bound="Platform")
+
+class PlatformError(Exception):
+    pass
+
+class UnsupportedError(PlatformError):
+    pass
+
+class PathNotFoundError(PlatformError)
     pass
 
 class Architecture(enum.Enum):
@@ -133,53 +138,9 @@ class Platform(BaseModel):
     device: Device
 
     @classmethod
-    def from_str(cls, os_str: str, architecture_str: str, device_str: str) -> _Platform:
+    def from_str(cls, os_str: str, architecture_str: str, device_str: str) -> _PlatformType:
         return cls(
             OperatingSystem.from_str(os_str),
             Architecture.from_str(architecture_str),
             Device.from_str(device_str)
         )
-
-class MLPackage(BaseModel):
-    name: str
-    version: str
-    pip_index: str
-    package: t.List[str]
-    lib_source: t.Union[HttpUrl, _PathLike]
-
-    def set_custom_index(self, index: str):
-        self.pip_index = index
-
-    def set_lib_source(self, source: t.Union[HttpUrl, _PathLike]):
-        self.lib_source = source
-
-
-class PlatformDependencies(BaseModel):
-    platform: Platform
-    ml_packages: t.Dict[str, MLPackage]
-
-    @classmethod
-    def from_json_file(cls, json_file: _PathLike) -> _PlatformDependencies:
-        with open(json_file, "r") as f:
-            config_json = json.load(json_file)
-        platform = Platform.from_str(**config_json["platform"])
-        ml_packages = {
-            ml_package["name"]:MLPackage(**ml_package) for ml_package in config_json["ml_packages"]
-        }
-        return cls(platform, ml_packages)
-
-
-def load_platform_configs(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformDependencies]:
-
-    configs = {}
-    print(config_file_path)
-    print(list(config_file_path.glob("*.json")))
-
-    for file in config_file_path.glob("*.json"):
-        print(file)
-        dependencies = PlatformDependencies.from_json_file(file)
-        configs[dependencies.platform] = dependencies
-    return configs
-
-DEFAULT_CONFIG_PATH = pathlib.Path(resources.files("smartsim._core._install.configs").as_file())
-DEFAULT_CONFIGS = load_platform_configs(DEFAULT_CONFIG_PATH)

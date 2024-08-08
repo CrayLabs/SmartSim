@@ -178,6 +178,7 @@ setup(
         "redis>=4.5",
         "tqdm>=4.50.2",
         "filelock>=3.4.2",
+        "GitPython<=3.1.43",
         "protobuf~=3.20",
         "jinja2>=3.1.2",
         "watchdog>=4.0.0",

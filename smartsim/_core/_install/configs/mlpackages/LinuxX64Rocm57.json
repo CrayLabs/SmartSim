@@ -6,6 +6,13 @@
     },
     "ml_packages": [
         {
+            "name": "dlpack",
+            "version": "v0.5_RAI",
+            "pip_index": "",
+            "packages": [],
+            "lib_source": "https://github.com/RedisAI/dlpack.git"
+        },
+        {
             "name": "torch",
             "version": "2.2.2",
             "pip_index": "https://download.pytorch.org/whl/rocm5.7",
