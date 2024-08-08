@@ -80,7 +80,7 @@ class TorchWorker(MachineLearningWorkerBase):
         for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
             tensor_desc: tensor_capnp.TensorDescriptor = item_meta
             result.append(
-                torch.tensor(np.frombuffer(item, dtype=str(tensor_desc.dataType)))
+                torch.from_numpy(np.frombuffer(item, dtype=str(tensor_desc.dataType)))
                 .to(device)
                 .reshape(tuple(dim for dim in tensor_desc.dimensions))
             )
