@@ -330,17 +330,22 @@ class DragonBackend:
         an optional error message"""
         # ensure the policy can be honored
         if request.policy:
+            logger.debug(f"{request.policy=}")
+            logger.debug(f"{self._cpus=}")
+            logger.debug(f"{self._gpus=}")
+
             if request.policy.cpu_affinity:
                 # make sure some node has enough CPUs
-                available = max(self._cpus)
+                last_available = max(self._cpus or [-1])
                 requested = max(request.policy.cpu_affinity)
-                if requested >= available:
+                if not any(self._cpus) or requested >= last_available:
                     return False, "Cannot satisfy request, not enough CPUs available"
             if request.policy.gpu_affinity:
                 # make sure some node has enough GPUs
-                available = max(self._gpus)
+                last_available = max(self._gpus or [-1])
                 requested = max(request.policy.gpu_affinity)
-                if requested >= available:
+                if not any(self._gpus) or requested >= last_available:
+                    print(f"failed check w/{self._gpus=}, {requested=}, {last_available=}")
                     return False, "Cannot satisfy request, not enough GPUs available"
         return True, None
 
@@ -366,38 +371,6 @@ class DragonBackend:
         if not honorable:
             return False, err
 
-        honorable, err = self._can_honor_affinities(request)
-        if not honorable:
-            return False, err
-
-        return True, None
-
-    def _can_honor_affinities(
-        self, request: DragonRunRequest
-    ) -> t.Tuple[bool, t.Optional[str]]:
-        """Check if the policy can be honored with resources available
-        in the allocation.
-
-        :param request: the DragonRunRequest to verify
-        :returns: Tuple indicating if the request can be honored and
-        an optional error message"""
-        if request.policy:
-            if request.policy.cpu_affinity:
-                # make sure some node has enough CPUs
-                available = max(self._cpus)
-                requested = max(request.policy.cpu_affinity)
-
-                if requested >= available:
-                    return False, "Cannot satisfy request, not enough CPUs available"
-
-            if request.policy.gpu_affinity:
-                # make sure some node has enough GPUs
-                available = max(self._gpus)
-                requested = max(request.policy.gpu_affinity)
-
-                if requested >= available:
-                    return False, "Cannot satisfy request, not enough GPUs available"
-
         return True, None
 
     def _can_honor_hosts(
@@ -409,26 +382,32 @@ class DragonBackend:
         :param request: `DragonRunRequest` to validate
         :returns: Tuple indicating if the request can be honored and
         an optional error message"""
+        all_hosts = frozenset(self._hosts)
+        num_nodes = request.nodes
+
         # fail if requesting more nodes than the total number available
-        if request.nodes > len(self._hosts):
-            message = f"Cannot satisfy request. {request.nodes} requested nodes"
-            message += f"exceeds {len(self._hosts)} available."
+        if num_nodes > len(all_hosts):
+            message = f"Cannot satisfy request. {num_nodes} requested nodes"
+            message += f"exceeds {len(all_hosts)} available."
             return False, message
 
-        requested_hosts: t.Set[str] = set(self._hosts)
+        requested_hosts = all_hosts
         if request.hostlist:
-            requested_hosts = {host.strip() for host in request.hostlist.split(",")}
+            requested_hosts = frozenset({host.strip() for host in request.hostlist.split(",")})
 
-        all_hosts = set(self._hosts)
         valid_hosts = all_hosts.intersection(requested_hosts)
         invalid_hosts = requested_hosts - valid_hosts
+
+        logger.debug(f"{num_nodes=}")
+        logger.debug(f"{valid_hosts=}")
+        logger.debug(f"{invalid_hosts=}")
 
         if invalid_hosts:
             logger.warning(f"Some invalid hostnames were requested: {invalid_hosts}")
 
         # fail if requesting specific hostnames and there aren't enough available
-        if request.nodes > len(valid_hosts):
-            message = f"Cannot satisfy request. Requested {request.nodes} nodes, "
+        if num_nodes > len(valid_hosts):
+            message = f"Cannot satisfy request. Requested {num_nodes} nodes, "
             message += f"but only {len(valid_hosts)} named hosts are available."
             return False, message
 
