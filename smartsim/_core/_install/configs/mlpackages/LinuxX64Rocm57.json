@@ -4,7 +4,7 @@
         "architecture":"x86_64",
         "device":"rocm-5.7"
     },
-    "ml_packages": [
+    "ml_backends": [
         {
             "name": "dlpack",
             "version": "v0.5_RAI",
@@ -16,7 +16,7 @@
             "name": "torch",
             "version": "2.2.2",
             "pip_index": "https://download.pytorch.org/whl/rocm5.7",
-            "packages": [
+            "python_packages": [
                 "torch==2.2.2",
                 "torchvision==0.17.2",
                 "torchaudio==2.2.2"
@@ -27,7 +27,7 @@
             "name": "tensorflow",
             "version": "2.14",
             "pip_index": "",
-            "packages": [
+            "python_packages": [
                 "tensorflow-rocm==2.14.0.600"
             ],
             "lib_source": "/home/users/shao/dev/ml_lib_builder/install/libtensorflow-2.16-linux-x64-rocm-5.7.0.tgz"
@@ -36,7 +36,7 @@
             "name": "onnxruntime",
             "version": "1.17",
             "pip_index": "",
-            "packages": [
+            "python_packages": [
                 "onnx<=1.15",
                 "skl2onnx",
                 "scikit-learn",
