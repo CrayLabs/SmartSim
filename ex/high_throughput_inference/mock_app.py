@@ -157,11 +157,9 @@ class ProtoClient:
             self.measure_time("deserialize_response")
             # list of data blobs? recv depending on the len(response.result.descriptors)?
             data_blob = from_recvh.recv_bytes(timeout=None)
-            result = torch.from_numpy(
-                numpy.frombuffer(
-                    data_blob,
-                    dtype=str(response.result.descriptors[0].dataType),
-                )
+            result = numpy.frombuffer(
+                data_blob,
+                dtype=str(response.result.descriptors[0].dataType),
             )
             self.measure_time("deserialize_tensor")
 
