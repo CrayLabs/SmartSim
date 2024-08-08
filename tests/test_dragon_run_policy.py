@@ -159,7 +159,7 @@ def test_create_run_policy_run_request_default_run_policy() -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(),  # <--- passing default values
+        policy=DragonRunPolicy(),  # <--- passing default values
     )
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
@@ -183,7 +183,7 @@ def test_create_run_policy_run_request_cpu_affinity_no_device() -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(cpu_affinity=list(affinity)),  # <-- no device spec
+        policy=DragonRunPolicy(cpu_affinity=list(affinity)),  # <-- no device spec
     )
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
@@ -206,7 +206,7 @@ def test_create_run_policy_run_request_cpu_affinity() -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(cpu_affinity=list(affinity)),
+        policy=DragonRunPolicy(cpu_affinity=list(affinity)),
     )
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
@@ -229,7 +229,7 @@ def test_create_run_policy_run_request_gpu_affinity() -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(device="gpu", gpu_affinity=list(affinity)),
+        policy=DragonRunPolicy(device="gpu", gpu_affinity=list(affinity)),
     )
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
@@ -246,7 +246,7 @@ def test_dragon_run_policy_from_run_args() -> None:
         "cpu-affinity": "3,4,5,6",
     }
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == [3, 4, 5, 6]
     assert policy.gpu_affinity == [0, 1, 2]
@@ -257,7 +257,7 @@ def test_dragon_run_policy_from_run_args_empty() -> None:
     dictionary of run arguments"""
     run_args = {}
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == []
     assert policy.gpu_affinity == []
@@ -270,7 +270,7 @@ def test_dragon_run_policy_from_run_args_cpu_affinity() -> None:
         "cpu-affinity": "3,4,5,6",
     }
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == [3, 4, 5, 6]
     assert policy.gpu_affinity == []
@@ -283,7 +283,7 @@ def test_dragon_run_policy_from_run_args_gpu_affinity() -> None:
         "gpu-affinity": "0, 1, 2",
     }
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == []
     assert policy.gpu_affinity == [0, 1, 2]
@@ -297,7 +297,7 @@ def test_dragon_run_policy_from_run_args_invalid_gpu_affinity() -> None:
     }
 
     with pytest.raises(SmartSimError) as ex:
-        HardwarePolicy.from_run_args(run_args)
+        DragonRunPolicy.from_run_args(run_args)
 
     assert "DragonRunPolicy" in ex.value.args[0]
 
@@ -310,7 +310,7 @@ def test_dragon_run_policy_from_run_args_invalid_cpu_affinity() -> None:
     }
 
     with pytest.raises(SmartSimError) as ex:
-        HardwarePolicy.from_run_args(run_args)
+        DragonRunPolicy.from_run_args(run_args)
 
     assert "DragonRunPolicy" in ex.value.args[0]
 
@@ -322,7 +322,7 @@ def test_dragon_run_policy_from_run_args_ignore_empties_gpu() -> None:
         "gpu-affinity": "0,,2",
     }
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == []
     assert policy.gpu_affinity == [0, 2]
@@ -335,7 +335,7 @@ def test_dragon_run_policy_from_run_args_ignore_empties_cpu() -> None:
         "cpu-affinity": "3,4,,6,",
     }
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == [3, 4, 6]
     assert policy.gpu_affinity == []
@@ -349,7 +349,7 @@ def test_dragon_run_policy_from_run_args_null_gpu_affinity() -> None:
         "cpu-affinity": "3,4,5,6",
     }
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == [3, 4, 5, 6]
     assert policy.gpu_affinity == []
@@ -360,7 +360,7 @@ def test_dragon_run_policy_from_run_args_null_cpu_affinity() -> None:
     in the cpu-affinity list"""
     run_args = {"gpu-affinity": "0,1,2", "cpu-affinity": None}
 
-    policy = HardwarePolicy.from_run_args(run_args)
+    policy = DragonRunPolicy.from_run_args(run_args)
 
     assert policy.cpu_affinity == []
     assert policy.gpu_affinity == [0, 1, 2]

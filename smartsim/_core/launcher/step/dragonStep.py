@@ -32,7 +32,7 @@ import typing as t
 
 from ...._core.schemas.dragonRequests import (
     DragonRunRequest,
-    HardwarePolicy,
+    DragonRunPolicy,
     request_registry,
 )
 from ....error.errors import SSUnsupportedError
@@ -173,7 +173,7 @@ class DragonBatchStep(Step):
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
             hosts_csv = str(run_args.get("host-list", ""))
 
-            policy = HardwarePolicy.from_run_args(run_args)
+            policy = DragonRunPolicy.from_run_args(run_args)
 
             cmd = step.get_launch_cmd()
             out, err = step.get_output_files()

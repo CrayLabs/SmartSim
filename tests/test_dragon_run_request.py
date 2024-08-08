@@ -354,7 +354,7 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(cpu_affinity=[0, 1]),
+        policy=DragonRunPolicy(cpu_affinity=[0, 1]),
     )
 
     run_resp = dragon_backend.process_request(run_req)
@@ -588,7 +588,7 @@ def test_can_honor_cpu_affinity(
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(cpu_affinity=affinity),
+        policy=DragonRunPolicy(cpu_affinity=affinity),
     )
 
     assert dragon_backend._can_honor(run_req)[0]
@@ -609,7 +609,7 @@ def test_can_honor_cpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(cpu_affinity=list(range(9))),
+        policy=DragonRunPolicy(cpu_affinity=list(range(9))),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -632,7 +632,7 @@ def test_can_honor_gpu_affinity(
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(gpu_affinity=affinity),
+        policy=DragonRunPolicy(gpu_affinity=affinity),
     )
 
     assert dragon_backend._can_honor(run_req)[0]
@@ -653,7 +653,7 @@ def test_can_honor_gpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(gpu_affinity=list(range(3))),
+        policy=DragonRunPolicy(gpu_affinity=list(range(3))),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -677,7 +677,7 @@ def test_can_honor_gpu_device_not_available(monkeypatch: pytest.MonkeyPatch) -> 
         current_env={},
         pmi_enabled=False,
         # specify GPU device w/no affinity
-        policy=HardwarePolicy(gpu_affinity=[0]),
+        policy=DragonRunPolicy(gpu_affinity=[0]),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -745,7 +745,7 @@ def test_can_honor_hosts_unavailable_hosts(monkeypatch: pytest.MonkeyPatch) -> N
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(),
+        policy=DragonRunPolicy(),
     )
 
     can_honor, error_msg = dragon_backend._can_honor(run_req)
@@ -778,7 +778,7 @@ def test_can_honor_hosts_unavailable_hosts_ok(monkeypatch: pytest.MonkeyPatch) -
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(),
+        policy=DragonRunPolicy(),
     )
 
     can_honor, error_msg = dragon_backend._can_honor(run_req)

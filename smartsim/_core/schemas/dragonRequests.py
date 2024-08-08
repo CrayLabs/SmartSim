@@ -40,7 +40,7 @@ request_registry = _utils.SchemaRegistry["DragonRequest"]()
 class DragonRequest(BaseModel): ...
 
 
-class HardwarePolicy(BaseModel):
+class DragonRunPolicy(BaseModel):
     """Policy specifying hardware constraints when running a Dragon job"""
 
     cpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
@@ -51,7 +51,7 @@ class HardwarePolicy(BaseModel):
     @staticmethod
     def from_run_args(
         run_args: t.Dict[str, t.Union[int, str, float, None]]
-    ) -> "HardwarePolicy":
+    ) -> "DragonRunPolicy":
         """Create a DragonRunPolicy with hardware constraints passed from
         a dictionary of run arguments
         :param run_args: Dictionary of run arguments
@@ -69,7 +69,7 @@ class HardwarePolicy(BaseModel):
         cpu_affinity = [int(x.strip()) for x in cpu_args.split(",") if x]
 
         try:
-            return HardwarePolicy(
+            return DragonRunPolicy(
                 cpu_affinity=cpu_affinity,
                 gpu_affinity=gpu_affinity,
             )
@@ -95,7 +95,7 @@ class DragonRunRequestView(DragonRequest):
 @request_registry.register("run")
 class DragonRunRequest(DragonRunRequestView):
     current_env: t.Dict[str, t.Optional[str]] = {}
-    policy: t.Optional[HardwarePolicy] = None
+    policy: t.Optional[DragonRunPolicy] = None
 
     def __str__(self) -> str:
         return str(DragonRunRequestView.parse_obj(self.dict(exclude={"current_env"})))

@@ -65,7 +65,7 @@ def test_run_request_with_empty_policy(monkeypatch: pytest.MonkeyPatch) -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=HardwarePolicy(),
+        policy=DragonRunPolicy(),
     )
     assert run_req.policy is not None
     assert not run_req.policy.cpu_affinity
@@ -96,7 +96,9 @@ def test_run_request_with_negative_affinity(
             env={},
             current_env={},
             pmi_enabled=False,
-            policy=HardwarePolicy(cpu_affinity=cpu_affinity, gpu_affinity=gpu_affinity),
+            policy=DragonRunPolicy(
+                cpu_affinity=cpu_affinity, gpu_affinity=gpu_affinity
+            ),
         )
 
     assert f"{device}_affinity" in str(ex.value.args[0])
