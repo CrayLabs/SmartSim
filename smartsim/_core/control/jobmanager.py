@@ -228,7 +228,7 @@ class JobManager:
     def get_status(
         self,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-    ) -> SmartSimStatus | FailedToFetchStatus:
+    ) -> t.Union[SmartSimStatus, FailedToFetchStatus]:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntitySequence instance
