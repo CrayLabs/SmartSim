@@ -32,6 +32,8 @@ import pytest
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim.settings.dispatch import LauncherProtocol, create_job_id
 
+pytestmark = pytest.mark.group_a
+
 
 class MockLancher(LauncherProtocol):
     __hash__ = object.__hash__
