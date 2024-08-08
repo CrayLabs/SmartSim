@@ -29,9 +29,9 @@ from __future__ import annotations
 
 import typing as t
 
-from smartsim.types import LaunchedJobID
-
+from smartsim._core.dispatch import create_job_id
 from smartsim.log import get_logger
+from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
@@ -40,9 +40,9 @@ if t.TYPE_CHECKING:
 import subprocess as sp
 
 from smartsim._core.utils import helpers
-from smartsim._core.dispatch import dispatch
 
 logger = get_logger(__name__)
+
 
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands"""
@@ -51,7 +51,7 @@ class ShellLauncher:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
     def start(self, command: t.Sequence[str]) -> LaunchedJobID:
-        id_ = dispatch.create_job_id()
+        id_ = create_job_id()
         exe, *rest = command
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
@@ -60,6 +60,6 @@ class ShellLauncher:
     @classmethod
     def create(cls, _: Experiment) -> Self:
         return cls()
-    
+
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

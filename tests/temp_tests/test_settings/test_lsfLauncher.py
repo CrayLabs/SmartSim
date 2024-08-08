@@ -61,7 +61,7 @@ def test_format_env_vars():
     env_vars = {"OMP_NUM_THREADS": None, "LOGGING": "verbose"}
     lsfLauncher = LaunchSettings(launcher=LauncherType.Lsf, env_vars=env_vars)
     assert isinstance(lsfLauncher._arguments, JsrunLaunchArguments)
-    formatted = lsfLauncher.format_env_vars()
+    formatted = lsfLauncher._arguments.format_env_vars(env_vars)
     assert formatted == ["-E", "OMP_NUM_THREADS", "-E", "LOGGING=verbose"]
 
 
@@ -76,7 +76,7 @@ def test_launch_args():
     }
     lsfLauncher = LaunchSettings(launcher=LauncherType.Lsf, launch_args=launch_args)
     assert isinstance(lsfLauncher._arguments, JsrunLaunchArguments)
-    formatted = lsfLauncher.format_launch_args()
+    formatted = lsfLauncher._arguments.format_launch_args()
     result = [
         "--latency_priority=gpu-gpu",
         "--immediate",

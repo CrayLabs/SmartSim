@@ -140,7 +140,7 @@ def test_format_env_vars():
         "SSKEYIN": "name_0,name_1",
     }
     ls = LaunchSettings(launcher=LauncherType.Slurm, env_vars=env_vars)
-    ls_format = ls.format_env_vars()
+    ls_format = ls._arguments.format_env_vars(env_vars)
     assert "OMP_NUM_THREADS=20" in ls_format
     assert "LOGGING=verbose" in ls_format
     assert all("SSKEYIN" not in x for x in ls_format)
@@ -156,7 +156,7 @@ def test_catch_existing_env_var(caplog, monkeypatch):
     monkeypatch.setenv("SMARTSIM_TEST_VAR", "A")
     monkeypatch.setenv("SMARTSIM_TEST_CSVAR", "A,B")
     caplog.clear()
-    slurmSettings.format_env_vars()
+    slurmSettings._arguments.format_env_vars(slurmSettings._env_vars)
 
     msg = f"Variable SMARTSIM_TEST_VAR is set to A in current environment. "
     msg += f"If the job is running in an interactive allocation, the value B will not be set. "
@@ -170,7 +170,7 @@ def test_catch_existing_env_var(caplog, monkeypatch):
 
     env_vars = {"SMARTSIM_TEST_VAR": "B", "SMARTSIM_TEST_CSVAR": "C,D"}
     settings = LaunchSettings(launcher=LauncherType.Slurm, env_vars=env_vars)
-    settings.format_comma_sep_env_vars()
+    settings._arguments.format_comma_sep_env_vars(env_vars)
 
     for record in caplog.records:
         assert record.levelname == "WARNING"
@@ -185,7 +185,7 @@ def test_format_comma_sep_env_vars():
         "SSKEYIN": "name_0,name_1",
     }
     slurmLauncher = LaunchSettings(launcher=LauncherType.Slurm, env_vars=env_vars)
-    formatted, comma_separated_formatted = slurmLauncher.format_comma_sep_env_vars()
+    formatted, comma_separated_formatted = slurmLauncher._arguments.format_comma_sep_env_vars(env_vars)
     assert "OMP_NUM_THREADS" in formatted
     assert "LOGGING" in formatted
     assert "SSKEYIN" in formatted
@@ -200,7 +200,7 @@ def test_slurmSettings_settings():
     slurmLauncher.launch_args.set_cpus_per_task(2)
     slurmLauncher.launch_args.set_tasks(100)
     slurmLauncher.launch_args.set_tasks_per_node(20)
-    formatted = slurmLauncher.format_launch_args()
+    formatted = slurmLauncher._arguments.format_launch_args()
     result = ["--nodes=5", "--cpus-per-task=2", "--ntasks=100", "--ntasks-per-node=20"]
     assert formatted == result
 
@@ -215,7 +215,7 @@ def test_slurmSettings_launch_args():
         "ntasks": 100,
     }
     slurmLauncher = LaunchSettings(launcher=LauncherType.Slurm, launch_args=launch_args)
-    formatted = slurmLauncher.format_launch_args()
+    formatted = slurmLauncher._arguments.format_launch_args()
     result = [
         "--account=A3123",
         "--exclusive",

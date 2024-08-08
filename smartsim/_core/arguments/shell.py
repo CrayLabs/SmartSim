@@ -26,49 +26,23 @@
 
 from __future__ import annotations
 
-import copy
-import textwrap
 import typing as t
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from smartsim.log import get_logger
+from smartsim.settings.arguments.launchArguments import LaunchArguments
 
-from ..._core.utils.helpers import fmt_dict
+if t.TYPE_CHECKING:
+    from smartsim.settings.arguments import LaunchArguments
 
 logger = get_logger(__name__)
 
 
-class LaunchArguments(ABC):
-    """Abstract base class for launcher arguments. It is the responsibility of
-    child classes for each launcher to add methods to set input parameters and
-    to maintain valid state between parameters set by a user.
-    """
-
-    def __init__(self, launch_args: t.Dict[str, str | None] | None) -> None:
-        """Initialize a new `LaunchArguments` instance.
-
-        :param launch_args: A mapping of arguments to (optional) values
-        """
-        self._launch_args = copy.deepcopy(launch_args) or {}
+class ShellLaunchArguments(LaunchArguments):
+    @abstractmethod
+    def format_env_vars(
+        self, env_vars: t.Dict[str, t.Optional[str]]
+    ) -> t.Union[t.List[str], None]: ...
 
     @abstractmethod
-    def launcher_str(self) -> str:
-        """Get the string representation of the launcher"""
-
-    @abstractmethod
-    def set(self, arg: str, val: str | None) -> None:
-        """Set a launch argument
-
-        :param arg: The argument name to set
-        :param val: The value to set the argument to as a `str` (if
-            applicable). Otherwise `None`
-        """
-
-    def __str__(self) -> str:  # pragma: no-cover
-        return textwrap.dedent(f"""\
-            Launch Arguments:
-                Launcher: {self.launcher_str()}
-                Name: {type(self).__name__}
-                Arguments:
-                {fmt_dict(self._launch_args)}
-            """)
+    def format_launch_args(self) -> t.Union[t.List[str], None]: ...

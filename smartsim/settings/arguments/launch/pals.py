@@ -28,20 +28,20 @@ from __future__ import annotations
 
 import typing as t
 
+from smartsim._core.arguments.shell import ShellLaunchArguments
+from smartsim._core.dispatch import dispatch, make_shell_format_fn
 from smartsim._core.shell.shellLauncher import ShellLauncher
 from smartsim.log import get_logger
-from smartsim._core.dispatch import dispatch, make_shell_format_fn
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 _as_pals_command = make_shell_format_fn(run_command="mpiexec")
 
 
 @dispatch(with_format=_as_pals_command, to_launcher=ShellLauncher)
-class PalsMpiexecLaunchArguments(LaunchArguments):
+class PalsMpiexecLaunchArguments(ShellLaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher
 

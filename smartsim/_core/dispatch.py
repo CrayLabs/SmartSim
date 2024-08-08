@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import dataclasses
-import subprocess as sp
 import typing as t
 import uuid
 
@@ -38,6 +37,7 @@ from smartsim.error import errors
 from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
+    from smartsim._core.arguments.shell import ShellLaunchArguments
     from smartsim.experiment import Experiment
     from smartsim.settings.arguments import LaunchArguments
 
@@ -386,7 +386,7 @@ class LauncherProtocol(t.Protocol[_T_contra]):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
+) -> _FormatterType[ShellLaunchArguments, t.Sequence[str]]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 
@@ -417,7 +417,7 @@ def make_shell_format_fn(
     """
 
     def impl(
-        args: LaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
+        args: ShellLaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
     ) -> t.Sequence[str]:
         return (
             (

@@ -30,20 +30,20 @@ import os
 import re
 import typing as t
 
+from smartsim._core.arguments.shell import ShellLaunchArguments
+from smartsim._core.dispatch import dispatch, make_shell_format_fn
 from smartsim._core.shell.shellLauncher import ShellLauncher
 from smartsim.log import get_logger
-from smartsim._core.dispatch import dispatch, make_shell_format_fn
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 _as_srun_command = make_shell_format_fn(run_command="srun")
 
 
 @dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)
-class SlurmLaunchArguments(LaunchArguments):
+class SlurmLaunchArguments(ShellLaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher
 
@@ -271,6 +271,7 @@ class SlurmLaunchArguments(LaunchArguments):
         the list starts with all as to not disturb the rest of the environment
         for more information on this, see the slurm documentation for srun
 
+        :param env_vars: An environment mapping
         :returns: the formatted string of environment variables
         """
         self._check_env_vars(env_vars)

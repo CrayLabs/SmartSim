@@ -159,7 +159,7 @@ def test_mpi_class_methods(l, function, value, flag, result):
 def test_format_env_vars(launcher):
     env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose"}
     mpiSettings = LaunchSettings(launcher=launcher, env_vars=env_vars)
-    formatted = mpiSettings.format_env_vars()
+    formatted = mpiSettings._arguments.format_env_vars(env_vars)
     result = [
         "-x",
         "OMP_NUM_THREADS=20",
@@ -182,7 +182,7 @@ def test_format_launcher_args(launcher):
     mpiSettings.launch_args.set_cpus_per_task(1)
     mpiSettings.launch_args.set_tasks(2)
     mpiSettings.launch_args.set_hostlist(["node005", "node006"])
-    formatted = mpiSettings.format_launch_args()
+    formatted = mpiSettings._arguments.format_launch_args()
     result = ["--cpus-per-proc", "1", "--n", "2", "--host", "node005,node006"]
     assert formatted == result
 
