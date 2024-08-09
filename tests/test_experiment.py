@@ -42,7 +42,7 @@ from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import dispatch, launchSettings
 from smartsim.settings.arguments import launchArguments
-from smartsim.status import FailedToFetchStatus, SmartSimStatus
+from smartsim.status import InvalidJobStatus, JobStatus
 
 pytestmark = pytest.mark.group_a
 
@@ -285,7 +285,7 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
 
 class GetStatusLauncher(dispatch.LauncherProtocol):
     def __init__(self):
-        self.id_to_status = {dispatch.create_job_id(): stat for stat in SmartSimStatus}
+        self.id_to_status = {dispatch.create_job_id(): stat for stat in JobStatus}
 
     __hash__ = object.__hash__
 
@@ -361,7 +361,7 @@ def test_get_status_returns_not_started_for_unrecognized_ids(
     )
     new_history = LaunchHistory({id_: launcher for id_ in rest})
     monkeypatch.setattr(exp, "_launch_history", new_history)
-    expected_stats = (FailedToFetchStatus.STATUS_NEVER_STARTED,) * 2
+    expected_stats = (InvalidJobStatus.NEVER_STARTED,) * 2
     actual_stats = exp.get_status(brand_new_id, id_not_known_by_exp)
     assert expected_stats == actual_stats
 

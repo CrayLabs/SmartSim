@@ -27,7 +27,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher != "dragon":
@@ -48,7 +48,7 @@ def test_dragon_global_path(global_dragon_teardown, wlmutils, test_dir, monkeypa
     exp.start(model, block=True)
 
     try:
-        assert exp.get_status(model)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert exp.get_status(model)[0] == JobStatus.COMPLETED
     finally:
         launcher: DragonLauncher = exp._control._launcher
         launcher.cleanup()
@@ -68,7 +68,7 @@ def test_dragon_exp_path(global_dragon_teardown, wlmutils, test_dir, monkeypatch
     exp.generate(model)
     exp.start(model, block=True)
     try:
-        assert exp.get_status(model)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert exp.get_status(model)[0] == JobStatus.COMPLETED
     finally:
         launcher: DragonLauncher = exp._control._launcher
         launcher.cleanup()
@@ -88,7 +88,7 @@ def test_dragon_cannot_honor(wlmutils, test_dir):
     exp.start(model, block=True)
 
     try:
-        assert exp.get_status(model)[0] == SmartSimStatus.STATUS_FAILED
+        assert exp.get_status(model)[0] == JobStatus.FAILED
     finally:
         launcher: DragonLauncher = exp._control._launcher
         launcher.cleanup()

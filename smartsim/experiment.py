@@ -42,7 +42,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim.error import errors
 from smartsim.settings import dispatch
-from smartsim.status import FailedToFetchStatus, SmartSimStatus
+from smartsim.status import InvalidJobStatus, JobStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
@@ -232,7 +232,7 @@ class Experiment:
 
     def get_status(
         self, *ids: LaunchedJobID
-    ) -> tuple[SmartSimStatus | FailedToFetchStatus, ...]:
+    ) -> tuple[JobStatus | InvalidJobStatus, ...]:
         """Get the status of jobs launched through the `Experiment` from their
         launched job id returned when calling `Experiment.start`.
 
@@ -242,8 +242,7 @@ class Experiment:
 
         If the `Experiment` cannot find any launcher that started the job
         associated with the launched job id, then a
-        `FailedToFetchStatus.STATUS_NEVER_STARTED` status is returned for that
-        id.
+        `InvalidJobStatus.NEVER_STARTED` status is returned for that id.
 
         If the experiment maps the launched job id to multiple launchers, then
         a `ValueError` is raised. This should only happen in the case when
@@ -259,9 +258,7 @@ class Experiment:
         ).items()
         stats_iter = (launcher.get_status(*ids).items() for launcher, ids in to_query)
         stats_map = dict(itertools.chain.from_iterable(stats_iter))
-        stats = (
-            stats_map.get(i, FailedToFetchStatus.STATUS_NEVER_STARTED) for i in ids
-        )
+        stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
         return tuple(stats)
 
     @_contextualize

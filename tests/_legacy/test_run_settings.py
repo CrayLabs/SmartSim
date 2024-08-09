@@ -42,7 +42,7 @@ from smartsim.settings import (
     Singularity,
 )
 from smartsim.settings.settings import create_run_settings
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -586,7 +586,7 @@ def test_create_run_settings_run_args_leading_dashes(test_dir, wlmutils):
     exp.start(model)
 
     statuses = exp.get_status(model)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_set_run_args_leading_dashes(test_dir, wlmutils):
@@ -603,7 +603,7 @@ def test_set_run_args_leading_dashes(test_dir, wlmutils):
     model = exp.create_model("sr_issue_model", run_settings=settings)
     exp.start(model)
     statuses = exp.get_status(model)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_run_args_integer(test_dir, wlmutils):
@@ -620,4 +620,4 @@ def test_run_args_integer(test_dir, wlmutils):
     model = exp.create_model("sr_issue_model", run_settings=settings)
     exp.start(model)
     statuses = exp.get_status(model)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])

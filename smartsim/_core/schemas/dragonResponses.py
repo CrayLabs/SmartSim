@@ -29,7 +29,7 @@ import typing as t
 from pydantic import BaseModel, Field
 
 import smartsim._core.schemas.utils as _utils
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # Black and Pylint disagree about where to put the `...`
 # pylint: disable=multiple-statements
@@ -51,7 +51,7 @@ class DragonUpdateStatusResponse(DragonResponse):
     # status is a dict: {step_id: (is_alive, returncode)}
     statuses: t.Mapping[
         t.Annotated[str, Field(min_length=1)],
-        t.Tuple[SmartSimStatus, t.Optional[t.List[int]]],
+        t.Tuple[JobStatus, t.Optional[t.List[int]]],
     ] = {}
 
 

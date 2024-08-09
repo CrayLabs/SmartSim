@@ -31,7 +31,7 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 """
 Test the launch of simple entity types on pre-existing allocations.
@@ -62,7 +62,7 @@ def test_applications(fileutils, test_dir, wlmutils):
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_multinode_app(mpi_app_path, test_dir, wlmutils):
@@ -108,7 +108,7 @@ def test_ensemble(fileutils, test_dir, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_summary(fileutils, test_dir, wlmutils):
@@ -132,8 +132,8 @@ def test_summary(fileutils, test_dir, wlmutils):
 
     # start and poll
     exp.start(sleep_exp, bad)
-    assert exp.get_status(bad)[0] == SmartSimStatus.STATUS_FAILED
-    assert exp.get_status(sleep_exp)[0] == SmartSimStatus.STATUS_COMPLETED
+    assert exp.get_status(bad)[0] == JobStatus.FAILED
+    assert exp.get_status(sleep_exp)[0] == JobStatus.COMPLETED
 
     summary_str = exp.summary(style="plain")
     print(summary_str)

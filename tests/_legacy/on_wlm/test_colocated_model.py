@@ -30,7 +30,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.entity import Application
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 if sys.platform == "darwin":
     supported_fss = ["tcp", "deprecated"]
@@ -63,14 +63,14 @@ def test_launch_colocated_application_defaults(fileutils, test_dir, coloutils, f
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
     # test restarting the colocated application
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -94,7 +94,7 @@ def test_colocated_application_disable_pinning(fileutils, test_dir, coloutils, f
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -121,7 +121,7 @@ def test_colocated_application_pinning_auto_2cpu(
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -149,7 +149,7 @@ def test_colocated_application_pinning_range(fileutils, test_dir, coloutils, fs_
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -176,7 +176,7 @@ def test_colocated_application_pinning_list(fileutils, test_dir, coloutils, fs_t
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -203,5 +203,5 @@ def test_colocated_application_pinning_mixed(fileutils, test_dir, coloutils, fs_
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"

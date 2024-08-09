@@ -43,7 +43,7 @@ from ....settings import (
     SbatchSettings,
     SettingsBase,
 )
-from ....status import SmartSimStatus
+from ....status import JobStatus
 from ...schemas import (
     DragonRunRequest,
     DragonRunRequestView,
@@ -147,7 +147,7 @@ class DragonLauncher(WLMLauncher):
 
     def get_status(
         self, *launched_ids: LaunchedJobID
-    ) -> t.Mapping[LaunchedJobID, SmartSimStatus]:
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
         infos = self._get_managed_step_update(list(launched_ids))
         return {id_: info.status for id_, info in zip(launched_ids, infos)}
 
@@ -256,9 +256,9 @@ class DragonLauncher(WLMLauncher):
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
         step_info.status = (
-            SmartSimStatus.STATUS_CANCELLED  # set status to cancelled instead of failed
+            JobStatus.CANCELLED  # set status to cancelled instead of failed
         )
-        step_info.launcher_status = str(SmartSimStatus.STATUS_CANCELLED)
+        step_info.launcher_status = str(JobStatus.CANCELLED)
         return step_info
 
     @staticmethod
@@ -318,8 +318,8 @@ class DragonLauncher(WLMLauncher):
                         msg += response.error_message
                     logger.error(msg)
                     info = StepInfo(
-                        SmartSimStatus.STATUS_FAILED,
-                        SmartSimStatus.STATUS_FAILED.value,
+                        JobStatus.FAILED,
+                        JobStatus.FAILED.value,
                         -1,
                     )
                 else:
