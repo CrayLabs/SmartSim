@@ -77,9 +77,6 @@ import os
 from pathlib import Path
 
 from setuptools import setup
-from setuptools.command.build_py import build_py
-from setuptools.command.install import install
-from setuptools.dist import Distribution
 
 # Some necessary evils we have to do to be able to use
 # the _install tools in smartsim/smartsim/_core/_install

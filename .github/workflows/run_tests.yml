@@ -164,7 +164,7 @@ jobs:
           retention-days: 5
 
       - name: Upload Pytest coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v4.5.0
         with:
           fail_ci_if_error: false
           files: ./coverage.xml
