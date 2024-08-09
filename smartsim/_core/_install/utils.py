@@ -34,6 +34,8 @@ import zipfile
 
 import git
 
+from smartsim._core._install.platform import OperatingSystem, Architecture
+
 _PathLike = t.Union[str, pathlib.Path]
 
 class UnsupportedArchive(Exception):
@@ -74,7 +76,18 @@ class PackageRetriever():
 
     @staticmethod
     def _from_git(source, destination, **clone_kwargs) -> None:
-        git.Repo(source).clone_from(source, destination, **clone_kwargs)
+        is_mac = OperatingSystem.autodetect() == OperatingSystem.DARWIN
+        is_arm64 = Architecture.autodetect() == Architecture.ARM64
+        if is_mac and is_arm64:
+            config_options = (
+                "--config core.autocrlf=false",
+                "--config core.eol=lf"
+            )
+        else:
+            config_options = None
+        git.Repo(source).clone_from(
+            source, destination, multi_options=config_options, **clone_kwargs
+        )
 
     @classmethod
     def retrieve(

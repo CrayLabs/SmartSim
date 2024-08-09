@@ -1,24 +1,14 @@
-<<<<<<<< HEAD:smartsim/_core/_install/configs/mlpackages/LinuxX64CPU.json
-configs/LinuxX64CPU.json{
+{
     "os":"linux",
     "architecture":"x86_64",
     "device":"rocm-5.7",
 
     "ml_packages": [
-========
-{
-    "platform":{
-        "os":"linux",
-        "architecture":"x86_64",
-        "device":"cpu"
-    },
-    "ml_backends": [
->>>>>>>> 259441cb987734549bedab2ea251a02140ec1ff7:smartsim/_core/_install/platforms/LinuxX64CPU.json
         {
             "name": "libtorch",
             "version": "2.2.2",
             "pip_index": "https://download.pytorch.org/whl/cpu",
-            "python_packages": [
+            "packages": [
                 "torch<=2.3.1",
                 "torchvision<=0.18.1",
                 "torchaudio<=2.3.1"
@@ -29,7 +19,7 @@ configs/LinuxX64CPU.json{
             "name": "libtensorflow",
             "version": "2.15",
             "pip_index": "",
-            "python_packages": [
+            "packages": [
                 "tensorflow<=2.15"
             ],
             "lib_source": "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.15.0.tar.gz"
@@ -38,7 +28,7 @@ configs/LinuxX64CPU.json{
             "name": "onnxruntime",
             "version": "1.18.1",
             "pip_index": "",
-            "python_packages": [
+            "packages": [
                 "onnx<=1.16",
                 "skl2onnx",
                 "scikit-learn",

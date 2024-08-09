@@ -24,17 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=too-many-lines
-
 import pathlib
+import shutil
 import typing as t
 
 from smartsim._core.config import CONFIG
 from smartsim._core._install.platform import Platform
 from smartsim._core._install.mlpackages import MLPackage
 from smartsim._core._install.utils import PackageRetriever
-
-class RedisAIBuilder(Builder):
+from smartsim._core.utils.shell import execute_cmd
+class RedisAIBuilder():
     """Class to build RedisAI from Source
     Supported build method:
      - from git
@@ -60,8 +59,11 @@ class RedisAIBuilder(Builder):
         self.version = version
 
         self.src_path = CONFIG.build_path / "RedisAI"
-        self.build_path = self.rai_path / "build"
-        self.package_path = self.rai_path / "mlpackages"
+        self.build_path = self.src_path / "build"
+        self.package_path = self.src_path / "mlpackages"
+
+    def cleanup(self):
+        shutil.rmtree(self.src_path)
 
     @property
     def is_built(self) -> bool:
@@ -106,9 +108,14 @@ class RedisAIBuilder(Builder):
         cmake_command = self._rai_cmake_cmd()
         build_command = self._rai_build_cmd
 
-        self.run_command(cmake_command, cwd=self.rai_build_path)
-        self.run_command(build_command, cwd=self.rai_build_path)
-        self.cleanup()
+        self.run_command(cmake_command, self.rai_build_path)
+        self.run_command(build_command, self.rai_build_path)
+
+    def run_command(self, cmd, cwd):
+        rc, output, err, = execute_cmd(cmd, cwd=cwd, env=self.build_env)
+        if (rc != 0) or self.verbose:
+            print(output)
+            print(err)
 
     def _rai_cmake_cmd(self) -> t.List[str]:
         def on_off(expression: bool):
