@@ -218,7 +218,7 @@ class DragonBackend:
 
         :returns: List of host names"""
         with self._queue_lock:
-            return [str(item[1]) for item in self._prioritizer.unassigned()]
+            return [node.hostname for node in self._prioritizer.unassigned()]
 
     @property
     def group_infos(self) -> dict[str, ProcessGroupInfo]:
@@ -456,22 +456,21 @@ class DragonBackend:
                 hosts = [host for host in request.hostlist.split(",") if host]
 
             if hosts:
-                reference_counts = self._prioritizer.next_n_from(num_hosts, hosts)
+                nodes = self._prioritizer.next_n_from(num_hosts, hosts)
             else:
                 filter_on: t.Optional[PrioritizerFilter] = None
                 if request.policy and request.policy.gpu_affinity:
                     filter_on = PrioritizerFilter.GPU
-                reference_counts = self._prioritizer.next_n(num_hosts, filter_on)
+                nodes = self._prioritizer.next_n(num_hosts, filter_on)
 
-            if len(reference_counts) < num_hosts:
+            if len(nodes) < num_hosts:
                 # exit if the prioritizer can't identify enough nodes
                 return None
 
-            to_allocate = [str(ref_counter[1]) for ref_counter in reference_counts]
-
+            to_allocate = [node.hostname for node in nodes]
             # track assigning this step to each node
-            for host in to_allocate:
-                self._allocated_hosts[host] = step_id
+            for hostname in to_allocate:
+                self._allocated_hosts[hostname] = step_id
 
             return to_allocate
 

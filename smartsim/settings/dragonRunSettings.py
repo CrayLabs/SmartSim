@@ -102,21 +102,25 @@ class DragonRunSettings(RunSettings):
         :param host_list: hosts to launch on
         """
         if not host_list:
-            raise
+            raise ValueError("empty hostlist provided")
+
         if isinstance(host_list, list):
-            self.run_args["host-list"] = ",".join(host_list.replace(" ", ""))
+            self.run_args["host-list"] = ",".join(
+                host.replace(" ", "") for host in host_list
+            )
             return
-        
-        BREAKING ON PURPOSE!
-        Add a test for DragonRunSettings for:
-        - set_hotslist (None)
-        - set_hostlist([])
-        - set_hostlist([''])
-        - set_hostlist(['abc']) - single
-        - set_hostlist(['abc', 'def']) - multi
-        - set_hostlist('abc') - single (str)
-        - set_hostlist('abc,def']) - multi (str),
-        - set_hostlist('abc, def']) - multi (str), spaces removal 'x, y' -> 'x','y', not 'x', ' y'
+
+        # TODO: BREAKING ON PURPOSE!
+        # Add a test for DragonRunSettings for:
+        # - set_hotslist (None)
+        # - set_hostlist([])
+        # - set_hostlist([''])
+        # - set_hostlist(['abc']) - single
+        # - set_hostlist(['abc', 'def']) - multi
+        # - set_hostlist('abc') - single (str)
+        # - set_hostlist('abc,def']) - multi (str),
+        # - set_hostlist('abc, def']) - multi (str),
+        #       spaces removal 'x, y' -> 'x','y', not 'x', ' y'
 
         self.run_args["host-list"] = host_list.replace(" ", "")
 

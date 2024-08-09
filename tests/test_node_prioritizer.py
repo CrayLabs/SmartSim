@@ -106,39 +106,39 @@ def test_node_prioritizer_init_ok(num_cpu_nodes: int, num_gpu_nodes: int) -> Non
     # verify tracking data is initialized correctly for all nodes
     for hostname in all_hosts:
         # show that the ref map is tracking the node
-        assert hostname in p._ref_map
+        assert hostname in p._nodes
 
-        tracking_info = p._ref_map[hostname]
+        tracking_info = p.get_tracking_info(hostname)
 
         # show that the node is created w/zero ref counts
-        assert tracking_info[0] == 0
+        assert tracking_info.num_refs == 0
 
         # show that the node is created and marked as not dirty (unchanged)
-        assert tracking_info[2] == False
+        # assert tracking_info.dirty == False
 
     # iterate through known cpu node keys and verify prioritizer initialization
     for hostname in cpu_hosts:
         # show that the device ref counters are appropriately assigned
-        cpu_ref = next((n for n in p._cpu_refs if n[1] == hostname), None)
+        cpu_ref = next((n for n in p._cpu_refs if n.hostname == hostname), None)
         assert cpu_ref, "CPU-only node not found in cpu ref set"
 
-        gpu_ref = next((n for n in p._gpu_refs if n[1] == hostname), None)
+        gpu_ref = next((n for n in p._gpu_refs if n.hostname == hostname), None)
         assert not gpu_ref, "CPU-only node should not be found in gpu ref set"
 
     # iterate through known GPU node keys and verify prioritizer initialization
     for hostname in gpu_hosts:
         # show that the device ref counters are appropriately assigned
-        gpu_ref = next((n for n in p._gpu_refs if n[1] == hostname), None)
+        gpu_ref = next((n for n in p._gpu_refs if n.hostname == hostname), None)
         assert gpu_ref, "GPU-only node not found in gpu ref set"
 
-        cpu_ref = next((n for n in p._cpu_refs if n[1] == hostname), None)
+        cpu_ref = next((n for n in p._cpu_refs if n.hostname == hostname), None)
         assert not cpu_ref, "GPU-only node should not be found in cpu ref set"
 
     # verify we have all hosts in the ref map
-    assert set(p._ref_map.keys()) == set(all_hosts)
+    assert set(p._nodes.keys()) == set(all_hosts)
 
     # verify we have no extra hosts in ref map
-    assert len(p._ref_map.keys()) == len(set(all_hosts))
+    assert len(p._nodes.keys()) == len(set(all_hosts))
 
 
 def test_node_prioritizer_direct_increment() -> None:
@@ -174,15 +174,15 @@ def test_node_prioritizer_direct_increment() -> None:
 
         # ... and verify the correct incrementing is applied
         tracking_info = p.get_tracking_info(node.hostname)
-        assert tracking_info[0] == num_increments
+        assert tracking_info.num_refs == num_increments
 
     # verify the excluded cpu node was never changed
     tracking_info0 = p.get_tracking_info(exclude_host0)
-    assert tracking_info0[0] == 0
+    assert tracking_info0.num_refs == 0
 
     # verify the excluded gpu node was never changed
     tracking_info1 = p.get_tracking_info(exclude_host1)
-    assert tracking_info1[0] == 0
+    assert tracking_info1.num_refs == 0
 
 
 def test_node_prioritizer_indirect_increment() -> None:
@@ -196,21 +196,28 @@ def test_node_prioritizer_indirect_increment() -> None:
     lock = threading.RLock()
     p = NodePrioritizer(nodes, lock)
 
-    # perform indirect
-    for i in range(len(nodes)):
-        tracking_info = p.get_tracking_info(nodes[i].hostname)
-        assert tracking_info[0] == 0  # <--- ref count starts at zero
+    # verify starting state
+    for node in p._nodes.values():
+        tracking_info = p.get_tracking_info(node.hostname)
 
-        # apply operation
-        tracking_info = p.next(PrioritizerFilter.CPU)
+        assert node.num_refs == 0  # <--- ref count starts at zero
+        assert tracking_info.num_refs == 0  # <--- ref count starts at zero
+
+    # perform indirect
+    for node in p._nodes.values():
+        tracking_info = p.get_tracking_info(node.hostname)
+
+        # apply `next` operation and verify tracking info reflects new ref
+        node = p.next(PrioritizerFilter.CPU)
+        tracking_info = p.get_tracking_info(node.hostname)
 
         # verify side-effects
-        assert tracking_info[0] > 0  # <--- ref count should now be > 0
-        assert (
-            tracking_info[2] == False
-        )  # <--- we expect it to give back only "clean" nodes
+        assert tracking_info.num_refs > 0  # <--- ref count should now be > 0
 
-    # every node has been incremented now. prioritizer shouldn't have anything to give
+        # we expect it to give back only "clean" nodes from next*
+        assert tracking_info.dirty == False  # NOTE: this is "hidden" by protocol
+
+    # every node should be incremented now. prioritizer shouldn't have anything to give
     tracking_info = p.next(PrioritizerFilter.CPU)
     assert tracking_info is None  # <--- get_next shouldn't have any nodes to give
 
@@ -253,25 +260,24 @@ def test_node_prioritizer_multi_increment() -> None:
 
     # Mark some nodes as dirty to verify retrieval
     p.increment(cpu_hosts[0])
-    assert p.get_tracking_info(cpu_hosts[0])[0] > 0
+    assert p.get_tracking_info(cpu_hosts[0]).num_refs > 0
 
     p.increment(cpu_hosts[2])
-    assert p.get_tracking_info(cpu_hosts[2])[0] > 0
+    assert p.get_tracking_info(cpu_hosts[2]).num_refs > 0
 
     p.increment(cpu_hosts[4])
-    assert p.get_tracking_info(cpu_hosts[4])[0] > 0
+    assert p.get_tracking_info(cpu_hosts[4]).num_refs > 0
 
     # use next_n w/the minimum allowed value
     all_tracking_info = p.next_n(1, PrioritizerFilter.CPU)  # <---- next_n(1)
 
     # confirm the number requested is honored and the expected node is returned
     assert len(all_tracking_info) == 1
-    assert all_tracking_info[0][1] == cpu_hosts[1]
+    assert all_tracking_info[0].hostname == cpu_hosts[1]
 
     # use next_n w/value that exceeds available number of open nodes
-    all_tracking_info = p.next_n(
-        5, PrioritizerFilter.CPU
-    )  # <---- 3 direct increments in setup, 1 out of next_n(1), 4 left
+    # 3 direct increments in setup, 1 out of next_n(1), 4 left
+    all_tracking_info = p.next_n(5, PrioritizerFilter.CPU)
 
     # confirm that no nodes are returned, even though 4 out of 5 requested are available
     assert len(all_tracking_info) == 0
@@ -325,35 +331,38 @@ def test_node_prioritizer_indirect_direct_interleaved_increments() -> None:
     p.increment(cpu_hosts[7])
 
     tracking_info = p.get_tracking_info(gpu_hosts[1])
-    assert tracking_info[0] == 1
+    assert tracking_info.num_refs == 1
 
     tracking_info = p.get_tracking_info(gpu_hosts[3])
-    assert tracking_info[0] == 2
+    assert tracking_info.num_refs == 2
+
+    nodes = [n for n in p._nodes.values() if n.num_refs == 0 and n.num_gpus == 0]
 
     # we should skip the 0-th item in the heap due to direct increment
     tracking_info = p.next(PrioritizerFilter.CPU)
-    assert tracking_info[0] == 1
-    assert tracking_info[1] == cpu_hosts[1]
+    assert tracking_info.num_refs == 1
+    # confirm we get a cpu node
+    assert "cpu-node" in tracking_info.hostname
 
     # this should pull the next item right out
     tracking_info = p.next(PrioritizerFilter.CPU)
-    assert tracking_info[0] == 1
-    assert tracking_info[1] == cpu_hosts[2]
-
-    # we should step over the 3-th node on this iteration
-    tracking_info = p.next(PrioritizerFilter.CPU)
-    assert tracking_info[0] == 1
-    assert tracking_info[1] == cpu_hosts[4]
+    assert tracking_info.num_refs == 1
+    assert "cpu-node" in tracking_info.hostname
 
     # ensure we pull from gpu nodes and the 0th item is returned
     tracking_info = p.next(PrioritizerFilter.GPU)
-    assert tracking_info[0] == 1
-    assert tracking_info[1] == gpu_hosts[0]
+    assert tracking_info.num_refs == 1
+    assert "gpu-node" in tracking_info.hostname
+
+    # we should step over the 3-th node on this iteration
+    tracking_info = p.next(PrioritizerFilter.CPU)
+    assert tracking_info.num_refs == 1
+    assert "cpu-node" in tracking_info.hostname
 
     # and ensure that heap also steps over a direct increment
     tracking_info = p.next(PrioritizerFilter.GPU)
-    assert tracking_info[0] == 1
-    assert tracking_info[1] == gpu_hosts[2]
+    assert tracking_info.num_refs == 1
+    assert "gpu-node" in tracking_info.hostname
 
     # and another GPU request should return nothing
     tracking_info = p.next(PrioritizerFilter.GPU)
@@ -381,7 +390,7 @@ def test_node_prioritizer_decrement_floor() -> None:
 
     for node in nodes:
         tracking_info = p.get_tracking_info(node.hostname)
-        assert tracking_info[0] == 0
+        assert tracking_info.num_refs == 0
 
 
 @pytest.mark.parametrize("num_requested", [1, 2, 3])
@@ -430,10 +439,13 @@ def test_node_prioritizer_multi_increment_subheap_assigned() -> None:
     p.increment(cpu_hosts[0])
     p.increment(cpu_hosts[2])
 
-    hostnames = [cpu_hosts[0], cpu_hosts[2]]
+    hostnames = [
+        cpu_hosts[0],
+        "x" + cpu_hosts[2],
+    ]  # <--- we can't get 2 from 1 valid node name
 
     # request n == {num_requested} nodes from set of 3 available
-    num_requested = 1
+    num_requested = 2
     all_tracking_info = p.next_n_from(num_requested, hostnames)
 
     # w/0,2 assigned, nothing can be returned
