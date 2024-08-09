@@ -461,7 +461,7 @@ def group_by(
 ) -> t.Mapping[_HashableT, t.Collection[_T]]:
     """Iterate over an iterable and group the items based on the return of some
     mapping function. Works similar to SQL's "GROUP BY" statement, but works
-    over an arbitary mapping function.
+    over an arbitrary mapping function.
 
     :param fn: A function mapping the iterable values to some hashable values
     :items: An iterable yielding items to group by mapping function return.
