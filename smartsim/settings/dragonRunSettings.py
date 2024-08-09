@@ -101,7 +101,24 @@ class DragonRunSettings(RunSettings):
 
         :param host_list: hosts to launch on
         """
-        self.run_args["host-list"] = ",".join(host_list)
+        if not host_list:
+            raise
+        if isinstance(host_list, list):
+            self.run_args["host-list"] = ",".join(host_list.replace(" ", ""))
+            return
+        
+        BREAKING ON PURPOSE!
+        Add a test for DragonRunSettings for:
+        - set_hotslist (None)
+        - set_hostlist([])
+        - set_hostlist([''])
+        - set_hostlist(['abc']) - single
+        - set_hostlist(['abc', 'def']) - multi
+        - set_hostlist('abc') - single (str)
+        - set_hostlist('abc,def']) - multi (str),
+        - set_hostlist('abc, def']) - multi (str), spaces removal 'x, y' -> 'x','y', not 'x', ' y'
+
+        self.run_args["host-list"] = host_list.replace(" ", "")
 
     def set_cpu_affinity(self, devices: t.List[int]) -> None:
         """Set the CPU affinity for this job
