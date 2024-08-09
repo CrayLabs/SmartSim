@@ -28,6 +28,8 @@
 
 from __future__ import annotations
 
+import collections
+import itertools
 import os
 import os.path as osp
 import textwrap
@@ -37,9 +39,10 @@ from os import environ, getcwd
 from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
+from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim.error import errors
 from smartsim.settings import dispatch
-from smartsim.status import SmartSimStatus
+from smartsim.status import FailedToFetchStatus, SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
@@ -55,7 +58,7 @@ from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.dispatch import ExecutableProtocol, LauncherProtocol
+    from smartsim.settings.dispatch import ExecutableProtocol
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -159,9 +162,8 @@ class Experiment:
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
-        self._active_launchers: set[LauncherProtocol[t.Any]] = set()
-        """The active launchers created, used, and reused by the experiment"""
-
+        self._launch_history = _LaunchHistory()
+        """A cache of launchers used and which ids they have issued"""
         self._fs_identifiers: t.Set[str] = set()
         """Set of feature store identifiers currently in use by this
         experiment
@@ -209,7 +211,7 @@ class Experiment:
                 # Check to see if one of the existing launchers can be
                 # configured to handle the launch arguments ...
                 launch_config = dispatch.configure_first_compatible_launcher(
-                    from_available_launchers=self._active_launchers,
+                    from_available_launchers=self._launch_history.iter_past_launchers(),
                     with_arguments=args,
                 )
             except errors.LauncherNotFoundError:
@@ -218,14 +220,49 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            # Save the underlying launcher instance. That way we do not need to
-            # spin up a launcher instance for each individual job, and it makes
-            # it easier to monitor job statuses
+            id_ = launch_config.start(exe, env)
+            # Save the underlying launcher instance and launched job id. That
+            # way we do not need to spin up a launcher instance for each
+            # individual job, and the experiment can monitor job statuses.
             # pylint: disable-next=protected-access
-            self._active_launchers.add(launch_config._adapted_launcher)
-            return launch_config.start(exe, env)
+            self._launch_history.save_launch(launch_config._adapted_launcher, id_)
+            return id_
 
         return execute_dispatch(job), *map(execute_dispatch, jobs)
+
+    def get_status(
+        self, *ids: LaunchedJobID
+    ) -> tuple[SmartSimStatus | FailedToFetchStatus, ...]:
+        """Get the status of jobs launched through the `Experiment` from their
+        launched job id returned when calling `Experiment.start`.
+
+        The `Experiment` will map the launched ID back to the launcher that
+        started the job and request a status update. The order of the returned
+        statuses exactly matches the order of the launched job ids.
+
+        If the `Experiment` cannot find any launcher that started the job
+        associated with the launched job id, then a
+        `FailedToFetchStatus.STATUS_NEVER_STARTED` status is returned for that
+        id.
+
+        If the experiment maps the launched job id to multiple launchers, then
+        a `ValueError` is raised. This should only happen in the case when
+        launched job ids issued by user defined launcher are not sufficiently
+        unique.
+
+        :param ids: A sequence of launched job ids issued by the experiment.
+        :returns: A tuple of statuses with order respective of the order of the
+            calling arguments.
+        """
+        to_query = self._launch_history.group_by_launcher(
+            set(ids), unknown_ok=True
+        ).items()
+        stats_iter = (launcher.get_status(*ids).items() for launcher, ids in to_query)
+        stats_map = dict(itertools.chain.from_iterable(stats_iter))
+        stats = (
+            stats_map.get(i, FailedToFetchStatus.STATUS_NEVER_STARTED) for i in ids
+        )
+        return tuple(stats)
 
     @_contextualize
     def generate(
