@@ -38,7 +38,6 @@ from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
     BuildEnv,
-    DbEngine,
     SetupError,
     Version_,
     VersionConflictError,
@@ -59,13 +58,12 @@ _TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
 
 def check_py_onnx_version(versions: Versioner) -> None:
     """Check Python environment for ONNX installation"""
-    # TODO: Add new baceknd for skl2onnx, onnxmltools, and scikit-learn
     _check_packages_in_python_env(
         {
             "onnx": Version_(versions.ONNX),
-            # "skl2onnx": Version_(versions.None.skl2onnx),
-            # "onnxmltools": Version_(versions.None.onnxmltools),
-            # "scikit-learn": Version_(getattr(versions.None, "scikit-learn")),
+            "skl2onnx": "1.16.0",
+            "onnxmltools": "1.12.0",
+            "scikit-learn": "1.3.2",
         },
     )
 
@@ -76,13 +74,10 @@ def check_py_tf_version(versions: Versioner) -> None:
 
 
 
-
-
 def build_feature_store(
-    build_env: BuildEnv, versions: Versioner, keydb: bool, verbose: bool
+    build_env: BuildEnv, verbose: bool
 ) -> None:
     # check feature store installation
-    feature_store_name = "KeyDB" if keydb else None
     feature_store_builder = builder.FeatureStoreBuilder(
         build_env(),
         jobs=build_env.JOBS,
@@ -91,15 +86,12 @@ def build_feature_store(
         malloc=build_env.MALLOC,
         verbose=verbose,
     )
-    # TODO: Add new feature store
+ 
     if not feature_store_builder.is_built:
-        # logger.info(
-        #     f"Building {feature_store_name} version {versions.None} "
-        #     f"from {versions.None}"
-        # )
-        #feature_store_builder.build_from_git(versions.None, versions.None)
+        logger.info("No feature store is currently being built by 'smart build'")
+
         feature_store_builder.cleanup()
-    logger.info(f"{feature_store_name} build complete!")
+    logger.info("No feature store is currently being built by 'smart build'")
 
 
 
@@ -235,17 +227,11 @@ def _format_incompatible_python_env_message(
     )
 
 
-def _configure_keydb_build(versions: Versioner) -> None:
-    """Configure the feature store versions to be used during the build operation"""
-    ...
-
-
 # pylint: disable-next=too-many-statements
 def execute(
     args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     verbose = args.v
-    keydb = args.keydb
     device = Device(args.device.lower())
     is_dragon_requested = args.dragon
     # torch and tf build by default
@@ -267,13 +253,9 @@ def execute(
         env_vars = list(env.keys())
         print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
 
-    if keydb:
-        _configure_keydb_build(versions)
-
     if verbose:
-        fs_name: DbEngine = "KEYDB" if keydb else None
         logger.info("Version Information:")
-        vers = versions.as_dict(fs_name=fs_name)
+        vers = versions.as_dict()
         version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
@@ -290,15 +272,13 @@ def execute(
 
     try:
         if not args.only_python_packages:
-            # KeyDB
-            build_feature_store(build_env, versions, keydb, verbose)
+            ...
 
     except (SetupError, BuildError) as e:
         logger.error(str(e))
         return os.EX_SOFTWARE
     
-    # TODO: Add new backend 
-    backends = None
+    backends = []
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) built")
 
@@ -374,12 +354,6 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         default=None,
         type=str,
         help=f"Path to custom libtensorflow directory {warn_usage}",
-    )
-    parser.add_argument(
-        "--keydb",
-        action="store_true",
-        default=False,
-        help="Build KeyDB",
     )
     parser.add_argument(
         "--no_torch_with_mkl",

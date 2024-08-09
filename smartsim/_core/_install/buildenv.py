@@ -37,8 +37,6 @@ from typing import Iterable
 
 from packaging.version import InvalidVersion, Version, parse
 
-DbEngine = t.Literal["KEYDB"]
-
 
 class SetupError(Exception):
     """A simple exception class for errors in _install.buildenv file.
@@ -176,9 +174,8 @@ class Versioner:
     ``smart build`` command to determine which dependency versions
     to look for and download.
 
-    Default versions for SmartSim are
-    all set here. Setting a default version for { } also dictates
-    default versions of the machine learning libraries.
+    Default versions for SmartSim and its machine learning library dependencies
+    all defined here.
     """
 
     # compatible Python version
@@ -190,20 +187,17 @@ class Versioner:
 
     # ML/DL
     # torch can be set by the user because we download that for them
-    TORCH = Version_(get_env("SMARTSIM_TORCH", None.torch))
-    TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", None.torchvision))
-    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", None.torch_cpu_suffix))
-    TORCH_CUDA_SUFFIX = Version_(
-        get_env("TORCH_CUDA_SUFFIX", None.torch_cuda_suffix)
-    )
+    TORCH = Version_(get_env("SMARTSIM_TORCH", "2.13.1"))
+    TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", "0.15.2"))
+    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", "+cpu"))
+    TORCH_CUDA_SUFFIX = Version_(get_env("TORCH_CUDA_SUFFIX", "+cu117"))
 
     # TensorFlow and ONNX only use the defaults
 
-    TENSORFLOW = Version_(None.tensorflow)
-    ONNX = Version_(None.onnx)
+    TENSORFLOW = Version_("2.13.1")
+    ONNX = Version_("1.14.1")
 
-    # TODO add a new DbEngine
-    def as_dict(self, fs_name: DbEngine = "None") -> t.Dict[str, t.Tuple[str, ...]]:
+    def as_dict(self) -> t.Dict[str, t.Tuple[str, ...]]:
         pkg_map = {
             "SMARTSIM": self.SMARTSIM,
             "TORCH": self.TORCH,
@@ -216,7 +210,13 @@ class Versioner:
     def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
         """Optional ML/DL dependencies we suggest for the user.
         """
-        ml_defaults = self.None.get_defaults()
+        ml_defaults = {
+            "tensorflow": self.TENSORFLOW,
+            "onnx": self.ONNX,
+            "skl2onnx": "1.16.0",
+            "onnxmltools": "1.12.0",
+            "scikit-learn": "1.3.2",
+        }
 
         # remove torch-related fields as they are subject to change
         # by having the user change hardware (cpu/gpu)
@@ -272,7 +272,7 @@ class BuildEnv:
     """Environment for building third-party dependencies
 
     BuildEnv provides a method for configuring how the third-party
-    dependencies within SmartSim are built, namely KeyDB.
+    dependencies within SmartSim are built.
 
     Build tools are also checked for here and if they are not found
     then a SetupError is raised.

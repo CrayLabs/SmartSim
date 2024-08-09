@@ -6,6 +6,7 @@ import typing as t
 
 from tabulate import tabulate
 
+from smartsim._core._cli.scripts.dragon_install import dragon_pin
 import smartsim._core._cli.utils as _utils
 import smartsim._core.utils.helpers as _helpers
 from smartsim._core._install.buildenv import BuildEnv as _BuildEnv
@@ -28,36 +29,30 @@ def execute(
         end="\n\n",
     )
 
-    print("FeatureStore Configuration:")
-    fs_path = _utils.get_fs_path()
-    fs_table = [["Installed", _fmt_installed_fs(fs_path)]]
-    if fs_path:
-        fs_table.append(["Location", str(fs_path)])
+    print("Dragon Installation:")
+    dragon_version = dragon_pin()
+
+    fs_table = [["Version", str(dragon_version)]]
     print(tabulate(fs_table, tablefmt="fancy_outline"), end="\n\n")
 
-    print("Machine Learning Backends:")
-    #TODO: add a backend
-    backends = None
+    print("Machine Learning Packages:")
     print(
         tabulate(
             [
                 [
                     "Tensorflow",
-                    _utils.color_bool("tensorflow" in backends),
                     _fmt_py_pkg_version("tensorflow"),
                 ],
                 [
                     "Torch",
-                    _utils.color_bool("torch" in backends),
                     _fmt_py_pkg_version("torch"),
                 ],
                 [
                     "ONNX",
-                    _utils.color_bool("onnxruntime" in backends),
                     _fmt_py_pkg_version("onnx"),
                 ],
             ],
-            headers=["Name", "Backend Available", "Python Package"],
+            headers=["Name", "Python Package"],
             tablefmt="fancy_outline",
         ),
         end="\n\n",

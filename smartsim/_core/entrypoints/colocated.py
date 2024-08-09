@@ -39,17 +39,20 @@ import filelock
 import psutil
 
 from smartsim._core.utils.network import current_ip
+from smartsim.entity._mock import Mock
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-# TODO add a Client
-
 DBPID = None
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
+
+
+class Client(Mock):
+    """Mock Client"""
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
@@ -240,8 +243,7 @@ def main(
 
     try:
         if fs_models or fs_scripts:
-            options = ConfigOptions.create_from_environment(fs_identifier)
-            client = Client(options, logger_name="SmartSim")
+            client = Client()
             launch_models(client, fs_models)
             launch_fs_scripts(client, fs_scripts)
      

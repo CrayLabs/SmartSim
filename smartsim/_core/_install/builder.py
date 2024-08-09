@@ -53,8 +53,6 @@ from subprocess import SubprocessError
 
 # TODO: check cmake version and use system if possible to avoid conflicts
 
-# TODO add a new backend
-TNoneBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 _PathLike = t.Union[str, "os.PathLike[str]"]
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -244,41 +242,6 @@ class Builder:
             raise BuildError(e) from e
 
 
-class FeatureStoreBuilder(Builder):
-    """Class to build KeyDB from Source
-    Supported build methods:
-     - from git
-    See buildenv.py for buildtime configuration of KeyDB
-    version and url.
-    """
-
-    def __init__(
-        self,
-        build_env: t.Optional[t.Dict[str, str]] = None,
-        malloc: str = "libc",
-        jobs: int = 1,
-        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
-        architecture: Architecture = Architecture.from_str(platform.machine()),
-        verbose: bool = False,
-    ) -> None:
-        super().__init__(
-            build_env or {},
-            jobs=jobs,
-            _os=_os,
-            architecture=architecture,
-            verbose=verbose,
-        )
-        self.malloc = malloc
-
-    @property
-    def is_built(self) -> bool:
-        """Check if KeyDB is built"""
-        bin_files = {file.name for file in self.bin_path.iterdir()}
-        keydb_files = {"keydb-server", "keydb-cli"}
-        return keydb_files.issubset(bin_files)
-
-
-
 class _WebLocation(ABC):
     @property
     @abstractmethod
@@ -416,8 +379,6 @@ class _PTArchiveMacOSX(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == Device.GPU:
-            ...
         if self.architecture == Architecture.X64:
             pt_build = Device.CPU.value
             libtorch_archive = f"libtorch-macos-{self.version}.zip"
@@ -474,8 +435,6 @@ class _TFArchive(_WebTGZ):
             tf_device = self.device
         elif self.os_ == OperatingSystem.DARWIN:
             tf_os = "darwin"
-            if self.device == Device.GPU:
-                ...
             tf_device = Device.CPU
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
@@ -513,8 +472,6 @@ class _ORTArchive(_WebTGZ):
             ort_os = "osx"
             ort_arch = "x86_64"
             ort_build = ""
-            if self.device == Device.GPU:
-                ...
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"

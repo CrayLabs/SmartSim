@@ -73,8 +73,7 @@ class DataInfo:
         self.num_classes = num_classes
         self._ds_name = form_name(self.list_name, "info")
 
-    # TODO add a new Client and Dataset
-    def publish(self, client: Client) -> None:
+    def publish(self) -> None:
         """Upload DataInfo information to FeatureStore
 
         The information is put on the DB as a DataSet, with strings
@@ -82,16 +81,10 @@ class DataInfo:
 
         :param client: Client to connect to Feature Store
         """
-        info_ds = Dataset(self._ds_name)
-        info_ds.add_meta_string("sample_name", self.sample_name)
-        if self.target_name:
-            info_ds.add_meta_string("target_name", self.target_name)
-        if self.num_classes:
-            info_ds.add_meta_scalar("num_classes", self.num_classes)
-        client.put_dataset(info_ds)
+        ...
 
-    # TODO add a new Client
-    def download(self, client: Client) -> None:
+
+    def download(self) -> None:
         """Download DataInfo information from FeatureStore
 
         The information retrieved from the DB is used to populate
@@ -101,14 +94,6 @@ class DataInfo:
         :param client: Client to connect to Feature Store
         """
 
-        info_ds = client.get_dataset(self._ds_name)
-  
-        self.sample_name = info_ds.get_meta_strings("sample_name")[0]
-        field_names = info_ds.get_metadata_field_names()
-        if "target_name" in field_names:
-            self.target_name = info_ds.get_meta_strings("target_name")[0]
-        if "num_classes" in field_names:
-            self.num_classes = int(info_ds.get_meta_scalars("num_classes")[0])
 
     def __repr__(self) -> str:
         strings = ["DataInfo object"]
@@ -161,7 +146,6 @@ class TrainingDataUploader:
         if not sample_name:
             raise ValueError("Sample name can not be empty")
 
-        self.client = Client(cluster, address=address)
         self.verbose = verbose
         self.batch_idx = 0
         self.rank = rank
@@ -184,7 +168,7 @@ class TrainingDataUploader:
         return self._info.num_classes
 
     def publish_info(self) -> None:
-        self._info.publish(self.client)
+        self._info.publish()
 
     def put_batch(
         self,
@@ -192,25 +176,20 @@ class TrainingDataUploader:
         targets: t.Optional[np.ndarray] = None,  # type: ignore[type-arg]
     ) -> None:
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
-        batch_ds = Dataset(batch_ds_name)
-        batch_ds.add_tensor(self.sample_name, samples)
         if (
             targets is not None
             and self.target_name
             and (self.target_name != self.sample_name)
         ):
-            batch_ds.add_tensor(self.target_name, targets)
             if self.verbose:
                 logger.info(f"Putting dataset {batch_ds_name} with samples and targets")
         else:
             if self.verbose:
                 logger.info(f"Putting dataset {batch_ds_name} with samples")
 
-        self.client.put_dataset(batch_ds)
-        self.client.append_to_list(self.list_name, batch_ds)
         if self.verbose:
             logger.info(f"Added dataset to list {self.list_name}")
-            logger.info(f"List length {self.client.get_list_length(self.list_name)}")
+            logger.info(f"List length")
 
         self.batch_idx += 1
 
@@ -293,11 +272,9 @@ class DataDownloader:
             self._info = data_info_or_list_name
         elif isinstance(data_info_or_list_name, str):
             self._info = DataInfo(list_name=data_info_or_list_name)
-            client = Client(self.cluster, self.address)
-            self._info.download(client)
+            self._info.download()
         else:
             raise TypeError("data_info_or_list_name must be either DataInfo or str")
-        self._client: t.Optional[Client] = None
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")
 
@@ -306,11 +283,6 @@ class DataDownloader:
         if init_samples:
             self.init_samples(max_fetch_trials, wait_interval)
 
-    @property
-    def client(self) -> Client:
-        if self._client is None:
-            raise ValueError("Client not initialized")
-        return self._client
 
     def log(self, message: str) -> None:
         if self.verbose:
@@ -379,7 +351,6 @@ class DataDownloader:
 
         :param init_trials: maximum number of attempts to fetch data
         """
-        self._client = Client(self.cluster, self.address)
 
         num_trials = 0
         max_trials = init_trials or -1
@@ -398,72 +369,15 @@ class DataDownloader:
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_exists(self, batch_name: str, target_name: str) -> bool:
-        if self.need_targets:
-            return all(
-                self.client.tensor_exists(datum) for datum in [batch_name, target_name]
-            )
-
-        return bool(self.client.tensor_exists(batch_name))
+    def _data_exists(self, batch_name: str, target_name: str) -> None:
+        pass
 
     def _add_samples(self, indices: t.List[int]) -> None:
-        datasets: t.List[Dataset] = []
-
-        if self.num_replicas == 1:
-            datasets = self.client.get_dataset_list_range(
-                self.list_name, start_index=indices[0], end_index=indices[-1]
-            )
-        else:
-            for idx in indices:
-                datasets += self.client.get_dataset_list_range(
-                    self.list_name, start_index=idx, end_index=idx
-                )
-
-        if self.samples is None:
-            self.samples = datasets[0].get_tensor(self.sample_name)
-            if self.need_targets:
-                self.targets = datasets[0].get_tensor(self.target_name)
-
-            if len(datasets) > 1:
-                datasets = datasets[1:]
-
-        if self.samples is not None:
-            for dataset in datasets:
-                self.samples = np.concatenate(
-                    (
-                        t.cast("npt.NDArray[t.Any]", self.samples),
-                        dataset.get_tensor(self.sample_name),
-                    )
-                )
-                if self.need_targets:
-                    self.targets = np.concatenate(
-                        (
-                            t.cast("npt.NDArray[t.Any]", self.targets),
-                            dataset.get_tensor(self.target_name),
-                        )
-                    )
-
-            self.num_samples = t.cast("npt.NDArray[t.Any]", self.samples).shape[0]
-            self.indices = np.arange(self.num_samples)
-
-        self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
+        pass
 
     def _update_samples_and_targets(self) -> None:
         self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
 
-        for uploader_idx, uploader_key in enumerate(self.uploader_keys):
-            if uploader_key:
-                self.client.use_list_ensemble_prefix(True)
-                self.client.set_data_source(uploader_key)
-
-            list_length = self.client.get_list_length(self.list_name)
-
-            # Strictly greater, because next_index is 0-based
-            if list_length > self.next_indices[uploader_idx]:
-                start = self.next_indices[uploader_idx]
-                indices = list(range(start, list_length, self.num_replicas))
-                self._add_samples(indices)
-                self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
 
     def update_data(self) -> None:
         if self.dynamic:

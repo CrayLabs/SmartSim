@@ -36,15 +36,14 @@ from shlex import split as sh_split
 
 import psutil
 
-from .._core.config import CONFIG
-from .._core.utils import fs_is_active
+from smartsim.entity._mock import Mock
+
 from .._core.utils.helpers import is_valid_cmd, unpack_fs_identifier
 from .._core.utils.network import get_ip_from_host
 from .._core.utils.shell import execute_cmd
 from ..entity import EntityList, FSNode, TelemetryConfiguration
 from ..error import (
     SmartSimError,
-    SSConfigError,
     SSDBFilesNotParseable,
     SSUnsupportedError,
 )
@@ -69,6 +68,15 @@ from ..settings import (
 from ..wlm import detect_launcher
 
 logger = get_logger(__name__)
+
+class Client(Mock):
+    """Mock Client"""
+
+class ConfigOptions(Mock):
+    """Mock ConfigOptions"""
+
+def fs_is_active():
+    return False
 
 by_launcher: t.Dict[str, t.List[str]] = {
     "dragon": [""],
@@ -251,11 +259,6 @@ class FeatureStore(EntityList[FSNode]):
             intra_op_threads=intra_op_threads,
             **kwargs,
         )
-
-        try:
-            CONFIG.database_cli  # pylint: disable=W0104
-        except SSConfigError as e:
-            ...
 
         if self.launcher != "local":
             self.batch_settings = self._build_batch_settings(
@@ -583,7 +586,6 @@ class FeatureStore(EntityList[FSNode]):
         """
         self.set_fs_conf("proto-max-bulk-len", str(size))
 
-    # TODO add a new Client
     def set_fs_conf(self, key: str, value: str) -> None:
         """Set any valid configuration at runtime without the need
         to restart the feature store. All configuration parameters

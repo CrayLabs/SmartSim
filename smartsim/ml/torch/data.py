@@ -26,12 +26,20 @@
 
 import typing as t
 
+
 import numpy as np
+from smartsim.entity._mock import Mock
 import torch
 
 from smartsim.ml.data import DataDownloader
 
-# TODO add a Client and a Dataset
+class Client(Mock):
+    """Mock Client"""
+    pass
+
+class Dataset(Mock):
+    """Mock Dataset"""
+    pass
 
 class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDataset):
     def __init__(self, **kwargs: t.Any) -> None:

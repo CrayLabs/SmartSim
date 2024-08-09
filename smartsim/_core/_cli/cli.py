@@ -103,7 +103,6 @@ class SmartCli:
         for item in menu_items:
             self._register_menu_item(item)
 
-# TODO: Add new path for dbcli
 def default_cli() -> SmartCli:
     menu = [
         MenuItemConfig(
@@ -117,11 +116,6 @@ def default_cli() -> SmartCli:
             "Remove previous ML runtime installation",
             clean_execute,
             clean_parser,
-        ),
-        MenuItemConfig(
-            "dbcli",
-            "Print the path to the -cli binary",
-            dbcli_execute,
         ),
         MenuItemConfig(
             "site",

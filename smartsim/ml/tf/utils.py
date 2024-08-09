@@ -39,10 +39,6 @@ def freeze_model(
 ) -> t.Tuple[str, t.List[str], t.List[str]]:
     """Freeze a Keras or TensorFlow Graph
 
-    to use a Keras or TensorFlow model in SmartSim, the model
-    must be frozen and the inputs and outputs provided to the
-    None.client.set_model_from_file() method.
-
     This utiliy function provides everything users need to take
     a trained model and put it inside an ``featurestore`` instance
 
@@ -53,8 +49,6 @@ def freeze_model(
     """
     # TODO figure out why layer names don't match up to
     # specified name in Model init.
-
-    # TODO add new client to docstring
 
     if not file_name.endswith(".pb"):
         file_name = file_name + ".pb"
@@ -83,18 +77,13 @@ def freeze_model(
 def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]]:
     """Serialize a Keras or TensorFlow Graph
 
-    to use a Keras or TensorFlow model in SmartSim, the model
-    must be frozen and the inputs and outputs provided to the
-    None.client.set_model() method.
-
     This utiliy function provides everything users need to take
     a trained model and put it inside an ``featurestore`` instance.
 
     :param model: TensorFlow or Keras model
     :return: serialized model, model input layer names, model output layer names
     """
-    #TODO: Add new client to docstring
-
+    
     full_model = tf.function(model)
     full_model = full_model.get_concrete_function(
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)

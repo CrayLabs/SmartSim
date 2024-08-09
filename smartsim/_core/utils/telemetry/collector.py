@@ -213,8 +213,7 @@ class DBCollector(Collector):
         try:
             if self._client:
                 return await self._client.ping()
-        # TODO add a new error
-        except:
+        except Exception:
             logger.warning(f"Cannot ping fs {self._address}")
 
         return False

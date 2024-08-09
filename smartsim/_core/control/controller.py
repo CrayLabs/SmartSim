@@ -39,6 +39,7 @@ import time
 import typing as t
 
 from smartsim._core.utils.network import get_ip_from_host
+from smartsim.entity._mock import Mock
 
 from ..._core.launcher.step import Step
 from ..._core.utils.helpers import (
@@ -69,7 +70,7 @@ from ..launcher import (
     SlurmLauncher,
 )
 from ..launcher.launcher import Launcher
-from ..utils import check_cluster_status, create_cluster, serialize
+from ..utils import serialize
 from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
 from .job import Job
 from .jobmanager import JobManager
@@ -86,6 +87,30 @@ logger = get_logger(__name__)
 # job manager lock
 JM_LOCK = threading.RLock()
 
+
+class Client(Mock):
+    """Mock Client"""
+
+class ConfigOptions(Mock):
+    """Mock ConfigOptions"""
+
+def fs_is_active():
+    pass
+
+def set_ml_model():
+    pass
+
+def set_script():
+    pass
+
+def shutdown_fs_node():
+    pass
+
+def create_cluster():
+    pass
+
+def check_cluster_status():
+    pass
 
 class Controller:
     """The controller module provides an interface between the
