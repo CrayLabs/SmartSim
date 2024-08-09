@@ -345,7 +345,9 @@ class DragonBackend:
                 last_available = max(self._gpus or [-1])
                 requested = max(request.policy.gpu_affinity)
                 if not any(self._gpus) or requested >= last_available:
-                    print(f"failed check w/{self._gpus=}, {requested=}, {last_available=}")
+                    print(
+                        f"failed check w/{self._gpus=}, {requested=}, {last_available=}"
+                    )
                     return False, "Cannot satisfy request, not enough GPUs available"
         return True, None
 
@@ -393,7 +395,9 @@ class DragonBackend:
 
         requested_hosts = all_hosts
         if request.hostlist:
-            requested_hosts = frozenset({host.strip() for host in request.hostlist.split(",")})
+            requested_hosts = frozenset(
+                {host.strip() for host in request.hostlist.split(",")}
+            )
 
         valid_hosts = all_hosts.intersection(requested_hosts)
         invalid_hosts = requested_hosts - valid_hosts
