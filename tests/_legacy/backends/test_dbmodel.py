@@ -35,7 +35,7 @@ from smartsim.entity import Ensemble
 from smartsim.entity.dbobject import FSModel
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 logger = get_logger(__name__)
 
@@ -212,7 +212,7 @@ def test_tf_fs_model(
     wlm_experiment.start(smartsim_model, block=True)
     statuses = wlm_experiment.get_status(smartsim_model)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -270,7 +270,7 @@ def test_pt_fs_model(
     wlm_experiment.start(smartsim_model, block=True)
     statuses = wlm_experiment.get_status(smartsim_model)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -362,7 +362,7 @@ def test_fs_model_ensemble(
     wlm_experiment.start(smartsim_ensemble, block=True)
     statuses = wlm_experiment.get_status(smartsim_ensemble)
     assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+        stat == JobStatus.COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -432,7 +432,7 @@ def test_colocated_fs_model_tf(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
         assert all(
-            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+            stat == JobStatus.COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
@@ -492,7 +492,7 @@ def test_colocated_fs_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
         assert all(
-            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+            stat == JobStatus.COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
@@ -593,7 +593,7 @@ def test_colocated_fs_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
         assert all(
-            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+            stat == JobStatus.COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
@@ -697,7 +697,7 @@ def test_colocated_fs_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
         assert all(
-            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+            stat == JobStatus.COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)

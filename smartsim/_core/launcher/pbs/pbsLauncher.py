@@ -39,7 +39,7 @@ from ....settings import (
     RunSettings,
     SettingsBase,
 )
-from ....status import SmartSimStatus
+from ....status import JobStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -150,7 +150,7 @@ class PBSLauncher(WLMLauncher):
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
         step_info.status = (
-            SmartSimStatus.STATUS_CANCELLED
+            JobStatus.CANCELLED
         )  # set status to cancelled instead of failed
         return step_info
 
@@ -202,7 +202,7 @@ class PBSLauncher(WLMLauncher):
         for stat, _ in zip(stats, step_ids):
             info = PBSStepInfo(stat or "NOTFOUND", None)
             # account for case where job history is not logged by PBS
-            if info.status == SmartSimStatus.STATUS_COMPLETED:
+            if info.status == JobStatus.COMPLETED:
                 info.returncode = 0
 
             updates.append(info)

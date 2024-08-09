@@ -36,7 +36,7 @@ from smartsim.entity.dbobject import FSScript
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 from smartsim.settings import MpiexecSettings, MpirunSettings
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 logger = get_logger(__name__)
 
@@ -119,7 +119,7 @@ def test_fs_script(wlm_experiment, prepare_fs, single_fs, fileutils, mlutils):
     # Launch and check successful completion
     wlm_experiment.start(smartsim_application, block=True)
     statuses = wlm_experiment.get_status(smartsim_application)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
@@ -208,7 +208,7 @@ def test_fs_script_ensemble(wlm_experiment, prepare_fs, single_fs, fileutils, ml
 
     wlm_experiment.start(ensemble, block=True)
     statuses = wlm_experiment.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
@@ -273,7 +273,7 @@ def test_colocated_fs_script(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_application, block=True)
         statuses = exp.get_status(colo_application)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == JobStatus.COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_application)
 
@@ -373,7 +373,7 @@ def test_colocated_fs_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == JobStatus.COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_ensemble)
 
@@ -471,7 +471,7 @@ def test_colocated_fs_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == JobStatus.COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_ensemble)
 

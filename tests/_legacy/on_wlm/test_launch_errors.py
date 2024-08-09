@@ -30,7 +30,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.error import SmartSimError
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -57,7 +57,7 @@ def test_failed_status(fileutils, test_dir, wlmutils):
         time.sleep(2)
     stat = exp.get_status(application)
     assert len(stat) == 1
-    assert stat[0] == SmartSimStatus.STATUS_FAILED
+    assert stat[0] == JobStatus.FAILED
 
 
 def test_bad_run_command_args(fileutils, test_dir, wlmutils):

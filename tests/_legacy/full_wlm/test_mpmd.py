@@ -30,7 +30,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.utils.helpers import is_valid_cmd
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -92,8 +92,8 @@ def test_mpmd(fileutils, test_dir, wlmutils):
         )
         exp.start(mpmd_application, block=True)
         statuses = exp.get_status(mpmd_application)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
         exp.start(mpmd_application, block=True)
         statuses = exp.get_status(mpmd_application)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == JobStatus.COMPLETED for stat in statuses])

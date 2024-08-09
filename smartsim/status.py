@@ -27,23 +27,23 @@
 from enum import Enum
 
 
-class SmartSimStatus(Enum):
-    STATUS_UNKNOWN = "Unknown"
-    STATUS_RUNNING = "Running"
-    STATUS_COMPLETED = "Completed"
-    STATUS_CANCELLED = "Cancelled"
-    STATUS_FAILED = "Failed"
-    STATUS_NEW = "New"
-    STATUS_PAUSED = "Paused"
-    STATUS_QUEUED = "Queued"
+class JobStatus(Enum):
+    UNKNOWN = "Unknown"
+    RUNNING = "Running"
+    COMPLETED = "Completed"
+    CANCELLED = "Cancelled"
+    FAILED = "Failed"
+    NEW = "New"
+    PAUSED = "Paused"
+    QUEUED = "Queued"
 
 
-class FailedToFetchStatus(Enum):
-    STATUS_NEVER_STARTED = "Never Started"
+class InvalidJobStatus(Enum):
+    NEVER_STARTED = "Never Started"
 
 
 TERMINAL_STATUSES = {
-    SmartSimStatus.STATUS_CANCELLED,
-    SmartSimStatus.STATUS_COMPLETED,
-    SmartSimStatus.STATUS_FAILED,
+    JobStatus.CANCELLED,
+    JobStatus.COMPLETED,
+    JobStatus.FAILED,
 }
