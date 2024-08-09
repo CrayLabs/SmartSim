@@ -213,12 +213,12 @@ class DragonBackend:
             return self._allocated_hosts
 
     @property
-    def free_hosts(self) -> t.List[str]:
+    def free_hosts(self) -> t.Sequence[str]:
         """Find hosts that do not have a step assigned
 
         :returns: List of host names"""
         with self._queue_lock:
-            return [node.hostname for node in self._prioritizer.unassigned()]
+            return list(map(lambda x: x.hostname, self._prioritizer.unassigned()))
 
     @property
     def group_infos(self) -> dict[str, ProcessGroupInfo]:

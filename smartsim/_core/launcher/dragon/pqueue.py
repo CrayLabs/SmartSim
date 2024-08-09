@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class _TrackedNode:
-    """Minimum Node API required to support the NodePrioritizer"""
+    """Node API required to have support in the NodePrioritizer"""
 
     num_cpus: int
     """The number of CPUs available on this node"""
@@ -51,49 +51,45 @@ class _TrackedNode:
 
     tracking: t.Set[str] = field(default_factory=set)
     """The unique identifiers of processes using this node"""
-    allocated_cpus: t.Set[int] = field(default_factory=set)
-    """The CPU indices allocated on this node"""
-    allocated_gpus: t.Set[int] = field(default_factory=set)
-    """The GPU indices allocated on this node"""
     dirty: bool = False
     """Flag indicating that the node has been updated"""
 
     def add(
         self,
         tracking_id: t.Optional[str] = None,
-        cpus: t.Optional[t.Sequence[int]] = None,
-        gpus: t.Optional[t.Sequence[int]] = None,
     ) -> None:
+        """Modify the node as needed to track the removal of a process
+
+        :tracking_id: (optional) a unique task identifier executing on the node
+        to add"""
         if tracking_id in self.tracking:
             raise ValueError("Attempted adding task more than once")
 
         self.num_refs = self.num_refs + 1
         if tracking_id:
             self.tracking = self.tracking.union({tracking_id})
-        if cpus:
-            self.allocated_cpus.update(set(cpus))
-        if gpus:
-            self.allocated_gpus.update(set(gpus))
         self.dirty = True
 
     def remove(
         self,
         tracking_id: t.Optional[str] = None,
-        cpus: t.Optional[t.Sequence[int]] = None,
-        gpus: t.Optional[t.Sequence[int]] = None,
     ) -> None:
+        """Modify the node as needed to track the removal of a process
+
+        :tracking_id: (optional) a unique task identifier executing on the node
+        to remove"""
         if tracking_id and tracking_id not in self.tracking:
             raise ValueError("Attempted removal of untracked item")
 
         self.num_refs = max(self.num_refs - 1, 0)
         self.tracking = self.tracking - {tracking_id}
-        if cpus:
-            self.allocated_cpus.difference_update(set(cpus))
-        if gpus:
-            self.allocated_gpus.difference_update(set(gpus))
         self.dirty = True
 
     def __lt__(self, other: "_TrackedNode") -> bool:
+        """Comparison operator used to evaluate the ordering of nodes within
+        the prioritizer. This comparison only considers reference counts.
+
+        :param other: Another node to compare against"""
         if self.num_refs < other.num_refs:
             return True
 
@@ -108,18 +104,23 @@ class PrioritizerFilter(str, enum.Enum):
 
 
 class Node(t.Protocol):
-    """Minimum Node API required to support the NodePrioritizer"""
+    """Base Node API required to support the NodePrioritizer"""
 
     hostname: str
+    """The hostname of the node"""
     num_cpus: int
+    """The number of CPUs in the node"""
     num_gpus: int
+    """The number of GPUs in the node"""
 
 
 class NodeReferenceCount(t.Protocol):
     """Contains details pertaining to references to a node"""
 
     hostname: str
+    """The hostname of the node"""
     num_refs: int
+    """The number of jobs assigned to the node"""
 
 
 class NodePrioritizer:
@@ -134,13 +135,10 @@ class NodePrioritizer:
 
         self._lock = lock
         """Lock used to ensure thread safe changes of the reference counters"""
-
         self._cpu_refs: t.List[_TrackedNode] = []
         """Track reference counts to CPU-only nodes"""
-
         self._gpu_refs: t.List[_TrackedNode] = []
         """Track reference counts to GPU nodes"""
-
         self._nodes: t.Dict[str, _TrackedNode] = {}
 
         self._initialize_reference_counters(nodes)
@@ -162,21 +160,15 @@ class NodePrioritizer:
             else:
                 self._cpu_refs.append(tracked)
 
-    # def _update_ref_count(self, host: str, updated_ref_count: _TrackedNode) -> None:
-    #     """Updates the shared _NodeRefCount instance to keep each
-    #     reference (cpu ref, gpu ref, all refs) in sync"""
-    #     node = self._nodes[host]
-
-    #     node.num_refs = updated_ref_count[0]
-    #     node.dirty = updated_ref_count[2]
-
     def increment(
         self, host: str, tracking_id: t.Optional[str] = None
     ) -> NodeReferenceCount:
         """Directly increment the reference count of a given node and ensure the
         ref counter is marked as dirty to trigger a reordering on retrieval
 
-        :param host: a hostname that should have a reference counter selected"""
+        :param host: a hostname that should have a reference counter selected
+        :tracking_id: (optional) a unique task identifier executing on the node
+        to add"""
         with self._lock:
             tracked_node = self._nodes[host]
             tracked_node.add(tracking_id)
@@ -196,7 +188,11 @@ class NodePrioritizer:
         """Returns the reference counter information for a single node
 
         :param host: a hostname that should have a reference counter selected
-        :returns: a reference counter"""
+        :returns: a reference counter for the node
+        :raises ValueError: if the hostname is not in the set of managed nodes"""
+        if host not in self._nodes:
+            raise ValueError("The supplied hostname was not found")
+
         return self._nodes[host]
 
     def decrement(
@@ -205,7 +201,9 @@ class NodePrioritizer:
         """Directly increment the reference count of a given node and ensure the
         ref counter is marked as dirty to trigger a reordering
 
-        :param host: a hostname that should have a reference counter decremented"""
+        :param host: a hostname that should have a reference counter decremented
+        :tracking_id: (optional) a unique task identifier executing on the node
+        to remove"""
         with self._lock:
             tracked_node = self._nodes[host]
             tracked_node.remove(tracking_id)
@@ -243,7 +241,7 @@ class NodePrioritizer:
         sub_heap = self._create_sub_heap(hosts)
         return self._get_next_available_node(sub_heap)
 
-    def next_n_from(self, num_items: int, hosts: t.List[str]) -> t.List[Node]:
+    def next_n_from(self, num_items: int, hosts: t.List[str]) -> t.Sequence[Node]:
         """Return the next N available nodes given a set of desired hosts
 
         :param num_items: the desird number of nodes to allocate
@@ -259,7 +257,9 @@ class NodePrioritizer:
         sub_heap = self._create_sub_heap(hosts)
         return self._get_next_n_available_nodes(num_items, sub_heap)
 
-    def unassigned(self, heap: t.Optional[t.List[_TrackedNode]] = None) -> t.List[Node]:
+    def unassigned(
+        self, heap: t.Optional[t.List[_TrackedNode]] = None
+    ) -> t.Sequence[Node]:
         """Select nodes that are currently not assigned a task
 
         :param heap: (optional) a subset of the node heap to consider
@@ -267,9 +267,15 @@ class NodePrioritizer:
         if heap is None:
             heap = list(self._nodes.values())
 
-        return list(filter(lambda x: x.num_refs == 0, heap))
+        nodes: t.List[Node] = []
+        for item in heap:
+            if item.num_refs == 0:
+                nodes.append(item)
+        return nodes
 
-    def assigned(self, heap: t.Optional[t.List[_TrackedNode]] = None) -> t.List[Node]:
+    def assigned(
+        self, heap: t.Optional[t.List[_TrackedNode]] = None
+    ) -> t.Sequence[Node]:
         """Helper method to identify the nodes that are currently assigned
 
         :param heap: (optional) a subset of the node heap to consider
@@ -277,7 +283,12 @@ class NodePrioritizer:
         if heap is None:
             heap = list(self._nodes.values())
 
-        return list(filter(lambda x: x.num_refs == 1, heap))
+        nodes: t.List[Node] = []
+        for item in heap:
+            if item.num_refs == 1:
+                nodes.append(item)
+        return nodes
+        # return list(filter(lambda x: x.num_refs == 1, heap))
 
     def _check_satisfiable_n(
         self, num_items: int, heap: t.Optional[t.List[_TrackedNode]] = None
@@ -342,9 +353,6 @@ class NodePrioritizer:
             if original_ref_count > 0:
                 return None
 
-        if not tracking_info:
-            return None
-
         return tracking_info
 
     def _get_next_n_available_nodes(
@@ -355,7 +363,8 @@ class NodePrioritizer:
         """Find the next N available nodes w/least amount of references using
         the supplied filter to target a specific node capability
 
-        :param n: number of nodes to reserve
+        :param num_items: number of nodes to reserve
+        :param heap: (optional) a subset of the node heap to consider
         :returns: a list of reference counters for a available nodes if enough
         unassigned nodes exists, `None` otherwise
         :raises ValueError: if the number of requetsed nodes is not a positive integer
