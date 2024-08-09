@@ -58,12 +58,16 @@ class RedisAIBuilder():
         self.source = source
         self.version = version
 
-        self.src_path = CONFIG.build_path / "RedisAI"
-        self.build_path = self.src_path / "build"
-        self.package_path = self.src_path / "mlpackages"
+        self.src_path = CONFIG.build_path / "RedisAI" /"src"
+        self.build_path = CONFIG.build_path / "RedisAI" / "build"
+        self.package_path = CONFIG.build_path / "RedisAI" / "mlpackages"
+
+        self.cleanup()
 
     def cleanup(self):
-        shutil.rmtree(self.src_path)
+        shutil.rmtree(self.src_path, ignore_errors=True)
+        shutil.rmtree(self.build_path, ignore_errors=True)
+        shutil.rmtree(self.package_path, ignore_errors=True)
 
     @property
     def is_built(self) -> bool:
@@ -76,15 +80,15 @@ class RedisAIBuilder():
 
     @property
     def build_torch(self) -> bool:
-        return "torch" in self.mlpackages
+        return "libtorch" in self.mlpackages
 
     @property
     def build_tensorflow(self) -> bool:
-        return "tensorflow" in self.mlpackages
+        return "libtensorflow" in self.mlpackages
 
     @property
     def build_onnxruntime(self) -> bool:
-        return "onnx" in self.mlpackages
+        return "onnxruntime" in self.mlpackages
 
     def build(self) -> None:
         """Build RedisAI
@@ -94,22 +98,26 @@ class RedisAIBuilder():
         :param device: cpu or gpu
         """
 
+        self.src_path.mkdir()
+        self.build_path.mkdir()
+        self.package_path.mkdir()
+
         # Create the build directory structure
-        self.build_dir.parent.mkdir(parents=True)
         git_kwargs = {
             "depth":1,
             "branch":self.version,
         }
-        PackageRetriever(self.source, self.build_dir, **git_kwargs)
 
-        for package in self.mlpackages:
-            package.retrieve(self.rai_package_path)
+        PackageRetriever.retrieve(self.source, self.src_path, **git_kwargs)
+
+        for package in self.mlpackages.values():
+            package.retrieve(self.package_path)
 
         cmake_command = self._rai_cmake_cmd()
-        build_command = self._rai_build_cmd
+        build_command = self._rai_build_cmd()
 
-        self.run_command(cmake_command, self.rai_build_path)
-        self.run_command(build_command, self.rai_build_path)
+        self.run_command(cmake_command, self.build_path)
+        self.run_command(build_command, self.build_path)
 
     def run_command(self, cmd, cwd):
         rc, output, err, = execute_cmd(cmd, cwd=cwd, env=self.build_env)
@@ -124,11 +132,14 @@ class RedisAIBuilder():
             BUILD_TF=on_off(self.build_tensorflow),
             BUILD_ORT=on_off(self.build_onnxruntime),
             BUILD_TORCH=on_off(self.build_torch),
-            DEPS_PATH=self.rai_package_path,
+            DEPS_PATH=str(self.package_path),
             DEVICE="gpu" if self.platform.device.is_gpu() else "cpu",
-            CMAKE_INSTALL_PREFIX=CONFIG.dependency_path
+            CMAKE_INSTALL_PREFIX=str(CONFIG.dependency_path)
         )
         cmd = ["cmake"]
-        cmd.append(f"-D{key}={value}" for key, value in cmake_args.items())
-        cmd.append(self.src_path)
+        cmd += (f"-D{key}={value}" for key, value in cmake_args.items())
+        cmd.append(str(self.src_path))
         return cmd
+
+    def _rai_build_cmd(self):
+        return "make install -j"

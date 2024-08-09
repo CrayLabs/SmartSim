@@ -39,12 +39,11 @@ from functools import lru_cache
 from pathlib import Path
 from shutil import which
 
-from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
-
 if t.TYPE_CHECKING:
     from types import FrameType
 
 
+TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
@@ -236,7 +235,7 @@ def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
 
 def installed_redisai_backends(
     backends_path: t.Optional[str] = None,
-) -> t.Set[_TRedisAIBackendStr]:
+) -> t.Set[TRedisAIBackendStr]:
     """Check which ML backends are available for the RedisAI module.
 
     The optional argument ``backends_path`` is needed if the backends

@@ -33,7 +33,7 @@ from pathlib import Path
 import psutil
 
 from ...error import SSConfigError
-from ..utils.helpers import expand_exe_path
+from ..utils import expand_exe_path
 
 # Configuration Values
 #

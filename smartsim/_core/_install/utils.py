@@ -24,12 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import pathlib
 import shutil
 import tarfile
 import typing as t
 from urllib.request import urlretrieve
-import urllib.parse as urlparse
+from urllib.parse import urlparse
 import zipfile
 
 import git
@@ -48,12 +49,12 @@ class PackageRetriever():
     def _from_local_archive(
         source: _PathLike,
         destination: pathlib.Path,
-        **kwargs: t.Any
+        **kwargs: t.Any,
     ) -> None:
         if tarfile.is_tarfile(source):
             tarfile.open(source).extractall(path=destination, **kwargs)
         if zipfile.is_zipfile(source):
-            zipfile.open(source).extractall(path=destination, **kwargs)
+            zipfile.ZipFile(source).extractall(path=destination, **kwargs)
 
     @staticmethod
     def _from_local_directory(
@@ -68,11 +69,11 @@ class PackageRetriever():
         cls,
         source: _PathLike,
         destination: pathlib.Path,
-        **kwargs: t.Any
+        **kwargs: t.Any,
     ) -> None:
-        urlretrieve(source, destination, **kwargs)
-        cls.from_local_archive(destination, destination.parent)
-        destination.unlink()
+        local_file, _ = urlretrieve(source, **kwargs)
+        cls._from_local_archive(local_file, destination)
+        os.remove(local_file)
 
     @staticmethod
     def _from_git(source, destination, **clone_kwargs) -> None:
@@ -85,7 +86,7 @@ class PackageRetriever():
             )
         else:
             config_options = None
-        git.Repo(source).clone_from(
+        git.Repo.clone_from(
             source, destination, multi_options=config_options, **clone_kwargs
         )
 
@@ -94,10 +95,10 @@ class PackageRetriever():
         cls,
         source:_PathLike,
         destination: pathlib.Path,
-        retrieve_kwargs: t.Any
+        **retrieve_kwargs: t.Any
     ) -> None:
-        url_scheme = urlparse(source).scheme
-        if source.endswith(".git"):
+        url_scheme = urlparse(str(source)).scheme
+        if str(source).endswith(".git"):
             return cls._from_git(source, destination, **retrieve_kwargs)
         elif url_scheme == "http":
             return cls._from_http(source, destination, **retrieve_kwargs)
@@ -108,7 +109,7 @@ class PackageRetriever():
             if source_path.exists():
                 if source_path.is_dir():
                     return cls._from_local_directory(source, destination, **retrieve_kwargs)
-                elif source_path.is_file():
+                elif source_path.is_file() and source_path.suffix in (".gz", ".zip", ".tgz"):
                     return cls._from_local_archive(source, destination, **retrieve_kwargs)
                 else:
                     raise UnsupportedArchive(

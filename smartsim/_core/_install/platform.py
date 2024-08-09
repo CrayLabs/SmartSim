@@ -24,21 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import importlib.resources as pkg_resources
-from pydantic import HttpUrl
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
 
 import enum
 import json
 import os
 import pathlib
 import platform
-import textwrap
 import typing as t
+from typing_extensions import Self
 
 from .types import PathLike
 
-_PlatformType = t.TypeVar("_PlatformType", bound="Platform")
 
 class PlatformError(Exception):
     pass
@@ -46,7 +43,7 @@ class PlatformError(Exception):
 class UnsupportedError(PlatformError):
     pass
 
-class PathNotFoundError(PlatformError)
+class PathNotFoundError(PlatformError):
     pass
 
 class Architecture(enum.Enum):
@@ -83,28 +80,20 @@ class Device(enum.Enum):
 
     @classmethod
     def detect_cuda_version(cls) -> t.Optional[str]:
-        if cuda_path := pathlib.Path(os.environ.get("CUDATOOLKIT_HOME")):
+        if cuda_path := pathlib.Path(os.environ.get("CUDA_HOME")):
             with open(cuda_path / "version.json", "r") as f:
                 cuda_versions = json.load(f)
             major, minor = cuda_versions["cuda"]["version"].split(".")[0:2]
-            return cls.from_string(f"cuda-{major}.{minor}")
+            return cls.from_str(f"cuda-{major}.{minor}")
         return None
 
     @classmethod
     def detect_rocm_version(cls) -> t.Optional[str]:
         if rocm_path := pathlib.Path(os.environ.get("ROCM_HOME")):
             with open(rocm_path / ".info" / "version", "r") as f:
-                major, minor = f.readline().split(".")[0:2]
-            return cls.from_string(f"rocm-{major}.{minor}")
+                major, minor= f.readline().split("-")[0].split(".")
+            return cls.from_str(f"rocm-{major}.{minor}")
         return None
-
-    @classmethod
-    def autodetect(cls):
-        if device := cls.detect_cuda_version():
-            return device
-        if device := cls.detect_rocm_Version():
-            return device
-        return cls.CPU
 
     def is_gpu(self) -> bool:
         return self != type(self).CPU
@@ -115,7 +104,15 @@ class Device(enum.Enum):
 
     def is_rocm(self) -> bool:
         cls = type(self)
-        return self in (cls.ROCM57)
+        return self in (cls.ROCM57,)
+
+    @classmethod
+    def _cuda_enums(cls):
+        return (device for device in cls if "cuda" in device.value)
+
+    @classmethod
+    def _rocm_enums(cls):
+        return (device for device in cls if "rocm" in device.value)
 
 
 class OperatingSystem(enum.Enum):
@@ -141,7 +138,7 @@ class Platform:
     device: Device
 
     @classmethod
-    def from_str(cls, os: str, architecture: str, device: str) -> _Platform:
+    def from_str(cls, os: str, architecture: str, device: str) -> Self:
         return cls(
             OperatingSystem.from_str(os),
             Architecture.from_str(architecture),
@@ -155,67 +152,3 @@ class Platform:
             self.device.name,
         ]
         return "-".join(output)
-
-@dataclass
-class MLBackend:
-    name: str
-    version: str
-    pip_index: str
-    python_packages: t.List[str]
-    lib_source: t.Union[HttpUrl, _PathLike]
-
-    def set_custom_index(self, index: str):
-        self.pip_index = index
-
-    def set_lib_source(self, source: t.Union[HttpUrl, _PathLike]):
-        self.lib_source = source
-
-    def __repr__(self):
-        output = [
-            f"Name: {self.name}",
-            f"Version: {self.version}",
-            f"Source: {self.lib_source}",
-            "Python packages:",
-            textwrap.indent("\n".join(self.python_packages), "\t"),
-        ]
-        return "\n".join(output)
-
-
-@dataclass
-class PlatformDependencies:
-    platform: Platform
-    ml_backends: t.Dict[str, MLBackend]
-
-    @classmethod
-    def from_json_file(cls, json_file: _PathLike) -> _PlatformDependencies:
-        with open(json_file, "r") as f:
-            config_json = json.load(f)
-        platform = Platform.from_str(**config_json["platform"])
-        ml_backends = {
-            backend["name"]: MLBackend(**backend) for backend in config_json["ml_backends"]
-        }
-        return cls(platform, ml_backends)
-
-    def __repr__(self):
-        output = [
-            f"\nPlatform: {str(self.platform)}",
-            "ML Packages:",
-        ]
-        for backend in self.ml_backends.values():
-            output += [textwrap.indent(str(backend), "\t")]
-            output += ["\n"]
-
-        return "\n".join(output)
-
-
-def load_platforms(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformDependencies]:
-
-    configs = {}
-
-    for file in config_file_path.glob("*.json"):
-        dependencies = PlatformDependencies.from_json_file(file)
-        configs[dependencies.platform] = dependencies
-    return configs
-
-DEFAULT_PLATFORM_PATH = pkg_resources.files("smartsim") / "_core" / "_install" / "platforms"
-DEFAULT_PLATFORMS = load_platforms(DEFAULT_PLATFORM_PATH)

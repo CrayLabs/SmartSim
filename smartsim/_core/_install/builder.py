@@ -32,7 +32,7 @@ import re
 import shutil
 import stat
 import subprocess
-import typing as smartsim/_core/_install/builder.pyt
+import typing as t
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
@@ -40,36 +40,16 @@ from subprocess import SubprocessError
 if t.TYPE_CHECKING:
     from typing_extensions import Never
 
-from smartsim._core.config import CONFIG
 from smartsim._core._install.platform import OperatingSystem, Device, Architecture, Platform
 from smartsim._core._install.mlpackages import MLPackage
 from smartsim._core._install.utils import PackageRetriever
+from smartsim._core.utils import expand_exe_path
 
 # TODO: check cmake version and use system if possible to avoid conflicts
 
-TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 _PathLike = t.Union[str, "os.PathLike[str]"]
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
-
-
-def expand_exe_path(exe: str) -> str:
-    """Takes an executable and returns the full path to that executable
-
-    :param exe: executable or file
-    :raises TypeError: if file is not an executable
-    :raises FileNotFoundError: if executable cannot be found
-    """
-
-    # which returns none if not found
-    in_path = which(exe)
-    if not in_path:
-        if os.path.isfile(exe) and os.access(exe, os.X_OK):
-            return os.path.abspath(exe)
-        if os.path.isfile(exe) and not os.access(exe, os.X_OK):
-            raise TypeError(f"File, {exe}, is not an executable")
-        raise FileNotFoundError(f"Could not locate executable {exe}")
-    return os.path.abspath(in_path)
 
 
 class BuildError(Exception):

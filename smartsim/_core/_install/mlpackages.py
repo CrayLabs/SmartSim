@@ -31,7 +31,7 @@ import subprocess
 import sys
 import typing as t
 
-from pydantic import HttpUrl, BaseModel
+from dataclasses import dataclass
 
 from .types import PathLike
 from .utils import PackageRetriever
@@ -39,17 +39,18 @@ from .platform import Platform
 
 _PlatformPackages = t.TypeVar("_PlatformPackages", bound="PlatformPackages")
 
-class MLPackage(BaseModel):
+@dataclass
+class MLPackage():
     name: str
     version: str
     pip_index: str
-    packages: t.List[str]
-    lib_source: t.Union[HttpUrl, PathLike]
+    python_packages: t.List[str]
+    lib_source:PathLike
 
     def set_custom_index(self, index: str):
         self.pip_index = index
 
-    def set_lib_source(self, source: t.Union[HttpUrl, PathLike]):
+    def set_lib_source(self, source: PathLike):
         self.lib_source = source
 
     def retrieve(self, destination: PathLike):
@@ -62,29 +63,46 @@ class MLPackage(BaseModel):
         install_command += self.packages
         subprocess.check_call(install_command)
 
-class PlatformPackages(BaseModel):
+@dataclass
+class PlatformPackages():
     platform: Platform
     ml_packages: t.Dict[str, MLPackage]
 
     @classmethod
     def from_json_file(cls, json_file: PathLike) -> _PlatformPackages:
         with open(json_file, "r") as f:
-            config_json = json.load(json_file)
+            config_json = json.load(f)
         platform = Platform.from_str(**config_json["platform"])
         ml_packages = {
             ml_package["name"]:MLPackage(**ml_package) for ml_package in config_json["ml_packages"]
         }
         return cls(platform, ml_packages)
 
+    def __iter__(self):
+        return iter(self.ml_packages)
+
+    def __getitem__(self, key):
+        return self.ml_packages[key]
+
+    def values(self):
+        return self.ml_packages.values()
+
+    def items(self):
+        return self.ml_packages.items()
+
+    def keys(self):
+        return self.ml_packages.keys()
+
+
 def load_platform_configs(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformPackages]:
     configs = {}
-    for file in config_file_path.glob("*.json"):
-        dependencies = PlatformPackages.from_json_file(file)
+    for config_file in config_file_path.glob("*.json"):
+        dependencies = PlatformPackages.from_json_file(config_file)
         configs[dependencies.platform] = dependencies
     return configs
 
 DEFAULT_MLPACKAGE_PATH = pathlib.Path(
-    resources.files(
-        "smartsim._core._install.configs.mlpackages").as_file()
+    resources.path(
+        "smartsim._core._install.configs", "mlpackages")
     )
 DEFAULT_MLPACKAGES = load_platform_configs(DEFAULT_MLPACKAGE_PATH)

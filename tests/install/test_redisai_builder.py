@@ -24,13 +24,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .helpers import (
-    check_for_utility,
-    colorize,
-    delete_elements,
-    execute_platform_cmd,
-    installed_redisai_backends,
-    is_crayex_platform,
-    expand_exe_path
-)
-from .redis import check_cluster_status, create_cluster, db_is_active
+import pytest
+
+from smartsim._core._install.platform import Platform
+from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES
+from smartsim._core._install.redisaiBuilder import RedisAIBuilder
+from smartsim._core._install.utils import PackageRetriever
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
+def test_redisai_builder(monkeypatch, test_dir):
+    platform = Platform.from_str("linux", "x86_64", "cpu")
+    mlpackages = DEFAULT_MLPACKAGES[platform]
+    monkeypatch.setattr(PackageRetriever, "retrieve", lambda *args, **kwargs: None)
+    builder = RedisAIBuilder(platform, mlpackages)
+
+    builder.run_command = lambda *args, **kwargs: print(args)
+    builder.build()
+
+    assert builder.build_torch
+    assert builder.build_tensorflow
+    assert builder.build_onnxruntime

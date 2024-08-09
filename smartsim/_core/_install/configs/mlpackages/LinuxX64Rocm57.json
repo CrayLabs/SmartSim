@@ -4,12 +4,12 @@
         "architecture":"x86_64",
         "device":"rocm-5.7"
     },
-    "ml_backends": [
+    "ml_packages": [
         {
             "name": "dlpack",
             "version": "v0.5_RAI",
             "pip_index": "",
-            "packages": [],
+            "python_packages": [],
             "lib_source": "https://github.com/RedisAI/dlpack.git"
         },
         {
