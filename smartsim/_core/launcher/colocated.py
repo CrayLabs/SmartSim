@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+def colocated_settings():
+    return None
 
 def write_colocated_launch_script(file_name: str) -> None:
     """Write the colocated launch script
