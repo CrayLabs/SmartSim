@@ -205,7 +205,7 @@ class DragonBackend:
 
     # todo: remove
     @property
-    def allocated_hosts(self) -> dict[str, str]:
+    def allocated_hosts(self) -> dict[str, t.Set[str]]:
         """A map of host names to the step id executing on a host
 
         :returns: Dictionary with host name as key and step id as value"""
@@ -240,9 +240,7 @@ class DragonBackend:
             """List of cpu-count by node"""
             self._gpus = [node.num_gpus for node in self._nodes]
             """List of gpu-count by node"""
-            # NOTE: self._allocated_hosts does NOT support tracking colocated items
-            # and it must be converted into a list of step IDs in the future. Now?
-            self._allocated_hosts: t.Dict[str, str] = {}  # todo: rename to _host_tasks?
+            self._allocated_hosts: t.Dict[str, t.Set[str]] = collections.defaultdict(set)
             """Mapping of hosts to an assigned, running step ID"""
             self._ref_map: t.Dict[str, _NodeRefCount] = {}
             """Map node names to a ref counter for direct access"""
@@ -456,12 +454,12 @@ class DragonBackend:
                 hosts = [host for host in request.hostlist.split(",") if host]
 
             if hosts:
-                nodes = self._prioritizer.next_n_from(num_hosts, hosts)
+                nodes = self._prioritizer.next_n_from(num_hosts, hosts, step_id)
             else:
                 filter_on: t.Optional[PrioritizerFilter] = None
                 if request.policy and request.policy.gpu_affinity:
                     filter_on = PrioritizerFilter.GPU
-                nodes = self._prioritizer.next_n(num_hosts, filter_on)
+                nodes = self._prioritizer.next_n(num_hosts, filter_on, step_id)
 
             if len(nodes) < num_hosts:
                 # exit if the prioritizer can't identify enough nodes
@@ -469,8 +467,9 @@ class DragonBackend:
 
             to_allocate = [node.hostname for node in nodes]
             # track assigning this step to each node
+
             for hostname in to_allocate:
-                self._allocated_hosts[hostname] = step_id
+                self._allocated_hosts[hostname].add(step_id)
 
             return to_allocate
 
@@ -750,6 +749,10 @@ class DragonBackend:
             if terminated:
                 logger.debug(f"{terminated=}")
 
+            # remove all the terminated steps from all hosts
+            for host in list(self._allocated_hosts.keys()):
+                self._allocated_hosts[host].difference_update(set(terminated))
+
             for step_id in terminated:
                 self._running_steps.remove(step_id)
                 self._completed_steps.append(step_id)
@@ -758,10 +761,12 @@ class DragonBackend:
                     for host in group_info.hosts:
                         logger.debug(f"Releasing host {host}")
                         try:
-                            self._allocated_hosts.pop(host)  # todo: remove?
+                            # stop tracking any host no longer running steps
+                            if not self._allocated_hosts[host]:
+                                self._allocated_hosts.pop(host)
                         except KeyError:
                             logger.error(f"Tried to free a non-allocated host: {host}")
-                        self._prioritizer.decrement(host)
+                        self._prioritizer.decrement(host, step_id)
                     group_info.process_group = None
                     group_info.redir_workers = None
 

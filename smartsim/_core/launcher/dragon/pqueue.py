@@ -268,23 +268,34 @@ class NodePrioritizer:
 
         return nodes_tracking_info
 
-    def next_from(self, hosts: t.List[str]) -> t.Optional[Node]:
+    def next_from(
+        self,
+        hosts: t.List[str],
+        tracking_id: t.Optional[str] = None,
+    ) -> t.Optional[Node]:
         """Return the next node available given a set of desired hosts
 
         :param hosts: a list of hostnames used to filter the available nodes
+        :param tracking_id: (optional) unique task identifier to track
         :returns: a list of assigned reference counters
         :raises ValueError: if no host names are provided"""
         if not hosts or len(hosts) == 0:
             raise ValueError("No host names provided")
 
         sub_heap = self._create_sub_heap(hosts)
-        return self._get_next_available_node(sub_heap)
+        return self._get_next_available_node(sub_heap, tracking_id)
 
-    def next_n_from(self, num_items: int, hosts: t.List[str]) -> t.Sequence[Node]:
+    def next_n_from(
+        self,
+        num_items: int,
+        hosts: t.List[str],
+        tracking_id: t.Optional[str] = None,
+    ) -> t.Sequence[Node]:
         """Return the next N available nodes given a set of desired hosts
 
         :param num_items: the desired number of nodes to allocate
         :param hosts: a list of hostnames used to filter the available nodes
+        :param tracking_id: (optional) unique task identifier to track
         :returns: a list of reference counts
         :raises ValueError: if no host names are provided"""
         if not hosts or len(hosts) == 0:
@@ -294,7 +305,7 @@ class NodePrioritizer:
             raise ValueError(f"Number of items requested {num_items} is invalid")
 
         sub_heap = self._create_sub_heap(hosts)
-        return self._get_next_n_available_nodes(num_items, sub_heap)
+        return self._get_next_n_available_nodes(num_items, sub_heap, tracking_id)
 
     def unassigned(
         self, heap: t.Optional[t.List[_TrackedNode]] = None
@@ -368,7 +379,7 @@ class NodePrioritizer:
         the priority structure before being made available
 
         :param heap: (optional) a subset of the node heap to consider
-        :param tracking_id: (optional) unique task identifier to remove
+        :param tracking_id: (optional) unique task identifier to track
         :returns: a reference counter for an available node if an unassigned node
         exists, `None` otherwise"""
         tracking_info: t.Optional[_TrackedNode] = None
@@ -411,6 +422,7 @@ class NodePrioritizer:
 
         :param num_items: number of nodes to reserve
         :param heap: (optional) a subset of the node heap to consider
+        :param tracking_id: (optional) unique task identifier to track
         :returns: a list of reference counters for a available nodes if enough
         unassigned nodes exists, `None` otherwise
         :raises ValueError: if the number of requested nodes is not a positive integer
@@ -447,15 +459,20 @@ class NodePrioritizer:
 
         return self._all_refs()
 
-    def next(self, filter_on: t.Optional[PrioritizerFilter] = None) -> t.Optional[Node]:
+    def next(
+        self,
+        filter_on: t.Optional[PrioritizerFilter] = None,
+        tracking_id: t.Optional[str] = None,
+    ) -> t.Optional[Node]:
         """Find the next node available w/least amount of references using
         the supplied filter to target a specific node capability
 
         :param filter_on: the subset of nodes to query for available nodes
+        :param tracking_id: (optional) unique task identifier to track
         :returns: a reference counter for an available node if an unassigned node
         exists, `None` otherwise"""
         heap = self._get_filtered_heap(filter_on)
-        return self._get_next_available_node(heap)
+        return self._get_next_available_node(heap, tracking_id)
 
     def next_n(
         self,
@@ -468,6 +485,7 @@ class NodePrioritizer:
 
         :param num_items: number of nodes to reserve
         :param filter_on: the subset of nodes to query for available nodes
+        :param tracking_id: (optional) unique task identifier to track
         :returns: Collection of reserved nodes"""
         heap = self._get_filtered_heap(filter_on)
         return self._get_next_n_available_nodes(num_items, heap, tracking_id)
