@@ -101,6 +101,7 @@ class Service(ABC):
     def _signals(self) -> t.List[int]:
         """Return the list of signals to register a signal handler for"""
         logger.debug(f"No signal handlers registered for {self.__class__.__name__}")
+        return []
 
     def _register_handlers(self) -> None:
         """Registers a signal handler for all signals specified in the
