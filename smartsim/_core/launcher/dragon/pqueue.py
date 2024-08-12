@@ -28,7 +28,6 @@ import enum
 import heapq
 import threading
 import typing as t
-from dataclasses import dataclass, field
 
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
@@ -36,27 +35,43 @@ from smartsim.log import get_logger
 logger = get_logger(__name__)
 
 
-@dataclass(frozen=True)
-class _Node:
-    """Contains information on the capabilities supported by a node"""
+class Node(t.Protocol):
+    """Base Node API required to support the NodePrioritizer"""
 
-    hostname: str
-    """The hostname of this node"""
-    num_cpus: int
-    """The number of CPUs available on this node"""
-    num_gpus: int
-    """The number of GPUs available on this node"""
+    @property
+    def hostname(self) -> str:
+        """The hostname of the node"""
+
+    @property
+    def num_cpus(self) -> int:
+        """The number of CPUs in the node"""
+
+    @property
+    def num_gpus(self) -> int:
+        """The number of GPUs in the node"""
+
+
+class NodeReferenceCount(t.Protocol):
+    """Contains details pertaining to references to a node"""
+
+    @property
+    def hostname(self) -> str:
+        """The hostname of the node"""
+
+    @property
+    def num_refs(self) -> int:
+        """The number of jobs assigned to the node"""
 
 
 class _TrackedNode:
     """Node API required to have support in the NodePrioritizer"""
 
-    def __init__(self, node: _Node) -> None:
+    def __init__(self, node: Node) -> None:
         self._node = node
         """The node being tracked"""
         self._num_refs = 0
         """The number of references to the tracked node"""
-        self._tracking: t.Set[str] = set()
+        self._assigned_tasks: t.Set[str] = set()
         """The unique identifiers of processes using this node"""
         self._is_dirty = False
         """Flag indicating that tracking information has been modified"""
@@ -87,9 +102,9 @@ class _TrackedNode:
         return self._num_refs > 0
 
     @property
-    def tracking(self) -> t.Set[str]:
+    def assigned_tasks(self) -> t.Set[str]:
         """The set of currently running processes of the node"""
-        return self._tracking
+        return self._assigned_tasks
 
     @property
     def is_dirty(self) -> bool:
@@ -104,16 +119,16 @@ class _TrackedNode:
         self,
         tracking_id: t.Optional[str] = None,
     ) -> None:
-        """Modify the node as needed to track the removal of a process
+        """Modify the node as needed to track the addition of a process
 
         :param tracking_id: (optional) a unique task identifier executing on the node
         to add"""
-        if tracking_id in self.tracking:
+        if tracking_id in self.assigned_tasks:
             raise ValueError("Attempted adding task more than once")
 
         self._num_refs = self._num_refs + 1
         if tracking_id:
-            self.tracking = self.tracking.union({tracking_id})
+            self._assigned_tasks = self._assigned_tasks.union({tracking_id})
         self._is_dirty = True
 
     def remove(
@@ -124,12 +139,12 @@ class _TrackedNode:
 
         :param tracking_id: (optional) a unique task identifier executing on the node
         to remove"""
-        if tracking_id and tracking_id not in self.tracking:
+        if tracking_id and tracking_id not in self.assigned_tasks:
             raise ValueError("Attempted removal of untracked item")
 
         self._num_refs = max(self._num_refs - 1, 0)
         if tracking_id:
-            self._tracking = self._tracking - {tracking_id}
+            self._assigned_tasks = self._assigned_tasks - {tracking_id}
         self._is_dirty = True
 
     def __lt__(self, other: "_TrackedNode") -> bool:
@@ -148,26 +163,6 @@ class PrioritizerFilter(str, enum.Enum):
 
     CPU = enum.auto()
     GPU = enum.auto()
-
-
-class Node(t.Protocol):
-    """Base Node API required to support the NodePrioritizer"""
-
-    hostname: str
-    """The hostname of the node"""
-    num_cpus: int
-    """The number of CPUs in the node"""
-    num_gpus: int
-    """The number of GPUs in the node"""
-
-
-class NodeReferenceCount(t.Protocol):
-    """Contains details pertaining to references to a node"""
-
-    hostname: str
-    """The hostname of the node"""
-    num_refs: int
-    """The number of jobs assigned to the node"""
 
 
 class NodePrioritizer:
@@ -311,7 +306,7 @@ class NodePrioritizer:
         if heap is None:
             heap = list(self._nodes.values())
 
-        nodes: t.List[Node] = []
+        nodes: t.List[_TrackedNode] = []
         for item in heap:
             if item.num_refs == 0:
                 nodes.append(item)
@@ -327,7 +322,7 @@ class NodePrioritizer:
         if heap is None:
             heap = list(self._nodes.values())
 
-        nodes: t.List[Node] = []
+        nodes: t.List[_TrackedNode] = []
         for item in heap:
             if item.num_refs == 1:
                 nodes.append(item)
@@ -447,7 +442,7 @@ class NodePrioritizer:
         filter is supplied, all nodes are returned"""
         if filter_on == PrioritizerFilter.GPU:
             return self._gpu_refs
-        elif filter_on == PrioritizerFilter.CPU:
+        if filter_on == PrioritizerFilter.CPU:
             return self._cpu_refs
 
         return self._all_refs()
