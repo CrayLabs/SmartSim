@@ -89,9 +89,11 @@ def setup_worker_manager_model_bytes(
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv(
+        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
     worker_manager = WorkerManager(
         EnvironmentConfigLoader(
@@ -127,9 +129,11 @@ def setup_worker_manager_model_key(
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv(
+        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
     worker_manager = WorkerManager(
         EnvironmentConfigLoader(
