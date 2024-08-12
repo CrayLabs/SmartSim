@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import signal
 import time
 import typing as t
 from abc import ABC, abstractmethod
@@ -94,10 +95,24 @@ class Service(ABC):
         else:
             logger.info(f"exceeded cooldown {self._cooldown}s by {abs(remaining):.2f}s")
 
+    def _on_signal(self, signo: int, frame: t.Any) -> None:
+        logger.warning(f"Signal {signo} has been received")
+
+    def _signals(self) -> t.List[int]:
+        """Return the list of signals to register a signal handler for"""
+        logger.debug(f"No signal handlers registered for {self.__class__.__name__}")
+
+    def _register_handlers(self) -> None:
+        """Registers a signal handler for all signals specified in the
+        return value of `_signals`"""
+        for sig in self._signals():
+            signal.signal(sig, self._on_signal)
+
     def execute(self) -> None:
         """The main event loop of a service host. Evaluates shutdown criteria and
         combines with a cooldown period to allow automatic service termination.
         Responsible for executing calls to subclass implementation of `_on_iteration`"""
+        self._register_handlers()
         self._on_start()
 
         running = True
