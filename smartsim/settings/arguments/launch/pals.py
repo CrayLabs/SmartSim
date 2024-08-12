@@ -36,7 +36,7 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_pals_command = make_shell_format_fn(run_command="mpiexec")
+_as_pals_command = make_shell_format_fn(run_command="mpiexec", out_flag="hold", err_flag="hold")
 
 
 @dispatch(with_format=_as_pals_command, to_launcher=ShellLauncher)

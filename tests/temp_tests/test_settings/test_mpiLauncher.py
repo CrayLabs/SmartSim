@@ -286,6 +286,11 @@ def test_invalid_hostlist_format(launcher):
 def test_formatting_launch_args(
     mock_echo_executable, cls, fmt, cmd, args, expected, test_dir
 ):
-    path, fmt_cmd = fmt(cls(args), mock_echo_executable, test_dir, {})
+    outfile = "out.txt"
+    errfile = "err.txt"
+    env, path, stdin, stdout, fmt_cmd = fmt(cls(args), mock_echo_executable, test_dir, {}, outfile, errfile)
     assert tuple(fmt_cmd) == (cmd,) + expected
     assert path == test_dir
+    assert env == {}
+    assert stdin == f"hold={outfile}"
+    assert stdout == f"hold={errfile}"

@@ -36,7 +36,7 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_jsrun_command = make_shell_format_fn(run_command="jsrun")
+_as_jsrun_command = make_shell_format_fn(run_command="jsrun", out_flag="--stdio_stdout", err_flag="--stdio_stderr")
 
 
 @dispatch(with_format=_as_jsrun_command, to_launcher=ShellLauncher)

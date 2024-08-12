@@ -71,6 +71,12 @@ class Generator:
         :returns: Path to file with parameter settings
         """
         return pathlib.Path(log_path) / "smartsim_params.txt"
+    
+    def output_files(self, log_path: os.PathLike[str], job_name: str) -> None:
+        out_file_path = log_path / (job_name + ".out")
+        err_file_path = log_path / (job_name + ".err")
+        return out_file_path, err_file_path
+    
 
     def generate_job(
         self, job: Job, job_path: os.PathLike[str], log_path: os.PathLike[str]
@@ -96,9 +102,23 @@ class Generator:
         with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
+        
+        # Create output files
+        out_file, err_file = self.output_files(log_path, job.entity.name)
+        
+        # Open and write to .out file
+        with open(out_file, mode="w", encoding="utf-8") as log_file:
+            dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            log_file.write(f"Generation start date and time: {dt_string}\n")
 
+        # Open and write to .err file
+        with open(err_file, mode="w", encoding="utf-8") as log_file:
+            dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            log_file.write(f"Generation start date and time: {dt_string}\n")
+    
         # Perform file system operations on attached files
         self._build_operations(job, job_path)
+        return out_file, err_file
 
     def _build_operations(self, job: Job, job_path: os.PathLike[str]) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
@@ -124,7 +144,6 @@ class Generator:
         # Return if no files are attached
         if files is None:
             return
-        print(f"type is defined as: {type(files)}")
         for src in files.copy:
             if os.path.isdir(src):
                 # Remove basename of source

@@ -132,8 +132,13 @@ def test_invalid_hostlist_format():
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
-    path, cmd = _as_pals_command(
-        PalsMpiexecLaunchArguments(args), mock_echo_executable, test_dir, {}
+    outfile = "out.txt"
+    errfile = "err.txt"
+    env, path, stdin, stdout, args = _as_pals_command(
+        PalsMpiexecLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
     )
-    assert tuple(cmd) == expected
+    assert tuple(args) == expected
     assert path == test_dir
+    assert env == {}
+    assert stdin == f"hold={outfile}"
+    assert stdout == f"hold={errfile}"

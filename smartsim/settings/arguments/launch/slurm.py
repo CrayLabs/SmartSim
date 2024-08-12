@@ -38,7 +38,7 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_srun_command = make_shell_format_fn(run_command="srun")
+_as_srun_command = make_shell_format_fn(run_command="srun", out_flag="--output", err_flag="--error")
 
 
 @dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)

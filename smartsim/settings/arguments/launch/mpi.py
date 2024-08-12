@@ -36,9 +36,9 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_mpirun_command = make_shell_format_fn("mpirun")
-_as_mpiexec_command = make_shell_format_fn("mpiexec")
-_as_orterun_command = make_shell_format_fn("orterun")
+_as_mpirun_command = make_shell_format_fn("mpirun", out_flag="hold", err_flag="hold")
+_as_mpiexec_command = make_shell_format_fn("mpiexec", out_flag="hold", err_flag="hold")
+_as_orterun_command = make_shell_format_fn("orterun", out_flag="hold", err_flag="hold")
 
 
 class _BaseMPILaunchArguments(LaunchArguments):

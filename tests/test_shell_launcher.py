@@ -28,7 +28,10 @@ import tempfile
 import unittest.mock
 import pytest
 import time
+import pathlib
 import weakref
+import datetime
+import subprocess
 from smartsim.entity import _mock, entity, Application
 from smartsim import Experiment
 from smartsim.settings import LaunchSettings
@@ -36,7 +39,8 @@ from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,
     _as_srun_command,
 )
-from smartsim.settings.dispatch import sp as dsp
+from smartsim._core.utils import helpers
+from smartsim.settings.dispatch import sp
 from smartsim.settings.dispatch import ShellLauncher
 from smartsim.settings.launchCommand import LauncherType
 from smartsim.launchable import Job
@@ -56,6 +60,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
         self._finalizer = weakref.finalize(self, path.cleanup)
         super().__init__("test-entity", _mock.Mock())
         self.files = Files()
+        self.params = {}
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -63,30 +68,14 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
         return self.as_program_arguments() == other.as_program_arguments()
 
     def as_program_arguments(self):
-        return ("/usr/bin/echo", "Hello", "World!")
-        #return ("/usr/bin/sleep", "10")
+        return (helpers.expand_exe_path("echo"), "Hello", "World!")
 
 class Files():
+    """Represents a collection of files with different attrs for Mock entity"""
     def __init__(self):
         self.copy = []
         self.link = []
         self.tagged = []
-        
-
-# what is the success criteria
-def test_shell_as_py(capsys):
-    # a unit test should init the obj bc testing that unit of code
-    launcher = ShellLauncher() # should be testing the method level
-    # avoid rep
-    expected_output = "hello"
-    launcher.start((["echo", expected_output], "/tmp")) # use time.sleep(0.1) -> we do not need sleep in other places
-    captured = capsys.readouterr()
-    output = captured.out
-    assert expected_output in captured.out
-    # do not need to build exact str, but can just have multiple assert
-    # verify echo hello
-    # make a separate test for stdout and stdin -> that test only verifies one component
-    # tests should do as little as possible, reduce number of constraints
     
 
 # popen returns a non 0 when an error occurs, so test invalid path
@@ -104,44 +93,78 @@ def test_shell_launcher_init():
     # Assert that private attribute is expected value
     assert shell_launcher._launched == {}
 
-# test that the process leading up to the shell launcher was corrected, integration test
-# my test is identifying the change in the code
-def test_shell_launcher_calls_popen(test_dir: str, monkeypatch: pytest.MonkeyPatch):
-    # monkeypatch the popen
-    # create a Mock popen object
-    # def my_mock_popen(*args, **kwargs):
-    #     print("foo")
-    # no longer care about the internals, only want to know that the process up to it was currect
-    mock_popen_obj = unittest.mock.MagicMock()
-    with monkeypatch.context() as ctx:
-        ctx.setattr(dsp, "Popen", mock_popen_obj)
-    
-    # mock2 = unittest.mock.MagicMock(return_value=0) # same as monkeypatch - implements getproperty or API that looks for a unknown prop on an obj
-    # mock3 = unittest.mock.MagicMock()
-    # # Avoid actual network request
-    # mock3.Popen = mock2
-    # mock3.return_value = mock2
-    env_vars = {
-        "LOGGING": "verbose",
-    }
-    slurm_settings = LaunchSettings(launcher=LauncherType.Slurm, env_vars=env_vars)
-    slurm_settings.launch_args.set_nodes(1)
-    job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=slurm_settings)
+
+def test_shell_launcher_calls_popen(test_dir: str):
+    """Test that the process leading up to the shell launcher popen call was corrected"""
+    job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    # can validate id here -> could build another mock that ensures that 22 is the pid
-    id = exp.start(job)
-    # mock2.assert_called_once_with(
-    #     ('/usr/bin/srun', '--nodes=1', '--', '/usr/bin/echo', 'Hello', 'World!'),
-    #     cwd=unittest.mock.ANY,
-    #     env={},
-    #     stdin=None,
-    #     stdout=None
-    # )
-    # mock_popen_obj.assert_called()
-    #mock3.assert_called_with() # the process executed the correct launcher
-    # write something that makes sure the job has completed b4 the test exits
-    print(id)
-    #time.sleep(5) # TODO remove once blocking is added
-    # asyn = concurrent, not happening in another thread, not happening somewhere else
-    # focus on async io in python, make sure that anything that is io bound is async
-    
+    # Setup mock for Popen class from the smartsim.settings.dispatch.sp module
+    # to temporarily replace the actual Popen class with a mock version
+    with unittest.mock.patch("smartsim.settings.dispatch.sp.Popen") as mock_open:
+        # Assign a mock value of 12345 to the process id attr of the mocked Popen object
+        mock_open.pid = unittest.mock.MagicMock(return_value=12345)
+        # Assign a mock return value of 0 to the returncode attr of the mocked Popen object
+        mock_open.returncode = unittest.mock.MagicMock(return_value=0)
+        # Execute Experiment.start
+        _ = exp.start(job)
+        # Assert that the mock_open object was called during the execution of the Experiment.start
+        mock_open.assert_called_once()
+
+def test_shell_launcher_calls_popen_with_value(test_dir: str):
+    """Test that popen was called with correct types"""
+    job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    # Setup mock for Popen class from the smartsim.settings.dispatch.sp module
+    # to temporarily replace the actual Popen class with a mock version
+    with unittest.mock.patch("smartsim.settings.dispatch.sp.Popen") as mock_open:
+        # Assign a mock value of 12345 to the pid attr of the mocked Popen object
+        mock_open.pid = unittest.mock.MagicMock(return_value=12345)
+        # Assign a mock return value of 0 to the returncode attr of the mocked Popen object
+        mock_open.returncode = unittest.mock.MagicMock(return_value=0)
+        _ = exp.start(job)
+        # Assert that the mock_open object was called during the execution of the Experiment.start with value
+        mock_open.assert_called_once_with(
+            (helpers.expand_exe_path("srun"), '--', helpers.expand_exe_path("echo"), 'Hello', 'World!'),
+            cwd=unittest.mock.ANY,
+            env={},
+            stdin=unittest.mock.ANY,
+            stdout=unittest.mock.ANY,
+        )
+
+def test_this(test_dir: str):
+    """Test that popen was called with correct types"""
+    job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    _ = exp.start(job)
+
+
+
+
+
+
+
+
+
+
+
+
+# write something that makes sure the job has completed b4 the test exits
+# print(id)
+#time.sleep(5) # TODO remove once blocking is added
+# asyn = concurrent, not happening in another thread, not happening somewhere else
+# focus on async io in python, make sure that anything that is io bound is async
+
+# what is the success criteria
+# def test_shell_as_py(capsys):
+#     # a unit test should init the obj bc testing that unit of code
+#     launcher = ShellLauncher() # should be testing the method level
+#     # avoid rep
+#     expected_output = "hello"
+#     launcher.start((["echo", expected_output], "/tmp")) # use time.sleep(0.1) -> we do not need sleep in other places
+#     captured = capsys.readouterr()
+#     output = captured.out
+#     assert expected_output in captured.out
+    # do not need to build exact str, but can just have multiple assert
+    # verify echo hello
+    # make a separate test for stdout and stdin -> that test only verifies one component
+    # tests should do as little as possible, reduce number of constraints

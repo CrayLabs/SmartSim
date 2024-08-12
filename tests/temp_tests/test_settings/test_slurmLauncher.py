@@ -317,8 +317,13 @@ def test_set_het_groups(monkeypatch):
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
-    path, cmd = _as_srun_command(
-        SlurmLaunchArguments(args), mock_echo_executable, test_dir, {}
+    outfile = "out.txt"
+    errfile = "err.txt"
+    env, path, stdin, stdout, args = _as_srun_command(
+        SlurmLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
     )
-    assert tuple(cmd) == expected
+    assert tuple(args) == expected
     assert path == test_dir
+    assert env == {}
+    assert stdin == f"--output={outfile}"
+    assert stdout == f"--error={errfile}"

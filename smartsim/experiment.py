@@ -157,7 +157,6 @@ class Experiment:
             exp_path = osp.abspath(exp_path)
         else:
             exp_path = osp.join(getcwd(), name)
-        print("got here")
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
@@ -236,8 +235,8 @@ class Experiment:
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
             # Generate the job directory and return the generated job path
-            job_execution_path = self._generate(generator, job, idx)
-            return launch_config.start(exe, job_execution_path, env)
+            job_execution_path, out, err = self._generate(generator, job, idx)
+            return launch_config.start(exe, job_execution_path, env, out, err)
 
         return execute_dispatch(generator, job, 0), *(
             execute_dispatch(generator, job, idx) for idx, job in enumerate(jobs, 1)
@@ -268,8 +267,8 @@ class Experiment:
         # Generate ../job_name/log directory
         log_path = self._generate_log_path(job, job_index, generator.root)
         try:
-            generator.generate_job(job, job_path, log_path)
-            return job_path
+            out, err = generator.generate_job(job, job_path, log_path)
+            return job_path, out, err
         except SmartSimError as e:
             logger.error(e)
             raise

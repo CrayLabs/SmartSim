@@ -49,6 +49,16 @@ def test_log_file_path(generator_instance):
     assert generator_instance.log_file(base_path) == pathlib.Path(expected_path)
 
 
+def test_output_files(generator_instance):
+    """Test if the log_file function returns the correct log path."""
+    log_path = pathlib.Path("/tmp")
+    expected_out_path = osp.join(log_path, "name.out")
+    expected_err_path = osp.join(log_path, "name.err")
+    out, err = generator_instance.output_files(log_path, "name")
+    assert out == pathlib.Path(expected_out_path)
+    assert err == pathlib.Path(expected_err_path)
+
+
 def test_generate_job_directory(wlmutils, generator_instance):
     """Test Generator.generate_job"""
     # Create Job
@@ -75,7 +85,10 @@ def test_generate_job_directory(wlmutils, generator_instance):
     with open(log_path / "smartsim_params.txt", "r") as file:
         content = file.read()
         assert "Generation start date and time:" in content
-
+    expected_out_path = osp.join(log_path, (job.entity.name + ".out"))
+    expected_err_path = osp.join(log_path, (job.entity.name + ".err"))
+    assert osp.isfile(expected_out_path)
+    assert osp.isfile(expected_err_path)
 
 def test_exp_private_generate_method(wlmutils, test_dir, generator_instance):
     """Test that Job directory was created from Experiment._generate."""

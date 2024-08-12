@@ -120,8 +120,13 @@ def test_launch_args():
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
-    path, cmd = _as_jsrun_command(
-        JsrunLaunchArguments(args), mock_echo_executable, test_dir, {}
+    outfile = "out.txt"
+    errfile = "err.txt"
+    env, path, stdin, stdout, args = _as_jsrun_command(
+        JsrunLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
     )
-    assert tuple(cmd) == expected
+    assert tuple(args) == expected
     assert path == test_dir
+    assert env == {}
+    assert stdin == f"--stdio_stdout={outfile}"
+    assert stdout == f"--stdio_stderr={errfile}"

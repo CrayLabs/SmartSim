@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
+from subprocess import PIPE
 
 import typing as t
 
@@ -36,7 +37,7 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_local_command = make_shell_format_fn(run_command=None)
+_as_local_command = make_shell_format_fn(run_command=None, out_flag="hold", err_flag="hold")
 
 
 @dispatch(with_format=_as_local_command, to_launcher=ShellLauncher)
