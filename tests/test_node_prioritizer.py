@@ -41,10 +41,10 @@ logger = get_logger(__name__)
 
 
 class MockNode:
-    def __init__(self, num_cpus: int, num_gpus: int, hostname: str) -> None:
+    def __init__(self, hostname: str, num_cpus: int, num_gpus: int) -> None:
+        self.hostname = hostname
         self.num_cpus = num_cpus
         self.num_gpus = num_gpus
-        self.hostname = hostname
 
 
 def mock_node_hosts(
@@ -60,8 +60,8 @@ def mock_node_builder(num_cpu_nodes: int, num_gpu_nodes: int) -> t.List[MockNode
     nodes = []
     cpu_hosts, gpu_hosts = mock_node_hosts(num_cpu_nodes, num_gpu_nodes)
 
-    nodes.extend(MockNode(4, 0, hostname) for hostname in cpu_hosts)
-    nodes.extend(MockNode(4, 4, hostname) for hostname in gpu_hosts)
+    nodes.extend(MockNode(hostname, 4, 0) for hostname in cpu_hosts)
+    nodes.extend(MockNode(hostname, 4, 4) for hostname in gpu_hosts)
 
     return nodes
 
@@ -114,7 +114,7 @@ def test_node_prioritizer_init_ok(num_cpu_nodes: int, num_gpu_nodes: int) -> Non
         assert tracking_info.num_refs == 0
 
         # show that the node is created and marked as not dirty (unchanged)
-        # assert tracking_info.dirty == False
+        # assert tracking_info.is_dirty == False
 
     # iterate through known cpu node keys and verify prioritizer initialization
     for hostname in cpu_hosts:
@@ -215,7 +215,7 @@ def test_node_prioritizer_indirect_increment() -> None:
         assert tracking_info.num_refs > 0  # <--- ref count should now be > 0
 
         # we expect it to give back only "clean" nodes from next*
-        assert tracking_info.dirty == False  # NOTE: this is "hidden" by protocol
+        assert tracking_info.is_dirty == False  # NOTE: this is "hidden" by protocol
 
     # every node should be incremented now. prioritizer shouldn't have anything to give
     tracking_info = p.next(PrioritizerFilter.CPU)
@@ -271,9 +271,14 @@ def test_node_prioritizer_multi_increment() -> None:
     # use next_n w/the minimum allowed value
     all_tracking_info = p.next_n(1, PrioritizerFilter.CPU)  # <---- next_n(1)
 
-    # confirm the number requested is honored and the expected node is returned
+    # confirm the number requested is honored
     assert len(all_tracking_info) == 1
-    assert all_tracking_info[0].hostname == cpu_hosts[1]
+    # ensure no unavailable node is returned
+    assert all_tracking_info[0].hostname not in [
+        cpu_hosts[0],
+        cpu_hosts[2],
+        cpu_hosts[4],
+    ]
 
     # use next_n w/value that exceeds available number of open nodes
     # 3 direct increments in setup, 1 out of next_n(1), 4 left
