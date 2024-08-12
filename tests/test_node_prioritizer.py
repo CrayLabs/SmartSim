@@ -400,7 +400,7 @@ def test_node_prioritizer_decrement_floor() -> None:
 
 @pytest.mark.parametrize("num_requested", [1, 2, 3])
 def test_node_prioritizer_multi_increment_subheap(num_requested: int) -> None:
-    """Verify that retrieving multiple nodes via `next_n_from` API correctly
+    """Verify that retrieving multiple nodes via `next_n` API correctly
     increments reference counts and returns appropriate results
     when requesting an in-bounds number of nodes"""
 
@@ -419,9 +419,9 @@ def test_node_prioritizer_multi_increment_subheap(num_requested: int) -> None:
     hostnames = [cpu_hosts[0], cpu_hosts[1], cpu_hosts[2], cpu_hosts[3], cpu_hosts[5]]
 
     # request n == {num_requested} nodes from set of 3 available
-    all_tracking_info = p.next_n_from(
+    all_tracking_info = p.next_n(
         num_requested,
-        hostnames,
+        hosts=hostnames,
     )  # <---- w/0,2,4 assigned, only 1,3,5 from hostnames can work
 
     # all parameterizations should result in a matching output size
@@ -429,7 +429,7 @@ def test_node_prioritizer_multi_increment_subheap(num_requested: int) -> None:
 
 
 def test_node_prioritizer_multi_increment_subheap_assigned() -> None:
-    """Verify that retrieving multiple nodes via `next_n_from` API does
+    """Verify that retrieving multiple nodes via `next_n` API does
     not return anything when the number requested cannot be satisfied
     by the given subheap due to prior assignment"""
 
@@ -451,14 +451,14 @@ def test_node_prioritizer_multi_increment_subheap_assigned() -> None:
 
     # request n == {num_requested} nodes from set of 3 available
     num_requested = 2
-    all_tracking_info = p.next_n_from(num_requested, hostnames)
+    all_tracking_info = p.next_n(num_requested, hosts=hostnames)
 
     # w/0,2 assigned, nothing can be returned
     assert len(all_tracking_info) == 0
 
 
-def test_node_prioritizer_empty_subheap_next_from() -> None:
-    """Verify that retrieving multiple nodes via `next_n_from` API does
+def test_node_prioritizer_empty_subheap_next_w_hosts() -> None:
+    """Verify that retrieving multiple nodes via `next_n` API does
     not allow an empty host list"""
 
     num_cpu_nodes, num_gpu_nodes = 8, 0
@@ -477,13 +477,13 @@ def test_node_prioritizer_empty_subheap_next_from() -> None:
     # request n == {num_requested} nodes from set of 3 available
     num_requested = 1
     with pytest.raises(ValueError) as ex:
-        p.next_from(hostnames)
+        p.next(hosts=hostnames)
 
     assert "No host names provided" == ex.value.args[0]
 
 
-def test_node_prioritizer_empty_subheap_next_n_from() -> None:
-    """Verify that retrieving multiple nodes via `next_n_from` API does
+def test_node_prioritizer_empty_subheap_next_n_w_hosts() -> None:
+    """Verify that retrieving multiple nodes via `next_n` API does
     not allow an empty host list"""
 
     num_cpu_nodes, num_gpu_nodes = 8, 0
@@ -502,7 +502,7 @@ def test_node_prioritizer_empty_subheap_next_n_from() -> None:
     # request n == {num_requested} nodes from set of 3 available
     num_requested = 1
     with pytest.raises(ValueError) as ex:
-        p.next_n_from(num_requested, hostnames)
+        p.next_n(num_requested, hosts=hostnames)
 
     assert "No host names provided" == ex.value.args[0]
 
@@ -531,8 +531,8 @@ def test_node_prioritizer_empty_subheap_next_n(num_requested: int) -> None:
 
 
 @pytest.mark.parametrize("num_requested", [-100, -1, 0])
-def test_node_prioritizer_empty_subheap_next_n_from(num_requested: int) -> None:
-    """Verify that retrieving multiple nodes via `next_n_from` API does
+def test_node_prioritizer_empty_subheap_next_n(num_requested: int) -> None:
+    """Verify that retrieving multiple nodes via `next_n` API does
     not allow a request with num_items < 1"""
 
     num_cpu_nodes, num_gpu_nodes = 8, 0
@@ -550,6 +550,6 @@ def test_node_prioritizer_empty_subheap_next_n_from(num_requested: int) -> None:
 
     # request n == {num_requested} nodes from set of 3 available
     with pytest.raises(ValueError) as ex:
-        p.next_n_from(num_requested, hostnames)
+        p.next_n(num_requested, hosts=hostnames)
 
     assert "Number of items requested" in ex.value.args[0]
