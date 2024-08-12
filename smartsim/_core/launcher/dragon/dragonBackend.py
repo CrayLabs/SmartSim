@@ -240,8 +240,10 @@ class DragonBackend:
             """List of cpu-count by node"""
             self._gpus = [node.num_gpus for node in self._nodes]
             """List of gpu-count by node"""
-            self._allocated_hosts: t.Dict[str, t.Set[str]] = collections.defaultdict(set)
-            """Mapping of hosts to an assigned, running step ID"""
+            self._allocated_hosts: t.Dict[str, t.Set[str]] = collections.defaultdict(
+                set
+            )
+            """Mapping of hosts to a assigned, running step IDs"""
             self._ref_map: t.Dict[str, _NodeRefCount] = {}
             """Map node names to a ref counter for direct access"""
             self._cpu_refs: t.List[_NodeRefCount] = []
@@ -710,7 +712,7 @@ class DragonBackend:
         stored assigned and unassigned task information"""
         self._heartbeat()
         with self._queue_lock:
-            terminated = []
+            terminated: t.Set[str] = set()
             for step_id in self._running_steps:
                 group_info = self._group_infos[step_id]
                 grp = group_info.process_group
@@ -744,14 +746,14 @@ class DragonBackend:
                             )
 
                 if group_info.status in TERMINAL_STATUSES:
-                    terminated.append(step_id)
+                    terminated.add(step_id)
 
             if terminated:
                 logger.debug(f"{terminated=}")
 
             # remove all the terminated steps from all hosts
             for host in list(self._allocated_hosts.keys()):
-                self._allocated_hosts[host].difference_update(set(terminated))
+                self._allocated_hosts[host].difference_update(terminated)
 
             for step_id in terminated:
                 self._running_steps.remove(step_id)
@@ -760,12 +762,12 @@ class DragonBackend:
                 if group_info is not None:
                     for host in group_info.hosts:
                         logger.debug(f"Releasing host {host}")
-                        try:
-                            # stop tracking any host no longer running steps
+                        if host not in self._allocated_hosts:
+                            logger.error(f"Tried to free a non-allocated host: {host}")
+                        else:
+                            # remove any hosts that have had all their steps terminated
                             if not self._allocated_hosts[host]:
                                 self._allocated_hosts.pop(host)
-                        except KeyError:
-                            logger.error(f"Tried to free a non-allocated host: {host}")
                         self._prioritizer.decrement(host, step_id)
                     group_info.process_group = None
                     group_info.redir_workers = None
