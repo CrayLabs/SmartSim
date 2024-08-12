@@ -33,9 +33,15 @@ class SimpleService(Service):
         self._quit_after = 0
 
     def _signals(self) -> t.List[int]:
+        """
+        New
+        """
         return [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
     def _on_signal(self, signo: int, frame: t.Any) -> None:
+        """
+        New
+        """
         super()._on_signal(signo, frame)
         self._quit_after = 0
 
@@ -58,19 +64,6 @@ class SimpleService(Service):
             return True
 
         return self.num_iterations >= self._quit_after
-
-
-# def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
-#     print(f"Received signal {signo}")
-
-
-# def register_signal_handlers(service: Service) -> None:
-#     """Register signal handlers prior to execution"""
-#     # make sure to register the cleanup before the start
-#     # the process so our signaller will be able to stop
-#     # the server process.
-#     for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]:
-#         signal.signal(sig, handle_signal)
 
 
 if __name__ == "__main__":
