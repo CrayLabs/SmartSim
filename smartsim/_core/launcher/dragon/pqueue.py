@@ -78,48 +78,50 @@ class _TrackedNode:
 
     @property
     def hostname(self) -> str:
-        """The hostname of the node being reference counted"""
+        """Returns the hostname of the node"""
         return self._node.hostname
 
     @property
     def num_cpus(self) -> int:
-        """The number of CPUs of the node being reference counted"""
+        """Returns the number of CPUs in the node"""
         return self._node.num_cpus
 
     @property
     def num_gpus(self) -> int:
-        """The number of GPUs of the node being reference counted"""
+        """Returns the number of GPUs attached to the node"""
         return self._node.num_gpus
 
     @property
     def num_refs(self) -> int:
-        """The number of processes currently using the node"""
+        """Returns the number of processes currently running on the node"""
         return self._num_refs
 
     @property
-    def is_assigned(self) -> int:
-        """Returns True if no references are currently being counted"""
+    def is_assigned(self) -> bool:
+        """Returns `True` if no references are currently counted, `False` otherwise"""
         return self._num_refs > 0
 
     @property
     def assigned_tasks(self) -> t.Set[str]:
-        """The set of currently running processes of the node"""
+        """Returns the set of unique IDs for currently running processes"""
         return self._assigned_tasks
 
     @property
     def is_dirty(self) -> bool:
-        """The current modification status of the tracking information"""
+        """Returns a flag indicating if the reference counter has changed. `True`
+        if references have been added or removed, `False` otherwise."""
         return self._is_dirty
 
     def clean(self) -> None:
-        """Mark the node as unmodified"""
+        """Marks the node as unmodified"""
         self._is_dirty = False
 
     def add(
         self,
         tracking_id: t.Optional[str] = None,
     ) -> None:
-        """Modify the node as needed to track the addition of a process
+        """Update the node to indicate the addition of a process that must be
+        reference counted.
 
         :param tracking_id: (optional) a unique task identifier executing on the node
         to add"""
@@ -135,7 +137,7 @@ class _TrackedNode:
         self,
         tracking_id: t.Optional[str] = None,
     ) -> None:
-        """Modify the node as needed to track the removal of a process
+        """Update the reference counter to indicate the removal of a process.
 
         :param tracking_id: (optional) a unique task identifier executing on the node
         to remove"""
@@ -151,7 +153,8 @@ class _TrackedNode:
         """Comparison operator used to evaluate the ordering of nodes within
         the prioritizer. This comparison only considers reference counts.
 
-        :param other: Another node to compare against"""
+        :param other: Another node to compare against
+        :returns: True if this node has fewer references than the other node"""
         if self.num_refs < other.num_refs:
             return True
 
@@ -171,6 +174,7 @@ class NodePrioritizer:
 
         :param nodes: node attribute information for initializing the priorizer
         :param lock: a lock used to ensure threadsafe operations
+        :raises SmartSimError: if the nodes collection is empty
         """
         if not nodes:
             raise SmartSimError("Missing nodes to prioritize")
@@ -216,7 +220,7 @@ class NodePrioritizer:
             # self._update_ref_count(host, tracked_node)
             return tracked_node
 
-    def _all_refs(self) -> t.List[_TrackedNode]:
+    def _heapify_all_refs(self) -> t.List[_TrackedNode]:
         """Combine the CPU and GPU nodes into a single heap
 
         :returns: list of all reference counters"""
@@ -238,7 +242,7 @@ class NodePrioritizer:
     def decrement(
         self, host: str, tracking_id: t.Optional[str] = None
     ) -> NodeReferenceCount:
-        """Directly increment the reference count of a given node and ensure the
+        """Directly decrement the reference count of a given node and ensure the
         ref counter is marked as dirty to trigger a reordering
 
         :param host: a hostname that should have a reference counter decremented
@@ -335,7 +339,7 @@ class NodePrioritizer:
 
         nodes: t.List[_TrackedNode] = []
         for item in heap:
-            if item.num_refs == 1:
+            if item.num_refs > 0:
                 nodes.append(item)
         return nodes
         # return list(filter(lambda x: x.num_refs == 1, heap))
@@ -457,7 +461,7 @@ class NodePrioritizer:
         if filter_on == PrioritizerFilter.CPU:
             return self._cpu_refs
 
-        return self._all_refs()
+        return self._heapify_all_refs()
 
     def next(
         self,

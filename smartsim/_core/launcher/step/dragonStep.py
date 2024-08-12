@@ -167,9 +167,7 @@ class DragonBatchStep(Step):
             run_settings = t.cast(DragonRunSettings, step.step_settings)
             run_args = run_settings.run_args
             env = run_settings.env_vars
-            nodes = int(
-                run_args.get("nodes", None) or 1
-            )  # todo: is this the same use as my new host-list?
+            nodes = int(run_args.get("nodes", 1) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
             hosts_csv = str(run_args.get("host-list", ""))
 
