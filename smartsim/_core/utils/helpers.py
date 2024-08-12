@@ -31,13 +31,13 @@ from __future__ import annotations
 
 import base64
 import collections.abc
+import functools
 import os
 import signal
 import subprocess
 import typing as t
 import uuid
 from datetime import datetime
-from functools import lru_cache
 from pathlib import Path
 from shutil import which
 
@@ -45,6 +45,10 @@ from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBacke
 
 if t.TYPE_CHECKING:
     from types import FrameType
+
+    from typing_extensions import TypeVarTuple, Unpack
+
+    _Ts = TypeVarTuple("_Ts")
 
 
 _T = t.TypeVar("_T")
@@ -97,7 +101,7 @@ def create_lockfile_name() -> str:
     return f"smartsim-{lock_suffix}.lock"
 
 
-@lru_cache(maxsize=20, typed=False)
+@functools.lru_cache(maxsize=20, typed=False)
 def check_dev_log_level() -> bool:
     lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
     return lvl == "developer"
@@ -484,6 +488,43 @@ def group_by(
     for item in items:
         groups[fn(item)].append(item)
     return dict(groups)
+
+
+def pack_params(
+    fn: t.Callable[[Unpack[_Ts]], _T]
+) -> t.Callable[[tuple[Unpack[_Ts]]], _T]:
+    r"""Take a function that takes an unspecified number of positional arguments
+    and turn it into a function that takes one argument of type `tuple` of
+    unspecified length. The main use case is largely just for iterating over an
+    iterable where arguments are "pre-zipped" into tuples. E.g.
+
+    .. highlight:: python
+    .. code-block:: python
+
+        def pretty_print_dict(d):
+            fmt_pair = lambda key, value: f"{repr(key)}: {repr(value)},"
+            body = "\n".join(map(pack_params(fmt_pair), d.items()))
+            #                    ^^^^^^^^^^^^^^^^^^^^^
+            print(f"{{\n{textwrap.indent(body, '    ')}\n}}")
+
+        pretty_print_dict({"spam": "eggs", "foo": "bar", "hello": "world"})
+        # prints:
+        # {
+        #     'spam': 'eggs',
+        #     'foo': 'bar',
+        #     'hello': 'world',
+        # }
+
+    :param fn: A callable that takes many positional parameters.
+    :returns: A callable that takes a single positional parameter of type tuple
+        of with the same shape as the original callable parameter list.
+    """
+
+    @functools.wraps(fn)
+    def packed(args: tuple[Unpack[_Ts]]) -> _T:
+        return fn(*args)
+
+    return packed
 
 
 @t.final

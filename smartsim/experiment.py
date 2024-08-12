@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=too-many-lines
-
 from __future__ import annotations
 
 import collections
@@ -42,9 +40,11 @@ from tabulate import tabulate
 
 from smartsim._core import dispatch
 from smartsim._core.config import CONFIG
+from smartsim._core.control import interval as _interval
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
+from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
-from smartsim.status import InvalidJobStatus, JobStatus
+from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
@@ -275,6 +275,82 @@ class Experiment:
         stats_map = dict(itertools.chain.from_iterable(stats_iter))
         stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
         return tuple(stats)
+
+    def wait(
+        self, *ids: LaunchedJobID, timeout: float | None = None, verbose: bool = True
+    ) -> None:
+        """Block execution until all of the provided launched jobs, represented
+        by an ID, have entered a terminal status.
+
+        :param ids: The ids of the launched ids to wait for.
+        :param timeout: The max time to wait for all of the launched jobs to end.
+        :param verbose: Whether found statuses should be displayed in the console.
+        :raises ValueError: No IDs were provided.
+        """
+        if not ids:
+            raise ValueError("No job ids to wait on provided")
+        self._poll_for_statuses(
+            ids,
+            TERMINAL_STATUSES,
+            timeout=_interval.SynchronousTimeInterval(timeout),
+            verbose=verbose,
+        )
+
+    def _poll_for_statuses(
+        self,
+        ids: t.Sequence[LaunchedJobID],
+        statuses: t.Collection[JobStatus],
+        timeout: _interval.SynchronousTimeInterval | None = None,
+        interval: _interval.SynchronousTimeInterval | None = None,
+        verbose: bool = True,
+    ) -> dict[LaunchedJobID, JobStatus | InvalidJobStatus]:
+        """Poll launchers until  status until all jobs represented by a
+        collections of ids have changed state to one of the provided statuses.
+
+        :param ids: IDs of launches to poll for status.
+        :param statuses: A collection of statuses to poll for.
+        :param timeout: The minimum amount of time to spend polling all jobs to
+            reach one of the supplied statuses. If not supplied or `None`, the
+            experiment will poll indefinitely.
+        :param interval: The minimum time between polling launchers.
+        :param verbose: Whether or not to log polled states the console.
+        :raises ValueError: The interval between polling launchers is infinite
+        :raises TimeoutError: The polling interval was exceeded.
+        :returns: A mapping of ids to the status they entered that ended
+            polling.
+        """
+        terminal = frozenset(itertools.chain(statuses, InvalidJobStatus))
+        log = logger.info if verbose else lambda *_, **__: None
+        method_timeout = timeout or _interval.SynchronousTimeInterval(None)
+        iter_timeout = interval or _interval.SynchronousTimeInterval(5.0)
+        final: dict[LaunchedJobID, JobStatus | InvalidJobStatus] = {}
+
+        def is_finished(
+            id_: LaunchedJobID, status: JobStatus | InvalidJobStatus
+        ) -> bool:
+            job_title = f"Job({id_}): "
+            if done := status in terminal:
+                log(f"{job_title}Finished with status '{status.value}'")
+            else:
+                log(f"{job_title}Running with status '{status.value}'")
+            return done
+
+        if iter_timeout.infinite:
+            raise ValueError("Polling interval cannot be infinite")
+        while ids and not method_timeout.expired:
+            iter_timeout = iter_timeout.new_interval()
+            stats = zip(ids, self.get_status(*ids))
+            is_done = _helpers.group_by(_helpers.pack_params(is_finished), stats)
+            final |= dict(is_done.get(True, ()))
+            ids = tuple(id_ for id_, _ in is_done.get(False, ()))
+            if ids:
+                iter_timeout.wait()
+        if ids:
+            raise TimeoutError(
+                f"Job ID(s) {', '.join(map(str, ids))} failed to reach "
+                "terminal status before timeout"
+            )
+        return final
 
     @_contextualize
     def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
