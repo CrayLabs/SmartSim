@@ -66,9 +66,9 @@ def get_redisai_env(
     """
     env = os.environ.copy()
     if rai_path is not None:
-        env["RAI_PATH"] = rai_path
+        env["SMARTSIM_RAI_PATH"] = rai_path
     else:
-        env.pop("RAI_PATH", None)
+        env.pop("SMARTSIM_RAI_PATH", None)
 
     if lib_path is not None:
         env["SMARTSIM_DEP_INSTALL_PATH"] = lib_path
@@ -85,7 +85,7 @@ def make_file(filepath: str) -> None:
 
 
 def test_redisai_invalid_rai_path(test_dir, monkeypatch):
-    """An invalid RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should fail"""
+    """An invalid SMARTSIM_RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should fail"""
 
     rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
     make_file(os.path.join(test_dir, "lib", "redisai.so"))
@@ -94,7 +94,7 @@ def test_redisai_invalid_rai_path(test_dir, monkeypatch):
 
     config = Config()
 
-    # Fail when no file exists @ RAI_PATH
+    # Fail when no file exists @ SMARTSIM_RAI_PATH
     with pytest.raises(SSConfigError) as ex:
         _ = config.redisai
 
@@ -102,7 +102,7 @@ def test_redisai_invalid_rai_path(test_dir, monkeypatch):
 
 
 def test_redisai_valid_rai_path(test_dir, monkeypatch):
-    """A valid RAI_PATH should override valid SMARTSIM_DEP_INSTALL_PATH and succeed"""
+    """A valid SMARTSIM_RAI_PATH should override valid SMARTSIM_DEP_INSTALL_PATH and succeed"""
 
     rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
     make_file(rai_file_path)
@@ -117,7 +117,7 @@ def test_redisai_valid_rai_path(test_dir, monkeypatch):
 
 
 def test_redisai_invalid_lib_path(test_dir, monkeypatch):
-    """Invalid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should fail"""
+    """Invalid SMARTSIM_RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should fail"""
 
     rai_file_path = f"{test_dir}/railib/redisai.so"
 
@@ -133,7 +133,7 @@ def test_redisai_invalid_lib_path(test_dir, monkeypatch):
 
 
 def test_redisai_valid_lib_path(test_dir, monkeypatch):
-    """Valid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should succeed"""
+    """Valid SMARTSIM_RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should succeed"""
 
     rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
     make_file(rai_file_path)
@@ -147,7 +147,7 @@ def test_redisai_valid_lib_path(test_dir, monkeypatch):
 
 
 def test_redisai_valid_lib_path_null_rai(test_dir, monkeypatch):
-    """Missing RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should succeed"""
+    """Missing SMARTSIM_RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should succeed"""
 
     rai_file_path: t.Optional[str] = None
     lib_file_path = os.path.join(test_dir, "lib", "redisai.so")
@@ -166,11 +166,11 @@ def test_redis_conf():
     assert Path(config.database_conf).is_file()
     assert isinstance(config.database_conf, str)
 
-    os.environ["REDIS_CONF"] = "not/a/path"
+    os.environ["SMARTSIM_REDIS_CONF"] = "not/a/path"
     config = Config()
     with pytest.raises(SSConfigError):
         config.database_conf
-    os.environ.pop("REDIS_CONF")
+    os.environ.pop("SMARTSIM_REDIS_CONF")
 
 
 def test_redis_exe():
@@ -178,11 +178,11 @@ def test_redis_exe():
     assert Path(config.database_exe).is_file()
     assert isinstance(config.database_exe, str)
 
-    os.environ["REDIS_PATH"] = "not/a/path"
+    os.environ["SMARTSIM_REDIS_PATH"] = "not/a/path"
     config = Config()
     with pytest.raises(SSConfigError):
         config.database_exe
-    os.environ.pop("REDIS_PATH")
+    os.environ.pop("SMARTSIM_REDIS_PATH")
 
 
 def test_redis_cli():
@@ -190,11 +190,11 @@ def test_redis_cli():
     assert Path(config.redisai).is_file()
     assert isinstance(config.redisai, str)
 
-    os.environ["REDIS_CLI_PATH"] = "not/a/path"
+    os.environ["SMARTSIM_REDIS_CLI_PATH"] = "not/a/path"
     config = Config()
     with pytest.raises(SSConfigError):
         config.database_cli
-    os.environ.pop("REDIS_CLI_PATH")
+    os.environ.pop("SMARTSIM_REDIS_CLI_PATH")
 
 
 @pytest.mark.parametrize(

@@ -221,7 +221,7 @@ def _installed(base_path: Path, backend: str) -> bool:
     """
     backend_key = f"redisai_{backend}"
     backend_path = base_path / backend_key / f"{backend_key}.so"
-    backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
+    backend_so = Path(os.environ.get("SMARTSIM_RAI_PATH", backend_path)).resolve()
 
     return backend_so.is_file()
 

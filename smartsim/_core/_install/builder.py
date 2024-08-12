@@ -342,7 +342,9 @@ class DatabaseBuilder(Builder):
         bin_path = Path(dependency_path, "bin").resolve()
         try:
             database_exe = next(bin_path.glob("*-server"))
-            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            database = Path(
+                os.environ.get("SMARTSIM_REDIS_PATH", database_exe)
+            ).resolve()
             _ = expand_exe_path(str(database))
         except (TypeError, FileNotFoundError) as e:
             raise BuildError("Installation of redis-server failed!") from e
@@ -350,7 +352,9 @@ class DatabaseBuilder(Builder):
         # validate install -- redis-cli
         try:
             redis_cli_exe = next(bin_path.glob("*-cli"))
-            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
+            redis_cli = Path(
+                os.environ.get("SMARTSIM_REDIS_CLI_PATH", redis_cli_exe)
+            ).resolve()
             _ = expand_exe_path(str(redis_cli))
         except (TypeError, FileNotFoundError) as e:
             raise BuildError("Installation of redis-cli failed!") from e

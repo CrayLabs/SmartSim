@@ -265,8 +265,8 @@ class Orchestrator(EntityList[DBNode]):
             raise SSConfigError(
                 "SmartSim not installed with pre-built extensions (Redis)\n"
                 "Use the `smart` cli tool to install needed extensions\n"
-                "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
-                "See documentation for more information"
+                "or set SMARTSIM_REDIS_PATH and SMARTSIM_REDIS_CLI_PATH "
+                "in your environment\nSee documentation for more information"
             ) from e
 
         if self.launcher != "local":
