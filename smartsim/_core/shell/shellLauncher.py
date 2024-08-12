@@ -29,20 +29,26 @@ from __future__ import annotations
 
 import typing as t
 
+from smartsim.settings.arguments.launchArguments import LaunchArguments
 from smartsim.types import LaunchedJobID
 
 from smartsim.log import get_logger
+
+import subprocess as sp
+
+from smartsim._core.utils import helpers
+from smartsim._core.dispatch import ExecutableProtocol, dispatch
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
     from smartsim.experiment import Experiment
 
-import subprocess as sp
-
-from smartsim._core.utils import helpers
-from smartsim._core.dispatch import dispatch
-
 logger = get_logger(__name__)
+
+_EnvironMappingType: t.TypeAlias = t.Mapping[str, "str | None"]
+"""A mapping of user provided mapping of environment variables in which to run
+a job
+"""
 
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands"""
@@ -60,6 +66,51 @@ class ShellLauncher:
     @classmethod
     def create(cls, _: Experiment) -> Self:
         return cls()
-    
 
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    def make_shell_format_fn(
+        run_command: str | None,
+    ) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
+        """A function that builds a function that formats a `LaunchArguments` as a
+        shell executable sequence of strings for a given launching utility.
+
+        Example usage:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            echo_hello_world: ExecutableProtocol = ...
+            env = {}
+            slurm_args: SlurmLaunchArguments = ...
+            slurm_args.set_nodes(3)
+
+            as_srun_command = make_shell_format_fn("srun")
+            fmt_cmd = as_srun_command(slurm_args, echo_hello_world, env)
+            print(list(fmt_cmd))
+            # prints: "['srun', '--nodes=3', '--', 'echo', 'Hello World!']"
+
+        .. note::
+            This function was/is a kind of slap-dash implementation, and is likely
+            to change or be removed entierely as more functionality is added to the
+            shell launcher. Use with caution and at your own risk!
+
+        :param run_command: Name or path of the launching utility to invoke with
+            the arguments.
+        :returns: A function to format an arguments, an executable, and an
+            environment as a shell launchable sequence for strings.
+        """
+
+        def impl(
+            args: LaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
+        ) -> t.Sequence[str]:
+            return (
+                (
+                    run_command,
+                    *(args.format_launch_args() or ()),
+                    "--",
+                    *exe.as_program_arguments(),
+                )
+                if run_command is not None
+                else exe.as_program_arguments()
+            )
+
+        return impl

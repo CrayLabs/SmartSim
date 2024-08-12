@@ -30,14 +30,14 @@ import typing as t
 
 from smartsim._core.shell.shellLauncher import ShellLauncher
 from smartsim.log import get_logger
-from smartsim._core.dispatch import dispatch, make_shell_format_fn
+from smartsim._core.dispatch import dispatch
 
 from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_local_command = make_shell_format_fn(run_command=None)
+_as_local_command = ShellLauncher.make_shell_format_fn(run_command=None)
 
 
 @dispatch(with_format=_as_local_command, to_launcher=ShellLauncher)
