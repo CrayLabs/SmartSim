@@ -90,7 +90,7 @@ def setup_worker_manager_model_bytes(test_dir, monkeypatch: pytest.MonkeyPatch):
         test_dir, model, [tensor_key], [tensor_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
-    worker_manager._task_queue.send(ser_request)
+    worker_manager._dispatcher_queue.send(ser_request)
 
     return worker_manager, integrated_worker
 
@@ -122,7 +122,7 @@ def setup_worker_manager_model_key(test_dir, monkeypatch: pytest.MonkeyPatch):
         test_dir, model_key, [tensor_key], [tensor_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
-    worker_manager._task_queue.send(ser_request)
+    worker_manager._dispatcher_queue.send(ser_request)
 
     return worker_manager, integrated_worker
 

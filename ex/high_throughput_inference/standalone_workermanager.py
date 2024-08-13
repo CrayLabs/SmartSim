@@ -28,7 +28,6 @@
 import dragon
 
 # pylint disable=import-error
-import dragon.globalservices.pool as dragon_gs_pool
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
@@ -69,31 +68,16 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
 )
 from smartsim._core.mli.infrastructure.worker.worker import MachineLearningWorkerBase
 
+from smartsim.log import get_logger
+
+logger = get_logger("Worker Manager Entry Point")
+
 mp.set_start_method("dragon")
 
 pid = os.getpid()
 affinity = os.sched_getaffinity(pid)
-print("Entry point:", socket.gethostname(), affinity)
-print("CPUS:", os.cpu_count())
-
-
-def create_request_dispatcher(
-    batch_size: int,
-    batch_timeout: float,
-    comm_channel_type: t.Type[CommChannelBase],
-    worker_type: t.Type[MachineLearningWorkerBase],
-    config_loader: EnvironmentConfigLoader,
-) -> RequestDispatcher:
-    mem_pool = MemoryPool.attach(dragon_gs_pool.create(2 * 1024**3).sdesc)
-
-    return RequestDispatcher(
-        batch_timeout=batch_timeout,
-        batch_size=batch_size,
-        config_loader=config_loader,
-        comm_channel_type=comm_channel_type,
-        mem_pool=mem_pool,
-        worker_type=worker_type,
-    )
+logger.log(f"Entry point: {socket.gethostname()}, {affinity}")
+logger.log(f"CPUS: {os.cpu_count()}")
 
 
 def create_worker_manager(
@@ -102,15 +86,7 @@ def create_worker_manager(
     device: str,
     dispatcher_queue: mp.Queue,
 ) -> WorkerManager:
-    return WorkerManager(
-        config_loader=config_loader,
-        worker_type=worker_type,
-        as_service=True,
-        cooldown=10,
-        comm_channel_type=DragonCommChannel,
-        device=device,
-        task_queue=dispatcher_queue,
-    )
+    return
 
 
 def service_as_dragon_proc(
@@ -191,31 +167,36 @@ if __name__ == "__main__":
 
     ss_config_loader = EnvironmentConfigLoader()
 
-    dispatcher = create_request_dispatcher(
-        batch_size=args.batch_size,
+    dispatcher = RequestDispatcher(
         batch_timeout=args.batch_timeout,
+        batch_size=args.batch_size,
+        config_loader=ss_config_loader,
         comm_channel_type=DragonCommChannel,
         worker_type=arg_worker_type,
-        config_loader=ss_config_loader,
     )
 
     wms = []
     worker_device = args.device
     for wm_idx in range(args.num_workers):
-        # if args.num_workers > 0:
-        #     worker_device = f"{args.device}:{wm_idx}"
-        worker_manager = create_worker_manager(
-            worker_type=arg_worker_type,
+
+        worker_manager =  WorkerManager(
             config_loader=ss_config_loader,
+            worker_type=arg_worker_type,
+            as_service=True,
+            cooldown=10,
+            comm_channel_type=DragonCommChannel,
             device=worker_device,
-            dispatcher_queue=dispatcher.task_queue,
+            task_queue=dispatcher.task_queue,
         )
+
         wms.append(worker_manager)
 
     wm_affinity: list[int] = []
     disp_affinity: list[int] = []
 
-    # This is hardcoded for a specific type of node!
+    # This is hardcoded for a specific type of node:
+    # the GPU-to-CPU mapping is taken from the nvidia-smi tool
+    # TODO can this be computed on the fly?
     gpu_to_cpu_aff: dict[int, list[int]] = {}
     gpu_to_cpu_aff[0] = list(range(48,64)) + list(range(112,128))
     gpu_to_cpu_aff[1] = list(range(32,48)) + list(range(96,112))

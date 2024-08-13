@@ -162,18 +162,33 @@ class FetchModelResult:
 
 
 @dataclass
-class InferenceBatch:
+class RequestBatch:
+    """A batch of aggregated inference requests
+    """
     model_key: str
     requests: list[InferenceRequest]
     inputs: t.Optional[TransformInputResult]
 
+    @property
+    def has_valid_requests(self) -> bool:
+        return len(self.requests) > 0
+
+    @property
+    def has_raw_nodel(self) -> bool:
+        return self.raw_model is not None
+
+    @property
+    def raw_model(self) -> t.Optional[t.Any]:
+        if self.has_valid_requests:
+            return self.requests[0].raw_model
+        return None
 
 class MachineLearningWorkerCore:
     """Basic functionality of ML worker that is shared across all worker types"""
 
     @staticmethod
     def fetch_model(
-        batch: InferenceBatch, feature_store: t.Optional[FeatureStore]
+        batch: RequestBatch, feature_store: t.Optional[FeatureStore]
     ) -> FetchModelResult:
         """Given a resource key, retrieve the raw model from a feature store
         :param batch: The batch of requests that triggered the pipeline
@@ -204,7 +219,7 @@ class MachineLearningWorkerCore:
 
     @staticmethod
     def fetch_inputs(
-        batch: InferenceBatch, feature_store: t.Optional[FeatureStore]
+        batch: RequestBatch, feature_store: t.Optional[FeatureStore]
     ) -> t.List[FetchInputResult]:
         """Given a collection of ResourceKeys, identify the physical location
         and input metadata
@@ -276,7 +291,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def load_model(
-        batch: InferenceBatch, fetch_result: FetchModelResult, device: str
+        batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
         """Given a loaded MachineLearningModel, ensure it is loaded into
         device memory
@@ -288,7 +303,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_input(
-        batch: InferenceBatch,
+        batch: RequestBatch,
         fetch_results: list[FetchInputResult],
         mem_pool: MemoryPool,
     ) -> TransformInputResult:
@@ -302,7 +317,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def execute(
-        batch: InferenceBatch,
+        batch: RequestBatch,
         load_result: LoadModelResult,
         transform_result: TransformInputResult,
         device: str,
@@ -317,7 +332,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_output(
-        batch: InferenceBatch, execute_result: ExecuteResult
+        batch: RequestBatch, execute_result: ExecuteResult
     ) -> t.List[TransformOutputResult]:
         """Given inference results, perform transformations required to
         transmit results to the requestor.

@@ -27,11 +27,12 @@
 # pylint: disable=import-error
 # pylint: disable-next=unused-import
 import dragon
-
 # pylint: enable=import-error
 
 # isort: off
 # isort: on
+
+from queue import Empty
 
 import multiprocessing as mp
 import time
@@ -45,13 +46,14 @@ from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import (
-    InferenceBatch,
+    RequestBatch,
     InferenceReply,
     LoadModelResult,
     MachineLearningWorkerBase,
 )
 from ...message_handler import MessageHandler
 from ...mli_schemas.response.response_capnp import ResponseBuilder
+from .commons import build_failure_reply, exception_handler
 from .devicemanager import DeviceManager, WorkerDevice
 
 if t.TYPE_CHECKING:
@@ -61,14 +63,6 @@ if t.TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-
-def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
-    return MessageHandler.build_response(
-        status=status,
-        message=message,
-        result=[],
-        custom_attributes=None,
-    )
 
 
 def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
@@ -100,29 +94,6 @@ def build_reply(reply: InferenceReply) -> ResponseBuilder:
         custom_attributes=None,
     )
 
-
-def exception_handler(
-    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
-) -> None:
-    """
-    Logs exceptions and sends a failure response.
-
-    :param exc: The exception to be logged
-    :param reply_channel: The channel used to send replies
-    :param failure_message: Failure message to log and send back
-    """
-    logger.exception(
-        f"{failure_message}\n"
-        f"Exception type: {type(exc).__name__}\n"
-        f"Exception message: {str(exc)}"
-    )
-    serialized_resp = MessageHandler.serialize_response(
-        build_failure_reply("fail", failure_message)
-    )
-    if reply_channel:
-        reply_channel.send(serialized_resp)
-
-
 class WorkerManager(Service):
     """An implementation of a service managing distribution of tasks to
     machine learning workers"""
@@ -131,7 +102,7 @@ class WorkerManager(Service):
         self,
         config_loader: EnvironmentConfigLoader,
         worker_type: t.Type[MachineLearningWorkerBase],
-        task_queue: "mp.Queue[InferenceBatch]",
+        dispatcher_queue: "mp.Queue[InferenceBatch]",
         as_service: bool = False,
         cooldown: int = 0,
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
@@ -141,7 +112,7 @@ class WorkerManager(Service):
         :param config_loader: Environment config loader that loads the task queue and
         feature store
         :param worker_type: The type of worker to manage
-        :param task_queue: Queue from witch the batched requests have to be pulled
+        :param dispatcher_queue: Queue from which the batched requests have to be pulled
         :param as_service: Specifies run-once or run-until-complete behavior of service
         :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
@@ -151,7 +122,7 @@ class WorkerManager(Service):
         """
         super().__init__(as_service, cooldown)
 
-        self._task_queue = task_queue
+        self._dispatcher_queue = dispatcher_queue
         """The dispatcher queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()
@@ -179,8 +150,8 @@ class WorkerManager(Service):
 
         pre_batch_time = time.perf_counter()
         try:
-            batch: InferenceBatch = self._task_queue.get(timeout=0.0001)
-        except Exception:
+            batch: RequestBatch = self._dispatcher_queue.get(timeout=0.0001)
+        except Empty:
             return
 
         self._perf_timer.start_timings(
@@ -188,12 +159,17 @@ class WorkerManager(Service):
         )
 
         if batch is None or 0 == len(batch.requests):
+            exception_handler(
+                ValueError("An empty batch was received"),
+                None,
+                "Error batching inputs, the batch was empty.",
+            )
             return
 
         if self._device_manager is None:
             raise ValueError("No Device Manager available: did you call _on_start()")
         device: WorkerDevice = next(
-            self._device_manager.get_free_device(
+            self._device_manager.get_device(
                 worker=self._worker,
                 batch=batch,
                 feature_store=self._feature_store,

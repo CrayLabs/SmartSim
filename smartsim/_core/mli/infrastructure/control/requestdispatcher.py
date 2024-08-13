@@ -29,6 +29,7 @@
 import dragon
 from dragon.managed_memory import MemoryPool
 from dragon.mpbridge.queues import DragonQueue
+import dragon.globalservices.pool as dragon_gs_pool
 
 # pylint: enable=import-error
 
@@ -53,14 +54,14 @@ from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import (
-    InferenceBatch,
+    RequestBatch,
     InferenceRequest,
     MachineLearningWorkerBase,
 )
 from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
-from ...mli_schemas.response.response_capnp import ResponseBuilder
 from ...mli_schemas.tensor.tensor_capnp import TensorDescriptor
+from .commons import exception_handler
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
@@ -73,18 +74,10 @@ def deserialize_message(
     channel_type: t.Type[CommChannelBase],
 ) -> InferenceRequest:
     """Deserialize a message from a byte stream into an InferenceRequest
-    :param data_blob: The byte stream to deserialize"""
-    # todo: consider moving to XxxCore and only making
-    # workers implement the inputs and model conversion?
-
-    # alternatively, consider passing the capnproto models
-    # to this method instead of the data_blob...
-
-    # something is definitely wrong here... client shouldn't have to touch
-    # callback (or batch size)
+    :param data_blob: The byte stream to deserialize
+    :param channel_type: The channel used to send the response"""
 
     request = MessageHandler.deserialize_request(data_blob)
-    # return request
     model_key: t.Optional[str] = None
     model_bytes: t.Optional[Model] = None
 
@@ -126,37 +119,6 @@ def deserialize_message(
     return inference_request
 
 
-def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
-    return MessageHandler.build_response(
-        status=status,
-        message=message,
-        result=[],
-        custom_attributes=None,
-    )
-
-
-def exception_handler(
-    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
-) -> None:
-    """
-    Logs exceptions and sends a failure response.
-
-    :param exc: The exception to be logged
-    :param reply_channel: The channel used to send replies
-    :param failure_message: Failure message to log and send back
-    """
-    logger.exception(
-        f"{failure_message}\n"
-        f"Exception type: {type(exc).__name__}\n"
-        f"Exception message: {str(exc)}"
-    )
-    serialized_resp = MessageHandler.serialize_response(
-        build_failure_reply("fail", failure_message)
-    )
-    if reply_channel:
-        reply_channel.send(serialized_resp)
-
-
 class WorkerDevice:
     def __init__(self, name: str) -> None:
         """Wrapper around a device to keep track of loaded Models and availability
@@ -192,7 +154,7 @@ class BatchQueue(Queue[InferenceRequest]):
         """Queue used to store inference requests waiting to be batched and
         sent to Worker Managers.
         :param batch_timeout: Time in seconds that has to be waited before flushing a
-        non-full queue. The time of the firt item put is 0 seconds.
+        non-full queue. The time of the first item put is 0 seconds.
         :param batch_size: Total capacity of the queue.
         :param model_key: Key of the model which needs to be executed on the queued
         requests
@@ -200,7 +162,7 @@ class BatchQueue(Queue[InferenceRequest]):
         super().__init__(maxsize=batch_size)
         self._batch_timeout = batch_timeout
         """Time in seconds that has to be waited before flushing a non-full queue.
-        The time of the firt item put is 0 seconds."""
+        The time of the first item put is 0 seconds."""
         self._batch_size = batch_size
         """Total capacity of the queue."""
         self._first_put: t.Optional[float] = None
@@ -212,13 +174,13 @@ class BatchQueue(Queue[InferenceRequest]):
         """Key of the model which needs to be executed on the queued requets"""
         self._flush_lock = RLock()
         """Lock used to make sure only one process can flush the queue (unused now)"""
-        self._id = str(uuid.uuid4())
-        """Id of queue"""
+        self._uid = str(uuid.uuid4())
+        """Unique ID of queue"""
 
     @property
-    def queue_id(self) -> str:
+    def uid(self) -> str:
         """ID of this queue"""
-        return self._id
+        return self._uid
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
         """Acquire queue lock to flush
@@ -232,6 +194,7 @@ class BatchQueue(Queue[InferenceRequest]):
         self._flush_lock.release()
 
     def __enter__(self) -> None:
+        """Method to use the Queue as a Context Manager"""
         self.acquire()
 
     def __exit__(
@@ -240,6 +203,7 @@ class BatchQueue(Queue[InferenceRequest]):
         exc_val: t.Optional[BaseException],
         exc_tb: t.Optional[TracebackType],
     ) -> None:
+        """Method to release the Queue as a Context Manager"""
         self.release()
 
     @property
@@ -256,7 +220,7 @@ class BatchQueue(Queue[InferenceRequest]):
         """Put an inference request in the queue
         :param item: The request
         :param block: Whether to block when trying to put the item
-        :param timeout: Time to wait if block==True
+        :param timeout: Time (in seconds) to wait if block==True
         """
         if not self.acquire(blocking=False):
             raise Full
@@ -270,8 +234,8 @@ class BatchQueue(Queue[InferenceRequest]):
             self.release()
 
     @property
-    def _waited_time(self) -> float:
-        if self._first_put is None:
+    def _elapsed_time(self) -> float:
+        if self.empty():
             return 0
         return time.time() - self._first_put
 
@@ -280,15 +244,15 @@ class BatchQueue(Queue[InferenceRequest]):
         """True if the queue can be flushed"""
         if self.empty():
             return False
-        return self.full() or (self._waited_time >= self._batch_timeout)
+        return self.full() or (self._elapsed_time >= self._batch_timeout)
 
     def make_disposable(self) -> None:
         """Set this queue as disposable, and never use it again after it gets flushed"""
         self._disposable = True
 
     @property
-    def disposable(self) -> bool:
-        """Whether this queue can be used to put items or should be deleted"""
+    def can_be_removed(self) -> bool:
+        """Whether this queue can be deleted and garbafe collected"""
         return self.empty() and self._disposable
 
     def flush(self) -> list[t.Any]:
@@ -298,7 +262,6 @@ class BatchQueue(Queue[InferenceRequest]):
         num_items = self.qsize()
         self._first_put = None
         items = []
-        # Avoid (unlikely) race condition error
         for _ in range(num_items):
             try:
                 items.append(self.get())
@@ -325,28 +288,27 @@ class RequestDispatcher(Service):
         self,
         batch_timeout: float,
         batch_size: int,
-        mem_pool: MemoryPool,
         config_loader: EnvironmentConfigLoader,
         worker_type: t.Type[MachineLearningWorkerBase],
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
     ) -> None:
-        """The RquestDispatcher intercepts inference requests, stages them in
+        """The RequestDispatcher intercepts inference requests, stages them in
         queues and batches them together before making them available to Worker
         Managers.
-        :param batch_timeout: Time in seconds that has to be waited before flushing a
-        non-full queue after having put at least one item on it.
+        :param batch_timeout: Maximum elapsed time before flushing a complete or incomplete batch
         :param batch_size: Total capacity of each batch queue.
         :param mem_pool: Memory pool used to share batched input tensors with worker
         managers
         :param config_loader: Object to load configuration from environment
         :param worker_type: Type of worker to instantiate to batch inputs
         :param comm_channel_type: Type of channel used to get requests
+        :raises SmartSimError: If config_loaded.get_queue() does not return a channel
         """
         super().__init__(as_service=True, cooldown=1)
-        self._queues: list[BatchQueue] = []
-        """All batch queues"""
+        self._queues: dict[str, list[BatchQueue]] = []
+        """Dict of all batch queues available for a given model key"""
         self._active_queues: dict[str, BatchQueue] = {}
-        """Mapping telling which queue is the recipient of requets for a given model
+        """Mapping telling which queue is the recipient of requests for a given model
         key"""
         self._batch_timeout = batch_timeout
         """Time in seconds that has to be waited before flushing a non-full queue"""
@@ -354,7 +316,10 @@ class RequestDispatcher(Service):
         """Total capacity of each batch queue."""
         self._queue_swap_lock: t.Optional[RLock] = None
         """Lock used to swap the active queue for a key"""
-        self._incoming_channel = config_loader.get_queue()
+        incoming_channel = config_loader.get_queue()
+        if incoming_channel is None:
+            raise SmartSimError("No incoming channel for dispatcher")
+        self._incoming_channel = incoming_channel
         """The channel the dispatcher monitors for new tasks"""
         self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
         """The queue on which batched inference requests are placed"""
@@ -366,7 +331,7 @@ class RequestDispatcher(Service):
         """The type of the channel used to receive requests"""
         self._worker = worker_type()
         """The worker used to batch inputs"""
-        self._mem_pool = mem_pool
+        self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(2 * 1024**3).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
         self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
         """Performance timer"""
@@ -406,9 +371,6 @@ class RequestDispatcher(Service):
         self._queue_swap_lock = RLock()
 
     def _on_iteration(self) -> None:
-
-        if self._incoming_channel is None:
-            raise SmartSimError("No incoming channel for dispatcher")
 
         try:
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
@@ -454,16 +416,28 @@ class RequestDispatcher(Service):
         return self._outgoing_queue
 
     def _swap_queue(self, model_key: str) -> None:
+        """Get an empty queue or create a new one
+
+        and make it the active one for a given model.
+
+        :param model_key: The key of the model for which the
+        queue has to be swapped
+        :raises SmartSimError: If the queue is not locked.
+        """
         if self._queue_swap_lock is None:
             raise SmartSimError("Queues were not locked")
         with self._queue_swap_lock:
-            for queue in self._queues:
-                if queue.model_key == model_key and not queue.full():
-                    self._active_queues[model_key] = queue
-                    return
+            for queue_list in self._queues[model_key]:
+                for queue in queue_list:
+                    if not queue.full():
+                        self._active_queues[model_key] = queue
+                        return
 
             new_queue = BatchQueue(self._batch_timeout, self._batch_size, model_key)
-            self._queues.append(new_queue)
+            if model_key in self._queues:
+                self._queues[model_key].append(new_queue)
+            else:
+                self._queues[model_key] = [new_queue]
             self._active_queues[model_key] = new_queue
             return
 
@@ -493,33 +467,49 @@ class RequestDispatcher(Service):
 
     def flush_requests(self) -> None:
         """Get all requests from queues which are ready to be flushed. Place all
-        aviable request batches in the outgoing queue.
+        avaliable request batches in the outgoing queue.
         """
-        for queue in self._queues:
-            if queue.ready and queue.acquire(blocking=False):
-                self._perf_timer.measure_time("find_queue")
-                try:
-                    batch = InferenceBatch(
-                        model_key=queue.model_key, requests=queue.flush(), inputs=None
-                    )
-                finally:
-                    self._perf_timer.measure_time("flush_requests")
-                    queue.release()
-                fetch_results = self._worker.fetch_inputs(
-                    batch=batch, feature_store=self._feature_store
-                )
-                self._perf_timer.measure_time("fetch_input")
-                transformed_inputs = self._worker.transform_input(
-                    batch=batch, fetch_results=fetch_results, mem_pool=self._mem_pool
-                )
-                self._perf_timer.measure_time("transform_input")
-                batch.inputs = transformed_inputs
-                for request in batch.requests:
-                    request.raw_inputs = []
-                    request.input_meta = []
+        for queue_list in self._queues:
+            for queue in queue_list:
+                if queue.ready and queue.acquire(blocking=False):
+                    self._perf_timer.measure_time("find_queue")
+                    try:
+                        batch = RequestBatch(
+                            model_key=queue.model_key, requests=queue.flush(), inputs=None
+                        )
+                    finally:
+                        self._perf_timer.measure_time("flush_requests")
+                        queue.release()
+                    try:
+                        fetch_results = self._worker.fetch_inputs(
+                            batch=batch, feature_store=self._feature_store
+                        )
+                    except Exception as exc:
+                        exception_handler(
+                            exc,
+                            None,
+                            "Error fetching input.",
+                        )
+                    self._perf_timer.measure_time("fetch_input")
+                    try:
+                        transformed_inputs = self._worker.transform_input(
+                            batch=batch, fetch_results=fetch_results, mem_pool=self._mem_pool
+                        )
+                    except Exception as exc:
+                        exception_handler(
+                            exc,
+                            None,
+                            "Error Transforming input.",
+                        )
 
-                self._outgoing_queue.put(batch)
-                self._perf_timer.measure_time("put")
+                    self._perf_timer.measure_time("transform_input")
+                    batch.inputs = transformed_inputs
+                    for request in batch.requests:
+                        request.raw_inputs = []
+                        request.input_meta = []
+
+                    self._outgoing_queue.put(batch)
+                    self._perf_timer.measure_time("put")
 
     def _can_shutdown(self) -> bool:
         return False

@@ -39,7 +39,7 @@ from .worker import (
     ExecuteResult,
     FetchInputResult,
     FetchModelResult,
-    InferenceBatch,
+    RequestBatch,
     LoadModelResult,
     MachineLearningWorkerBase,
     TransformInputResult,
@@ -56,13 +56,12 @@ class TorchWorker(MachineLearningWorkerBase):
 
     @staticmethod
     def load_model(
-        batch: InferenceBatch, fetch_result: FetchModelResult, device: str
+        batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
-        request = batch.requests[0]
         if fetch_result.model_bytes:
             model_bytes = fetch_result.model_bytes
-        elif request.raw_model and request.raw_model.data:
-            model_bytes = request.raw_model.data
+        elif batch.raw_model and batch.raw_model.data:
+            model_bytes = batch.raw_model.data
         else:
             raise ValueError("Unable to load model without reference object")
 
@@ -79,7 +78,7 @@ class TorchWorker(MachineLearningWorkerBase):
 
     @staticmethod
     def transform_input(
-        batch: InferenceBatch,
+        batch: RequestBatch,
         fetch_results: list[FetchInputResult],
         mem_pool: MemoryPool,
     ) -> TransformInputResult:
@@ -135,7 +134,7 @@ class TorchWorker(MachineLearningWorkerBase):
     # pylint: disable-next=unused-argument
     @staticmethod
     def execute(
-        batch: InferenceBatch,
+        batch: RequestBatch,
         load_result: LoadModelResult,
         transform_result: TransformInputResult,
         device: str,
@@ -165,8 +164,8 @@ class TorchWorker(MachineLearningWorkerBase):
         with torch.no_grad():
             model.eval()
             results = [
-                model(tensor.to(device, non_blocking=True)).detach()
-                for tensor in tensors
+                model(*[tensor.to(device, non_blocking=True).detach()
+                for tensor in tensors])
             ]
 
         transform_result.transformed = []
@@ -178,7 +177,7 @@ class TorchWorker(MachineLearningWorkerBase):
 
     @staticmethod
     def transform_output(
-        batch: InferenceBatch,
+        batch: RequestBatch,
         execute_result: ExecuteResult,
     ) -> list[TransformOutputResult]:
         transformed_list: list[TransformOutputResult] = []

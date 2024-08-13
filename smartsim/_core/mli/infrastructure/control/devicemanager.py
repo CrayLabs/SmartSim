@@ -25,12 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
-from threading import RLock
-from types import TracebackType
 
 from ...infrastructure.storage.featurestore import FeatureStore
 from ..worker.worker import MachineLearningWorkerBase
-from .requestdispatcher import InferenceBatch
+from .requestdispatcher import RequestBatch
 
 
 class WorkerDevice:
@@ -40,91 +38,83 @@ class WorkerDevice:
         """
         self._name = name
         """The name used by the toolkit to identify this device"""
-        self._lock = RLock()
-        """Lock to ensure only one thread at the time accesses this device"""
         self._models: dict[str, t.Any] = {}
+        """Dict of keys to models which are loaded on this device"""
 
-    def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
-        return self._lock.acquire(blocking=blocking, timeout=timeout)
-
-    def release(self) -> None:
-        self._lock.release()
-
-    def __enter__(self) -> None:
-        self.acquire()
 
     @property
     def name(self) -> str:
+        """The identifier of the device represented by this object"""
         return self._name
 
     def add_model(self, key: str, model: t.Any) -> None:
+        """Add a reference to a model loaded on this device and assign it a key
+
+        :param key: The key under which the model is saved
+        :param model: The model which is added
+        """
         self._models[key] = model
 
     def remove_model(self, key: str) -> None:
+        """Remove the reference to a model loaded on this device
+
+        :param key: The key of the model to remove
+        """
         self._models.pop(key)
 
     def get_model(self, key: str) -> t.Any:
+        """Get the model corresponding to a given key
+
+        :param key: the model key
+        """
         return self._models[key]
 
     def __contains__(self, key: str) -> bool:
         return key in self._models
 
-    def __exit__(
-        self,
-        exc_type: t.Optional[t.Type[BaseException]],
-        exc_val: t.Optional[BaseException],
-        exc_tb: t.Optional[TracebackType],
-    ) -> None:
-        self.release()
-
 
 class DeviceManager:
-    def __init__(self, devices: list[WorkerDevice]):
-        self._devices = devices
-        """Dictionary of model key to devices on which it is loaded"""
+    def __init__(self, device: WorkerDevice):
+        self._device = device
+        """Device managed by this object"""
 
-    def get_free_device(
+    def _load_model_on_device(self,
+        worker: MachineLearningWorkerBase,
+        batch: RequestBatch,
+        feature_store: t.Optional[FeatureStore],
+    ) -> None:
+        model_bytes = worker.fetch_model(batch, feature_store)
+        loaded_model = worker.load_model(
+            batch, model_bytes, self._device.name
+        )
+        self._device.add_model(batch.model_key, loaded_model.model)
+
+    def get_device(
         self,
         worker: MachineLearningWorkerBase,
-        batch: InferenceBatch,
+        batch: RequestBatch,
         feature_store: t.Optional[FeatureStore],
     ) -> t.Generator[WorkerDevice, None, None]:
-        return_device = None
-        sample_request = batch.requests[0]
-        direct_inference = sample_request.raw_model is not None
-        while return_device is None:
-            loaded_devices = []
-            if not direct_inference:
-                # Look up devices to see if any of them already has a copy of the model
-                for device in self._devices:
-                    if batch.model_key in device:
-                        loaded_devices.append(device)
+        """Get the device managed by this object
 
-                # If a pre-loaded model is found on a device, try using that device
-                for device in loaded_devices:
-                    if device.acquire(blocking=False):
-                        return_device = device
-                        break
+        the model needed to run the batch of requests is
+        guaranteed to be available on the model
 
-            # If the model is not loaded on a free device,
-            # load it on another device (if available)
-            if return_device is None:
-                for candidate_device in self._devices:
-                    if (
-                        candidate_device not in loaded_devices
-                        and candidate_device.acquire(blocking=False)
-                    ):
-                        model_bytes = worker.fetch_model(batch, feature_store)
-                        loaded_model = worker.load_model(
-                            batch, model_bytes, candidate_device.name
-                        )
-                        candidate_device.add_model(batch.model_key, loaded_model.model)
+        :param worker: The worker that wants to access the device
+        :param batch: The batch of requests
+        :param feature_store: The feature store on which part of the
+        data needed by the request may be stored
+        :return: A generator yielding the device
+        """
+        model_in_request = batch.has_raw_model
 
-                        return_device = candidate_device
+        # Load model if not already loaded, or
+        # because it is sent with the request
+        if model_in_request or not batch.model_key in self._device:
+            self._load_model_on_device(worker, batch, feature_store)
 
         try:
-            yield return_device
+            yield self._device
         finally:
-            if direct_inference:
-                return_device.remove_model(batch.model_key)
-            return_device.release()
+            if model_in_request:
+                self._device.remove_model(batch.model_key)
