@@ -104,25 +104,15 @@ class DragonRunSettings(RunSettings):
         if not host_list:
             raise ValueError("empty hostlist provided")
 
-        if isinstance(host_list, list):
-            self.run_args["host-list"] = ",".join(
-                host.replace(" ", "") for host in host_list
-            )
-            return
+        if isinstance(host_list, str):
+            host_list = host_list.replace(" ", "").split(",")
 
-        # TODO: BREAKING ON PURPOSE!
-        # Add a test for DragonRunSettings for:
-        # - set_hotslist (None)
-        # - set_hostlist([])
-        # - set_hostlist([''])
-        # - set_hostlist(['abc']) - single
-        # - set_hostlist(['abc', 'def']) - multi
-        # - set_hostlist('abc') - single (str)
-        # - set_hostlist('abc,def']) - multi (str),
-        # - set_hostlist('abc, def']) - multi (str),
-        #       spaces removal 'x, y' -> 'x','y', not 'x', ' y'
+        # strip out all whitespace-only values
+        cleaned_list = [host.strip() for host in host_list if host and host.strip()]
+        if not len(cleaned_list) == len(host_list):
+            raise ValueError(f"invalid names found in hostlist: {host_list}")
 
-        self.run_args["host-list"] = host_list.replace(" ", "")
+        self.run_args["host-list"] = ",".join(cleaned_list)
 
     def set_cpu_affinity(self, devices: t.List[int]) -> None:
         """Set the CPU affinity for this job
