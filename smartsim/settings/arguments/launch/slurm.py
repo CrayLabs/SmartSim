@@ -38,8 +38,11 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
+# instead of the makeshell format -> do not here
 _as_srun_command = make_shell_format_fn(run_command="srun", out_flag="--output", err_flag="--error")
 
+# def as_srun_cmd():
+    
 
 @dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)
 class SlurmLaunchArguments(LaunchArguments):

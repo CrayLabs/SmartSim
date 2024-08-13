@@ -448,10 +448,11 @@ def make_shell_format_fn(
             if run_command is not None
             else exe.as_program_arguments()
         )
-        stdin = out_flag + "=" + str(out_file)
-        print(stdin)
-        stdout = err_flag + "=" + str(err_file)
-        launchable_args = [env, path, stdin, stdout, command_tuple]
+        stdout = out_flag + "=" + str(out_file)
+        print(stdout)
+        stderr = err_flag + "=" + str(err_file)
+        print(command_tuple)
+        launchable_args = [env, path, stdout, stderr, command_tuple]
         return launchable_args
 
     return impl
@@ -467,11 +468,15 @@ class ShellLauncher:
         self, command: tuple[str | os.PathLike[str], t.Sequence[str]]
     ) -> LaunchedJobID:
         id_ = create_job_id()
-        env, path, stdin, stdout, args = command
+        env, path, stdout, stderr, args = command
+        print(env)
+        print(path)
+        print(stdout)
+        print(stderr)
+        print(args)
         exe, *rest = args
         # pylint: disable-next=consider-using-with
-        print((helpers.expand_exe_path(exe), stdin, *rest))
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), stdin, *rest), cwd=path, env=env)
+        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path, env=env, stdout=stdout, stderr=stderr)
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 

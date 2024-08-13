@@ -153,11 +153,21 @@ def test_shell_launcher_calls_popen_with_value(test_dir: str):
 def test_this(experiment, test_dir):
     """Test that popen was called with correct types"""
     job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
-    _ = experiment.start(job)
-    run_dir = pathlib.Path(test_dir) / "tmp" / "tmp.out"
-    time.sleep(5)
-    with open(run_dir, 'r', encoding='utf-8') as file:
-        print(list({line.strip() for line in file.readlines()}))
+    shell_launcher = ShellLauncher()
+    # Generate run directory 
+    run_dir = pathlib.Path(test_dir) / "tmp"
+    run_dir.mkdir(exist_ok=True, parents=True)
+    # Generate out / err files 
+    out_file = run_dir / "tmp.out"
+    err_file = run_dir / "tmp.err"
+    with open(out_file, "w", encoding="utf-8") as out, open(err_file, "w", encoding="utf-8") as err:
+        id = shell_launcher.start([{},run_dir,out,err,('srun', '--', '/usr/bin/echo', 'Hello', 'World!')])
+    proc = shell_launcher._launched[id]
+    #ret_code = proc.wait()
+    assert proc.wait() == 0
+    with open(out_file, "r", encoding="utf-8") as out:
+        assert out.read() == "Hello World!\n"
+
     
 
 
