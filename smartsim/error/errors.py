@@ -116,6 +116,10 @@ class LauncherNotFoundError(LauncherError):
     """A requested launcher could not be found"""
 
 
+class LauncherJobNotFound(LauncherError):
+    """Launcher was asked to get information about a job it did not start"""
+
+
 class AllocationError(LauncherError):
     """Raised when there is a problem with the user WLM allocation"""
 

@@ -37,7 +37,7 @@ from ....settings import (
     SettingsBase,
     SgeQsubBatchSettings,
 )
-from ....status import SmartSimStatus
+from ....status import JobStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -137,7 +137,7 @@ class SGELauncher(WLMLauncher):
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
         step_info.status = (
-            SmartSimStatus.STATUS_CANCELLED
+            JobStatus.CANCELLED
         )  # set status to cancelled instead of failed
         return step_info
 
@@ -166,13 +166,13 @@ class SGELauncher(WLMLauncher):
                 if qacct_output:
                     failed = bool(int(parse_qacct_job_output(qacct_output, "failed")))
                     if failed:
-                        info.status = SmartSimStatus.STATUS_FAILED
+                        info.status = JobStatus.FAILED
                         info.returncode = 0
                     else:
-                        info.status = SmartSimStatus.STATUS_COMPLETED
+                        info.status = JobStatus.COMPLETED
                         info.returncode = 0
                 else:  # Assume if qacct did not find it, that the job completed
-                    info.status = SmartSimStatus.STATUS_COMPLETED
+                    info.status = JobStatus.COMPLETED
                     info.returncode = 0
             else:
                 info = SGEStepInfo(stat)

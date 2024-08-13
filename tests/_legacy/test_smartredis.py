@@ -31,7 +31,7 @@ from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import FeatureStore
 from smartsim.entity import Application, Ensemble
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -92,7 +92,7 @@ def test_exchange(local_experiment, local_fs, prepare_fs, fileutils):
 
     # get and confirm statuses
     statuses = local_experiment.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_consumer(local_experiment, local_fs, prepare_fs, fileutils):
@@ -131,4 +131,4 @@ def test_consumer(local_experiment, local_fs, prepare_fs, fileutils):
 
     # get and confirm statuses
     statuses = local_experiment.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])

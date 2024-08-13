@@ -27,7 +27,7 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -50,7 +50,7 @@ def test_applications(fileutils, test_dir):
 
     exp.start(M1, M2, block=True, summary=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_ensemble(fileutils, test_dir):
@@ -64,4 +64,4 @@ def test_ensemble(fileutils, test_dir):
 
     exp.start(ensemble, block=True, summary=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])

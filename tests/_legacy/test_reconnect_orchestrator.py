@@ -31,7 +31,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.database import FeatureStore
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -55,7 +55,7 @@ def test_local_feature_store(test_dir, wlmutils):
 
     exp.start(feature_store)
     statuses = exp.get_status(feature_store)
-    assert [stat != SmartSimStatus.STATUS_FAILED for stat in statuses]
+    assert [stat != JobStatus.FAILED for stat in statuses]
 
     # simulate user shutting down main thread
     exp._control._jobs.actively_monitoring = False
@@ -78,7 +78,7 @@ def test_reconnect_local_feature_store(test_dir):
 
     statuses = exp_2.get_status(reloaded_feature_store)
     for stat in statuses:
-        if stat == SmartSimStatus.STATUS_FAILED:
+        if stat == JobStatus.FAILED:
             exp_2.stop(reloaded_feature_store)
             assert False
     exp_2.stop(reloaded_feature_store)
