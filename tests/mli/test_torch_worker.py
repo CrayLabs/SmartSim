@@ -26,12 +26,12 @@
 
 import io
 
-import numpy as np
 import pytest
 import torch
 from torch import nn
 from torch.nn import functional as F
 
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
@@ -102,7 +102,7 @@ def get_request() -> InferenceRequest:
     ]
 
     return InferenceRequest(
-        model_key="model",
+        model_key=FeatureStoreKey(key="model", descriptor="xyz"),
         callback=None,
         raw_inputs=tensor_numpy,
         input_keys=None,

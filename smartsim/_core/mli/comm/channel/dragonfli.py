@@ -30,7 +30,7 @@ import dragon.channels as dch
 
 # isort: on
 
-import sys
+import base64
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
@@ -43,7 +43,11 @@ class DragonFLIChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon FLI Channel"""
 
     def __init__(self, fli_desc: bytes, sender_supplied: bool = True) -> None:
-        """Initialize the DragonFLIChannel instance"""
+        """Initialize the DragonFLIChannel instance
+
+        :param fli_desc: the descriptor of the FLI channel to attach
+        :param sender_supplied: flag indicating if the FLI uses sender-supplied streams
+        """
         super().__init__(fli_desc)
         # todo: do we need memory pool information to construct the channel correctly?
         self._fli: "fli" = fli.FLInterface.attach(fli_desc)
@@ -53,12 +57,14 @@ class DragonFLIChannel(cch.CommChannelBase):
 
     def send(self, value: bytes) -> None:
         """Send a message through the underlying communication channel
+
         :param value: The value to send"""
         with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
             sendh.send_bytes(value)
 
     def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
+
         :returns: the received message"""
         messages = []
         eot = False
@@ -70,3 +76,21 @@ class DragonFLIChannel(cch.CommChannelBase):
                 except fli.FLIEOT:
                     eot = True
         return messages
+
+    @classmethod
+    def from_descriptor(
+        cls,
+        descriptor: str,
+    ) -> "DragonFLIChannel":
+        """A factory method that creates an instance from a descriptor string
+
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached DragonFLIChannel"""
+        try:
+            return DragonFLIChannel(
+                fli_desc=base64.b64decode(descriptor),
+                sender_supplied=True,
+            )
+        except:
+            logger.error(f"Error while creating DragonFLIChannel: {descriptor}")
+            raise

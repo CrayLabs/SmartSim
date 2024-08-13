@@ -31,14 +31,16 @@ from smartsim._core.mli.message_handler import MessageHandler
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
-model_key = MessageHandler.build_model_key("model_key")
+fsd = "mock-feature-store-descriptor"
+
+model_key = MessageHandler.build_model_key("model_key", fsd)
 model = MessageHandler.build_model(b"model data", "model_name", "v0.0.1")
 
-input_key1 = MessageHandler.build_tensor_key("input_key1")
-input_key2 = MessageHandler.build_tensor_key("input_key2")
+input_key1 = MessageHandler.build_tensor_key("input_key1", fsd)
+input_key2 = MessageHandler.build_tensor_key("input_key2", fsd)
 
-output_key1 = MessageHandler.build_tensor_key("output_key1")
-output_key2 = MessageHandler.build_tensor_key("output_key2")
+output_key1 = MessageHandler.build_tensor_key("output_key1", fsd)
+output_key2 = MessageHandler.build_tensor_key("output_key2", fsd)
 
 output_descriptor1 = MessageHandler.build_output_tensor_descriptor(
     "c", [output_key1, output_key2], "int64", []

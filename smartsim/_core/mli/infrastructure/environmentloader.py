@@ -24,44 +24,82 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
 import os
-import pickle
 import typing as t
 
-from dragon.fli import FLInterface  # pylint: disable=all
-
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 
 class EnvironmentConfigLoader:
     """
-    Facilitates the loading of a FeatureStore and Queue
-    into the WorkerManager.
+    Facilitates the loading of a FeatureStore and Queue into the WorkerManager.
     """
 
-    def __init__(self) -> None:
-        self._feature_store_descriptor: t.Optional[str] = os.getenv(
-            "SSFeatureStore", None
-        )
-        self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
-        self.feature_store: t.Optional[FeatureStore] = None
-        self.queue: t.Optional[DragonFLIChannel] = None
+    def __init__(
+        self,
+        featurestore_factory: t.Callable[[str], FeatureStore],
+        callback_factory: t.Callable[[bytes], CommChannelBase],
+        queue_factory: t.Callable[[str], CommChannelBase],
+    ) -> None:
+        """Initialize the config loader instance with the factories necessary for
+        creating additional objects.
 
-    def get_feature_store(self) -> t.Optional[FeatureStore]:
-        """Loads the Feature Store previously set in SSFeatureStore"""
-        if self._feature_store_descriptor is not None:
-            self.feature_store = pickle.loads(
-                base64.b64decode(self._feature_store_descriptor)
-            )
-        return self.feature_store
+        :param featurestore_factory: A factory method that produces a feature store
+        given a descriptor
+        :param callback_factory: A factory method that produces a callback
+        channel given a descriptor
+        :param queue_factory: A factory method that produces a queue
+        channel given a descriptor"""
+        self.queue: t.Optional[CommChannelBase] = None
+        """The attached incoming event queue channel"""
+        self.backbone: t.Optional[FeatureStore] = None
+        """The attached backbone feature store"""
+        self._featurestore_factory = featurestore_factory
+        """A factory method to instantiate a FeatureStore"""
+        self._callback_factory = callback_factory
+        """A factory method to instantiate a concrete CommChannelBase
+        for inference callbacks"""
+        self._queue_factory = queue_factory
+        """A factory method to instantiate a concrete CommChannelBase
+        for inference requests"""
 
-    def get_queue(self, sender_supplied: bool = True) -> t.Optional[DragonFLIChannel]:
-        """Returns the Queue previously set in SSQueue"""
-        if self._queue_descriptor is not None:
-            self.queue = DragonFLIChannel(
-                fli_desc=base64.b64decode(self._queue_descriptor),
-                sender_supplied=sender_supplied,
-            )
+    def get_backbone(self) -> t.Optional[FeatureStore]:
+        """Attach to the backbone feature store using the descriptor found in
+        an environment variable. The backbone is a standalone, system-created
+        feature store used to share internal information among MLI components
+
+        :returns: The attached feature store via SS_INFRA_BACKBONE"""
+        descriptor = os.getenv("SS_INFRA_BACKBONE", "")
+
+        if not descriptor:
+            logger.warning("No backbone descriptor is configured")
+            return None
+
+        if self._featurestore_factory is None:
+            logger.warning("No feature store factory is configured")
+            return None
+
+        self.backbone = self._featurestore_factory(descriptor)
+        return self.backbone
+
+    def get_queue(self) -> t.Optional[CommChannelBase]:
+        """Attach to a queue-like communication channel using the descriptor
+        found in an environment variable.
+
+        :returns: The attached queue specified via `SS_REQUEST_QUEUE`"""
+        descriptor = os.getenv("SS_REQUEST_QUEUE", "")
+
+        if not descriptor:
+            logger.warning("No queue descriptor is configured")
+            return None
+
+        if self._queue_factory is None:
+            logger.warning("No queue factory is configured")
+            return None
+
+        self.queue = self._queue_factory(descriptor)
         return self.queue

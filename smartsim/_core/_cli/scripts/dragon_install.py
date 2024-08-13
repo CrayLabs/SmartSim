@@ -1,7 +1,9 @@
 import os
 import pathlib
+import shutil
 import sys
 import typing as t
+from urllib.request import urlretrieve
 
 from github import Github
 from github.GitReleaseAsset import GitReleaseAsset
@@ -155,38 +157,53 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
 
     :param working_dir: location in file system where assets should be written
     :param asset: GitHub release asset to retrieve
-    :returns: path to the downloaded asset"""
-    if working_dir.exists() and list(working_dir.rglob("*.whl")):
-        return working_dir
+    :returns: path to the directory containing the extracted release asset"""
+    download_dir = working_dir / str(asset.id)
 
-    archive = WebTGZ(asset.browser_download_url)
-    archive.extract(working_dir)
+    # if we've previously downloaded the release and still have
+    # wheels laying around, use that cached version instead
+    if download_dir.exists() or list(download_dir.rglob("*.whl")):
+        return download_dir
 
-    logger.debug(f"Retrieved {asset.browser_download_url} to {working_dir}")
-    return working_dir
+    download_dir.mkdir(parents=True, exist_ok=True)
+
+    # grab a copy of the complete asset
+    asset_path = download_dir / str(asset.name)
+    download_url = asset.browser_download_url
+
+    try:
+        urlretrieve(download_url, str(asset_path))
+        logger.debug(f"Retrieved asset {asset.name} from {download_url}")
+    except Exception:
+        logger.exception(f"Unable to download asset from: {download_url}")
+
+    # extract the asset
+    archive = WebTGZ(download_url)
+    archive.extract(download_dir)
+
+    logger.debug(f"Extracted {download_url} to {download_dir}")
+    return download_dir
 
 
 def install_package(asset_dir: pathlib.Path) -> int:
     """Install the package found in `asset_dir` into the current python environment
 
     :param asset_dir: path to a decompressed archive contents for a release asset"""
-    wheels = asset_dir.rglob("*.whl")
-    wheel_path = next(wheels, None)
-    if not wheel_path:
-        logger.error(f"No wheel found for package in {asset_dir}")
+    found_wheels = list(asset_dir.rglob("*.whl"))
+    if not found_wheels:
+        logger.error(f"No wheel(s) found for package in {asset_dir}")
         return 1
 
-    create_dotenv(wheel_path.parent)
+    create_dotenv(found_wheels[0].parent)
 
-    while wheel_path is not None:
-        logger.info(f"Installing package: {wheel_path.absolute()}")
+    try:
+        wheels = list(map(str, found_wheels))
+        logger.info("Installing packages:\n%s", "\n".join(wheels))
 
-        try:
-            pip("install", "--force-reinstall", str(wheel_path))
-            wheel_path = next(wheels, None)
-        except Exception:
-            logger.error(f"Unable to install from {asset_dir}")
-            return 1
+        pip("install", *wheels)
+    except Exception:
+        logger.error(f"Unable to install from {asset_dir}")
+        return 1
 
     return 0
 

@@ -43,6 +43,9 @@ import time
 import torch
 
 from mpi4py import MPI
+from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+    DragonFeatureStore,
+)
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 from smartsim._core.utils.timings import PerfTimer
@@ -59,8 +62,9 @@ class ProtoClient:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
         connect_to_infrastructure()
-        ddict_str = os.environ["SS_DRG_DDICT"]
+        ddict_str = os.environ["SS_INFRA_BACKBONE"]
         self._ddict = DDict.attach(ddict_str)
+        self._backbone_descriptor = DragonFeatureStore(self._ddict).descriptor
         to_worker_fli_str = None
         while to_worker_fli_str is None:
             try:
@@ -78,15 +82,16 @@ class ProtoClient:
         tensors = [batch.numpy()]
         self.perf_timer.start_timings("batch_size", batch.shape[0])
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
-            "c", "float32", list(batch.shape))
+            "c", "float32", list(batch.shape)
+        )
         self.perf_timer.measure_time("build_tensor_descriptor")
         if isinstance(model, str):
-            model_arg = MessageHandler.build_model_key(model)
+            model_arg = MessageHandler.build_model_key(model, self._backbone_descriptor)
         else:
             model_arg = MessageHandler.build_model(model, "resnet-50", "1.0")
         request = MessageHandler.build_request(
             reply_channel=self._from_worker_ch_serialized,
-            model= model_arg,
+            model=model_arg,
             inputs=[built_tensor_desc],
             outputs=[],
             output_descriptors=[],
@@ -129,7 +134,7 @@ class ProtoClient:
 
 
 
-class ResNetWrapper():
+class ResNetWrapper:
     def __init__(self, name: str, model: str):
         self._model = torch.jit.load(model)
         self._name = name
@@ -138,7 +143,7 @@ class ResNetWrapper():
         torch.jit.save(scripted, buffer)
         self._serialized_model = buffer.getvalue()
 
-    def get_batch(self, batch_size: int=32):
+    def get_batch(self, batch_size: int = 32):
         return torch.randn((batch_size, 3, 224, 224), dtype=torch.float32)
 
     @property
@@ -148,6 +153,7 @@ class ResNetWrapper():
     @property
     def name(self):
         return self._name
+
 
 if __name__ == "__main__":
 

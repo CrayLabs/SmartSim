@@ -44,6 +44,7 @@ from smartsim._core._cli.scripts.dragon_install import (
     retrieve_asset,
     retrieve_asset_info,
 )
+from smartsim._core._install.builder import WebTGZ
 from smartsim.error.errors import SmartSimCLIActionCancelled
 
 # The tests in this file belong to the group_a group
@@ -58,14 +59,25 @@ _git_attr = namedtuple("_git_attr", "value")
 def test_archive(test_dir: str, archive_path: pathlib.Path) -> pathlib.Path:
     """Fixture for returning a simple tarfile to test on"""
     num_files = 10
+
+    archive_name = archive_path.name
+    archive_name = archive_name.replace(".tar.gz", "")
+
     with tarfile.TarFile.open(archive_path, mode="w:gz") as tar:
-        mock_whl = pathlib.Path(test_dir) / "mock.whl"
+        mock_whl = pathlib.Path(test_dir) / archive_name / f"{archive_name}.whl"
+        mock_whl.parent.mkdir(parents=True, exist_ok=True)
         mock_whl.touch()
 
+        tar.add(mock_whl)
+
         for i in range(num_files):
-            content = pathlib.Path(test_dir) / f"{i:04}.txt"
+            content = pathlib.Path(test_dir) / archive_name / f"{i:04}.txt"
             content.write_text(f"i am file {i}\n")
             tar.add(content)
+            content.unlink()
+
+        mock_whl.unlink()
+
     return archive_path
 
 
@@ -118,6 +130,7 @@ def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]
                     _git_attr(value=f"http://foo/{archive_name}"),
                 )
                 monkeypatch.setattr(asset, "_name", _git_attr(value=archive_name))
+                monkeypatch.setattr(asset, "_id", _git_attr(value=123))
                 assets.append(asset)
 
     return assets
@@ -149,11 +162,22 @@ def test_retrieve_cached(
     test_archive: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Verify that a previously retrieved asset archive is re-used"""
-    with tarfile.TarFile.open(test_archive) as tar:
-        tar.extractall(test_dir)
+    """Verify that a previously retrieved asset archive is re-used and the
+    release asset retrieval is not attempted"""
 
-    ts1 = test_archive.parent.stat().st_ctime
+    asset_id = 123
+
+    def mock_webtgz_extract(self_, target_) -> None:
+        mock_extraction_dir = pathlib.Path(target_)
+        with tarfile.TarFile.open(test_archive) as tar:
+            tar.extractall(mock_extraction_dir)
+
+    # we'll use the mock extract to create the files that would normally be downloaded
+    expected_output_dir = test_archive.parent / str(asset_id)
+    mock_webtgz_extract(None, expected_output_dir)
+
+    # get modification time of directory holding the "downloaded" archive
+    ts1 = expected_output_dir.stat().st_ctime
 
     requester = Requester(
         auth=None,
@@ -174,14 +198,74 @@ def test_retrieve_cached(
     # ensure mocked asset has values that we use...
     monkeypatch.setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
     monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
+    monkeypatch.setattr(asset, "_id", _git_attr(value=asset_id))
 
+    # show that retrieving an asset w/a different ID results in ignoring
+    # other wheels from prior downloads in the parent directory of the asset
     asset_path = retrieve_asset(test_archive.parent, asset)
     ts2 = asset_path.stat().st_ctime
 
+    # NOTE: the file should be written to a subdir based on the asset ID
     assert (
-        asset_path == test_archive.parent
-    )  # show that the expected path matches the output path
+        asset_path == expected_output_dir
+    )  # shows that the expected path matches the output path
     assert ts1 == ts2  # show that the file wasn't changed...
+
+
+def test_retrieve_updated(
+    test_archive: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify that a previously retrieved asset archive is not re-used if a new
+    version is found"""
+
+    old_asset_id = 100
+    asset_id = 123
+
+    def mock_webtgz_extract(self_, target_) -> None:
+        mock_extraction_dir = pathlib.Path(target_)
+        with tarfile.TarFile.open(test_archive) as tar:
+            tar.extractall(mock_extraction_dir)
+
+    # we'll use the mock extract to create the files that would normally be downloaded
+    expected_output_dir = test_archive.parent / str(asset_id)
+    old_output_dir = test_archive.parent / str(old_asset_id)
+    mock_webtgz_extract(None, old_output_dir)
+
+    requester = Requester(
+        auth=None,
+        base_url="https://github.com",
+        user_agent="mozilla",
+        per_page=10,
+        verify=False,
+        timeout=1,
+        retry=1,
+        pool_size=1,
+    )
+    headers = {"mock-header": "mock-value"}
+    attributes = {"mock-attr": "mock-attr-value"}
+    completed = True
+
+    asset = GitReleaseAsset(requester, headers, attributes, completed)
+
+    # ensure mocked asset has values that we use...
+    monkeypatch.setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
+    monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
+    monkeypatch.setattr(asset, "_id", _git_attr(value=asset_id))
+    monkeypatch.setattr(
+        WebTGZ,
+        "extract",
+        lambda s_, t_: mock_webtgz_extract(s_, expected_output_dir),
+    )  # mock the retrieval of the updated archive
+
+    # tell it to retrieve. it should return the path to the new download, not the old one
+    asset_path = retrieve_asset(test_archive.parent, asset)
+
+    # sanity check we don't have the same paths
+    assert old_output_dir != expected_output_dir
+
+    # verify the "cached" copy wasn't used
+    assert asset_path == expected_output_dir
 
 
 @pytest.mark.parametrize(

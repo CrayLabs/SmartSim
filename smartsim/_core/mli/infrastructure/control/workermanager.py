@@ -38,13 +38,14 @@ import multiprocessing as mp
 import time
 import typing as t
 
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+
 from .....log import get_logger
 from ....entrypoints.service import Service
 from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
-from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import (
     RequestBatch,
     InferenceReply,
@@ -57,9 +58,7 @@ from .commons import build_failure_reply, exception_handler
 from .devicemanager import DeviceManager, WorkerDevice
 
 if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.model.model_capnp import Model
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
-    from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
 
@@ -105,10 +104,10 @@ class WorkerManager(Service):
         dispatcher_queue: "mp.Queue[InferenceBatch]",
         as_service: bool = False,
         cooldown: int = 0,
-        comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
         device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
+
         :param config_loader: Environment config loader that loads the task queue and
         feature store
         :param worker_type: The type of worker to manage
@@ -130,22 +129,109 @@ class WorkerManager(Service):
         """A feature store to retrieve models from"""
         self._worker = worker_type()
         """The ML Worker implementation"""
-        self._comm_channel_type = comm_channel_type
+        self._callback_factory = config_loader._callback_factory
         """The type of communication channel to construct for callbacks"""
         self._device = device
         """Device on which workers need to run"""
+        self._cached_models: dict[str, t.Any] = {}
+        """Dictionary of previously loaded models"""
+        self._feature_stores: t.Dict[str, FeatureStore] = {}
+        """A collection of attached feature stores"""
+        self._featurestore_factory = config_loader._featurestore_factory
+        """A factory method to create a desired feature store client type"""
+        self._backbone: t.Optional[FeatureStore] = config_loader.get_backbone()
+        """A standalone, system-created feature store used to share internal
+        information among MLI components"""
 
         self._device_manager: t.Optional[DeviceManager] = None
         """Object responsible for model caching and device access"""
         self._perf_timer = PerfTimer(prefix="w_", debug=True, timing_on=True)
         """Performance timer"""
 
-    def _on_start(self) -> None:
-        self._device_manager = DeviceManager([WorkerDevice(self._device)])
+    def _check_feature_stores(self, request: InferenceRequest) -> bool:
+        """Ensures that all feature stores required by the request are available
 
-    # pylint: disable-next=too-many-statements
+        :param request: The request to validate
+        :returns: False if feature store validation fails for the request, True otherwise
+        """
+        # collect all feature stores required by the request
+        fs_model: t.Set[str] = set()
+        if request.model_key:
+            fs_model = {request.model_key.descriptor}
+        fs_inputs = {key.descriptor for key in request.input_keys}
+        fs_outputs = {key.descriptor for key in request.output_keys}
+
+        # identify which feature stores are requested and unknown
+        fs_desired = fs_model.union(fs_inputs).union(fs_outputs)
+        fs_actual = {item.descriptor for item in self._feature_stores.values()}
+        fs_missing = fs_desired - fs_actual
+
+        if self._featurestore_factory is None:
+            logger.error("No feature store factory configured")
+            return False
+
+        # create the feature stores we need to service request
+        if fs_missing:
+            logger.debug(f"Adding feature store(s): {fs_missing}")
+            for descriptor in fs_missing:
+                feature_store = self._featurestore_factory(descriptor)
+                self._feature_stores[descriptor] = feature_store
+
+        return True
+
+    def _check_model(self, request: InferenceRequest) -> bool:
+        """Ensure that a model is available for the request
+
+        :param request: The request to validate
+        :returns: False if model validation fails for the request, True otherwise
+        """
+        if request.model_key or request.raw_model:
+            return True
+
+        logger.error("Unable to continue without model bytes or feature store key")
+        return False
+
+    def _check_inputs(self, request: InferenceRequest) -> bool:
+        """Ensure that inputs are available for the request
+
+        :param request: The request to validate
+        :returns: False if input validation fails for the request, True otherwise
+        """
+        if request.input_keys or request.raw_inputs:
+            return True
+
+        logger.error("Unable to continue without input bytes or feature store keys")
+        return False
+
+    def _check_callback(self, request: InferenceRequest) -> bool:
+        """Ensure that a callback channel is available for the request
+
+        :param request: The request to validate
+        :returns: False if callback validation fails for the request, True otherwise
+        """
+        if request.callback is not None:
+            return True
+
+        logger.error("No callback channel provided in request")
+        return False
+
+    def _validate_request(self, request: InferenceRequest) -> bool:
+        """Ensure the request can be processed
+
+        :param request: The request to validate
+        :return: False if the request fails any validation checks, True otherwise"""
+        checks = [
+            self._check_feature_stores(request),
+            self._check_model(request),
+            self._check_inputs(request),
+            self._check_callback(request),
+        ]
+
+        return all(checks)
+
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
+
         the inference pipeline"""
 
         pre_batch_time = time.perf_counter()

@@ -31,9 +31,10 @@ from smartsim._core.mli.message_handler import MessageHandler
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+fsd = "mock-feature-store-descriptor"
 
-result_key1 = MessageHandler.build_tensor_key("result_key1")
-result_key2 = MessageHandler.build_tensor_key("result_key2")
+result_key1 = MessageHandler.build_tensor_key("result_key1", fsd)
+result_key2 = MessageHandler.build_tensor_key("result_key2", fsd)
 
 torch_attributes = MessageHandler.build_torch_response_attributes()
 tf_attributes = MessageHandler.build_tf_response_attributes()

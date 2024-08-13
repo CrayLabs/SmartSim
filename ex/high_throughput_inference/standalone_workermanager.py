@@ -53,11 +53,16 @@ import time
 import typing as t
 
 import cloudpickle
+import optparse
+import os
 
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+    DragonFeatureStore,
+)
 from smartsim._core.mli.infrastructure.control.requestdispatcher import (
     RequestDispatcher,
 )
@@ -147,7 +152,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     connect_to_infrastructure()
-    ddict_str = os.environ["SS_DRG_DDICT"]
+    ddict_str = os.environ["SS_INFRA_BACKBONE"]
     ddict = DDict.attach(ddict_str)
 
     to_worker_channel = Channel.make_process_local()
@@ -162,10 +167,14 @@ if __name__ == "__main__":
     dfs = DragonFeatureStore(ddict)
     comm_channel = DragonFLIChannel(to_worker_fli_serialized)
 
-    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(dfs)).decode("utf-8")
-    os.environ["SSQueue"] = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+    descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+    os.environ["SS_REQUEST_QUEUE"] = descriptor
 
-    ss_config_loader = EnvironmentConfigLoader()
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=DragonCommChannel,
+        queue_factory=DragonFLIChannel.from_descriptor,
+    )
 
     dispatcher = RequestDispatcher(
         batch_timeout=args.batch_timeout,

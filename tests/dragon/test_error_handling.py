@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
-import pickle
 from unittest.mock import MagicMock
 
 import pytest
@@ -37,6 +35,7 @@ from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 
+from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
@@ -45,6 +44,7 @@ from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfi
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
     FetchInputResult,
@@ -64,30 +64,51 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture
-def setup_worker_manager_model_bytes(test_dir, monkeypatch: pytest.MonkeyPatch):
+def backbone_descriptor() -> str:
+    # create a shared backbone featurestore
+    feature_store = DragonFeatureStore(DDict())
+    return feature_store.descriptor
+
+
+@pytest.fixture
+def app_feature_store() -> FeatureStore:
+    # create a standalone feature store to mimic a user application putting
+    # data into an application-owned resource (app should not access backbone)
+    app_fs = DragonFeatureStore(DDict())
+    return app_fs
+
+
+@pytest.fixture
+def setup_worker_manager_model_bytes(
+    test_dir,
+    monkeypatch: pytest.MonkeyPatch,
+    backbone_descriptor: str,
+    app_feature_store: FeatureStore,
+):
     integrated_worker = IntegratedTorchWorker()
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
-    storage = DDict()
-    feature_store = DragonFeatureStore(storage)
-    monkeypatch.setenv(
-        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
-    )
+    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
+    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
 
     worker_manager = WorkerManager(
-        EnvironmentConfigLoader(),
+        EnvironmentConfigLoader(
+            featurestore_factory=DragonFeatureStore.from_descriptor,
+            callback_factory=FileSystemCommChannel.from_descriptor,
+            queue_factory=DragonFLIChannel.from_descriptor,
+        ),
         integrated_worker,
         as_service=False,
         cooldown=3,
-        comm_channel_type=FileSystemCommChannel,
     )
 
-    tensor_key = MessageHandler.build_tensor_key("key")
+    tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
+    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
     model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
     request = MessageHandler.build_request(
-        test_dir, model, [tensor_key], [tensor_key], [], None
+        test_dir, model, [tensor_key], [output_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
     worker_manager._dispatcher_queue.send(ser_request)
@@ -96,30 +117,38 @@ def setup_worker_manager_model_bytes(test_dir, monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def setup_worker_manager_model_key(test_dir, monkeypatch: pytest.MonkeyPatch):
+def setup_worker_manager_model_key(
+    test_dir: str,
+    monkeypatch: pytest.MonkeyPatch,
+    backbone_descriptor: str,
+    app_feature_store: FeatureStore,
+):
     integrated_worker = IntegratedTorchWorker()
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
-    storage = DDict()
-    feature_store = DragonFeatureStore(storage)
-    monkeypatch.setenv(
-        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
-    )
+    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
+    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
 
     worker_manager = WorkerManager(
-        EnvironmentConfigLoader(),
+        EnvironmentConfigLoader(
+            featurestore_factory=DragonFeatureStore.from_descriptor,
+            callback_factory=FileSystemCommChannel.from_descriptor,
+            queue_factory=DragonFLIChannel.from_descriptor,
+        ),
         integrated_worker,
         as_service=False,
         cooldown=3,
-        comm_channel_type=FileSystemCommChannel,
     )
 
-    tensor_key = MessageHandler.build_tensor_key("key")
-    model_key = MessageHandler.build_model_key("model key")
+    tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
+    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
+    model_key = MessageHandler.build_model_key(
+        "model key", app_feature_store.descriptor
+    )
     request = MessageHandler.build_request(
-        test_dir, model_key, [tensor_key], [tensor_key], [], None
+        test_dir, model_key, [tensor_key], [output_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
     worker_manager._dispatcher_queue.send(ser_request)
@@ -162,7 +191,11 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         pytest.param(
             "fetch_model", "Failed while fetching the model.", id="fetch model"
         ),
-        pytest.param("load_model", "Failed while loading the model.", id="load model"),
+        pytest.param(
+            "load_model",
+            "Failed while loading model from feature store.",
+            id="load model",
+        ),
         pytest.param(
             "fetch_inputs", "Failed while fetching the inputs.", id="fetch inputs"
         ),
