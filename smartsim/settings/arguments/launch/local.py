@@ -28,9 +28,9 @@ from __future__ import annotations
 
 import typing as t
 
+from smartsim._core.dispatch import dispatch
 from smartsim._core.shell.shellLauncher import ShellLauncher
 from smartsim.log import get_logger
-from smartsim._core.dispatch import dispatch
 
 from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType

@@ -27,20 +27,29 @@
 
 from __future__ import annotations
 
+import os
+import subprocess as sp
 import typing as t
 
-from smartsim.settings.arguments.launchArguments import LaunchArguments
-from smartsim.types import LaunchedJobID
+import psutil
 
-from smartsim.log import get_logger
-
-import subprocess as sp
-
+from smartsim._core.dispatch import (
+    ExecutableProtocol,
+    _EnvironMappingType,
+    _FormatterType,
+    create_job_id,
+    dispatch,
+)
 from smartsim._core.utils import helpers
-from smartsim._core.dispatch import create_job_id, ExecutableProtocol, dispatch, _FormatterType, _EnvironMappingType
+from smartsim.error import errors
+from smartsim.log import get_logger
+from smartsim.settings.arguments.launchArguments import LaunchArguments
+from smartsim.status import JobStatus
+from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
+
     from smartsim.experiment import Experiment
 
 logger = get_logger(__name__)
@@ -51,12 +60,45 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    def start(self, command: t.Sequence[str]) -> LaunchedJobID:
+    def start(
+        self, command: tuple[str | os.PathLike[str], t.Sequence[str]]
+    ) -> LaunchedJobID:
         id_ = create_job_id()
-        exe, *rest = command
+        path, args = command
+        exe, *rest = args
         # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
+        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path)
         return id_
+
+    def get_status(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        return {id_: self._get_status(id_) for id_ in launched_ids}
+
+    def _get_status(self, id_: LaunchedJobID, /) -> JobStatus:
+        if (proc := self._launched.get(id_)) is None:
+            msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
+            raise errors.LauncherJobNotFound(msg)
+        ret_code = proc.poll()
+        if ret_code is None:
+            status = psutil.Process(proc.pid).status()
+            return {
+                psutil.STATUS_RUNNING: JobStatus.RUNNING,
+                psutil.STATUS_SLEEPING: JobStatus.RUNNING,
+                psutil.STATUS_WAKING: JobStatus.RUNNING,
+                psutil.STATUS_DISK_SLEEP: JobStatus.RUNNING,
+                psutil.STATUS_DEAD: JobStatus.FAILED,
+                psutil.STATUS_TRACING_STOP: JobStatus.PAUSED,
+                psutil.STATUS_WAITING: JobStatus.PAUSED,
+                psutil.STATUS_STOPPED: JobStatus.PAUSED,
+                psutil.STATUS_LOCKED: JobStatus.PAUSED,
+                psutil.STATUS_PARKED: JobStatus.PAUSED,
+                psutil.STATUS_IDLE: JobStatus.PAUSED,
+                psutil.STATUS_ZOMBIE: JobStatus.COMPLETED,
+            }.get(status, JobStatus.UNKNOWN)
+        if ret_code == 0:
+            return JobStatus.COMPLETED
+        return JobStatus.FAILED
 
     @classmethod
     def create(cls, _: Experiment) -> Self:
@@ -65,7 +107,7 @@ class ShellLauncher:
     @staticmethod
     def make_shell_format_fn(
         run_command: str | None,
-    ) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
+    ) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
         """A function that builds a function that formats a `LaunchArguments` as a
         shell executable sequence of strings for a given launching utility.
 
@@ -96,9 +138,12 @@ class ShellLauncher:
         """
 
         def impl(
-            args: LaunchArguments, exe: ExecutableProtocol, _env: _EnvironMappingType
-        ) -> t.Sequence[str]:
-            return (
+            args: LaunchArguments,
+            exe: ExecutableProtocol,
+            path: str | os.PathLike[str],
+            _env: _EnvironMappingType,
+        ) -> t.Tuple[str | os.PathLike[str], t.Sequence[str]]:
+            return path, (
                 (
                     run_command,
                     *(args.format_launch_args() or ()),
