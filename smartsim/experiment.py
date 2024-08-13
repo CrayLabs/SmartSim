@@ -29,9 +29,11 @@
 from __future__ import annotations
 
 import collections
+import datetime
 import itertools
 import os
 import os.path as osp
+import pathlib
 import textwrap
 import typing as t
 from os import environ, getcwd
@@ -181,13 +183,23 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        return self._dispatch(dispatch.DEFAULT_DISPATCHER, *jobs)
+        # Create the run id
+        run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
+        # Generate the root path
+        root = pathlib.Path(self.exp_path, run_id)
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
-        self, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
+        self,
+        generator: Generator,
+        dispatcher: dispatch.Dispatcher,
+        job: Job,
+        *jobs: Job,
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 
+        :param generator: The generator is responsible for creating the
+            job run and log directory.
         :param dispatcher: The dispatcher that should be used to determine how
             to start a job based on its launch settings.
         :param job: The first job instance to dispatch
@@ -197,7 +209,7 @@ class Experiment:
             particular dispatch of the job.
         """
 
-        def execute_dispatch(job: Job) -> LaunchedJobID:
+        def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -220,7 +232,8 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            id_ = launch_config.start(exe, env)
+            job_execution_path = self._generate(generator, job, idx)
+            id_ = launch_config.start(exe, job_execution_path, env)
             # Save the underlying launcher instance and launched job id. That
             # way we do not need to spin up a launcher instance for each
             # individual job, and the experiment can monitor job statuses.
@@ -228,7 +241,9 @@ class Experiment:
             self._launch_history.save_launch(launch_config._adapted_launcher, id_)
             return id_
 
-        return execute_dispatch(job), *map(execute_dispatch, jobs)
+        return execute_dispatch(generator, job, 0), *(
+            execute_dispatch(generator, job, idx) for idx, job in enumerate(jobs, 1)
+        )
 
     def get_status(
         self, *ids: LaunchedJobID
@@ -262,35 +277,24 @@ class Experiment:
         return tuple(stats)
 
     @_contextualize
-    def generate(
-        self,
-        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        tag: t.Optional[str] = None,
-        overwrite: bool = False,
-        verbose: bool = False,
-    ) -> None:
-        """Generate the file structure for an ``Experiment``
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
+        """Generate the directory structure and files for a ``Job``
 
-        ``Experiment.generate`` creates directories for each entity
-        passed to organize Experiments that launch many entities.
+        If files or directories are attached to an ``Application`` object
+        associated with the Job using ``Application.attach_generator_files()``,
+        those files or directories will be symlinked, copied, or configured and
+        written into the created job directory.
 
-        If files or directories are attached to ``application`` objects
-        using ``application.attach_generator_files()``, those files or
-        directories will be symlinked, copied, or configured and
-        written into the created directory for that instance.
-
-        Instances of ``application``, ``Ensemble`` and ``FeatureStore``
-        can all be passed as arguments to the generate method.
-
-        :param tag: tag used in `to_configure` generator files
-        :param overwrite: overwrite existing folders and contents
-        :param verbose: log parameter settings to std out
+        :param generator: The generator is responsible for creating the job
+            run and log directory.
+        :param job: The Job instance for which the output is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the generated output for the Job instance.
+        :raises: A SmartSimError if an error occurs during the generation process.
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
-            if tag:
-                generator.set_tag(tag)
-            generator.generate_experiment(*args)
+            job_run_path = generator.generate_job(job, job_index)
+            return job_run_path
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -371,22 +375,6 @@ class Experiment:
         :returns: configuration of telemetry for this entity
         """
         return self._telemetry_cfg
-
-    def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(
-            entity: t.Union[FeatureStore, Application, Ensemble]
-        ) -> None:
-            if not osp.isdir(entity.path):
-                os.makedirs(entity.path)
-
-        for application in start_manifest.applications:
-            create_entity_dir(application)
-
-        for feature_store in start_manifest.fss:
-            create_entity_dir(feature_store)
-
-        for ensemble in start_manifest.ensembles:
-            create_entity_dir(ensemble)
 
     def __str__(self) -> str:
         return self.name

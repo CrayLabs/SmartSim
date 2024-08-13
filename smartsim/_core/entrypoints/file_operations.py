@@ -133,7 +133,7 @@ def copy(parsed_args: argparse.Namespace) -> None:
             dirs_exist_ok=parsed_args.dirs_exist_ok,
         )
     else:
-        shutil.copyfile(parsed_args.source, parsed_args.dest)
+        shutil.copy(parsed_args.source, parsed_args.dest)
 
 
 def symlink(parsed_args: argparse.Namespace) -> None:

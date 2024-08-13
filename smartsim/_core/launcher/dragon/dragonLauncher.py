@@ -367,6 +367,7 @@ from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 def _as_run_request_args_and_policy(
     run_req_args: DragonLaunchArguments,
     exe: ExecutableProtocol,
+    path: str | os.PathLike[str],
     env: t.Mapping[str, str | None],
 ) -> tuple[DragonRunRequestView, DragonRunPolicy]:
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -385,8 +386,7 @@ def _as_run_request_args_and_policy(
             #        this will need to be injected by the user or by us to have
             #        the command execute next to any generated files. A similar
             #        problem exists for the other settings.
-            # TODO: Find a way to inject this path
-            path=os.getcwd(),
+            path=path,
             env=env,
             # TODO: Not sure how this info is injected
             name=None,

@@ -52,6 +52,18 @@ _HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
+def check_name(name: str) -> None:
+    """
+    Checks if the input name is valid.
+
+    :param name: The name to be checked.
+
+    :raises ValueError: If the name contains the path separator (os.path.sep).
+    """
+    if os.path.sep in name:
+        raise ValueError("Invalid input: String contains the path separator.")
+
+
 def unpack_fs_identifier(fs_id: str, token: str) -> t.Tuple[str, str]:
     """Unpack the unformatted feature store identifier
     and format for env variable suffix using the token
