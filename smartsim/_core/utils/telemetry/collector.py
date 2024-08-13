@@ -33,8 +33,13 @@ import typing as t
 from smartsim._core.control.job import JobEntity
 from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.telemetry.sink import FileSink, Sink
+from smartsim.entity._mock import Mock
 
 logger = logging.getLogger("TelemetryMonitor")
+
+
+class Client(Mock):
+    """Mock Client"""
 
 
 class Collector(abc.ABC):
@@ -121,7 +126,7 @@ class DBCollector(Collector):
         :param sink: destination to write collected information
         """
         super().__init__(entity, sink)
-        self._client: None
+        self._client: Client
         self._address = _DBAddress(
             self._entity.config.get("host", ""),
             int(self._entity.config.get("port", 0)),
