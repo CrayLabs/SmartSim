@@ -42,6 +42,7 @@ if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
 
 
+@t.final
 class Job(BaseJob):
     """A Job holds a reference to a SmartSimEntity and associated
     LaunchSettings prior to launch.  It is responsible for turning
@@ -72,7 +73,7 @@ class Job(BaseJob):
     def name(self, name: str) -> None:
         """Sets the name of the Job."""
         check_name(name)
-        logger.info(f"Overwriting Job name from {self._name} to name")
+        logger.info(f'Overwriting the Job name from "{self._name}" to "{name}"')
         self._name = name
 
     @property

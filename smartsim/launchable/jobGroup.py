@@ -15,6 +15,7 @@ if t.TYPE_CHECKING:
     from typing_extensions import Self
 
 
+@t.final
 class JobGroup(BaseJobGroup):
     """A job group holds references to multiple jobs that
     will be executed all at the same time when resources
@@ -40,7 +41,7 @@ class JobGroup(BaseJobGroup):
     def name(self, name: str) -> None:
         """Sets the name of the JobGroup."""
         check_name(name)
-        logger.info(f"Overwriting Job name from {self._name} to name")
+        logger.info(f'Overwriting Job name from "{self._name}" to "{name}"')
         self._name = name
 
     @property
