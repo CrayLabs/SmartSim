@@ -30,6 +30,7 @@ import os
 import typing as t
 
 from smartsim._core.schemas.dragonRequests import DragonRunPolicy
+from smartsim.error import errors
 from smartsim.types import LaunchedJobID
 
 from ...._core.launcher.stepMapping import StepMap
@@ -42,7 +43,7 @@ from ....settings import (
     SbatchSettings,
     SettingsBase,
 )
-from ....status import SmartSimStatus
+from ....status import JobStatus
 from ...schemas import (
     DragonRunRequest,
     DragonRunRequestView,
@@ -143,6 +144,12 @@ class DragonLauncher(WLMLauncher):
         req = DragonRunRequest(**dict(req_args), current_env=merged_env, policy=policy)
         res = _assert_schema_type(self._connector.send_request(req), DragonRunResponse)
         return LaunchedJobID(res.step_id)
+
+    def get_status(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        infos = self._get_managed_step_update(list(launched_ids))
+        return {id_: info.status for id_, info in zip(launched_ids, infos)}
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
@@ -249,9 +256,9 @@ class DragonLauncher(WLMLauncher):
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
         step_info.status = (
-            SmartSimStatus.STATUS_CANCELLED  # set status to cancelled instead of failed
+            JobStatus.CANCELLED  # set status to cancelled instead of failed
         )
-        step_info.launcher_status = str(SmartSimStatus.STATUS_CANCELLED)
+        step_info.launcher_status = str(JobStatus.CANCELLED)
         return step_info
 
     @staticmethod
@@ -311,8 +318,8 @@ class DragonLauncher(WLMLauncher):
                         msg += response.error_message
                     logger.error(msg)
                     info = StepInfo(
-                        SmartSimStatus.STATUS_FAILED,
-                        SmartSimStatus.STATUS_FAILED.value,
+                        JobStatus.FAILED,
+                        JobStatus.FAILED.value,
                         -1,
                     )
                 else:
@@ -331,8 +338,12 @@ class DragonLauncher(WLMLauncher):
 
                 step_id_updates[step_id] = info
 
-        # Order matters as we return an ordered list of StepInfo objects
-        return [step_id_updates[step_id] for step_id in step_ids]
+        try:
+            # Order matters as we return an ordered list of StepInfo objects
+            return [step_id_updates[step_id] for step_id in step_ids]
+        except KeyError:
+            msg = "A step info could not be found for one or more of the requested ids"
+            raise errors.LauncherJobNotFound(msg) from None
 
     def __str__(self) -> str:
         return "Dragon"

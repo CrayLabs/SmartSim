@@ -26,16 +26,20 @@
 
 from __future__ import annotations
 
+import abc
+import collections.abc
 import dataclasses
 import os
 import subprocess as sp
 import typing as t
 import uuid
 
+import psutil
 from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
 
 from smartsim._core.utils import helpers
 from smartsim.error import errors
+from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
@@ -387,10 +391,45 @@ class ExecutableProtocol(t.Protocol):
     def as_program_arguments(self) -> t.Sequence[str]: ...
 
 
-class LauncherProtocol(t.Protocol[_T_contra]):
-    def start(self, launchable: _T_contra, /) -> LaunchedJobID: ...
+class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
+    """The protocol defining a launcher that can be used by a SmartSim
+    experiment
+    """
+
     @classmethod
-    def create(cls, exp: Experiment, /) -> Self: ...
+    @abc.abstractmethod
+    def create(cls, exp: Experiment, /) -> Self:
+        """Create an new launcher instance from and to be used by the passed in
+        experiment instance
+
+        :param: An experiment to use the newly created launcher instance
+        :returns: The newly constructed launcher instance
+        """
+
+    @abc.abstractmethod
+    def start(self, launchable: _T_contra, /) -> LaunchedJobID:
+        """Given input that this launcher understands, create a new process and
+        issue a launched job id to query the status of the job in future.
+
+        :param launchable: The input to start a new process
+        :returns: The id to query the status of the process in future
+        """
+
+    @abc.abstractmethod
+    def get_status(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Given a collection of launched job ids, return a mapping of id to
+        current status of the launched job. If a job id is no recognized by the
+        launcher, a `smartsim.error.errors.LauncherJobNotFound` error should be
+        raised.
+
+        :param launched_ids: The collection of ids of launched jobs to query
+            for current status
+        :raises smartsim.error.errors.LauncherJobNotFound: If at least one of
+            the ids of the `launched_ids` collection is not recognized.
+        :returns: A mapping of launched id to current status
+        """
 
 
 def make_shell_format_fn(
@@ -460,6 +499,36 @@ class ShellLauncher:
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path)
         return id_
+
+    def get_status(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        return {id_: self._get_status(id_) for id_ in launched_ids}
+
+    def _get_status(self, id_: LaunchedJobID, /) -> JobStatus:
+        if (proc := self._launched.get(id_)) is None:
+            msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
+            raise errors.LauncherJobNotFound(msg)
+        ret_code = proc.poll()
+        if ret_code is None:
+            status = psutil.Process(proc.pid).status()
+            return {
+                psutil.STATUS_RUNNING: JobStatus.RUNNING,
+                psutil.STATUS_SLEEPING: JobStatus.RUNNING,
+                psutil.STATUS_WAKING: JobStatus.RUNNING,
+                psutil.STATUS_DISK_SLEEP: JobStatus.RUNNING,
+                psutil.STATUS_DEAD: JobStatus.FAILED,
+                psutil.STATUS_TRACING_STOP: JobStatus.PAUSED,
+                psutil.STATUS_WAITING: JobStatus.PAUSED,
+                psutil.STATUS_STOPPED: JobStatus.PAUSED,
+                psutil.STATUS_LOCKED: JobStatus.PAUSED,
+                psutil.STATUS_PARKED: JobStatus.PAUSED,
+                psutil.STATUS_IDLE: JobStatus.PAUSED,
+                psutil.STATUS_ZOMBIE: JobStatus.COMPLETED,
+            }.get(status, JobStatus.UNKNOWN)
+        if ret_code == 0:
+            return JobStatus.COMPLETED
+        return JobStatus.FAILED
 
     @classmethod
     def create(cls, _: Experiment) -> Self:

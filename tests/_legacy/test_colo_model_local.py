@@ -31,7 +31,7 @@ import pytest
 from smartsim import Experiment
 from smartsim.entity import Application
 from smartsim.error import SSUnsupportedError
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -149,14 +149,12 @@ def test_launch_colocated_application_defaults(
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
-    assert all(stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses)
+    assert all(stat == JobStatus.COMPLETED for stat in statuses)
 
     # test restarting the colocated application
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
-    assert all(
-        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
-    ), f"Statuses {statuses}"
+    assert all(stat == JobStatus.COMPLETED for stat in statuses), f"Statuses {statuses}"
 
 
 @pytest.mark.parametrize("fs_type", supported_fss)
@@ -191,12 +189,12 @@ def test_launch_multiple_colocated_applications(
     exp.generate(*colo_applications)
     exp.start(*colo_applications, block=True)
     statuses = exp.get_status(*colo_applications)
-    assert all(stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses)
+    assert all(stat == JobStatus.COMPLETED for stat in statuses)
 
     # test restarting the colocated application
     exp.start(*colo_applications, block=True)
     statuses = exp.get_status(*colo_applications)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 @pytest.mark.parametrize("fs_type", supported_fss)
@@ -222,7 +220,7 @@ def test_colocated_application_disable_pinning(
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 @pytest.mark.parametrize("fs_type", supported_fss)
@@ -256,7 +254,7 @@ def test_colocated_application_pinning_auto_2cpu(
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
@@ -285,7 +283,7 @@ def test_colocated_application_pinning_range(
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
@@ -312,7 +310,7 @@ def test_colocated_application_pinning_list(
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_colo_uds_verifies_socket_file_name(test_dir, launcher="local"):

@@ -40,7 +40,7 @@ from ....settings import (
     SettingsBase,
     SrunSettings,
 )
-from ....status import SmartSimStatus
+from ....status import JobStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -213,7 +213,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
         step_info.status = (
-            SmartSimStatus.STATUS_CANCELLED
+            JobStatus.CANCELLED
         )  # set status to cancelled instead of failed
         return step_info
 

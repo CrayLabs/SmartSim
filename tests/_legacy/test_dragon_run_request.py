@@ -47,7 +47,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.schemas.dragonRequests import *
 from smartsim._core.schemas.dragonResponses import *
 from smartsim._core.utils.helpers import create_short_id_str
-from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
+from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
 if t.TYPE_CHECKING:
     from smartsim._core.launcher.dragon.dragonBackend import (
@@ -175,7 +175,7 @@ def set_mock_group_infos(
 
     group_infos = {
         "abc123-1": ProcessGroupInfo(
-            SmartSimStatus.STATUS_RUNNING,
+            JobStatus.RUNNING,
             running_group,
             [123],
             [],
@@ -183,7 +183,7 @@ def set_mock_group_infos(
             MagicMock(),
         ),
         "del999-2": ProcessGroupInfo(
-            SmartSimStatus.STATUS_CANCELLED,
+            JobStatus.CANCELLED,
             error_group,
             [124],
             [-9],
@@ -191,7 +191,7 @@ def set_mock_group_infos(
             MagicMock(),
         ),
         "c101vz-3": ProcessGroupInfo(
-            SmartSimStatus.STATUS_COMPLETED,
+            JobStatus.COMPLETED,
             MagicMock(),
             [125, 126],
             [0],
@@ -199,7 +199,7 @@ def set_mock_group_infos(
             MagicMock(),
         ),
         "0ghjk1-4": ProcessGroupInfo(
-            SmartSimStatus.STATUS_FAILED,
+            JobStatus.FAILED,
             error_group,
             [127],
             [-1],
@@ -207,7 +207,7 @@ def set_mock_group_infos(
             MagicMock(),
         ),
         "ljace0-5": ProcessGroupInfo(
-            SmartSimStatus.STATUS_NEVER_STARTED, None, [], [], [], None
+            InvalidJobStatus.NEVER_STARTED, None, [], [], [], None
         ),
     }
 
@@ -275,7 +275,7 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
 
-    dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
+    dragon_backend._group_infos[step_id].status = JobStatus.CANCELLED
 
     dragon_backend._update()
     assert not dragon_backend._running_steps
@@ -304,7 +304,7 @@ def test_deny_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert run_resp.error_message == "Cannot satisfy request, server is shutting down."
     step_id = run_resp.step_id
 
-    assert dragon_backend.group_infos[step_id].status == SmartSimStatus.STATUS_FAILED
+    assert dragon_backend.group_infos[step_id].status == JobStatus.FAILED
 
 
 def test_run_request_with_empty_policy(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -372,7 +372,7 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
     assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
 
-    dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
+    dragon_backend._group_infos[step_id].status = JobStatus.CANCELLED
 
     dragon_backend._update()
     assert not dragon_backend._running_steps
@@ -403,7 +403,7 @@ def test_stop_request(monkeypatch: pytest.MonkeyPatch) -> None:
     running_steps = [
         step_id
         for step_id, group in group_infos.items()
-        if group.status == SmartSimStatus.STATUS_RUNNING
+        if group.status == JobStatus.RUNNING
     ]
 
     step_id_to_stop = running_steps[0]
@@ -418,10 +418,7 @@ def test_stop_request(monkeypatch: pytest.MonkeyPatch) -> None:
     dragon_backend._update()
 
     assert len(dragon_backend._stop_requests) == 0
-    assert (
-        dragon_backend._group_infos[step_id_to_stop].status
-        == SmartSimStatus.STATUS_CANCELLED
-    )
+    assert dragon_backend._group_infos[step_id_to_stop].status == JobStatus.CANCELLED
 
     assert len(dragon_backend._allocated_hosts) == 0
     assert len(dragon_backend._free_hosts) == 3
@@ -453,7 +450,7 @@ def test_shutdown_request(
     if kill_jobs:
         for group_info in dragon_backend.group_infos.values():
             if not group_info.status in TERMINAL_STATUSES:
-                group_info.status = SmartSimStatus.STATUS_FAILED
+                group_info.status = JobStatus.FAILED
                 group_info.return_codes = [-9]
             group_info.process_group = None
             group_info.redir_workers = None

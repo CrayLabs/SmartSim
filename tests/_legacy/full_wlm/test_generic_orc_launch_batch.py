@@ -32,7 +32,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.settings.pbsSettings import QsubBatchSettings
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -79,13 +79,13 @@ def test_launch_feature_store_auto_batch(test_dir, wlmutils):
     statuses = exp.get_status(feature_store)
 
     # don't use assert so that we don't leave an orphan process
-    if SmartSimStatus.STATUS_FAILED in statuses:
+    if JobStatus.FAILED in statuses:
         exp.stop(feature_store)
         assert False
 
     exp.stop(feature_store)
     statuses = exp.get_status(feature_store)
-    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == JobStatus.CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_feature_store_batch_single(test_dir, wlmutils):
@@ -116,13 +116,13 @@ def test_launch_cluster_feature_store_batch_single(test_dir, wlmutils):
     statuses = exp.get_status(feature_store)
 
     # don't use assert so that feature_store we don't leave an orphan process
-    if SmartSimStatus.STATUS_FAILED in statuses:
+    if JobStatus.FAILED in statuses:
         exp.stop(feature_store)
         assert False
 
     exp.stop(feature_store)
     statuses = exp.get_status(feature_store)
-    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == JobStatus.CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_feature_store_batch_multi(test_dir, wlmutils):
@@ -153,13 +153,13 @@ def test_launch_cluster_feature_store_batch_multi(test_dir, wlmutils):
     statuses = exp.get_status(feature_store)
 
     # don't use assert so that feature_store we don't leave an orphan process
-    if SmartSimStatus.STATUS_FAILED in statuses:
+    if JobStatus.FAILED in statuses:
         exp.stop(feature_store)
         assert False
 
     exp.stop(feature_store)
     statuses = exp.get_status(feature_store)
-    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == JobStatus.CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
@@ -186,7 +186,7 @@ def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
 
     statuses = exp.get_status(feature_store)
     try:
-        assert all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
+        assert all(stat == JobStatus.RUNNING for stat in statuses)
     except Exception:
         exp.stop(feature_store)
         raise
@@ -204,7 +204,7 @@ def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
         time.sleep(5)
 
         statuses = exp_2.get_status(reloaded_feature_store)
-        assert all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
+        assert all(stat == JobStatus.RUNNING for stat in statuses)
     except Exception:
         # Something went wrong! Let the experiment that started the FS
         # clean up the FS
@@ -215,7 +215,7 @@ def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
         # Test experiment 2 can stop the FS
         exp_2.stop(reloaded_feature_store)
         assert all(
-            stat == SmartSimStatus.STATUS_CANCELLED
+            stat == JobStatus.CANCELLED
             for stat in exp_2.get_status(reloaded_feature_store)
         )
     except Exception:
@@ -227,6 +227,5 @@ def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
         # Ensure  it is the same FS that Experiment 1 was tracking
         time.sleep(5)
         assert not any(
-            stat == SmartSimStatus.STATUS_RUNNING
-            for stat in exp.get_status(feature_store)
+            stat == JobStatus.RUNNING for stat in exp.get_status(feature_store)
         )

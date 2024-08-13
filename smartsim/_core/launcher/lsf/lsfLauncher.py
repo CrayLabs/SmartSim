@@ -38,7 +38,7 @@ from ....settings import (
     RunSettings,
     SettingsBase,
 )
-from ....status import SmartSimStatus
+from ....status import JobStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -152,7 +152,7 @@ class LSFLauncher(WLMLauncher):
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
         step_info.status = (
-            SmartSimStatus.STATUS_CANCELLED
+            JobStatus.CANCELLED
         )  # set status to cancelled instead of failed
         return step_info
 
@@ -203,7 +203,7 @@ class LSFLauncher(WLMLauncher):
                 # create LSFBatchStepInfo objects to return
                 batch_info = LSFBatchStepInfo(stat, None)
                 # account for case where job history is not logged by LSF
-                if batch_info.status == SmartSimStatus.STATUS_COMPLETED:
+                if batch_info.status == JobStatus.COMPLETED:
                     batch_info.returncode = 0
                 updates.append(batch_info)
         return updates

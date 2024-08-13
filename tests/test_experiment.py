@@ -28,16 +28,20 @@ from __future__ import annotations
 
 import dataclasses
 import itertools
+import random
+import tempfile
 import typing as t
 import uuid
 
 import pytest
 
+from smartsim._core.control.launch_history import LaunchHistory
 from smartsim.entity import _mock, entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import dispatch, launchSettings
 from smartsim.settings.arguments import launchArguments
+from smartsim.status import InvalidJobStatus, JobStatus
 
 pytestmark = pytest.mark.group_a
 
@@ -127,6 +131,9 @@ class NoOpRecordLauncher(dispatch.LauncherProtocol):
         self.ids_to_launched[id_] = record
         return id_
 
+    def get_status(self, *ids):
+        raise NotImplementedError
+
 
 @dataclasses.dataclass(frozen=True)
 class LaunchRecord:
@@ -211,10 +218,16 @@ def test_start_can_launch_jobs(
     num_jobs: int,
 ) -> None:
     jobs = make_jobs(job_maker, num_jobs)
-    assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 0
+    ), "Initialized w/ launchers"
     launched_ids = experiment.start(*jobs)
-    assert len(experiment._active_launchers) == 1, "Unexpected number of launchers"
-    (launcher,) = experiment._active_launchers
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 1
+    ), "Unexpected number of launchers"
+    ((launcher, exp_cached_ids),) = (
+        experiment._launch_history.group_by_launcher().items()
+    )
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
     assert launcher.created_by_experiment is experiment, "Not created by experiment"
     assert (
@@ -225,6 +238,7 @@ def test_start_can_launch_jobs(
     # Check that `job_a, job_b, job_c, ...` are started in that order when
     # calling `experiemnt.start(job_a, job_b, job_c, ...)`
     assert expected_launched == list(launcher.launched_order), "Unexpected launch order"
+    assert sorted(launched_ids) == sorted(exp_cached_ids), "Exp did not cache ids"
 
     # Similarly, check that `id_a, id_b, id_c, ...` corresponds to
     # `job_a, job_b, job_c, ...` when calling
@@ -240,17 +254,23 @@ def test_start_can_launch_jobs(
 def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     experiment: Experiment, job_maker: JobMakerType, num_starts: int
 ) -> None:
-    assert len(experiment._active_launchers) == 0, "Initialized w/ launchers"
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 0
+    ), "Initialized w/ launchers"
     job = job_maker()
     ids_to_launches = {
         experiment.start(job)[0]: LaunchRecord.from_job(job) for _ in range(num_starts)
     }
-    assert len(experiment._active_launchers) == 1, "Did not reuse the launcher"
-    (launcher,) = experiment._active_launchers
+    assert (
+        len(list(experiment._launch_history.iter_past_launchers())) == 1
+    ), "Did not reuse the launcher"
+    ((launcher, exp_cached_ids),) = (
+        experiment._launch_history.group_by_launcher().items()
+    )
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
     assert len(launcher.launched_order) == num_starts, "Unexpected number launches"
 
-    # Check that a single `job` instance can be launched and re-launcherd and
+    # Check that a single `job` instance can be launched and re-launched and
     # that `id_a, id_b, id_c, ...` corresponds to
     # `"start_a", "start_b", "start_c", ...` when calling
     # ```py
@@ -260,3 +280,111 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     # ...
     # ```
     assert ids_to_launches == launcher.ids_to_launched, "Job was not re-launched"
+    assert sorted(ids_to_launches) == sorted(exp_cached_ids), "Exp did not cache ids"
+
+
+class GetStatusLauncher(dispatch.LauncherProtocol):
+    def __init__(self):
+        self.id_to_status = {dispatch.create_job_id(): stat for stat in JobStatus}
+
+    __hash__ = object.__hash__
+
+    @property
+    def known_ids(self):
+        return tuple(self.id_to_status)
+
+    @classmethod
+    def create(cls, _):
+        raise NotImplementedError("{type(self).__name__} should not be created")
+
+    def start(self, _):
+        raise NotImplementedError("{type(self).__name__} should not start anything")
+
+    def get_status(self, *ids: LaunchedJobID):
+        return {id_: self.id_to_status[id_] for id_ in ids}
+
+
+@pytest.fixture
+def make_populated_experment(monkeypatch, experiment):
+    def impl(num_active_launchers):
+        new_launchers = (GetStatusLauncher() for _ in range(num_active_launchers))
+        id_to_launcher = {
+            id_: launcher for launcher in new_launchers for id_ in launcher.known_ids
+        }
+        monkeypatch.setattr(
+            experiment, "_launch_history", LaunchHistory(id_to_launcher)
+        )
+        return experiment
+
+    yield impl
+
+
+def test_experiment_can_get_statuses(make_populated_experment):
+    exp = make_populated_experment(num_active_launchers=1)
+    (launcher,) = exp._launch_history.iter_past_launchers()
+    ids = tuple(launcher.known_ids)
+    recieved_stats = exp.get_status(*ids)
+    assert len(recieved_stats) == len(ids), "Unexpected number of statuses"
+    assert (
+        dict(zip(ids, recieved_stats)) == launcher.id_to_status
+    ), "Statuses in wrong order"
+
+
+@pytest.mark.parametrize(
+    "num_launchers",
+    [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
+)
+def test_experiment_can_get_statuses_from_many_launchers(
+    make_populated_experment, num_launchers
+):
+    exp = make_populated_experment(num_active_launchers=num_launchers)
+    launcher_and_rand_ids = (
+        (launcher, random.choice(tuple(launcher.id_to_status)))
+        for launcher in exp._launch_history.iter_past_launchers()
+    )
+    expected_id_to_stat = {
+        id_: launcher.id_to_status[id_] for launcher, id_ in launcher_and_rand_ids
+    }
+    query_ids = tuple(expected_id_to_stat)
+    stats = exp.get_status(*query_ids)
+    assert len(stats) == len(expected_id_to_stat), "Unexpected number of statuses"
+    assert dict(zip(query_ids, stats)) == expected_id_to_stat, "Statuses in wrong order"
+
+
+def test_get_status_returns_not_started_for_unrecognized_ids(
+    monkeypatch, make_populated_experment
+):
+    exp = make_populated_experment(num_active_launchers=1)
+    brand_new_id = dispatch.create_job_id()
+    ((launcher, (id_not_known_by_exp, *rest)),) = (
+        exp._launch_history.group_by_launcher().items()
+    )
+    new_history = LaunchHistory({id_: launcher for id_ in rest})
+    monkeypatch.setattr(exp, "_launch_history", new_history)
+    expected_stats = (InvalidJobStatus.NEVER_STARTED,) * 2
+    actual_stats = exp.get_status(brand_new_id, id_not_known_by_exp)
+    assert expected_stats == actual_stats
+
+
+def test_get_status_de_dups_ids_passed_to_launchers(
+    monkeypatch, make_populated_experment
+):
+    def track_calls(fn):
+        calls = []
+
+        def impl(*a, **kw):
+            calls.append((a, kw))
+            return fn(*a, **kw)
+
+        return calls, impl
+
+    exp = make_populated_experment(num_active_launchers=1)
+    ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    calls, tracked_get_status = track_calls(launcher.get_status)
+    monkeypatch.setattr(launcher, "get_status", tracked_get_status)
+    stats = exp.get_status(id_, id_, id_)
+    assert len(stats) == 3, "Unexpected number of statuses"
+    assert all(stat == stats[0] for stat in stats), "Statuses are not eq"
+    assert len(calls) == 1, "Launcher's `get_status` was called more than once"
+    (call,) = calls
+    assert call == ((id_,), {}), "IDs were not de-duplicated"
