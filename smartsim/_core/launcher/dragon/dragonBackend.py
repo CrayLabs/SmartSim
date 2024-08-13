@@ -451,9 +451,9 @@ class DragonBackend:
                 return None
 
             to_allocate = [node.hostname for node in nodes]
-            # track assigning this step to each node
 
             for hostname in to_allocate:
+                # track assigning this step to each node
                 self._allocated_hosts[hostname].add(step_id)
 
             return to_allocate
