@@ -27,12 +27,10 @@
 import tempfile
 import unittest.mock
 import pytest
-import time
 import pathlib
+import os
 import uuid
 import weakref
-import datetime
-import subprocess
 from smartsim.entity import _mock, entity, Application
 from smartsim import Experiment
 from smartsim.settings import LaunchSettings
@@ -40,6 +38,7 @@ from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,
     _as_srun_command,
 )
+from smartsim._core.commands import Command
 from smartsim._core.utils import helpers
 from smartsim.settings.dispatch import sp
 from smartsim.settings.dispatch import ShellLauncher
@@ -113,10 +112,12 @@ def test_shell_launcher_init():
     assert shell_launcher._launched == {}
 
 
-def test_shell_launcher_calls_popen(test_dir: str):
+def test_shell_launcher_calls_popen():
     """Test that the process leading up to the shell launcher popen call was corrected"""
-    job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
-    exp = Experiment(name="exp_name", exp_path=test_dir)
+    # Init ShellLauncher
+    shell_launcher = ShellLauncher()
+    # Mock command passed to ShellLauncher.start
+    cmd = Command(["env_vars", "run_dir", "out_file_path", "err_file_path", EchoHelloWorldEntity().as_program_arguments()])
     # Setup mock for Popen class from the smartsim.settings.dispatch.sp module
     # to temporarily replace the actual Popen class with a mock version
     with unittest.mock.patch("smartsim.settings.dispatch.sp.Popen") as mock_open:
@@ -125,11 +126,11 @@ def test_shell_launcher_calls_popen(test_dir: str):
         # Assign a mock return value of 0 to the returncode attr of the mocked Popen object
         mock_open.returncode = unittest.mock.MagicMock(return_value=0)
         # Execute Experiment.start
-        _ = exp.start(job)
+        _ = shell_launcher.start(cmd)
         # Assert that the mock_open object was called during the execution of the Experiment.start
         mock_open.assert_called_once()
 
-def test_shell_launcher_calls_popen_with_value(test_dir: str):
+def test_this(test_dir: str):
     """Test that popen was called with correct types"""
     job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
     exp = Experiment(name="exp_name", exp_path=test_dir)
@@ -150,22 +151,42 @@ def test_shell_launcher_calls_popen_with_value(test_dir: str):
             stdout=unittest.mock.ANY,
         )
 
-def test_this(experiment, test_dir):
-    """Test that popen was called with correct types"""
-    job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
+def create_directory(directory_path) -> pathlib.Path:
+    """Creates the execution directory for testing."""
+    tmp_dir = pathlib.Path(directory_path)
+    tmp_dir.mkdir(exist_ok=True, parents=True)
+    return tmp_dir
+
+def generate_output_files(tmp_dir):
+    """Generates output and error files within the run directory for testing."""
+    out_file = tmp_dir / "tmp.out"
+    err_file = tmp_dir / "tmp.err"
+    return out_file, err_file
+
+def generate_directory(test_dir):
+    """Generates a execution directory, output file, and error file for testing."""
+    execution_dir = create_directory(os.path.join(test_dir, "/tmp"))
+    out_file, err_file = generate_output_files(execution_dir)
+    return execution_dir, out_file, err_file
+
+def test_popen_writes_to_out(test_dir):
+    """TODO"""
+    # Init ShellLauncher
     shell_launcher = ShellLauncher()
-    # Generate run directory 
-    run_dir = pathlib.Path(test_dir) / "tmp"
-    run_dir.mkdir(exist_ok=True, parents=True)
-    # Generate out / err files 
-    out_file = run_dir / "tmp.out"
-    err_file = run_dir / "tmp.err"
+    # Generate testing directory
+    run_dir, out_file, err_file = generate_directory(test_dir)
     with open(out_file, "w", encoding="utf-8") as out, open(err_file, "w", encoding="utf-8") as err:
-        id = shell_launcher.start([{},run_dir,out,err,('srun', '--', '/usr/bin/echo', 'Hello', 'World!')])
+        # Construct a command to execute
+        cmd = Command([{}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments()])
+        # Start the execution of the command using a ShellLauncher
+        id = shell_launcher.start(cmd)
+    # Retrieve the process associated with the launched command
     proc = shell_launcher._launched[id]
-    #ret_code = proc.wait()
+    # Check successful execution
     assert proc.wait() == 0
+    # Reopen out_file in read mode
     with open(out_file, "r", encoding="utf-8") as out:
+        # Assert that the content of the output file is expected
         assert out.read() == "Hello World!\n"
 
     

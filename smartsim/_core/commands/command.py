@@ -27,23 +27,13 @@
 import typing as t
 from collections.abc import MutableSequence
 
-from ...settings.launchCommand import LauncherType
-
 
 class Command(MutableSequence[str]):
     """Basic container for command information"""
 
-    def __init__(self, launcher: LauncherType, command: t.List[str]) -> None:
+    def __init__(self, command: t.List[str]) -> None:
         """Command constructor"""
-        self._launcher = launcher
         self._command = command
-
-    @property
-    def launcher(self) -> LauncherType:
-        """Get the launcher type.
-        Return a reference to the LauncherType.
-        """
-        return self._launcher
 
     @property
     def command(self) -> t.List[str]:
@@ -73,6 +63,5 @@ class Command(MutableSequence[str]):
         self._command.insert(idx, value)
 
     def __str__(self) -> str:  # pragma: no cover
-        string = f"\nLauncher: {self.launcher.value}\n"
-        string += f"Command: {' '.join(str(cmd) for cmd in self.command)}"
+        string = f"\nCommand: {' '.join(str(cmd) for cmd in self.command)}"
         return string

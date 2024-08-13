@@ -448,12 +448,10 @@ def make_shell_format_fn(
             if run_command is not None
             else exe.as_program_arguments()
         )
-        stdout = out_flag + "=" + str(out_file)
-        print(stdout)
-        stderr = err_flag + "=" + str(err_file)
-        print(command_tuple)
-        launchable_args = [env, path, stdout, stderr, command_tuple]
-        return launchable_args
+        stdout = "hold"
+        stderr = "hold"
+        cmd = Command([env, path, stdout, stderr, command_tuple])
+        return cmd
 
     return impl
 
@@ -469,11 +467,6 @@ class ShellLauncher:
     ) -> LaunchedJobID:
         id_ = create_job_id()
         env, path, stdout, stderr, args = command
-        print(env)
-        print(path)
-        print(stdout)
-        print(stderr)
-        print(args)
         exe, *rest = args
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path, env=env, stdout=stdout, stderr=stderr)
