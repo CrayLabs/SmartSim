@@ -74,12 +74,12 @@ class Generator:
         return pathlib.Path(job_path)
 
     def _generate_run_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """Generates the path for the \"run\" directory within the root directory
+        """Generates the path for the "run" directory within the root directory
         of a specific Job instance.
 
         :param job (Job): The Job instance for which the path is generated.
         :param job_index (int): The index of the Job instance (used for naming).
-        :returns: The path to the \"run\" directory for the Job instance.
+        :returns: The path to the "run" directory for the Job instance.
         """
         path = self._generate_job_root(job, job_index) / "run"
         path.mkdir(exist_ok=False, parents=True)
@@ -87,19 +87,18 @@ class Generator:
 
     def _generate_log_path(self, job: Job, job_index: int) -> pathlib.Path:
         """
-        Generates the path for the \"log\" directory within the root directory of a specific Job instance.
+        Generates the path for the "log" directory within the root directory of a specific Job instance.
 
         :param job: The Job instance for which the path is generated.
         :param job_index: The index of the Job instance (used for naming).
-        :returns: The path to the \"log\" directory for the Job instance.
+        :returns: The path to the "log" directory for the Job instance.
         """
         path = self._generate_job_root(job, job_index) / "log"
         path.mkdir(exist_ok=False, parents=True)
         return pathlib.Path(path)
 
-    # make this protected
     @staticmethod
-    def log_file(log_path: pathlib.Path) -> pathlib.Path:
+    def _log_file(log_path: pathlib.Path) -> pathlib.Path:
         """Returns the location of the file
         summarizing the parameters used for the generation
         of the entity.
@@ -119,12 +118,12 @@ class Generator:
         Tagged application files are read, checked for input variables to
         configure, and written. Input variables to configure are
         specified with a tag within the input file itself.
-        The default tag is surronding an input value with semicolons.
+        The default tag is surrounding an input value with semicolons.
         e.g. ``THERMO=;90;``
 
         :param job: The job instance to write and configure files for.
-        :param job_path: The path to the \"run\" directory for the job instance.
-        :param log_path: The path to the \"log\" directory for the job instance.
+        :param job_path: The path to the "run" directory for the job instance.
+        :param log_path: The path to the "log" directory for the job instance.
         """
 
         # Generate ../job_name/run directory
@@ -133,7 +132,7 @@ class Generator:
         log_path = self._generate_log_path(job, job_index)
 
         # Create and write to the parameter settings file
-        with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
+        with open(self._log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 

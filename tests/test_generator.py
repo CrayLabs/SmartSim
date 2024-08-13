@@ -51,7 +51,7 @@ def test_log_file_path(generator_instance):
     """Test if the log_file function returns the correct log path."""
     base_path = "/tmp"
     expected_path = osp.join(base_path, "smartsim_params.txt")
-    assert generator_instance.log_file(base_path) == pathlib.Path(expected_path)
+    assert generator_instance._log_file(base_path) == pathlib.Path(expected_path)
 
 
 def test_generate_job_directory(test_dir, wlmutils, generator_instance):

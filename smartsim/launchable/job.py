@@ -73,7 +73,7 @@ class Job(BaseJob):
     def name(self, name: str) -> None:
         """Sets the name of the Job."""
         check_name(name)
-        logger.info(f'Overwriting the Job name from "{self._name}" to "{name}"')
+        logger.debug(f'Overwriting the Job name from "{self._name}" to "{name}"')
         self._name = name
 
     @property

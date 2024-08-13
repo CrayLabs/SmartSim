@@ -183,9 +183,9 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        """Create the run id"""
+        # Create the run id
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
-        """Generate the root path"""
+        # Generate the root path
         root = pathlib.Path(self.exp_path, run_id)
         return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 

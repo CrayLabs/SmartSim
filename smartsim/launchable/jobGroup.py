@@ -41,7 +41,7 @@ class JobGroup(BaseJobGroup):
     def name(self, name: str) -> None:
         """Sets the name of the JobGroup."""
         check_name(name)
-        logger.info(f'Overwriting Job name from "{self._name}" to "{name}"')
+        logger.debug(f'Overwriting Job name from "{self._name}" to "{name}"')
         self._name = name
 
     @property
