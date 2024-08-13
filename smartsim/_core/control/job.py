@@ -30,7 +30,7 @@ import typing as t
 from dataclasses import dataclass
 
 from ...entity import EntitySequence, SmartSimEntity
-from ...status import SmartSimStatus
+from ...status import JobStatus
 
 
 @dataclass(frozen=True)
@@ -215,7 +215,7 @@ class Job:
         self.name = job_name
         self.jid = job_id
         self.entity = entity
-        self.status = SmartSimStatus.STATUS_NEW
+        self.status = JobStatus.NEW
         # status before smartsim status mapping is applied
         self.raw_status: t.Optional[str] = None
         self.returncode: t.Optional[int] = None
@@ -235,7 +235,7 @@ class Job:
 
     def set_status(
         self,
-        new_status: SmartSimStatus,
+        new_status: JobStatus,
         raw_status: str,
         returncode: t.Optional[int],
         error: t.Optional[str] = None,
@@ -274,7 +274,7 @@ class Job:
         """
         self.name = new_job_name
         self.jid = new_job_id
-        self.status = SmartSimStatus.STATUS_NEW
+        self.status = JobStatus.NEW
         self.returncode = None
         self.output = None
         self.error = None
@@ -327,14 +327,14 @@ class History:
         """
         self.runs = runs
         self.jids: t.Dict[int, t.Optional[str]] = {}
-        self.statuses: t.Dict[int, SmartSimStatus] = {}
+        self.statuses: t.Dict[int, JobStatus] = {}
         self.returns: t.Dict[int, t.Optional[int]] = {}
         self.job_times: t.Dict[int, float] = {}
 
     def record(
         self,
         job_id: t.Optional[str],
-        status: SmartSimStatus,
+        status: JobStatus,
         returncode: t.Optional[int],
         job_time: float,
     ) -> None:

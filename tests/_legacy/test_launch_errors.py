@@ -31,7 +31,7 @@ from smartsim import Experiment
 from smartsim.database import FeatureStore
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -58,7 +58,7 @@ def test_model_failure(fileutils, test_dir):
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == SmartSimStatus.STATUS_FAILED for stat in statuses])
+    assert all([stat == JobStatus.FAILED for stat in statuses])
 
 
 def test_feature_store_relaunch(test_dir, wlmutils):

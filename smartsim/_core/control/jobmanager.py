@@ -36,7 +36,7 @@ from ..._core.launcher.step import Step
 from ...database import FeatureStore
 from ...entity import EntitySequence, FSNode, SmartSimEntity
 from ...log import ContextThread, get_logger
-from ...status import TERMINAL_STATUSES, SmartSimStatus
+from ...status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
@@ -228,7 +228,7 @@ class JobManager:
     def get_status(
         self,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-    ) -> SmartSimStatus:
+    ) -> t.Union[JobStatus, InvalidJobStatus]:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntitySequence instance
@@ -242,7 +242,7 @@ class JobManager:
                 job: Job = self[entity.name]  # locked
                 return job.status
 
-            return SmartSimStatus.STATUS_NEVER_STARTED
+            return InvalidJobStatus.NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance

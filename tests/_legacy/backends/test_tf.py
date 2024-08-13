@@ -32,7 +32,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.error import SmartSimError
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 tf_available = True
 try:
@@ -81,7 +81,7 @@ def test_keras_model(wlm_experiment, prepare_fs, single_fs, mlutils, wlmutils):
 
     # if model failed, test will fail
     model_status = wlm_experiment.get_status(model)[0]
-    assert model_status != SmartSimStatus.STATUS_FAILED
+    assert model_status != JobStatus.FAILED
 
 
 def create_tf_model():

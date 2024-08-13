@@ -37,7 +37,7 @@ from smartsim.log import get_logger
 import subprocess as sp
 
 from smartsim._core.utils import helpers
-from smartsim._core.dispatch import ExecutableProtocol, dispatch
+from smartsim._core.dispatch import ExecutableProtocol, dispatch, _FormatterType
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
@@ -66,6 +66,7 @@ class ShellLauncher:
     @classmethod
     def create(cls, _: Experiment) -> Self:
         return cls()
+
 
     def make_shell_format_fn(
         run_command: str | None,

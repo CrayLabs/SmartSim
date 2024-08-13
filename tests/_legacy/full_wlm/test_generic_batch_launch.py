@@ -30,7 +30,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.settings import QsubBatchSettings
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -74,7 +74,7 @@ def test_batch_application(fileutils, test_dir, wlmutils):
     exp.start(application, block=True)
     statuses = exp.get_status(application)
     assert len(statuses) == 1
-    assert statuses[0] == SmartSimStatus.STATUS_COMPLETED
+    assert statuses[0] == JobStatus.COMPLETED
 
 
 def test_batch_ensemble(fileutils, test_dir, wlmutils):
@@ -99,7 +99,7 @@ def test_batch_ensemble(fileutils, test_dir, wlmutils):
     exp.generate(ensemble)
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_batch_ensemble_replicas(fileutils, test_dir, wlmutils):
@@ -119,7 +119,7 @@ def test_batch_ensemble_replicas(fileutils, test_dir, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_batch_run_args_leading_dashes(fileutils, test_dir, wlmutils):
@@ -142,4 +142,4 @@ def test_batch_run_args_leading_dashes(fileutils, test_dir, wlmutils):
 
     exp.start(model, block=True)
     statuses = exp.get_status(model)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])

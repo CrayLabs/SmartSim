@@ -31,7 +31,7 @@ import pathlib
 import typing as t
 
 from smartsim._core.launcher.stepInfo import StepInfo
-from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
+from smartsim.status import TERMINAL_STATUSES, JobStatus
 
 _EventClass = t.Literal["start", "stop", "timestep"]
 
@@ -106,8 +106,6 @@ def map_return_code(step_info: StepInfo) -> t.Optional[int]:
     :return: a return code if the step is finished, otherwise None
     """
     rc_map = {s: 1 for s in TERMINAL_STATUSES}  # return `1` for all terminal statuses
-    rc_map.update(
-        {SmartSimStatus.STATUS_COMPLETED: os.EX_OK}
-    )  # return `0` for full success
+    rc_map.update({JobStatus.COMPLETED: os.EX_OK})  # return `0` for full success
 
     return rc_map.get(step_info.status, None)  # return `None` when in-progress

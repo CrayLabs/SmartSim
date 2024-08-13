@@ -29,7 +29,7 @@ from copy import deepcopy
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -49,10 +49,10 @@ def test_restart(fileutils, test_dir, wlmutils):
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
     # TODO add job history check here.
