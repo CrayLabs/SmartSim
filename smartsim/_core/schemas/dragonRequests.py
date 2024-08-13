@@ -64,7 +64,7 @@ class DragonRunPolicy(BaseModel):
         if cpu_arg_value := run_args.get("cpu-affinity", None):
             cpu_args = str(cpu_arg_value)
 
-        # list[int] converted to comma-separated str must split into a list[int]
+        # run args converted to a string must be split back into a list[int]
         gpu_affinity = [int(x.strip()) for x in gpu_args.split(",") if x]
         cpu_affinity = [int(x.strip()) for x in cpu_args.split(",") if x]
 

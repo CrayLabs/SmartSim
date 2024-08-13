@@ -199,7 +199,6 @@ class DragonBackend:
         with self._queue_lock:
             return self._hosts
 
-    # todo: remove
     @property
     def allocated_hosts(self) -> dict[str, t.Set[str]]:
         """A map of host names to the step id executing on a host
@@ -320,9 +319,7 @@ class DragonBackend:
         an optional error message"""
         # ensure the policy can be honored
         if request.policy:
-            logger.debug(f"{request.policy=}")
-            logger.debug(f"{self._cpus=}")
-            logger.debug(f"{self._gpus=}")
+            logger.debug(f"{request.policy=}{self._cpus=}"){self._gpus=}")
 
             if request.policy.cpu_affinity:
                 # make sure some node has enough CPUs
@@ -392,9 +389,7 @@ class DragonBackend:
         valid_hosts = all_hosts.intersection(requested_hosts)
         invalid_hosts = requested_hosts - valid_hosts
 
-        logger.debug(f"{num_nodes=}")
-        logger.debug(f"{valid_hosts=}")
-        logger.debug(f"{invalid_hosts=}")
+        logger.debug(f"{num_nodes=}{valid_hosts=}{invalid_hosts=}")
 
         if invalid_hosts:
             logger.warning(f"Some invalid hostnames were requested: {invalid_hosts}")
