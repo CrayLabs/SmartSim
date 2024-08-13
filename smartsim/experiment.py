@@ -247,20 +247,18 @@ class Experiment:
     def _generate(
         self, generator: Generator, job: Job, job_index: int
     ) -> os.PathLike[str]:
-        """Generate the directory and file structure for a ``Job``
+        """Generate the directory structure and files for a ``Job``
 
-        If files or directories are attached to an ``application`` object
-        associated with the Job using ``application.attach_generator_files()``,
+        If files or directories are attached to an ``Application`` object
+        associated with the Job using ``Application.attach_generator_files()``,
         those files or directories will be symlinked, copied, or configured and
-        written into the created job directory
+        written into the created job directory.
 
-        An instance of ``Generator`` and ``Job`` can be passed as an argument to
-        the protected _generate member, as well as the Jobs index.
-
-        :param generator: The generator is responsible for creating the job run and log directory.
-        :param job: The job instance for which the output is generated.
-        :param job_index: The index of the job instance (used for naming).
-        :returns: The path to the generated output for the job instance.
+        :param generator: The generator is responsible for creating the job
+            run and log directory.
+        :param job: The Job instance for which the output is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the generated output for the Job instance.
         :raises: A SmartSimError if an error occurs during the generation process.
         """
         try:

@@ -80,11 +80,11 @@ class Generator:
         self, job: Job, job_index: int
     ) -> os.PathLike[str]:
         """Generates the path for the \"run\" directory within the root directory
-        of a specific job instance.
+        of a specific Job instance.
 
-        :param job (Job): The job instance for which the path is generated.
-        :param job_index (int): The index of the job instance (used for naming).
-        :returns: The path to the \"run\" directory for the job instance.
+        :param job (Job): The Job instance for which the path is generated.
+        :param job_index (int): The index of the Job instance (used for naming).
+        :returns: The path to the \"run\" directory for the Job instance.
         """
         path = self._generate_job_root(job, job_index) / "run"
         path.mkdir(exist_ok=False, parents=True)
@@ -95,11 +95,11 @@ class Generator:
         self, job: Job, job_index: int
     ) -> os.PathLike[str]:
         """
-        Generates the path for the \"log\" directory within the root directory of a specific job instance.
+        Generates the path for the \"log\" directory within the root directory of a specific Job instance.
 
-        :param job: The job instance for which the path is generated.
-        :param job_index: The index of the job instance (used for naming).
-        :returns: The path to the \"log\" directory for the job instance.
+        :param job: The Job instance for which the path is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the \"log\" directory for the Job instance.
         """
         path = self._generate_job_root(job, job_index) / "log"
         path.mkdir(exist_ok=False, parents=True)
