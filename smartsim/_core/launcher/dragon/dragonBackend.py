@@ -319,7 +319,7 @@ class DragonBackend:
         an optional error message"""
         # ensure the policy can be honored
         if request.policy:
-            logger.debug(f"{request.policy=}{self._cpus=}"){self._gpus=}")
+            logger.debug(f"{request.policy=}{self._cpus=}{self._gpus=}")
 
             if request.policy.cpu_affinity:
                 # make sure some node has enough CPUs
