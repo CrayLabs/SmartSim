@@ -38,10 +38,10 @@ from os import environ, getcwd
 
 from tabulate import tabulate
 
+from smartsim._core import dispatch
 from smartsim._core.config import CONFIG
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim.error import errors
-from smartsim._core import dispatch
 from smartsim.status import InvalidJobStatus, JobStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
@@ -57,8 +57,8 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim.launchable.job import Job
     from smartsim._core.dispatch import ExecutableProtocol
+    from smartsim.launchable.job import Job
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)

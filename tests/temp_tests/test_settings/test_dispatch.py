@@ -32,8 +32,8 @@ import sys
 
 import pytest
 
-from smartsim.error import errors
 from smartsim._core import dispatch
+from smartsim.error import errors
 
 pytestmark = pytest.mark.group_a
 
