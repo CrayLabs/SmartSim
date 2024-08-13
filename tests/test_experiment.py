@@ -32,7 +32,6 @@ import random
 import tempfile
 import typing as t
 import uuid
-import weakref
 
 import pytest
 
@@ -54,6 +53,7 @@ def experiment(monkeypatch, test_dir, dispatcher):
     """
     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
     monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
+    monkeypatch.setattr(exp, "_generate", lambda gen, job, idx: "/tmp/job")
     yield exp
 
 
@@ -64,7 +64,7 @@ def dispatcher():
     """
     d = dispatch.Dispatcher()
     to_record: dispatch._FormatterType[MockLaunchArgs, LaunchRecord] = (
-        lambda settings, exe, env: LaunchRecord(settings, exe, env)
+        lambda settings, exe, path, env: LaunchRecord(settings, exe, env, path)
     )
     d.dispatch(MockLaunchArgs, with_format=to_record, to_launcher=NoOpRecordLauncher)
     yield d
@@ -140,6 +140,7 @@ class LaunchRecord:
     launch_args: launchArguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
+    path: str
 
     @classmethod
     def from_job(cls, job: job.Job):
@@ -154,7 +155,8 @@ class LaunchRecord:
         args = job._launch_settings.launch_args
         entity = job._entity
         env = job._launch_settings.env_vars
-        return cls(args, entity, env)
+        path = "/tmp/job"
+        return cls(args, entity, env, path)
 
 
 class MockLaunchArgs(launchArguments.LaunchArguments):
@@ -182,9 +184,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
     def __init__(self):
-        path = tempfile.TemporaryDirectory()
-        self._finalizer = weakref.finalize(self, path.cleanup)
-        super().__init__("test-entity", path, _mock.Mock())
+        super().__init__("test-entity", _mock.Mock())
 
     def __eq__(self, other):
         if type(self) is not type(other):
