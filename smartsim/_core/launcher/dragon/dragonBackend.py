@@ -71,10 +71,6 @@ from ....status import TERMINAL_STATUSES, SmartSimStatus
 logger = get_logger(__name__)
 
 
-# tracking structure for [num_refs, node_name, is_dirty]
-_NodeRefCount = t.List[t.Union[int, str, bool]]
-
-
 class DragonStatus(str, Enum):
     ERROR = str(dragon_group_state.Error())
     RUNNING = str(dragon_group_state.Running())
@@ -244,12 +240,6 @@ class DragonBackend:
                 set
             )
             """Mapping of hosts to a assigned, running step IDs"""
-            self._ref_map: t.Dict[str, _NodeRefCount] = {}
-            """Map node names to a ref counter for direct access"""
-            self._cpu_refs: t.List[_NodeRefCount] = []
-            """Track reference counts to CPU-only nodes"""
-            self._gpu_refs: t.List[_NodeRefCount] = []
-            """Track reference counts to GPU nodes"""
 
     def __str__(self) -> str:
         return self.status_message
