@@ -455,13 +455,11 @@ class DragonBackend:
                 # convert the comma-separated argument into a real list
                 hosts = [host for host in request.hostlist.split(",") if host]
 
-            if hosts:
-                nodes = self._prioritizer.next_n_from(num_hosts, hosts, step_id)
-            else:
-                filter_on: t.Optional[PrioritizerFilter] = None
-                if request.policy and request.policy.gpu_affinity:
-                    filter_on = PrioritizerFilter.GPU
-                nodes = self._prioritizer.next_n(num_hosts, filter_on, step_id)
+            filter_on: t.Optional[PrioritizerFilter] = None
+            if request.policy and request.policy.gpu_affinity:
+                filter_on = PrioritizerFilter.GPU
+
+            nodes = self._prioritizer.next_n(num_hosts, filter_on, step_id, hosts)
 
             if len(nodes) < num_hosts:
                 # exit if the prioritizer can't identify enough nodes
