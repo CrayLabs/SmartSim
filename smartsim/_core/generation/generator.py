@@ -62,6 +62,7 @@ class Generator:
         self.root = root
         """The root path under which to generate files"""
 
+
     def _generate_job_root(
         self, job: Job, job_index: int
     ) -> pathlib.Path:
@@ -75,7 +76,7 @@ class Generator:
         job_path = self.root / f"{job_type}/{job.name}-{job_index}"
         return pathlib.Path(job_path)
 
-    @staticmethod
+
     def _generate_job_path(
         self, job: Job, job_index: int
     ) -> os.PathLike[str]:
@@ -90,7 +91,6 @@ class Generator:
         path.mkdir(exist_ok=False, parents=True)
         return pathlib.Path(path)
 
-    @staticmethod
     def _generate_log_path(
         self, job: Job, job_index: int
     ) -> os.PathLike[str]:
@@ -105,6 +105,8 @@ class Generator:
         path.mkdir(exist_ok=False, parents=True)
         return pathlib.Path(path)
 
+    # make this protected
+    @staticmethod
     def log_file(log_path: os.PathLike[str]) -> os.PathLike[str]:
         """Returns the location of the file
         summarizing the parameters used for the generation
@@ -115,9 +117,9 @@ class Generator:
         """
         return pathlib.Path(log_path) / "smartsim_params.txt"
 
-    @classmethod
+
     def generate_job(
-        cls, job: Job, job_index: int
+        self, job: Job, job_index: int
     ) -> os.PathLike[str]:
         """Write and configure input files for a Job.
 
@@ -137,17 +139,17 @@ class Generator:
         """
         
         # Generate ../job_name/run directory
-        job_path = cls._generate_job_path(job, job_index)
+        job_path = self._generate_job_path(job, job_index)
         # Generate ../job_name/log directory
-        log_path = cls._generate_log_path(job, job_index)
+        log_path = self._generate_log_path(job, job_index)
 
         # Create and write to the parameter settings file
-        with open(log_file(log_path), mode="w", encoding="utf-8") as log_file:
+        with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
         # Perform file system operations on attached files
-        cls._build_operations(job, job_path)
+        self._build_operations(job, job_path)
         
         return job_path
 
