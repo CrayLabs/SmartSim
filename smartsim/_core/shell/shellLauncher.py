@@ -37,18 +37,13 @@ from smartsim.log import get_logger
 import subprocess as sp
 
 from smartsim._core.utils import helpers
-from smartsim._core.dispatch import ExecutableProtocol, dispatch, _FormatterType
+from smartsim._core.dispatch import create_job_id, ExecutableProtocol, dispatch, _FormatterType, _EnvironMappingType
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
     from smartsim.experiment import Experiment
 
 logger = get_logger(__name__)
-
-_EnvironMappingType: t.TypeAlias = t.Mapping[str, "str | None"]
-"""A mapping of user provided mapping of environment variables in which to run
-a job
-"""
 
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands"""
@@ -57,7 +52,7 @@ class ShellLauncher:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
     def start(self, command: t.Sequence[str]) -> LaunchedJobID:
-        id_ = dispatch.create_job_id()
+        id_ = create_job_id()
         exe, *rest = command
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
@@ -67,7 +62,7 @@ class ShellLauncher:
     def create(cls, _: Experiment) -> Self:
         return cls()
 
-
+    @staticmethod
     def make_shell_format_fn(
         run_command: str | None,
     ) -> _FormatterType[LaunchArguments, t.Sequence[str]]:
