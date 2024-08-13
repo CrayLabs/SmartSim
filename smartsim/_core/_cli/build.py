@@ -118,8 +118,6 @@ def build_database(
     database_builder = builder.DatabaseBuilder(
         build_env(),
         jobs=build_env.JOBS,
-        _os=builder.OperatingSystem.from_str(platform.system()),
-        architecture=builder.Architecture.from_str(platform.machine()),
         malloc=build_env.MALLOC,
         verbose=verbose,
     )
@@ -139,9 +137,10 @@ def build_redis_ai(
         build_env: BuildEnv,
         verbose: bool
     ) -> None:
+        logger.info("Building RedisAI and backends...")
         RAIBuilder = RedisAIBuilder(platform, mlpackages, build_env, verbose)
         RAIBuilder.build()
-        RAIBuilder.cleanup()
+        RAIBuilder.cleanup_build()
 
 def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> None:
     """Check Python environment for TensorFlow installation"""
@@ -288,7 +287,7 @@ def execute(
     # Unpack various arguments
     verbose = args.v
     keydb = args.keydb
-    device = Device.from_string(args.device.lower())
+    device = Device.from_str(args.device.lower())
     is_dragon_requested = args.dragon
 
     # The user should never have to specify the OS and Architecture
@@ -299,20 +298,20 @@ def execute(
     )
 
     # Configure the ML Packages
-    mlpackages = DEFAULT_MLPACKAGES[current_platform].copy()
-    if args.torch_dir:
-        mlpackages["torch"].set_lib_source(args.torch_dir)
-    if args.tensorflow_dir:
-        mlpackages["tensorflow"].set_lib_source(args.tensorflow_dir)
-    if args.onnx_dir:
-        mlpackages["onnxruntime"].set_lib_source(args.onnx_dir)
+    mlpackages = DEFAULT_MLPACKAGES[current_platform]
+    if args.libtorch_dir:
+        mlpackages["libtorch"].set_lib_source(args.libtorch_dir)
+    if args.libtensorflow_dir:
+        mlpackages["libtensorflow"].set_lib_source(args.libtensorflow_dir)
+    if args.onnxruntime_dir:
+        mlpackages["onnxruntime"].set_lib_source(args.onnxruntime_dir)
 
     # Build all backends by default, pop off the ones that user wants skipped
     if args.skip_torch:
-        mlpackages.pop("torch")
+        mlpackages.pop("libtorch")
     if args.skip_tensorflow:
-        mlpackages.pop("tensorflow")
-    if args.skip_onnxruntime:
+        mlpackages.pop("libtensorflow")
+    if args.skip_onnx:
         mlpackages.pop("onnxruntime")
 
     build_env = BuildEnv(checks=True)
@@ -352,7 +351,7 @@ def execute(
 
     # REDIS/KeyDB
     build_database(build_env, versions, keydb, verbose)
-    build_redis_ai(platform, mlpackages, build_env)
+    build_redis_ai(current_platform, mlpackages, build_env, verbose)
 
     backends = installed_redisai_backends()
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"

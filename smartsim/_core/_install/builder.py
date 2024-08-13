@@ -27,14 +27,12 @@
 # pylint: disable=too-many-lines
 
 import os
-import platform
 import re
 import shutil
 import stat
 import subprocess
 import typing as t
 from pathlib import Path
-from shutil import which
 from subprocess import SubprocessError
 
 if t.TYPE_CHECKING:
@@ -72,13 +70,10 @@ class Builder:
         self,
         env: t.Dict[str, str],
         jobs: int = 1,
-        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
-        architecture: Architecture = Architecture.from_str(platform.machine()),
         verbose: bool = False,
     ) -> None:
         # build environment from buildenv
         self.env = env
-        self._platform = Platform(_os, architecture)
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
@@ -111,11 +106,6 @@ class Builder:
     # implemented in base classes
     @property
     def is_built(self) -> bool:
-        raise NotImplementedError
-
-    def build_from_git(
-        self, git_url: str, branch: str, device: Device = Device.CPU
-    ) -> None:
         raise NotImplementedError
 
     @staticmethod
@@ -193,15 +183,11 @@ class DatabaseBuilder(Builder):
         build_env: t.Optional[t.Dict[str, str]] = None,
         malloc: str = "libc",
         jobs: int = 1,
-        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
-        architecture: Architecture = Architecture.from_str(platform.machine()),
         verbose: bool = False,
     ) -> None:
         super().__init__(
             build_env or {},
             jobs=jobs,
-            _os=_os,
-            architecture=architecture,
             verbose=verbose,
         )
         self.malloc = malloc

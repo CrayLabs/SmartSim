@@ -26,8 +26,9 @@
 
 import pytest
 
-from smartsim._core._install.platform import Platform
+from smartsim._core._install.buildenv import BuildEnv
 from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES
+from smartsim._core._install.platform import Platform
 from smartsim._core._install.redisaiBuilder import RedisAIBuilder
 from smartsim._core._install.utils import PackageRetriever
 
@@ -38,9 +39,9 @@ def test_redisai_builder(monkeypatch, test_dir):
     platform = Platform.from_str("linux", "x86_64", "cpu")
     mlpackages = DEFAULT_MLPACKAGES[platform]
     monkeypatch.setattr(PackageRetriever, "retrieve", lambda *args, **kwargs: None)
-    builder = RedisAIBuilder(platform, mlpackages)
+    builder = RedisAIBuilder(platform, mlpackages, BuildEnv())
 
-    builder.run_command = lambda *args, **kwargs: print(args)
+    # builder.run_command = lambda *args, **kwargs: print(args)
     builder.build()
 
     assert builder.build_torch

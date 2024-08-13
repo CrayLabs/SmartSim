@@ -93,6 +93,10 @@ class PlatformPackages():
     def keys(self):
         return self.ml_packages.keys()
 
+    def pop(self, key):
+        self.ml_packages.pop(key)
+
+
 
 def load_platform_configs(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformPackages]:
     configs = {}
