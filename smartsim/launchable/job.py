@@ -66,10 +66,10 @@ class Job(BaseJob):
         return self._name
 
     @name.setter
-    def name(self, name: str | None) -> None:
+    def name(self, name: str) -> None:
         """Sets the name of the Job."""
-        self._name = name if name else self._entity.name
         check_name(self._name)
+        self._name = name
 
     @property
     def entity(self) -> SmartSimEntity:

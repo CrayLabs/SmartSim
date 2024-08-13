@@ -263,58 +263,13 @@ class Experiment:
         :returns: The path to the generated output for the job instance.
         :raises: A SmartSimError if an error occurs during the generation process.
         """
-        # Generate ../job_name/run directory
-        job_path = self._generate_job_path(job, job_index, generator.root)
-        # Generate ../job_name/log directory
-        log_path = self._generate_log_path(job, job_index, generator.root)
         try:
-            generator.generate_job(job, job_path, log_path)
-            return job_path
+            job_run_path = generator.generate_job(job, job_index)
+            return job_run_path
         except SmartSimError as e:
             logger.error(e)
             raise
 
-    def _generate_job_root(
-        self, job: Job, job_index: int, root: os.PathLike[str]
-    ) -> pathlib.Path:
-        """Generates the root directory for a specific job instance.
-
-        :param job: The Job instance for which the root directory is generated.
-        :param job_index: The index of the Job instance (used for naming).
-        :returns: The path to the root directory for the Job instance.
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        job_path = pathlib.Path(root) / f"{job_type}/{job.name}-{job_index}"
-        job_path.mkdir(exist_ok=True, parents=True)
-        return pathlib.Path(job_path)
-
-    def _generate_job_path(
-        self, job: Job, job_index: int, root: os.PathLike[str]
-    ) -> os.PathLike[str]:
-        """Generates the path for the \"run\" directory within the root directory
-        of a specific job instance.
-
-        :param job (Job): The job instance for which the path is generated.
-        :param job_index (int): The index of the job instance (used for naming).
-        :returns: The path to the \"run\" directory for the job instance.
-        """
-        path = self._generate_job_root(job, job_index, root) / "run"
-        path.mkdir(exist_ok=False, parents=True)
-        return pathlib.Path(path)
-
-    def _generate_log_path(
-        self, job: Job, job_index: int, root: os.PathLike[str]
-    ) -> os.PathLike[str]:
-        """
-        Generates the path for the \"log\" directory within the root directory of a specific job instance.
-
-        :param job: The job instance for which the path is generated.
-        :param job_index: The index of the job instance (used for naming).
-        :returns: The path to the \"log\" directory for the job instance.
-        """
-        path = self._generate_job_root(job, job_index, root) / "log"
-        path.mkdir(exist_ok=False, parents=True)
-        return pathlib.Path(path)
 
     def preview(
         self,

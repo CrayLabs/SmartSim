@@ -62,7 +62,50 @@ class Generator:
         self.root = root
         """The root path under which to generate files"""
 
-    def log_file(self, log_path: os.PathLike[str]) -> os.PathLike[str]:
+    def _generate_job_root(
+        self, job: Job, job_index: int
+    ) -> pathlib.Path:
+        """Generates the root directory for a specific job instance.
+
+        :param job: The Job instance for which the root directory is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the root directory for the Job instance.
+        """
+        job_type = f"{job.__class__.__name__.lower()}s"
+        job_path = self.root / f"{job_type}/{job.name}-{job_index}"
+        return pathlib.Path(job_path)
+
+    @staticmethod
+    def _generate_job_path(
+        self, job: Job, job_index: int
+    ) -> os.PathLike[str]:
+        """Generates the path for the \"run\" directory within the root directory
+        of a specific job instance.
+
+        :param job (Job): The job instance for which the path is generated.
+        :param job_index (int): The index of the job instance (used for naming).
+        :returns: The path to the \"run\" directory for the job instance.
+        """
+        path = self._generate_job_root(job, job_index) / "run"
+        path.mkdir(exist_ok=False, parents=True)
+        return pathlib.Path(path)
+
+    @staticmethod
+    def _generate_log_path(
+        self, job: Job, job_index: int
+    ) -> os.PathLike[str]:
+        """
+        Generates the path for the \"log\" directory within the root directory of a specific job instance.
+
+        :param job: The job instance for which the path is generated.
+        :param job_index: The index of the job instance (used for naming).
+        :returns: The path to the \"log\" directory for the job instance.
+        """
+        path = self._generate_job_root(job, job_index) / "log"
+        path.mkdir(exist_ok=False, parents=True)
+        return pathlib.Path(path)
+
+    def log_file(log_path: os.PathLike[str]) -> os.PathLike[str]:
         """Returns the location of the file
         summarizing the parameters used for the generation
         of the entity.
@@ -72,9 +115,10 @@ class Generator:
         """
         return pathlib.Path(log_path) / "smartsim_params.txt"
 
+    @classmethod
     def generate_job(
-        self, job: Job, job_path: os.PathLike[str], log_path: os.PathLike[str]
-    ) -> None:
+        cls, job: Job, job_index: int
+    ) -> os.PathLike[str]:
         """Write and configure input files for a Job.
 
         To have files or directories present in the created Job
@@ -91,16 +135,24 @@ class Generator:
         :param job_path: The path to the \"run\" directory for the job instance.
         :param log_path: The path to the \"log\" directory for the job instance.
         """
+        
+        # Generate ../job_name/run directory
+        job_path = cls._generate_job_path(job, job_index)
+        # Generate ../job_name/log directory
+        log_path = cls._generate_log_path(job, job_index)
 
         # Create and write to the parameter settings file
-        with open(self.log_file(log_path), mode="w", encoding="utf-8") as log_file:
+        with open(log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
         # Perform file system operations on attached files
-        self._build_operations(job, job_path)
+        cls._build_operations(job, job_path)
+        
+        return job_path
 
-    def _build_operations(self, job: Job, job_path: os.PathLike[str]) -> None:
+    @classmethod
+    def _build_operations(cls, job: Job, job_path: os.PathLike[str]) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
         It processes three types of file system operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods that open a subprocess
@@ -110,9 +162,9 @@ class Generator:
         :param job_path: Path to the Jobs run directory
         """
         app = t.cast(Application, job.entity)
-        self._copy_files(app.files, job_path)
-        self._symlink_files(app.files, job_path)
-        self._write_tagged_files(app.files, app.params, job_path)
+        cls._copy_files(app.files, job_path)
+        cls._symlink_files(app.files, job_path)
+        cls._write_tagged_files(app.files, app.params, job_path)
 
     @staticmethod
     def _copy_files(files: t.Union[EntityFiles, None], dest: os.PathLike[str]) -> None:
