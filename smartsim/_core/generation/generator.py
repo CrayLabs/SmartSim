@@ -51,7 +51,7 @@ class Generator:
     files into the Job directory.
     """
 
-    def __init__(self, root: os.PathLike[str]) -> None:
+    def __init__(self, root: pathlib.Path) -> None:
         """Initialize a Generator object
 
         The class handles symlinking, copying, and configuration of files
@@ -62,10 +62,7 @@ class Generator:
         self.root = root
         """The root path under which to generate files"""
 
-
-    def _generate_job_root(
-        self, job: Job, job_index: int
-    ) -> pathlib.Path:
+    def _generate_job_root(self, job: Job, job_index: int) -> pathlib.Path:
         """Generates the root directory for a specific job instance.
 
         :param job: The Job instance for which the root directory is generated.
@@ -76,10 +73,7 @@ class Generator:
         job_path = self.root / f"{job_type}/{job.name}-{job_index}"
         return pathlib.Path(job_path)
 
-
-    def _generate_job_path(
-        self, job: Job, job_index: int
-    ) -> os.PathLike[str]:
+    def _generate_run_path(self, job: Job, job_index: int) -> pathlib.Path:
         """Generates the path for the \"run\" directory within the root directory
         of a specific Job instance.
 
@@ -91,9 +85,7 @@ class Generator:
         path.mkdir(exist_ok=False, parents=True)
         return pathlib.Path(path)
 
-    def _generate_log_path(
-        self, job: Job, job_index: int
-    ) -> os.PathLike[str]:
+    def _generate_log_path(self, job: Job, job_index: int) -> pathlib.Path:
         """
         Generates the path for the \"log\" directory within the root directory of a specific Job instance.
 
@@ -107,7 +99,7 @@ class Generator:
 
     # make this protected
     @staticmethod
-    def log_file(log_path: os.PathLike[str]) -> os.PathLike[str]:
+    def log_file(log_path: pathlib.Path) -> pathlib.Path:
         """Returns the location of the file
         summarizing the parameters used for the generation
         of the entity.
@@ -117,10 +109,7 @@ class Generator:
         """
         return pathlib.Path(log_path) / "smartsim_params.txt"
 
-
-    def generate_job(
-        self, job: Job, job_index: int
-    ) -> os.PathLike[str]:
+    def generate_job(self, job: Job, job_index: int) -> pathlib.Path:
         """Write and configure input files for a Job.
 
         To have files or directories present in the created Job
@@ -137,9 +126,9 @@ class Generator:
         :param job_path: The path to the \"run\" directory for the job instance.
         :param log_path: The path to the \"log\" directory for the job instance.
         """
-        
+
         # Generate ../job_name/run directory
-        job_path = self._generate_job_path(job, job_index)
+        job_path = self._generate_run_path(job, job_index)
         # Generate ../job_name/log directory
         log_path = self._generate_log_path(job, job_index)
 
@@ -150,11 +139,11 @@ class Generator:
 
         # Perform file system operations on attached files
         self._build_operations(job, job_path)
-        
+
         return job_path
 
     @classmethod
-    def _build_operations(cls, job: Job, job_path: os.PathLike[str]) -> None:
+    def _build_operations(cls, job: Job, job_path: pathlib.Path) -> None:
         """This method orchestrates file system ops for the attached SmartSim entity.
         It processes three types of file system operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods that open a subprocess
@@ -169,7 +158,7 @@ class Generator:
         cls._write_tagged_files(app.files, app.params, job_path)
 
     @staticmethod
-    def _copy_files(files: t.Union[EntityFiles, None], dest: os.PathLike[str]) -> None:
+    def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
         """Perform copy file sys operations on a list of files.
 
         :param app: The Application attached to the Job
@@ -209,9 +198,7 @@ class Generator:
                 )
 
     @staticmethod
-    def _symlink_files(
-        files: t.Union[EntityFiles, None], dest: os.PathLike[str]
-    ) -> None:
+    def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
         """Perform symlink file sys operations on a list of files.
 
         :param app: The Application attached to the Job
@@ -242,7 +229,7 @@ class Generator:
     def _write_tagged_files(
         files: t.Union[EntityFiles, None],
         params: t.Mapping[str, str],
-        dest: os.PathLike[str],
+        dest: pathlib.Path,
     ) -> None:
         """Read, configure and write the tagged input files for
            a Job instance. This function specifically deals with the tagged

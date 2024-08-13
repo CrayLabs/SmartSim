@@ -33,7 +33,10 @@ from copy import deepcopy
 from smartsim._core.commands.launchCommands import LaunchCommands
 from smartsim._core.utils.helpers import check_name
 from smartsim.launchable.basejob import BaseJob
+from smartsim.log import get_logger
 from smartsim.settings import LaunchSettings
+
+logger = get_logger(__name__)
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
@@ -68,7 +71,8 @@ class Job(BaseJob):
     @name.setter
     def name(self, name: str) -> None:
         """Sets the name of the Job."""
-        check_name(self._name)
+        check_name(name)
+        logger.info(f"Overwriting Job name from {self._name} to name")
         self._name = name
 
     @property

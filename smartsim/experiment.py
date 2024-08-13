@@ -28,8 +28,8 @@
 
 from __future__ import annotations
 
-import datetime
 import collections
+import datetime
 import itertools
 import os
 import os.path as osp
@@ -183,10 +183,10 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
         """Create the run id"""
-        root = pathlib.Path(self.exp_path, run_id)
+        run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
         """Generate the root path"""
+        root = pathlib.Path(self.exp_path, run_id)
         return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
@@ -232,13 +232,13 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            id_ = launch_config.start(exe, env)
+            job_execution_path = self._generate(generator, job, idx)
+            id_ = launch_config.start(exe, job_execution_path, env)
             # Save the underlying launcher instance and launched job id. That
             # way we do not need to spin up a launcher instance for each
             # individual job, and the experiment can monitor job statuses.
             # pylint: disable-next=protected-access
             self._launch_history.save_launch(launch_config._adapted_launcher, id_)
-            job_execution_path = self._generate(generator, job, idx)
             return id_
 
         return execute_dispatch(generator, job, 0), *(
@@ -277,9 +277,7 @@ class Experiment:
         return tuple(stats)
 
     @_contextualize
-    def _generate(
-        self, generator: Generator, job: Job, job_index: int
-    ) -> os.PathLike[str]:
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
         """Generate the directory structure and files for a ``Job``
 
         If files or directories are attached to an ``Application`` object
@@ -300,7 +298,6 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
-
 
     def preview(
         self,

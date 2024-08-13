@@ -2,6 +2,7 @@ import filecmp
 import itertools
 import os
 import pathlib
+import random
 from glob import glob
 from os import listdir
 from os import path as osp
@@ -18,6 +19,10 @@ from smartsim.settings import LaunchSettings, dispatch
 # TODO Add JobGroup tests when JobGroup becomes a Launchable
 
 pytestmark = pytest.mark.group_a
+
+
+def random_id():
+    return str(random.randint(1, 100))
 
 
 @pytest.fixture
@@ -254,7 +259,7 @@ def test_generate_ensemble_directory(wlmutils, generator_instance):
 def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
     monkeypatch.setattr(
         "smartsim.settings.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: "exit",
+        lambda launch, exe, job_execution_path, env: random_id(),
     )
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
@@ -274,7 +279,7 @@ def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
 def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_dir):
     monkeypatch.setattr(
         "smartsim.settings.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: "exit",
+        lambda launch, exe, job_execution_path, env: random_id(),
     )
     ensemble = Ensemble(
         "ensemble-name", "echo", replicas=2, files=EntityFiles(copy=get_gen_copy_dir)
@@ -296,7 +301,7 @@ def test_generate_ensemble_symlink(
 ):
     monkeypatch.setattr(
         "smartsim.settings.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: "exit",
+        lambda launch, exe, job_execution_path, env: random_id(),
     )
     ensemble = Ensemble(
         "ensemble-name",
@@ -323,7 +328,7 @@ def test_generate_ensemble_configure(
 ):
     monkeypatch.setattr(
         "smartsim.settings.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: "exit",
+        lambda launch, exe, job_execution_path, env: random_id(),
     )
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
     # Retrieve a list of files for configuration
