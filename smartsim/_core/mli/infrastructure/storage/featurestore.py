@@ -27,19 +27,20 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel, Field
+from dataclasses import dataclass
+
 
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-
-class FeatureStoreKey(BaseModel):
+@dataclass
+class FeatureStoreKey:
     """A key,descriptor pair enabling retrieval of an item from a feature store"""
 
-    key: str = Field(min_length=1)
+    key: str
     """The unique key of an item in a feature store"""
-    descriptor: str = Field(min_length=1)
+    descriptor: str
     """The unique identifier of the feature store containing the key"""
 
 
