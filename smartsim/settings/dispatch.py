@@ -449,6 +449,7 @@ def make_shell_format_fn(
             else exe.as_program_arguments()
         )
         stdin = out_flag + "=" + str(out_file)
+        print(stdin)
         stdout = err_flag + "=" + str(err_file)
         launchable_args = [env, path, stdin, stdout, command_tuple]
         return launchable_args
@@ -469,6 +470,7 @@ class ShellLauncher:
         env, path, stdin, stdout, args = command
         exe, *rest = args
         # pylint: disable-next=consider-using-with
+        print((helpers.expand_exe_path(exe), stdin, *rest))
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), stdin, *rest), cwd=path, env=env)
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_

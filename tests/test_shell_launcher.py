@@ -29,6 +29,7 @@ import unittest.mock
 import pytest
 import time
 import pathlib
+import uuid
 import weakref
 import datetime
 import subprocess
@@ -76,7 +77,25 @@ class Files():
         self.copy = []
         self.link = []
         self.tagged = []
-    
+
+
+@pytest.fixture
+def experiment(monkeypatch, test_dir):
+    """Fixture for creating an Experiment instance with a unique name and run directory
+    for testing.
+    """
+    exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
+    # Generate run directory 
+    run_dir = pathlib.Path(test_dir) / "tmp"
+    run_dir.mkdir(exist_ok=True, parents=True)
+    # Generate out / err files 
+    out_file = run_dir / "tmp.out"
+    err_file = run_dir / "tmp.err"
+    out_file.touch()
+    err_file.touch()
+    # MonkeyPatch Experiment._generate
+    monkeypatch.setattr(exp, "_generate", lambda gen, job, idx: (run_dir, out_file, err_file))
+    yield exp
 
 # popen returns a non 0 when an error occurs, so test invalid path
 # assert not id, might retry -> assert called 5 times, -> could verify that a warning was printed
@@ -131,11 +150,15 @@ def test_shell_launcher_calls_popen_with_value(test_dir: str):
             stdout=unittest.mock.ANY,
         )
 
-def test_this(test_dir: str):
+def test_this(experiment, test_dir):
     """Test that popen was called with correct types"""
     job = Job(name="jobs", entity=EchoHelloWorldEntity(), launch_settings=LaunchSettings(launcher=LauncherType.Slurm))
-    exp = Experiment(name="exp_name", exp_path=test_dir)
-    _ = exp.start(job)
+    _ = experiment.start(job)
+    run_dir = pathlib.Path(test_dir) / "tmp" / "tmp.out"
+    time.sleep(5)
+    with open(run_dir, 'r', encoding='utf-8') as file:
+        print(list({line.strip() for line in file.readlines()}))
+    
 
 
 

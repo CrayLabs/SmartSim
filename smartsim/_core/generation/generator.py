@@ -105,11 +105,12 @@ class Generator:
         
         # Create output files
         out_file, err_file = self.output_files(log_path, job.entity.name)
-        
+        print(out_file)
         # Open and write to .out file
         with open(out_file, mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
+        print(out_file.is_file())
 
         # Open and write to .err file
         with open(err_file, mode="w", encoding="utf-8") as log_file:

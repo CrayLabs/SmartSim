@@ -235,7 +235,8 @@ class Experiment:
             # pylint: disable-next=protected-access
             self._active_launchers.add(launch_config._adapted_launcher)
             # Generate the job directory and return the generated job path
-            job_execution_path, out, err = self._generate(generator, job, idx)
+            ret = self._generate(generator, job, idx)
+            job_execution_path, out, err = ret
             return launch_config.start(exe, job_execution_path, env, out, err)
 
         return execute_dispatch(generator, job, 0), *(
@@ -268,7 +269,7 @@ class Experiment:
         log_path = self._generate_log_path(job, job_index, generator.root)
         try:
             out, err = generator.generate_job(job, job_path, log_path)
-            return job_path, out, err
+            return (job_path, out, err)
         except SmartSimError as e:
             logger.error(e)
             raise
