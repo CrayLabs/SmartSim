@@ -26,15 +26,14 @@
 
 import typing as t
 from abc import ABC, abstractmethod
-
 from dataclasses import dataclass
-
 
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-@dataclass
+
+@dataclass(frozen=True)
 class FeatureStoreKey:
     """A key,descriptor pair enabling retrieval of an item from a feature store"""
 
@@ -42,6 +41,16 @@ class FeatureStoreKey:
     """The unique key of an item in a feature store"""
     descriptor: str
     """The unique identifier of the feature store containing the key"""
+
+    def __post_init__(self) -> None:
+        """Ensure the key and descriptor have at least one character
+
+        :raises ValueError: if key or descriptor are empty strings
+        """
+        if len(self.key) < 1:
+            raise ValueError("Key must have at least one character.")
+        if len(self.descriptor) < 1:
+            raise ValueError("Descriptor must have at least one character.")
 
 
 class FeatureStore(ABC):
