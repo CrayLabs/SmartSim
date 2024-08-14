@@ -41,7 +41,6 @@ class WorkerDevice:
         self._models: dict[str, t.Any] = {}
         """Dict of keys to models which are loaded on this device"""
 
-
     @property
     def name(self) -> str:
         """The identifier of the device represented by this object"""
@@ -78,22 +77,21 @@ class DeviceManager:
         self._device = device
         """Device managed by this object"""
 
-    def _load_model_on_device(self,
+    def _load_model_on_device(
+        self,
         worker: MachineLearningWorkerBase,
         batch: RequestBatch,
-        feature_store: t.Optional[FeatureStore],
+        feature_stores: dict[str, FeatureStore],
     ) -> None:
-        model_bytes = worker.fetch_model(batch, feature_store)
-        loaded_model = worker.load_model(
-            batch, model_bytes, self._device.name
-        )
-        self._device.add_model(batch.model_key, loaded_model.model)
+        model_bytes = worker.fetch_model(batch, feature_stores)
+        loaded_model = worker.load_model(batch, model_bytes, self._device.name)
+        self._device.add_model(batch.model_key.key, loaded_model.model)
 
     def get_device(
         self,
         worker: MachineLearningWorkerBase,
         batch: RequestBatch,
-        feature_store: t.Optional[FeatureStore],
+        feature_stores: dict[str, FeatureStore],
     ) -> t.Generator[WorkerDevice, None, None]:
         """Get the device managed by this object
 
@@ -110,11 +108,11 @@ class DeviceManager:
 
         # Load model if not already loaded, or
         # because it is sent with the request
-        if model_in_request or not batch.model_key in self._device:
-            self._load_model_on_device(worker, batch, feature_store)
+        if model_in_request or not batch.model_key.key in self._device:
+            self._load_model_on_device(worker, batch, feature_stores)
 
         try:
             yield self._device
         finally:
             if model_in_request:
-                self._device.remove_model(batch.model_key)
+                self._device.remove_model(batch.model_key.key)

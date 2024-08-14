@@ -31,6 +31,8 @@ from ...comm.channel.channel import CommChannelBase
 from ...message_handler import MessageHandler
 from ...mli_schemas.response.response_capnp import ResponseBuilder
 
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger(__file__)
 
@@ -42,6 +44,7 @@ def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
         result=[],
         custom_attributes=None,
     )
+
 
 def exception_handler(
     exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str

@@ -27,33 +27,30 @@
 # pylint: disable=import-error
 # pylint: disable-next=unused-import
 import dragon
+
 # pylint: enable=import-error
 
 # isort: off
 # isort: on
 
-from queue import Empty
-
 import multiprocessing as mp
 import time
 import typing as t
+from queue import Empty
 
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 
 from .....log import get_logger
 from ....entrypoints.service import Service
 from ....utils.timings import PerfTimer
-from ...comm.channel.channel import CommChannelBase
-from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
 from ...infrastructure.worker.worker import (
-    RequestBatch,
     InferenceReply,
     LoadModelResult,
     MachineLearningWorkerBase,
+    RequestBatch,
 )
 from ...message_handler import MessageHandler
-from ...mli_schemas.response.response_capnp import ResponseBuilder
 from .commons import build_failure_reply, exception_handler
 from .devicemanager import DeviceManager, WorkerDevice
 
@@ -63,36 +60,6 @@ if t.TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-
-def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
-    prepared_outputs: t.List[t.Any] = []
-    if reply.output_keys:
-        for key in reply.output_keys:
-            if not key:
-                continue
-            msg_key = MessageHandler.build_tensor_key(key)
-            prepared_outputs.append(msg_key)
-    elif reply.outputs:
-        for _ in reply.outputs:
-            msg_tensor_desc = MessageHandler.build_tensor_descriptor(
-                "c",
-                "float32",
-                [1],
-            )
-            prepared_outputs.append(msg_tensor_desc)
-    return prepared_outputs
-
-
-def build_reply(reply: InferenceReply) -> ResponseBuilder:
-    results = prepare_outputs(reply)
-
-    return MessageHandler.build_response(
-        status=reply.status_enum,
-        message=reply.message,
-        result=results,
-        custom_attributes=None,
-    )
-
 class WorkerManager(Service):
     """An implementation of a service managing distribution of tasks to
     machine learning workers"""
@@ -101,7 +68,7 @@ class WorkerManager(Service):
         self,
         config_loader: EnvironmentConfigLoader,
         worker_type: t.Type[MachineLearningWorkerBase],
-        dispatcher_queue: "mp.Queue[InferenceBatch]",
+        dispatcher_queue: "mp.Queue[RequestBatch]",
         as_service: bool = False,
         cooldown: int = 0,
         device: t.Literal["cpu", "gpu"] = "cpu",
@@ -123,10 +90,6 @@ class WorkerManager(Service):
 
         self._dispatcher_queue = dispatcher_queue
         """The dispatcher queue the manager monitors for new tasks"""
-        self._feature_store: t.Optional[FeatureStore] = (
-            config_loader.get_feature_store()
-        )
-        """A feature store to retrieve models from"""
         self._worker = worker_type()
         """The ML Worker implementation"""
         self._callback_factory = config_loader._callback_factory
@@ -148,87 +111,8 @@ class WorkerManager(Service):
         self._perf_timer = PerfTimer(prefix="w_", debug=True, timing_on=True)
         """Performance timer"""
 
-    def _check_feature_stores(self, request: InferenceRequest) -> bool:
-        """Ensures that all feature stores required by the request are available
-
-        :param request: The request to validate
-        :returns: False if feature store validation fails for the request, True otherwise
-        """
-        # collect all feature stores required by the request
-        fs_model: t.Set[str] = set()
-        if request.model_key:
-            fs_model = {request.model_key.descriptor}
-        fs_inputs = {key.descriptor for key in request.input_keys}
-        fs_outputs = {key.descriptor for key in request.output_keys}
-
-        # identify which feature stores are requested and unknown
-        fs_desired = fs_model.union(fs_inputs).union(fs_outputs)
-        fs_actual = {item.descriptor for item in self._feature_stores.values()}
-        fs_missing = fs_desired - fs_actual
-
-        if self._featurestore_factory is None:
-            logger.error("No feature store factory configured")
-            return False
-
-        # create the feature stores we need to service request
-        if fs_missing:
-            logger.debug(f"Adding feature store(s): {fs_missing}")
-            for descriptor in fs_missing:
-                feature_store = self._featurestore_factory(descriptor)
-                self._feature_stores[descriptor] = feature_store
-
-        return True
-
-    def _check_model(self, request: InferenceRequest) -> bool:
-        """Ensure that a model is available for the request
-
-        :param request: The request to validate
-        :returns: False if model validation fails for the request, True otherwise
-        """
-        if request.model_key or request.raw_model:
-            return True
-
-        logger.error("Unable to continue without model bytes or feature store key")
-        return False
-
-    def _check_inputs(self, request: InferenceRequest) -> bool:
-        """Ensure that inputs are available for the request
-
-        :param request: The request to validate
-        :returns: False if input validation fails for the request, True otherwise
-        """
-        if request.input_keys or request.raw_inputs:
-            return True
-
-        logger.error("Unable to continue without input bytes or feature store keys")
-        return False
-
-    def _check_callback(self, request: InferenceRequest) -> bool:
-        """Ensure that a callback channel is available for the request
-
-        :param request: The request to validate
-        :returns: False if callback validation fails for the request, True otherwise
-        """
-        if request.callback is not None:
-            return True
-
-        logger.error("No callback channel provided in request")
-        return False
-
-    def _validate_request(self, request: InferenceRequest) -> bool:
-        """Ensure the request can be processed
-
-        :param request: The request to validate
-        :return: False if the request fails any validation checks, True otherwise"""
-        checks = [
-            self._check_feature_stores(request),
-            self._check_model(request),
-            self._check_inputs(request),
-            self._check_callback(request),
-        ]
-
-        return all(checks)
-
+    # remove this when we are done with time measurements
+    # pylint: disable-next=too-many-statements
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
 
@@ -258,12 +142,12 @@ class WorkerManager(Service):
             self._device_manager.get_device(
                 worker=self._worker,
                 batch=batch,
-                feature_store=self._feature_store,
+                feature_stores=self._feature_stores,
             )
         )
         self._perf_timer.measure_time("fetch_model")
 
-        model_result = LoadModelResult(device.get_model(batch.model_key))
+        model_result = LoadModelResult(device.get_model(batch.model_key.key))
         self._perf_timer.measure_time("load_model")
 
         if batch.inputs is None:
@@ -302,7 +186,7 @@ class WorkerManager(Service):
                     reply.output_keys = self._worker.place_output(
                         request,
                         transformed_output,
-                        self._feature_store,
+                        self._feature_stores,
                     )
                 except Exception as e:
                     exception_handler(
@@ -313,12 +197,19 @@ class WorkerManager(Service):
                 reply.outputs = transformed_output.outputs
             self._perf_timer.measure_time("assign_output")
 
-            if reply.outputs is None:
+            if reply.outputs is None or not reply.outputs:
                 response = build_failure_reply("fail", "Outputs not found.")
             else:
                 reply.status_enum = "complete"
                 reply.message = "Success"
-                response = build_reply(reply)
+
+                results = self._worker.prepare_outputs(reply)
+                response = MessageHandler.build_response(
+                    status=reply.status_enum,
+                    message=reply.message,
+                    result=results,
+                    custom_attributes=None,
+                )
 
             self._perf_timer.measure_time("build_reply")
 

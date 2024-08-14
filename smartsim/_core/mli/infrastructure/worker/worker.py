@@ -171,18 +171,18 @@ class FetchModelResult:
 
 @dataclass
 class RequestBatch:
-    """A batch of aggregated inference requests
-    """
-    model_key: str
+    """A batch of aggregated inference requests"""
+
     requests: list[InferenceRequest]
     inputs: t.Optional[TransformInputResult]
+    model_key: FeatureStoreKey
 
     @property
     def has_valid_requests(self) -> bool:
         return len(self.requests) > 0
 
     @property
-    def has_raw_nodel(self) -> bool:
+    def has_raw_model(self) -> bool:
         return self.raw_model is not None
 
     @property
@@ -190,6 +190,7 @@ class RequestBatch:
         if self.has_valid_requests:
             return self.requests[0].raw_model
         return None
+
 
 class MachineLearningWorkerCore:
     """Basic functionality of ML worker that is shared across all worker types"""
@@ -279,27 +280,26 @@ class MachineLearningWorkerCore:
         :return: Raw bytes of the model"""
 
         # All requests in the same batch share the model
-        sample_request = batch.requests[0]
-        if sample_request.raw_model:
-            return FetchModelResult(sample_request.raw_model.data)
+        if batch.raw_model:
+            return FetchModelResult(batch.raw_model.data)
 
         if not feature_stores:
             raise ValueError("Feature store is required for model retrieval")
 
-        if not sample_request.model_key:
+        if batch.model_key is None:
             raise SmartSimError(
                 "Key must be provided to retrieve model from feature store"
             )
 
-        key, fsd = request.model_key.key, request.model_key.descriptor
+        key, fsd = batch.model_key.key, batch.model_key.descriptor
 
         try:
             feature_store = feature_stores[fsd]
-            raw_bytes: bytes = t.cast(bytes, feature_store[sample_key])
+            raw_bytes: bytes = t.cast(bytes, feature_store[key])
             return FetchModelResult(raw_bytes)
         except FileNotFoundError as ex:
             logger.exception(ex)
-            raise SmartSimError(f"Model could not be retrieved with key {sample_key}") from ex
+            raise SmartSimError(f"Model could not be retrieved with key {key}") from ex
 
     @staticmethod
     def fetch_inputs(
@@ -321,22 +321,23 @@ class MachineLearningWorkerCore:
             if not feature_stores:
                 raise ValueError("No input and no feature store provided")
 
-        if request.input_keys:
-            data: t.List[bytes] = []
+            if request.input_keys:
+                data: t.List[bytes] = []
 
-            for fs_key in request.input_keys:
-                try:
-                    feature_store = feature_stores[fs_key.descriptor]
-                    tensor_bytes = t.cast(bytes, feature_store[fs_key.key])
-                    data.append(tensor_bytes)
-                except KeyError as ex:
-                    logger.exception(ex)
-                    raise SmartSimError(
-                        f"Model could not be retrieved with key {fs_key.key}"
-                    ) from ex
-            return FetchInputResult(
-                data, meta=None
-            )  # fixme: need to get both tensor and descriptor
+                for fs_key in request.input_keys:
+                    try:
+                        feature_store = feature_stores[fs_key.descriptor]
+                        tensor_bytes = t.cast(bytes, feature_store[fs_key.key])
+                        data.append(tensor_bytes)
+                    except KeyError as ex:
+                        logger.exception(ex)
+                        raise SmartSimError(
+                            f"Model could not be retrieved with key {fs_key.key}"
+                        ) from ex
+                fetch_results.append(
+                    FetchInputResult(data, meta=None)
+                )  # fixme: need to get both tensor and descriptor
+                continue
 
             raise ValueError("No input source")
 

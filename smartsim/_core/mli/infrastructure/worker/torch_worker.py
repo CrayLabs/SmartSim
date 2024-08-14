@@ -39,9 +39,9 @@ from .worker import (
     ExecuteResult,
     FetchInputResult,
     FetchModelResult,
-    RequestBatch,
     LoadModelResult,
     MachineLearningWorkerBase,
+    RequestBatch,
     TransformInputResult,
     TransformOutputResult,
 )
@@ -164,8 +164,12 @@ class TorchWorker(MachineLearningWorkerBase):
         with torch.no_grad():
             model.eval()
             results = [
-                model(*[tensor.to(device, non_blocking=True).detach()
-                for tensor in tensors])
+                model(
+                    *[
+                        tensor.to(device, non_blocking=True).detach()
+                        for tensor in tensors
+                    ]
+                )
             ]
 
         transform_result.transformed = []
