@@ -26,7 +26,6 @@
 
 import pytest
 
-from smartsim._core import dispatch
 from smartsim._core.utils.launcher import (
     ExecutableProtocol,
     LauncherProtocol,

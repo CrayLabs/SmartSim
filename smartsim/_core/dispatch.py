@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import dataclasses
 import os
-import subprocess as sp
 import typing as t
 
 from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
