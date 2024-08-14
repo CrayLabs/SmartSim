@@ -374,7 +374,6 @@ class RequestDispatcher(Service):
         self._queue_swap_lock = RLock()
 
     def _on_iteration(self) -> None:
-
         try:
             self._perf_timer.set_active(True)
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
@@ -418,7 +417,7 @@ class RequestDispatcher(Service):
 
             self._perf_timer.end_timings()
 
-        if self._perf_timer.max_length == 801:
+        if self._perf_timer.max_length == 801 and self._perf_timer.is_active:
             self._perf_timer.print_timings(True)
 
     @property
@@ -430,7 +429,6 @@ class RequestDispatcher(Service):
         """Get an empty queue or create a new one
 
         and make it the active one for a given model.
-
         :param model_key: The key of the model for which the
         queue has to be swapped
         :raises SmartSimError: If the queue is not locked.

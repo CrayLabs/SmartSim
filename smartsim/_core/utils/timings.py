@@ -136,3 +136,7 @@ class PerfTimer:
     def set_active(self, active: bool = True) -> None:
         """Set whether the timer will record time"""
         self._timing_on = active
+
+    def is_active(self) -> bool:
+        """Returns true if the timer will record time"""
+        return self._timing_on
