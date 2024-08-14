@@ -282,7 +282,7 @@ class RequestDispatcher(Service):
         """The worker used to batch inputs"""
         self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(2 * 1024**3).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
-        self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
         """Performance timer"""
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
@@ -376,9 +376,10 @@ class RequestDispatcher(Service):
     def _on_iteration(self) -> None:
 
         try:
+            self._perf_timer.set_active(True)
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
         except Exception:
-            self._perf_timer.start_timings()
+            self._perf_timer.set_active(False)
         else:
             if not bytes_list:
                 exception_handler(
@@ -437,13 +438,14 @@ class RequestDispatcher(Service):
         if self._queue_swap_lock is None:
             raise SmartSimError("Queues were not locked")
         with self._queue_swap_lock:
-            for queue in self._queues[model_key.key]:
-                if not queue.full():
-                    self._active_queues[model_key.key] = queue
-                    return
+            if model_key.key in self._queues:
+                for queue in self._queues[model_key.key]:
+                    if not queue.full():
+                        self._active_queues[model_key.key] = queue
+                        return
 
             new_queue = BatchQueue(self._batch_timeout, self._batch_size, model_key)
-            if model_key in self._queues:
+            if model_key.key in self._queues:
                 self._queues[model_key.key].append(new_queue)
             else:
                 self._queues[model_key.key] = [new_queue]
@@ -455,7 +457,7 @@ class RequestDispatcher(Service):
         :param request: the request to place
         """
         if request.raw_model is not None:
-            logger.info("Direct inference requested, creating tmp queue")
+            logger.debug("Direct inference requested, creating tmp queue")
             tmp_id = f"_tmp_{str(uuid.uuid4())}"
             tmp_queue: BatchQueue = BatchQueue(
                 batch_timeout=0,

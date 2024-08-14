@@ -81,17 +81,9 @@ mp.set_start_method("dragon")
 
 pid = os.getpid()
 affinity = os.sched_getaffinity(pid)
-logger.log(f"Entry point: {socket.gethostname()}, {affinity}")
-logger.log(f"CPUS: {os.cpu_count()}")
+logger.info(f"Entry point: {socket.gethostname()}, {affinity}")
+logger.info(f"CPUS: {os.cpu_count()}")
 
-
-def create_worker_manager(
-    worker_type: t.Type[MachineLearningWorkerBase],
-    config_loader: EnvironmentConfigLoader,
-    device: str,
-    dispatcher_queue: mp.Queue,
-) -> WorkerManager:
-    return
 
 
 def service_as_dragon_proc(
@@ -102,7 +94,6 @@ def service_as_dragon_proc(
     local_policy = dragon_policy.Policy(
         placement=dragon_policy.Policy.Placement.HOST_NAME,
         host_name=socket.gethostname(),
-        affinity=dragon_policy.Policy.Affinity.SPECIFIC,
         cpu_affinity=cpu_affinity,
         gpu_affinity=gpu_affinity,
     )
@@ -179,8 +170,7 @@ if __name__ == "__main__":
     dispatcher = RequestDispatcher(
         batch_timeout=args.batch_timeout,
         batch_size=args.batch_size,
-        config_loader=ss_config_loader,
-        comm_channel_type=DragonCommChannel,
+        config_loader=config_loader,
         worker_type=arg_worker_type,
     )
 
@@ -189,13 +179,12 @@ if __name__ == "__main__":
     for wm_idx in range(args.num_workers):
 
         worker_manager =  WorkerManager(
-            config_loader=ss_config_loader,
+            config_loader=config_loader,
             worker_type=arg_worker_type,
             as_service=True,
             cooldown=10,
-            comm_channel_type=DragonCommChannel,
             device=worker_device,
-            task_queue=dispatcher.task_queue,
+            dispatcher_queue=dispatcher.task_queue,
         )
 
         wms.append(worker_manager)
@@ -226,6 +215,7 @@ if __name__ == "__main__":
     # TODO: use ProcessGroup and restart=True?
     all_procs = [dispatcher_proc, *worker_manager_procs]
 
+    print(f"Dispatcher proc: {dispatcher_proc}")
     for proc in all_procs:
         proc.start()
 

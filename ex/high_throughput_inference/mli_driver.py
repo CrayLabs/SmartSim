@@ -16,7 +16,7 @@ NUM_WORKERS = 1
 filedir = os.path.dirname(__file__)
 worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
 app_script_name = os.path.join(filedir, "mock_app.py")
-model_name = os.path.join(filedir, f"resnet50.{DEVICE.upper()}.pt")
+model_name = os.path.join(filedir, f"resnet50.{DEVICE}.pt")
 
 transport: t.Literal["hsta", "tcp"] = "hsta"
 

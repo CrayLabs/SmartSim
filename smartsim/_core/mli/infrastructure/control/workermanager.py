@@ -105,11 +105,55 @@ class WorkerManager(Service):
         self._backbone: t.Optional[FeatureStore] = config_loader.get_backbone()
         """A standalone, system-created feature store used to share internal
         information among MLI components"""
-
         self._device_manager: t.Optional[DeviceManager] = None
         """Object responsible for model caching and device access"""
-        self._perf_timer = PerfTimer(prefix="w_", debug=True, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
         """Performance timer"""
+
+    def _on_start(self) -> None:
+        self._device_manager = DeviceManager(WorkerDevice(self._device))
+
+    def _check_feature_stores(self, batch: RequestBatch) -> bool:
+        """Ensures that all feature stores required by the request are available
+
+        :param batch: The batch of requests to validate
+        :returns: False if feature store validation fails for the batch, True otherwise
+        """
+        # collect all feature stores required by the request
+        fs_model: t.Set[str] = set()
+        if batch.model_key:
+            fs_model = {batch.model_key.descriptor}
+        fs_inputs = {key.descriptor for key in batch.input_keys}
+        fs_outputs = {key.descriptor for key in batch.output_keys}
+
+        # identify which feature stores are requested and unknown
+        fs_desired = fs_model.union(fs_inputs).union(fs_outputs)
+        fs_actual = {item.descriptor for item in self._feature_stores.values()}
+        fs_missing = fs_desired - fs_actual
+
+        if self._featurestore_factory is None:
+            logger.error("No feature store factory configured")
+            return False
+
+        # create the feature stores we need to service request
+        if fs_missing:
+            logger.debug(f"Adding feature store(s): {fs_missing}")
+            for descriptor in fs_missing:
+                feature_store = self._featurestore_factory(descriptor)
+                self._feature_stores[descriptor] = feature_store
+
+        return True
+
+    def _validate_batch(self, batch: RequestBatch) -> bool:
+        """Ensure the request can be processed
+
+        :param batch: The batch of requests to validate
+        :return: False if the request fails any validation checks, True otherwise"""
+
+        if batch is None or len(batch.requests)==0:
+            return False
+
+        return self._check_feature_stores(batch)
 
     # remove this when we are done with time measurements
     # pylint: disable-next=too-many-statements
@@ -128,7 +172,7 @@ class WorkerManager(Service):
             "flush_requests", time.perf_counter() - pre_batch_time
         )
 
-        if batch is None or 0 == len(batch.requests):
+        if not self._validate_batch(batch):
             exception_handler(
                 ValueError("An empty batch was received"),
                 None,
@@ -136,18 +180,44 @@ class WorkerManager(Service):
             )
             return
 
+
         if self._device_manager is None:
-            raise ValueError("No Device Manager available: did you call _on_start()")
-        device: WorkerDevice = next(
-            self._device_manager.get_device(
-                worker=self._worker,
-                batch=batch,
-                feature_stores=self._feature_stores,
+            for request in batch.requests:
+                exception_handler(
+                    ValueError("No Device Manager available: did you call _on_start()"),
+                    request.callback,
+                    "Error acquiring device manager"
+                )
+                return
+
+        try:
+            device: WorkerDevice = next(
+                self._device_manager.get_device(
+                    worker=self._worker,
+                    batch=batch,
+                    feature_stores=self._feature_stores,
+                )
             )
-        )
+        except Exception as exc:
+            for request in batch.requests:
+                exception_handler(
+                    exc,
+                    request.callback,
+                    "Error loading model on device or getting device"
+                )
+            return
         self._perf_timer.measure_time("fetch_model")
 
-        model_result = LoadModelResult(device.get_model(batch.model_key.key))
+        try:
+            model_result = LoadModelResult(device.get_model(batch.model_key.key))
+        except Exception as exc:
+            for request in batch.requests:
+                exception_handler(
+                    exc,
+                    request.callback,
+                    "Error getting model from device"
+                )
+            return
         self._perf_timer.measure_time("load_model")
 
         if batch.inputs is None:

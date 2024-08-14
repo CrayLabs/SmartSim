@@ -154,7 +154,6 @@ class ResNetWrapper:
     def name(self):
         return self._name
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Mock application")
@@ -162,7 +161,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
-    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device.upper()}.pt")
+    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
 
     client = ProtoClient(timing_on=True)
     client.set_model(resnet.name, resnet.model)

@@ -132,3 +132,7 @@ class PerfTimer:
                 print(" ".join(self._format_number(value) for value in value_array[i]))
         if to_file:
             np.save(self._prefix + self._filename + ".npy", value_array)
+
+    def set_active(self, active: bool = True) -> None:
+        """Set whether the timer will record time"""
+        self._timing_on = active

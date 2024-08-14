@@ -191,6 +191,22 @@ class RequestBatch:
             return self.requests[0].raw_model
         return None
 
+    @property
+    def input_keys(self) -> t.List[FeatureStoreKey]:
+        keys = []
+        for request in self.requests:
+            keys.extend(request.input_keys)
+
+        return keys
+
+    @property
+    def output_keys(self) -> t.List[FeatureStoreKey]:
+        keys = []
+        for request in self.requests:
+            keys.extend(request.output_keys)
+
+        return keys
+
 
 class MachineLearningWorkerCore:
     """Basic functionality of ML worker that is shared across all worker types"""

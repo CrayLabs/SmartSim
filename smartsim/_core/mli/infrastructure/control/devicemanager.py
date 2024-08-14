@@ -29,6 +29,9 @@ import typing as t
 from ...infrastructure.storage.featurestore import FeatureStore
 from ..worker.worker import MachineLearningWorkerBase
 from .requestdispatcher import RequestBatch
+from .....log import get_logger
+
+logger = get_logger(__name__)
 
 
 class WorkerDevice:
@@ -83,6 +86,7 @@ class DeviceManager:
         batch: RequestBatch,
         feature_stores: dict[str, FeatureStore],
     ) -> None:
+
         model_bytes = worker.fetch_model(batch, feature_stores)
         loaded_model = worker.load_model(batch, model_bytes, self._device.name)
         self._device.add_model(batch.model_key.key, loaded_model.model)
