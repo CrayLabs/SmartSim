@@ -250,14 +250,18 @@ def installed_redisai_backends(
     """
     # import here to avoid circular import
     base_path = redis_install_base(backends_path)
-    backends = {
+    backends: t.Dict[str, TRedisAIBackendStr] = {
         "tensorflow": "libtensorflow",
         "torch": "libtorch",
         "onnxruntime": "onnxruntime",
     }
 
-    installed = {backends[backend] for backend in backends if _installed(base_path, backend)}
+    installed = {
+        backends[backend] for backend in backends if _installed(base_path, backend)
+    }
     return installed
+
+
 def get_ts_ms() -> int:
     """Return the current timestamp (accurate to milliseconds) cast to an integer"""
     return int(datetime.now().timestamp() * 1000)

@@ -24,14 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from dataclasses import dataclass
-
 import enum
 import json
 import os
 import pathlib
 import platform
 import typing as t
+from dataclasses import dataclass
+
 from typing_extensions import Self
 
 from .types import PathLike
@@ -40,11 +40,14 @@ from .types import PathLike
 class PlatformError(Exception):
     pass
 
+
 class UnsupportedError(PlatformError):
     pass
 
+
 class PathNotFoundError(PlatformError):
     pass
+
 
 class Architecture(enum.Enum):
     X64 = "x86_64"
@@ -59,7 +62,7 @@ class Architecture(enum.Enum):
         raise UnsupportedError(f"Unrecognized or unsupported architecture: {string}")
 
     @classmethod
-    def autodetect(cls):
+    def autodetect(cls) -> "Architecture":
         return cls.from_str(platform.machine())
 
 
@@ -79,8 +82,9 @@ class Device(enum.Enum):
         return cls(str_)
 
     @classmethod
-    def detect_cuda_version(cls) -> t.Optional[str]:
-        if cuda_path := pathlib.Path(os.environ.get("CUDA_HOME")):
+    def detect_cuda_version(cls) -> t.Optional["Device"]:
+        if cuda_home := os.environ.get("CUDA_HOME"):
+            cuda_path = pathlib.Path(cuda_home)
             with open(cuda_path / "version.json", "r") as f:
                 cuda_versions = json.load(f)
             major, minor = cuda_versions["cuda"]["version"].split(".")[0:2]
@@ -88,10 +92,11 @@ class Device(enum.Enum):
         return None
 
     @classmethod
-    def detect_rocm_version(cls) -> t.Optional[str]:
-        if rocm_path := pathlib.Path(os.environ.get("ROCM_HOME")):
+    def detect_rocm_version(cls) -> t.Optional["Device"]:
+        if rocm_home := os.environ.get("ROCM_HOME"):
+            rocm_path = pathlib.Path(rocm_home)
             with open(rocm_path / ".info" / "version", "r") as f:
-                major, minor= f.readline().split("-")[0].split(".")
+                major, minor = f.readline().split("-")[0].split(".")
             return cls.from_str(f"rocm-{major}.{minor}")
         return None
 
@@ -107,12 +112,12 @@ class Device(enum.Enum):
         return self in (cls.ROCM57,)
 
     @classmethod
-    def _cuda_enums(cls):
-        return (device for device in cls if "cuda" in device.value)
+    def _cuda_enums(cls) -> t.Tuple["Device", ...]:
+        return tuple(device for device in cls if "cuda" in device.value)
 
     @classmethod
-    def _rocm_enums(cls):
-        return (device for device in cls if "rocm" in device.value)
+    def _rocm_enums(cls) -> t.Tuple["Device", ...]:
+        return tuple(device for device in cls if "rocm" in device.value)
 
 
 class OperatingSystem(enum.Enum):
@@ -125,11 +130,14 @@ class OperatingSystem(enum.Enum):
         for type_ in cls:
             if string in type_.value:
                 return type_
-        raise UnsupportedError(f"Unrecognized or unsupported operating system: {string}")
+        raise UnsupportedError(
+            f"Unrecognized or unsupported operating system: {string}"
+        )
 
     @classmethod
     def autodetect(cls) -> "OperatingSystem":
         return cls.from_str(platform.system())
+
 
 @dataclass(frozen=True)
 class Platform:
@@ -142,10 +150,10 @@ class Platform:
         return cls(
             OperatingSystem.from_str(os),
             Architecture.from_str(architecture),
-            Device.from_str(device)
+            Device.from_str(device),
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         output = [
             self.os.name,
             self.architecture.name,

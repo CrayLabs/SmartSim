@@ -38,8 +38,13 @@ from subprocess import SubprocessError
 if t.TYPE_CHECKING:
     from typing_extensions import Never
 
-from smartsim._core._install.platform import OperatingSystem, Device, Architecture, Platform
 from smartsim._core._install.mlpackages import MLPackage
+from smartsim._core._install.platform import (
+    Architecture,
+    Device,
+    OperatingSystem,
+    Platform,
+)
 from smartsim._core._install.utils import PackageRetriever
 from smartsim._core.utils import expand_exe_path
 
@@ -52,6 +57,7 @@ _U = t.TypeVar("_U")
 
 class BuildError(Exception):
     pass
+
 
 class Builder:
     """Base class for building third-party libraries"""
@@ -225,10 +231,7 @@ class DatabaseBuilder(Builder):
             raise BuildError(f"Malformed {database_name} URL: {git_url}")
 
         PackageRetriever.retrieve(
-            git_url,
-            self.build_dir / database_name,
-            branch=branch,
-            depth=1
+            git_url, self.build_dir / database_name, branch=branch, depth=1
         )
         # build Redis
         build_cmd = [
@@ -266,4 +269,3 @@ class DatabaseBuilder(Builder):
             _ = expand_exe_path(str(redis_cli))
         except (TypeError, FileNotFoundError) as e:
             raise BuildError("Installation of redis-cli failed!") from e
-

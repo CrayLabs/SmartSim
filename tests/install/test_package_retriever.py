@@ -40,6 +40,7 @@ from smartsim._core._install.utils import PackageRetriever
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+
 @contextlib.contextmanager
 def temp_cd(path):
     original = os.getcwd()
@@ -51,9 +52,10 @@ def temp_cd(path):
 
 
 def make_test_file(test_file):
-    data = ''.join(random.choices(string.ascii_letters + string.digits, k=1024))
-    with open(test_file, 'w') as f:
+    data = "".join(random.choices(string.ascii_letters + string.digits, k=1024))
+    with open(test_file, "w") as f:
         f.write(data)
+
 
 def test_local_archive_zip(test_dir):
     with temp_cd(test_dir):
@@ -61,12 +63,15 @@ def test_local_archive_zip(test_dir):
         make_test_file(test_file)
 
         zip_file = "./test.zip"
-        with zipfile.ZipFile(zip_file, 'w') as f:
+        with zipfile.ZipFile(zip_file, "w") as f:
             f.write(test_file)
 
         PackageRetriever.retrieve(zip_file, pathlib.Path("./output"))
 
-        assert filecmp.cmp(test_file, pathlib.Path("./output") / "test.data", shallow=False)
+        assert filecmp.cmp(
+            test_file, pathlib.Path("./output") / "test.data", shallow=False
+        )
+
 
 def test_local_archive_tgz(test_dir):
     with temp_cd(test_dir):
@@ -79,20 +84,23 @@ def test_local_archive_tgz(test_dir):
 
         PackageRetriever.retrieve(tgz_file, pathlib.Path("./output"))
 
-        assert filecmp.cmp(test_file, pathlib.Path("./output") / "test.data", shallow=False)
+        assert filecmp.cmp(
+            test_file, pathlib.Path("./output") / "test.data", shallow=False
+        )
+
 
 def test_git(test_dir):
     PackageRetriever.retrieve(
         "https://github.com/CrayLabs/SmartSim.git",
         f"{test_dir}/smartsim_git",
-        branch="master"
+        branch="master",
     )
     assert pathlib.Path(f"{test_dir}/smartsim_git").is_dir()
 
+
 def test_https(test_dir):
-    output_dir = pathlib.Path(test_dir)/"output"
+    output_dir = pathlib.Path(test_dir) / "output"
     PackageRetriever.retrieve(
-        "https://github.com/CrayLabs/SmartSim/archive/refs/tags/v0.6.0.zip",
-        output_dir
+        "https://github.com/CrayLabs/SmartSim/archive/refs/tags/v0.6.0.zip", output_dir
     )
     assert False

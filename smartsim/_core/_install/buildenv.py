@@ -155,6 +155,7 @@ class Version_(str):
 def get_env(var: str, default: str) -> str:
     return os.environ.get(var, default)
 
+
 class Versioner:
     """Versioner is responsible for managing all the versions
     within SmartSim including SmartSim itself.

@@ -34,5 +34,6 @@ import smartsim._core._install.platform as platform
 #  file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+
 def test_default_configs():
     print(platform.DEFAULT_PLATFORMS)

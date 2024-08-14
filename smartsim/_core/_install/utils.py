@@ -29,22 +29,26 @@ import pathlib
 import shutil
 import tarfile
 import typing as t
-from urllib.request import urlretrieve
-from urllib.parse import urlparse
 import zipfile
+from urllib.parse import urlparse
+from urllib.request import urlretrieve
 
 import git
 
-from smartsim._core._install.platform import OperatingSystem, Architecture
+from smartsim._core._install.platform import Architecture, OperatingSystem
 
 _PathLike = t.Union[str, pathlib.Path]
 
+
 class UnsupportedArchive(Exception):
     pass
+
+
 class PathNotFound(Exception):
     pass
 
-class PackageRetriever():
+
+class PackageRetriever:
     @staticmethod
     def _from_local_archive(
         source: _PathLike,
@@ -67,7 +71,7 @@ class PackageRetriever():
     @classmethod
     def _from_http(
         cls,
-        source: _PathLike,
+        source: str,
         destination: pathlib.Path,
         **kwargs: t.Any,
     ) -> None:
@@ -76,14 +80,13 @@ class PackageRetriever():
         os.remove(local_file)
 
     @staticmethod
-    def _from_git(source, destination, **clone_kwargs) -> None:
+    def _from_git(
+        source: str, destination: pathlib.Path, **clone_kwargs: t.Any
+    ) -> None:
         is_mac = OperatingSystem.autodetect() == OperatingSystem.DARWIN
         is_arm64 = Architecture.autodetect() == Architecture.ARM64
         if is_mac and is_arm64:
-            config_options = (
-                "--config core.autocrlf=false",
-                "--config core.eol=lf"
-            )
+            config_options = ["--config core.autocrlf=false", "--config core.eol=lf"]
         else:
             config_options = None
         git.Repo.clone_from(
@@ -92,30 +95,29 @@ class PackageRetriever():
 
     @classmethod
     def retrieve(
-        cls,
-        source:_PathLike,
-        destination: pathlib.Path,
-        **retrieve_kwargs: t.Any
+        cls, source: _PathLike, destination: pathlib.Path, **retrieve_kwargs: t.Any
     ) -> None:
         url_scheme = urlparse(str(source)).scheme
         if str(source).endswith(".git"):
-            return cls._from_git(source, destination, **retrieve_kwargs)
+            cls._from_git(str(source), destination, **retrieve_kwargs)
         elif url_scheme == "http":
-            return cls._from_http(source, destination, **retrieve_kwargs)
+            cls._from_http(str(source), destination, **retrieve_kwargs)
         elif url_scheme == "https":
-            return cls._from_http(source, destination, **retrieve_kwargs)
+            cls._from_http(str(source), destination, **retrieve_kwargs)
         else:  # This is probably a path
             source_path = pathlib.Path(source)
             if source_path.exists():
                 if source_path.is_dir():
-                    return cls._from_local_directory(source, destination, **retrieve_kwargs)
-                elif source_path.is_file() and source_path.suffix in (".gz", ".zip", ".tgz"):
-                    return cls._from_local_archive(source, destination, **retrieve_kwargs)
+                    cls._from_local_directory(source, destination, **retrieve_kwargs)
+                elif source_path.is_file() and source_path.suffix in (
+                    ".gz",
+                    ".zip",
+                    ".tgz",
+                ):
+                    cls._from_local_archive(source, destination, **retrieve_kwargs)
                 else:
                     raise UnsupportedArchive(
                         f"Source ({source}) is not a supported archive or directory "
                     )
             else:
-                raise PathNotFound(
-                    f"Package path or file does not exist: {source}"
-                )
+                raise PathNotFound(f"Package path or file does not exist: {source}")

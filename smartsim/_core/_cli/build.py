@@ -37,15 +37,19 @@ from tabulate import tabulate
 from smartsim._core._cli.scripts.dragon_install import install_dragon
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import (
-    BuildEnv,
-    DbEngine,
-    Version_,
-    Versioner,
-)
+from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
 from smartsim._core._install.builder import Device
-from smartsim._core._install.platform import Platform, Architecture, Device, OperatingSystem
-from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, MLPackageCollection, load_platform_configs
+from smartsim._core._install.mlpackages import (
+    DEFAULT_MLPACKAGES,
+    MLPackageCollection,
+    load_platform_configs,
+)
+from smartsim._core._install.platform import (
+    Architecture,
+    Device,
+    OperatingSystem,
+    Platform,
+)
 from smartsim._core._install.redisaiBuilder import RedisAIBuilder
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
@@ -108,25 +112,37 @@ def build_database(
             f"Building {database_name} version {versions.REDIS} "
             f"from {versions.REDIS_URL}"
         )
-        database_builder.build_from_git(versions.REDIS_URL, branch=versions.REDIS_BRANCH)
+        database_builder.build_from_git(
+            versions.REDIS_URL, branch=versions.REDIS_BRANCH
+        )
         database_builder.cleanup()
-    logger.info(f"{database_name} build complete!")
+        logger.info(f"{database_name} build complete!")
+    else:
+        logger.warning(
+            f"{database_name} was previously built, run 'smart clobber' to rebuild"
+        )
 
 
 def build_redis_ai(
-        platform: Platform,
-        mlpackages: MLPackageCollection,
-        build_env: BuildEnv,
-        verbose: bool
-    ) -> None:
-        logger.info("Building RedisAI and backends...")
-        RAIBuilder = RedisAIBuilder(platform, mlpackages, build_env, verbose)
-        RAIBuilder.build()
-        RAIBuilder.cleanup_build()
+    platform: Platform,
+    mlpackages: MLPackageCollection,
+    build_env: BuildEnv,
+    verbose: bool,
+) -> None:
+    logger.info("Building RedisAI and backends...")
+    RAIBuilder = RedisAIBuilder(platform, mlpackages, build_env, verbose)
+    RAIBuilder.build()
+    RAIBuilder.cleanup_build()
 
-def check_ml_python_packages(packages: MLPackageCollection):
-    def parse_requirement(requirement: str) -> t.Tuple[str, str, str]:
+
+def check_ml_python_packages(packages: MLPackageCollection) -> None:
+    def parse_requirement(
+        requirement: str,
+    ) -> t.Tuple[
+        str, t.Optional[t.Callable[[t.Any, t.Any], bool]], t.Optional[Version_]
+    ]:
         import operator
+
         operators = {
             "==": operator.eq,
             "<=": operator.le,
@@ -138,9 +154,9 @@ def check_ml_python_packages(packages: MLPackageCollection):
         match = re.match(pattern, requirement)
         if match:
             module_name = match.group(1)
-            operator = operators[match.group(2)] if match.group(2) else None
+            op = operators[match.group(2)] if match.group(2) else None
             version = Version_(match.group(3)) if match.group(3) else None
-            return module_name, operator, version
+            return module_name, op, version
         else:
             raise ValueError(f"Invalid requirement string: {requirement}")
 
@@ -160,6 +176,7 @@ def check_ml_python_packages(packages: MLPackageCollection):
 
     if missing or conflicts:
         logger.warning(_format_incompatible_python_env_message(missing, conflicts))
+
 
 def _format_incompatible_python_env_message(
     missing: t.Collection[str], conflicting: t.Collection[str]
@@ -211,9 +228,7 @@ def execute(
 
     # The user should never have to specify the OS and Architecture
     current_platform = Platform(
-        OperatingSystem.autodetect(),
-        Architecture.autodetect(),
-        device
+        OperatingSystem.autodetect(), Architecture.autodetect(), device
     )
 
     # Configure the ML Packages
@@ -336,7 +351,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--alternate-config-dir",
         default=None,
         type=str,
-        help="Path to directory with JSON files describing the platform and associated packages"
+        help="Path to directory with JSON files describing the platform and associated packages",
     )
     parser.add_argument(
         "--keydb",

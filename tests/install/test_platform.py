@@ -30,12 +30,11 @@ import platform
 
 import pytest
 
-from smartsim._core._install.platform import (
-    Device, Architecture, OperatingSystem
-)
+from smartsim._core._install.platform import Architecture, Device, OperatingSystem
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
+
 
 def test_device_cpu():
     cpu_enum = Device.CPU
@@ -43,9 +42,10 @@ def test_device_cpu():
     assert not cpu_enum.is_cuda()
     assert not cpu_enum.is_rocm()
 
+
 @pytest.mark.parametrize("cuda_device", Device._cuda_enums())
 def test_cuda(monkeypatch, test_dir, cuda_device):
-    version= cuda_device.value.split("-")[1]
+    version = cuda_device.value.split("-")[1]
     fake_full_version = version + ".9999"
     monkeypatch.setenv("CUDA_HOME", test_dir)
 
@@ -58,9 +58,10 @@ def test_cuda(monkeypatch, test_dir, cuda_device):
     assert cuda_device.is_cuda()
     assert not cuda_device.is_rocm()
 
+
 @pytest.mark.parametrize("rocm_device", Device._rocm_enums())
 def test_rocm(monkeypatch, test_dir, rocm_device):
-    version= rocm_device.value.split("-")[1]
+    version = rocm_device.value.split("-")[1]
     fake_full_version = version + "-9999"
     monkeypatch.setenv("ROCM_HOME", test_dir)
     info_dir = f"{test_dir}/.info"
@@ -74,10 +75,12 @@ def test_rocm(monkeypatch, test_dir, rocm_device):
     assert not rocm_device.is_cuda()
     assert rocm_device.is_rocm()
 
+
 @pytest.mark.parametrize("os", ("linux", "darwin"))
 def test_operating_system(monkeypatch, os):
     monkeypatch.setattr(platform, "system", lambda: os)
     assert OperatingSystem.autodetect().value == os
+
 
 @pytest.mark.parametrize("arch", ("x86_64", "arm64"))
 def test_architecture(monkeypatch, arch):

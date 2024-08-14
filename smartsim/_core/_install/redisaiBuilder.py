@@ -24,28 +24,28 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from collections import deque, namedtuple
-
 import fileinput
 import pathlib
 import re
 import shutil
 import subprocess
 import typing as t
+from collections import deque, namedtuple
 
 from packaging.version import Version
 
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
-from smartsim._core.config import CONFIG
 from smartsim._core._install.buildenv import BuildEnv
+from smartsim._core._install.mlpackages import MLPackageCollection
 from smartsim._core._install.platform import Platform
-from smartsim._core._install.mlpackages import MLPackage
 from smartsim._core._install.utils import PackageRetriever
+from smartsim._core.config import CONFIG
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
-class RedisAIBuilder():
+
+class RedisAIBuilder:
     """Class to build RedisAI from Source
     Supported build method:
      - from git
@@ -56,11 +56,11 @@ class RedisAIBuilder():
     def __init__(
         self,
         platform: Platform,
-        mlpackages: t.Dict[str, MLPackage],
+        mlpackages: MLPackageCollection,
         build_env: BuildEnv,
         verbose: bool = False,
         source: t.Union[str, pathlib.Path] = "https://github.com/RedisAI/RedisAI.git",
-        version: str = "v1.2.7"
+        version: str = "v1.2.7",
     ) -> None:
         self.platform = platform
         self.mlpackages = mlpackages
@@ -71,19 +71,18 @@ class RedisAIBuilder():
         self.patches: t.List[_RedisAIPatch] = []
         self._define_patches_by_version()
 
-        self.src_path = CONFIG.build_path / "RedisAI" /"src"
+        self.src_path = CONFIG.build_path / "RedisAI" / "src"
         self.build_path = CONFIG.build_path / "RedisAI" / "build"
         self.package_path = CONFIG.build_path / "RedisAI" / "mlpackages"
 
         self.cleanup_build()
 
-    def _define_patches_by_version(self):
+    def _define_patches_by_version(self) -> None:
         if self.build_torch:
             if Version(self.mlpackages["libtorch"].version) >= Version("2.1.0"):
                 self.patches.append(_patches["c++17"])
 
-
-    def cleanup_build(self):
+    def cleanup_build(self) -> None:
         shutil.rmtree(self.src_path, ignore_errors=True)
         shutil.rmtree(self.build_path, ignore_errors=True)
         shutil.rmtree(self.package_path, ignore_errors=True)
@@ -92,7 +91,8 @@ class RedisAIBuilder():
     def is_built(self) -> bool:
         backend_dir = CONFIG.lib_path / "backends"
         rai_exists = [
-            (backend_dir / f"redisai_{backend_name}").is_dir() for backend_name in self.mlpackages
+            (backend_dir / f"redisai_{backend_name}").is_dir()
+            for backend_name in self.mlpackages
         ]
         rai_exists.append((CONFIG.lib_path / "redisai.so").is_file())
         return all(rai_exists)
@@ -123,8 +123,8 @@ class RedisAIBuilder():
 
         # Create the build directory structure
         git_kwargs = {
-            "depth":1,
-            "branch":self.version,
+            "depth": 1,
+            "branch": self.version,
         }
 
         PackageRetriever.retrieve(self.source, self.src_path, **git_kwargs)
@@ -134,13 +134,20 @@ class RedisAIBuilder():
         cmake_command = self._rai_cmake_cmd()
         build_command = self._rai_build_cmd()
 
-        logger.info(f"Configuring CMake Build: {' '.join(cmake_command)}")
+        logger.info(f"Configuring CMake Build:")
+        if self.verbose:
+            print(" ".join(cmake_command))
         self.run_command(cmake_command, self.build_path)
-        logger.info(f"Building RedisAI: {' '.join(build_command)}")
+
+        logger.info(f"Building RedisAI:")
+        if self.verbose:
+            print(" ".join(cmake_command))
         self.run_command(build_command, self.build_path)
 
-    def _prepare_packages(self):
-        def find_closest_object(start_path, target_obj):
+    def _prepare_packages(self) -> None:
+        def find_closest_object(
+            start_path: pathlib.Path, target_obj: str
+        ) -> t.Optional[pathlib.Path]:
             queue = deque([start_path])
             while queue:
                 current_dir = queue.popleft()
@@ -158,12 +165,14 @@ class RedisAIBuilder():
             package.retrieve(target_dir)
             # Move actual contents to root of the expected location
             actual_root = find_closest_object(target_dir, "include")
-            if actual_root != target_dir:
-                logger.info(f"Non-standard location found: {str(actual_root)} -> {str(target_dir)}")
+            if actual_root and actual_root != target_dir:
+                logger.info(
+                    f"Non-standard location found: {str(actual_root)} -> {str(target_dir)}"
+                )
                 for f in actual_root.iterdir():
                     f.rename(target_dir / f.name)
 
-    def run_command(self, cmd, cwd):
+    def run_command(self, cmd: t.Union[str, t.List[str]], cwd: pathlib.Path) -> None:
         stdout = None if self.verbose else subprocess.DEVNULL
         stderr = None if self.verbose else subprocess.PIPE
         proc = subprocess.run(cmd, cwd=str(cwd), stdout=stdout, stderr=stderr)
@@ -171,8 +180,9 @@ class RedisAIBuilder():
             print(proc.stderr.decode("utf-8"))
 
     def _rai_cmake_cmd(self) -> t.List[str]:
-        def on_off(expression: bool):
+        def on_off(expression: bool) -> t.Literal["ON", "OFF"]:
             return "ON" if expression else "OFF"
+
         cmake_args = dict(
             BUILD_TF=on_off(self.build_tensorflow),
             BUILD_ORT=on_off(self.build_onnxruntime),
@@ -189,20 +199,23 @@ class RedisAIBuilder():
         cmd.append(str(self.src_path))
         return cmd
 
-    def _rai_build_cmd(self):
+    def _rai_build_cmd(self) -> t.List[str]:
         return "make install -j VERBOSE=1".split(" ")
 
     def _patch_source_files(self) -> None:
         for patch in self.patches:
             compiled_regex = re.compile(patch.regex)
-            with fileinput.input(str(self.src_path/patch.source_file), inplace=True) as f:
+            with fileinput.input(
+                str(self.src_path / patch.source_file), inplace=True
+            ) as f:
                 for line in f:
                     line = compiled_regex.sub(patch.replacement, line)
                     print(line, end="")
 
+
 _RedisAIPatch = namedtuple("_RedisAIPatch", "source_file regex replacement")
 _patches = {
-    "c++17":_RedisAIPatch(
+    "c++17": _RedisAIPatch(
         "src/backends/libtorch_c/CMakeLists.txt",
         r"set_property\(TARGET\storch_c\sPROPERTY\sCXX_STANDARD\s(98|11|14)\)",
         "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)",

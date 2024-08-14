@@ -35,6 +35,7 @@ from smartsim._core._install.utils import PackageRetriever
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+
 def test_redisai_builder(monkeypatch, test_dir):
     platform = Platform.from_str("linux", "x86_64", "cpu")
     mlpackages = DEFAULT_MLPACKAGES[platform]

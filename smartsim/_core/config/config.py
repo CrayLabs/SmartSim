@@ -95,7 +95,9 @@ class Config:
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
 
-        self.dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", self.core_path)
+        self.dependency_path = os.environ.get(
+            "SMARTSIM_DEP_INSTALL_PATH", self.core_path
+        )
         self.lib_path = Path(self.dependency_path, "lib").resolve()
         self.bin_path = Path(self.dependency_path, "bin").resolve()
         self.build_path = Path(self.dependency_path, "build").resolve()
