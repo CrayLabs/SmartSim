@@ -37,7 +37,7 @@
             "version": "1.18.1",
             "pip_index": "",
             "python_packages": [
-                "onnx==1.18.1",
+                "onnx==1.16.2",
                 "skl2onnx",
                 "scikit-learn",
                 "onnxmltools"

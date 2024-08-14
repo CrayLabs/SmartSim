@@ -30,6 +30,7 @@ import fileinput
 import pathlib
 import re
 import shutil
+import subprocess
 import typing as t
 
 from packaging.version import Version
@@ -40,7 +41,6 @@ from smartsim._core._install.buildenv import BuildEnv
 from smartsim._core._install.platform import Platform
 from smartsim._core._install.mlpackages import MLPackage
 from smartsim._core._install.utils import PackageRetriever
-from smartsim._core.utils.shell import execute_cmd
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
@@ -117,9 +117,9 @@ class RedisAIBuilder():
         :param device: cpu or gpu
         """
 
-        self.src_path.mkdir()
-        self.build_path.mkdir()
-        self.package_path.mkdir()
+        self.src_path.mkdir(parents=True)
+        self.build_path.mkdir(parents=True)
+        self.package_path.mkdir(parents=True)
 
         # Create the build directory structure
         git_kwargs = {
@@ -134,9 +134,9 @@ class RedisAIBuilder():
         cmake_command = self._rai_cmake_cmd()
         build_command = self._rai_build_cmd()
 
-        logger.info(f"Configuring CMake Build: {cmake_command.join(' ')}")
+        logger.info(f"Configuring CMake Build: {' '.join(cmake_command)}")
         self.run_command(cmake_command, self.build_path)
-        logger.info(f"Building RedisAI: {build_command.join(' ')}")
+        logger.info(f"Building RedisAI: {' '.join(build_command)}")
         self.run_command(build_command, self.build_path)
 
     def _prepare_packages(self):
@@ -164,12 +164,11 @@ class RedisAIBuilder():
                     f.rename(target_dir / f.name)
 
     def run_command(self, cmd, cwd):
-        rc, output, err, = execute_cmd(cmd, cwd=str(cwd))
-        if (rc != 0) or self.verbose:
-            print(output)
-            print(err)
-        if (rc != 0):
-            raise Exception(f"Build Failed with code: {rc}")
+        stdout = None if self.verbose else subprocess.DEVNULL
+        stderr = None if self.verbose else subprocess.PIPE
+        proc = subprocess.run(cmd, cwd=str(cwd), stdout=stdout, stderr=stderr)
+        if proc.returncode != 0:
+            print(proc.stderr.decode("utf-8"))
 
     def _rai_cmake_cmd(self) -> t.List[str]:
         def on_off(expression: bool):

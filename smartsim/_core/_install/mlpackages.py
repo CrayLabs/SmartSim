@@ -33,11 +33,13 @@ import typing as t
 
 from dataclasses import dataclass
 
+from tabulate import tabulate
+
 from .types import PathLike
 from .utils import PackageRetriever
 from .platform import Platform
 
-_PlatformPackages = t.TypeVar("_PlatformPackages", bound="PlatformPackages")
+_MLPackageCollection = t.TypeVar("_MLPackageCollection", bound="MLPackageCollection")
 
 @dataclass
 class MLPackage():
@@ -56,20 +58,23 @@ class MLPackage():
     def retrieve(self, destination: PathLike):
         PackageRetriever.retrieve(self.lib_source, destination)
 
-    def pip_install(self):
-        install_command = [sys.executable, '-m', 'pip', 'install']
-        if self.pip_index:
-            install_command = ["--index-url", self.pip_index]
-        install_command += self.packages
-        subprocess.check_call(install_command)
+    def pip_install(self, quiet: bool = False):
+        if self.python_packages:
+            install_command = [sys.executable, '-m', 'pip', 'install']
+            if self.pip_index:
+                install_command += ["--index-url", self.pip_index]
+            if quiet:
+                install_command += ["--quiet"]
+            install_command += self.python_packages
+            subprocess.check_call(install_command)
 
 @dataclass
-class PlatformPackages():
+class MLPackageCollection():
     platform: Platform
     ml_packages: t.Dict[str, MLPackage]
 
     @classmethod
-    def from_json_file(cls, json_file: PathLike) -> _PlatformPackages:
+    def from_json_file(cls, json_file: PathLike) -> _MLPackageCollection:
         with open(json_file, "r") as f:
             config_json = json.load(f)
         platform = Platform.from_str(**config_json["platform"])
@@ -96,17 +101,28 @@ class PlatformPackages():
     def pop(self, key):
         self.ml_packages.pop(key)
 
+    def tabulate_versions(self, tablefmt: str="github") -> None:
+        """Display package names and versions as a table
 
+        :param tablefmt: Tabulate format, defaults to "github"
+        :type tablefmt: str, optional
+        """
 
-def load_platform_configs(config_file_path: pathlib.Path) -> t.Dict[Platform, PlatformPackages]:
+        return tabulate(
+            [[k, v.version] for k, v in self.items()],
+            headers=["Package", "Version"],
+            tablefmt=tablefmt
+        )
+
+def load_platform_configs(config_file_path: pathlib.Path) -> t.Dict[Platform, MLPackageCollection]:
     configs = {}
     for config_file in config_file_path.glob("*.json"):
-        dependencies = PlatformPackages.from_json_file(config_file)
+        dependencies = MLPackageCollection.from_json_file(config_file)
         configs[dependencies.platform] = dependencies
     return configs
 
-DEFAULT_MLPACKAGE_PATH = pathlib.Path(
+DEFAULT_MLPACKAGE_PATH: pathlib.Path = pathlib.Path(
     resources.path(
         "smartsim._core._install.configs", "mlpackages")
     )
-DEFAULT_MLPACKAGES = load_platform_configs(DEFAULT_MLPACKAGE_PATH)
+DEFAULT_MLPACKAGES: t.Dict[Platform, MLPackageCollection] = load_platform_configs(DEFAULT_MLPACKAGE_PATH)

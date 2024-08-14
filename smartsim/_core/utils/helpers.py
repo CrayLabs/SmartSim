@@ -43,7 +43,7 @@ if t.TYPE_CHECKING:
     from types import FrameType
 
 
-TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
+TRedisAIBackendStr = t.Literal["libtensorflow", "libtorch", "onnxruntime"]
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
@@ -250,16 +250,14 @@ def installed_redisai_backends(
     """
     # import here to avoid circular import
     base_path = redis_install_base(backends_path)
-    backends: t.Set[_TRedisAIBackendStr] = {
-        "tensorflow",
-        "torch",
-        "onnxruntime",
-        "tflite",
+    backends = {
+        "tensorflow": "libtensorflow",
+        "torch": "libtorch",
+        "onnxruntime": "onnxruntime",
     }
 
-    return {backend for backend in backends if _installed(base_path, backend)}
-
-
+    installed = {backends[backend] for backend in backends if _installed(base_path, backend)}
+    return installed
 def get_ts_ms() -> int:
     """Return the current timestamp (accurate to milliseconds) cast to an integer"""
     return int(datetime.now().timestamp() * 1000)

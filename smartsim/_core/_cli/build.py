@@ -25,11 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import collections
 import importlib.metadata
-import operator
 import os
 import re
+import shutil
 import typing as t
 from pathlib import Path
 
@@ -41,14 +40,12 @@ from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
     BuildEnv,
     DbEngine,
-    SetupError,
     Version_,
-    VersionConflictError,
     Versioner,
 )
-from smartsim._core._install.builder import BuildError, Device
+from smartsim._core._install.builder import Device
 from smartsim._core._install.platform import Platform, Architecture, Device, OperatingSystem
-from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, PlatformPackages
+from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, MLPackageCollection, load_platform_configs
 from smartsim._core._install.redisaiBuilder import RedisAIBuilder
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
@@ -111,14 +108,14 @@ def build_database(
             f"Building {database_name} version {versions.REDIS} "
             f"from {versions.REDIS_URL}"
         )
-        database_builder.build_from_git(versions.REDIS_URL, versions.REDIS_BRANCH)
+        database_builder.build_from_git(versions.REDIS_URL, branch=versions.REDIS_BRANCH)
         database_builder.cleanup()
     logger.info(f"{database_name} build complete!")
 
 
 def build_redis_ai(
         platform: Platform,
-        mlpackages: PlatformPackages,
+        mlpackages: MLPackageCollection,
         build_env: BuildEnv,
         verbose: bool
     ) -> None:
@@ -127,22 +124,22 @@ def build_redis_ai(
         RAIBuilder.build()
         RAIBuilder.cleanup_build()
 
-def check_ml_python_packages(packages: PlatformPackages):
+def check_ml_python_packages(packages: MLPackageCollection):
     def parse_requirement(requirement: str) -> t.Tuple[str, str, str]:
-        operator_mappings = collections.defaultdict(ValueError("Invalid requirement operator"))
-        operator_mappings.update({
+        import operator
+        operators = {
             "==": operator.eq,
-            "<=": operator.lte,
-            ">=": operator.gte,
+            "<=": operator.le,
+            ">=": operator.ge,
             "<": operator.lt,
             ">": operator.gt,
-        })
-        pattern = r"([a-zA-Z0-9_\-]+)([<>=!~]+)([\d\.]+)"
+        }
+        pattern = r"^([a-zA-Z0-9_\-]+)([<>=!~]+)?([\d\.\*]+)?$"
         match = re.match(pattern, requirement)
         if match:
-            module_name, operator, version = match.groups()
-            operator = operator_mappings[operator] if operator else None
-            version = Version_(version) if version else None
+            module_name = match.group(1)
+            operator = operators[match.group(2)] if match.group(2) else None
+            version = Version_(match.group(3)) if match.group(3) else None
             return module_name, operator, version
         else:
             raise ValueError(f"Invalid requirement string: {requirement}")
@@ -161,7 +158,8 @@ def check_ml_python_packages(packages: PlatformPackages):
             except importlib.metadata.PackageNotFoundError:
                 missing.append(module_name)
 
-    logger.warning(_format_incompatible_python_env_message(missing, conflicts))
+    if missing or conflicts:
+        logger.warning(_format_incompatible_python_env_message(missing, conflicts))
 
 def _format_incompatible_python_env_message(
     missing: t.Collection[str], conflicting: t.Collection[str]
@@ -174,19 +172,19 @@ def _format_incompatible_python_env_message(
     conflict_str = fmt_list("Conflicting", conflicting)
     sep = "\n" if missing_str and conflict_str else ""
     return (
-        "Python Env Status Warning!\n"
-        "Requested Packages are Missing or Conflicting:\n\n"
+        "Python Package Warning:\n"
+        "Requested packages are missing or have have a version mismatch with\n"
+        "their respective backend:\n\n"
         f"{missing_str}{sep}{conflict_str}\n\n"
-        "Consider installing packages at the requested versions via `pip` or "
-        "uninstalling them, installing SmartSim with optional ML dependencies "
-        "(`pip install smartsim[ml]`), and running `smart clean && smart build ...`"
+        "Consider rerunning smart build with --install-python-packages if you\n"
+        "encounter issues."
     )
 
 
 def _configure_keydb_build(versions: Versioner) -> None:
     """Configure the redis versions to be used during the build operation"""
     versions.REDIS = Version_("6.2.0")
-    versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
+    versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB.git"
     versions.REDIS_BRANCH = "v6.2.0"
 
     CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
@@ -207,6 +205,10 @@ def execute(
     device = Device.from_str(args.device.lower())
     is_dragon_requested = args.dragon
 
+    if Path(CONFIG.build_path).exists():
+        logger.warning(f"Build path already exists, removing: {CONFIG.build_path}")
+        shutil.rmtree(CONFIG.build_path)
+
     # The user should never have to specify the OS and Architecture
     current_platform = Platform(
         OperatingSystem.autodetect(),
@@ -215,13 +217,11 @@ def execute(
     )
 
     # Configure the ML Packages
-    mlpackages = DEFAULT_MLPACKAGES[current_platform]
-    if args.libtorch_dir:
-        mlpackages["libtorch"].set_lib_source(args.libtorch_dir)
-    if args.libtensorflow_dir:
-        mlpackages["libtensorflow"].set_lib_source(args.libtensorflow_dir)
-    if args.onnxruntime_dir:
-        mlpackages["onnxruntime"].set_lib_source(args.onnxruntime_dir)
+    if args.alternate_config_dir:
+        configs = load_platform_configs(Path(args.alternate_config_dir))
+    else:
+        configs = DEFAULT_MLPACKAGES
+    mlpackages = configs[current_platform]
 
     # Build all backends by default, pop off the ones that user wants skipped
     if args.skip_torch:
@@ -255,6 +255,9 @@ def execute(
         version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
+    logger.info("ML Packages")
+    print(mlpackages.tabulate_versions())
+
     if is_dragon_requested:
         install_to = CONFIG.core_path / ".dragon"
         return_code = install_dragon(install_to)
@@ -268,11 +271,20 @@ def execute(
 
     # REDIS/KeyDB
     build_database(build_env, versions, keydb, verbose)
-    build_redis_ai(current_platform, mlpackages, build_env, verbose)
 
     backends = installed_redisai_backends()
+    if backends:
+        logger.warning("RedisAI was previously built, run 'smart clean' to rebuild")
+    else:
+        build_redis_ai(current_platform, mlpackages, build_env, verbose)
+
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) built")
+
+    if args.install_python_packages:
+        for package in mlpackages.values():
+            logger.info(f"Installing python packages for {package.name}")
+            package.pip_install(quiet=not verbose)
     check_ml_python_packages(mlpackages)
 
     logger.info("SmartSim build complete!")
@@ -281,7 +293,6 @@ def execute(
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
     """Builds the parser for the command"""
-    warn_usage = "(ONLY USE IF NEEDED)"
     parser.add_argument(
         "-v",
         action="store_true",
@@ -302,7 +313,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Install the dragon runtime",
     )
     parser.add_argument(
-        "--with-python-packages",
+        "--install-python-packages",
         action="store_true",
         help="Install the python packages that match the backends",
     )
@@ -322,22 +333,10 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Build ONNX backend (off by default)",
     )
     parser.add_argument(
-        "--libtorch-dir",
+        "--alternate-config-dir",
         default=None,
         type=str,
-        help=f"Path to custom libtorch directory{warn_usage}",
-    )
-    parser.add_argument(
-        "--libtensorflow-dir",
-        default=None,
-        type=str,
-        help=f"Path to custom libtensorflow directory {warn_usage}",
-    )
-    parser.add_argument(
-        "--onnxruntime-dir",
-        default=None,
-        type=str,
-        help=f"Path to onnxruntime libtensorflow directory {warn_usage}",
+        help="Path to directory with JSON files describing the platform and associated packages"
     )
     parser.add_argument(
         "--keydb",

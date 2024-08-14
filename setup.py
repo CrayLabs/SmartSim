@@ -159,8 +159,6 @@ extras_require = {
         "sphinx-autodoc-typehints",
         "myst_parser",
     ],
-    # see smartsim/_core/_install/buildenv.py for more details
-    **versions.ml_extras_required(),
 }
 
 
