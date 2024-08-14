@@ -10,11 +10,12 @@ from os import path as osp
 import pytest
 
 from smartsim import Experiment
+from smartsim._core import dispatch
 from smartsim._core.generation.generator import Generator
 from smartsim.entity import Application, Ensemble, SmartSimEntity, _mock
 from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
-from smartsim.settings import LaunchSettings, dispatch
+from smartsim.settings import LaunchSettings
 
 # TODO Add JobGroup tests when JobGroup becomes a Launchable
 
@@ -258,7 +259,7 @@ def test_generate_ensemble_directory(wlmutils, generator_instance):
 
 def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env: random_id(),
     )
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
@@ -278,7 +279,7 @@ def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
 
 def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_dir):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env: random_id(),
     )
     ensemble = Ensemble(
@@ -300,7 +301,7 @@ def test_generate_ensemble_symlink(
     test_dir, wlmutils, monkeypatch, get_gen_symlink_dir
 ):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env: random_id(),
     )
     ensemble = Ensemble(
@@ -327,7 +328,7 @@ def test_generate_ensemble_configure(
     test_dir, wlmutils, monkeypatch, get_gen_configure_dir
 ):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env: random_id(),
     )
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
