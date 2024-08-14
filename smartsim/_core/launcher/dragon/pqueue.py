@@ -216,8 +216,6 @@ class NodePrioritizer:
         with self._lock:
             tracked_node = self._nodes[host]
             tracked_node.add(tracking_id)
-
-            # self._update_ref_count(host, tracked_node)
             return tracked_node
 
     def _heapify_all_refs(self) -> t.List[_TrackedNode]:
@@ -307,7 +305,6 @@ class NodePrioritizer:
             if item.num_refs > 0:
                 nodes.append(item)
         return nodes
-        # return list(filter(lambda x: x.num_refs == 1, heap))
 
     def _check_satisfiable_n(
         self, num_items: int, heap: t.Optional[t.List[_TrackedNode]] = None
@@ -315,7 +312,7 @@ class NodePrioritizer:
         """Validates that a request for some number of nodes `n` can be
         satisfied by the prioritizer given the set of nodes available
 
-        :param num_items: the desird number of nodes to allocate
+        :param num_items: the desired number of nodes to allocate
         :param heap: a subset of the node heap to consider
         :returns: True if the request can be fulfilled, False otherwise"""
         num_nodes = len(self._nodes.keys())

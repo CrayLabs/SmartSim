@@ -238,7 +238,7 @@ class DragonBackend:
             self._allocated_hosts: t.Dict[str, t.Set[str]] = collections.defaultdict(
                 set
             )
-            """Mapping of hosts to a assigned, running step IDs"""
+            """Mapping with hostnames as keys and a set of executing step IDs as the value"""
 
     def __str__(self) -> str:
         return self.status_message
@@ -332,7 +332,7 @@ class DragonBackend:
                 last_available = max(self._gpus or [-1])
                 requested = max(request.policy.gpu_affinity)
                 if not any(self._gpus) or requested >= last_available:
-                    print(
+                    logger.warning(
                         f"failed check w/{self._gpus=}, {requested=}, {last_available=}"
                     )
                     return False, "Cannot satisfy request, not enough GPUs available"
@@ -377,7 +377,7 @@ class DragonBackend:
         # fail if requesting more nodes than the total number available
         if num_nodes > len(all_hosts):
             message = f"Cannot satisfy request. {num_nodes} requested nodes"
-            message += f"exceeds {len(all_hosts)} available."
+            message += f" exceeds {len(all_hosts)} available."
             return False, message
 
         requested_hosts = all_hosts
