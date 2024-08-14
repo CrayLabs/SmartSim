@@ -241,9 +241,9 @@ class Versioner:
     ``smart build`` command to determine which dependency versions
     to look for and download.
 
-    Default versions for SmartSim, Redis, and RedisAI are
-    all set here. Setting a default version for RedisAI also dictates
-    default versions of the machine learning libraries.
+    Default versions for SmartSim and Redis are specified here. The
+    versions of the machine learning packages are checked elsewhere
+    instantiation because they differ by platform.
     """
 
     # compatible Python version

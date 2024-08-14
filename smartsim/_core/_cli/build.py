@@ -25,9 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import collections
+import importlib.metadata
+import operator
 import os
-import platform
-import sys
+import re
 import typing as t
 from pathlib import Path
 
@@ -46,7 +48,7 @@ from smartsim._core._install.buildenv import (
 )
 from smartsim._core._install.builder import BuildError, Device
 from smartsim._core._install.platform import Platform, Architecture, Device, OperatingSystem
-from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, MLPackage
+from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, PlatformPackages
 from smartsim._core._install.redisaiBuilder import RedisAIBuilder
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
@@ -59,23 +61,6 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 #       may be installed into a different directory.
 
 _TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
-
-
-def check_py_onnx_version(versions: Versioner) -> None:
-    """Check Python environment for ONNX installation"""
-    _check_packages_in_python_env(
-        {
-            "onnx": Version_(versions.ONNX),
-            "skl2onnx": Version_(versions.REDISAI.skl2onnx),
-            "onnxmltools": Version_(versions.REDISAI.onnxmltools),
-            "scikit-learn": Version_(getattr(versions.REDISAI, "scikit-learn")),
-        },
-    )
-
-
-def check_py_tf_version(versions: Versioner) -> None:
-    """Check Python environment for TensorFlow installation"""
-    _check_packages_in_python_env({"tensorflow": Version_(versions.TENSORFLOW)})
 
 
 def check_backends_install() -> bool:
@@ -133,7 +118,7 @@ def build_database(
 
 def build_redis_ai(
         platform: Platform,
-        mlpackages: t.Dict[str, MLPackage],
+        mlpackages: PlatformPackages,
         build_env: BuildEnv,
         verbose: bool
     ) -> None:
@@ -142,109 +127,41 @@ def build_redis_ai(
         RAIBuilder.build()
         RAIBuilder.cleanup_build()
 
-def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> None:
-    """Check Python environment for TensorFlow installation"""
-    if BuildEnv.is_macos():
-        if device.is_gpu():
-            raise BuildError("SmartSim does not support GPU on MacOS")
-        device_suffix = ""
-    else:  # linux
-        device_suffix = f"+{device.torch_suffix()}"
+def check_ml_python_packages(packages: PlatformPackages):
+    def parse_requirement(requirement: str) -> t.Tuple[str, str, str]:
+        operator_mappings = collections.defaultdict(ValueError("Invalid requirement operator"))
+        operator_mappings.update({
+            "==": operator.eq,
+            "<=": operator.lte,
+            ">=": operator.gte,
+            "<": operator.lt,
+            ">": operator.gt,
+        })
+        pattern = r"([a-zA-Z0-9_\-]+)([<>=!~]+)([\d\.]+)"
+        match = re.match(pattern, requirement)
+        if match:
+            module_name, operator, version = match.groups()
+            operator = operator_mappings[operator] if operator else None
+            version = Version_(version) if version else None
+            return module_name, operator, version
+        else:
+            raise ValueError(f"Invalid requirement string: {requirement}")
 
-    torch_deps = {
-        "torch": Version_(f"{versions.TORCH}{device_suffix}"),
-        "torchvision": Version_(f"{versions.TORCHVISION}{device_suffix}"),
-    }
-    missing, conflicts = _assess_python_env(
-        torch_deps,
-        package_pinning="==",
-        validate_installed_version=_create_torch_version_validator(
-            with_suffix=device_suffix
-        ),
-    )
+    missing = []
+    conflicts = []
 
-    if len(missing) == len(torch_deps) and not conflicts:
-        # All PyTorch deps are not installed and there are no conflicting
-        # python packages. We can try to install torch deps into the current env.
-        logger.info(
-            "Torch version not found in python environment. "
-            "Attempting to install via `pip`"
-        )
-        pip(
-            "install",
-            "--extra-index-url",
-            f"https://download.pytorch.org/whl/{device.torch_suffix()}",
-            *(f"{package}=={version}" for package, version in torch_deps.items()),
-        )
-    elif missing or conflicts:
-        logger.warning(_format_incompatible_python_env_message(missing, conflicts))
+    for package in packages.values():
+        for python_requirement in package.python_packages:
+            module_name, operator, version = parse_requirement(python_requirement)
+            try:
+                dist = importlib.metadata.distribution(module_name)
+                if operator and version:
+                    if not operator(version, dist.version):
+                        conflicts.append(f"{module_name} {version}")
+            except importlib.metadata.PackageNotFoundError:
+                missing.append(module_name)
 
-
-def _create_torch_version_validator(
-    with_suffix: str,
-) -> t.Callable[[str, t.Optional[Version_]], bool]:
-    def check_torch_version(package: str, version: t.Optional[Version_]) -> bool:
-        if not BuildEnv.check_installed(package, version):
-            return False
-        # Default check only looks at major/minor version numbers,
-        # Torch requires we look at the patch as well
-        installed = BuildEnv.get_py_package_version(package)
-        if with_suffix and with_suffix not in installed.patch:
-            raise VersionConflictError(
-                package,
-                installed,
-                version or Version_(f"X.X.X{with_suffix}"),
-                msg=(
-                    f"{package}=={installed} does not satisfy device "
-                    f"suffix requirement: {with_suffix}"
-                ),
-            )
-        return True
-
-    return check_torch_version
-
-
-def _check_packages_in_python_env(
-    packages: t.Mapping[str, t.Optional[Version_]],
-    package_pinning: _TPinningStr = "==",
-    validate_installed_version: t.Optional[
-        t.Callable[[str, t.Optional[Version_]], bool]
-    ] = None,
-) -> None:
-    # TODO: Do not like how the default validation function will always look for
-    #       a `==` pinning. Maybe turn `BuildEnv.check_installed` into a factory
-    #       that takes a pinning and returns an appropriate validation fn?
-    validate_installed_version = validate_installed_version or BuildEnv.check_installed
-    missing, conflicts = _assess_python_env(
-        packages,
-        package_pinning,
-        validate_installed_version,
-    )
-
-    if missing or conflicts:
-        logger.warning(_format_incompatible_python_env_message(missing, conflicts))
-
-
-def _assess_python_env(
-    packages: t.Mapping[str, t.Optional[Version_]],
-    package_pinning: _TPinningStr,
-    validate_installed_version: t.Callable[[str, t.Optional[Version_]], bool],
-) -> t.Tuple[t.List[str], t.List[str]]:
-    missing: t.List[str] = []
-    conflicts: t.List[str] = []
-
-    for name, version in packages.items():
-        spec = f"{name}{package_pinning}{version}" if version else name
-        try:
-            if not validate_installed_version(name, version):
-                # Not installed!
-                missing.append(spec)
-        except VersionConflictError:
-            # Incompatible version found
-            conflicts.append(spec)
-
-    return missing, conflicts
-
+    logger.warning(_format_incompatible_python_env_message(missing, conflicts))
 
 def _format_incompatible_python_env_message(
     missing: t.Collection[str], conflicting: t.Collection[str]
@@ -356,17 +273,7 @@ def execute(
     backends = installed_redisai_backends()
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) built")
-
-    try:
-        if "torch" in backends:
-            check_py_torch_version(versions, device)
-        if "tensorflow" in backends:
-            check_py_tf_version(versions)
-        if "onnxruntime" in backends:
-            check_py_onnx_version(versions)
-    except (SetupError, BuildError) as e:
-        logger.error(str(e))
-        return os.EX_SOFTWARE
+    check_ml_python_packages(mlpackages)
 
     logger.info("SmartSim build complete!")
     return os.EX_OK
