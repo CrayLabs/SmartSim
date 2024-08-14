@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Remove pydantic dependency from MLI code
 - Reduce a copy by using torch.from_numpy instead of torch.tensor
 - Enable dynamic feature store selection
 - Fix dragon package installation bug
