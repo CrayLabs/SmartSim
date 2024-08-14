@@ -35,7 +35,7 @@ from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
 from smartsim.log import get_logger
 from smartsim.ml.data import DataInfo, TrainingDataUploader
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 logger = get_logger(__name__)
 
@@ -283,7 +283,7 @@ def test_torch_dataloaders(
         trainer = create_trainer_torch(wlm_experiment, config_dir, wlmutils)
         wlm_experiment.start(trainer, block=True)
 
-        assert wlm_experiment.get_status(trainer)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert wlm_experiment.get_status(trainer)[0] == JobStatus.COMPLETED
 
     except Exception as e:
         raise e

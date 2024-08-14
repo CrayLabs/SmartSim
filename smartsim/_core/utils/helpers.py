@@ -45,7 +45,20 @@ if t.TYPE_CHECKING:
 
 
 _T = t.TypeVar("_T")
+_HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
+
+
+def check_name(name: str) -> None:
+    """
+    Checks if the input name is valid.
+
+    :param name: The name to be checked.
+
+    :raises ValueError: If the name contains the path separator (os.path.sep).
+    """
+    if os.path.sep in name:
+        raise ValueError("Invalid input: String contains the path separator.")
 
 
 def unpack_fs_identifier(fs_id: str, token: str) -> t.Tuple[str, str]:
@@ -385,6 +398,43 @@ def first(predicate: t.Callable[[_T], bool], iterable: t.Iterable[_T]) -> _T | N
               return `True`
     """
     return next((item for item in iterable if predicate(item)), None)
+
+
+def unique(iterable: t.Iterable[_HashableT]) -> t.Iterable[_HashableT]:
+    """Iterate over an iterable, yielding only unique values.
+
+    This helper function will maintain a set of seen values in memory and yield
+    any values not previously seen during iteration. This is nice if you know
+    you will be iterating over the iterable exactly once, but if you need to
+    iterate over the iterable multiple times, it would likely use less memory
+    to cast the iterable to a set first.
+
+    :param iterable: An iterable of possibly not unique values.
+    :returns: An iterable of unique values with order unchanged from the
+        original iterable.
+    """
+    seen = set()
+    for item in filter(lambda x: x not in seen, iterable):
+        seen.add(item)
+        yield item
+
+
+def group_by(
+    fn: t.Callable[[_T], _HashableT], items: t.Iterable[_T]
+) -> t.Mapping[_HashableT, t.Collection[_T]]:
+    """Iterate over an iterable and group the items based on the return of some
+    mapping function. Works similar to SQL's "GROUP BY" statement, but works
+    over an arbitrary mapping function.
+
+    :param fn: A function mapping the iterable values to some hashable values
+    :items: An iterable yielding items to group by mapping function return.
+    :returns: A mapping of mapping function return values to collection of
+        items that returned that value when fed to the mapping function.
+    """
+    groups = collections.defaultdict[_HashableT, list[_T]](list)
+    for item in items:
+        groups[fn(item)].append(item)
+    return dict(groups)
 
 
 @t.final

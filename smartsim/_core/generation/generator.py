@@ -24,219 +24,223 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
+import os
 import pathlib
+import pickle
 import shutil
+import subprocess
+import sys
 import typing as t
 from datetime import datetime
-from distutils import dir_util  # pylint: disable=deprecated-module
-from logging import DEBUG, INFO
-from os import mkdir, path, symlink
-from os.path import join, relpath
+from os import mkdir, path
+from os.path import join
 
-from tabulate import tabulate
-
-from ...database import FeatureStore
-from ...entity import Application, Ensemble, TaggedFilesHierarchy
+from ...entity import Application, TaggedFilesHierarchy
+from ...entity.files import EntityFiles
+from ...launchable import Job
 from ...log import get_logger
-from ..control import Manifest
-from .modelwriter import ApplicationWriter
 
 logger = get_logger(__name__)
 logger.propagate = False
 
 
 class Generator:
-    """The primary job of the generator is to create the file structure
-    for a SmartSim experiment. The Generator is responsible for reading
-    and writing into configuration files as well.
+    """The primary job of the Generator is to create the directory and file structure
+    for a SmartSim Job. The Generator is also responsible for writing and configuring
+    files into the Job directory.
     """
 
-    def __init__(
-        self, gen_path: str, overwrite: bool = False, verbose: bool = True
-    ) -> None:
-        """Initialize a generator object
+    def __init__(self, root: pathlib.Path) -> None:
+        """Initialize a Generator object
 
-        if overwrite is true, replace any existing
-        configured applications within an ensemble if there
-        is a name collision. Also replace any and all directories
-        for the experiment with fresh copies. Otherwise, if overwrite
-        is false, raises EntityExistsError when there is a name
-        collision between entities.
-
-        :param gen_path: Path in which files need to be generated
-        :param overwrite: toggle entity replacement
-        :param verbose: Whether generation information should be logged to std out
+        The class handles symlinking, copying, and configuration of files
+        associated with a Jobs entity. Additionally, it writes entity parameters
+        used for the specific run into the "smartsim_params.txt" settings file within
+        the Jobs log folder.
         """
-        self._writer = ApplicationWriter()
-        self.gen_path = gen_path
-        self.overwrite = overwrite
-        self.log_level = DEBUG if not verbose else INFO
+        self.root = root
+        """The root path under which to generate files"""
 
-    @property
-    def log_file(self) -> str:
+    def _generate_job_root(self, job: Job, job_index: int) -> pathlib.Path:
+        """Generates the root directory for a specific job instance.
+
+        :param job: The Job instance for which the root directory is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the root directory for the Job instance.
+        """
+        job_type = f"{job.__class__.__name__.lower()}s"
+        job_path = self.root / f"{job_type}/{job.name}-{job_index}"
+        return pathlib.Path(job_path)
+
+    def _generate_run_path(self, job: Job, job_index: int) -> pathlib.Path:
+        """Generates the path for the "run" directory within the root directory
+        of a specific Job instance.
+
+        :param job (Job): The Job instance for which the path is generated.
+        :param job_index (int): The index of the Job instance (used for naming).
+        :returns: The path to the "run" directory for the Job instance.
+        """
+        path = self._generate_job_root(job, job_index) / "run"
+        path.mkdir(exist_ok=False, parents=True)
+        return pathlib.Path(path)
+
+    def _generate_log_path(self, job: Job, job_index: int) -> pathlib.Path:
+        """
+        Generates the path for the "log" directory within the root directory of a specific Job instance.
+
+        :param job: The Job instance for which the path is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the "log" directory for the Job instance.
+        """
+        path = self._generate_job_root(job, job_index) / "log"
+        path.mkdir(exist_ok=False, parents=True)
+        return pathlib.Path(path)
+
+    @staticmethod
+    def _log_file(log_path: pathlib.Path) -> pathlib.Path:
         """Returns the location of the file
-        summarizing the parameters used for the last generation
-        of all generated entities.
+        summarizing the parameters used for the generation
+        of the entity.
 
-        :returns: path to file with parameter settings
+        :param log_path: Path to log directory
+        :returns: Path to file with parameter settings
         """
-        return join(self.gen_path, "smartsim_params.txt")
+        return pathlib.Path(log_path) / "smartsim_params.txt"
 
-    def generate_experiment(self, *args: t.Any) -> None:
-        """Run ensemble and experiment file structure generation
+    def generate_job(self, job: Job, job_index: int) -> pathlib.Path:
+        """Write and configure input files for a Job.
 
-        Generate the file structure for a SmartSim experiment. This
-        includes the writing and configuring of input files for a
-        application.
-
-        To have files or directories present in the created entity
-        directories, such as datasets or input files, call
-        ``entity.attach_generator_files`` prior to generation. See
-        ``entity.attach_generator_files`` for more information on
-        what types of files can be included.
+        To have files or directories present in the created Job
+        directory, such as datasets or input files, call
+        ``entity.attach_generator_files`` prior to generation.
 
         Tagged application files are read, checked for input variables to
         configure, and written. Input variables to configure are
         specified with a tag within the input file itself.
-        The default tag is surronding an input value with semicolons.
+        The default tag is surrounding an input value with semicolons.
         e.g. ``THERMO=;90;``
 
-        """
-        generator_manifest = Manifest(*args)
-
-        self._gen_exp_dir()
-        self._gen_feature_store_dir(generator_manifest.fss)
-        self._gen_entity_list_dir(generator_manifest.ensembles)
-        self._gen_entity_dirs(generator_manifest.applications)
-
-    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
-        """Set the tag used for tagging input files
-
-        Set a tag or a regular expression for the
-        generator to look for when configuring new applications.
-
-        For example, a tag might be ``;`` where the
-        expression being replaced in the application configuration
-        file would look like ``;expression;``
-
-        A full regular expression might tag specific
-        application configurations such that the configuration
-        files don't need to be tagged manually.
-
-        :param tag: A string of characters that signify
-                    the string to be changed. Defaults to ``;``
-        :param regex: full regex for the applicationwriter to search for
-        """
-        self._writer.set_tag(tag, regex)
-
-    def _gen_exp_dir(self) -> None:
-        """Create the directory for an experiment if it does not
-        already exist.
+        :param job: The job instance to write and configure files for.
+        :param job_path: The path to the "run" directory for the job instance.
+        :param log_path: The path to the "log" directory for the job instance.
         """
 
-        if path.isfile(self.gen_path):
-            raise FileExistsError(
-                f"Experiment directory could not be created. {self.gen_path} exists"
-            )
-        if not path.isdir(self.gen_path):
-            # keep exists ok for race conditions on NFS
-            pathlib.Path(self.gen_path).mkdir(exist_ok=True, parents=True)
-        else:
-            logger.log(
-                level=self.log_level, msg="Working in previously created experiment"
-            )
+        # Generate ../job_name/run directory
+        job_path = self._generate_run_path(job, job_index)
+        # Generate ../job_name/log directory
+        log_path = self._generate_log_path(job, job_index)
 
-        # The log_file only keeps track of the last generation
-        # this is to avoid gigantic files in case the user repeats
-        # generation several times. The information is anyhow
-        # redundant, as it is also written in each entity's dir
-        with open(self.log_file, mode="w", encoding="utf-8") as log_file:
+        # Create and write to the parameter settings file
+        with open(self._log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_feature_store_dir(self, feature_store_list: t.List[FeatureStore]) -> None:
-        """Create the directory that will hold the error, output and
-           configuration files for the feature store.
+        # Perform file system operations on attached files
+        self._build_operations(job, job_path)
 
-        :param featurestore: FeatureStore instance
+        return job_path
+
+    @classmethod
+    def _build_operations(cls, job: Job, job_path: pathlib.Path) -> None:
+        """This method orchestrates file system ops for the attached SmartSim entity.
+        It processes three types of file system operations: to_copy, to_symlink, and to_configure.
+        For each type, it calls the corresponding private methods that open a subprocess
+        to complete each task.
+
+        :param job: The Job to perform file ops on attached entity files
+        :param job_path: Path to the Jobs run directory
         """
-        # Loop through feature stores
-        for featurestore in feature_store_list:
-            feature_store_path = path.join(self.gen_path, featurestore.name)
+        app = t.cast(Application, job.entity)
+        cls._copy_files(app.files, job_path)
+        cls._symlink_files(app.files, job_path)
+        cls._write_tagged_files(app.files, app.params, job_path)
 
-            featurestore.set_path(feature_store_path)
-            # Always remove featurestore files if present.
-            if path.isdir(feature_store_path):
-                shutil.rmtree(feature_store_path, ignore_errors=True)
-            pathlib.Path(feature_store_path).mkdir(
-                exist_ok=self.overwrite, parents=True
+    @staticmethod
+    def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
+        """Perform copy file sys operations on a list of files.
+
+        :param app: The Application attached to the Job
+        :param dest: Path to the Jobs run directory
+        """
+        # Return if no files are attached
+        if files is None:
+            return
+        for src in files.copy:
+            if os.path.isdir(src):
+                # Remove basename of source
+                base_source_name = os.path.basename(src)
+                # Attach source basename to destination
+                new_dst_path = os.path.join(dest, base_source_name)
+                # Copy source contents to new destination path
+                subprocess.run(
+                    args=[
+                        sys.executable,
+                        "-m",
+                        "smartsim._core.entrypoints.file_operations",
+                        "copy",
+                        src,
+                        new_dst_path,
+                        "--dirs_exist_ok",
+                    ]
+                )
+            else:
+                subprocess.run(
+                    args=[
+                        sys.executable,
+                        "-m",
+                        "smartsim._core.entrypoints.file_operations",
+                        "copy",
+                        src,
+                        dest,
+                    ]
+                )
+
+    @staticmethod
+    def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
+        """Perform symlink file sys operations on a list of files.
+
+        :param app: The Application attached to the Job
+        :param dest: Path to the Jobs run directory
+        """
+        # Return if no files are attached
+        if files is None:
+            return
+        for src in files.link:
+            # Normalize the path to remove trailing slashes
+            normalized_path = os.path.normpath(src)
+            # Get the parent directory (last folder)
+            parent_dir = os.path.basename(normalized_path)
+            # Create destination
+            new_dest = os.path.join(str(dest), parent_dir)
+            subprocess.run(
+                args=[
+                    sys.executable,
+                    "-m",
+                    "smartsim._core.entrypoints.file_operations",
+                    "symlink",
+                    src,
+                    new_dest,
+                ]
             )
 
-    def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
-        """Generate directories for Ensemble instances
-
-        :param entity_lists: list of Ensemble instances
-        """
-
-        if not entity_lists:
-            return
-
-        for elist in entity_lists:
-            elist_dir = path.join(self.gen_path, elist.name)
-            if path.isdir(elist_dir):
-                if self.overwrite:
-                    shutil.rmtree(elist_dir)
-                    mkdir(elist_dir)
-            else:
-                mkdir(elist_dir)
-            elist.path = elist_dir
-
-    def _gen_entity_dirs(
-        self,
-        entities: t.List[Application],
-        entity_list: t.Optional[Ensemble] = None,
+    @staticmethod
+    def _write_tagged_files(
+        files: t.Union[EntityFiles, None],
+        params: t.Mapping[str, str],
+        dest: pathlib.Path,
     ) -> None:
-        """Generate directories for Entity instances
-
-        :param entities: list of Application instances
-        :param entity_list: Ensemble instance
-        :raises EntityExistsError: if a directory already exists for an
-                                   entity by that name
-        """
-        if not entities:
-            return
-
-        for entity in entities:
-            if entity_list:
-                dst = path.join(self.gen_path, entity_list.name, entity.name)
-            else:
-                dst = path.join(self.gen_path, entity.name)
-
-            if path.isdir(dst):
-                if self.overwrite:
-                    shutil.rmtree(dst)
-                else:
-                    error = (
-                        f"Directory for entity {entity.name} "
-                        f"already exists in path {dst}"
-                    )
-                    raise FileExistsError(error)
-            pathlib.Path(dst).mkdir(exist_ok=True)
-            entity.path = dst
-
-            self._copy_entity_files(entity)
-            self._link_entity_files(entity)
-            self._write_tagged_entity_files(entity)
-
-    def _write_tagged_entity_files(self, entity: Application) -> None:
         """Read, configure and write the tagged input files for
-           a Application instance within an ensemble. This function
-           specifically deals with the tagged files attached to
-           an Ensemble.
+           a Job instance. This function specifically deals with the tagged
+           files attached to an entity.
 
-        :param entity: a Application instance
+        :param app: The Application attached to the Job
+        :param dest: Path to the Jobs run directory
         """
-        if entity.files:
+        # Return if no files are attached
+        if files is None:
+            return
+        if files.tagged:
             to_write = []
 
             def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
@@ -247,92 +251,80 @@ class Generator:
                                directory structure
                 """
                 for file in tagged.files:
-                    dst_path = path.join(entity.path, tagged.base, path.basename(file))
+                    dst_path = path.join(dest, tagged.base, path.basename(file))
                     shutil.copyfile(file, dst_path)
                     to_write.append(dst_path)
 
                 for tagged_dir in tagged.dirs:
-                    mkdir(
-                        path.join(
-                            entity.path, tagged.base, path.basename(tagged_dir.base)
-                        )
-                    )
+                    mkdir(path.join(dest, tagged.base, path.basename(tagged_dir.base)))
                     _build_tagged_files(tagged_dir)
 
-            if entity.files.tagged_hierarchy:
-                _build_tagged_files(entity.files.tagged_hierarchy)
+            if files.tagged_hierarchy:
+                _build_tagged_files(files.tagged_hierarchy)
 
-            # write in changes to configurations
-            if isinstance(entity, Application):
-                files_to_params = self._writer.configure_tagged_application_files(
-                    to_write, entity.params
+            # Pickle the dictionary
+            pickled_dict = pickle.dumps(params)
+            # Default tag delimiter
+            tag = ";"
+            # Encode the pickled dictionary with Base64
+            encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
+            for dest_path in to_write:
+                subprocess.run(
+                    args=[
+                        sys.executable,
+                        "-m",
+                        "smartsim._core.entrypoints.file_operations",
+                        "configure",
+                        dest_path,
+                        dest_path,
+                        tag,
+                        encoded_dict,
+                    ]
                 )
-                self._log_params(entity, files_to_params)
 
-    def _log_params(
-        self, entity: Application, files_to_params: t.Dict[str, t.Dict[str, str]]
-    ) -> None:
-        """Log which files were modified during generation
+            # TODO address in ticket 723
+            # self._log_params(entity, files_to_params)
 
-        and what values were set to the parameters
+    # TODO to be refactored in ticket 723
+    # def _log_params(
+    #     self, entity: Application, files_to_params: t.Dict[str, t.Dict[str, str]]
+    # ) -> None:
+    #     """Log which files were modified during generation
 
-        :param entity: the application being generated
-        :param files_to_params: a dict connecting each file to its parameter settings
-        """
-        used_params: t.Dict[str, str] = {}
-        file_to_tables: t.Dict[str, str] = {}
-        for file, params in files_to_params.items():
-            used_params.update(params)
-            table = tabulate(params.items(), headers=["Name", "Value"])
-            file_to_tables[relpath(file, self.gen_path)] = table
+    #     and what values were set to the parameters
 
-        if used_params:
-            used_params_str = ", ".join(
-                [f"{name}={value}" for name, value in used_params.items()]
-            )
-            logger.log(
-                level=self.log_level,
-                msg=f"Configured application {entity.name} with params {used_params_str}",
-            )
-            file_table = tabulate(
-                file_to_tables.items(),
-                headers=["File name", "Parameters"],
-            )
-            log_entry = f"Application name: {entity.name}\n{file_table}\n\n"
-            with open(self.log_file, mode="a", encoding="utf-8") as logfile:
-                logfile.write(log_entry)
-            with open(
-                join(entity.path, "smartsim_params.txt"), mode="w", encoding="utf-8"
-            ) as local_logfile:
-                local_logfile.write(log_entry)
+    #     :param entity: the application being generated
+    #     :param files_to_params: a dict connecting each file to its parameter settings
+    #     """
+    #     used_params: t.Dict[str, str] = {}
+    #     file_to_tables: t.Dict[str, str] = {}
+    #     for file, params in files_to_params.items():
+    #         used_params.update(params)
+    #         table = tabulate(params.items(), headers=["Name", "Value"])
+    #         file_to_tables[relpath(file, self.gen_path)] = table
 
-        else:
-            logger.log(
-                level=self.log_level,
-                msg=f"Configured application {entity.name} with no parameters",
-            )
+    #     if used_params:
+    #         used_params_str = ", ".join(
+    #             [f"{name}={value}" for name, value in used_params.items()]
+    #         )
+    #         logger.log(
+    #             level=self.log_level,
+    #             msg=f"Configured application {entity.name} with params {used_params_str}",
+    #         )
+    #         file_table = tabulate(
+    #             file_to_tables.items(),
+    #             headers=["File name", "Parameters"],
+    #         )
+    #         log_entry = f"Application name: {entity.name}\n{file_table}\n\n"
+    #         with open(self.log_file, mode="a", encoding="utf-8") as logfile:
+    #             logfile.write(log_entry)
+    #         with open(
+    #             join(entity.path, "smartsim_params.txt"), mode="w", encoding="utf-8"
+    #         ) as local_logfile:
+    #             local_logfile.write(log_entry)
 
-    @staticmethod
-    def _copy_entity_files(entity: Application) -> None:
-        """Copy the entity files and directories attached to this entity.
-
-        :param entity: Application
-        """
-        if entity.files:
-            for to_copy in entity.files.copy:
-                dst_path = path.join(entity.path, path.basename(to_copy))
-                if path.isdir(to_copy):
-                    dir_util.copy_tree(to_copy, entity.path)
-                else:
-                    shutil.copyfile(to_copy, dst_path)
-
-    @staticmethod
-    def _link_entity_files(entity: Application) -> None:
-        """Symlink the entity files attached to this entity.
-
-        :param entity: Application
-        """
-        if entity.files:
-            for to_link in entity.files.link:
-                dst_path = path.join(entity.path, path.basename(to_link))
-                symlink(to_link, dst_path)
+    #     else:
+    #         logger.log(
+    #             level=self.log_level,
+    #             msg=f"Configured application {entity.name} with no parameters",
+    #         )

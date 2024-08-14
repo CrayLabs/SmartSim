@@ -59,7 +59,7 @@ from ...error import (
 )
 from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
-from ...status import TERMINAL_STATUSES, SmartSimStatus
+from ...status import TERMINAL_STATUSES, JobStatus
 from ..config import CONFIG
 from ..launcher import (
     DragonLauncher,
@@ -283,7 +283,7 @@ class Controller:
 
                         job = self._jobs[node.name]
                         job.set_status(
-                            SmartSimStatus.STATUS_CANCELLED,
+                            JobStatus.CANCELLED,
                             "",
                             0,
                             output=None,
@@ -315,7 +315,7 @@ class Controller:
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> SmartSimStatus:
+    ) -> JobStatus:
         """Get the status of an entity
 
         :param entity: entity to get status of
@@ -331,7 +331,7 @@ class Controller:
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
-    ) -> t.List[SmartSimStatus]:
+    ) -> t.List[JobStatus]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
@@ -854,7 +854,7 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(featurestore)
-                if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
+                if all(stat == JobStatus.RUNNING for stat in statuses):
                     ready = True
                     # TODO: Add a node status check
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):

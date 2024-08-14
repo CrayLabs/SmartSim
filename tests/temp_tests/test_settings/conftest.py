@@ -26,7 +26,7 @@
 
 import pytest
 
-from smartsim.settings import dispatch
+from smartsim._core import dispatch
 from smartsim.settings.arguments import launchArguments as launch
 
 
@@ -52,11 +52,16 @@ def mock_launch_args():
 @pytest.fixture
 def mock_launcher():
     class _MockLauncher(dispatch.LauncherProtocol):
+        __hash__ = object.__hash__
+
         def start(self, launchable):
             return dispatch.create_job_id()
 
         @classmethod
         def create(cls, exp):
             return cls()
+
+        def get_status(self, *ids):
+            raise NotImplementedError
 
     yield _MockLauncher()

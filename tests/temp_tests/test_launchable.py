@@ -50,6 +50,18 @@ def test_launchable_init():
     assert isinstance(launchable, Launchable)
 
 
+def test_invalid_job_name(wlmutils):
+    entity = Application(
+        "test_name",
+        run_settings="RunSettings",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )  # Mock RunSettings
+    settings = LaunchSettings(wlmutils.get_test_launcher())
+    with pytest.raises(ValueError):
+        _ = Job(entity, settings, name="path/to/name")
+
+
 def test_job_init():
     entity = Application(
         "test_name",
@@ -63,6 +75,18 @@ def test_job_init():
     assert "echo" in job.entity.exe[0]
     assert "spam" in job.entity.exe_args
     assert "eggs" in job.entity.exe_args
+
+
+def test_name_setter():
+    entity = Application(
+        "test_name",
+        run_settings=LaunchSettings("slurm"),
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    job = Job(entity, LaunchSettings("slurm"))
+    job.name = "new_name"
+    assert job.name == "new_name"
 
 
 def test_job_init_deepcopy():
@@ -80,7 +104,7 @@ def test_job_init_deepcopy():
 
 
 def test_add_mpmd_pair():
-    entity = SmartSimEntity("test_name", "python", LaunchSettings("slurm"))
+    entity = SmartSimEntity("test_name", LaunchSettings("slurm"))
 
     mpmd_job = MPMDJob()
     mpmd_job.add_mpmd_pair(entity, LaunchSettings("slurm"))
@@ -155,10 +179,10 @@ def test_add_mpmd_pair_check_launcher_error():
     """Test that an error is raised when a pairs is added to an mpmd
     job using add_mpmd_pair that does not have the same launcher type"""
     mpmd_pairs = []
-    entity1 = SmartSimEntity("entity1", "python", LaunchSettings("slurm"))
+    entity1 = SmartSimEntity("entity1", LaunchSettings("slurm"))
     launch_settings1 = LaunchSettings("slurm")
 
-    entity2 = SmartSimEntity("entity2", "python", LaunchSettings("pals"))
+    entity2 = SmartSimEntity("entity2", LaunchSettings("pals"))
     launch_settings2 = LaunchSettings("pals")
 
     pair1 = MPMDPair(entity1, launch_settings1)

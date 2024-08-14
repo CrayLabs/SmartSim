@@ -62,7 +62,7 @@ from ...._core.schemas import (
 )
 from ...._core.utils.helpers import create_short_id_str
 from ....log import get_logger
-from ....status import TERMINAL_STATUSES, SmartSimStatus
+from ....status import TERMINAL_STATUSES, JobStatus
 
 logger = get_logger(__name__)
 
@@ -77,7 +77,7 @@ class DragonStatus(str, Enum):
 
 @dataclass
 class ProcessGroupInfo:
-    status: SmartSimStatus
+    status: JobStatus
     """Status of step"""
     process_group: t.Optional[dragon_process_group.ProcessGroup] = None
     """Internal Process Group object, None for finished or not started steps"""
@@ -91,7 +91,7 @@ class ProcessGroupInfo:
     """Workers used to redirect stdout and stderr to file"""
 
     @property
-    def smartsim_info(self) -> t.Tuple[SmartSimStatus, t.Optional[t.List[int]]]:
+    def smartsim_info(self) -> t.Tuple[JobStatus, t.Optional[t.List[int]]]:
         """Information needed by SmartSim Launcher and Job Manager"""
         return (self.status, self.return_codes)
 
@@ -424,7 +424,7 @@ class DragonBackend:
                         except Exception as e:
                             logger.error(e)
 
-                self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
+                self._group_infos[step_id].status = JobStatus.CANCELLED
                 self._group_infos[step_id].return_codes = [-9]
 
     @staticmethod
@@ -508,10 +508,10 @@ class DragonBackend:
                 try:
                     grp.init()
                     grp.start()
-                    grp_status = SmartSimStatus.STATUS_RUNNING
+                    grp_status = JobStatus.RUNNING
                 except Exception as e:
                     logger.error(e)
-                    grp_status = SmartSimStatus.STATUS_FAILED
+                    grp_status = JobStatus.FAILED
 
                 puids = None
                 try:
@@ -533,7 +533,7 @@ class DragonBackend:
                 if (
                     puids is not None
                     and len(puids) == len(policies)
-                    and grp_status == SmartSimStatus.STATUS_RUNNING
+                    and grp_status == JobStatus.RUNNING
                 ):
                     redir_grp = DragonBackend._create_redirect_workers(
                         global_policy,
@@ -550,7 +550,7 @@ class DragonBackend:
                             f"Could not redirect stdout and stderr for PUIDS {puids}"
                         ) from e
                     self._group_infos[step_id].redir_workers = redir_grp
-                elif puids is not None and grp_status == SmartSimStatus.STATUS_RUNNING:
+                elif puids is not None and grp_status == JobStatus.RUNNING:
                     logger.error("Cannot redirect workers: some PUIDS are missing")
 
             if started:
@@ -574,11 +574,11 @@ class DragonBackend:
                 group_info = self._group_infos[step_id]
                 grp = group_info.process_group
                 if grp is None:
-                    group_info.status = SmartSimStatus.STATUS_FAILED
+                    group_info.status = JobStatus.FAILED
                     group_info.return_codes = [-1]
                 elif group_info.status not in TERMINAL_STATUSES:
                     if grp.status == str(DragonStatus.RUNNING):
-                        group_info.status = SmartSimStatus.STATUS_RUNNING
+                        group_info.status = JobStatus.RUNNING
                     else:
                         puids = group_info.puids
                         if puids is not None and all(
@@ -594,12 +594,12 @@ class DragonBackend:
                                 group_info.return_codes = [-1 for _ in puids]
                         else:
                             group_info.return_codes = [0]
-                        if not group_info.status == SmartSimStatus.STATUS_CANCELLED:
+                        if not group_info.status == JobStatus.CANCELLED:
                             group_info.status = (
-                                SmartSimStatus.STATUS_FAILED
+                                JobStatus.FAILED
                                 if any(group_info.return_codes)
                                 or grp.status == DragonStatus.ERROR
-                                else SmartSimStatus.STATUS_COMPLETED
+                                else JobStatus.COMPLETED
                             )
 
                 if group_info.status in TERMINAL_STATUSES:
@@ -685,13 +685,11 @@ class DragonBackend:
             honorable, err = self._can_honor(request)
             if not honorable:
                 self._group_infos[step_id] = ProcessGroupInfo(
-                    status=SmartSimStatus.STATUS_FAILED, return_codes=[-1]
+                    status=JobStatus.FAILED, return_codes=[-1]
                 )
             else:
                 self._queued_steps[step_id] = request
-                self._group_infos[step_id] = ProcessGroupInfo(
-                    status=SmartSimStatus.STATUS_NEVER_STARTED
-                )
+                self._group_infos[step_id] = ProcessGroupInfo(status=JobStatus.NEW)
             return DragonRunResponse(step_id=step_id, error_message=err)
 
     @process_request.register

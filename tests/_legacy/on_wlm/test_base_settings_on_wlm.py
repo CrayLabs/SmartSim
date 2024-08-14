@@ -29,7 +29,7 @@ import time
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 """
 Test the launch and stop of applications and ensembles using base
@@ -55,7 +55,7 @@ def test_application_on_wlm(fileutils, test_dir, wlmutils):
     for _ in range(2):
         exp.start(M1, M2, block=True)
         statuses = exp.get_status(M1, M2)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == JobStatus.COMPLETED for stat in statuses])
 
 
 def test_application_stop_on_wlm(fileutils, test_dir, wlmutils):
@@ -75,4 +75,4 @@ def test_application_stop_on_wlm(fileutils, test_dir, wlmutils):
     assert M1.name in exp._control._jobs.completed
     assert M2.name in exp._control._jobs.completed
     statuses = exp.get_status(M1, M2)
-    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == JobStatus.CANCELLED for stat in statuses])

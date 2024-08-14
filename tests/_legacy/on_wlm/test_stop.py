@@ -29,7 +29,7 @@ import time
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 """
 Test Stopping launched entities.
@@ -56,7 +56,7 @@ def test_stop_entity(fileutils, test_dir, wlmutils):
     time.sleep(5)
     exp.stop(M1)
     assert M1.name in exp._control._jobs.completed
-    assert exp.get_status(M1)[0] == SmartSimStatus.STATUS_CANCELLED
+    assert exp.get_status(M1)[0] == JobStatus.CANCELLED
 
 
 def test_stop_entity_list(fileutils, test_dir, wlmutils):
@@ -73,5 +73,5 @@ def test_stop_entity_list(fileutils, test_dir, wlmutils):
     time.sleep(5)
     exp.stop(ensemble)
     statuses = exp.get_status(ensemble)
-    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == JobStatus.CANCELLED for stat in statuses])
     assert all([m.name in exp._control._jobs.completed for m in ensemble])

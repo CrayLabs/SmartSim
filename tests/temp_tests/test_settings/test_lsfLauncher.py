@@ -119,6 +119,9 @@ def test_launch_args():
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected):
-    cmd = _as_jsrun_command(JsrunLaunchArguments(args), mock_echo_executable, {})
+def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+    path, cmd = _as_jsrun_command(
+        JsrunLaunchArguments(args), mock_echo_executable, test_dir, {}
+    )
     assert tuple(cmd) == expected
+    assert path == test_dir

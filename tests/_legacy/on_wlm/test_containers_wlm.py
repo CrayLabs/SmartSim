@@ -31,7 +31,7 @@ import pytest
 from smartsim import Experiment
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 """Test SmartRedis container integration on a supercomputer with a WLM."""
 
@@ -92,7 +92,7 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
+    if not all([stat == JobStatus.COMPLETED for stat in statuses]):
         exp.stop(feature_store)
         assert False  # client ensemble failed
 

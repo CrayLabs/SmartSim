@@ -77,9 +77,6 @@ import os
 from pathlib import Path
 
 from setuptools import setup
-from setuptools.command.build_py import build_py
-from setuptools.command.install import install
-from setuptools.dist import Distribution
 
 # Some necessary evils we have to do to be able to use
 # the _install tools in smartsim/smartsim/_core/_install
@@ -94,12 +91,6 @@ buildenv_path = _install_dir.joinpath("buildenv.py")
 buildenv_spec = importlib.util.spec_from_file_location("buildenv", str(buildenv_path))
 buildenv = importlib.util.module_from_spec(buildenv_spec)
 buildenv_spec.loader.exec_module(buildenv)
-
-# import builder module
-builder_path = _install_dir.joinpath("builder.py")
-builder_spec = importlib.util.spec_from_file_location("builder", str(builder_path))
-builder = importlib.util.module_from_spec(builder_spec)
-builder_spec.loader.exec_module(builder)
 
 # helper classes for building dependencies that are
 # also utilized by the Smart CLI
@@ -163,6 +154,7 @@ class BinaryDistribution(Distribution):
     def has_ext_modules(_placeholder):
         return True
 
+# Define needed dependencies for the installation
 
 extras_require = {
     "dev": [
@@ -227,13 +219,8 @@ setup(
         "smartredis>=0.5,<0.6",
         "typing_extensions>=4.1.0,<4.6",
     ],
-    cmdclass={
-        "build_py": SmartSimBuild,
-        "install": InstallPlatlib,
-    },
     zip_safe=False,
     extras_require=extras_require,
-    distclass=BinaryDistribution,
     entry_points={
         "console_scripts": [
             "smart = smartsim._core._cli.__main__:main",
