@@ -33,14 +33,9 @@ import typing as t
 
 import psutil
 
-from smartsim._core.dispatch import (
-    ExecutableProtocol,
-    _EnvironMappingType,
-    _FormatterType,
-    create_job_id,
-    dispatch,
-)
+from smartsim._core.dispatch import _EnvironMappingType, _FormatterType, dispatch
 from smartsim._core.utils import helpers
+from smartsim._core.utils.launcher import ExecutableProtocol, create_job_id
 from smartsim.error import errors
 from smartsim.log import get_logger
 from smartsim.settings.arguments.launchArguments import LaunchArguments
@@ -53,6 +48,7 @@ if t.TYPE_CHECKING:
     from smartsim.experiment import Experiment
 
 logger = get_logger(__name__)
+
 
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands"""
@@ -107,7 +103,9 @@ class ShellLauncher:
     @staticmethod
     def make_shell_format_fn(
         run_command: str | None,
-    ) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
+    ) -> _FormatterType[
+        LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
+    ]:
         """A function that builds a function that formats a `LaunchArguments` as a
         shell executable sequence of strings for a given launching utility.
 
