@@ -28,6 +28,7 @@ import abc
 import contextlib
 import dataclasses
 import io
+import sys
 
 import pytest
 
@@ -243,9 +244,12 @@ def test_register_dispatch_to_launcher_types(request, cls, ctx):
         d.dispatch(to_launcher=cls, with_format=format_fn)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class BufferWriterLauncher(dispatch.LauncherProtocol[list[str]]):
     buf: io.StringIO
+
+    if sys.version_info < (3, 10):
+        __hash__ = object.__hash__
 
     @classmethod
     def create(cls, exp):
@@ -254,6 +258,9 @@ class BufferWriterLauncher(dispatch.LauncherProtocol[list[str]]):
     def start(self, strs):
         self.buf.writelines(f"{s}\n" for s in strs)
         return dispatch.create_job_id()
+
+    def get_status(self, *ids):
+        raise NotImplementedError
 
 
 class BufferWriterLauncherSubclass(BufferWriterLauncher): ...

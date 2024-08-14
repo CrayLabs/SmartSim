@@ -56,7 +56,7 @@ from smartsim._core.utils.telemetry.telemetry import (
 from smartsim._core.utils.telemetry.util import map_return_code, write_event
 from smartsim.error.errors import UnproxyableStepError
 from smartsim.settings.base import RunSettings
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 ALL_ARGS = {"-exp_dir", "-frequency"}
 PROXY_ENTRY_POINT = "smartsim._core.entrypoints.indirect"
@@ -646,7 +646,7 @@ def test_telemetry_single_application(fileutils, test_dir, wlmutils, config):
     smartsim_application = exp.create_application("perroquet", app_settings)
     exp.generate(smartsim_application)
     exp.start(smartsim_application, block=True)
-    assert exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
+    assert exp.get_status(smartsim_application)[0] == JobStatus.COMPLETED
 
     telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
     start_events = list(telemetry_output_path.rglob("start.json"))
@@ -687,9 +687,7 @@ def test_telemetry_single_application_nonblocking(
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert (
-            exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
-        )
+        assert exp.get_status(smartsim_application)[0] == JobStatus.COMPLETED
 
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -730,7 +728,7 @@ def test_telemetry_serial_applications(
         exp.start(*smartsim_applications, block=True)
         assert all(
             [
-                status == SmartSimStatus.STATUS_COMPLETED
+                status == JobStatus.COMPLETED
                 for status in exp.get_status(*smartsim_applications)
             ]
         )
@@ -780,7 +778,7 @@ def test_telemetry_serial_applications_nonblocking(
 
         assert all(
             [
-                status == SmartSimStatus.STATUS_COMPLETED
+                status == JobStatus.COMPLETED
                 for status in exp.get_status(*smartsim_applications)
             ]
         )
@@ -832,7 +830,7 @@ def test_telemetry_fs_only_with_generate(test_dir, wlmutils, monkeypatch, config
             exp.stop(feature_store)
             snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(feature_store)[0] == SmartSimStatus.STATUS_CANCELLED
+        assert exp.get_status(feature_store)[0] == JobStatus.CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
@@ -876,7 +874,7 @@ def test_telemetry_fs_only_without_generate(test_dir, wlmutils, monkeypatch, con
             exp.stop(feature_store)
 
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
-        assert exp.get_status(feature_store)[0] == SmartSimStatus.STATUS_CANCELLED
+        assert exp.get_status(feature_store)[0] == JobStatus.CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
@@ -927,10 +925,8 @@ def test_telemetry_fs_and_application(
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(feature_store)[0] == SmartSimStatus.STATUS_CANCELLED
-        assert (
-            exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
-        )
+        assert exp.get_status(feature_store)[0] == JobStatus.CANCELLED
+        assert exp.get_status(smartsim_application)[0] == JobStatus.COMPLETED
 
         start_events = list(telemetry_output_path.rglob("database/**/start.json"))
         stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
@@ -969,12 +965,7 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch, config):
         ens = exp.create_ensemble("troupeau", run_settings=app_settings, replicas=5)
         exp.generate(ens)
         exp.start(ens, block=True)
-        assert all(
-            [
-                status == SmartSimStatus.STATUS_COMPLETED
-                for status in exp.get_status(ens)
-            ]
-        )
+        assert all([status == JobStatus.COMPLETED for status in exp.get_status(ens)])
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
@@ -1014,7 +1005,7 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
         exp.start(smartsim_application, block=True)
         assert all(
             [
-                status == SmartSimStatus.STATUS_COMPLETED
+                status == JobStatus.COMPLETED
                 for status in exp.get_status(smartsim_application)
             ]
         )
@@ -1267,12 +1258,12 @@ def test_multistart_experiment(
 @pytest.mark.parametrize(
     "status_in, expected_out",
     [
-        pytest.param(SmartSimStatus.STATUS_CANCELLED, 1, id="failure on cancellation"),
-        pytest.param(SmartSimStatus.STATUS_COMPLETED, 0, id="success on completion"),
-        pytest.param(SmartSimStatus.STATUS_FAILED, 1, id="failure on failed"),
-        pytest.param(SmartSimStatus.STATUS_NEW, None, id="failure on new"),
-        pytest.param(SmartSimStatus.STATUS_PAUSED, None, id="failure on paused"),
-        pytest.param(SmartSimStatus.STATUS_RUNNING, None, id="failure on running"),
+        pytest.param(JobStatus.CANCELLED, 1, id="failure on cancellation"),
+        pytest.param(JobStatus.COMPLETED, 0, id="success on completion"),
+        pytest.param(JobStatus.FAILED, 1, id="failure on failed"),
+        pytest.param(JobStatus.NEW, None, id="failure on new"),
+        pytest.param(JobStatus.PAUSED, None, id="failure on paused"),
+        pytest.param(JobStatus.RUNNING, None, id="failure on running"),
     ],
 )
 def test_faux_rc(status_in: str, expected_out: t.Optional[int]):
@@ -1286,18 +1277,12 @@ def test_faux_rc(status_in: str, expected_out: t.Optional[int]):
 @pytest.mark.parametrize(
     "status_in, expected_out, expected_has_jobs",
     [
-        pytest.param(
-            SmartSimStatus.STATUS_CANCELLED, 1, False, id="failure on cancellation"
-        ),
-        pytest.param(
-            SmartSimStatus.STATUS_COMPLETED, 0, False, id="success on completion"
-        ),
-        pytest.param(SmartSimStatus.STATUS_FAILED, 1, False, id="failure on failed"),
-        pytest.param(SmartSimStatus.STATUS_NEW, None, True, id="failure on new"),
-        pytest.param(SmartSimStatus.STATUS_PAUSED, None, True, id="failure on paused"),
-        pytest.param(
-            SmartSimStatus.STATUS_RUNNING, None, True, id="failure on running"
-        ),
+        pytest.param(JobStatus.CANCELLED, 1, False, id="failure on cancellation"),
+        pytest.param(JobStatus.COMPLETED, 0, False, id="success on completion"),
+        pytest.param(JobStatus.FAILED, 1, False, id="failure on failed"),
+        pytest.param(JobStatus.NEW, None, True, id="failure on new"),
+        pytest.param(JobStatus.PAUSED, None, True, id="failure on paused"),
+        pytest.param(JobStatus.RUNNING, None, True, id="failure on running"),
     ],
 )
 @pytest.mark.asyncio
