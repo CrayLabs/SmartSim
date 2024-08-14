@@ -56,7 +56,7 @@ logger = get_logger("App")
 class ProtoClient:
     def __init__(self, timing_on: bool):
         connect_to_infrastructure()
-        ddict_str = os.environ["SS_INFRA_BACKBONE"]
+        ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]
         self._ddict = DDict.attach(ddict_str)
         self._backbone_descriptor = DragonFeatureStore(self._ddict).descriptor
         to_worker_fli_str = None
