@@ -64,7 +64,7 @@ class FSNode(SmartSimEntity):
         fs_identifier: str = "",
     ) -> None:
         """Initialize a feature store node within an feature store."""
-        super().__init__(name, path, run_settings)
+        super().__init__(name, run_settings)
         self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
         self.exe_args = exe_args or []
         self.ports = ports

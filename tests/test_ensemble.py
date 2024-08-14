@@ -58,7 +58,6 @@ def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
         "test_ensemble",
         "echo",
         ("hello", "world"),
-        path=test_dir,
         permutation_strategy=user_created_function,
     ).as_jobs(mock_launcher_settings)
     assert len(jobs) == 1
@@ -72,7 +71,6 @@ def test_ensemble_without_any_members_raises_when_cast_to_jobs(
             "test_ensemble",
             "echo",
             ("hello", "world"),
-            path=test_dir,
             file_parameters=_2x2_PARAMS,
             permutation_strategy="random",
             max_permutations=30,
@@ -86,7 +84,6 @@ def test_strategy_error_raised_if_a_strategy_that_dne_is_requested(test_dir):
             "test_ensemble",
             "echo",
             ("hello",),
-            path=test_dir,
             permutation_strategy="THIS-STRATEGY-DNE",
         )._create_applications()
 
@@ -105,7 +102,6 @@ def test_replicated_applications_have_eq_deep_copies_of_parameters(params, test_
             "test_ensemble",
             "echo",
             ("hello",),
-            path=test_dir,
             replicas=4,
             file_parameters=params,
         )._create_applications()
@@ -151,7 +147,6 @@ def test_all_perm_strategy(
         "test_ensemble",
         "echo",
         ("hello", "world"),
-        path=test_dir,
         file_parameters=params,
         exe_arg_parameters=exe_arg_params,
         permutation_strategy="all_perm",
@@ -206,7 +201,6 @@ def test_step_strategy(
         "test_ensemble",
         "echo",
         ("hello", "world"),
-        path=test_dir,
         file_parameters=params,
         exe_arg_parameters=exe_arg_params,
         permutation_strategy="step",

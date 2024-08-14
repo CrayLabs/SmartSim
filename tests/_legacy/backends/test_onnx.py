@@ -32,7 +32,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.status import SmartSimStatus
+from smartsim.status import JobStatus
 
 sklearn_available = True
 try:
@@ -94,4 +94,4 @@ def test_sklearn_onnx(wlm_experiment, prepare_fs, single_fs, mlutils, wlmutils):
 
     # if model failed, test will fail
     model_status = wlm_experiment.get_status(model)
-    assert model_status[0] != SmartSimStatus.STATUS_FAILED
+    assert model_status[0] != JobStatus.FAILED

@@ -28,19 +28,23 @@
 
 from __future__ import annotations
 
+import collections
+import datetime
+import itertools
 import os
 import os.path as osp
+import pathlib
 import textwrap
 import typing as t
 from os import environ, getcwd
 
 from tabulate import tabulate
 
-from smartsim._core.config import CONFIG
-from smartsim.error import errors
 from smartsim._core import dispatch
-from smartsim.status import SmartSimStatus
-
+from smartsim._core.config import CONFIG
+from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
+from smartsim.error import errors
+from smartsim.status import InvalidJobStatus, JobStatus
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
 from .entity import (
@@ -54,8 +58,8 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
+    from smartsim._core.dispatch import ExecutableProtocol
     from smartsim.launchable.job import Job
-    from smartsim._core.dispatch import ExecutableProtocol, LauncherProtocol
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -159,9 +163,8 @@ class Experiment:
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
-        self._active_launchers: set[LauncherProtocol[t.Any]] = set()
-        """The active launchers created, used, and reused by the experiment"""
-
+        self._launch_history = _LaunchHistory()
+        """A cache of launchers used and which ids they have issued"""
         self._fs_identifiers: t.Set[str] = set()
         """Set of feature store identifiers currently in use by this
         experiment
@@ -179,13 +182,23 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        return self._dispatch(dispatch.DEFAULT_DISPATCHER, *jobs)
+        # Create the run id
+        run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
+        # Generate the root path
+        root = pathlib.Path(self.exp_path, run_id)
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
-        self, dispatcher: dispatch.Dispatcher, job: Job, *jobs: Job
+        self,
+        generator: Generator,
+        dispatcher: dispatch.Dispatcher,
+        job: Job,
+        *jobs: Job,
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 
+        :param generator: The generator is responsible for creating the
+            job run and log directory.
         :param dispatcher: The dispatcher that should be used to determine how
             to start a job based on its launch settings.
         :param job: The first job instance to dispatch
@@ -195,7 +208,7 @@ class Experiment:
             particular dispatch of the job.
         """
 
-        def execute_dispatch(job: Job) -> LaunchedJobID:
+        def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -209,7 +222,7 @@ class Experiment:
                 # Check to see if one of the existing launchers can be
                 # configured to handle the launch arguments ...
                 launch_config = dispatch.configure_first_compatible_launcher(
-                    from_available_launchers=self._active_launchers,
+                    from_available_launchers=self._launch_history.iter_past_launchers(),
                     with_arguments=args,
                 )
             except errors.LauncherNotFoundError:
@@ -218,45 +231,69 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            # Save the underlying launcher instance. That way we do not need to
-            # spin up a launcher instance for each individual job, and it makes
-            # it easier to monitor job statuses
+            job_execution_path = self._generate(generator, job, idx)
+            id_ = launch_config.start(exe, job_execution_path, env)
+            # Save the underlying launcher instance and launched job id. That
+            # way we do not need to spin up a launcher instance for each
+            # individual job, and the experiment can monitor job statuses.
             # pylint: disable-next=protected-access
-            self._active_launchers.add(launch_config._adapted_launcher)
-            return launch_config.start(exe, env)
+            self._launch_history.save_launch(launch_config._adapted_launcher, id_)
+            return id_
 
-        return execute_dispatch(job), *map(execute_dispatch, jobs)
+        return execute_dispatch(generator, job, 0), *(
+            execute_dispatch(generator, job, idx) for idx, job in enumerate(jobs, 1)
+        )
+
+    def get_status(
+        self, *ids: LaunchedJobID
+    ) -> tuple[JobStatus | InvalidJobStatus, ...]:
+        """Get the status of jobs launched through the `Experiment` from their
+        launched job id returned when calling `Experiment.start`.
+
+        The `Experiment` will map the launched ID back to the launcher that
+        started the job and request a status update. The order of the returned
+        statuses exactly matches the order of the launched job ids.
+
+        If the `Experiment` cannot find any launcher that started the job
+        associated with the launched job id, then a
+        `InvalidJobStatus.NEVER_STARTED` status is returned for that id.
+
+        If the experiment maps the launched job id to multiple launchers, then
+        a `ValueError` is raised. This should only happen in the case when
+        launched job ids issued by user defined launcher are not sufficiently
+        unique.
+
+        :param ids: A sequence of launched job ids issued by the experiment.
+        :returns: A tuple of statuses with order respective of the order of the
+            calling arguments.
+        """
+        to_query = self._launch_history.group_by_launcher(
+            set(ids), unknown_ok=True
+        ).items()
+        stats_iter = (launcher.get_status(*ids).items() for launcher, ids in to_query)
+        stats_map = dict(itertools.chain.from_iterable(stats_iter))
+        stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
+        return tuple(stats)
 
     @_contextualize
-    def generate(
-        self,
-        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        tag: t.Optional[str] = None,
-        overwrite: bool = False,
-        verbose: bool = False,
-    ) -> None:
-        """Generate the file structure for an ``Experiment``
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
+        """Generate the directory structure and files for a ``Job``
 
-        ``Experiment.generate`` creates directories for each entity
-        passed to organize Experiments that launch many entities.
+        If files or directories are attached to an ``Application`` object
+        associated with the Job using ``Application.attach_generator_files()``,
+        those files or directories will be symlinked, copied, or configured and
+        written into the created job directory.
 
-        If files or directories are attached to ``application`` objects
-        using ``application.attach_generator_files()``, those files or
-        directories will be symlinked, copied, or configured and
-        written into the created directory for that instance.
-
-        Instances of ``application``, ``Ensemble`` and ``FeatureStore``
-        can all be passed as arguments to the generate method.
-
-        :param tag: tag used in `to_configure` generator files
-        :param overwrite: overwrite existing folders and contents
-        :param verbose: log parameter settings to std out
+        :param generator: The generator is responsible for creating the job
+            run and log directory.
+        :param job: The Job instance for which the output is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the generated output for the Job instance.
+        :raises: A SmartSimError if an error occurs during the generation process.
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
-            if tag:
-                generator.set_tag(tag)
-            generator.generate_experiment(*args)
+            job_run_path = generator.generate_job(job, job_index)
+            return job_run_path
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -337,22 +374,6 @@ class Experiment:
         :returns: configuration of telemetry for this entity
         """
         return self._telemetry_cfg
-
-    def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(
-            entity: t.Union[FeatureStore, Application, Ensemble]
-        ) -> None:
-            if not osp.isdir(entity.path):
-                os.makedirs(entity.path)
-
-        for application in start_manifest.applications:
-            create_entity_dir(application)
-
-        for feature_store in start_manifest.fss:
-            create_entity_dir(feature_store)
-
-        for ensemble in start_manifest.ensembles:
-            create_entity_dir(ensemble)
 
     def __str__(self) -> str:
         return self.name

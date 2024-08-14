@@ -26,17 +26,23 @@
 
 from __future__ import annotations
 
+import os
 import typing as t
 from copy import deepcopy
 
 from smartsim._core.commands.launchCommands import LaunchCommands
+from smartsim._core.utils.helpers import check_name
 from smartsim.launchable.basejob import BaseJob
+from smartsim.log import get_logger
 from smartsim.settings import LaunchSettings
+
+logger = get_logger(__name__)
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
 
 
+@t.final
 class Job(BaseJob):
     """A Job holds a reference to a SmartSimEntity and associated
     LaunchSettings prior to launch.  It is responsible for turning
@@ -50,26 +56,44 @@ class Job(BaseJob):
         self,
         entity: SmartSimEntity,
         launch_settings: LaunchSettings,
+        name: str | None = None,
     ):
         super().__init__()
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
-        # TODO: self.warehouse_runner = JobWarehouseRunner
+        self._name = name if name else entity.name
+        check_name(self._name)
+
+    @property
+    def name(self) -> str:
+        """Retrieves the name of the Job."""
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """Sets the name of the Job."""
+        check_name(name)
+        logger.debug(f'Overwriting the Job name from "{self._name}" to "{name}"')
+        self._name = name
 
     @property
     def entity(self) -> SmartSimEntity:
+        """Retrieves the Job entity."""
         return deepcopy(self._entity)
 
     @entity.setter
     def entity(self, value: SmartSimEntity) -> None:
+        """Sets the Job entity."""
         self._entity = deepcopy(value)
 
     @property
     def launch_settings(self) -> LaunchSettings:
+        """Retrieves the Job LaunchSettings."""
         return deepcopy(self._launch_settings)
 
     @launch_settings.setter
     def launch_settings(self, value: LaunchSettings) -> None:
+        """Sets the Job LaunchSettings."""
         self._launch_settings = deepcopy(value)
 
     def get_launch_steps(self) -> LaunchCommands:

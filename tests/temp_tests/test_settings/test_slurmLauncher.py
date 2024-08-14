@@ -316,6 +316,9 @@ def test_set_het_groups(monkeypatch):
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected):
-    cmd = _as_srun_command(SlurmLaunchArguments(args), mock_echo_executable, {})
+def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+    path, cmd = _as_srun_command(
+        SlurmLaunchArguments(args), mock_echo_executable, test_dir, {}
+    )
     assert tuple(cmd) == expected
+    assert path == test_dir
