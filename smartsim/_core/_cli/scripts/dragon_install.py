@@ -182,7 +182,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
         logger.info(f"Installing package: {wheel_path.absolute()}")
 
         try:
-            pip("install", "--force-reinstall", str(wheel_path))
+            pip("install", "--force-reinstall", str(wheel_path), "numpy<2")
             wheel_path = next(wheels, None)
         except Exception:
             logger.error(f"Unable to install from {asset_dir}")
