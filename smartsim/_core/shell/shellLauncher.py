@@ -100,7 +100,7 @@ class ShellLauncher:
     def create(cls, _: Experiment) -> Self:
         return cls()
 
-    @staticmethod
+    
     def make_shell_format_fn(
         run_command: str | None,
     ) -> _FormatterType[
