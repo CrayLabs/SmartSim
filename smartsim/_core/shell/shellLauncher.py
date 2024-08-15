@@ -101,55 +101,55 @@ class ShellLauncher:
         return cls()
 
     
-    def make_shell_format_fn(
-        run_command: str | None,
-    ) -> _FormatterType[
-        LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
-    ]:
-        """A function that builds a function that formats a `LaunchArguments` as a
-        shell executable sequence of strings for a given launching utility.
+def make_shell_format_fn(
+    run_command: str | None,
+) -> _FormatterType[
+    LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
+]:
+    """A function that builds a function that formats a `LaunchArguments` as a
+    shell executable sequence of strings for a given launching utility.
 
-        Example usage:
+    Example usage:
 
-        .. highlight:: python
-        .. code-block:: python
+    .. highlight:: python
+    .. code-block:: python
 
-            echo_hello_world: ExecutableProtocol = ...
-            env = {}
-            slurm_args: SlurmLaunchArguments = ...
-            slurm_args.set_nodes(3)
+        echo_hello_world: ExecutableProtocol = ...
+        env = {}
+        slurm_args: SlurmLaunchArguments = ...
+        slurm_args.set_nodes(3)
 
-            as_srun_command = make_shell_format_fn("srun")
-            fmt_cmd = as_srun_command(slurm_args, echo_hello_world, env)
-            print(list(fmt_cmd))
-            # prints: "['srun', '--nodes=3', '--', 'echo', 'Hello World!']"
+        as_srun_command = make_shell_format_fn("srun")
+        fmt_cmd = as_srun_command(slurm_args, echo_hello_world, env)
+        print(list(fmt_cmd))
+        # prints: "['srun', '--nodes=3', '--', 'echo', 'Hello World!']"
 
-        .. note::
-            This function was/is a kind of slap-dash implementation, and is likely
-            to change or be removed entierely as more functionality is added to the
-            shell launcher. Use with caution and at your own risk!
+    .. note::
+        This function was/is a kind of slap-dash implementation, and is likely
+        to change or be removed entierely as more functionality is added to the
+        shell launcher. Use with caution and at your own risk!
 
-        :param run_command: Name or path of the launching utility to invoke with
-            the arguments.
-        :returns: A function to format an arguments, an executable, and an
-            environment as a shell launchable sequence for strings.
-        """
+    :param run_command: Name or path of the launching utility to invoke with
+        the arguments.
+    :returns: A function to format an arguments, an executable, and an
+        environment as a shell launchable sequence for strings.
+    """
 
-        def impl(
-            args: LaunchArguments,
-            exe: ExecutableProtocol,
-            path: str | os.PathLike[str],
-            _env: _EnvironMappingType,
-        ) -> t.Tuple[str | os.PathLike[str], t.Sequence[str]]:
-            return path, (
-                (
-                    run_command,
-                    *(args.format_launch_args() or ()),
-                    "--",
-                    *exe.as_program_arguments(),
-                )
-                if run_command is not None
-                else exe.as_program_arguments()
+    def impl(
+        args: LaunchArguments,
+        exe: ExecutableProtocol,
+        path: str | os.PathLike[str],
+        _env: _EnvironMappingType,
+    ) -> t.Tuple[str | os.PathLike[str], t.Sequence[str]]:
+        return path, (
+            (
+                run_command,
+                *(args.format_launch_args() or ()),
+                "--",
+                *exe.as_program_arguments(),
             )
+            if run_command is not None
+            else exe.as_program_arguments()
+        )
 
-        return impl
+    return impl
