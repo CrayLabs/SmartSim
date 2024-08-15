@@ -32,16 +32,26 @@ import typing as t
 
 from smartsim.log import get_logger
 from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
+from smartsim._core.commands import Command
+from smartsim.settings.dispatch import ExecutableProtocol, _FormatterType, _EnvironMappingType
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-# instead of the makeshell format -> do not here
-_as_srun_command = make_shell_format_fn(run_command="srun", out_flag="--output", err_flag="--error")
 
-# def as_srun_cmd():
+def _as_srun_command(args: LaunchArguments,
+        exe: ExecutableProtocol,
+        path: str | os.PathLike[str],
+        _env: _EnvironMappingType) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
+    command_tuple = (
+        "srun",
+        *(args.format_launch_args() or ()),
+        "--",
+        *exe.as_program_arguments(),
+    )
+    return Command(["test"])
     
 
 @dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)

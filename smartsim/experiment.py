@@ -33,6 +33,7 @@ import itertools
 import os
 import os.path as osp
 import pathlib
+import datetime
 import textwrap
 import typing as t
 from os import environ, getcwd
@@ -230,7 +231,8 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            id_ = launch_config.start(exe, env)
+            job_execution_path = self._generate(generator, job, idx)
+            id_ = launch_config.start(exe, job_execution_path, env)
             # Save the underlying launcher instance and launched job id. That
             # way we do not need to spin up a launcher instance for each
             # individual job, and the experiment can monitor job statuses.

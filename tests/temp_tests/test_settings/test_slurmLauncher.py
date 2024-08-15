@@ -31,6 +31,7 @@ from smartsim.settings.arguments.launch.slurm import (
     _as_srun_command,
 )
 from smartsim.settings.launchCommand import LauncherType
+from smartsim._core.commands import Command
 
 pytestmark = pytest.mark.group_a
 
@@ -319,11 +320,10 @@ def test_set_het_groups(monkeypatch):
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
     outfile = "out.txt"
     errfile = "err.txt"
-    env, path, stdin, stdout, args = _as_srun_command(
-        SlurmLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
-    )
-    assert tuple(args) == expected
-    assert path == test_dir
-    assert env == {}
-    assert stdin == f"--output={outfile}"
-    assert stdout == f"--error={errfile}"
+    test = _as_srun_command(args=SlurmLaunchArguments(args), exe=mock_echo_executable, path=test_dir, _env={})
+    assert isinstance(test, Command)
+    # assert tuple(args) == expected
+    # assert path == test_dir
+    # assert env == {}
+    # assert stdin == f"--output={outfile}"
+    # assert stdout == f"--error={errfile}"

@@ -33,9 +33,9 @@ from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
 
-pre_cmd = Command(launcher=LauncherType.Slurm, command=["pre", "cmd"])
-launch_cmd = Command(launcher=LauncherType.Slurm, command=["launch", "cmd"])
-post_cmd = Command(launcher=LauncherType.Slurm, command=["post", "cmd"])
+pre_cmd = Command(command=["pre", "cmd"])
+launch_cmd = Command(command=["launch", "cmd"])
+post_cmd = Command(command=["post", "cmd"])
 pre_commands_list = CommandList(commands=[pre_cmd])
 launch_command_list = CommandList(commands=[launch_cmd])
 post_command_list = CommandList(commands=[post_cmd])

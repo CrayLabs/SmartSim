@@ -32,9 +32,9 @@ from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
 
-salloc_cmd = Command(launcher=LauncherType.Slurm, command=["salloc", "-N", "1"])
-srun_cmd = Command(launcher=LauncherType.Slurm, command=["srun", "-n", "1"])
-sacct_cmd = Command(launcher=LauncherType.Slurm, command=["sacct", "--user"])
+salloc_cmd = Command(command=["salloc", "-N", "1"])
+srun_cmd = Command(command=["srun", "-n", "1"])
+sacct_cmd = Command(command=["sacct", "--user"])
 
 
 def test_command_init():

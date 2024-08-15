@@ -494,21 +494,30 @@ def make_shell_format_fn(
 
     return impl
 
+class ShellLauncherCommand(t.NamedTuple):
+    env: str
+    path: str
+    stdout: str
+    stderr: str
+    command_tuple: tuple
+        
 
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands"""
+    # add a def check
 
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
-
+    # covariant, contravariant, + boliscoff substitution princ
     def start(
-        self, command: tuple[str | os.PathLike[str], t.Sequence[str]]
+        self, shell_command: ShellLauncherCommand # this should be a named tuple
     ) -> LaunchedJobID:
         id_ = create_job_id()
-        env, path, stdout, stderr, args = command
-        exe, *rest = args
+        # raise ValueError -> invalid stuff throw
+        exe, *rest = shell_command.command_tuple
+        expanded_exe = helpers.expand_exe_path(exe)
         # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path, env=env, stdout=stdout, stderr=stderr)
+        self._launched[id_] = sp.Popen((expanded_exe, *rest), cwd=shell_command.path, env=shell_command.env, stdout=shell_command.stdout, stderr=shell_command.stderr)
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 
@@ -521,10 +530,12 @@ class ShellLauncher:
         if (proc := self._launched.get(id_)) is None:
             msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
             raise errors.LauncherJobNotFound(msg)
-        ret_code = proc.poll()
+        ret_code = proc.poll() # add a test that mocks out poll and raise some exception - terminal -> import subprocess -> start something echo blah - then poll and see what a valid fake output is
+        print(ret_code)
+        # try/catch around here and then reaise a smartsim.error
         if ret_code is None:
-            status = psutil.Process(proc.pid).status()
-            return {
+            status = psutil.Process(proc.pid).status() # TODO can mock this, put this into a parameterized test, when you put that in the mock thing, the correct thing comes out
+            return {#1st arg, 2nd arg in the param tests, need to solve branching problems, do an assertion
                 psutil.STATUS_RUNNING: JobStatus.RUNNING,
                 psutil.STATUS_SLEEPING: JobStatus.RUNNING,
                 psutil.STATUS_WAKING: JobStatus.RUNNING,
