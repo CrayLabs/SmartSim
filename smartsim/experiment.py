@@ -58,7 +58,7 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim._core.dispatch import ExecutableProtocol
+    from smartsim._core.utils.launcher import ExecutableProtocol
     from smartsim.launchable.job import Job
     from smartsim.types import LaunchedJobID
 

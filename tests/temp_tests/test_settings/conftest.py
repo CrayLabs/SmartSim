@@ -26,13 +26,17 @@
 
 import pytest
 
-from smartsim._core import dispatch
+from smartsim._core.utils.launcher import (
+    ExecutableProtocol,
+    LauncherProtocol,
+    create_job_id,
+)
 from smartsim.settings.arguments import launchArguments as launch
 
 
 @pytest.fixture
 def mock_echo_executable():
-    class _MockExe(dispatch.ExecutableProtocol):
+    class _MockExe(ExecutableProtocol):
         def as_program_arguments(self):
             return ("echo", "hello", "world")
 
@@ -51,11 +55,11 @@ def mock_launch_args():
 
 @pytest.fixture
 def mock_launcher():
-    class _MockLauncher(dispatch.LauncherProtocol):
+    class _MockLauncher(LauncherProtocol):
         __hash__ = object.__hash__
 
         def start(self, launchable):
-            return dispatch.create_job_id()
+            return create_job_id()
 
         @classmethod
         def create(cls, exp):

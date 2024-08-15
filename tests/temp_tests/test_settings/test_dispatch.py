@@ -33,8 +33,8 @@ import sys
 import pytest
 
 from smartsim._core import dispatch
+from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
 from smartsim.error import errors
-from smartsim._core import dispatch
 
 pytestmark = pytest.mark.group_a
 
@@ -198,7 +198,7 @@ class LauncherABC(abc.ABC):
 
 class PartImplLauncherABC(LauncherABC):
     def start(self, launchable):
-        return dispatch.create_job_id()
+        return create_job_id()
 
 
 class FullImplLauncherABC(PartImplLauncherABC):
@@ -211,7 +211,7 @@ class FullImplLauncherABC(PartImplLauncherABC):
     "cls, ctx",
     (
         pytest.param(
-            dispatch.LauncherProtocol,
+            LauncherProtocol,
             pytest.raises(TypeError, match="Cannot dispatch to protocol"),
             id="Cannot dispatch to protocol class",
         ),
@@ -246,7 +246,7 @@ def test_register_dispatch_to_launcher_types(request, cls, ctx):
 
 
 @dataclasses.dataclass(frozen=True)
-class BufferWriterLauncher(dispatch.LauncherProtocol[list[str]]):
+class BufferWriterLauncher(LauncherProtocol[list[str]]):
     buf: io.StringIO
 
     if sys.version_info < (3, 10):
@@ -258,7 +258,7 @@ class BufferWriterLauncher(dispatch.LauncherProtocol[list[str]]):
 
     def start(self, strs):
         self.buf.writelines(f"{s}\n" for s in strs)
-        return dispatch.create_job_id()
+        return create_job_id()
 
     def get_status(self, *ids):
         raise NotImplementedError

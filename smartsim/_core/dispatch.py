@@ -26,29 +26,24 @@
 
 from __future__ import annotations
 
-import abc
-import collections.abc
 import dataclasses
 import os
-import subprocess as sp
 import typing as t
-import uuid
 
-import psutil
 from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
 
 from smartsim._core.utils import helpers
 from smartsim.error import errors
-from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
     from smartsim._core.arguments.shell import ShellLaunchArguments
+    from smartsim._core.utils.launcher import ExecutableProtocol, LauncherProtocol
     from smartsim.experiment import Experiment
     from smartsim.settings.arguments import LaunchArguments
 
 _Ts = TypeVarTuple("_Ts")
-_T_contra = t.TypeVar("_T_contra", contravariant=True)
+
 
 _WorkingDirectory: TypeAlias = t.Union[str, os.PathLike[str]]
 """A working directory represented as a string or PathLike object"""
@@ -76,6 +71,7 @@ capable of being launched by a launcher.
 _LaunchConfigType: TypeAlias = (
     "_LauncherAdapter[ExecutableProtocol, _WorkingDirectory, _EnvironMappingType]"
 )
+
 """A launcher adapater that has configured a launcher to launch the components
 of a job with some pre-determined launch settings
 """
@@ -377,163 +373,3 @@ dispatch: t.Final = DEFAULT_DISPATCHER.dispatch
 """Function that can be used as a decorator to add a dispatch registration into
 `DEFAULT_DISPATCHER`.
 """
-
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# TODO: move these to a common module under `smartsim._core.launcher`
-# -----------------------------------------------------------------------------
-
-
-def create_job_id() -> LaunchedJobID:
-    return LaunchedJobID(str(uuid.uuid4()))
-
-
-class ExecutableProtocol(t.Protocol):
-    def as_program_arguments(self) -> t.Sequence[str]: ...
-
-
-class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
-    """The protocol defining a launcher that can be used by a SmartSim
-    experiment
-    """
-
-    @classmethod
-    @abc.abstractmethod
-    def create(cls, exp: Experiment, /) -> Self:
-        """Create an new launcher instance from and to be used by the passed in
-        experiment instance
-
-        :param: An experiment to use the newly created launcher instance
-        :returns: The newly constructed launcher instance
-        """
-
-    @abc.abstractmethod
-    def start(self, launchable: _T_contra, /) -> LaunchedJobID:
-        """Given input that this launcher understands, create a new process and
-        issue a launched job id to query the status of the job in future.
-
-        :param launchable: The input to start a new process
-        :returns: The id to query the status of the process in future
-        """
-
-    @abc.abstractmethod
-    def get_status(
-        self, *launched_ids: LaunchedJobID
-    ) -> t.Mapping[LaunchedJobID, JobStatus]:
-        """Given a collection of launched job ids, return a mapping of id to
-        current status of the launched job. If a job id is no recognized by the
-        launcher, a `smartsim.error.errors.LauncherJobNotFound` error should be
-        raised.
-
-        :param launched_ids: The collection of ids of launched jobs to query
-            for current status
-        :raises smartsim.error.errors.LauncherJobNotFound: If at least one of
-            the ids of the `launched_ids` collection is not recognized.
-        :returns: A mapping of launched id to current status
-        """
-
-
-def make_shell_format_fn(
-    run_command: str | None,
-) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
-    """A function that builds a function that formats a `LaunchArguments` as a
-    shell executable sequence of strings for a given launching utility.
-
-    Example usage:
-
-    .. highlight:: python
-    .. code-block:: python
-
-        echo_hello_world: ExecutableProtocol = ...
-        env = {}
-        slurm_args: SlurmLaunchArguments = ...
-        slurm_args.set_nodes(3)
-
-        as_srun_command = make_shell_format_fn("srun")
-        fmt_cmd = as_srun_command(slurm_args, echo_hello_world, env)
-        print(list(fmt_cmd))
-        # prints: "['srun', '--nodes=3', '--', 'echo', 'Hello World!']"
-
-    .. note::
-        This function was/is a kind of slap-dash implementation, and is likely
-        to change or be removed entierely as more functionality is added to the
-        shell launcher. Use with caution and at your own risk!
-
-    :param run_command: Name or path of the launching utility to invoke with
-        the arguments.
-    :returns: A function to format an arguments, an executable, and an
-        environment as a shell launchable sequence for strings.
-    """
-
-    def impl(
-        args: LaunchArguments,
-        exe: ExecutableProtocol,
-        path: str | os.PathLike[str],
-        _env: _EnvironMappingType,
-    ) -> t.Tuple[str | os.PathLike[str], t.Sequence[str]]:
-        return path, (
-            (
-                run_command,
-                *(args.format_launch_args() or ()),
-                "--",
-                *exe.as_program_arguments(),
-            )
-            if run_command is not None
-            else exe.as_program_arguments()
-        )
-
-    return impl
-
-
-class ShellLauncher:
-    """Mock launcher for launching/tracking simple shell commands"""
-
-    def __init__(self) -> None:
-        self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
-
-    def start(
-        self, command: tuple[str | os.PathLike[str], t.Sequence[str]]
-    ) -> LaunchedJobID:
-        id_ = create_job_id()
-        path, args = command
-        exe, *rest = args
-        # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path)
-        return id_
-
-    def get_status(
-        self, *launched_ids: LaunchedJobID
-    ) -> t.Mapping[LaunchedJobID, JobStatus]:
-        return {id_: self._get_status(id_) for id_ in launched_ids}
-
-    def _get_status(self, id_: LaunchedJobID, /) -> JobStatus:
-        if (proc := self._launched.get(id_)) is None:
-            msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
-            raise errors.LauncherJobNotFound(msg)
-        ret_code = proc.poll()
-        if ret_code is None:
-            status = psutil.Process(proc.pid).status()
-            return {
-                psutil.STATUS_RUNNING: JobStatus.RUNNING,
-                psutil.STATUS_SLEEPING: JobStatus.RUNNING,
-                psutil.STATUS_WAKING: JobStatus.RUNNING,
-                psutil.STATUS_DISK_SLEEP: JobStatus.RUNNING,
-                psutil.STATUS_DEAD: JobStatus.FAILED,
-                psutil.STATUS_TRACING_STOP: JobStatus.PAUSED,
-                psutil.STATUS_WAITING: JobStatus.PAUSED,
-                psutil.STATUS_STOPPED: JobStatus.PAUSED,
-                psutil.STATUS_LOCKED: JobStatus.PAUSED,
-                psutil.STATUS_PARKED: JobStatus.PAUSED,
-                psutil.STATUS_IDLE: JobStatus.PAUSED,
-                psutil.STATUS_ZOMBIE: JobStatus.COMPLETED,
-            }.get(status, JobStatus.UNKNOWN)
-        if ret_code == 0:
-            return JobStatus.COMPLETED
-        return JobStatus.FAILED
-
-    @classmethod
-    def create(cls, _: Experiment) -> Self:
-        return cls()
-
-
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
