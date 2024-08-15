@@ -29,7 +29,7 @@ from __future__ import annotations
 import typing as t
 
 from smartsim._core.dispatch import dispatch
-from smartsim._core.shell.shellLauncher import ShellLauncher
+from smartsim._core.shell.shellLauncher import ShellLauncher, make_shell_format_fn
 from smartsim.log import get_logger
 
 from ...common import set_check_input
@@ -37,7 +37,7 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_jsrun_command = ShellLauncher.make_shell_format_fn(run_command="jsrun")
+_as_jsrun_command = make_shell_format_fn(run_command="jsrun")
 
 
 @dispatch(with_format=_as_jsrun_command, to_launcher=ShellLauncher)
