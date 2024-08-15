@@ -120,7 +120,7 @@ def print_test_configuration() -> None:
 
 def pytest_configure() -> None:
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals", "dragon"]
+    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals", "dragon", "sge"]
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device

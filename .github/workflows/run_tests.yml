@@ -109,7 +109,7 @@ jobs:
       - name: Install SmartSim (with ML backends)
         run: |
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
-          python -m pip install .[dev,ml]
+          python -m pip install .[dev,mypy,ml]
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
         if: contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')
@@ -121,7 +121,6 @@ jobs:
 
       - name: Run mypy
         run: |
-          python -m pip install .[mypy]
           make check-mypy
 
       - name: Run Pylint
@@ -165,7 +164,7 @@ jobs:
           retention-days: 5
 
       - name: Upload Pytest coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v4.5.0
         with:
           fail_ci_if_error: false
           files: ./coverage.xml

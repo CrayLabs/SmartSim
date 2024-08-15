@@ -77,9 +77,6 @@ import os
 from pathlib import Path
 
 from setuptools import setup
-from setuptools.command.build_py import build_py
-from setuptools.command.install import install
-from setuptools.dist import Distribution
 
 # Some necessary evils we have to do to be able to use
 # the _install tools in smartsim/smartsim/_core/_install
@@ -94,12 +91,6 @@ buildenv_path = _install_dir.joinpath("buildenv.py")
 buildenv_spec = importlib.util.spec_from_file_location("buildenv", str(buildenv_path))
 buildenv = importlib.util.module_from_spec(buildenv_spec)
 buildenv_spec.loader.exec_module(buildenv)
-
-# import builder module
-builder_path = _install_dir.joinpath("builder.py")
-builder_spec = importlib.util.spec_from_file_location("builder", str(builder_path))
-builder = importlib.util.module_from_spec(builder_spec)
-builder_spec.loader.exec_module(builder)
 
 # helper classes for building dependencies that are
 # also utilized by the Smart CLI
@@ -128,61 +119,7 @@ smartsim_version = versions.write_version(setup_path)
 class BuildError(Exception):
     pass
 
-
-# Hacky workaround for solving CI build "purelib" issue
-# see https://github.com/google/or-tools/issues/616
-class InstallPlatlib(install):
-    def finalize_options(self):
-        super().finalize_options()
-        if self.distribution.has_ext_modules():
-            self.install_lib = self.install_platlib
-
-
-class SmartSimBuild(build_py):
-    def run(self):
-        database_builder = builder.DatabaseBuilder(
-            build_env(), build_env.MALLOC, build_env.JOBS
-        )
-        if not database_builder.is_built:
-            database_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
-
-            database_builder.cleanup()
-
-        # run original build_py command
-        super().run()
-
-
-# Tested with wheel v0.29.0
-class BinaryDistribution(Distribution):
-    """Distribution which always forces a binary package with platform name
-
-    We use this because we want to pre-package Redis for certain
-    platforms to use.
-    """
-
-    def has_ext_modules(_placeholder):
-        return True
-
-
 # Define needed dependencies for the installation
-deps = [
-    "packaging>=24.0",
-    "psutil>=5.7.2",
-    "coloredlogs>=10.0",
-    "tabulate>=0.8.9",
-    "redis>=4.5",
-    "tqdm>=4.50.2",
-    "filelock>=3.4.2",
-    "protobuf~=3.20",
-    "jinja2>=3.1.2",
-    "watchdog>=4.0.0",
-    "pydantic==1.10.14",
-    "pyzmq>=25.1.2",
-    "pygithub>=2.3.0",
-]
-
-# Add SmartRedis at specific version
-deps.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
@@ -204,6 +141,24 @@ extras_require = {
         "types-setuptools",
         "typing_extensions>=4.1.0",
     ],
+    "docs": [
+        "Sphinx==6.2.1",
+        "breathe==4.35.0",
+        "sphinx-fortran==1.1.1",
+        "sphinx-book-theme==1.0.1",
+        "sphinx-copybutton==0.5.2",
+        "sphinx-tabs==3.4.4",
+        "nbsphinx==0.9.3",
+        "docutils==0.18.1",
+        "torch==2.0.1",
+        "tensorflow==2.13.1",
+        "ipython",
+        "jinja2==3.1.2",
+        "sphinx-design",
+        "pypandoc",
+        "sphinx-autodoc-typehints",
+        "myst_parser",
+    ],
     # see smartsim/_core/_install/buildenv.py for more details
     **versions.ml_extras_required(),
 }
@@ -212,14 +167,25 @@ extras_require = {
 # rest in setup.cfg
 setup(
     version=smartsim_version,
-    install_requires=deps,
-    cmdclass={
-        "build_py": SmartSimBuild,
-        "install": InstallPlatlib,
-    },
+    install_requires=[
+        "packaging>=24.0",
+        "psutil>=5.7.2",
+        "coloredlogs>=10.0",
+        "tabulate>=0.8.9",
+        "redis>=4.5",
+        "tqdm>=4.50.2",
+        "filelock>=3.4.2",
+        "protobuf~=3.20",
+        "jinja2>=3.1.2",
+        "watchdog>=4.0.0",
+        "pydantic==1.10.14",
+        "pyzmq>=25.1.2",
+        "pygithub>=2.3.0",
+        "numpy<2",
+        "smartredis>=0.5,<0.6",
+    ],
     zip_safe=False,
     extras_require=extras_require,
-    distclass=BinaryDistribution,
     entry_points={
         "console_scripts": [
             "smart = smartsim._core._cli.__main__:main",

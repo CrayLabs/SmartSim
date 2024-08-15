@@ -39,11 +39,53 @@ To be released at some future point in time
 
 Description
 
+- Update codecov to 4.5.0
+- Remove build of Redis from setup.py
+- Mitigate dependency installation issues
+- Fix internal host name representation for Dragon backend
+- Make dependencies more discoverable in setup.py
+- Add hardware pinning capability when using dragon
+- Pin NumPy version to 1.x
+- New launcher support for SGE (and similar derivatives)
+- Fix test outputs being created in incorrect directory
 - Improve support for building SmartSim without ML backends
 - Update packaging dependency
+- Remove broken oss.redis.com URI blocking documentation generation
 
 Detailed Notes
 
+- Update codecov to 4.5.0 to mitigate GitHub action failure
+  ([SmartSim-PR657](https://github.com/CrayLabs/SmartSim/pull/657))
+- The builder module was included in setup.py to allow us to ship the
+  main Redis binaries (not RedisAI) with installs from PyPI. To
+  allow easier maintenance of this file and enable future complexity
+  this has been removed. The Redis binaries will thus be built
+  by users during the `smart build` step
+- Installation of mypy or dragon in separate build actions caused
+  some dependencies (typing_extensions, numpy) to be upgraded and
+  caused runtime failures. The build actions were tweaked to include
+  all optional dependencies to be considered by pip during resolution.
+  Additionally, the numpy version was capped on dragon installations.
+  ([SmartSim-PR653](https://github.com/CrayLabs/SmartSim/pull/653))
+- setup.py used to define dependencies in a way that was not amenable
+  to code scanning tools. Direct dependencies now appear directly
+  in the setup call and the definition of the SmartRedis version
+  has been removed
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+- The separate definition of dependencies for the docs in
+  requirements-doc.txt is now defined as an extra.
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+- The new major version release of Numpy is incompatible with modules
+  compiled against Numpy 1.x. For both SmartSim and SmartRedis we
+  request a 1.x version of numpy. This is needed in SmartSim because
+  some of the downstream dependencies request NumPy
+  ([SmartSim-PR623](https://github.com/CrayLabs/SmartSim/pull/623))
+- SGE is now a supported launcher for SmartSim. Users can now define
+  BatchSettings which will be monitored by the TaskManager. Additionally,
+  if the MPI implementation was built with SGE support, Orchestrators can
+  use `mpirun` without needing to specify the hosts
+  ([SmartSim-PR610](https://github.com/CrayLabs/SmartSim/pull/610))
+- Ensure outputs from tests are written to temporary `tests/test_output` directory
 - Fix an error that would prevent ``smart build`` from moving a successfully
   compiled RedisAI shared object to the install location expected by SmartSim
   if no ML backend installations were found. Previously, this would effectively

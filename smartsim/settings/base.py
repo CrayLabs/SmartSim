@@ -594,9 +594,13 @@ class BatchSettings(SettingsBase):
         self._batch_cmd = batch_cmd
         self.batch_args = batch_args or {}
         self._preamble: t.List[str] = []
-        self.set_nodes(kwargs.get("nodes", None))
+        nodes = kwargs.get("nodes", None)
+        if nodes:
+            self.set_nodes(nodes)
+        queue = kwargs.get("queue", None)
+        if queue:
+            self.set_queue(queue)
         self.set_walltime(kwargs.get("time", None))
-        self.set_queue(kwargs.get("queue", None))
         self.set_account(kwargs.get("account", None))
 
     @property
