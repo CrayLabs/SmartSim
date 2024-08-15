@@ -9,12 +9,14 @@ Jump to:
 
 ## SmartSim
 
-###  Cuda 12 support branch
+###  Cuda 12 and ROCm support branch
 
 To be merged into `develop` at some future point in time
 
 Description
 
+- Refactor to the RedisAI build to allow more flexibility in versions
+  and sources of ML backends
 - Add Dockerfiles with GPU support
 - Fine grain build support for GPUs
 - Update Torch to 2.1.0, Tensorflow to 2.15.0
@@ -22,6 +24,13 @@ Description
 
 Detailed Notes
 
+- The RedisAIBuilder class was completely overhauled to allow users to
+  express a wider range of support for hardware/software stacks. This 
+  will be extended to support ROCm, CUDA-11, and CUDA-12.
+- Versions for each of these packages are no longer specified in an
+  internal class. Instead a default set of JSON files specifies the
+  sources and versions. Users can specify their own custom specifications
+  at smart build time
 - Two new Dockerfiles are now provided (one each for 11.8 and 12.1) that
   can be used to build a container to run the tutorials. No HPC support
   should be expected at this time

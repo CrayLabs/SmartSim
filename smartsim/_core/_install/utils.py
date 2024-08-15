@@ -49,12 +49,23 @@ class PathNotFound(Exception):
 
 
 class PackageRetriever:
+    """Helper class to handle retreiving git repos and archives
+
+    :raises UnsupportedArchive: Thrown if the archive is not zip, git, tgz, or gz
+    :raises PathNotFound: Thrown if the Path does not exist
+    """
+
     @staticmethod
     def _from_local_archive(
         source: _PathLike,
         destination: pathlib.Path,
         **kwargs: t.Any,
     ) -> None:
+        """Decompress a local archive
+
+        :param source: Path to the archive on a local system
+        :param destination: Where to unpack the archive
+        """
         if tarfile.is_tarfile(source):
             tarfile.open(source).extractall(path=destination, **kwargs)
         if zipfile.is_zipfile(source):
@@ -66,6 +77,11 @@ class PackageRetriever:
         destination: pathlib.Path,
         **kwargs: t.Any,
     ) -> None:
+        """Copy the contents of a directory
+
+        :param source: source directory
+        :param destination: desitnation directory
+        """
         shutil.copytree(source, destination, **kwargs)
 
     @classmethod
@@ -75,6 +91,11 @@ class PackageRetriever:
         destination: pathlib.Path,
         **kwargs: t.Any,
     ) -> None:
+        """Download and decompress a package
+
+        :param source: URL to a particular package
+        :param destination: Where to unpack the archive
+        """
         local_file, _ = urlretrieve(source, **kwargs)
         cls._from_local_archive(local_file, destination)
         os.remove(local_file)
@@ -83,6 +104,12 @@ class PackageRetriever:
     def _from_git(
         source: str, destination: pathlib.Path, **clone_kwargs: t.Any
     ) -> None:
+        """Clone a repository
+
+        :param source: Path to the remote (URL or local) repository
+        :param destination: where to clone the repository
+        :param clone_kwargs: various options to send to the clone command
+        """
         is_mac = OperatingSystem.autodetect() == OperatingSystem.DARWIN
         is_arm64 = Architecture.autodetect() == Architecture.ARM64
         if is_mac and is_arm64:
@@ -97,6 +124,17 @@ class PackageRetriever:
     def retrieve(
         cls, source: _PathLike, destination: pathlib.Path, **retrieve_kwargs: t.Any
     ) -> None:
+        """Primary method for retrieval
+
+        Automatically choose the correct method based on the extension and/or source
+        of the archive. If downloaded, this will also decompress the archive and
+        extract
+
+        :param source: URL or path to find the package
+        :param destination: where to place the package
+        :raises UnsupportedArchive: Unknown archive type
+        :raises PathNotFound: Path to archive does not exist
+        """
         url_scheme = urlparse(str(source)).scheme
         if str(source).endswith(".git"):
             cls._from_git(str(source), destination, **retrieve_kwargs)

@@ -46,12 +46,7 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 
 class RedisAIBuilder:
-    """Class to build RedisAI from Source
-    Supported build method:
-     - from git
-    See buildenv.py for buildtime configuration of RedisAI
-    version and url.
-    """
+    """Class to build RedisAI from Source"""
 
     def __init__(
         self,
@@ -78,17 +73,24 @@ class RedisAIBuilder:
         self.cleanup_build()
 
     def _define_patches_by_version(self) -> None:
+        """Inject specific patches due to package version numbers"""
         if self.build_torch:
             if Version(self.mlpackages["libtorch"].version) >= Version("2.1.0"):
                 self.patches.append(_patches["c++17"])
 
     def cleanup_build(self) -> None:
+        """Removes all directories associated with the build"""
         shutil.rmtree(self.src_path, ignore_errors=True)
         shutil.rmtree(self.build_path, ignore_errors=True)
         shutil.rmtree(self.package_path, ignore_errors=True)
 
     @property
     def is_built(self) -> bool:
+        """Determine whether RedisAI and backends were built
+
+        :return: True if all backends and RedisAI module are in
+                 the expected location
+        """
         backend_dir = CONFIG.lib_path / "backends"
         rai_exists = [
             (backend_dir / f"redisai_{backend_name}").is_dir()
@@ -99,14 +101,26 @@ class RedisAIBuilder:
 
     @property
     def build_torch(self) -> bool:
+        """Whether to build torch backend
+
+        :return: True if torch backend should be built
+        """
         return "libtorch" in self.mlpackages
 
     @property
     def build_tensorflow(self) -> bool:
+        """Whether to build tensorflow backend
+
+        :return: True if tensorflow backend should be built
+        """
         return "libtensorflow" in self.mlpackages
 
     @property
     def build_onnxruntime(self) -> bool:
+        """Whether to build onnx backend
+
+        :return: True if onnx backend should be built
+        """
         return "onnxruntime" in self.mlpackages
 
     def build(self) -> None:
@@ -145,6 +159,15 @@ class RedisAIBuilder:
         self.run_command(build_command, self.build_path)
 
     def _prepare_packages(self) -> None:
+        """Ensure that retrieved archives/packages are in the expected location
+
+        RedisAI requires that the root directory of the backend is at
+        DEP_PATH/example_backend. Due to difficulties in retrieval methods and
+        naming conventions from different sources, this cannot be standardized.
+        Instead we try to find the parent of the "include" directory and assume
+        this is the root.
+        """
+
         def find_closest_object(
             start_path: pathlib.Path, target_obj: str
         ) -> t.Optional[pathlib.Path]:
@@ -173,6 +196,11 @@ class RedisAIBuilder:
                     f.rename(target_dir / f.name)
 
     def run_command(self, cmd: t.Union[str, t.List[str]], cwd: pathlib.Path) -> None:
+        """Executor of commands usedi in the build
+
+        :param cmd: The actual command to execute
+        :param cwd: The working directory to execute in
+        """
         stdout = None if self.verbose else subprocess.DEVNULL
         stderr = None if self.verbose else subprocess.PIPE
         proc = subprocess.run(cmd, cwd=str(cwd), stdout=stdout, stderr=stderr)
@@ -180,6 +208,11 @@ class RedisAIBuilder:
             print(proc.stderr.decode("utf-8"))
 
     def _rai_cmake_cmd(self) -> t.List[str]:
+        """Build the CMake configuration command
+
+        :return: CMake command with correct options
+        """
+
         def on_off(expression: bool) -> t.Literal["ON", "OFF"]:
             return "ON" if expression else "OFF"
 
@@ -200,9 +233,19 @@ class RedisAIBuilder:
         return cmd
 
     def _rai_build_cmd(self) -> t.List[str]:
+        """Shell command to build RedisAI and modules
+
+        With the CMake based install, very little needs to be done here.
+        "make install" is used to ensure that all resulting RedisAI backends
+        and their dependencies end up in the same location with the correct
+        RPATH if applicable.
+
+        :return: Command used to compile RedisAI and backends
+        """
         return "make install -j VERBOSE=1".split(" ")
 
     def _patch_source_files(self) -> None:
+        """Apply all _RedisAIPatches specified previously"""
         for patch in self.patches:
             compiled_regex = re.compile(patch.regex)
             with fileinput.input(

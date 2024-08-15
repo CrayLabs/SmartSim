@@ -50,11 +50,23 @@ class PathNotFoundError(PlatformError):
 
 
 class Architecture(enum.Enum):
+    """Identifiers for supported CPU architectures
+
+    :raises UnsupportedError: If a given architecture is not enumerated (i.e not supported)
+    :return: An enum representing the CPU architecture
+    """
+
     X64 = "x86_64"
     ARM64 = "arm64"
 
     @classmethod
-    def from_str(cls, string: str, /) -> "Architecture":
+    def from_str(cls, string: str) -> "Architecture":
+        """Return enum associated with the architecture
+
+        :param string: String representing the architecture, see platform.machine
+        :raises UnsupportedError: If not enumerated here, unsupported architecture
+        :return: Enum for a specific architecture
+        """
         string = string.lower()
         for type_ in cls:
             if string in type_.value:
@@ -63,10 +75,19 @@ class Architecture(enum.Enum):
 
     @classmethod
     def autodetect(cls) -> "Architecture":
+        """Automatically return the architecture of the current machine
+
+        :return: enum of this platform's architecture
+        """
         return cls.from_str(platform.machine())
 
 
 class Device(enum.Enum):
+    """Identifiers for the device stack
+
+    :return: Enum associated with the device stack
+    """
+
     CPU = "cpu"
     CUDA118 = "cuda-11.8"
     CUDA121 = "cuda-12.1"
@@ -74,6 +95,12 @@ class Device(enum.Enum):
 
     @classmethod
     def from_str(cls, str_: str) -> "Device":
+        """Return enum associated with the device
+
+        :param string: String representing the device and version
+        :raises UnsupportedError: If not enumerated here, unsupported
+        :return: Enum for a specific device
+        """
         str_ = str_.lower()
         if str_ == "gpu":
             # TODO: auto detect which device to use
@@ -83,6 +110,10 @@ class Device(enum.Enum):
 
     @classmethod
     def detect_cuda_version(cls) -> t.Optional["Device"]:
+        """Find the enum based on environment CUDA
+
+        :return: Enum for the version of CUDA currently available
+        """
         if cuda_home := os.environ.get("CUDA_HOME"):
             cuda_path = pathlib.Path(cuda_home)
             with open(cuda_path / "version.json", "r") as f:
@@ -93,6 +124,10 @@ class Device(enum.Enum):
 
     @classmethod
     def detect_rocm_version(cls) -> t.Optional["Device"]:
+        """Find the enum based on environment ROCm
+
+        :return: Enum for the version of ROCm currently available
+        """
         if rocm_home := os.environ.get("ROCM_HOME"):
             rocm_path = pathlib.Path(rocm_home)
             with open(rocm_path / ".info" / "version", "r") as f:
@@ -101,31 +136,62 @@ class Device(enum.Enum):
         return None
 
     def is_gpu(self) -> bool:
+        """Whether the enum is categorized as a GPU
+
+        :return: True if GPU
+        """
         return self != type(self).CPU
 
     def is_cuda(self) -> bool:
+        """Whether the enum is associated with a CUDA device
+
+        :return: True for any supported CUDA enums
+        """
         cls = type(self)
         return self in (cls.CUDA118, cls.CUDA121)
 
     def is_rocm(self) -> bool:
+        """Whether the enum is associated with a ROCm device
+
+        :return: True for any supported ROCm enums
+        """
         cls = type(self)
         return self in (cls.ROCM57,)
 
     @classmethod
     def _cuda_enums(cls) -> t.Tuple["Device", ...]:
+        """Detect all CUDA devices supported by SmartSim
+
+        :return: all enums associated with CUDA
+        """
         return tuple(device for device in cls if "cuda" in device.value)
 
     @classmethod
     def _rocm_enums(cls) -> t.Tuple["Device", ...]:
+        """Detect all ROCm devices supported by SmartSim
+
+        :return: all enums associated with ROCm
+        """
         return tuple(device for device in cls if "rocm" in device.value)
 
 
 class OperatingSystem(enum.Enum):
+    """Enum for all supported operating systems
+
+    :raises UnsupportedError: If operating system is not not supported
+    """
+
     LINUX = "linux"
     DARWIN = "darwin"
 
     @classmethod
     def from_str(cls, string: str, /) -> "OperatingSystem":
+        """Return enum associated with the OS
+
+        :param string: String representing the OS
+        :raises UnsupportedError: If not enumerated here, unsupported
+        :return: Enum for a specific OS
+        """
         string = string.lower()
         for type_ in cls:
             if string in type_.value:
@@ -136,17 +202,30 @@ class OperatingSystem(enum.Enum):
 
     @classmethod
     def autodetect(cls) -> "OperatingSystem":
+        """Automatically return the OS of the current machine
+
+        :return: enum of this platform's OS
+        """
         return cls.from_str(platform.system())
 
 
 @dataclass(frozen=True)
 class Platform:
+    """Container describing relevant identifiers for a platform"""
+
     os: OperatingSystem
     architecture: Architecture
     device: Device
 
     @classmethod
     def from_str(cls, os: str, architecture: str, device: str) -> Self:
+        """Factory method for Platform from string onput
+
+        :param os: String identifier for the OS
+        :param architecture: String identifier for the architecture
+        :param device: String identifer for the device and version
+        :return: Instance of Platform
+        """
         return cls(
             OperatingSystem.from_str(os),
             Architecture.from_str(architecture),
@@ -154,6 +233,10 @@ class Platform:
         )
 
     def __repr__(self) -> str:
+        """Human-readable representation of Platform
+
+        :return: String created from the values of the enums for each property
+        """
         output = [
             self.os.name,
             self.architecture.name,

@@ -41,6 +41,8 @@ from .utils import PackageRetriever
 
 @dataclass
 class MLPackage:
+    """Describes the python and C/C++ library for an ML package"""
+
     name: str
     version: str
     pip_index: str
@@ -48,9 +50,17 @@ class MLPackage:
     lib_source: PathLike
 
     def retrieve(self, destination: PathLike) -> None:
+        """Retrieve an archive and/or repository for the package
+
+        :param destination: Path to place the extracted package or repository
+        """
         PackageRetriever.retrieve(self.lib_source, pathlib.Path(destination))
 
     def pip_install(self, quiet: bool = False) -> None:
+        """Install associated python packages
+
+        :param quiet: If True, suppress most of the pip output, defaults to False
+        """
         if self.python_packages:
             install_command = [sys.executable, "-m", "pip", "install"]
             if self.pip_index:
@@ -63,11 +73,21 @@ class MLPackage:
 
 @dataclass
 class MLPackageCollection:
+    """Collects multiple MLPackages
+
+    Define a collection of MLPackages available for a specific platform
+    """
+
     platform: Platform
     ml_packages: t.Dict[str, MLPackage]
 
     @classmethod
     def from_json_file(cls, json_file: PathLike) -> "MLPackageCollection":
+        """Create an MLPackageCollection specified from a JSON file
+
+        :param json_file: path to the JSON file
+        :return: An instance of MLPackageCollection for a platform
+        """
         with open(json_file, "r") as f:
             config_json = json.load(f)
         platform = Platform.from_str(**config_json["platform"])
@@ -78,21 +98,49 @@ class MLPackageCollection:
         return cls(platform, ml_packages)
 
     def __iter__(self) -> t.Iterator[str]:
+        """Iterate over the mlpackages in the collection
+
+        :return: Iterator over mlpackages
+        """
         return iter(self.ml_packages)
 
     def __getitem__(self, key: str) -> MLPackage:
+        """Retrieve an MLPackage based on its name
+
+        :param key: Name of the python package (e.g. libtorch)
+        :return: MLPackage with all requirements
+        """
         return self.ml_packages[key]
 
     def values(self) -> t.Iterable[MLPackage]:
+        """Accesses the MLPackages directly
+
+        :return: All the MLPackages in this collection
+        """
         return self.ml_packages.values()
 
     def items(self) -> t.ItemsView[str, MLPackage]:
+        """Retrieve all MLPackages and their names
+
+        :return: MLPackages and names in this collection
+        """
         return self.ml_packages.items()
 
     def keys(self) -> t.Iterable[str]:
+        """Retrieve just the names of the MLPackages
+
+        :return: The names of the MLPackages
+        """
         return self.ml_packages.keys()
 
     def pop(self, key: str) -> None:
+        """Remove a particular MLPackage by name
+
+        Used internally if a user specifies they do not want a
+        particular package installed
+
+        :param key: The name of the package to remove
+        """
         self.ml_packages.pop(key)
 
     def tabulate_versions(self, tablefmt: str = "github") -> str:
@@ -112,6 +160,13 @@ class MLPackageCollection:
 def load_platform_configs(
     config_file_path: pathlib.Path,
 ) -> t.Dict[Platform, MLPackageCollection]:
+    """Create MLPackageCollections from JSON files in directory
+
+    :param config_file_path: Directory with JSON files describing the
+                             configuration by platform
+    :return: Dictionary whose keys are the supported platform and values
+             are its associated MLPackageCollection
+    """
     configs = {}
     for config_file in config_file_path.glob("*.json"):
         dependencies = MLPackageCollection.from_json_file(config_file)
