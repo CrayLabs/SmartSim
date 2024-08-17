@@ -107,7 +107,7 @@ class WorkerManager(Service):
         information among MLI components"""
         self._device_manager: t.Optional[DeviceManager] = None
         """Object responsible for model caching and device access"""
-        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="w_", debug=True, timing_on=True)
         """Performance timer"""
 
     def _on_start(self) -> None:
@@ -166,6 +166,7 @@ class WorkerManager(Service):
         try:
             batch: RequestBatch = self._dispatcher_queue.get(timeout=0.0001)
         except Empty:
+            logger.info("Empty queue")
             return
 
         self._perf_timer.start_timings(
@@ -174,17 +175,16 @@ class WorkerManager(Service):
 
         if not self._validate_batch(batch):
             exception_handler(
-                ValueError("An empty batch was received"),
+                ValueError("An invalid batch was received"),
                 None,
-                "Error batching inputs, the batch was empty.",
+                "Error batching inputs, the batch was invalid.",
             )
             return
-
 
         if self._device_manager is None:
             for request in batch.requests:
                 exception_handler(
-                    ValueError("No Device Manager available: did you call _on_start()"),
+                    ValueError("No Device Manager available: did you call _on_start()?"),
                     request.callback,
                     "Error acquiring device manager"
                 )

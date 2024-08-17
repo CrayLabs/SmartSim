@@ -113,8 +113,10 @@ class DeviceManager:
         # Load model if not already loaded, or
         # because it is sent with the request
         if model_in_request or not batch.model_key.key in self._device:
-            self._load_model_on_device(worker, batch, feature_stores)
-
+            try:
+                self._load_model_on_device(worker, batch, feature_stores)
+            except Exception as exc:
+                raise exc
         try:
             yield self._device
         finally:

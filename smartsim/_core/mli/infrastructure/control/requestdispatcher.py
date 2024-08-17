@@ -63,6 +63,8 @@ if t.TYPE_CHECKING:
 
 logger = get_logger("Request Dispatcher")
 
+# Placeholder
+ModelIdentifier = FeatureStoreKey
 
 class WorkerDevice:
     def __init__(self, name: str) -> None:
@@ -77,12 +79,23 @@ class WorkerDevice:
         """Lock to ensure only one thread at the time accesses this device"""
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
+        """Acquire and lock this device to prevent other threads
+
+        from acquiring it concurrently.
+        :param blocking: If set to True, the call will block
+        for the time specified by ``timeout`` until the lock
+        can be acquired
+        :param timeout: Time (in seconds) to wait to acquire lock.
+        Ignored if ``blocking`` is set to False.
+        """
         return self._lock.acquire(blocking=blocking, timeout=timeout)
 
     def release(self) -> None:
+        """Release device to allow other threads to acquire it"""
         self._lock.release()
 
     def __enter__(self) -> None:
+        """Locked context creator for this device"""
         self.acquire()
 
     def __exit__(
@@ -91,12 +104,13 @@ class WorkerDevice:
         exc_val: t.Optional[BaseException],
         exc_tb: t.Optional[TracebackType],
     ) -> None:
+        """Locked context destructor for this device"""
         self.release()
 
 
 class BatchQueue(Queue[InferenceRequest]):
     def __init__(
-        self, batch_timeout: float, batch_size: int, model_key: FeatureStoreKey
+        self, batch_timeout: float, batch_size: int, model_key: ModelIdentifier
     ) -> None:
         """Queue used to store inference requests waiting to be batched and
         sent to Worker Managers.
@@ -154,7 +168,7 @@ class BatchQueue(Queue[InferenceRequest]):
         self.release()
 
     @property
-    def model_key(self) -> FeatureStoreKey:
+    def model_key(self) -> ModelIdentifier:
         """Key of the model which needs to be run on the queued requests"""
         return self._model_key
 
@@ -168,6 +182,7 @@ class BatchQueue(Queue[InferenceRequest]):
         :param item: The request
         :param block: Whether to block when trying to put the item
         :param timeout: Time (in seconds) to wait if block==True
+        :raises Full: If an item cannot be put on the queue
         """
         if not self.acquire(blocking=False):
             raise Full
@@ -182,6 +197,7 @@ class BatchQueue(Queue[InferenceRequest]):
 
     @property
     def _elapsed_time(self) -> float:
+        """Time elapsed since the first item was put on this queue"""
         if self.empty() or self._first_put is None:
             return 0
         return time.time() - self._first_put
@@ -199,7 +215,7 @@ class BatchQueue(Queue[InferenceRequest]):
 
     @property
     def can_be_removed(self) -> bool:
-        """Whether this queue can be deleted and garbafe collected"""
+        """Whether this queue can be deleted and garbage collected"""
         return self.empty() and self._disposable
 
     def flush(self) -> list[t.Any]:

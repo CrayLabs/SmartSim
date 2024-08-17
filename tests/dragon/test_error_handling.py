@@ -40,17 +40,22 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
 )
+from smartsim._core.mli.infrastructure.control.requestdispatcher import (
+    RequestDispatcher,
+)
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore, FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
     FetchInputResult,
     FetchModelResult,
     InferenceReply,
+    InferenceRequest,
     LoadModelResult,
+    RequestBatch,
     TransformInputResult,
     TransformOutputResult,
 )
@@ -85,35 +90,56 @@ def setup_worker_manager_model_bytes(
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
 ):
-    integrated_worker = IntegratedTorchWorker()
+    integrated_worker_type = IntegratedTorchWorker
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
+    wrapped_queue = DragonFLIChannel(queue.serialize())
+
     monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
     monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
 
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=FileSystemCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
+    )
+
+    dispatcher = RequestDispatcher(
+        batch_timeout=0,
+        batch_size=1,
+        config_loader=config_loader,
+        worker_type=integrated_worker_type,
+    )
+
     worker_manager = WorkerManager(
-        EnvironmentConfigLoader(
-            featurestore_factory=DragonFeatureStore.from_descriptor,
-            callback_factory=FileSystemCommChannel.from_descriptor,
-            queue_factory=DragonFLIChannel.from_descriptor,
-        ),
-        integrated_worker,
+        config_loader=config_loader,
+        worker_type=integrated_worker_type,
+        dispatcher_queue=dispatcher.task_queue,
         as_service=False,
         cooldown=3,
     )
 
-    tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
-    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
-    model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
-    request = MessageHandler.build_request(
-        test_dir, model, [tensor_key], [output_key], [], None
-    )
-    ser_request = MessageHandler.serialize_request(request)
-    worker_manager._dispatcher_queue.send(ser_request)
+    tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+    output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
 
-    return worker_manager, integrated_worker
+    request = InferenceRequest(model_key= None, callback = None, raw_inputs= None, input_keys=[tensor_key], input_meta = None, output_keys=[output_key], raw_model=b'model', batch_size=0)
+
+    model_id = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+
+    request_batch = RequestBatch(
+        [request],
+        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]]),
+        model_id,
+    )
+
+    dispatcher.task_queue.put(request_batch)
+
+    #
+    # wrapped_queue.send(ser_request)
+
+    return worker_manager, integrated_worker_type
 
 
 @pytest.fixture
@@ -147,7 +173,8 @@ def setup_worker_manager_model_key(
     model_key = MessageHandler.build_model_key(
         "model key", app_feature_store.descriptor
     )
-    request = MessageHandler.build_request(
+
+    MessageHandler.build_request(
         test_dir, model_key, [tensor_key], [output_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
@@ -223,7 +250,10 @@ def test_pipeline_stage_errors_handled(
     error_message: str,
 ):
     """Ensures that the worker manager does not crash after a failure in various pipeline stages"""
-    worker_manager, integrated_worker = request.getfixturevalue(setup_worker_manager)
+    worker_manager, integrated_worker_type = request.getfixturevalue(
+        setup_worker_manager
+    )
+    integrated_worker = worker_manager._worker
     mock_reply_fn = mock_pipeline_stage(monkeypatch, integrated_worker, stage)
 
     if stage not in ["fetch_model"]:
@@ -279,6 +309,7 @@ def test_pipeline_stage_errors_handled(
             ),
         )
 
+    worker_manager._on_start()
     worker_manager._on_iteration()
 
     mock_reply_fn.assert_called_once()
