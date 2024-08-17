@@ -1,4 +1,3 @@
-import argparse
 import os
 import base64
 import cloudpickle
@@ -11,7 +10,7 @@ import time
 import typing as t
 
 DEVICE = "gpu"
-NUM_RANKS = 1
+NUM_RANKS = 4
 NUM_WORKERS = 1
 filedir = os.path.dirname(__file__)
 worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
@@ -39,7 +38,7 @@ worker_manager_rs: DragonRunSettings = exp.create_run_settings(
         "--batch_size",
         str(NUM_RANKS//NUM_WORKERS),
         "--batch_timeout",
-        str(0.002),
+        str(0.00),
         "--num_workers",
         str(NUM_WORKERS)
     ],
@@ -54,7 +53,7 @@ worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
 app_rs: DragonRunSettings = exp.create_run_settings(
     sys.executable,
-    exe_args=[app_script_name, "--device", DEVICE, "--log_max_batchsize", str(7)],
+    exe_args=[app_script_name, "--device", DEVICE, "--log_max_batchsize", str(6)],
 )
 app_rs.set_tasks_per_node(NUM_RANKS)
 
