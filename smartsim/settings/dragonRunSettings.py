@@ -100,6 +100,7 @@ class DragonRunSettings(RunSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
+        :raises ValueError: if an empty host list is supplied
         """
         if not host_list:
             raise ValueError("empty hostlist provided")

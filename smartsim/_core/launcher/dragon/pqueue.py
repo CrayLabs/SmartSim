@@ -124,7 +124,8 @@ class _TrackedNode:
         reference counted.
 
         :param tracking_id: a unique task identifier executing on the node
-        to add"""
+        to add
+        :raises ValueError: if tracking_id is already assigned to this node"""
         if tracking_id in self.assigned_tasks:
             raise ValueError("Attempted adding task more than once")
 
@@ -140,7 +141,8 @@ class _TrackedNode:
         """Update the reference counter to indicate the removal of a process.
 
         :param tracking_id: a unique task identifier executing on the node
-        to remove"""
+        to remove
+        :raises ValueError: if tracking_id is already assigned to this node"""
         if tracking_id and tracking_id not in self.assigned_tasks:
             raise ValueError("Attempted removal of untracked item")
 
@@ -335,12 +337,12 @@ class NodePrioritizer:
 
         return True
 
-    def _get_next_available_node(
+    def _get_next_unassigned_node(
         self,
         heap: t.List[_TrackedNode],
         tracking_id: t.Optional[str] = None,
     ) -> t.Optional[Node]:
-        """Finds the next node w/the least amount of running processes and
+        """Finds the next node with no running processes and
         ensures that any elements that were directly updated are updated in
         the priority structure before being made available
 
@@ -402,7 +404,7 @@ class NodePrioritizer:
             return next_nodes
 
         while len(next_nodes) < num_items:
-            if next_node := self._get_next_available_node(heap, tracking_id):
+            if next_node := self._get_next_unassigned_node(heap, tracking_id):
                 next_nodes.append(next_node)
                 continue
             break
@@ -430,7 +432,7 @@ class NodePrioritizer:
         tracking_id: t.Optional[str] = None,
         hosts: t.Optional[t.List[str]] = None,
     ) -> t.Optional[Node]:
-        """Find the next available node using the supplied filter to target
+        """Find the next unsassigned node using the supplied filter to target
         a specific node capability
 
         :param filter_on: the subset of nodes to query for available nodes
@@ -456,9 +458,10 @@ class NodePrioritizer:
         :param filter_on: the subset of nodes to query for available nodes
         :param tracking_id: unique task identifier to track
         :param hosts: a list of hostnames used to filter the available nodes
-        :returns: Collection of reserved nodes"""
+        :returns: Collection of reserved nodes
+        :raises ValueError: if the hosts parameter is an empty list"""
         if hosts is not None and not hosts:
-            raise ValueError("No host names provided")
+            raise ValueError("No hostnames provided")
 
         heap = self._create_sub_heap(hosts, filter_on)
         return self._get_next_n_available_nodes(num_items, heap, tracking_id)

@@ -194,6 +194,17 @@ class DragonBackend:
         self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
         self._prioritizer = NodePrioritizer(self._nodes, self._queue_lock)
 
+        self._nodes: t.List["dragon_machine.Node"] = []
+        """Node capability information for hosts in the allocation"""
+        self._hosts: t.List[str] = []
+        """List of hosts available in allocation"""
+        self._cpus: t.List[int] = []
+        """List of cpu-count by node"""
+        self._gpus: t.List[int] = []
+        """List of gpu-count by node"""
+        self._allocated_hosts: t.Dict[str, t.Set[str]] = {}
+        """Mapping with hostnames as keys and a set of running step IDs as the value"""
+
     @property
     def hosts(self) -> list[str]:
         with self._queue_lock:
@@ -229,16 +240,10 @@ class DragonBackend:
             self._nodes = [
                 dragon_machine.Node(node) for node in dragon_machine.System().nodes
             ]
-            self._hosts: t.List[str] = sorted(node.hostname for node in self._nodes)
-            """List of hosts available in allocation"""
+            self._hosts = sorted(node.hostname for node in self._nodes)
             self._cpus = [node.num_cpus for node in self._nodes]
-            """List of cpu-count by node"""
             self._gpus = [node.num_gpus for node in self._nodes]
-            """List of gpu-count by node"""
-            self._allocated_hosts: t.Dict[str, t.Set[str]] = collections.defaultdict(
-                set
-            )
-            """Mapping with hostnames as keys and a set of executing step IDs as the value"""
+            self._allocated_hosts = collections.defaultdict(set)
 
     def __str__(self) -> str:
         return self.status_message
