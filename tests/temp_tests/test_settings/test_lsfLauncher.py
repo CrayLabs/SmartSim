@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
+import pathlib
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.lsf import (
@@ -126,7 +127,7 @@ def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
         JsrunLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
     )
     assert tuple(args) == expected
-    assert path == test_dir
+    assert path == pathlib.Path(test_dir)
     assert env == {}
     assert stdin == f"--stdio_stdout={outfile}"
     assert stdout == f"--stdio_stderr={errfile}"

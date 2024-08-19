@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+import pathlib
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.pals import (
@@ -140,7 +141,7 @@ def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
     )
     assert isinstance(shell_launch_cmd, ShellLauncherCommand)
     assert shell_launch_cmd.command_tuple == expected
-    assert shell_launch_cmd.path == test_dir
+    assert shell_launch_cmd.path == pathlib.Path(test_dir)
     assert shell_launch_cmd.env == {}
     assert shell_launch_cmd.stdout == outfile
     assert shell_launch_cmd.stderr == errfile

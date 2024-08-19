@@ -27,6 +27,7 @@
 import itertools
 
 import pytest
+import pathlib
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.dispatch import ShellLauncherCommand
@@ -292,7 +293,7 @@ def test_formatting_launch_args(
     shell_launch_cmd = fmt(cls(args), mock_echo_executable, test_dir, {}, outfile, errfile)
     assert isinstance(shell_launch_cmd, ShellLauncherCommand)
     assert shell_launch_cmd.command_tuple == (cmd,) + expected
-    assert shell_launch_cmd.path == test_dir
+    assert shell_launch_cmd.path == pathlib.Path(test_dir)
     assert shell_launch_cmd.env == {}
     assert shell_launch_cmd.stdout == outfile
     assert shell_launch_cmd.stderr == errfile
