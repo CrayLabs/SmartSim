@@ -28,6 +28,7 @@ import tempfile
 import unittest.mock
 import pytest
 import pathlib
+import psutil
 import difflib
 import os
 import uuid
@@ -35,6 +36,7 @@ import weakref
 from smartsim.entity import _mock, entity, Application
 from smartsim import Experiment
 from smartsim.settings import LaunchSettings
+from smartsim.settings.dispatch import ShellLauncher
 from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,
     _as_srun_command,
@@ -146,6 +148,8 @@ def test_popen_writes_to_output_file(test_dir: str):
     with open(out_file, "w", encoding="utf-8") as out, open(err_file, "w", encoding="utf-8") as err:
         cmd = ShellLauncherCommand({}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments())
         id = shell_launcher.start(cmd)
+        val = shell_launcher.get_status(id)
+        print(val)
     proc = shell_launcher._launched[id]
     # Wait for subprocess to finish
     assert proc.wait() == 0
@@ -154,6 +158,8 @@ def test_popen_writes_to_output_file(test_dir: str):
         assert out.read() == "Hello World!\n"
     with open(err_file, "r", encoding="utf-8") as err:
         assert err.read() == ""
+    val = shell_launcher.get_status(id)
+    print(val)
 
 
 def test_popen_fails_with_invalid_cmd(test_dir):
@@ -216,7 +222,7 @@ def test_shell_launcher_returns_failed_status(test_dir):
     with open(out_file, "w", encoding="utf-8") as out, open(err_file, "w", encoding="utf-8") as err:
         # Construct a invalid command to execute
         args = (helpers.expand_exe_path("srun"), "--flag_dne")
-        cmd = Command([{}, run_dir, out, err, args])
+        cmd = ShellLauncherCommand({}, run_dir, out, err, args)
         # Start the execution of the command using a ShellLauncher
         for _ in range(5):
             id = shell_launcher.start(cmd)
@@ -239,7 +245,7 @@ def test_shell_launcher_returns_running_status(test_dir):
     run_dir, out_file, err_file = generate_directory(test_dir)
     with open(out_file, "w", encoding="utf-8") as out, open(err_file, "w", encoding="utf-8") as err:
         # Construct a command to execute
-        cmd = Command([{}, run_dir, out, err, (helpers.expand_exe_path("sleep"), "5")])
+        cmd = ShellLauncherCommand({}, run_dir, out, err, (helpers.expand_exe_path("sleep"), "5"))
         # Start the execution of the command using a ShellLauncher
         for _ in range(5):
             id = shell_launcher.start(cmd)
@@ -249,11 +255,32 @@ def test_shell_launcher_returns_running_status(test_dir):
             # Assert that subprocess has completed
             assert code[val] == JobStatus.RUNNING
             
-            
-# TODO one test that verifies the mapping in status, verify every single one, do not execute, just mock
 
-def test_this(monkeypatch):
+@pytest.mark.parametrize(
+    "psutil_status,job_status",
+    [
+        pytest.param(psutil.STATUS_RUNNING, JobStatus.RUNNING, id="merp"),
+        pytest.param(psutil.STATUS_SLEEPING, JobStatus.RUNNING, id="merp"),
+        pytest.param(psutil.STATUS_WAKING, JobStatus.RUNNING, id="merp"),
+        pytest.param(psutil.STATUS_DISK_SLEEP, JobStatus.RUNNING, id="merp"),
+        pytest.param(psutil.STATUS_DEAD, JobStatus.FAILED, id="merp"),
+        pytest.param(psutil.STATUS_TRACING_STOP, JobStatus.PAUSED, id="merp"),
+        pytest.param(psutil.STATUS_WAITING, JobStatus.PAUSED, id="merp"),
+        pytest.param(psutil.STATUS_STOPPED, JobStatus.PAUSED, id="merp"),
+        pytest.param(psutil.STATUS_LOCKED, JobStatus.PAUSED, id="merp"),
+        pytest.param(psutil.STATUS_PARKED, JobStatus.PAUSED, id="merp"),
+        pytest.param(psutil.STATUS_IDLE, JobStatus.PAUSED, id="merp"),
+        pytest.param(psutil.STATUS_ZOMBIE, JobStatus.COMPLETED, id="merp"),
+    ],
+)
+def test_this(psutil_status,job_status,monkeypatch: pytest.MonkeyPatch, test_dir):
     shell_launcher = ShellLauncher()
-    shell_launcher._launched = {"test":sp.Popen}
-    monkeypatch.setattr(sp.Popen, "poll", lambda: "/")
-    shell_launcher.get_status("test")
+    run_dir, out_file, err_file = generate_directory(test_dir)
+    with open(out_file, "w", encoding="utf-8") as out, open(err_file, "w", encoding="utf-8") as err:
+        cmd = ShellLauncherCommand({}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments())
+        id = shell_launcher.start(cmd)
+        proc = shell_launcher._launched[id]
+        monkeypatch.setattr(proc, "poll", lambda: None)
+        monkeypatch.setattr(psutil.Process, "status", lambda self: psutil_status)
+        value = shell_launcher.get_status(id)
+        assert value.get(id) == job_status

@@ -27,13 +27,15 @@
 from __future__ import annotations
 
 import os
+import pathlib
+import subprocess
 import re
 import typing as t
 
 from smartsim.log import get_logger
 from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
 from smartsim._core.commands import Command
-from smartsim.settings.dispatch import ExecutableProtocol, _FormatterType, _EnvironMappingType
+from smartsim.settings.dispatch import ExecutableProtocol, _FormatterType, _EnvironMappingType, ShellLauncherCommand
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
@@ -43,15 +45,21 @@ logger = get_logger(__name__)
 
 def _as_srun_command(args: LaunchArguments,
         exe: ExecutableProtocol,
-        path: str | os.PathLike[str],
-        _env: _EnvironMappingType) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
+        path: pathlib.Path,
+        env: _EnvironMappingType,
+        stdout_path: pathlib.Path,
+        stderr_path: pathlib.Path) -> ShellLauncherCommand:
     command_tuple = (
         "srun",
         *(args.format_launch_args() or ()),
         "--",
         *exe.as_program_arguments(),
+        f"--output={stdout_path}",
+        f"--error={stderr_path}",
+        
     )
-    return Command(["test"])
+    # add output and err to CMD tuple -> add dev Null for stdout and stderr
+    return ShellLauncherCommand(env, path, subprocess.DEVNULL, subprocess.DEVNULL, command_tuple)
     
 
 @dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)

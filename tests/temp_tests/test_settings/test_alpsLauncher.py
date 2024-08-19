@@ -30,6 +30,7 @@ from smartsim.settings.arguments.launch.alps import (
     AprunLaunchArguments,
     _as_aprun_command,
 )
+from smartsim.settings.dispatch import ShellLauncherCommand
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -213,11 +214,13 @@ def test_invalid_exclude_hostlist_format():
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
     outfile = "out.txt"
     errfile = "err.txt"
-    env, path, stdin, stdout, cmd = _as_aprun_command(
+    shell_launch_cmd = _as_aprun_command(
         AprunLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
     )
+    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
+    env, path, stdin, stdout, cmd = shell_launch_cmd
     assert tuple(cmd) == expected
     assert path == test_dir
     assert env == {}
-    assert stdin == f"hold={outfile}"
-    assert stdout == f"hold={errfile}"
+    assert stdin == outfile
+    assert stdout == errfile

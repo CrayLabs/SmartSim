@@ -32,6 +32,7 @@ from smartsim.settings.arguments.launch.pals import (
     _as_pals_command,
 )
 from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.dispatch import ShellLauncherCommand
 
 pytestmark = pytest.mark.group_a
 
@@ -134,11 +135,12 @@ def test_invalid_hostlist_format():
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
     outfile = "out.txt"
     errfile = "err.txt"
-    env, path, stdin, stdout, args = _as_pals_command(
+    shell_launch_cmd = _as_pals_command(
         PalsMpiexecLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
     )
-    assert tuple(args) == expected
-    assert path == test_dir
-    assert env == {}
-    assert stdin == f"hold={outfile}"
-    assert stdout == f"hold={errfile}"
+    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
+    assert shell_launch_cmd.command_tuple == expected
+    assert shell_launch_cmd.path == test_dir
+    assert shell_launch_cmd.env == {}
+    assert shell_launch_cmd.stdout == outfile
+    assert shell_launch_cmd.stderr == errfile

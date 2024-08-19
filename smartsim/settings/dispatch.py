@@ -31,6 +31,7 @@ import collections.abc
 import dataclasses
 import os
 import subprocess as sp
+import pathlib
 import typing as t
 import uuid
 import os
@@ -50,10 +51,18 @@ if t.TYPE_CHECKING:
     from smartsim.experiment import Experiment
     from smartsim.settings.arguments import LaunchArguments
 
+class ShellLauncherCommand(t.NamedTuple):
+    env: _EnvironMappingType
+    path: pathlib.Path
+    stdout: pathlib.Path
+    stderr: pathlib.Path
+    command_tuple: tuple[str, tuple[str, ...]] | t.Sequence[str]
+
+
 _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
 
-_WorkingDirectory: TypeAlias = t.Union[str, os.PathLike[str]]
+_WorkingDirectory: TypeAlias = pathlib.Path
 """A working directory represented as a string or PathLike object"""
 
 _DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArguments")
@@ -70,14 +79,14 @@ _EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
 a job
 """
 _FormatterType: TypeAlias = t.Callable[
-    [_DispatchableT, "ExecutableProtocol", _WorkingDirectory, _EnvironMappingType, str, str],
+    [_DispatchableT, "ExecutableProtocol", _WorkingDirectory, _EnvironMappingType, pathlib.Path, pathlib.Path],
     _LaunchableT,
 ]
 """A callable that is capable of formatting the components of a job into a type
 capable of being launched by a launcher.
 """
 _LaunchConfigType: TypeAlias = (
-    "_LauncherAdapter[ExecutableProtocol, _WorkingDirectory, _EnvironMappingType, str, str]"
+    "_LauncherAdapter[ExecutableProtocol, _WorkingDirectory, _EnvironMappingType, pathlib.Path, pathlib.Path]"
 )
 """A launcher adapater that has configured a launcher to launch the components
 of a job with some pre-determined launch settings
@@ -267,10 +276,10 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
 
         def format_(
             exe: ExecutableProtocol,
-            path: str | os.PathLike[str],
+            path: pathlib.Path,
             env: _EnvironMappingType,
-            out: str,
-            err: str,
+            out: pathlib.Path,
+            err: pathlib.Path,
         ) -> _LaunchableT:
             return self.formatter(arguments, exe, path, env, out, err)
 
@@ -439,8 +448,8 @@ class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
 
 
 def make_shell_format_fn(
-    run_command: str | None, out_flag = str | None, err_flag = str | None,
-) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
+    run_command: str | None
+) -> _FormatterType[LaunchArguments, ShellLauncherCommand]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 
@@ -472,11 +481,11 @@ def make_shell_format_fn(
     def impl(
         args: LaunchArguments,
         exe: ExecutableProtocol,
-        path: str | os.PathLike[str],
+        path: _WorkingDirectory,
         env: _EnvironMappingType,
-        out_file: str,
-        err_file: str,
-    ) -> t.Tuple[str | os.PathLike[str], t.Sequence[str]]:
+        stdout_path: pathlib.Path,
+        stderr_path: pathlib.Path,
+    ) -> ShellLauncherCommand:
         command_tuple = (
             (
                 run_command,
@@ -487,19 +496,9 @@ def make_shell_format_fn(
             if run_command is not None
             else exe.as_program_arguments()
         )
-        stdout = "hold"
-        stderr = "hold"
-        cmd = Command([env, path, stdout, stderr, command_tuple])
-        return cmd
+        return ShellLauncherCommand(env, pathlib.Path(path), stdout_path, stderr_path, command_tuple)
 
     return impl
-
-class ShellLauncherCommand(t.NamedTuple):
-    env: str
-    path: str
-    stdout: str
-    stderr: str
-    command_tuple: tuple
         
 
 class ShellLauncher:
@@ -517,7 +516,7 @@ class ShellLauncher:
         exe, *rest = shell_command.command_tuple
         expanded_exe = helpers.expand_exe_path(exe)
         # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((expanded_exe, *rest), cwd=shell_command.path, env=shell_command.env, stdout=shell_command.stdout, stderr=shell_command.stderr)
+        self._launched[id_] = sp.Popen((expanded_exe, *rest), cwd=shell_command.path, env={k:v for k,v in shell_command.env.items() if v is not None}, stdout=open(shell_command.stdout), stderr=open(shell_command.stderr))
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 
@@ -534,8 +533,9 @@ class ShellLauncher:
         print(ret_code)
         # try/catch around here and then reaise a smartsim.error
         if ret_code is None:
-            status = psutil.Process(proc.pid).status() # TODO can mock this, put this into a parameterized test, when you put that in the mock thing, the correct thing comes out
-            return {#1st arg, 2nd arg in the param tests, need to solve branching problems, do an assertion
+            status = psutil.Process(proc.pid).status()
+            print(status)
+            return {
                 psutil.STATUS_RUNNING: JobStatus.RUNNING,
                 psutil.STATUS_SLEEPING: JobStatus.RUNNING,
                 psutil.STATUS_WAKING: JobStatus.RUNNING,

@@ -29,6 +29,7 @@ import itertools
 import pytest
 
 from smartsim.settings import LaunchSettings
+from smartsim.settings.dispatch import ShellLauncherCommand
 from smartsim.settings.arguments.launch.mpi import (
     MpiexecLaunchArguments,
     MpirunLaunchArguments,
@@ -288,9 +289,10 @@ def test_formatting_launch_args(
 ):
     outfile = "out.txt"
     errfile = "err.txt"
-    env, path, stdin, stdout, fmt_cmd = fmt(cls(args), mock_echo_executable, test_dir, {}, outfile, errfile)
-    assert tuple(fmt_cmd) == (cmd,) + expected
-    assert path == test_dir
-    assert env == {}
-    assert stdin == f"hold={outfile}"
-    assert stdout == f"hold={errfile}"
+    shell_launch_cmd = fmt(cls(args), mock_echo_executable, test_dir, {}, outfile, errfile)
+    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
+    assert shell_launch_cmd.command_tuple == (cmd,) + expected
+    assert shell_launch_cmd.path == test_dir
+    assert shell_launch_cmd.env == {}
+    assert shell_launch_cmd.stdout == outfile
+    assert shell_launch_cmd.stderr == errfile

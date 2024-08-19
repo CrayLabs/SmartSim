@@ -26,6 +26,7 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
+from smartsim.settings.dispatch import ShellLauncherCommand
 from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,
     _as_srun_command,
@@ -320,10 +321,10 @@ def test_set_het_groups(monkeypatch):
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
     outfile = "out.txt"
     errfile = "err.txt"
-    test = _as_srun_command(args=SlurmLaunchArguments(args), exe=mock_echo_executable, path=test_dir, _env={})
-    assert isinstance(test, Command)
-    # assert tuple(args) == expected
-    # assert path == test_dir
-    # assert env == {}
-    # assert stdin == f"--output={outfile}"
-    # assert stdout == f"--error={errfile}"
+    shell_launch_cmd = _as_srun_command(args=SlurmLaunchArguments(args), exe=mock_echo_executable, path=test_dir, env={}, stdout_path=outfile, stderr_path=errfile)
+    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
+    assert shell_launch_cmd.command_tuple == expected
+    assert shell_launch_cmd.path == test_dir
+    assert shell_launch_cmd.env == {}
+    assert shell_launch_cmd.stdout == f"--output={outfile}"
+    assert shell_launch_cmd.stderr == f"--error={errfile}"

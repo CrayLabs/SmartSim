@@ -36,7 +36,7 @@ from ...launchCommand import LauncherType
 from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
-_as_aprun_command = make_shell_format_fn(run_command="aprun", out_flag="hold", err_flag="hold")
+_as_aprun_command = make_shell_format_fn(run_command="aprun")
 
 
 @dispatch(with_format=_as_aprun_command, to_launcher=ShellLauncher)

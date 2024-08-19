@@ -31,6 +31,7 @@ from smartsim.settings.arguments.launch.local import (
     _as_local_command,
 )
 from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.dispatch import ShellLauncherCommand
 
 pytestmark = pytest.mark.group_a
 
@@ -145,11 +146,12 @@ def test_format_env_vars():
 def test_formatting_returns_original_exe(mock_echo_executable, test_dir):
     outfile = "out.txt"
     errfile = "err.txt"
-    env, path, stdin, stdout, cmd = _as_local_command(
+    shell_launch_cmd = _as_local_command(
         LocalLaunchArguments({}), mock_echo_executable, test_dir, {}, outfile, errfile
     )
-    assert tuple(cmd) == ("echo", "hello", "world")
-    assert path == test_dir
-    assert env == {}
-    assert stdin == f"hold={outfile}"
-    assert stdout == f"hold={errfile}"
+    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
+    assert shell_launch_cmd.command_tuple == ("echo", "hello", "world")
+    assert shell_launch_cmd.path == test_dir
+    assert shell_launch_cmd.env == {}
+    assert shell_launch_cmd.stdout == outfile
+    assert shell_launch_cmd.stderr == errfile

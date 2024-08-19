@@ -29,11 +29,11 @@
 from __future__ import annotations
 
 import collections
+import datetime
 import itertools
 import os
 import os.path as osp
 import pathlib
-import datetime
 import textwrap
 import typing as t
 from os import environ, getcwd
@@ -43,8 +43,8 @@ from tabulate import tabulate
 from smartsim._core.config import CONFIG
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim.error import errors
-from smartsim.settings import dispatch
 from smartsim.status import InvalidJobStatus, JobStatus
+from smartsim.settings import dispatch
 
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
@@ -59,8 +59,8 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim.launchable.job import Job
     from smartsim.settings.dispatch import ExecutableProtocol
+    from smartsim.launchable.job import Job
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -160,6 +160,7 @@ class Experiment:
             exp_path = osp.abspath(exp_path)
         else:
             exp_path = osp.join(getcwd(), name)
+
         self.exp_path = exp_path
         """The path under which the experiment operate"""
 
@@ -182,10 +183,10 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
+        # Create the run id
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
-        """Create the run id"""
+        # Generate the root path
         root = pathlib.Path(self.exp_path, run_id)
-        """Generate the root path"""
         return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
@@ -231,8 +232,12 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            job_execution_path = self._generate(generator, job, idx)
-            id_ = launch_config.start(exe, job_execution_path, env)
+            # Generate the job directory and return the generated job path
+            ret = self._generate(generator, job, idx)
+            print(f"the type: {type(ret)}")
+            print(f"the val: {ret}")
+            job_execution_path, out, err = ret
+            id_ = launch_config.start(exe, job_execution_path, env, out, err)
             # Save the underlying launcher instance and launched job id. That
             # way we do not need to spin up a launcher instance for each
             # individual job, and the experiment can monitor job statuses.
@@ -275,109 +280,28 @@ class Experiment:
         stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
         return tuple(stats)
 
-    def get_status(
-        self, *ids: LaunchedJobID
-    ) -> tuple[JobStatus | InvalidJobStatus, ...]:
-        """Get the status of jobs launched through the `Experiment` from their
-        launched job id returned when calling `Experiment.start`.
-
-        The `Experiment` will map the launched ID back to the launcher that
-        started the job and request a status update. The order of the returned
-        statuses exactly matches the order of the launched job ids.
-
-        If the `Experiment` cannot find any launcher that started the job
-        associated with the launched job id, then a
-        `InvalidJobStatus.NEVER_STARTED` status is returned for that id.
-
-        If the experiment maps the launched job id to multiple launchers, then
-        a `ValueError` is raised. This should only happen in the case when
-        launched job ids issued by user defined launcher are not sufficiently
-        unique.
-
-        :param ids: A sequence of launched job ids issued by the experiment.
-        :returns: A tuple of statuses with order respective of the order of the
-            calling arguments.
-        """
-        to_query = self._launch_history.group_by_launcher(
-            set(ids), unknown_ok=True
-        ).items()
-        stats_iter = (launcher.get_status(*ids).items() for launcher, ids in to_query)
-        stats_map = dict(itertools.chain.from_iterable(stats_iter))
-        stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
-        return tuple(stats)
-
     @_contextualize
-    def _generate(
-        self, generator: Generator, job: Job, job_index: int
-    ) -> os.PathLike[str]:
-        """Generate the directory and file structure for a ``Job``
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> t.Tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
+        """Generate the directory structure and files for a ``Job``
 
-        If files or directories are attached to an ``application`` object
-        associated with the Job using ``application.attach_generator_files()``,
+        If files or directories are attached to an ``Application`` object
+        associated with the Job using ``Application.attach_generator_files()``,
         those files or directories will be symlinked, copied, or configured and
-        written into the created job directory
+        written into the created job directory.
 
-        An instance of ``Generator`` and ``Job`` can be passed as an argument to
-        the protected _generate member, as well as the Jobs index.
-
-        :param generator: The generator is responsible for creating the job run and log directory.
-        :param job: The job instance for which the output is generated.
-        :param job_index: The index of the job instance (used for naming).
-        :returns: The path to the generated output for the job instance.
+        :param generator: The generator is responsible for creating the job
+            run and log directory.
+        :param job: The Job instance for which the output is generated.
+        :param job_index: The index of the Job instance (used for naming).
+        :returns: The path to the generated output for the Job instance.
         :raises: A SmartSimError if an error occurs during the generation process.
         """
-        # Generate ../job_name/run directory
-        job_path = self._generate_job_path(job, job_index, generator.root)
-        # Generate ../job_name/log directory
-        log_path = self._generate_log_path(job, job_index, generator.root)
         try:
-            out, err = generator.generate_job(job, job_path, log_path)
+            job_path, out, err = generator.generate_job(job, job_index)
             return (job_path, out, err)
         except SmartSimError as e:
             logger.error(e)
             raise
-
-    def _generate_job_root(
-        self, job: Job, job_index: int, root: os.PathLike[str]
-    ) -> pathlib.Path:
-        """Generates the root directory for a specific job instance.
-
-        :param job: The Job instance for which the root directory is generated.
-        :param job_index: The index of the Job instance (used for naming).
-        :returns: The path to the root directory for the Job instance.
-        """
-        job_type = f"{job.__class__.__name__.lower()}s"
-        job_path = pathlib.Path(root) / f"{job_type}/{job.name}-{job_index}"
-        job_path.mkdir(exist_ok=True, parents=True)
-        return pathlib.Path(job_path)
-
-    def _generate_job_path(
-        self, job: Job, job_index: int, root: os.PathLike[str]
-    ) -> os.PathLike[str]:
-        """Generates the path for the \"run\" directory within the root directory
-        of a specific job instance.
-
-        :param job (Job): The job instance for which the path is generated.
-        :param job_index (int): The index of the job instance (used for naming).
-        :returns: The path to the \"run\" directory for the job instance.
-        """
-        path = self._generate_job_root(job, job_index, root) / "run"
-        path.mkdir(exist_ok=False, parents=True)
-        return pathlib.Path(path)
-
-    def _generate_log_path(
-        self, job: Job, job_index: int, root: os.PathLike[str]
-    ) -> os.PathLike[str]:
-        """
-        Generates the path for the \"log\" directory within the root directory of a specific job instance.
-
-        :param job: The job instance for which the path is generated.
-        :param job_index: The index of the job instance (used for naming).
-        :returns: The path to the \"log\" directory for the job instance.
-        """
-        path = self._generate_job_root(job, job_index, root) / "log"
-        path.mkdir(exist_ok=False, parents=True)
-        return pathlib.Path(path)
 
     def preview(
         self,
