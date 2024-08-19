@@ -479,7 +479,7 @@ def test_node_prioritizer_empty_subheap_next_w_hosts() -> None:
     with pytest.raises(ValueError) as ex:
         p.next(hosts=hostnames)
 
-    assert "No host names provided" == ex.value.args[0]
+    assert "No hostnames provided" == ex.value.args[0]
 
 
 def test_node_prioritizer_empty_subheap_next_n_w_hosts() -> None:
@@ -504,7 +504,7 @@ def test_node_prioritizer_empty_subheap_next_n_w_hosts() -> None:
     with pytest.raises(ValueError) as ex:
         p.next_n(num_requested, hosts=hostnames)
 
-    assert "No host names provided" == ex.value.args[0]
+    assert "No hostnames provided" == ex.value.args[0]
 
 
 @pytest.mark.parametrize("num_requested", [-100, -1, 0])
