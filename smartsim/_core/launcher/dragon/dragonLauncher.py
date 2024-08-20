@@ -27,8 +27,8 @@
 from __future__ import annotations
 
 import os
-import typing as t
 import pathlib
+import typing as t
 
 from smartsim._core.schemas.dragonRequests import DragonRunPolicy
 from smartsim.error import errors

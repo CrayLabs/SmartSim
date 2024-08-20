@@ -26,12 +26,18 @@
 
 from __future__ import annotations
 
-import typing as t
 import pathlib
 import subprocess
+import typing as t
 
 from smartsim.log import get_logger
-from smartsim.settings.dispatch import ShellLauncher, dispatch, ExecutableProtocol, _EnvironMappingType, ShellLauncherCommand
+from smartsim.settings.dispatch import (
+    ExecutableProtocol,
+    ShellLauncher,
+    ShellLauncherCommand,
+    _EnvironMappingType,
+    dispatch,
+)
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
@@ -39,12 +45,15 @@ from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 
-def _as_jsrun_command(args: LaunchArguments,
-        exe: ExecutableProtocol,
-        path: pathlib.Path,
-        env: _EnvironMappingType,
-        stdout_path: pathlib.Path,
-        stderr_path: pathlib.Path) -> ShellLauncherCommand:
+
+def _as_jsrun_command(
+    args: LaunchArguments,
+    exe: ExecutableProtocol,
+    path: pathlib.Path,
+    env: _EnvironMappingType,
+    stdout_path: pathlib.Path,
+    stderr_path: pathlib.Path,
+) -> ShellLauncherCommand:
     command_tuple = (
         "jsrun",
         *(args.format_launch_args() or ()),
@@ -52,10 +61,11 @@ def _as_jsrun_command(args: LaunchArguments,
         *exe.as_program_arguments(),
         f"--stdio_stdout={stdout_path}",
         f"--stdio_stderr={stderr_path}",
-        
     )
     # add output and err to CMD tuple -> add dev Null for stdout and stderr
-    return ShellLauncherCommand(env, path, subprocess.DEVNULL, subprocess.DEVNULL, command_tuple)
+    return ShellLauncherCommand(
+        env, path, subprocess.DEVNULL, subprocess.DEVNULL, command_tuple
+    )
 
 
 @dispatch(with_format=_as_jsrun_command, to_launcher=ShellLauncher)

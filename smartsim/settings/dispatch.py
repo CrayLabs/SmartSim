@@ -29,33 +29,36 @@ from __future__ import annotations
 import abc
 import collections.abc
 import dataclasses
+import io
 import os
-import subprocess as sp
 import pathlib
+import subprocess
+import subprocess as sp
 import typing as t
 import uuid
-import os
+from subprocess import STDOUT
 
 import psutil
 from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
 
+from smartsim._core.commands import Command, CommandList
 from smartsim._core.utils import helpers
 from smartsim.error import errors
 from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
-from smartsim._core.commands import Command, CommandList
+
 from ..settings.launchCommand import LauncherType
-from subprocess import STDOUT
 
 if t.TYPE_CHECKING:
     from smartsim.experiment import Experiment
     from smartsim.settings.arguments import LaunchArguments
 
+
 class ShellLauncherCommand(t.NamedTuple):
     env: _EnvironMappingType
     path: pathlib.Path
-    stdout: TextIOWrapper
-    stderr: TextIOWrapper
+    stdout: io.TextIOWrapper | int
+    stderr: io.TextIOWrapper | int
     command_tuple: tuple[str, tuple[str, ...]] | t.Sequence[str]
 
 
@@ -79,7 +82,14 @@ _EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
 a job
 """
 _FormatterType: TypeAlias = t.Callable[
-    [_DispatchableT, "ExecutableProtocol", _WorkingDirectory, _EnvironMappingType, pathlib.Path, pathlib.Path],
+    [
+        _DispatchableT,
+        "ExecutableProtocol",
+        _WorkingDirectory,
+        _EnvironMappingType,
+        pathlib.Path,
+        pathlib.Path,
+    ],
     _LaunchableT,
 ]
 """A callable that is capable of formatting the components of a job into a type
@@ -448,7 +458,7 @@ class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
 
 
 def make_shell_format_fn(
-    run_command: str | None
+    run_command: str | None,
 ) -> _FormatterType[LaunchArguments, ShellLauncherCommand]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
@@ -478,6 +488,7 @@ def make_shell_format_fn(
     :returns: A function to format an arguments, an executable, and an
         environment as a shell launchable sequence for strings.
     """
+
     def impl(
         args: LaunchArguments,
         exe: ExecutableProtocol,
@@ -496,27 +507,36 @@ def make_shell_format_fn(
             if run_command is not None
             else exe.as_program_arguments()
         )
-        return ShellLauncherCommand(env, pathlib.Path(path), stdout_path, stderr_path, command_tuple)
+        return ShellLauncherCommand(
+            env, pathlib.Path(path), open(stdout_path), open(stderr_path), command_tuple
+        )
 
     return impl
-        
+
 
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands"""
+
     # add a def check
 
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
+
     # covariant, contravariant, + boliscoff substitution princ
     def start(
-        self, shell_command: ShellLauncherCommand # this should be a named tuple
+        self, shell_command: ShellLauncherCommand  # this should be a named tuple
     ) -> LaunchedJobID:
         id_ = create_job_id()
         # raise ValueError -> invalid stuff throw
         exe, *rest = shell_command.command_tuple
         expanded_exe = helpers.expand_exe_path(exe)
-        # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((expanded_exe, *rest), cwd=shell_command.path, env={k:v for k,v in shell_command.env.items() if v is not None}, stdout=shell_command.stdout, stderr=shell_command.stderr)
+        self._launched[id_] = sp.Popen(
+            (expanded_exe, *rest),
+            cwd=shell_command.path,
+            env={k: v for k, v in shell_command.env.items() if v is not None},
+            stdout=shell_command.stdout,
+            stderr=shell_command.stderr,
+        )
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 
@@ -529,7 +549,9 @@ class ShellLauncher:
         if (proc := self._launched.get(id_)) is None:
             msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
             raise errors.LauncherJobNotFound(msg)
-        ret_code = proc.poll() # add a test that mocks out poll and raise some exception - terminal -> import subprocess -> start something echo blah - then poll and see what a valid fake output is
+        ret_code = (
+            proc.poll()
+        )  # add a test that mocks out poll and raise some exception - terminal -> import subprocess -> start something echo blah - then poll and see what a valid fake output is
         print(ret_code)
         # try/catch around here and then reaise a smartsim.error
         if ret_code is None:

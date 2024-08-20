@@ -90,7 +90,13 @@ def test_formatting_launch_args_into_request(
         if v is not NOT_SET
     }
     expected_run_req = DragonRunRequestView(
-        exe="echo", exe_args=["hello", "world"], path=test_dir, env={}, output_file="output.txt", error_file="error.txt", **expected_args
+        exe="echo",
+        exe_args=["hello", "world"],
+        path=test_dir,
+        env={},
+        output_file="output.txt",
+        error_file="error.txt",
+        **expected_args,
     )
     assert req.exe == expected_run_req.exe
     assert req.exe_args == expected_run_req.exe_args

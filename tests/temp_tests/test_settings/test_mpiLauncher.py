@@ -24,13 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import io
 import itertools
-
-import pytest
+import os
 import pathlib
 
+import pytest
+
 from smartsim.settings import LaunchSettings
-from smartsim.settings.dispatch import ShellLauncherCommand
 from smartsim.settings.arguments.launch.mpi import (
     MpiexecLaunchArguments,
     MpirunLaunchArguments,
@@ -39,6 +40,7 @@ from smartsim.settings.arguments.launch.mpi import (
     _as_mpirun_command,
     _as_orterun_command,
 )
+from smartsim.settings.dispatch import ShellLauncherCommand
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -288,12 +290,13 @@ def test_invalid_hostlist_format(launcher):
 def test_formatting_launch_args(
     mock_echo_executable, cls, fmt, cmd, args, expected, test_dir
 ):
-    outfile = "out.txt"
-    errfile = "err.txt"
-    shell_launch_cmd = fmt(cls(args), mock_echo_executable, test_dir, {}, outfile, errfile)
+    out = os.path.join(test_dir, "out.txt")
+    err = os.path.join(test_dir, "err.txt")
+    with open(out, "w") as _, open(err, "w") as _:
+        shell_launch_cmd = fmt(cls(args), mock_echo_executable, test_dir, {}, out, err)
     assert isinstance(shell_launch_cmd, ShellLauncherCommand)
     assert shell_launch_cmd.command_tuple == (cmd,) + expected
     assert shell_launch_cmd.path == pathlib.Path(test_dir)
     assert shell_launch_cmd.env == {}
-    assert shell_launch_cmd.stdout == outfile
-    assert shell_launch_cmd.stderr == errfile
+    assert isinstance(shell_launch_cmd.stdout, io.TextIOWrapper)
+    assert isinstance(shell_launch_cmd.stderr, io.TextIOWrapper)

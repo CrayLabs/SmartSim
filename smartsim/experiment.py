@@ -43,8 +43,8 @@ from tabulate import tabulate
 from smartsim._core.config import CONFIG
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim.error import errors
-from smartsim.status import InvalidJobStatus, JobStatus
 from smartsim.settings import dispatch
+from smartsim.status import InvalidJobStatus, JobStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
@@ -59,8 +59,8 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim.settings.dispatch import ExecutableProtocol
     from smartsim.launchable.job import Job
+    from smartsim.settings.dispatch import ExecutableProtocol
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -281,7 +281,9 @@ class Experiment:
         return tuple(stats)
 
     @_contextualize
-    def _generate(self, generator: Generator, job: Job, job_index: int) -> t.Tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
+    def _generate(
+        self, generator: Generator, job: Job, job_index: int
+    ) -> t.Tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
         """Generate the directory structure and files for a ``Job``
 
         If files or directories are attached to an ``Application`` object

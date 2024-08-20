@@ -25,9 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-from subprocess import PIPE
 
 import typing as t
+from subprocess import PIPE
 
 from smartsim.log import get_logger
 from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn

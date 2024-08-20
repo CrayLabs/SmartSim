@@ -53,7 +53,11 @@ def experiment(monkeypatch, test_dir, dispatcher):
     """
     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
     monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
-    monkeypatch.setattr(exp, "_generate", lambda gen, job, idx: ("/tmp/job", "/tmp/job/out.txt", "/tmp/job/err.txt"))
+    monkeypatch.setattr(
+        exp,
+        "_generate",
+        lambda gen, job, idx: ("/tmp/job", "/tmp/job/out.txt", "/tmp/job/err.txt"),
+    )
     yield exp
 
 
@@ -64,7 +68,9 @@ def dispatcher():
     """
     d = dispatch.Dispatcher()
     to_record: dispatch._FormatterType[MockLaunchArgs, LaunchRecord] = (
-        lambda settings, exe, path, env, out, err: LaunchRecord(settings, exe, env, path, out, err)
+        lambda settings, exe, path, env, out, err: LaunchRecord(
+            settings, exe, env, path, out, err
+        )
     )
     d.dispatch(MockLaunchArgs, with_format=to_record, to_launcher=NoOpRecordLauncher)
     yield d

@@ -23,8 +23,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pytest
 import subprocess
+
+import pytest
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.lsf import (
@@ -92,30 +93,90 @@ def test_launch_args():
 @pytest.mark.parametrize(
     "args, expected",
     (
-        pytest.param({}, ("jsrun", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'), id="Empty Args"),
+        pytest.param(
+            {},
+            (
+                "jsrun",
+                "--",
+                "echo",
+                "hello",
+                "world",
+                "--stdio_stdout=output.txt",
+                "--stdio_stderr=error.txt",
+            ),
+            id="Empty Args",
+        ),
         pytest.param(
             {"n": "1"},
-            ("jsrun", "-n", "1", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
+            (
+                "jsrun",
+                "-n",
+                "1",
+                "--",
+                "echo",
+                "hello",
+                "world",
+                "--stdio_stdout=output.txt",
+                "--stdio_stderr=error.txt",
+            ),
             id="Short Arg",
         ),
         pytest.param(
             {"nrs": "1"},
-            ("jsrun", "--nrs=1", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
+            (
+                "jsrun",
+                "--nrs=1",
+                "--",
+                "echo",
+                "hello",
+                "world",
+                "--stdio_stdout=output.txt",
+                "--stdio_stderr=error.txt",
+            ),
             id="Long Arg",
         ),
         pytest.param(
             {"v": None},
-            ("jsrun", "-v", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
+            (
+                "jsrun",
+                "-v",
+                "--",
+                "echo",
+                "hello",
+                "world",
+                "--stdio_stdout=output.txt",
+                "--stdio_stderr=error.txt",
+            ),
             id="Short Arg (No Value)",
         ),
         pytest.param(
             {"verbose": None},
-            ("jsrun", "--verbose", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
+            (
+                "jsrun",
+                "--verbose",
+                "--",
+                "echo",
+                "hello",
+                "world",
+                "--stdio_stdout=output.txt",
+                "--stdio_stderr=error.txt",
+            ),
             id="Long Arg (No Value)",
         ),
         pytest.param(
             {"tasks_per_rs": "1", "n": "123"},
-            ("jsrun", "--tasks_per_rs=1", "-n", "123", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
+            (
+                "jsrun",
+                "--tasks_per_rs=1",
+                "-n",
+                "123",
+                "--",
+                "echo",
+                "hello",
+                "world",
+                "--stdio_stdout=output.txt",
+                "--stdio_stderr=error.txt",
+            ),
             id="Short and Long Args",
         ),
     ),
