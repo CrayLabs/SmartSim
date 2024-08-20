@@ -185,7 +185,9 @@ def test_format_comma_sep_env_vars():
         "SSKEYIN": "name_0,name_1",
     }
     slurmLauncher = LaunchSettings(launcher=LauncherType.Slurm, env_vars=env_vars)
-    formatted, comma_separated_formatted = slurmLauncher._arguments.format_comma_sep_env_vars(env_vars)
+    formatted, comma_separated_formatted = (
+        slurmLauncher._arguments.format_comma_sep_env_vars(env_vars)
+    )
     assert "OMP_NUM_THREADS" in formatted
     assert "LOGGING" in formatted
     assert "SSKEYIN" in formatted

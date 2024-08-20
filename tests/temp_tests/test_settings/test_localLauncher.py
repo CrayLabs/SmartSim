@@ -139,7 +139,12 @@ def test_format_env_vars():
     }
     localLauncher = LaunchSettings(launcher=LauncherType.Local, env_vars=env_vars)
     assert isinstance(localLauncher._arguments, LocalLaunchArguments)
-    assert localLauncher._arguments.format_env_vars(env_vars) == ["A=a", "B=", "C=", "D=12"]
+    assert localLauncher._arguments.format_env_vars(env_vars) == [
+        "A=a",
+        "B=",
+        "C=",
+        "D=12",
+    ]
 
 
 def test_formatting_returns_original_exe(mock_echo_executable, test_dir):
