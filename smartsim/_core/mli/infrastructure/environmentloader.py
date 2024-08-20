@@ -72,8 +72,8 @@ class EnvironmentConfigLoader:
         an environment variable. The backbone is a standalone, system-created
         feature store used to share internal information among MLI components
 
-        :returns: The attached feature store via SS_INFRA_BACKBONE"""
-        descriptor = os.getenv("SS_INFRA_BACKBONE", "")
+        :returns: The attached feature store via _SMARTSIM_INFRA_BACKBONE"""
+        descriptor = os.getenv("_SMARTSIM_INFRA_BACKBONE", "")
 
         if not descriptor:
             logger.warning("No backbone descriptor is configured")
@@ -90,8 +90,8 @@ class EnvironmentConfigLoader:
         """Attach to a queue-like communication channel using the descriptor
         found in an environment variable.
 
-        :returns: The attached queue specified via `SS_REQUEST_QUEUE`"""
-        descriptor = os.getenv("SS_REQUEST_QUEUE", "")
+        :returns: The attached queue specified via `_SMARTSIM_REQUEST_QUEUE`"""
+        descriptor = os.getenv("_SMARTSIM_REQUEST_QUEUE", "")
 
         if not descriptor:
             logger.warning("No queue descriptor is configured")

@@ -515,7 +515,7 @@ class DragonBackend:
                         env={
                             **request.current_env,
                             **request.env,
-                            "SS_INFRA_BACKBONE": self.infra_ddict,
+                            "_SMARTSIM_INFRA_BACKBONE": self.infra_ddict,
                         },
                         stdout=dragon_process.Popen.PIPE,
                         stderr=dragon_process.Popen.PIPE,

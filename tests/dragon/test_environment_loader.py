@@ -55,7 +55,9 @@ def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.Monke
     """A descriptor can be stored, loaded, and reattached"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv(
+        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+    )
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -76,7 +78,9 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
     queue are the same"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv(
+        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+    )
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -89,7 +93,7 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
 
 def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
     """An incorrect serialized descriptor will fails to attach"""
-    monkeypatch.setenv("SS_REQUEST_QUEUE", "randomstring")
+    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", "randomstring")
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=None,
@@ -104,7 +108,7 @@ def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
     """Verify the dragon feature store is loaded correctly by the
     EnvironmentConfigLoader to demonstrate featurestore_factory correctness"""
     feature_store = DragonFeatureStore(DDict())
-    monkeypatch.setenv("SS_INFRA_BACKBONE", feature_store.descriptor)
+    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", feature_store.descriptor)
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
