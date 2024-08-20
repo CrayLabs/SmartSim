@@ -218,6 +218,8 @@ class Versioner:
             "onnxmltools": "1.12.0",
             "scikit-learn": "1.3.2",
             "torchvision": "0.15.2",
+            "torch_cpu_suffix": "+cpu",
+            "torch_cuda_suffix": "+cu117",
         }
 
         # remove torch-related fields as they are subject to change
