@@ -350,3 +350,15 @@ def test_place_outputs() -> None:
 
     for i in range(3):
         assert feature_store[keys[i].key] == data[i]
+
+
+@pytest.mark.parametrize(
+    "key, descriptor",
+    [
+        pytest.param("", "desc", id="invalid key"),
+        pytest.param("key", "", id="invalid descriptor"),
+    ],
+)
+def test_invalid_featurestorekey(key, descriptor) -> None:
+    with pytest.raises(ValueError):
+        fsk = FeatureStoreKey(key, descriptor)
