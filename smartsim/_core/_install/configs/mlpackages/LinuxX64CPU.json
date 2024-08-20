@@ -34,15 +34,15 @@
         },
         {
             "name": "onnxruntime",
-            "version": "1.18.1",
+            "version": "1.17.3",
             "pip_index": "",
             "python_packages": [
-                "onnx<=1.16.2",
+                "onnx<=1.15",
                 "skl2onnx",
                 "scikit-learn",
                 "onnxmltools"
             ],
-            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.18.1/onnxruntime-linux-x64-1.18.1.tgz"
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-linux-x64-1.17.3.tgz"
         }
     ]
 

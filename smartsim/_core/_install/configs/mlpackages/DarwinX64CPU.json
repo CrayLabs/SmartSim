@@ -34,7 +34,7 @@
         },
         {
             "name": "onnxruntime",
-            "version": "1.18.1",
+            "version": "1.19.0",
             "pip_index": "",
             "python_packages": [
                 "onnx==1.16.2",

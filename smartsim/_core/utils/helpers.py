@@ -250,14 +250,14 @@ def installed_redisai_backends(
     """
     # import here to avoid circular import
     base_path = redis_install_base(backends_path)
-    backends: t.Dict[str, TRedisAIBackendStr] = {
-        "tensorflow": "libtensorflow",
-        "torch": "libtorch",
-        "onnxruntime": "onnxruntime",
+    backends: t.Set = {
+        "tensorflow",
+        "torch",
+        "onnxruntime",
     }
 
     installed = {
-        backends[backend] for backend in backends if _installed(base_path, backend)
+        backend for backend in backends if _installed(base_path, backend)
     }
     return installed
 
