@@ -100,12 +100,10 @@ class ShellLauncher:
     def create(cls, _: Experiment) -> Self:
         return cls()
 
-    
+
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[
-    LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
-]:
+) -> _FormatterType[LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 
