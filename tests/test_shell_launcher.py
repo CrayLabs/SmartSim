@@ -45,6 +45,7 @@ from smartsim.status import JobStatus
 #       -> have border tests for 0,1,4,6 cmd vals -> work correctly without them -> raise ValueError
 # do all of the failures as well as the sucess criteria
 
+pytestmark = pytest.mark.group_a
 
 class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
