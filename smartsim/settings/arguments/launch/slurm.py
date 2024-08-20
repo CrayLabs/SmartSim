@@ -252,9 +252,7 @@ class SlurmLaunchArguments(ShellLaunchArguments):
                     formatted += ["=".join((prefix + key, str(value)))]
         return formatted
 
-    def format_env_vars(
-        self, env_vars: t.Dict[str, t.Optional[str]]
-    ) -> t.Union[t.List[str], None]:
+    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str] | None:
         """Build bash compatible environment variable string for Slurm
 
         :returns: the formatted string of environment variables
@@ -291,7 +289,7 @@ class SlurmLaunchArguments(ShellLaunchArguments):
 
         return fmt_exported_env, compound_env
 
-    def _check_env_vars(self, env_vars: t.Dict[str, t.Optional[str]]) -> None:
+    def _check_env_vars(self, env_vars: t.Mapping[str, str | None]) -> None:
         """Warn a user trying to set a variable which is set in the environment
 
         Given Slurm's env var precedence, trying to export a variable which is already

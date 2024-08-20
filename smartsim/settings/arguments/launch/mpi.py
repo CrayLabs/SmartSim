@@ -172,9 +172,7 @@ class _BaseMPILaunchArguments(ShellLaunchArguments):
         else:
             self._launch_args.pop("quiet", None)
 
-    def format_env_vars(
-        self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]
-    ) -> t.Union[t.List[str], None]:
+    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str] | None:
         """Format the environment variables for mpirun
 
         :return: list of env vars

@@ -32,17 +32,13 @@ from abc import abstractmethod
 from smartsim.log import get_logger
 from smartsim.settings.arguments.launchArguments import LaunchArguments
 
-if t.TYPE_CHECKING:
-    from smartsim.settings.arguments import LaunchArguments
-
 logger = get_logger(__name__)
 
 
 class ShellLaunchArguments(LaunchArguments):
     @abstractmethod
     def format_env_vars(
-        self, env_vars: t.Dict[str, t.Optional[str]]
-    ) -> t.Union[t.List[str], None]: ...
-
+        self, env_vars: t.Mapping[str, str | None]
+    ) -> list[str] | None: ...
     @abstractmethod
-    def format_launch_args(self) -> t.Union[t.List[str], None]: ...
+    def format_launch_args(self) -> list[str] | None: ...

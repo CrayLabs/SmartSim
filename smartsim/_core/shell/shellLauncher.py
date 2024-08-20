@@ -32,13 +32,12 @@ import subprocess as sp
 import typing as t
 
 import psutil
-
+from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import _EnvironMappingType, _FormatterType, dispatch
 from smartsim._core.utils import helpers
 from smartsim._core.utils.launcher import ExecutableProtocol, create_job_id
 from smartsim.error import errors
 from smartsim.log import get_logger
-from smartsim.settings.arguments.launchArguments import LaunchArguments
 from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
 
@@ -100,11 +99,11 @@ class ShellLauncher:
     def create(cls, _: Experiment) -> Self:
         return cls()
 
-    
+
 def make_shell_format_fn(
     run_command: str | None,
 ) -> _FormatterType[
-    LaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
+    ShellLaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
 ]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
@@ -122,7 +121,7 @@ def make_shell_format_fn(
         as_srun_command = make_shell_format_fn("srun")
         fmt_cmd = as_srun_command(slurm_args, echo_hello_world, env)
         print(list(fmt_cmd))
-        # prints: "['srun', '--nodes=3', '--', 'echo', 'Hello World!']"
+        # prints: "['srun', --export ALL,foo=bar,baz=meep,spam=eggs '--nodes=3', '--', 'echo', 'Hello World!']"
 
     .. note::
         This function was/is a kind of slap-dash implementation, and is likely
@@ -136,7 +135,7 @@ def make_shell_format_fn(
     """
 
     def impl(
-        args: LaunchArguments,
+        args: ShellLaunchArguments,
         exe: ExecutableProtocol,
         path: str | os.PathLike[str],
         _env: _EnvironMappingType,

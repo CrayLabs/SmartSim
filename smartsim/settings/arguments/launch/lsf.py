@@ -74,9 +74,7 @@ class JsrunLaunchArguments(ShellLaunchArguments):
         """
         self.set("bind", binding)
 
-    def format_env_vars(
-        self, env_vars: t.Dict[str, t.Optional[str]]
-    ) -> t.Union[t.List[str], None]:
+    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str] | None:
         """Format environment variables. Each variable needs
         to be passed with ``--env``. If a variable is set to ``None``,
         its value is propagated from the current environment.
