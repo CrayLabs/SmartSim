@@ -211,6 +211,7 @@ class Versioner:
         """Optional ML/DL dependencies we suggest for the user.
         """
         ml_defaults = {
+            "torch": self.TORCH,
             "tensorflow": self.TENSORFLOW,
             "onnx": self.ONNX,
             "skl2onnx": "1.16.0",
