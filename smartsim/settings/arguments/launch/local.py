@@ -63,7 +63,7 @@ class LocalLaunchArguments(ShellLaunchArguments):
                 formatted.append(f"{key}={val}")
         return formatted
 
-    def format_launch_args(self) -> t.Union[t.List[str], None]:
+    def format_launch_args(self) -> t.List[str]:
         """Build launcher argument string
 
         :returns: formatted list of launcher arguments

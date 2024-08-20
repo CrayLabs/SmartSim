@@ -234,7 +234,7 @@ class SlurmLaunchArguments(ShellLaunchArguments):
         else:
             self._launch_args.pop("quiet", None)
 
-    def format_launch_args(self) -> t.Union[t.List[str], None]:
+    def format_launch_args(self) -> t.List[str]:
         """Return a list of slurm formatted launch arguments
 
         :return: list of slurm arguments for these settings

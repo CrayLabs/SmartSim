@@ -188,7 +188,7 @@ class AprunLaunchArguments(ShellLaunchArguments):
                 formatted += ["-e", name + "=" + str(value)]
         return formatted
 
-    def format_launch_args(self) -> t.Union[t.List[str], None]:
+    def format_launch_args(self) -> t.List[str]:
         """Return a list of ALPS formatted run arguments
 
         :return: list of ALPS arguments for these settings

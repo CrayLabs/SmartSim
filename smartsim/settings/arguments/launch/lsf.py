@@ -89,7 +89,7 @@ class JsrunLaunchArguments(ShellLaunchArguments):
                 format_str += ["-E", f"{k}"]
         return format_str
 
-    def format_launch_args(self) -> t.Union[t.List[str], None]:
+    def format_launch_args(self) -> t.List[str]:
         """Return a list of LSF formatted run arguments
 
         :return: list of LSF arguments for these settings
