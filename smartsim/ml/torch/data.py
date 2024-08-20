@@ -35,11 +35,15 @@ from smartsim.ml.data import DataDownloader
 
 class Client(Mock):
     """Mock Client"""
+
     pass
+
 
 class Dataset(Mock):
     """Mock Dataset"""
+
     pass
+
 
 class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDataset):
     def __init__(self, **kwargs: t.Any) -> None:

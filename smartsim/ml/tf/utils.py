@@ -83,7 +83,7 @@ def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]
     :param model: TensorFlow or Keras model
     :return: serialized model, model input layer names, model output layer names
     """
-    
+
     full_model = tf.function(model)
     full_model = full_model.get_concrete_function(
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)

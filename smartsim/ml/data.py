@@ -83,7 +83,6 @@ class DataInfo:
         """
         ...
 
-
     def download(self) -> None:
         """Download DataInfo information from FeatureStore
 
@@ -93,7 +92,6 @@ class DataInfo:
 
         :param client: Client to connect to Feature Store
         """
-
 
     def __repr__(self) -> str:
         strings = ["DataInfo object"]
@@ -124,7 +122,7 @@ class TrainingDataUploader:
     :param target_name: Name of targets tensor (if needed) in uploaded Datasets
     :param num_classes: Number of classes of targets, if categorical
     :param cluster: Whether the SmartSim FeatureStore is being run as a cluster
-    :param address: 
+    :param address:
     :param rank: Rank of DataUploader in multi-process application (e.g. MPI rank).
     :param verbose: If output should be logged to screen.
 
@@ -283,7 +281,6 @@ class DataDownloader:
         if init_samples:
             self.init_samples(max_fetch_trials, wait_interval)
 
-
     def log(self, message: str) -> None:
         if self.verbose:
             logger.info(message)
@@ -377,7 +374,6 @@ class DataDownloader:
 
     def _update_samples_and_targets(self) -> None:
         self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
-
 
     def update_data(self) -> None:
         if self.dynamic:

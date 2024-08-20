@@ -115,6 +115,7 @@ class _DBAddress:
         """Pretty-print the instance"""
         return f"{self.host}:{self.port}"
 
+
 # TODO add a new Client
 class DBCollector(Collector):
     """A base class for collectors that retrieve statistics from a feature store"""

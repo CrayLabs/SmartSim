@@ -45,8 +45,10 @@ from ...utils.helpers import encode_cmd, get_base_36_repr
 
 logger = get_logger(__name__)
 
+
 def write_colocated_launch_script():
     pass
+
 
 class Step:
     def __init__(

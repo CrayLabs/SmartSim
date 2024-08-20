@@ -277,6 +277,7 @@ class _DLPackRepository(_WebGitRepository):
     def url(self) -> str:
         return ""
 
+
 class _WebArchive(_WebLocation):
     @property
     def name(self) -> str:
@@ -337,7 +338,6 @@ class _PTArchive(_WebZip):
                 var.supported_platforms() for var in _PTArchive.__subclasses__()
             )
         )
-
 
     @staticmethod
     def _patch_out_mkl(libtorch_root: Path) -> None:

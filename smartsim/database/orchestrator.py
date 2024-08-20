@@ -65,14 +65,18 @@ from ..wlm import detect_launcher
 
 logger = get_logger(__name__)
 
+
 class Client(Mock):
     """Mock Client"""
+
 
 class ConfigOptions(Mock):
     """Mock ConfigOptions"""
 
+
 def fs_is_active():
     return False
+
 
 by_launcher: t.Dict[str, t.List[str]] = {
     "dragon": [""],
@@ -390,7 +394,6 @@ class FeatureStore(EntityList[FSNode]):
             return False
         return fs_is_active(hosts, self.ports, self.num_shards)
 
-
     @property
     def checkpoint_file(self) -> str:
         """Get the path to the checkpoint file for this Feature Store
@@ -610,7 +613,7 @@ class FeatureStore(EntityList[FSNode]):
             try:
                 for address in addresses:
                     client.config_set(key, value, address)
-                    
+
             except TypeError:
                 raise TypeError(
                     "Incompatible function arguments. The key and value used for "

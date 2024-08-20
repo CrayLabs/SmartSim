@@ -73,10 +73,7 @@ def check_py_tf_version(versions: Versioner) -> None:
     _check_packages_in_python_env({"tensorflow": Version_(versions.TENSORFLOW)})
 
 
-
-def build_feature_store(
-    build_env: BuildEnv, verbose: bool
-) -> None:
+def build_feature_store(build_env: BuildEnv, verbose: bool) -> None:
     # check feature store installation
     feature_store_builder = builder.FeatureStoreBuilder(
         build_env(),
@@ -86,13 +83,12 @@ def build_feature_store(
         malloc=build_env.MALLOC,
         verbose=verbose,
     )
- 
+
     if not feature_store_builder.is_built:
         logger.info("No feature store is currently being built by 'smart build'")
 
         feature_store_builder.cleanup()
     logger.info("No feature store is currently being built by 'smart build'")
-
 
 
 def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> None:
@@ -277,7 +273,7 @@ def execute(
     except (SetupError, BuildError) as e:
         logger.error(str(e))
         return os.EX_SOFTWARE
-    
+
     backends = []
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) built")

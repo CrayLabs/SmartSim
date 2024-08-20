@@ -86,7 +86,6 @@ class Config:
         self.conf_path = Path(dependency_path, "config")
         self.conf_dir = Path(self.core_path, "config")
 
-
     @property
     def database_file_parse_trials(self) -> int:
         return int(os.getenv("SMARTSIM_DB_FILE_PARSE_TRIALS", "10"))

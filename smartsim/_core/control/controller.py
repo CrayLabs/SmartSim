@@ -90,26 +90,34 @@ JM_LOCK = threading.RLock()
 class Client(Mock):
     """Mock Client"""
 
+
 class ConfigOptions(Mock):
     """Mock ConfigOptions"""
+
 
 def fs_is_active():
     pass
 
+
 def set_ml_model():
     pass
+
 
 def set_script():
     pass
 
+
 def shutdown_fs_node():
     pass
+
 
 def create_cluster():
     pass
 
+
 def check_cluster_status():
     pass
+
 
 class Controller:
     """The controller module provides an interface between the

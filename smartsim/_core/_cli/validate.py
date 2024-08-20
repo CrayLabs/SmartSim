@@ -69,8 +69,7 @@ class _VerificationTempDir(_TemporaryDirectory):
             self._finalizer.detach()  # type: ignore[attr-defined]
 
 
-def execute(
-    args: argparse.Namespace) -> int:
+def execute(args: argparse.Namespace) -> int:
     """Validate the SmartSim installation works as expected given a
     simple experiment
     """

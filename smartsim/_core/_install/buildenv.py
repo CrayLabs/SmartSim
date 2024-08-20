@@ -153,6 +153,7 @@ class Version_(str):
 def get_env(var: str, default: str) -> str:
     return os.environ.get(var, default)
 
+
 # TODO Add A Version class for the new backend
 
 
@@ -206,10 +207,9 @@ class Versioner:
         }
         return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
 
-    # TODO add a backend for ml libraries 
+    # TODO add a backend for ml libraries
     def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
-        """Optional ML/DL dependencies we suggest for the user.
-        """
+        """Optional ML/DL dependencies we suggest for the user."""
         ml_defaults = {
             "torch": self.TORCH,
             "tensorflow": self.TENSORFLOW,

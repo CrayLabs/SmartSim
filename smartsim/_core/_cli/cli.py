@@ -103,6 +103,7 @@ class SmartCli:
         for item in menu_items:
             self._register_menu_item(item)
 
+
 def default_cli() -> SmartCli:
     menu = [
         MenuItemConfig(
