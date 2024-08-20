@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import os
 import typing as t
+import pathlib
 
 from smartsim._core.schemas.dragonRequests import DragonRunPolicy
 from smartsim.error import errors
@@ -368,6 +369,8 @@ def _as_run_request_args_and_policy(
     exe: ExecutableProtocol,
     path: str | os.PathLike[str],
     env: t.Mapping[str, str | None],
+    stdout_path: pathlib.Path,
+    stderr_path: pathlib.Path,
 ) -> tuple[DragonRunRequestView, DragonRunPolicy]:
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     # FIXME: This type is 100% unacceptable, but I don't want to spend too much
@@ -389,8 +392,8 @@ def _as_run_request_args_and_policy(
             env=env,
             # TODO: Not sure how this info is injected
             name=None,
-            output_file=None,
-            error_file=None,
+            output_file=stdout_path,
+            error_file=stderr_path,
             **run_args,
         ),
         policy,

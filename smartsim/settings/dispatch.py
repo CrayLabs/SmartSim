@@ -54,8 +54,8 @@ if t.TYPE_CHECKING:
 class ShellLauncherCommand(t.NamedTuple):
     env: _EnvironMappingType
     path: pathlib.Path
-    stdout: pathlib.Path
-    stderr: pathlib.Path
+    stdout: TextIOWrapper
+    stderr: TextIOWrapper
     command_tuple: tuple[str, tuple[str, ...]] | t.Sequence[str]
 
 
@@ -516,7 +516,7 @@ class ShellLauncher:
         exe, *rest = shell_command.command_tuple
         expanded_exe = helpers.expand_exe_path(exe)
         # pylint: disable-next=consider-using-with
-        self._launched[id_] = sp.Popen((expanded_exe, *rest), cwd=shell_command.path, env={k:v for k,v in shell_command.env.items() if v is not None}, stdout=open(shell_command.stdout), stderr=open(shell_command.stderr))
+        self._launched[id_] = sp.Popen((expanded_exe, *rest), cwd=shell_command.path, env={k:v for k,v in shell_command.env.items() if v is not None}, stdout=shell_command.stdout, stderr=shell_command.stderr)
         # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 

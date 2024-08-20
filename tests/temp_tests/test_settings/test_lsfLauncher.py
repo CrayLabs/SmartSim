@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
-import pathlib
+import subprocess
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.lsf import (
@@ -92,42 +92,42 @@ def test_launch_args():
 @pytest.mark.parametrize(
     "args, expected",
     (
-        pytest.param({}, ("jsrun", "--", "echo", "hello", "world"), id="Empty Args"),
+        pytest.param({}, ("jsrun", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'), id="Empty Args"),
         pytest.param(
             {"n": "1"},
-            ("jsrun", "-n", "1", "--", "echo", "hello", "world"),
+            ("jsrun", "-n", "1", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
             id="Short Arg",
         ),
         pytest.param(
             {"nrs": "1"},
-            ("jsrun", "--nrs=1", "--", "echo", "hello", "world"),
+            ("jsrun", "--nrs=1", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
             id="Long Arg",
         ),
         pytest.param(
             {"v": None},
-            ("jsrun", "-v", "--", "echo", "hello", "world"),
+            ("jsrun", "-v", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
             id="Short Arg (No Value)",
         ),
         pytest.param(
             {"verbose": None},
-            ("jsrun", "--verbose", "--", "echo", "hello", "world"),
+            ("jsrun", "--verbose", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
             id="Long Arg (No Value)",
         ),
         pytest.param(
             {"tasks_per_rs": "1", "n": "123"},
-            ("jsrun", "--tasks_per_rs=1", "-n", "123", "--", "echo", "hello", "world"),
+            ("jsrun", "--tasks_per_rs=1", "-n", "123", "--", "echo", "hello", "world", '--stdio_stdout=output.txt', '--stdio_stderr=error.txt'),
             id="Short and Long Args",
         ),
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
-    outfile = "out.txt"
-    errfile = "err.txt"
+    outfile = "output.txt"
+    errfile = "error.txt"
     env, path, stdin, stdout, args = _as_jsrun_command(
         JsrunLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
     )
     assert tuple(args) == expected
-    assert path == pathlib.Path(test_dir)
+    assert path == test_dir
     assert env == {}
-    assert stdin == f"--stdio_stdout={outfile}"
-    assert stdout == f"--stdio_stderr={errfile}"
+    assert stdin == subprocess.DEVNULL
+    assert stdout == subprocess.DEVNULL

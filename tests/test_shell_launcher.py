@@ -27,6 +27,7 @@
 import tempfile
 import unittest.mock
 import pytest
+import subprocess
 import pathlib
 import psutil
 import difflib
@@ -135,7 +136,7 @@ def test_popen_returns_popen_object(test_dir: str):
     shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with open(out_file, "w", encoding="utf-8") as out, open(err_file, "w", encoding="utf-8") as err:
-        cmd = ShellLauncherCommand({}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments())
+        cmd = ShellLauncherCommand({}, run_dir, subprocess.DEVNULL, subprocess.DEVNULL, EchoHelloWorldEntity().as_program_arguments())
         id = shell_launcher.start(cmd)
     proc = shell_launcher._launched[id]
     assert isinstance(proc, sp.Popen)
