@@ -273,6 +273,10 @@ class _DLPackRepository(_WebGitRepository):
             (OperatingSystem.DARWIN, Architecture.ARM64),
         )
 
+    @property
+    def url(self) -> str:
+        return ""
+
 class _WebArchive(_WebLocation):
     @property
     def name(self) -> str:
