@@ -47,7 +47,6 @@ from ..._core.utils.helpers import (
     unpack_colo_fs_identifier,
     unpack_fs_identifier,
 )
-
 from ...database import FeatureStore
 from ...entity import Application, Ensemble, EntitySequence, SmartSimEntity
 from ...error import (

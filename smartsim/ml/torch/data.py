@@ -26,12 +26,12 @@
 
 import typing as t
 
-
 import numpy as np
-from smartsim.entity._mock import Mock
 import torch
 
+from smartsim.entity._mock import Mock
 from smartsim.ml.data import DataDownloader
+
 
 class Client(Mock):
     """Mock Client"""
