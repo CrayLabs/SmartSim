@@ -137,6 +137,7 @@ class PerfTimer:
         """Set whether the timer will record time"""
         self._timing_on = active
 
+    @property
     def is_active(self) -> bool:
         """Returns true if the timer will record time"""
         return self._timing_on

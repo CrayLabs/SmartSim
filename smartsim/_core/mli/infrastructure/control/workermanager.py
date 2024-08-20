@@ -121,7 +121,7 @@ class WorkerManager(Service):
         """
         # collect all feature stores required by the request
         fs_model: t.Set[str] = set()
-        if batch.model_key:
+        if batch.model_key.key:
             fs_model = {batch.model_key.descriptor}
         fs_inputs = {key.descriptor for key in batch.input_keys}
         fs_outputs = {key.descriptor for key in batch.output_keys}
@@ -181,18 +181,17 @@ class WorkerManager(Service):
             )
             return
 
-        if self._device_manager is None:
-            for request in batch.requests:
-                exception_handler(
-                    ValueError(
-                        "No Device Manager available: did you call _on_start()?"
-                    ),
-                    request.callback,
-                    "Error acquiring device manager",
-                )
-                return
-
         try:
+            if self._device_manager is None:
+                for request in batch.requests:
+                    exception_handler(
+                        ValueError(
+                            "No Device Manager available: did you call _on_start()?"
+                        ),
+                        request.callback,
+                        "Error acquiring device manager",
+                    )
+                return
             device: WorkerDevice = next(
                 self._device_manager.get_device(
                     worker=self._worker,
