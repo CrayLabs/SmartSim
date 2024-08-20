@@ -66,6 +66,7 @@ logger = get_logger("Request Dispatcher")
 # Placeholder
 ModelIdentifier = FeatureStoreKey
 
+
 class WorkerDevice:
     def __init__(self, name: str) -> None:
         """Wrapper around a device to keep track of loaded Models and availability

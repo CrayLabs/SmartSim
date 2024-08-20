@@ -26,10 +26,10 @@
 
 import typing as t
 
+from .....log import get_logger
 from ...infrastructure.storage.featurestore import FeatureStore
 from ..worker.worker import MachineLearningWorkerBase
 from .requestdispatcher import RequestBatch
-from .....log import get_logger
 
 logger = get_logger(__name__)
 

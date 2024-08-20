@@ -24,30 +24,37 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 dragon = pytest.importorskip("dragon")
 
+import multiprocessing as mp
+
 import dragon.utils as du
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
+from dragon.mpbridge.queues import DragonQueue
 
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.control.devicemanager import WorkerDevice
+from smartsim._core.mli.infrastructure.control.requestdispatcher import (
+    RequestDispatcher,
+)
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
-)
-from smartsim._core.mli.infrastructure.control.requestdispatcher import (
-    RequestDispatcher,
 )
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore, FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.featurestore import (
+    FeatureStore,
+    FeatureStoreKey,
+)
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
     FetchInputResult,
@@ -106,17 +113,12 @@ def setup_worker_manager_model_bytes(
         queue_factory=DragonFLIChannel.from_descriptor,
     )
 
-    dispatcher = RequestDispatcher(
-        batch_timeout=0,
-        batch_size=1,
-        config_loader=config_loader,
-        worker_type=integrated_worker_type,
-    )
+    dispatcher_task_queue = mp.Queue(maxsize=0)
 
     worker_manager = WorkerManager(
         config_loader=config_loader,
         worker_type=integrated_worker_type,
-        dispatcher_queue=dispatcher.task_queue,
+        dispatcher_queue=dispatcher_task_queue,
         as_service=False,
         cooldown=3,
     )
@@ -124,7 +126,16 @@ def setup_worker_manager_model_bytes(
     tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
     output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
 
-    request = InferenceRequest(model_key= None, callback = None, raw_inputs= None, input_keys=[tensor_key], input_meta = None, output_keys=[output_key], raw_model=b'model', batch_size=0)
+    request = InferenceRequest(
+        model_key=None,
+        callback=None,
+        raw_inputs=None,
+        input_keys=[tensor_key],
+        input_meta=None,
+        output_keys=[output_key],
+        raw_model=b"model",
+        batch_size=0,
+    )
 
     model_id = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
 
@@ -134,11 +145,7 @@ def setup_worker_manager_model_bytes(
         model_id,
     )
 
-    dispatcher.task_queue.put(request_batch)
-
-    #
-    # wrapped_queue.send(ser_request)
-
+    dispatcher_task_queue.put(request_batch)
     return worker_manager, integrated_worker_type
 
 
@@ -149,7 +156,7 @@ def setup_worker_manager_model_key(
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
 ):
-    integrated_worker = IntegratedTorchWorker()
+    integrated_worker_type = IntegratedTorchWorker
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
@@ -157,30 +164,46 @@ def setup_worker_manager_model_key(
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
     monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
 
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=FileSystemCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
+    )
+
+    dispatcher_task_queue = mp.Queue(maxsize=0)
+
     worker_manager = WorkerManager(
-        EnvironmentConfigLoader(
-            featurestore_factory=DragonFeatureStore.from_descriptor,
-            callback_factory=FileSystemCommChannel.from_descriptor,
-            queue_factory=DragonFLIChannel.from_descriptor,
-        ),
-        integrated_worker,
+        config_loader=config_loader,
+        worker_type=integrated_worker_type,
+        dispatcher_queue=dispatcher_task_queue,
         as_service=False,
         cooldown=3,
     )
 
-    tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
-    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
-    model_key = MessageHandler.build_model_key(
-        "model key", app_feature_store.descriptor
+    tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+    output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+    model_key = FeatureStoreKey(
+        key="model key", descriptor=app_feature_store.descriptor
     )
 
-    MessageHandler.build_request(
-        test_dir, model_key, [tensor_key], [output_key], [], None
+    request = InferenceRequest(
+        model_key=model_key,
+        callback=None,
+        raw_inputs=None,
+        input_keys=[tensor_key],
+        input_meta=None,
+        output_keys=[output_key],
+        raw_model=b"model",
+        batch_size=0,
     )
-    ser_request = MessageHandler.serialize_request(request)
-    worker_manager._dispatcher_queue.send(ser_request)
+    request_batch = RequestBatch(
+        [request],
+        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]]),
+        model_key=model_key,
+    )
 
-    return worker_manager, integrated_worker
+    dispatcher_task_queue.put(request_batch)
+    return worker_manager, integrated_worker_type
 
 
 def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stage):
@@ -190,7 +213,7 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
     monkeypatch.setattr(integrated_worker, stage, mock_stage)
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        "smartsim._core.mli.infrastructure.control.commons.build_failure_reply",
         mock_reply_fn,
     )
 
@@ -216,20 +239,14 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
     "stage, error_message",
     [
         pytest.param(
-            "fetch_model", "Failed while fetching the model.", id="fetch model"
+            "fetch_model",
+            "Error loading model on device or getting device.",
+            id="fetch model",
         ),
         pytest.param(
             "load_model",
-            "Failed while loading model from feature store.",
+            "Error loading model on device or getting device.",
             id="load model",
-        ),
-        pytest.param(
-            "fetch_inputs", "Failed while fetching the inputs.", id="fetch inputs"
-        ),
-        pytest.param(
-            "transform_input",
-            "Failed while transforming the input.",
-            id="transform inputs",
         ),
         pytest.param("execute", "Failed while executing.", id="execute"),
         pytest.param(
@@ -242,7 +259,7 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         ),
     ],
 )
-def test_pipeline_stage_errors_handled(
+def test_wm_pipeline_stage_errors_handled(
     request,
     setup_worker_manager,
     monkeypatch: pytest.MonkeyPatch,
@@ -254,6 +271,9 @@ def test_pipeline_stage_errors_handled(
         setup_worker_manager
     )
     integrated_worker = worker_manager._worker
+
+    worker_manager._on_start()
+    device = worker_manager._device_manager._device
     mock_reply_fn = mock_pipeline_stage(monkeypatch, integrated_worker, stage)
 
     if stage not in ["fetch_model"]:
@@ -262,42 +282,28 @@ def test_pipeline_stage_errors_handled(
             "fetch_model",
             MagicMock(return_value=FetchModelResult(b"result_bytes")),
         )
-
     if stage not in ["fetch_model", "load_model"]:
         monkeypatch.setattr(
             integrated_worker,
             "load_model",
             MagicMock(return_value=LoadModelResult(b"result_bytes")),
         )
-    if stage not in ["fetch_model", "load_model", "fetch_inputs"]:
         monkeypatch.setattr(
-            integrated_worker,
-            "fetch_inputs",
-            MagicMock(return_value=FetchInputResult([b"result_bytes"], None)),
-        )
-    if stage not in ["fetch_model", "load_model", "fetch_inputs", "transform_input"]:
-        monkeypatch.setattr(
-            integrated_worker,
-            "transform_input",
-            MagicMock(return_value=TransformInputResult(b"result_bytes")),
+            device,
+            "get_model",
+            MagicMock(return_value=b"result_bytes"),
         )
     if stage not in [
         "fetch_model",
-        "load_model",
-        "fetch_inputs",
-        "transform_input",
         "execute",
     ]:
         monkeypatch.setattr(
             integrated_worker,
             "execute",
-            MagicMock(return_value=ExecuteResult(b"result_bytes")),
+            MagicMock(return_value=ExecuteResult(b"result_bytes", [slice(0, 1)])),
         )
     if stage not in [
         "fetch_model",
-        "load_model",
-        "fetch_inputs",
-        "transform_input",
         "execute",
         "transform_output",
     ]:
@@ -305,11 +311,10 @@ def test_pipeline_stage_errors_handled(
             integrated_worker,
             "transform_output",
             MagicMock(
-                return_value=TransformOutputResult(b"result", [], "c", "float32")
+                return_value=[TransformOutputResult(b"result", [], "c", "float32")]
             ),
         )
 
-    worker_manager._on_start()
     worker_manager._on_iteration()
 
     mock_reply_fn.assert_called_once()
@@ -323,7 +328,7 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
 
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        "smartsim._core.mli.infrastructure.control.commons.build_failure_reply",
         mock_reply_fn,
     )
 

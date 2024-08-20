@@ -150,7 +150,7 @@ class WorkerManager(Service):
         :param batch: The batch of requests to validate
         :return: False if the request fails any validation checks, True otherwise"""
 
-        if batch is None or len(batch.requests)==0:
+        if batch is None or len(batch.requests) == 0:
             return False
 
         return self._check_feature_stores(batch)
@@ -184,9 +184,11 @@ class WorkerManager(Service):
         if self._device_manager is None:
             for request in batch.requests:
                 exception_handler(
-                    ValueError("No Device Manager available: did you call _on_start()?"),
+                    ValueError(
+                        "No Device Manager available: did you call _on_start()?"
+                    ),
                     request.callback,
-                    "Error acquiring device manager"
+                    "Error acquiring device manager",
                 )
                 return
 
@@ -203,7 +205,7 @@ class WorkerManager(Service):
                 exception_handler(
                     exc,
                     request.callback,
-                    "Error loading model on device or getting device"
+                    "Error loading model on device or getting device.",
                 )
             return
         self._perf_timer.measure_time("fetch_model")
@@ -213,9 +215,7 @@ class WorkerManager(Service):
         except Exception as exc:
             for request in batch.requests:
                 exception_handler(
-                    exc,
-                    request.callback,
-                    "Error getting model from device"
+                    exc, request.callback, "Error getting model from device."
                 )
             return
         self._perf_timer.measure_time("load_model")
@@ -236,7 +236,7 @@ class WorkerManager(Service):
             )
         except Exception as e:
             for request in batch.requests:
-                exception_handler(e, request.callback, "Error executing worker.")
+                exception_handler(e, request.callback, "Failed while executing.")
             return
         self._perf_timer.measure_time("execute")
 
