@@ -26,6 +26,7 @@
 
 import os
 import pathlib
+import shutil
 import subprocess
 import unittest.mock
 
@@ -46,6 +47,8 @@ from smartsim.status import JobStatus
 # do all of the failures as well as the sucess criteria
 
 pytestmark = pytest.mark.group_a
+
+requires_slurm = pytest.mark.skipif(not shutil.which("srun"), reason="requires srun")
 
 
 class EchoHelloWorldEntity(entity.SmartSimEntity):
@@ -179,6 +182,7 @@ def test_popen_writes_to_output_file(test_dir: str):
     print(val)
 
 
+@requires_slurm
 def test_popen_fails_with_invalid_cmd(test_dir):
     """Test that popen returns a non zero returncode after failure"""
     shell_launcher = ShellLauncher()
@@ -244,6 +248,7 @@ def test_shell_launcher_returns_complete_status(test_dir):
             assert code[val] == JobStatus.COMPLETED
 
 
+@requires_slurm
 def test_shell_launcher_returns_failed_status(test_dir):
     """Test tht ShellLauncher returns the status of completed Jobs"""
     shell_launcher = ShellLauncher()
