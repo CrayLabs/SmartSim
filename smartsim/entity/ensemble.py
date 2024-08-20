@@ -87,9 +87,6 @@ class Ensemble(entity.CompoundEntity):
             Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
-                run_settings=_mock.Mock(),
-                # ^^^^^^^^^^^^^^^^^^^^^^^
-                # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
                 files=self.files,
                 params=permutation.params,
