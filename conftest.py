@@ -154,23 +154,23 @@ def pytest_sessionfinish(
     Called after whole test run finished, right before
     returning the exit status to the system.
     """
-    # if exitstatus == 0:
-    #     cleanup_attempts = 5
-    #     while cleanup_attempts > 0:
-    #         try:
-    #             shutil.rmtree(test_output_root)
-    #         except OSError as e:
-    #             cleanup_attempts -= 1
-    #             time.sleep(1)
-    #             if not cleanup_attempts:
-    #                 raise
-    #         else:
-    #             break
-    # else:
-    #     # kill all spawned processes
-    #     if CONFIG.test_launcher == "dragon":
-    #         time.sleep(5)
-    #     kill_all_test_spawned_processes()
+    if exitstatus == 0:
+        cleanup_attempts = 5
+        while cleanup_attempts > 0:
+            try:
+                shutil.rmtree(test_output_root)
+            except OSError as e:
+                cleanup_attempts -= 1
+                time.sleep(1)
+                if not cleanup_attempts:
+                    raise
+            else:
+                break
+    else:
+        # kill all spawned processes
+        if CONFIG.test_launcher == "dragon":
+            time.sleep(5)
+        kill_all_test_spawned_processes()
 
 
 def build_mpi_app() -> t.Optional[pathlib.Path]:

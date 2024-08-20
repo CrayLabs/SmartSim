@@ -30,24 +30,18 @@ import abc
 import collections.abc
 import dataclasses
 import io
-import os
 import pathlib
-import subprocess
 import subprocess as sp
 import typing as t
 import uuid
-from subprocess import STDOUT
 
 import psutil
 from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
 
-from smartsim._core.commands import Command, CommandList
 from smartsim._core.utils import helpers
 from smartsim.error import errors
 from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
-
-from ..settings.launchCommand import LauncherType
 
 if t.TYPE_CHECKING:
     from smartsim.experiment import Experiment
@@ -522,10 +516,7 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    # covariant, contravariant, + boliscoff substitution princ
-    def start(
-        self, shell_command: ShellLauncherCommand  # this should be a named tuple
-    ) -> LaunchedJobID:
+    def start(self, shell_command: ShellLauncherCommand) -> LaunchedJobID:
         id_ = create_job_id()
         # raise ValueError -> invalid stuff throw
         exe, *rest = shell_command.command_tuple
@@ -537,7 +528,6 @@ class ShellLauncher:
             stdout=shell_command.stdout,
             stderr=shell_command.stderr,
         )
-        # Popen starts a new process and gives you back a handle to process, getting back the pid - process id
         return id_
 
     def get_status(
@@ -549,14 +539,10 @@ class ShellLauncher:
         if (proc := self._launched.get(id_)) is None:
             msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
             raise errors.LauncherJobNotFound(msg)
-        ret_code = (
-            proc.poll()
-        )  # add a test that mocks out poll and raise some exception - terminal -> import subprocess -> start something echo blah - then poll and see what a valid fake output is
-        print(ret_code)
+        ret_code = proc.poll()
         # try/catch around here and then reaise a smartsim.error
         if ret_code is None:
             status = psutil.Process(proc.pid).status()
-            print(status)
             return {
                 psutil.STATUS_RUNNING: JobStatus.RUNNING,
                 psutil.STATUS_SLEEPING: JobStatus.RUNNING,

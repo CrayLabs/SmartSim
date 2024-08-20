@@ -24,34 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import difflib
 import os
 import pathlib
 import subprocess
-import tempfile
 import unittest.mock
-import uuid
-import weakref
 
 import psutil
 import pytest
 
-from smartsim import Experiment
-from smartsim._core.commands import Command
 from smartsim._core.utils import helpers
 from smartsim._core.utils.shell import *
-from smartsim.entity import Application, _mock, entity
+from smartsim.entity import _mock, entity
 from smartsim.error.errors import LauncherJobNotFound
-from smartsim.launchable import Job
-from smartsim.settings import LaunchSettings
-from smartsim.settings.arguments.launch.slurm import (
-    SlurmLaunchArguments,
-    _as_srun_command,
-)
 from smartsim.settings.dispatch import ShellLauncher, ShellLauncherCommand, sp
-from smartsim.settings.launchCommand import LauncherType
 from smartsim.status import JobStatus
-from smartsim.types import LaunchedJobID
 
 # TODO tests bad vars in Popen call at beginning
 # tests -> helper.exe : pass in None, empty str, path with a space at beginning, a non valid command
@@ -258,73 +244,60 @@ def test_shell_launcher_returns_complete_status(test_dir):
 
 def test_shell_launcher_returns_failed_status(test_dir):
     """Test tht ShellLauncher returns the status of completed Jobs"""
-    # Init ShellLauncher
     shell_launcher = ShellLauncher()
-    # Generate testing directory
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
         open(err_file, "w", encoding="utf-8") as err,
     ):
-        # Construct a invalid command to execute
         args = (helpers.expand_exe_path("srun"), "--flag_dne")
         cmd = ShellLauncherCommand({}, run_dir, out, err, args)
-        # Start the execution of the command using a ShellLauncher
         for _ in range(5):
             id = shell_launcher.start(cmd)
-            # Retrieve popen object
             proc = shell_launcher._launched[id]
-            # Wait for subprocess to complete
             proc.wait()
-            # Retrieve status of subprocess
             code = shell_launcher.get_status(id)
             val = list(code.keys())[0]
-            # Assert that subprocess has completed
             assert code[val] == JobStatus.FAILED
 
 
 def test_shell_launcher_returns_running_status(test_dir):
     """Test tht ShellLauncher returns the status of completed Jobs"""
-    # Init ShellLauncher
     shell_launcher = ShellLauncher()
-    # Generate testing directory
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
         open(err_file, "w", encoding="utf-8") as err,
     ):
-        # Construct a command to execute
         cmd = ShellLauncherCommand(
             {}, run_dir, out, err, (helpers.expand_exe_path("sleep"), "5")
         )
-        # Start the execution of the command using a ShellLauncher
         for _ in range(5):
             id = shell_launcher.start(cmd)
-            # Retrieve status of subprocess
             code = shell_launcher.get_status(id)
             val = list(code.keys())[0]
-            # Assert that subprocess has completed
             assert code[val] == JobStatus.RUNNING
 
 
 @pytest.mark.parametrize(
     "psutil_status,job_status",
     [
-        pytest.param(psutil.STATUS_RUNNING, JobStatus.RUNNING, id="merp"),
-        pytest.param(psutil.STATUS_SLEEPING, JobStatus.RUNNING, id="merp"),
-        pytest.param(psutil.STATUS_WAKING, JobStatus.RUNNING, id="merp"),
-        pytest.param(psutil.STATUS_DISK_SLEEP, JobStatus.RUNNING, id="merp"),
-        pytest.param(psutil.STATUS_DEAD, JobStatus.FAILED, id="merp"),
-        pytest.param(psutil.STATUS_TRACING_STOP, JobStatus.PAUSED, id="merp"),
-        pytest.param(psutil.STATUS_WAITING, JobStatus.PAUSED, id="merp"),
-        pytest.param(psutil.STATUS_STOPPED, JobStatus.PAUSED, id="merp"),
-        pytest.param(psutil.STATUS_LOCKED, JobStatus.PAUSED, id="merp"),
-        pytest.param(psutil.STATUS_PARKED, JobStatus.PAUSED, id="merp"),
-        pytest.param(psutil.STATUS_IDLE, JobStatus.PAUSED, id="merp"),
-        pytest.param(psutil.STATUS_ZOMBIE, JobStatus.COMPLETED, id="merp"),
+        pytest.param(psutil.STATUS_RUNNING, JobStatus.RUNNING, id="running"),
+        pytest.param(psutil.STATUS_SLEEPING, JobStatus.RUNNING, id="sleeping"),
+        pytest.param(psutil.STATUS_WAKING, JobStatus.RUNNING, id="waking"),
+        pytest.param(psutil.STATUS_DISK_SLEEP, JobStatus.RUNNING, id="disk_sleep"),
+        pytest.param(psutil.STATUS_DEAD, JobStatus.FAILED, id="dead"),
+        pytest.param(psutil.STATUS_TRACING_STOP, JobStatus.PAUSED, id="tracing_stop"),
+        pytest.param(psutil.STATUS_WAITING, JobStatus.PAUSED, id="waiting"),
+        pytest.param(psutil.STATUS_STOPPED, JobStatus.PAUSED, id="stopped"),
+        pytest.param(psutil.STATUS_LOCKED, JobStatus.PAUSED, id="locked"),
+        pytest.param(psutil.STATUS_PARKED, JobStatus.PAUSED, id="parked"),
+        pytest.param(psutil.STATUS_IDLE, JobStatus.PAUSED, id="idle"),
+        pytest.param(psutil.STATUS_ZOMBIE, JobStatus.COMPLETED, id="zombie"),
     ],
 )
 def test_this(psutil_status, job_status, monkeypatch: pytest.MonkeyPatch, test_dir):
+    """Test tht ShellLauncher.get_status returns correct mapping"""
     shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (

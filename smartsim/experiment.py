@@ -234,8 +234,6 @@ class Experiment:
                 )
             # Generate the job directory and return the generated job path
             ret = self._generate(generator, job, idx)
-            print(f"the type: {type(ret)}")
-            print(f"the val: {ret}")
             job_execution_path, out, err = ret
             id_ = launch_config.start(exe, job_execution_path, env, out, err)
             # Save the underlying launcher instance and launched job id. That

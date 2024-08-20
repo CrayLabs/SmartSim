@@ -32,16 +32,13 @@ import re
 import subprocess
 import typing as t
 
-from smartsim._core.commands import Command
 from smartsim.log import get_logger
 from smartsim.settings.dispatch import (
     ExecutableProtocol,
     ShellLauncher,
     ShellLauncherCommand,
     _EnvironMappingType,
-    _FormatterType,
     dispatch,
-    make_shell_format_fn,
 )
 
 from ...common import set_check_input

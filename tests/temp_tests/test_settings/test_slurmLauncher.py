@@ -23,12 +23,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pathlib
 import subprocess
 
 import pytest
 
-from smartsim._core.commands import Command
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,

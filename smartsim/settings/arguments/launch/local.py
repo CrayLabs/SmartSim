@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import typing as t
-from subprocess import PIPE
 
 from smartsim.log import get_logger
 from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
