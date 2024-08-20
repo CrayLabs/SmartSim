@@ -356,12 +356,13 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
     return obj
 
 
+from smartsim._core.dispatch import ExecutableProtocol, dispatch
+
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO: Remove this registry and move back to builder file after fixing
 #       circular import caused by `DragonLauncher.supported_rs`
 # -----------------------------------------------------------------------------
 from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
-from smartsim.settings.dispatch import ExecutableProtocol, dispatch
 
 
 def _as_run_request_args_and_policy(

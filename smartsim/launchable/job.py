@@ -26,18 +26,23 @@
 
 from __future__ import annotations
 
+import os
 import typing as t
 from copy import deepcopy
 
 from smartsim._core.commands.launchCommands import LaunchCommands
 from smartsim._core.utils.helpers import check_name
 from smartsim.launchable.basejob import BaseJob
+from smartsim.log import get_logger
 from smartsim.settings import LaunchSettings
+
+logger = get_logger(__name__)
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
 
 
+@t.final
 class Job(BaseJob):
     """A Job holds a reference to a SmartSimEntity and associated
     LaunchSettings prior to launch.  It is responsible for turning
@@ -65,10 +70,11 @@ class Job(BaseJob):
         return self._name
 
     @name.setter
-    def name(self, name: str | None) -> None:
+    def name(self, name: str) -> None:
         """Sets the name of the Job."""
-        self._name = name if name else self._entity.name
-        check_name(self._name)
+        check_name(name)
+        logger.debug(f'Overwriting the Job name from "{self._name}" to "{name}"')
+        self._name = name
 
     @property
     def entity(self) -> SmartSimEntity:

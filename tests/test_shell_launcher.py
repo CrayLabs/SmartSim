@@ -32,11 +32,11 @@ import unittest.mock
 import psutil
 import pytest
 
+from smartsim._core.dispatch import ShellLauncher, ShellLauncherCommand, sp
 from smartsim._core.utils import helpers
 from smartsim._core.utils.shell import *
 from smartsim.entity import _mock, entity
 from smartsim.error.errors import LauncherJobNotFound
-from smartsim.settings.dispatch import ShellLauncher, ShellLauncherCommand, sp
 from smartsim.status import JobStatus
 
 # TODO tests bad vars in Popen call at beginning
@@ -112,7 +112,7 @@ def test_shell_launcher_init():
 def test_shell_launcher_start_calls_popen(shell_cmd: ShellLauncherCommand):
     """Test that the process leading up to the shell launcher popen call was correct"""
     shell_launcher = ShellLauncher()
-    with unittest.mock.patch("smartsim.settings.dispatch.sp.Popen") as mock_open:
+    with unittest.mock.patch("smartsim._core.dispatch.sp.Popen") as mock_open:
         _ = shell_launcher.start(shell_cmd)
         mock_open.assert_called_once()
 
@@ -120,7 +120,7 @@ def test_shell_launcher_start_calls_popen(shell_cmd: ShellLauncherCommand):
 def test_shell_launcher_start_calls_popen_with_value(shell_cmd: ShellLauncherCommand):
     """Test that popen was called with correct values"""
     shell_launcher = ShellLauncher()
-    with unittest.mock.patch("smartsim.settings.dispatch.sp.Popen") as mock_open:
+    with unittest.mock.patch("smartsim._core.dispatch.sp.Popen") as mock_open:
         _ = shell_launcher.start(shell_cmd)
         mock_open.assert_called_once_with(
             shell_cmd.command_tuple,

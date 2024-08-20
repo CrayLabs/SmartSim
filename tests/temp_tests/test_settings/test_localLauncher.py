@@ -29,12 +29,12 @@ import pathlib
 
 import pytest
 
+from smartsim._core.dispatch import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.local import (
     LocalLaunchArguments,
     _as_local_command,
 )
-from smartsim.settings.dispatch import ShellLauncherCommand
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a

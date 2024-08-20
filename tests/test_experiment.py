@@ -34,11 +34,12 @@ import uuid
 
 import pytest
 
+from smartsim._core import dispatch
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim.entity import _mock, entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
-from smartsim.settings import dispatch, launchSettings
+from smartsim.settings import launchSettings
 from smartsim.settings.arguments import launchArguments
 from smartsim.status import InvalidJobStatus, JobStatus
 

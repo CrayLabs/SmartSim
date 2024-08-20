@@ -29,14 +29,19 @@ from __future__ import annotations
 import typing as t
 from copy import deepcopy
 
+from smartsim.log import get_logger
+
 from .._core.utils.helpers import check_name
 from .basejob import BaseJob
 from .baseJobGroup import BaseJobGroup
+
+logger = get_logger(__name__)
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
 
 
+@t.final
 class JobGroup(BaseJobGroup):
     """A job group holds references to multiple jobs that
     will be executed all at the same time when resources
@@ -62,6 +67,7 @@ class JobGroup(BaseJobGroup):
     def name(self, name: str) -> None:
         """Sets the name of the JobGroup."""
         check_name(name)
+        logger.debug(f'Overwriting Job name from "{self._name}" to "{name}"')
         self._name = name
 
     @property

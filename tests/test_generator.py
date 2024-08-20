@@ -258,7 +258,7 @@ def test_generate_ensemble_directory(wlmutils, generator_instance):
 
 def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
@@ -278,7 +278,7 @@ def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
 
 def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_dir):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     ensemble = Ensemble(
@@ -300,7 +300,7 @@ def test_generate_ensemble_symlink(
     test_dir, wlmutils, monkeypatch, get_gen_symlink_dir
 ):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     ensemble = Ensemble(
@@ -327,7 +327,7 @@ def test_generate_ensemble_configure(
     test_dir, wlmutils, monkeypatch, get_gen_configure_dir
 ):
     monkeypatch.setattr(
-        "smartsim.settings.dispatch._LauncherAdapter.start",
+        "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
