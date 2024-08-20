@@ -48,6 +48,8 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 if t.TYPE_CHECKING:
     # pylint: disable-next=unsubscriptable-object
     _TemporaryDirectory = tempfile.TemporaryDirectory[str]
+else:
+    _TemporaryDirectory = tempfile.TemporaryDirectory
 
 
 class _VerificationTempDir(_TemporaryDirectory):
