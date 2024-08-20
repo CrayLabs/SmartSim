@@ -119,41 +119,6 @@ smartsim_version = versions.write_version(setup_path)
 class BuildError(Exception):
     pass
 
-
-# Hacky workaround for solving CI build "purelib" issue
-# see https://github.com/google/or-tools/issues/616
-class InstallPlatlib(install):
-    def finalize_options(self):
-        super().finalize_options()
-        if self.distribution.has_ext_modules():
-            self.install_lib = self.install_platlib
-
-
-class SmartSimBuild(build_py):
-    def run(self):
-        feature_store_builder = builder.FeatureStoreBuilder(
-            build_env(), build_env.MALLOC, build_env.JOBS
-        )
-        if not feature_store_builder.is_built:
-            feature_store_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
-
-            feature_store_builder.cleanup()
-
-        # run original build_py command
-        super().run()
-
-
-# Tested with wheel v0.29.0
-class BinaryDistribution(Distribution):
-    """Distribution which always forces a binary package with platform name
-
-    We use this because we want to pre-package Redis for certain
-    platforms to use.
-    """
-
-    def has_ext_modules(_placeholder):
-        return True
-
 # Define needed dependencies for the installation
 
 extras_require = {
@@ -174,6 +139,7 @@ extras_require = {
         "types-tqdm",
         "types-tensorflow==2.12.0.9",
         "types-setuptools",
+        "typing_extensions>=4.1.0",
     ],
     "docs": [
         "Sphinx==6.2.1",
@@ -217,7 +183,6 @@ setup(
         "pygithub>=2.3.0",
         "numpy<2",
         "smartredis>=0.5,<0.6",
-        "typing_extensions>=4.1.0,<4.6",
     ],
     zip_safe=False,
     extras_require=extras_require,
