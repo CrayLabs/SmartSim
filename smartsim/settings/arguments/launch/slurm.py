@@ -252,7 +252,7 @@ class SlurmLaunchArguments(ShellLaunchArguments):
                     formatted += ["=".join((prefix + key, str(value)))]
         return formatted
 
-    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str] | None:
+    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str]:
         """Build bash compatible environment variable string for Slurm
 
         :returns: the formatted string of environment variables

@@ -49,7 +49,7 @@ class LocalLaunchArguments(ShellLaunchArguments):
         """
         return LauncherType.Local.value
 
-    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str] | None:
+    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str]:
         """Build bash compatible sequence of strings to specify an environment
 
         :param env_vars: An environment mapping
