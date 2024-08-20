@@ -45,6 +45,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim.error import errors
 from smartsim.status import InvalidJobStatus, JobStatus
+
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import FeatureStore
 from .entity import (

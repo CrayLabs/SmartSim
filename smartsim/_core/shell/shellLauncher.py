@@ -32,6 +32,7 @@ import subprocess as sp
 import typing as t
 
 import psutil
+
 from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import _EnvironMappingType, _FormatterType, dispatch
 from smartsim._core.utils import helpers
