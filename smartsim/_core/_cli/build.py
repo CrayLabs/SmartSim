@@ -279,7 +279,7 @@ def execute(
     logger.info(f"{backends_str} backend(s) built")
 
     try:
-        # TODO: always installing torch, otherwise tests will fail. 
+        # TODO: always installing torch, otherwise tests will fail.
         # Should revert once torch install has been revamped
         if "torch" in backends or True:
             check_py_torch_version(versions, device)
