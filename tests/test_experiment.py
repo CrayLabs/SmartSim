@@ -396,17 +396,25 @@ def test_get_status_de_dups_ids_passed_to_launchers(
 
 
 def test_wait_handles_empty_call_args(experiment):
+    """An exception is raised when asked to wait for the completion of no jobs"""
     with pytest.raises(ValueError, match="No job ids"):
         experiment.wait()
 
 
 def test_wait_does_not_block_unknown_id(experiment):
+    """If an experiment does not recognize a job id, it should not wait for its
+    completion
+    """
     now = time.perf_counter()
     experiment.wait(dispatch.create_job_id())
     assert time.perf_counter() - now < 1
 
 
 def test_wait_calls_prefered_impl(make_populated_experment, monkeypatch):
+    """Make wait is calling the expected method for checking job statuses.
+    Right now we only have the "polling" impl, but in future this might change
+    to an event based system.
+    """
     exp = make_populated_experment(1)
     ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     was_called = False
@@ -431,6 +439,12 @@ def test_wait_calls_prefered_impl(make_populated_experment, monkeypatch):
 def test_poll_status_blocks_until_job_is_completed(
     monkeypatch, make_populated_experment, num_polls, verbose
 ):
+    """Make sure that the polling based impl blocks the calling thread. Use
+    varying number of polls to simulate varying lengths of job time for a job
+    to complete.
+
+    Additionally check to make sure that the expected log messages are present
+    """
     exp = make_populated_experment(1)
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     (current_status,) = launcher.get_status(id_).values()
@@ -477,6 +491,9 @@ def test_poll_status_blocks_until_job_is_completed(
 def test_poll_status_raises_when_called_with_infinite_iter_wait(
     make_populated_experment,
 ):
+    """Cannot wait forever between polls. That will just block the thread after
+    the first poll
+    """
     exp = make_populated_experment(1)
     ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     with pytest.raises(ValueError, match="Polling interval cannot be infinite"):
@@ -491,6 +508,7 @@ def test_poll_status_raises_when_called_with_infinite_iter_wait(
 def test_poll_for_status_raises_if_ids_not_found_within_timeout(
     make_populated_experment,
 ):
+    """If there is a timeout, a timeout error should be raised when it is exceeded"""
     exp = make_populated_experment(1)
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     (current_status,) = launcher.get_status(id_).values()

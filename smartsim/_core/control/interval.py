@@ -37,23 +37,20 @@ class SynchronousTimeInterval:
     thread for an interval of time.
     """
 
-    def __init__(self, delta: float | None, strict: bool = True) -> None:
+    def __init__(self, delta: float | None) -> None:
         """Initialize a new `SynchronousTimeInterval` interval
 
         :param delta: The difference in time the interval represents. If
             `None`, the interval will represent an infinite amount of time in
             seconds.
-        :param strict: Wether or not to raise in the case where negative time
-            delta is provided. If `False`, the `SynchronousTimeInterval` and a negative `delta`
-            is provided, the interval will be infinite.
         :raises ValueError: The `delta` is negative and `strict` is `True`
         """
-        if delta is not None and delta < 0 and strict:
+        if delta is not None and delta < 0:
             raise ValueError("Timeout value cannot be less than 0")
         if delta is None or delta < 0:
             delta = float("inf")
         self._delta = Seconds(delta)
-        """The amount of time, in seconds the interval spans."""
+        """The amount of time, in seconds, the interval spans."""
         self._start = time.perf_counter()
         """The time of the creation of the interval"""
 
@@ -101,7 +98,7 @@ class SynchronousTimeInterval:
     def new_interval(self) -> SynchronousTimeInterval:
         """Make a new timeout with the same interval
 
-        :returns: The new timeout
+        :returns: The new time interval
         """
         return type(self)(self.delta)
 

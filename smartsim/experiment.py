@@ -282,7 +282,7 @@ class Experiment:
         """Block execution until all of the provided launched jobs, represented
         by an ID, have entered a terminal status.
 
-        :param ids: The ids of the launched ids to wait for.
+        :param ids: The ids of the launched jobs to wait for.
         :param timeout: The max time to wait for all of the launched jobs to end.
         :param verbose: Whether found statuses should be displayed in the console.
         :raises ValueError: No IDs were provided.
@@ -304,10 +304,11 @@ class Experiment:
         interval: _interval.SynchronousTimeInterval | None = None,
         verbose: bool = True,
     ) -> dict[LaunchedJobID, JobStatus | InvalidJobStatus]:
-        """Poll launchers until  status until all jobs represented by a
-        collections of ids have changed state to one of the provided statuses.
+        """Poll the experiment's launchers for the statuses of the launched
+        jobs with the provided ids, until the status of the changes to one of
+        the provided statuses.
 
-        :param ids: IDs of launches to poll for status.
+        :param ids: The ids of the launched jobs to wait for.
         :param statuses: A collection of statuses to poll for.
         :param timeout: The minimum amount of time to spend polling all jobs to
             reach one of the supplied statuses. If not supplied or `None`, the
@@ -344,7 +345,11 @@ class Experiment:
             final |= dict(is_done.get(True, ()))
             ids = tuple(id_ for id_, _ in is_done.get(False, ()))
             if ids:
-                iter_timeout.wait()
+                (
+                    iter_timeout
+                    if iter_timeout.remaining < method_timeout.remaining
+                    else method_timeout
+                ).wait()
         if ids:
             raise TimeoutError(
                 f"Job ID(s) {', '.join(map(str, ids))} failed to reach "

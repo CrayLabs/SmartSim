@@ -39,6 +39,7 @@ pytestmark = pytest.mark.group_a
     "timeout", [pytest.param(i, id=f"{i} second(s)") for i in range(10)]
 )
 def test_sync_timeout_finite(timeout, monkeypatch):
+    """Test the sync timeout intervals are correctly calcualted"""
     monkeypatch.setattr(time, "perf_counter", lambda *_, **__: 0)
     t = SynchronousTimeInterval(timeout)
     assert t.delta == timeout
@@ -61,6 +62,7 @@ def test_sync_timeout_finite(timeout, monkeypatch):
 
 
 def test_sync_timeout_can_block_thread():
+    """Test the sync timeout can block the calling thread"""
     timeout = 1
     now = time.perf_counter()
     SynchronousTimeInterval(timeout).wait()
@@ -68,32 +70,21 @@ def test_sync_timeout_can_block_thread():
     assert abs(later - now - timeout) <= 0.25
 
 
-@pytest.mark.parametrize(
-    "timeout",
-    [
-        pytest.param(-1, id="Negative timeout"),
-        pytest.param(None, id="Nullish timeout"),
-    ],
-)
-def test_sync_timeout_infinte(timeout):
-    t = SynchronousTimeInterval(timeout, strict=False)
+def test_sync_timeout_infinte():
+    """Passing in `None` to a sync timeout creates a timeout with an infinite
+    delta time
+    """
+    t = SynchronousTimeInterval(None)
     assert t.remaining == float("inf")
     assert t.infinite
     with pytest.raises(RuntimeError, match="block thread forever"):
         t.wait()
 
 
-@pytest.mark.parametrize(
-    "kwargs, ctx",
-    [
-        pytest.param({}, pytest.raises(ValueError), id=f"Default"),
-        pytest.param({"strict": True}, pytest.raises(ValueError), id=f"Strict"),
-        pytest.param({"strict": False}, contextlib.nullcontext(), id=f"Unstrict"),
-    ],
-)
-def test_sync_timeout_raises_on_invalid_value(monkeypatch, kwargs, ctx):
-    with ctx:
-        t = SynchronousTimeInterval(-1, **kwargs)
+def test_sync_timeout_raises_on_invalid_value(monkeypatch):
+    """Cannot make a sync time interval with a negative time delta"""
+    with pytest.raises(ValueError):
+        t = SynchronousTimeInterval(-1)
         now = time.perf_counter()
         monkeypatch.setattr(
             time, "perf_counter", lambda *_, **__: now + 365 * 24 * 60 * 60
