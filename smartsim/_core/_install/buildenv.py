@@ -188,7 +188,7 @@ class Versioner:
 
     # ML/DL
     # torch can be set by the user because we download that for them
-    TORCH = Version_(get_env("SMARTSIM_TORCH", "2.13.1"))
+    TORCH = Version_(get_env("SMARTSIM_TORCH", "2.0.1"))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", "0.15.2"))
     TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", "+cpu"))
     TORCH_CUDA_SUFFIX = Version_(get_env("TORCH_CUDA_SUFFIX", "+cu117"))
