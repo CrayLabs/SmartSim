@@ -143,7 +143,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     connect_to_infrastructure()
-    ddict_str = os.environ["SS_INFRA_BACKBONE"]
+    ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]
     ddict = DDict.attach(ddict_str)
 
     to_worker_channel = Channel.make_process_local()
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     comm_channel = DragonFLIChannel(to_worker_fli_serialized)
 
     descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
-    os.environ["SS_REQUEST_QUEUE"] = descriptor
+    os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,

@@ -62,7 +62,7 @@ class ProtoClient:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
         connect_to_infrastructure()
-        ddict_str = os.environ["SS_INFRA_BACKBONE"]
+        ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]
         self._ddict = DDict.attach(ddict_str)
         self._backbone_descriptor = DragonFeatureStore(self._ddict).descriptor
         to_worker_fli_str = None

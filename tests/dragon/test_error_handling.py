@@ -101,11 +101,11 @@ def setup_worker_manager_model_bytes(
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    wrapped_queue = DragonFLIChannel(queue.serialize())
-
-    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv(
+        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -160,9 +160,11 @@ def setup_worker_manager_model_key(
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv(
+        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -217,9 +219,11 @@ def setup_request_dispatcher_model_bytes(
 
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv(
+        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
