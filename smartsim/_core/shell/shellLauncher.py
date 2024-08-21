@@ -39,6 +39,7 @@ from smartsim._core.utils import helpers
 from smartsim._core.utils.launcher import ExecutableProtocol, create_job_id
 from smartsim.error import errors
 from smartsim.log import get_logger
+from smartsim.settings.arguments.launchArguments import LaunchArguments
 from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
 
@@ -122,7 +123,7 @@ def make_shell_format_fn(
         as_srun_command = make_shell_format_fn("srun")
         fmt_cmd = as_srun_command(slurm_args, echo_hello_world, env)
         print(list(fmt_cmd))
-        # prints: "['srun', --export ALL,foo=bar,baz=meep,spam=eggs '--nodes=3', '--', 'echo', 'Hello World!']"
+        # prints: "['srun', '--nodes=3', '--', 'echo', 'Hello World!']"
 
     .. note::
         This function was/is a kind of slap-dash implementation, and is likely
