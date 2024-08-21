@@ -166,7 +166,6 @@ class WorkerManager(Service):
         try:
             batch: RequestBatch = self._dispatcher_queue.get(timeout=0.0001)
         except Empty:
-            logger.info("Empty queue")
             return
 
         self._perf_timer.start_timings(

@@ -299,7 +299,7 @@ class RequestDispatcher(Service):
         """The worker used to batch inputs"""
         self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(2 * 1024**3).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
-        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
         """Performance timer"""
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
@@ -480,6 +480,7 @@ class RequestDispatcher(Service):
                 model_key=FeatureStoreKey(key=tmp_id, descriptor="TMP"),
             )
             self._active_queues[tmp_id] = tmp_queue
+            self._queues[tmp_id] = [tmp_queue]
             tmp_queue.put_nowait(request)
             tmp_queue.make_disposable()
             return
@@ -497,6 +498,7 @@ class RequestDispatcher(Service):
         """Get all requests from queues which are ready to be flushed. Place all
         avaliable request batches in the outgoing queue.
         """
+        print(self._queues.items())
         for queue_list in self._queues.values():
             for queue in queue_list:
                 if queue.ready and queue.acquire(blocking=False):

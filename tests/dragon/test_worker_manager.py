@@ -26,7 +26,6 @@
 
 import io
 import logging
-import multiprocessing as mp
 import pathlib
 import time
 
@@ -40,6 +39,9 @@ import os
 
 import dragon.channels as dch
 from dragon import fli
+from dragon.mpbridge.queues import DragonQueue
+
+import multiprocessing as mp
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
@@ -174,14 +176,15 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
         callback_factory=FileSystemCommChannel.from_descriptor,
         queue_factory=DragonFLIChannel.from_descriptor,
     )
-    integrated_worker = TorchWorker()
+    integrated_worker_type = TorchWorker
 
     worker_manager = WorkerManager(
         config_loader,
-        integrated_worker,
+        integrated_worker_type,
         as_service=True,
         cooldown=5,
         device="cpu",
+        dispatcher_queue=mp.Queue(maxsize=0)
     )
 
     worker_queue = config_loader.get_queue()

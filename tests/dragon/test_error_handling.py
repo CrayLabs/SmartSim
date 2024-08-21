@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -206,6 +206,48 @@ def setup_worker_manager_model_key(
     return worker_manager, integrated_worker_type
 
 
+@pytest.fixture
+def setup_request_dispatcher_model_bytes(
+    test_dir,
+    monkeypatch: pytest.MonkeyPatch,
+    backbone_descriptor: str,
+    app_feature_store: FeatureStore,
+):
+    integrated_worker_type = IntegratedTorchWorker
+
+    chan = Channel.make_process_local()
+    queue = FLInterface(main_ch=chan)
+    monkeypatch.setenv("SS_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize()))
+    # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
+    monkeypatch.setenv("SS_INFRA_BACKBONE", backbone_descriptor)
+
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=FileSystemCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
+    )
+
+    request_dispatcher = RequestDispatcher(
+        batch_timeout=0,
+        batch_size=0,
+        config_loader=config_loader,
+        worker_type=integrated_worker_type,
+    )
+    request_dispatcher._on_start()
+
+    tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
+    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
+    model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
+    request = MessageHandler.build_request(
+        test_dir, model, [tensor_key], [output_key], [], None
+    )
+    ser_request = MessageHandler.serialize_request(request)
+
+    request_dispatcher._incoming_channel.send(ser_request)
+
+    return request_dispatcher, integrated_worker_type
+
+
 def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stage):
     def mock_stage(*args, **kwargs):
         raise ValueError(f"Simulated error in {stage}")
@@ -316,6 +358,56 @@ def test_wm_pipeline_stage_errors_handled(
         )
 
     worker_manager._on_iteration()
+
+    mock_reply_fn.assert_called_once()
+    mock_reply_fn.assert_called_with("fail", error_message)
+
+
+@pytest.mark.parametrize(
+    "setup_request_dispatcher",
+    [
+        pytest.param("setup_request_dispatcher_model_bytes"),
+        # pytest.param("setup_worker_manager_model_key"),
+    ],
+)
+@pytest.mark.parametrize(
+    "stage, error_message",
+    [
+        pytest.param(
+            "fetch_inputs",
+            "Error fetching input.",
+            id="fetch input",
+        ),
+        pytest.param(
+            "transform_input",
+            "Error Transforming input.",
+            id="transform input",
+        ),
+    ],
+)
+def test_dispatcher_pipeline_stage_errors_handled(
+    request,
+    setup_request_dispatcher,
+    monkeypatch: pytest.MonkeyPatch,
+    stage: str,
+    error_message: str,
+):
+    """Ensures that the request dispatcher does not crash after a failure in various pipeline stages"""
+    request_dispatcher, integrated_worker_type = request.getfixturevalue(
+        setup_request_dispatcher
+    )
+    integrated_worker = request_dispatcher._worker
+
+    mock_reply_fn = mock_pipeline_stage(monkeypatch, integrated_worker, stage)
+
+    if stage not in ["fetch_inputs"]:
+        monkeypatch.setattr(
+            integrated_worker,
+            "fetch_inputs",
+            MagicMock(return_value=[FetchInputResult(result=[b"result"], meta=None)]),
+        )
+
+    request_dispatcher._on_iteration()
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", error_message)
