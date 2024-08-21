@@ -41,6 +41,7 @@ from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versi
 from smartsim._core._install.builder import Device
 from smartsim._core._install.mlpackages import (
     DEFAULT_MLPACKAGES,
+    DEFAULT_MLPACKAGE_PATH,
     MLPackageCollection,
     load_platform_configs,
 )
@@ -349,7 +350,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--alternate-config-dir",
-        default=None,
+        default=DEFAULT_MLPACKAGE_PATH,
         type=str,
         help="Path to directory with JSON files describing the platform and associated packages",
     )

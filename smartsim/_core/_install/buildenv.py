@@ -280,7 +280,7 @@ class BuildEnv:
             self.check_dependencies()
 
     def check_dependencies(self) -> None:
-        deps = ["git", "git-lfs", "make", "wget", "cmake", self.CC, self.CXX]
+        deps = ["git", "make", "wget", "cmake", self.CC, self.CXX]
         if int(self.CHECKS) == 0:
             for dep in deps:
                 self.check_build_dependency(dep)

@@ -114,10 +114,16 @@ class PackageRetriever:
         is_arm64 = Architecture.autodetect() == Architecture.ARM64
         if is_mac and is_arm64:
             config_options = ["--config core.autocrlf=false", "--config core.eol=lf"]
+            allow_unsafe_options = True
         else:
             config_options = None
+            allow_unsafe_options = False
         git.Repo.clone_from(
-            source, destination, multi_options=config_options, **clone_kwargs
+            source,
+            destination,
+            multi_options=config_options,
+            allow_unsafe_options=allow_unsafe_options,
+            **clone_kwargs
         )
 
     @classmethod

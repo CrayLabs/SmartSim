@@ -190,8 +190,4 @@ setup(
             "smart = smartsim._core._cli.__main__:main",
         ]
     },
-    include_package_data=True,
-    package_data={
-        "": ["_core/_install/configs/*.json"]
-    },
 )

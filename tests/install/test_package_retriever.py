@@ -103,4 +103,4 @@ def test_https(test_dir):
     PackageRetriever.retrieve(
         "https://github.com/CrayLabs/SmartSim/archive/refs/tags/v0.6.0.zip", output_dir
     )
-    assert False
+    assert output_dir.exists()
