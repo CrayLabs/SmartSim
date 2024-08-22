@@ -53,7 +53,6 @@ from subprocess import SubprocessError
 
 # TODO: check cmake version and use system if possible to avoid conflicts
 
-TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 _PathLike = t.Union[str, "os.PathLike[str]"]
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -243,506 +242,6 @@ class Builder:
             raise BuildError(e) from e
 
 
-class FeatureStoreBuilder(Builder):
-    """Class to build Redis or KeyDB from Source
-    Supported build methods:
-     - from git
-    See buildenv.py for buildtime configuration of Redis/KeyDB
-    version and url.
-    """
-
-    def __init__(
-        self,
-        build_env: t.Optional[t.Dict[str, str]] = None,
-        malloc: str = "libc",
-        jobs: int = 1,
-        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
-        architecture: Architecture = Architecture.from_str(platform.machine()),
-        verbose: bool = False,
-    ) -> None:
-        super().__init__(
-            build_env or {},
-            jobs=jobs,
-            _os=_os,
-            architecture=architecture,
-            verbose=verbose,
-        )
-        self.malloc = malloc
-
-    @property
-    def is_built(self) -> bool:
-        """Check if Redis or KeyDB is built"""
-        bin_files = {file.name for file in self.bin_path.iterdir()}
-        redis_files = {"redis-server", "redis-cli"}
-        keydb_files = {"keydb-server", "keydb-cli"}
-        return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
-
-    def build_from_git(
-        self, git_url: str, branch: str, device: Device = Device.CPU
-    ) -> None:
-        """Build Redis from git
-        :param git_url: url from which to retrieve Redis
-        :param branch: branch to checkout
-        """
-        # pylint: disable=too-many-locals
-        feature_store_name = "keydb" if "KeyDB" in git_url else "redis"
-        feature_store_build_path = Path(self.build_dir, feature_store_name.lower())
-
-        # remove git directory if it exists as it should
-        # really never exist as we delete after build
-        redis_build_path = Path(self.build_dir, "redis")
-        keydb_build_path = Path(self.build_dir, "keydb")
-        if redis_build_path.is_dir():
-            shutil.rmtree(str(redis_build_path))
-        if keydb_build_path.is_dir():
-            shutil.rmtree(str(keydb_build_path))
-
-        # Check feature store URL
-        if not self.is_valid_url(git_url):
-            raise BuildError(f"Malformed {feature_store_name} URL: {git_url}")
-
-        clone_cmd = config_git_command(
-            self._platform,
-            [
-                self.binary_path("git"),
-                "clone",
-                git_url,
-                "--branch",
-                branch,
-                "--depth",
-                "1",
-                feature_store_name,
-            ],
-        )
-
-        # clone Redis
-        self.run_command(clone_cmd, cwd=self.build_dir)
-
-        # build Redis
-        build_cmd = [
-            self.binary_path("make"),
-            "-j",
-            str(self.jobs),
-            f"MALLOC={self.malloc}",
-        ]
-        self.run_command(build_cmd, cwd=str(feature_store_build_path))
-
-        # move redis binaries to smartsim/smartsim/_core/bin
-        feature_store_src_dir = feature_store_build_path / "src"
-        server_source = feature_store_src_dir / (feature_store_name.lower() + "-server")
-        server_destination = self.bin_path / (feature_store_name.lower() + "-server")
-        cli_source = feature_store_src_dir / (feature_store_name.lower() + "-cli")
-        cli_destination = self.bin_path / (feature_store_name.lower() + "-cli")
-        self.copy_file(server_source, server_destination, set_exe=True)
-        self.copy_file(cli_source, cli_destination, set_exe=True)
-
-        # validate install -- redis-server
-        core_path = Path(os.path.abspath(__file__)).parent.parent
-        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", core_path)
-        bin_path = Path(dependency_path, "bin").resolve()
-        try:
-            database_exe = next(bin_path.glob("*-server"))
-            feature_store = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
-            _ = expand_exe_path(str(feature_store))
-        except (TypeError, FileNotFoundError) as e:
-            raise BuildError("Installation of redis-server failed!") from e
-
-        # validate install -- redis-cli
-        try:
-            redis_cli_exe = next(bin_path.glob("*-cli"))
-            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
-            _ = expand_exe_path(str(redis_cli))
-        except (TypeError, FileNotFoundError) as e:
-            raise BuildError("Installation of redis-cli failed!") from e
-
-
-class _RAIBuildDependency(ABC):
-    """An interface with a collection of magic methods so that
-    ``RedisAIBuilder`` can fetch and place its own dependencies
-    """
-
-    @property
-    @abstractmethod
-    def __rai_dependency_name__(self) -> str: ...
-
-    @abstractmethod
-    def __place_for_rai__(self, target: _PathLike) -> Path: ...
-
-    @staticmethod
-    @abstractmethod
-    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]: ...
-
-
-def _place_rai_dep_at(
-    target: _PathLike, verbose: bool
-) -> t.Callable[[_RAIBuildDependency], Path]:
-    def _place(dep: _RAIBuildDependency) -> Path:
-        if verbose:
-            print(f"Placing: '{dep.__rai_dependency_name__}'")
-        path = dep.__place_for_rai__(target)
-        if verbose:
-            print(f"Placed: '{dep.__rai_dependency_name__}' at '{path}'")
-        return path
-
-    return _place
-
-
-class RedisAIBuilder(Builder):
-    """Class to build RedisAI from Source
-    Supported build method:
-     - from git
-    See buildenv.py for buildtime configuration of RedisAI
-    version and url.
-    """
-
-    def __init__(
-        self,
-        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
-        architecture: Architecture = Architecture.from_str(platform.machine()),
-        build_env: t.Optional[t.Dict[str, str]] = None,
-        torch_dir: str = "",
-        libtf_dir: str = "",
-        build_torch: bool = True,
-        build_tf: bool = True,
-        build_onnx: bool = False,
-        jobs: int = 1,
-        verbose: bool = False,
-        torch_with_mkl: bool = True,
-    ) -> None:
-        super().__init__(
-            build_env or {},
-            jobs=jobs,
-            _os=_os,
-            architecture=architecture,
-            verbose=verbose,
-        )
-
-        self.rai_install_path: t.Optional[Path] = None
-
-        # convert to int for RAI build script
-        self._torch = build_torch
-        self._tf = build_tf
-        self._onnx = build_onnx
-        self.libtf_dir = libtf_dir
-        self.torch_dir = torch_dir
-
-        # extra configuration options
-        self.torch_with_mkl = torch_with_mkl
-
-        # Sanity checks
-        self._validate_platform()
-
-    def _validate_platform(self) -> None:
-        unsupported = []
-        if self._platform not in _DLPackRepository.supported_platforms():
-            unsupported.append("DLPack")
-        if self.fetch_tf and (self._platform not in _TFArchive.supported_platforms()):
-            unsupported.append("Tensorflow")
-        if self.fetch_onnx and (
-            self._platform not in _ORTArchive.supported_platforms()
-        ):
-            unsupported.append("ONNX")
-        if self.fetch_torch and (
-            self._platform not in _PTArchive.supported_platforms()
-        ):
-            unsupported.append("PyTorch")
-        if unsupported:
-            raise BuildError(
-                f"The {', '.join(unsupported)} backend(s) are not supported "
-                f"on {self._platform.os} with {self._platform.architecture}"
-            )
-
-    @property
-    def rai_build_path(self) -> Path:
-        return Path(self.build_dir, "RedisAI")
-
-    @property
-    def is_built(self) -> bool:
-        server = self.lib_path.joinpath("backends").is_dir()
-        cli = self.lib_path.joinpath("redisai.so").is_file()
-        return server and cli
-
-    @property
-    def build_torch(self) -> bool:
-        return self._torch
-
-    @property
-    def fetch_torch(self) -> bool:
-        return self.build_torch and not self.torch_dir
-
-    @property
-    def build_tf(self) -> bool:
-        return self._tf
-
-    @property
-    def fetch_tf(self) -> bool:
-        return self.build_tf and not self.libtf_dir
-
-    @property
-    def build_onnx(self) -> bool:
-        return self._onnx
-
-    @property
-    def fetch_onnx(self) -> bool:
-        return self.build_onnx
-
-    def get_deps_dir_path_for(self, device: Device) -> Path:
-        def fail_to_format(reason: str) -> BuildError:  # pragma: no cover
-            return BuildError(f"Failed to format RedisAI dependency path: {reason}")
-
-        _os, architecture = self._platform
-        if _os == OperatingSystem.DARWIN:
-            os_ = "macos"
-        elif _os == OperatingSystem.LINUX:
-            os_ = "linux"
-        else:  # pragma: no cover
-            raise fail_to_format(f"Unknown operating system: {_os}")
-        if architecture == Architecture.X64:
-            arch = "x64"
-        elif architecture == Architecture.ARM64:
-            arch = "arm64v8"
-        else:  # pragma: no cover
-            raise fail_to_format(f"Unknown architecture: {architecture}")
-        return self.rai_build_path / f"deps/{os_}-{arch}-{device.value}"
-
-    def _get_deps_to_fetch_for(
-        self, device: Device
-    ) -> t.Tuple[_RAIBuildDependency, ...]:
-        os_, arch = self._platform
-        # TODO: It would be nice if the backend version numbers were declared
-        #       alongside the python package version numbers so that all of the
-        #       dependency versions were declared in single location.
-        #       Unfortunately importing into this module is non-trivial as it
-        #       is used as script in the SmartSim `setup.py`.
-
-        # DLPack is always required
-        fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
-        if self.fetch_torch:
-            pt_dep = _choose_pt_variant(os_)(arch, device, "2.0.1", self.torch_with_mkl)
-            fetchable_deps.append(pt_dep)
-        if self.fetch_tf:
-            fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
-        if self.fetch_onnx:
-            fetchable_deps.append(_ORTArchive(os_, device, "1.16.3"))
-
-        return tuple(fetchable_deps)
-
-    def symlink_libtf(self, device: Device) -> None:
-        """Add symbolic link to available libtensorflow in RedisAI deps.
-
-        :param device: cpu or gpu
-        """
-        rai_deps_path = sorted(
-            self.rai_build_path.glob(os.path.join("deps", f"*{device.value}*"))
-        )
-        if not rai_deps_path:
-            raise FileNotFoundError("Could not find RedisAI 'deps' directory")
-
-        # There should only be one path for a given device,
-        # and this should hold even if in the future we use
-        # an external build of RedisAI
-        rai_libtf_path = rai_deps_path[0] / "libtensorflow"
-        rai_libtf_path.resolve()
-        if rai_libtf_path.is_dir():
-            shutil.rmtree(rai_libtf_path)
-
-        os.makedirs(rai_libtf_path)
-        libtf_path = Path(self.libtf_dir).resolve()
-
-        # Copy include directory to deps/libtensorflow
-        include_src_path = libtf_path / "include"
-        if not include_src_path.exists():
-            raise FileNotFoundError(f"Could not find include directory in {libtf_path}")
-        os.symlink(include_src_path, rai_libtf_path / "include")
-
-        # RedisAI expects to find a lib directory, which is only
-        # available in some distributions.
-        rai_libtf_lib_dir = rai_libtf_path / "lib"
-        os.makedirs(rai_libtf_lib_dir)
-        src_libtf_lib_dir = libtf_path / "lib"
-        # If the lib directory existed in the libtensorflow distribution,
-        # copy its content, otherwise gather library files from
-        # libtensorflow base dir and copy them into destination lib dir
-        if src_libtf_lib_dir.is_dir():
-            library_files = sorted(src_libtf_lib_dir.glob("*"))
-            if not library_files:
-                raise FileNotFoundError(
-                    f"Could not find libtensorflow library files in {src_libtf_lib_dir}"
-                )
-        else:
-            library_files = sorted(libtf_path.glob("lib*.so*"))
-            if not library_files:
-                raise FileNotFoundError(
-                    f"Could not find libtensorflow library files in {libtf_path}"
-                )
-
-        for src_file in library_files:
-            dst_file = rai_libtf_lib_dir / src_file.name
-            if not dst_file.is_file():
-                os.symlink(src_file, dst_file)
-
-    def build_from_git(
-        self, git_url: str, branch: str, device: Device = Device.CPU
-    ) -> None:
-        """Build RedisAI from git
-
-        :param git_url: url from which to retrieve RedisAI
-        :param branch: branch to checkout
-        :param device: cpu or gpu
-        """
-        # delete previous build dir (should never be there)
-        if self.rai_build_path.is_dir():
-            shutil.rmtree(self.rai_build_path)
-
-        # Check RedisAI URL
-        if not self.is_valid_url(git_url):
-            raise BuildError(f"Malformed RedisAI URL: {git_url}")
-
-        # clone RedisAI
-        clone_cmd = config_git_command(
-            self._platform,
-            [
-                self.binary_path("env"),
-                "GIT_LFS_SKIP_SMUDGE=1",
-                "git",
-                "clone",
-                "--recursive",
-                git_url,
-                "--branch",
-                branch,
-                "--depth=1",
-                os.fspath(self.rai_build_path),
-            ],
-        )
-
-        self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
-        self._fetch_deps_for(device)
-
-        if self.libtf_dir and device.value:
-            self.symlink_libtf(device)
-
-        build_cmd = self._rai_build_env_prefix(
-            with_pt=self.build_torch,
-            with_tf=self.build_tf,
-            with_ort=self.build_onnx,
-            extra_env={"GPU": "1" if device == Device.GPU else "0"},
-        )
-
-        if self.torch_dir:
-            self.env["Torch_DIR"] = str(self.torch_dir)
-
-        build_cmd.extend(
-            [
-                self.binary_path("make"),
-                "-C",
-                str(self.rai_build_path / "opt"),
-                "-j",
-                f"{self.jobs}",
-                "build",
-            ]
-        )
-        self.run_command(build_cmd, cwd=self.rai_build_path)
-
-        self._install_backends(device)
-        if self.user_supplied_backend("torch"):
-            self._move_torch_libs()
-        self.cleanup()
-
-    def user_supplied_backend(self, backend: TRedisAIBackendStr) -> bool:
-        if backend == "torch":
-            return bool(self.build_torch and not self.fetch_torch)
-        if backend == "tensorflow":
-            return bool(self.build_tf and not self.fetch_tf)
-        if backend == "onnxruntime":
-            return bool(self.build_onnx and not self.fetch_onnx)
-        if backend == "tflite":
-            return False
-        raise BuildError(f"Unrecognized backend requested {backend}")
-
-    def _rai_build_env_prefix(
-        self,
-        with_tf: bool,
-        with_pt: bool,
-        with_ort: bool,
-        extra_env: t.Optional[t.Dict[str, str]] = None,
-    ) -> t.List[str]:
-        extra_env = extra_env or {}
-        return [
-            self.binary_path("env"),
-            f"WITH_PT={1 if with_pt else 0}",
-            f"WITH_TF={1 if with_tf else 0}",
-            "WITH_TFLITE=0",  # never use TF Lite (for now)
-            f"WITH_ORT={1 if with_ort else 0}",
-            *(f"{key}={val}" for key, val in extra_env.items()),
-        ]
-
-    def _fetch_deps_for(self, device: Device) -> None:
-        if not self.rai_build_path.is_dir():
-            raise BuildError("RedisAI build directory not found")
-
-        deps_dir = self.get_deps_dir_path_for(device)
-        deps_dir.mkdir(parents=True, exist_ok=True)
-        if any(deps_dir.iterdir()):
-            raise BuildError("RAI build dependency directory is not empty")
-        to_fetch = self._get_deps_to_fetch_for(device)
-        placed_paths = _threaded_map(
-            _place_rai_dep_at(deps_dir, self.verbose), to_fetch
-        )
-        unique_placed_paths = {os.fspath(path.resolve()) for path in placed_paths}
-        if len(unique_placed_paths) != len(to_fetch):
-            raise BuildError(
-                f"Expected to place {len(to_fetch)} dependencies, but only "
-                f"found {len(unique_placed_paths)}"
-            )
-
-    def _install_backends(self, device: Device) -> None:
-        """Move backend libraries to smartsim/_core/lib/
-        :param device: cpu or cpu
-        """
-        self.rai_install_path = self.rai_build_path.joinpath(
-            f"install-{device.value}"
-        ).resolve()
-        rai_lib = self.rai_install_path / "redisai.so"
-        rai_backends = self.rai_install_path / "backends"
-
-        if rai_backends.is_dir():
-            self.copy_dir(rai_backends, self.lib_path / "backends", set_exe=True)
-        if rai_lib.is_file():
-            self.copy_file(rai_lib, self.lib_path / "redisai.so", set_exe=True)
-
-    def _move_torch_libs(self) -> None:
-        """Move pip install torch libraries
-        Since we use pip installed torch libraries for building
-        RedisAI, we need to move them into the LD_runpath of redisai.so
-        in the smartsim/_core/lib directory.
-        """
-        ss_rai_torch_path = self.lib_path / "backends" / "redisai_torch"
-        ss_rai_torch_lib_path = ss_rai_torch_path / "lib"
-
-        # retrieve torch shared libraries and copy to the
-        # smartsim/_core/lib/backends/redisai_torch/lib dir
-        # self.torch_dir should be /path/to/torch/share/cmake/Torch
-        # so we take the great grandparent here
-        pip_torch_path = Path(self.torch_dir).parent.parent.parent
-        pip_torch_lib_path = pip_torch_path / "lib"
-
-        self.copy_dir(pip_torch_lib_path, ss_rai_torch_lib_path, set_exe=True)
-
-        # also move the openmp files if on a mac
-        if sys.platform == "darwin":
-            dylibs = pip_torch_path / ".dylibs"
-            self.copy_dir(dylibs, ss_rai_torch_path / ".dylibs", set_exe=True)
-
-
-def _threaded_map(fn: t.Callable[[_T], _U], items: t.Iterable[_T]) -> t.Sequence[_U]:
-    items = tuple(items)
-    if not items:  # No items so no work to do
-        return ()
-    num_workers = min(len(items), (os.cpu_count() or 4) * 5)
-    with concurrent.futures.ThreadPoolExecutor(num_workers) as pool:
-        return tuple(pool.map(fn, items))
-
-
 class _WebLocation(ABC):
     @property
     @abstractmethod
@@ -763,7 +262,7 @@ class _WebGitRepository(_WebLocation):
 
 @t.final
 @dataclass(frozen=True)
-class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
+class _DLPackRepository(_WebGitRepository):
     version: str
 
     @staticmethod
@@ -776,18 +275,7 @@ class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
 
     @property
     def url(self) -> str:
-        return "https://github.com/RedisAI/dlpack.git"
-
-    @property
-    def __rai_dependency_name__(self) -> str:
-        return f"dlpack@{self.url}"
-
-    def __place_for_rai__(self, target: _PathLike) -> Path:
-        target = Path(target) / "dlpack"
-        self.clone(target, branch=self.version, depth=1)
-        if not target.is_dir():
-            raise BuildError("Failed to place dlpack")
-        return target
+        return ""
 
 
 class _WebArchive(_WebLocation):
@@ -836,7 +324,7 @@ class WebTGZ(_WebTGZ):
 
 
 @dataclass(frozen=True)
-class _PTArchive(_WebZip, _RAIBuildDependency):
+class _PTArchive(_WebZip):
     architecture: Architecture
     device: Device
     version: str
@@ -851,10 +339,6 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
             )
         )
 
-    @property
-    def __rai_dependency_name__(self) -> str:
-        return f"libtorch@{self.url}"
-
     @staticmethod
     def _patch_out_mkl(libtorch_root: Path) -> None:
         _modify_source_files(
@@ -867,13 +351,6 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
         super().extract(target)
         if not self.with_mkl:
             self._patch_out_mkl(Path(target))
-
-    def __place_for_rai__(self, target: _PathLike) -> Path:
-        self.extract(target)
-        target = Path(target) / "libtorch"
-        if not target.is_dir():
-            raise BuildError("Failed to place RAI dependency: `libtorch`")
-        return target
 
 
 @t.final
@@ -906,8 +383,6 @@ class _PTArchiveMacOSX(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == Device.GPU:
-            raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
             pt_build = Device.CPU.value
             libtorch_archive = f"libtorch-macos-{self.version}.zip"
@@ -937,7 +412,7 @@ def _choose_pt_variant(
 
 @t.final
 @dataclass(frozen=True)
-class _TFArchive(_WebTGZ, _RAIBuildDependency):
+class _TFArchive(_WebTGZ):
     os_: OperatingSystem
     architecture: Architecture
     device: Device
@@ -964,8 +439,6 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             tf_device = self.device
         elif self.os_ == OperatingSystem.DARWIN:
             tf_os = "darwin"
-            if self.device == Device.GPU:
-                raise BuildError("RedisAI does not currently support GPU on Macos")
             tf_device = Device.CPU
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
@@ -974,20 +447,10 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             f"libtensorflow-{tf_device.value}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
         )
 
-    @property
-    def __rai_dependency_name__(self) -> str:
-        return f"libtensorflow@{self.url}"
-
-    def __place_for_rai__(self, target: _PathLike) -> Path:
-        target = Path(target) / "libtensorflow"
-        target.mkdir()
-        self.extract(target)
-        return target
-
 
 @t.final
 @dataclass(frozen=True)
-class _ORTArchive(_WebTGZ, _RAIBuildDependency):
+class _ORTArchive(_WebTGZ):
     os_: OperatingSystem
     device: Device
     version: str
@@ -1013,30 +476,10 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
             ort_os = "osx"
             ort_arch = "x86_64"
             ort_build = ""
-            if self.device == Device.GPU:
-                raise BuildError("RedisAI does not currently support GPU on Macos")
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"
         return f"{ort_url_base}/{ort_archive}"
-
-    @property
-    def __rai_dependency_name__(self) -> str:
-        return f"onnxruntime@{self.url}"
-
-    def __place_for_rai__(self, target: _PathLike) -> Path:
-        target = Path(target).resolve() / "onnxruntime"
-        self.extract(target)
-        try:
-            (extracted_dir,) = target.iterdir()
-        except ValueError:
-            raise BuildError(
-                "Unexpected number of files extracted from ORT archive"
-            ) from None
-        for file in extracted_dir.iterdir():
-            file.rename(target / file.name)
-        extracted_dir.rmdir()
-        return target
 
 
 def _git(*args: str) -> None:

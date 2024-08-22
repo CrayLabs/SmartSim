@@ -29,7 +29,5 @@ from .helpers import (
     colorize,
     delete_elements,
     execute_platform_cmd,
-    installed_redisai_backends,
     is_crayex_platform,
 )
-from .redis import check_cluster_status, create_cluster, fs_is_active
