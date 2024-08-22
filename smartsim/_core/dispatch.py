@@ -37,6 +37,7 @@ from smartsim.error import errors
 from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
+    from smartsim._core.arguments.shell import ShellLaunchArguments
     from smartsim._core.utils.launcher import ExecutableProtocol, LauncherProtocol
     from smartsim.experiment import Experiment
     from smartsim.settings.arguments import LaunchArguments

@@ -152,29 +152,6 @@ class LaunchSettings(BaseSettings):
                 )
         self._env_vars.update(env_vars)
 
-    def format_env_vars(self) -> t.Union[t.List[str], None]:
-        """Build bash compatible environment variable string for Slurm
-        :returns: the formatted string of environment variables
-        """
-        return self._arguments.format_env_vars(self._env_vars)
-
-    def format_comma_sep_env_vars(self) -> t.Union[t.Tuple[str, t.List[str]], None]:
-        """Build environment variable string for Slurm
-        Slurm takes exports in comma separated lists
-        the list starts with all as to not disturb the rest of the environment
-        for more information on this, see the slurm documentation for srun
-        :returns: the formatted string of environment variables
-        """
-        return self._arguments.format_comma_sep_env_vars(self._env_vars)
-
-    def format_launch_args(self) -> t.Union[t.List[str], None]:
-        """Return formatted launch arguments
-        For ``RunSettings``, the run arguments are passed
-        literally with no formatting.
-        :return: list run arguments for these settings
-        """
-        return self._arguments.format_launch_args()
-
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nLauncher: {self.launcher}{self.launch_args}"
         if self.env_vars:
