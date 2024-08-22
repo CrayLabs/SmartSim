@@ -310,7 +310,7 @@ class GetStatusLauncher(dispatch.LauncherProtocol):
 
 
 @pytest.fixture
-def make_populated_experment(monkeypatch, experiment):
+def make_populated_experiment(monkeypatch, experiment):
     def impl(num_active_launchers):
         new_launchers = (GetStatusLauncher() for _ in range(num_active_launchers))
         id_to_launcher = {
@@ -324,8 +324,8 @@ def make_populated_experment(monkeypatch, experiment):
     yield impl
 
 
-def test_experiment_can_get_statuses(make_populated_experment):
-    exp = make_populated_experment(num_active_launchers=1)
+def test_experiment_can_get_statuses(make_populated_experiment):
+    exp = make_populated_experiment(num_active_launchers=1)
     (launcher,) = exp._launch_history.iter_past_launchers()
     ids = tuple(launcher.known_ids)
     recieved_stats = exp.get_status(*ids)
@@ -340,9 +340,9 @@ def test_experiment_can_get_statuses(make_populated_experment):
     [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
 )
 def test_experiment_can_get_statuses_from_many_launchers(
-    make_populated_experment, num_launchers
+    make_populated_experiment, num_launchers
 ):
-    exp = make_populated_experment(num_active_launchers=num_launchers)
+    exp = make_populated_experiment(num_active_launchers=num_launchers)
     launcher_and_rand_ids = (
         (launcher, random.choice(tuple(launcher.id_to_status)))
         for launcher in exp._launch_history.iter_past_launchers()
@@ -357,9 +357,9 @@ def test_experiment_can_get_statuses_from_many_launchers(
 
 
 def test_get_status_returns_not_started_for_unrecognized_ids(
-    monkeypatch, make_populated_experment
+    monkeypatch, make_populated_experiment
 ):
-    exp = make_populated_experment(num_active_launchers=1)
+    exp = make_populated_experiment(num_active_launchers=1)
     brand_new_id = dispatch.create_job_id()
     ((launcher, (id_not_known_by_exp, *rest)),) = (
         exp._launch_history.group_by_launcher().items()
@@ -372,7 +372,7 @@ def test_get_status_returns_not_started_for_unrecognized_ids(
 
 
 def test_get_status_de_dups_ids_passed_to_launchers(
-    monkeypatch, make_populated_experment
+    monkeypatch, make_populated_experiment
 ):
     def track_calls(fn):
         calls = []
@@ -383,7 +383,7 @@ def test_get_status_de_dups_ids_passed_to_launchers(
 
         return calls, impl
 
-    exp = make_populated_experment(num_active_launchers=1)
+    exp = make_populated_experiment(num_active_launchers=1)
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     calls, tracked_get_status = track_calls(launcher.get_status)
     monkeypatch.setattr(launcher, "get_status", tracked_get_status)
@@ -396,7 +396,7 @@ def test_get_status_de_dups_ids_passed_to_launchers(
 
 
 def test_wait_handles_empty_call_args(experiment):
-    """An exception is raised when asked to wait for the completion of no jobs"""
+    """An exception is raised when there are no jobs to complete"""
     with pytest.raises(ValueError, match="No job ids"):
         experiment.wait()
 
@@ -410,12 +410,12 @@ def test_wait_does_not_block_unknown_id(experiment):
     assert time.perf_counter() - now < 1
 
 
-def test_wait_calls_prefered_impl(make_populated_experment, monkeypatch):
+def test_wait_calls_prefered_impl(make_populated_experiment, monkeypatch):
     """Make wait is calling the expected method for checking job statuses.
     Right now we only have the "polling" impl, but in future this might change
     to an event based system.
     """
-    exp = make_populated_experment(1)
+    exp = make_populated_experiment(1)
     ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     was_called = False
 
@@ -437,15 +437,15 @@ def test_wait_calls_prefered_impl(make_populated_experment, monkeypatch):
 )
 @pytest.mark.parametrize("verbose", [True, False])
 def test_poll_status_blocks_until_job_is_completed(
-    monkeypatch, make_populated_experment, num_polls, verbose
+    monkeypatch, make_populated_experiment, num_polls, verbose
 ):
-    """Make sure that the polling based impl blocks the calling thread. Use
-    varying number of polls to simulate varying lengths of job time for a job
-    to complete.
+    """Make sure that the polling based implementation blocks the calling
+    thread. Use varying number of polls to simulate varying lengths of job time
+    for a job to complete.
 
     Additionally check to make sure that the expected log messages are present
     """
-    exp = make_populated_experment(1)
+    exp = make_populated_experiment(1)
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     (current_status,) = launcher.get_status(id_).values()
     different_statuses = set(JobStatus) - {current_status}
@@ -489,12 +489,12 @@ def test_poll_status_blocks_until_job_is_completed(
 
 
 def test_poll_status_raises_when_called_with_infinite_iter_wait(
-    make_populated_experment,
+    make_populated_experiment,
 ):
     """Cannot wait forever between polls. That will just block the thread after
     the first poll
     """
-    exp = make_populated_experment(1)
+    exp = make_populated_experiment(1)
     ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     with pytest.raises(ValueError, match="Polling interval cannot be infinite"):
         exp._poll_for_statuses(
@@ -506,10 +506,10 @@ def test_poll_status_raises_when_called_with_infinite_iter_wait(
 
 
 def test_poll_for_status_raises_if_ids_not_found_within_timeout(
-    make_populated_experment,
+    make_populated_experiment,
 ):
     """If there is a timeout, a timeout error should be raised when it is exceeded"""
-    exp = make_populated_experment(1)
+    exp = make_populated_experiment(1)
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     (current_status,) = launcher.get_status(id_).values()
     different_statuses = set(JobStatus) - {current_status}

@@ -314,7 +314,7 @@ class Experiment:
             reach one of the supplied statuses. If not supplied or `None`, the
             experiment will poll indefinitely.
         :param interval: The minimum time between polling launchers.
-        :param verbose: Whether or not to log polled states the console.
+        :param verbose: Whether or not to log polled states to the console.
         :raises ValueError: The interval between polling launchers is infinite
         :raises TimeoutError: The polling interval was exceeded.
         :returns: A mapping of ids to the status they entered that ended

@@ -39,7 +39,7 @@ pytestmark = pytest.mark.group_a
     "timeout", [pytest.param(i, id=f"{i} second(s)") for i in range(10)]
 )
 def test_sync_timeout_finite(timeout, monkeypatch):
-    """Test the sync timeout intervals are correctly calcualted"""
+    """Test that the sync timeout intervals are correctly calculated"""
     monkeypatch.setattr(time, "perf_counter", lambda *_, **__: 0)
     t = SynchronousTimeInterval(timeout)
     assert t.delta == timeout
@@ -62,7 +62,7 @@ def test_sync_timeout_finite(timeout, monkeypatch):
 
 
 def test_sync_timeout_can_block_thread():
-    """Test the sync timeout can block the calling thread"""
+    """Test that the sync timeout can block the calling thread"""
     timeout = 1
     now = time.perf_counter()
     SynchronousTimeInterval(timeout).wait()

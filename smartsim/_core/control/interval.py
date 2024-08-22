@@ -89,7 +89,7 @@ class SynchronousTimeInterval:
 
     @property
     def infinite(self) -> bool:
-        """Is the timeout interval infinitely long.
+        """Return true if the timeout interval is infinitely long
 
         :returns: `True` if the delta is infinite, `False` otherwise
         """
