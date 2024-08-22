@@ -30,7 +30,7 @@ import itertools
 import pytest
 
 from smartsim._core.control.launch_history import LaunchHistory
-from smartsim._core.dispatch import LauncherProtocol, create_job_id
+from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
 
 pytestmark = pytest.mark.group_a
 
