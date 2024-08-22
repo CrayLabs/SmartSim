@@ -24,19 +24,43 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import importlib.resources as resources
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import typing as t
+from collections.abc import MutableMapping
 from dataclasses import dataclass
+from importlib import resources
 
 from tabulate import tabulate
 
 from .platform import Platform
 from .types import PathLike
-from .utils import PackageRetriever
+from .utils import retrieve
+
+
+class RequireRelativePath(Exception):
+    pass
+
+
+@dataclass
+class RAIPatch:
+    """Holds information about how to patch a RedisAI source file
+
+    :param description: Human-readable description of the patch's purpose
+    :param source_file: A relative path to the
+    """
+
+    description: str
+    replacement: str
+    source_file: pathlib.Path
+    regex: re.Pattern[str]
+
+    def __post_init__(self) -> None:
+        self.source_file = pathlib.Path(self.source_file)
+        self.regex = re.compile(self.regex)
 
 
 @dataclass
@@ -48,13 +72,14 @@ class MLPackage:
     pip_index: str
     python_packages: t.List[str]
     lib_source: PathLike
+    rai_patches: t.Union[t.Tuple[RAIPatch], t.Tuple[()]] = ()
 
     def retrieve(self, destination: PathLike) -> None:
         """Retrieve an archive and/or repository for the package
 
         :param destination: Path to place the extracted package or repository
         """
-        PackageRetriever.retrieve(self.lib_source, pathlib.Path(destination))
+        retrieve(self.lib_source, pathlib.Path(destination))
 
     def pip_install(self, quiet: bool = False) -> None:
         """Install associated python packages
@@ -66,20 +91,20 @@ class MLPackage:
             if self.pip_index:
                 install_command += ["--index-url", self.pip_index]
             if quiet:
-                install_command += ["--quiet"]
+                install_command += ["--quiet --no-warn-conflicts"]
             install_command += self.python_packages
             subprocess.check_call(install_command)
 
 
-@dataclass
-class MLPackageCollection:
+class MLPackageCollection(MutableMapping[str, MLPackage]):
     """Collects multiple MLPackages
 
     Define a collection of MLPackages available for a specific platform
     """
 
-    platform: Platform
-    ml_packages: t.Dict[str, MLPackage]
+    def __init__(self, platform: Platform, ml_packages: t.Dict[str, MLPackage]):
+        self.platform = platform
+        self.ml_packages = ml_packages
 
     @classmethod
     def from_json_file(cls, json_file: PathLike) -> "MLPackageCollection":
@@ -88,9 +113,16 @@ class MLPackageCollection:
         :param json_file: path to the JSON file
         :return: An instance of MLPackageCollection for a platform
         """
-        with open(json_file, "r") as f:
-            config_json = json.load(f)
+        with open(json_file, "r", encoding="utf-8") as file_handle:
+            config_json = json.load(file_handle)
         platform = Platform.from_str(**config_json["platform"])
+
+        for ml_package in config_json["ml_packages"]:
+            # Convert the dictionary representation to a RAIPatch
+            if "rai_patches" in ml_package:
+                patch_list = ml_package.pop("rai_patches")
+                ml_package["rai_patches"] = [RAIPatch(**patch) for patch in patch_list]
+
         ml_packages = {
             ml_package["name"]: MLPackage(**ml_package)
             for ml_package in config_json["ml_packages"]
@@ -112,36 +144,35 @@ class MLPackageCollection:
         """
         return self.ml_packages[key]
 
-    def values(self) -> t.Iterable[MLPackage]:
-        """Accesses the MLPackages directly
+    def __len__(self) -> int:
+        return len(self.ml_packages)
 
-        :return: All the MLPackages in this collection
-        """
-        return self.ml_packages.values()
+    def __delitem__(self, key: str) -> None:
+        del self.ml_packages[key]
 
-    def items(self) -> t.ItemsView[str, MLPackage]:
-        """Retrieve all MLPackages and their names
+    def __setitem__(self, key: str, value: MLPackage) -> None:
+        self.ml_packages[key] = value
 
-        :return: MLPackages and names in this collection
-        """
-        return self.ml_packages.items()
+    # def values(self) -> t.Iterable[MLPackage]:
+    #     """Accesses the MLPackages directly
 
-    def keys(self) -> t.Iterable[str]:
-        """Retrieve just the names of the MLPackages
+    #     :return: All the MLPackages in this collection
+    #     """
+    #     return self.ml_packages.values()
 
-        :return: The names of the MLPackages
-        """
-        return self.ml_packages.keys()
+    # def items(self) -> t.ItemsView[str, MLPackage]:
+    #     """Retrieve all MLPackages and their names
 
-    def pop(self, key: str) -> None:
-        """Remove a particular MLPackage by name
+    #     :return: MLPackages and names in this collection
+    #     """
+    #     return self.ml_packages.items()
 
-        Used internally if a user specifies they do not want a
-        particular package installed
+    # def keys(self) -> t.Iterable[str]:
+    #     """Retrieve just the names of the MLPackages
 
-        :param key: The name of the package to remove
-        """
-        self.ml_packages.pop(key)
+    #     :return: The names of the MLPackages
+    #     """
+    #     return self.ml_packages.keys()
 
     def tabulate_versions(self, tablefmt: str = "github") -> str:
         """Display package names and versions as a table
@@ -174,9 +205,11 @@ def load_platform_configs(
     return configs
 
 
+# Note this conversion str -> pathlib.Path is needed for mypy
 DEFAULT_MLPACKAGE_PATH: pathlib.Path = pathlib.Path(
     str(resources.files("smartsim._core._install.configs.mlpackages").joinpath(""))
 )
+
 DEFAULT_MLPACKAGES: t.Dict[Platform, MLPackageCollection] = load_platform_configs(
     DEFAULT_MLPACKAGE_PATH
 )

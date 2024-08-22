@@ -21,7 +21,15 @@
                 "torchvision==0.17.2",
                 "torchaudio==2.2.2"
             ],
-            "lib_source": "https://download.pytorch.org/libtorch/cpu/libtorch-macos-x86_64-2.2.2.zip"
+            "lib_source": "https://download.pytorch.org/libtorch/cpu/libtorch-macos-x86_64-2.2.2.zip",
+            "rai_patches": [
+                {
+                    "description": "Patch RedisAI module to require C++17 standard instead of C++14",
+                    "source_file": "src/backends/libtorch_c/CMakeLists.txt",
+                    "regex": "set_property\\(TARGET\\storch_c\\sPROPERTY\\sCXX_STANDARD\\s(98|11|14)\\)",
+                    "replacement": "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)"
+                }
+            ]
         },
         {
             "name": "libtensorflow",
@@ -34,17 +42,15 @@
         },
         {
             "name": "onnxruntime",
-            "version": "1.19.0",
+            "version": "1.17.3",
             "pip_index": "",
             "python_packages": [
-                "onnx==1.16.2",
+                "onnx==1.15",
                 "skl2onnx",
                 "scikit-learn",
                 "onnxmltools"
             ],
-            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.18.1/onnxruntime-osx-x86_64-1.18.1.tgz"
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-osx-x86_64-1.17.3.tgz"
         }
     ]
-
-
 }

@@ -35,18 +35,11 @@ import typing as t
 from pathlib import Path
 from subprocess import SubprocessError
 
+from smartsim._core._install.utils import retrieve
+from smartsim._core.utils import expand_exe_path
+
 if t.TYPE_CHECKING:
     from typing_extensions import Never
-
-from smartsim._core._install.mlpackages import MLPackage
-from smartsim._core._install.platform import (
-    Architecture,
-    Device,
-    OperatingSystem,
-    Platform,
-)
-from smartsim._core._install.utils import PackageRetriever
-from smartsim._core.utils import expand_exe_path
 
 # TODO: check cmake version and use system if possible to avoid conflicts
 
@@ -206,9 +199,7 @@ class DatabaseBuilder(Builder):
         keydb_files = {"keydb-server", "keydb-cli"}
         return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
 
-    def build_from_git(
-        self, git_url: str, branch: str, device: Device = Device.CPU
-    ) -> None:
+    def build_from_git(self, git_url: str, branch: str) -> None:
         """Build Redis from git
         :param git_url: url from which to retrieve Redis
         :param branch: branch to checkout
@@ -230,9 +221,7 @@ class DatabaseBuilder(Builder):
         if not self.is_valid_url(git_url):
             raise BuildError(f"Malformed {database_name} URL: {git_url}")
 
-        PackageRetriever.retrieve(
-            git_url, self.build_dir / database_name, branch=branch, depth=1
-        )
+        retrieve(git_url, self.build_dir / database_name, branch=branch, depth=1)
         # build Redis
         build_cmd = [
             self.binary_path("make"),

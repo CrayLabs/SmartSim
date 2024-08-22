@@ -94,15 +94,29 @@ class Config:
     def __init__(self) -> None:
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
+        # TODO: Turn this into a property. Need to modify the configuration
+        # of KeyDB vs Redis at build time
+        self.conf_path = Path(self.dependency_path / "config" / "redis.conf")
 
-        self.dependency_path = os.environ.get(
-            "SMARTSIM_DEP_INSTALL_PATH", self.core_path
-        )
-        self.lib_path = Path(self.dependency_path, "lib").resolve()
-        self.bin_path = Path(self.dependency_path, "bin").resolve()
-        self.build_path = Path(self.dependency_path, "build").resolve()
-        self.conf_path = Path(self.dependency_path, "config", "redis.conf")
-        self.conf_dir = Path(self.core_path, "config")
+    @property
+    def dependency_path(self) -> str:
+        return os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path))
+
+    @property
+    def lib_path(self) -> Path:
+        return Path(self.dependency_path, "lib").resolve()
+
+    @property
+    def bin_path(self) -> Path:
+        return Path(self.dependency_path, "bin").resolve()
+
+    @property
+    def build_path(self) -> Path:
+        return Path(self.dependency_path, "build").resolve()
+
+    @property
+    def conf_dir(self) -> Path:
+        return Path(self.core_path, "config")
 
     @property
     def redisai(self) -> str:
@@ -159,7 +173,7 @@ class Config:
     @property
     def dragon_dotenv(self) -> Path:
         """Returns the path to a .env file containing dragon environment variables"""
-        return self.conf_dir / "dragon" / ".env"
+        return Path(self.conf_dir / "dragon" / ".env")
 
     @property
     def dragon_server_path(self) -> t.Optional[str]:

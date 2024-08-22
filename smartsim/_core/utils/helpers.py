@@ -43,7 +43,7 @@ if t.TYPE_CHECKING:
     from types import FrameType
 
 
-TRedisAIBackendStr = t.Literal["libtensorflow", "libtorch", "onnxruntime"]
+_TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime"]
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
@@ -229,13 +229,15 @@ def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
     # pylint: disable-next=import-outside-toplevel
     from ..._core.config import CONFIG
 
-    base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    base_path: Path = (
+        Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    )
     return base_path
 
 
 def installed_redisai_backends(
     backends_path: t.Optional[str] = None,
-) -> t.Set[TRedisAIBackendStr]:
+) -> t.Set[_TRedisAIBackendStr]:
     """Check which ML backends are available for the RedisAI module.
 
     The optional argument ``backends_path`` is needed if the backends
@@ -250,15 +252,13 @@ def installed_redisai_backends(
     """
     # import here to avoid circular import
     base_path = redis_install_base(backends_path)
-    backends: t.Set = {
+    backends: t.Set[_TRedisAIBackendStr] = {
         "tensorflow",
         "torch",
         "onnxruntime",
     }
 
-    installed = {
-        backend for backend in backends if _installed(base_path, backend)
-    }
+    installed = {backend for backend in backends if _installed(base_path, backend)}
     return installed
 
 

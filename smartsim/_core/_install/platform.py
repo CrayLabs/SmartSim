@@ -34,8 +34,6 @@ from dataclasses import dataclass
 
 from typing_extensions import Self
 
-from .types import PathLike
-
 
 class PlatformError(Exception):
     pass
@@ -45,14 +43,11 @@ class UnsupportedError(PlatformError):
     pass
 
 
-class PathNotFoundError(PlatformError):
-    pass
-
-
 class Architecture(enum.Enum):
     """Identifiers for supported CPU architectures
 
-    :raises UnsupportedError: If a given architecture is not enumerated (i.e not supported)
+    :raises UnsupportedError: If a given architecture is not enumerated
+                              (i.e not supported)
     :return: An enum representing the CPU architecture
     """
 
@@ -116,8 +111,8 @@ class Device(enum.Enum):
         """
         if cuda_home := os.environ.get("CUDA_HOME"):
             cuda_path = pathlib.Path(cuda_home)
-            with open(cuda_path / "version.json", "r") as f:
-                cuda_versions = json.load(f)
+            with open(cuda_path / "version.json", "r", encoding="utf-8") as file_handle:
+                cuda_versions = json.load(file_handle)
             major, minor = cuda_versions["cuda"]["version"].split(".")[0:2]
             return cls.from_str(f"cuda-{major}.{minor}")
         return None
@@ -130,8 +125,9 @@ class Device(enum.Enum):
         """
         if rocm_home := os.environ.get("ROCM_HOME"):
             rocm_path = pathlib.Path(rocm_home)
-            with open(rocm_path / ".info" / "version", "r") as f:
-                major, minor = f.readline().split("-")[0].split(".")
+            fname = rocm_path / ".info" / "version"
+            with open(fname, "r", encoding="utf-8") as file_handle:
+                major, minor = file_handle.readline().split("-")[0].split(".")
             return cls.from_str(f"rocm-{major}.{minor}")
         return None
 
@@ -213,12 +209,12 @@ class OperatingSystem(enum.Enum):
 class Platform:
     """Container describing relevant identifiers for a platform"""
 
-    os: OperatingSystem
+    operating_system: OperatingSystem
     architecture: Architecture
     device: Device
 
     @classmethod
-    def from_str(cls, os: str, architecture: str, device: str) -> Self:
+    def from_str(cls, operating_system: str, architecture: str, device: str) -> Self:
         """Factory method for Platform from string onput
 
         :param os: String identifier for the OS
@@ -227,18 +223,18 @@ class Platform:
         :return: Instance of Platform
         """
         return cls(
-            OperatingSystem.from_str(os),
+            OperatingSystem.from_str(operating_system),
             Architecture.from_str(architecture),
             Device.from_str(device),
         )
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         """Human-readable representation of Platform
 
         :return: String created from the values of the enums for each property
         """
         output = [
-            self.os.name,
+            self.operating_system.name,
             self.architecture.name,
             self.device.name,
         ]

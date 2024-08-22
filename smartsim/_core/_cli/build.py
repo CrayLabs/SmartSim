@@ -26,6 +26,7 @@
 
 import argparse
 import importlib.metadata
+import operator
 import os
 import re
 import shutil
@@ -35,13 +36,12 @@ from pathlib import Path
 from tabulate import tabulate
 
 from smartsim._core._cli.scripts.dragon_install import install_dragon
-from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
+from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
-from smartsim._core._install.builder import Device
 from smartsim._core._install.mlpackages import (
-    DEFAULT_MLPACKAGES,
     DEFAULT_MLPACKAGE_PATH,
+    DEFAULT_MLPACKAGES,
     MLPackageCollection,
     load_platform_configs,
 )
@@ -61,8 +61,6 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
-
-_TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
 
 
 def check_backends_install() -> bool:
@@ -131,46 +129,45 @@ def build_redis_ai(
     verbose: bool,
 ) -> None:
     logger.info("Building RedisAI and backends...")
-    RAIBuilder = RedisAIBuilder(platform, mlpackages, build_env, verbose)
-    RAIBuilder.build()
-    RAIBuilder.cleanup_build()
+    rai_builder = RedisAIBuilder(
+        platform, mlpackages, build_env, CONFIG.build_path, verbose
+    )
+    rai_builder.build()
+    rai_builder.cleanup_build()
+
+
+def parse_requirement(
+    requirement: str,
+) -> t.Tuple[str, t.Optional[t.Callable[[t.Any, t.Any], bool]], t.Optional[Version_]]:
+
+    operators = {
+        "==": operator.eq,
+        "<=": operator.le,
+        ">=": operator.ge,
+        "<": operator.lt,
+        ">": operator.gt,
+    }
+    pattern = r"^([a-zA-Z0-9_\-]+)([<>=!~]+)?([\d\.\*]+)?$"
+    match = re.match(pattern, requirement)
+    if match:
+        module_name = match.group(1)
+        parsed_operator = operators[match.group(2)] if match.group(2) else None
+        version = Version_(match.group(3)) if match.group(3) else None
+        return module_name, parsed_operator, version
+    raise ValueError(f"Invalid requirement string: {requirement}")
 
 
 def check_ml_python_packages(packages: MLPackageCollection) -> None:
-    def parse_requirement(
-        requirement: str,
-    ) -> t.Tuple[
-        str, t.Optional[t.Callable[[t.Any, t.Any], bool]], t.Optional[Version_]
-    ]:
-        import operator
-
-        operators = {
-            "==": operator.eq,
-            "<=": operator.le,
-            ">=": operator.ge,
-            "<": operator.lt,
-            ">": operator.gt,
-        }
-        pattern = r"^([a-zA-Z0-9_\-]+)([<>=!~]+)?([\d\.\*]+)?$"
-        match = re.match(pattern, requirement)
-        if match:
-            module_name = match.group(1)
-            op = operators[match.group(2)] if match.group(2) else None
-            version = Version_(match.group(3)) if match.group(3) else None
-            return module_name, op, version
-        else:
-            raise ValueError(f"Invalid requirement string: {requirement}")
-
     missing = []
     conflicts = []
 
     for package in packages.values():
-        for python_requirement in package.python_packages:
-            module_name, operator, version = parse_requirement(python_requirement)
+        for requirement in package.python_packages:
+            module_name, parsed_operator, version = parse_requirement(requirement)
             try:
                 dist = importlib.metadata.distribution(module_name)
-                if operator and version:
-                    if not operator(version, dist.version):
+                if parsed_operator and version:
+                    if not parsed_operator(version, dist.version):
                         conflicts.append(f"{module_name} {version}")
             except importlib.metadata.PackageNotFoundError:
                 missing.append(module_name)
@@ -288,14 +285,14 @@ def execute(
     # REDIS/KeyDB
     build_database(build_env, versions, keydb, verbose)
 
-    backends = installed_redisai_backends()
-    if backends:
+    if (CONFIG.lib_path / "redisai.so").exists():
         logger.warning("RedisAI was previously built, run 'smart clean' to rebuild")
     else:
         build_redis_ai(current_platform, mlpackages, build_env, verbose)
 
+    backends = installed_redisai_backends()
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
-    logger.info(f"{backends_str} backend(s) built")
+    logger.info(f"{backends_str} backend(s) available")
 
     if args.install_python_packages:
         for package in mlpackages.values():
@@ -352,7 +349,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--alternate-config-dir",
         default=DEFAULT_MLPACKAGE_PATH,
         type=str,
-        help="Path to directory with JSON files describing the platform and associated packages",
+        help="Path to directory with JSON files describing platform and packages",
     )
     parser.add_argument(
         "--keydb",

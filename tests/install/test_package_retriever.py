@@ -35,7 +35,7 @@ import zipfile
 
 import pytest
 
-from smartsim._core._install.utils import PackageRetriever
+from smartsim._core._install.utils import retrieve
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -66,7 +66,7 @@ def test_local_archive_zip(test_dir):
         with zipfile.ZipFile(zip_file, "w") as f:
             f.write(test_file)
 
-        PackageRetriever.retrieve(zip_file, pathlib.Path("./output"))
+        retrieve(zip_file, pathlib.Path("./output"))
 
         assert filecmp.cmp(
             test_file, pathlib.Path("./output") / "test.data", shallow=False
@@ -82,7 +82,7 @@ def test_local_archive_tgz(test_dir):
         with tarfile.open(tgz_file, "w:gz") as f:
             f.add(test_file)
 
-        PackageRetriever.retrieve(tgz_file, pathlib.Path("./output"))
+        retrieve(tgz_file, pathlib.Path("./output"))
 
         assert filecmp.cmp(
             test_file, pathlib.Path("./output") / "test.data", shallow=False
@@ -90,7 +90,7 @@ def test_local_archive_tgz(test_dir):
 
 
 def test_git(test_dir):
-    PackageRetriever.retrieve(
+    retrieve(
         "https://github.com/CrayLabs/SmartSim.git",
         f"{test_dir}/smartsim_git",
         branch="master",
@@ -100,7 +100,7 @@ def test_git(test_dir):
 
 def test_https(test_dir):
     output_dir = pathlib.Path(test_dir) / "output"
-    PackageRetriever.retrieve(
+    retrieve(
         "https://github.com/CrayLabs/SmartSim/archive/refs/tags/v0.6.0.zip", output_dir
     )
     assert output_dir.exists()

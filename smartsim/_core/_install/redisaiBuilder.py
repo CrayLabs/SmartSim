@@ -26,19 +26,16 @@
 
 import fileinput
 import pathlib
-import re
 import shutil
 import subprocess
 import typing as t
-from collections import deque, namedtuple
-
-from packaging.version import Version
+from collections import deque
 
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install.buildenv import BuildEnv
-from smartsim._core._install.mlpackages import MLPackageCollection
+from smartsim._core._install.mlpackages import MLPackageCollection, RAIPatch
 from smartsim._core._install.platform import Platform
-from smartsim._core._install.utils import PackageRetriever
+from smartsim._core._install.utils import retrieve
 from smartsim._core.config import CONFIG
 from smartsim.log import get_logger
 
@@ -53,30 +50,33 @@ class RedisAIBuilder:
         platform: Platform,
         mlpackages: MLPackageCollection,
         build_env: BuildEnv,
+        main_build_path: pathlib.Path,
         verbose: bool = False,
         source: t.Union[str, pathlib.Path] = "https://github.com/RedisAI/RedisAI.git",
         version: str = "v1.2.7",
     ) -> None:
+
         self.platform = platform
         self.mlpackages = mlpackages
         self.build_env = build_env
         self.verbose = verbose
         self.source = source
         self.version = version
-        self.patches: t.List[_RedisAIPatch] = []
-        self._define_patches_by_version()
-
-        self.src_path = CONFIG.build_path / "RedisAI" / "src"
-        self.build_path = CONFIG.build_path / "RedisAI" / "build"
-        self.package_path = CONFIG.build_path / "RedisAI" / "mlpackages"
+        self._root_path = main_build_path / "RedisAI"
 
         self.cleanup_build()
 
-    def _define_patches_by_version(self) -> None:
-        """Inject specific patches due to package version numbers"""
-        if self.build_torch:
-            if Version(self.mlpackages["libtorch"].version) >= Version("2.1.0"):
-                self.patches.append(_patches["c++17"])
+    @property
+    def src_path(self) -> pathlib.Path:
+        return pathlib.Path(self._root_path / "src")
+
+    @property
+    def build_path(self) -> pathlib.Path:
+        return pathlib.Path(self._root_path / "build")
+
+    @property
+    def package_path(self) -> pathlib.Path:
+        return pathlib.Path(self._root_path / "package")
 
     def cleanup_build(self) -> None:
         """Removes all directories associated with the build"""
@@ -135,28 +135,39 @@ class RedisAIBuilder:
         self.build_path.mkdir(parents=True)
         self.package_path.mkdir(parents=True)
 
-        # Create the build directory structure
-        git_kwargs = {
-            "depth": 1,
-            "branch": self.version,
-        }
+        retrieve(self.source, self.src_path, depth=1, branch=self.version)
 
-        PackageRetriever.retrieve(self.source, self.src_path, **git_kwargs)
-        self._patch_source_files()
         self._prepare_packages()
 
+        for package in self.mlpackages.values():
+            self._patch_source_files(package.rai_patches)
         cmake_command = self._rai_cmake_cmd()
         build_command = self._rai_build_cmd()
 
-        logger.info(f"Configuring CMake Build:")
+        logger.info("Configuring CMake Build")
         if self.verbose:
             print(" ".join(cmake_command))
         self.run_command(cmake_command, self.build_path)
 
-        logger.info(f"Building RedisAI:")
+        logger.info("Building RedisAI")
         if self.verbose:
             print(" ".join(cmake_command))
         self.run_command(build_command, self.build_path)
+
+    @staticmethod
+    def _find_closest_object(
+        start_path: pathlib.Path, target_obj: str
+    ) -> t.Optional[pathlib.Path]:
+        queue = deque([start_path])
+        while queue:
+            current_dir = queue.popleft()
+            current_target = current_dir / target_obj
+            if current_target.exists():
+                return current_target.parent
+            for sub_dir in current_dir.iterdir():
+                if sub_dir.is_dir():
+                    queue.append(sub_dir)
+        return None
 
     def _prepare_packages(self) -> None:
         """Ensure that retrieved archives/packages are in the expected location
@@ -168,32 +179,21 @@ class RedisAIBuilder:
         this is the root.
         """
 
-        def find_closest_object(
-            start_path: pathlib.Path, target_obj: str
-        ) -> t.Optional[pathlib.Path]:
-            queue = deque([start_path])
-            while queue:
-                current_dir = queue.popleft()
-                current_target = current_dir / target_obj
-                if current_target.exists():
-                    return current_target.parent
-                for sub_dir in current_dir.iterdir():
-                    if sub_dir.is_dir():
-                        queue.append(sub_dir)
-            return None
-
         for package in self.mlpackages.values():
             logger.info(f"Retrieving package: {package.name} {package.version}")
             target_dir = self.package_path / package.name
             package.retrieve(target_dir)
             # Move actual contents to root of the expected location
-            actual_root = find_closest_object(target_dir, "include")
+            actual_root = self._find_closest_object(target_dir, "include")
             if actual_root and actual_root != target_dir:
-                logger.info(
-                    f"Non-standard location found: {str(actual_root)} -> {str(target_dir)}"
+                logger.debug(
+                    (
+                        "Non-standard location found: \n",
+                        "{str(actual_root)} -> {str(target_dir)}",
+                    )
                 )
-                for f in actual_root.iterdir():
-                    f.rename(target_dir / f.name)
+                for file in actual_root.iterdir():
+                    file.rename(target_dir / file.name)
 
     def run_command(self, cmd: t.Union[str, t.List[str]], cwd: pathlib.Path) -> None:
         """Executor of commands usedi in the build
@@ -203,7 +203,9 @@ class RedisAIBuilder:
         """
         stdout = None if self.verbose else subprocess.DEVNULL
         stderr = None if self.verbose else subprocess.PIPE
-        proc = subprocess.run(cmd, cwd=str(cwd), stdout=stdout, stderr=stderr)
+        proc = subprocess.run(
+            cmd, cwd=str(cwd), stdout=stdout, stderr=stderr, check=False
+        )
         if proc.returncode != 0:
             print(proc.stderr.decode("utf-8"))
 
@@ -216,22 +218,23 @@ class RedisAIBuilder:
         def on_off(expression: bool) -> t.Literal["ON", "OFF"]:
             return "ON" if expression else "OFF"
 
-        cmake_args = dict(
-            BUILD_TF=on_off(self.build_tensorflow),
-            BUILD_ORT=on_off(self.build_onnxruntime),
-            BUILD_TORCH=on_off(self.build_torch),
-            BUILD_TFLITE="OFF",
-            DEPS_PATH=str(self.package_path),
-            DEVICE="gpu" if self.platform.device.is_gpu() else "cpu",
-            INSTALL_PATH=str(CONFIG.lib_path),
-            CMAKE_C_COMPILER=self.build_env.CC,
-            CMAKE_CXX_COMPILER=self.build_env.CXX,
-        )
+        cmake_args = {
+            "BUILD_TF": on_off(self.build_tensorflow),
+            "BUILD_ORT": on_off(self.build_onnxruntime),
+            "BUILD_TORCH": on_off(self.build_torch),
+            "BUILD_TFLITE": "OFF",
+            "DEPS_PATH": str(self.package_path),
+            "DEVICE": "gpu" if self.platform.device.is_gpu() else "cpu",
+            "INSTALL_PATH": str(CONFIG.lib_path),
+            "CMAKE_C_COMPILER": self.build_env.CC,
+            "CMAKE_CXX_COMPILER": self.build_env.CXX,
+        }
         cmd = ["cmake"]
         cmd += (f"-D{key}={value}" for key, value in cmake_args.items())
         cmd.append(str(self.src_path))
         return cmd
 
+    @property
     def _rai_build_cmd(self) -> t.List[str]:
         """Shell command to build RedisAI and modules
 
@@ -244,23 +247,14 @@ class RedisAIBuilder:
         """
         return "make install -j VERBOSE=1".split(" ")
 
-    def _patch_source_files(self) -> None:
-        """Apply all _RedisAIPatches specified previously"""
-        for patch in self.patches:
-            compiled_regex = re.compile(patch.regex)
+    def _patch_source_files(
+        self, patches: t.Union[t.Tuple[RAIPatch], t.Tuple[()]]
+    ) -> None:
+        """Apply specified RedisAI patches"""
+        for patch in patches:
             with fileinput.input(
                 str(self.src_path / patch.source_file), inplace=True
-            ) as f:
-                for line in f:
-                    line = compiled_regex.sub(patch.replacement, line)
+            ) as file_handle:
+                for line in file_handle:
+                    line = patch.regex.sub(patch.replacement, line)
                     print(line, end="")
-
-
-_RedisAIPatch = namedtuple("_RedisAIPatch", "source_file regex replacement")
-_patches = {
-    "c++17": _RedisAIPatch(
-        "src/backends/libtorch_c/CMakeLists.txt",
-        r"set_property\(TARGET\storch_c\sPROPERTY\sCXX_STANDARD\s(98|11|14)\)",
-        "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)",
-    ),
-}
