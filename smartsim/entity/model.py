@@ -78,14 +78,24 @@ class Application(SmartSimEntity):
         self._incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False
 
+        
+        ## add setter fror key_prefixing 
+
+        ## talk about whether dragon has a way to namespace keys 
+
+
+
     #TODO Talk through as a group if _key_prefixing_enabled 
-    #     should have proeprty and setter decorators or do we stick with something of similar syntax.
+    #     should have property and setter decorators or do we stick with something of similar syntax.
     #     Bring this up to the group after the rest of the class is done so they see what a consistent
     #     API is currently being formed.
+
+
     #TODO Discuss if the exe_args parameter should be set with a str in the construct 
     #     and setter or should we stick to t.Sequence[str] only.  This might require group discussion.
     #TODO Discuss with the core team when/if properties should always be returned via reference 
     #     or deep copy 
+
     #TODO Ticket says to remove prefixing, but I think that needs to stay
     #TODO @property for _exe
     #TODO @exe.setter for _exe
@@ -96,10 +106,14 @@ class Application(SmartSimEntity):
     #TODO @property for _incoming_entities
     #TODO @incoming_entities.setter for _incoming_entites
     #TODO Update __str__
-    #TODO Should attached_files_table be deleted and replaced with @property?
+
+
     #--moved #TODO Put create pinning string into a new ticket for finding a home for it
+    
     #TODO check consistency of variable names and constructor with Ensemble, where appropriate
+   
     #TODO Unit tests!!
+    
     #TODO Cleanup documentation
 
 
@@ -131,16 +145,18 @@ class Application(SmartSimEntity):
         
 
     @property
-    def exe_args(self) -> t.List[str]:
+    def exe_args(self) -> t.List[str]:  #  t.Sequence[str] use sequence of strings 
         # TODO why does this say immutable if it is not a deep copy?
+        # TODO review whether this should be a deepcopy - are we relying of having this be a reference? 
         """Return an immutable list of attached executable arguments.
 
         :returns: application executable arguments
         """
-        return self._exe_args
+        # make this a deepcopy (( maybe discuss )) - al and andrew? 
+        return self._exe_args 
 
     @exe_args.setter
-    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
+    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None: #  t.Sequence[str] ... 
         # TODO should we just make this a t.Sequence[str] if the 
         # constructor is just t.list[str]
         """Set the executable arguments.
