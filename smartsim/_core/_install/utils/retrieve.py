@@ -57,7 +57,7 @@ def _from_local_archive(
         with tarfile.open(source) as archive:
             archive.extractall(path=destination, **kwargs)
     if zipfile.is_zipfile(source):
-        with zipfile.Zipfile(source) as archive:
+        with zipfile.ZipFile(source) as archive:
             archive.extractall(path=destination, **kwargs)
 
 

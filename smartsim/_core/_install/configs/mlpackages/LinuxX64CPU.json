@@ -1,6 +1,6 @@
 {
     "platform": {
-        "os":"linux",
+        "operating_system":"linux",
         "architecture":"x86_64",
         "device":"cpu"
     },

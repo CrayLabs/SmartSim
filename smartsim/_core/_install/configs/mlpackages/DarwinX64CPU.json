@@ -1,6 +1,6 @@
 {
     "platform": {
-        "os":"darwin",
+        "operating_system":"darwin",
         "architecture":"x86_64",
         "device":"cpu"
     },

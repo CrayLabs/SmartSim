@@ -142,7 +142,7 @@ class RedisAIBuilder:
         for package in self.mlpackages.values():
             self._patch_source_files(package.rai_patches)
         cmake_command = self._rai_cmake_cmd()
-        build_command = self._rai_build_cmd()
+        build_command = self._rai_build_cmd
 
         logger.info("Configuring CMake Build")
         if self.verbose:

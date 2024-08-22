@@ -99,8 +99,8 @@ class Config:
         self.conf_path = Path(self.dependency_path / "config" / "redis.conf")
 
     @property
-    def dependency_path(self) -> str:
-        return os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path))
+    def dependency_path(self) -> Path:
+        return Path(os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path)))
 
     @property
     def lib_path(self) -> Path:
