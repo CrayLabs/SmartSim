@@ -32,7 +32,7 @@ import typing as t
 from smartsim._core.utils import helpers as _helpers
 
 if t.TYPE_CHECKING:
-    from smartsim._core.dispatch import LauncherProtocol
+    from smartsim._core.utils.launcher import LauncherProtocol
     from smartsim.types import LaunchedJobID
 
 

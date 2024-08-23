@@ -36,6 +36,7 @@ import pytest
 
 from smartsim._core import dispatch
 from smartsim._core.control.launch_history import LaunchHistory
+from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
 from smartsim.entity import _mock, entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
@@ -97,7 +98,7 @@ JobMakerType: t.TypeAlias = t.Callable[[], job.Job]
 
 
 @dataclasses.dataclass(frozen=True, eq=False)
-class NoOpRecordLauncher(dispatch.LauncherProtocol):
+class NoOpRecordLauncher(LauncherProtocol):
     """Simple launcher to track the order of and mapping of ids to `start`
     method calls. It has exactly three attrs:
 
@@ -132,7 +133,7 @@ class NoOpRecordLauncher(dispatch.LauncherProtocol):
         return cls(exp)
 
     def start(self, record: LaunchRecord):
-        id_ = dispatch.create_job_id()
+        id_ = create_job_id()
         self.launched_order.append(record)
         self.ids_to_launched[id_] = record
         return id_
@@ -293,9 +294,9 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     assert sorted(ids_to_launches) == sorted(exp_cached_ids), "Exp did not cache ids"
 
 
-class GetStatusLauncher(dispatch.LauncherProtocol):
+class GetStatusLauncher(LauncherProtocol):
     def __init__(self):
-        self.id_to_status = {dispatch.create_job_id(): stat for stat in JobStatus}
+        self.id_to_status = {create_job_id(): stat for stat in JobStatus}
 
     __hash__ = object.__hash__
 
@@ -365,7 +366,7 @@ def test_get_status_returns_not_started_for_unrecognized_ids(
     monkeypatch, make_populated_experment
 ):
     exp = make_populated_experment(num_active_launchers=1)
-    brand_new_id = dispatch.create_job_id()
+    brand_new_id = create_job_id()
     ((launcher, (id_not_known_by_exp, *rest)),) = (
         exp._launch_history.group_by_launcher().items()
     )

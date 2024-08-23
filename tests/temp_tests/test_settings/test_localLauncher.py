@@ -29,7 +29,7 @@ import pathlib
 
 import pytest
 
-from smartsim._core.dispatch import ShellLauncherCommand
+from smartsim._core.shell.shellLauncher import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.local import (
     LocalLaunchArguments,

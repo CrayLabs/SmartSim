@@ -64,7 +64,9 @@ from .dragonConnector import DragonConnector, _SchemaT
 if t.TYPE_CHECKING:
     from typing_extensions import Self
 
+    from smartsim._core.utils.launcher import ExecutableProtocol
     from smartsim.experiment import Experiment
+
 
 logger = get_logger(__name__)
 
@@ -356,7 +358,7 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
     return obj
 
 
-from smartsim._core.dispatch import ExecutableProtocol, dispatch
+from smartsim._core.dispatch import dispatch
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO: Remove this registry and move back to builder file after fixing
