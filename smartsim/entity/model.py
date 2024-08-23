@@ -28,10 +28,8 @@ from __future__ import annotations
 
 import copy
 import typing as t
-from os import getcwd
 from os import path as osp
 
-from .._core._install.builder import Device
 from .._core.utils.helpers import expand_exe_path
 from ..log import get_logger
 from .entity import SmartSimEntity
@@ -51,12 +49,13 @@ logger = get_logger(__name__)
 #       (run-settings/batch_settings/params_as_args/etc)!
 # pylint: disable-next=too-many-public-methods
 
+
 class Application(SmartSimEntity):
     def __init__(
         self,
         name: str,
         exe: str,
-        exe_args: t.Optional[t.Union[str,t.Sequence[str]]] = None,
+        exe_args: t.Optional[t.Union[str, t.Sequence[str]]] = None,
         files: t.Optional[EntityFiles] = None,
         file_parameters: t.Mapping[str, str] | None = None,
     ) -> None:
@@ -65,7 +64,7 @@ class Application(SmartSimEntity):
         :param name: name of the application
         :param exe: executable to run
         :param exe_args: executable arguments
-        :param files: files to be copied, symlinked, and/or configured prior to 
+        :param files: files to be copied, symlinked, and/or configured prior to
                       execution
         :param file_parameters: parameters and values to be used when configuring
                                 files
@@ -74,51 +73,38 @@ class Application(SmartSimEntity):
         self._exe = [expand_exe_path(exe)]
         self._exe_args = self._build_exe_args(exe_args) or []
         self._files = copy.deepcopy(files) if files else None
-        self._file_parameters = copy.deepcopy(file_parameters) if file_parameters else {}
+        self._file_parameters = (
+            copy.deepcopy(file_parameters) if file_parameters else {}
+        )
         self._incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False
 
-        
-        ## add setter fror key_prefixing 
-
-        ## talk about whether dragon has a way to namespace keys 
-
-
-
-    #TODO Talk through as a group if _key_prefixing_enabled 
-    #     should have property and setter decorators or do we stick with something of similar syntax.
+    # TODO Talk through as a group if _key_prefixing_enabled
+    #     should have proeprty and setter decorators or do we stick with something of similar syntax.
     #     Bring this up to the group after the rest of the class is done so they see what a consistent
     #     API is currently being formed.
-
-
-    #TODO Discuss if the exe_args parameter should be set with a str in the construct 
+    # TODO Discuss if the exe_args parameter should be set with a str in the construct
     #     and setter or should we stick to t.Sequence[str] only.  This might require group discussion.
-    #TODO Discuss with the core team when/if properties should always be returned via reference 
-    #     or deep copy 
+    # TODO Discuss with the core team when/if properties shoulda always be returned via reference
+    #     or deep copy
+    # TODO Ticket says to remove prefixing, but I think that needs to stay
+    # TODO @property for _exe
+    # TODO @exe.setter for _exe
+    # TODO @property for _files
+    # TODO @pfiles.setter for _files
+    # TODO @property for _file_parameters
+    # TODO @file_parameters.setter for _file_parameters
+    # TODO @property for _incoming_entities
+    # TODO @incoming_entities.setter for _incoming_entites
+    # TODO Update __str__
+    # TODO Should attached_files_table be deleted and replaced with @property?
+    # TODO Put create pinning string into a new ticket for finding a home for it
+    # TODO check consistency of variable names and constructor with Ensemble, where appropriate
+    # TODO Unit tests!!!
+    # TODO Cleanup documentation
 
-    #TODO Ticket says to remove prefixing, but I think that needs to stay
-    #TODO @property for _exe
-    #TODO @exe.setter for _exe
-    #TODO @property for _files
-    #TODO @pfiles.setter for _files
-    #-- added propert #TODO @property for _file_parameters
-    #-- added setter #TODO @file_parameters.setter for _file_parameters
-    #TODO @property for _incoming_entities
-    #TODO @incoming_entities.setter for _incoming_entites
-    #TODO Update __str__
-
-
-    #--moved #TODO Put create pinning string into a new ticket for finding a home for it
-    
-    #TODO check consistency of variable names and constructor with Ensemble, where appropriate
-   
-    #TODO Unit tests!!
-    
-    #TODO Cleanup documentation
-
-
-    @property 
-    def exe(self) -> str:
+    @property
+    def exe(self) -> t.List[str]:
         """Return executable to run.
 
         :returns: application executable to run
@@ -126,39 +112,43 @@ class Application(SmartSimEntity):
         return self._exe
 
     @exe.setter
-    def exe(self, value: str) -> None:
-        
+    def exe(self, value: t.List[str]) -> None:
+        """Set executable to run.
+
+        :param value: executable to run
+        """
         self._exe = value
 
     @property
     def files(self) -> t.Optional[EntityFiles]:
-        """Return 
+        """Return files to be copied, symlinked, and/or configured prior to
+        execution.
 
-        :returns: 
+        :returns: files
         """
         return self._files
 
     @files.setter
     def files(self, value: t.Optional[EntityFiles]) -> None:
-        
+        """Set files to be copied, symlinked, and/or configured prior to
+        execution.
+
+        :param value: files
+        """
         self._files = value
-        
 
     @property
-    def exe_args(self) -> t.List[str]:  #  t.Sequence[str] use sequence of strings 
+    def exe_args(self) -> t.Sequence[str]:
         # TODO why does this say immutable if it is not a deep copy?
-        # TODO review whether this should be a deepcopy - are we relying of having this be a reference? 
+        # TODO review whether this should be a deepcopy - are we relying of having this be a reference?
         """Return an immutable list of attached executable arguments.
 
         :returns: application executable arguments
         """
-        # make this a deepcopy (( maybe discuss )) - al and andrew? 
-        return self._exe_args 
+        return copy.deepcopy(self._exe_args)
 
     @exe_args.setter
-    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None: #  t.Sequence[str] ... 
-        # TODO should we just make this a t.Sequence[str] if the 
-        # constructor is just t.list[str]
+    def exe_args(self, value: t.Union[str, t.Sequence[str], None]) -> None:  #
         """Set the executable arguments.
 
         :param value: executable arguments
@@ -174,13 +164,37 @@ class Application(SmartSimEntity):
         return self._file_parameters
 
     @file_parameters.setter
-    def file_parameters(self, value: t.Mapping[str, str] | None) -> None:
+    def file_parameters(self, value: t.Mapping[str, str]) -> None:
         """Set the file parameters.
 
         :param value: file parameters
         """
         self._file_parameters = value
-        
+
+    @property
+    def incoming_entities(self) -> t.List[SmartSimEntity]:
+        """Return incoming entities.
+
+        :returns: incoming entities
+        """
+        return self._incoming_entities
+
+    @incoming_entities.setter
+    def incoming_entities(self, value: t.List[SmartSimEntity]) -> None:
+        """Set the incoming entities.
+
+        :param value: incoming entities
+        """
+        self._incoming_entities = value
+
+    @property
+    def key_prefixing_enabled(self) -> bool:
+        return self._key_prefixing_enabled
+
+    @key_prefixing_enabled.setter
+    def key_prefixing_enabled(self, value: bool) -> None:
+        self.key_prefixing_enabled
+
     def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
         """Add executable arguments to executable
 
@@ -188,7 +202,6 @@ class Application(SmartSimEntity):
         """
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
-
 
     def attach_generator_files(
         self,
@@ -253,14 +266,28 @@ class Application(SmartSimEntity):
         """Convert parameters to command line arguments and update run settings."""
         ...
 
-     #TODO Update __str__
     def __str__(self) -> str:  # pragma: no cover
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
+        entity_str += "Executable:\n"
+        for ex in self.exe:
+            entity_str += f"{ex}\n"
+        entity_str += "Executable Arguments:\n"
+        for ex_arg in self.exe_args:
+            entity_str += f"{str(ex_arg)}\n"
+        entity_str += "Entity Files: " + str(self.files) + "\n"
+        entity_str += "File Parameters: " + str(self.file_parameters) + "\n"
+        entity_str += "Incoming Entities:\n"
+        for entity in self.incoming_entities:
+            entity_str += f"{entity}\n"
+        entity_str += "Key Prefixing Enabled: " + str(self.key_prefixing_enabled) + "\n"
+
         return entity_str
 
     @staticmethod
-    def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str], None]]) -> t.List[str]:
+    def _build_exe_args(
+        exe_args: t.Optional[t.Union[str, t.Sequence[str], None]]
+    ) -> t.List[str]:
         """Check and convert exe_args input to a desired collection format"""
         if not exe_args:
             return []

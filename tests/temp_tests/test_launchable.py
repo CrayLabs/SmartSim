@@ -53,10 +53,10 @@ def test_launchable_init():
 def test_invalid_job_name(wlmutils):
     entity = Application(
         "test_name",
-        run_settings="RunSettings",
         exe="echo",
         exe_args=["spam", "eggs"],
     )  # Mock RunSettings
+
     settings = LaunchSettings(wlmutils.get_test_launcher())
     with pytest.raises(ValueError):
         _ = Job(entity, settings, name="path/to/name")
@@ -65,7 +65,6 @@ def test_invalid_job_name(wlmutils):
 def test_job_init():
     entity = Application(
         "test_name",
-        run_settings=LaunchSettings("slurm"),
         exe="echo",
         exe_args=["spam", "eggs"],
     )
@@ -80,7 +79,6 @@ def test_job_init():
 def test_name_setter():
     entity = Application(
         "test_name",
-        run_settings=LaunchSettings("slurm"),
         exe="echo",
         exe_args=["spam", "eggs"],
     )
@@ -92,7 +90,6 @@ def test_name_setter():
 def test_job_init_deepcopy():
     entity = Application(
         "test_name",
-        run_settings=LaunchSettings("slurm"),
         exe="echo",
         exe_args=["spam", "eggs"],
     )
@@ -104,7 +101,7 @@ def test_job_init_deepcopy():
 
 
 def test_add_mpmd_pair():
-    entity = SmartSimEntity("test_name", LaunchSettings("slurm"))
+    entity = SmartSimEntity("test_name")
 
     mpmd_job = MPMDJob()
     mpmd_job.add_mpmd_pair(entity, LaunchSettings("slurm"))
@@ -121,7 +118,6 @@ def test_mpmdpair_init():
         "test_name",
         "echo",
         exe_args=["spam", "eggs"],
-        run_settings=LaunchSettings("slurm"),
     )
     mpmd_pair = MPMDPair(entity, LaunchSettings("slurm"))
     assert isinstance(mpmd_pair, MPMDPair)
@@ -136,7 +132,6 @@ def test_mpmdpair_init_deepcopy():
     entity = Application(
         "test_name",
         "echo",
-        run_settings=LaunchSettings("slurm"),
         exe_args=["spam", "eggs"],
     )
     settings = LaunchSettings("slurm")
@@ -153,14 +148,12 @@ def test_check_launcher():
         "entity1",
         "echo",
         exe_args=["hello", "world"],
-        run_settings=LaunchSettings("slurm"),
     )
     launch_settings1 = LaunchSettings("slurm")
     entity2 = Application(
         "entity2",
         "echo",
         exe_args=["hello", "world"],
-        run_settings=LaunchSettings("slurm"),
     )
     launch_settings2 = LaunchSettings("slurm")
     mpmd_pairs = []
@@ -179,10 +172,10 @@ def test_add_mpmd_pair_check_launcher_error():
     """Test that an error is raised when a pairs is added to an mpmd
     job using add_mpmd_pair that does not have the same launcher type"""
     mpmd_pairs = []
-    entity1 = SmartSimEntity("entity1", LaunchSettings("slurm"))
+    entity1 = SmartSimEntity("entity1")
     launch_settings1 = LaunchSettings("slurm")
 
-    entity2 = SmartSimEntity("entity2", LaunchSettings("pals"))
+    entity2 = SmartSimEntity("entity2")
     launch_settings2 = LaunchSettings("pals")
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -197,10 +190,10 @@ def test_add_mpmd_pair_check_launcher_error():
 def test_add_mpmd_pair_check_entity():
     """Test that mpmd pairs that have the same entity type can be added to an MPMD Job"""
     mpmd_pairs = []
-    entity1 = Application("entity1", "python", LaunchSettings("slurm"))
+    entity1 = Application("entity1", "python")
     launch_settings1 = LaunchSettings("slurm")
 
-    entity2 = Application("entity2", "python", LaunchSettings("slurm"))
+    entity2 = Application("entity2", "python")
     launch_settings2 = LaunchSettings("slurm")
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -217,10 +210,10 @@ def test_add_mpmd_pair_check_entity_error():
     """Test that an error is raised when a pairs is added to an mpmd job
     using add_mpmd_pair that does not have the same entity type"""
     mpmd_pairs = []
-    entity1 = Application("entity1", "python", LaunchSettings("slurm"))
+    entity1 = Application("entity1", "python")
     launch_settings1 = LaunchSettings("slurm")
 
-    entity2 = Application("entity2", "python", LaunchSettings("pals"))
+    entity2 = Application("entity2", "python")
     launch_settings2 = LaunchSettings("pals")
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -237,10 +230,10 @@ def test_create_mpmdjob_invalid_mpmdpairs():
     does not have the same launcher type"""
 
     mpmd_pairs = []
-    entity1 = Application("entity1", "python", LaunchSettings("slurm"))
+    entity1 = Application("entity1", "python")
     launch_settings1 = LaunchSettings("slurm")
 
-    entity1 = Application("entity1", "python", LaunchSettings("pals"))
+    entity1 = Application("entity1", "python")
     launch_settings2 = LaunchSettings("pals")
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -258,9 +251,9 @@ def test_create_mpmdjob_valid_mpmdpairs():
     """Test that all pairs have the same entity type is enforced when creating an MPMDJob"""
 
     mpmd_pairs = []
-    entity1 = Application("entity1", "python", LaunchSettings("slurm"))
+    entity1 = Application("entity1", "python")
     launch_settings1 = LaunchSettings("slurm")
-    entity1 = Application("entity1", "python", LaunchSettings("slurm"))
+    entity1 = Application("entity1", "python")
     launch_settings2 = LaunchSettings("slurm")
 
     pair1 = MPMDPair(entity1, launch_settings1)
