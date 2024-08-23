@@ -21,9 +21,11 @@ from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
+ID_GENERATOR = (str(i) for i in itertools.count())
+
 
 def random_id():
-    return str(random.randint(1, 100))
+    return next(ID_GENERATOR)
 
 
 @pytest.fixture

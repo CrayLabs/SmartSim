@@ -67,15 +67,19 @@ class ShellLauncher:
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=path)
         return id_
 
+    def _get_proc_from_job_id(self, id_: LaunchedJobID, /) -> sp.Popen[bytes]:
+        if (proc := self._launched.get(id_)) is None:
+            msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
+            raise errors.LauncherJobNotFound(msg)
+        return proc
+
     def get_status(
         self, *launched_ids: LaunchedJobID
     ) -> t.Mapping[LaunchedJobID, JobStatus]:
         return {id_: self._get_status(id_) for id_ in launched_ids}
 
     def _get_status(self, id_: LaunchedJobID, /) -> JobStatus:
-        if (proc := self._launched.get(id_)) is None:
-            msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
-            raise errors.LauncherJobNotFound(msg)
+        proc = self._get_proc_from_job_id(id_)
         ret_code = proc.poll()
         if ret_code is None:
             status = psutil.Process(proc.pid).status()
@@ -96,6 +100,32 @@ class ShellLauncher:
         if ret_code == 0:
             return JobStatus.COMPLETED
         return JobStatus.FAILED
+
+    def stop_jobs(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        return {id_: self._stop(id_) for id_ in launched_ids}
+
+    def _stop(self, id_: LaunchedJobID, /) -> JobStatus:
+        proc = self._get_proc_from_job_id(id_)
+        wait_time = 5
+        if proc.poll() is None:
+            msg = f"Attempting to terminate local process {proc.pid}"
+            logger.debug(msg)
+            proc.terminate()
+
+        try:
+            proc.wait(wait_time)
+        except TimeoutError:
+            msg = f"Failed to terminate process {proc.pid}. Attempting to kill."
+            logger.warning(msg)
+            proc.kill()
+
+        try:
+            proc.wait(wait_time)
+        except TimeoutError:
+            logger.error(f"Failed to kill process {proc.pid}")
+        return self._get_status(id_)
 
     @classmethod
     def create(cls, _: Experiment) -> Self:

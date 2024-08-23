@@ -368,6 +368,25 @@ class Experiment:
             disable_numparse=True,
         )
 
+    def stop(self, *ids: LaunchedJobID) -> tuple[JobStatus | InvalidJobStatus, ...]:
+        """Cancel the execution of a previously launched job.
+
+        :param ids: The ids of the launched jobs to stop.
+        :raises ValueError: No job ids were provided.
+        :returns: A tuple of job statuses upon cancellation with order
+            respective of the order of the calling arguments.
+        """
+        if not ids:
+            raise ValueError("No job ids provided")
+        by_launcher = self._launch_history.group_by_launcher(set(ids), unknown_ok=True)
+        id_to_stop_stat = (
+            launcher.stop_jobs(*launched).items()
+            for launcher, launched in by_launcher.items()
+        )
+        stats_map = dict(itertools.chain.from_iterable(id_to_stop_stat))
+        stats = (stats_map.get(id_, InvalidJobStatus.NEVER_STARTED) for id_ in ids)
+        return tuple(stats)
+
     @property
     def telemetry(self) -> TelemetryConfiguration:
         """Return the telemetry configuration for this entity.

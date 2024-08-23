@@ -263,6 +263,11 @@ class DragonLauncher(WLMLauncher):
         step_info.launcher_status = str(JobStatus.CANCELLED)
         return step_info
 
+    def stop_jobs(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        return {id_: self.stop(id_).status for id_ in launched_ids}
+
     @staticmethod
     def _unprefix_step_id(step_id: str) -> str:
         return step_id.split("-", maxsplit=1)[1]

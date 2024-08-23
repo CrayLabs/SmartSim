@@ -48,6 +48,9 @@ class MockLancher(LauncherProtocol):
     def get_status(self, *_):
         raise NotImplementedError
 
+    def stop_jobs(self, *_):
+        raise NotImplementedError
+
 
 LAUNCHER_INSTANCE_A = MockLancher()
 LAUNCHER_INSTANCE_B = MockLancher()

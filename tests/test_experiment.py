@@ -136,6 +136,9 @@ class NoOpRecordLauncher(LauncherProtocol):
     def get_status(self, *ids):
         raise NotImplementedError
 
+    def stop_jobs(self, *ids):
+        raise NotImplementedError
+
 
 @dataclasses.dataclass(frozen=True)
 class LaunchRecord:
@@ -305,9 +308,14 @@ class GetStatusLauncher(LauncherProtocol):
     def get_status(self, *ids: LaunchedJobID):
         return {id_: self.id_to_status[id_] for id_ in ids}
 
+    def stop_jobs(self, *ids: LaunchedJobID):
+        stopped = {id_: JobStatus.CANCELLED for id_ in ids}
+        self.id_to_status |= stopped
+        return stopped
+
 
 @pytest.fixture
-def make_populated_experment(monkeypatch, experiment):
+def make_populated_experiment(monkeypatch, experiment):
     def impl(num_active_launchers):
         new_launchers = (GetStatusLauncher() for _ in range(num_active_launchers))
         id_to_launcher = {
@@ -321,8 +329,8 @@ def make_populated_experment(monkeypatch, experiment):
     yield impl
 
 
-def test_experiment_can_get_statuses(make_populated_experment):
-    exp = make_populated_experment(num_active_launchers=1)
+def test_experiment_can_get_statuses(make_populated_experiment):
+    exp = make_populated_experiment(num_active_launchers=1)
     (launcher,) = exp._launch_history.iter_past_launchers()
     ids = tuple(launcher.known_ids)
     recieved_stats = exp.get_status(*ids)
@@ -337,9 +345,9 @@ def test_experiment_can_get_statuses(make_populated_experment):
     [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
 )
 def test_experiment_can_get_statuses_from_many_launchers(
-    make_populated_experment, num_launchers
+    make_populated_experiment, num_launchers
 ):
-    exp = make_populated_experment(num_active_launchers=num_launchers)
+    exp = make_populated_experiment(num_active_launchers=num_launchers)
     launcher_and_rand_ids = (
         (launcher, random.choice(tuple(launcher.id_to_status)))
         for launcher in exp._launch_history.iter_past_launchers()
@@ -354,9 +362,9 @@ def test_experiment_can_get_statuses_from_many_launchers(
 
 
 def test_get_status_returns_not_started_for_unrecognized_ids(
-    monkeypatch, make_populated_experment
+    monkeypatch, make_populated_experiment
 ):
-    exp = make_populated_experment(num_active_launchers=1)
+    exp = make_populated_experiment(num_active_launchers=1)
     brand_new_id = create_job_id()
     ((launcher, (id_not_known_by_exp, *rest)),) = (
         exp._launch_history.group_by_launcher().items()
@@ -369,7 +377,7 @@ def test_get_status_returns_not_started_for_unrecognized_ids(
 
 
 def test_get_status_de_dups_ids_passed_to_launchers(
-    monkeypatch, make_populated_experment
+    monkeypatch, make_populated_experiment
 ):
     def track_calls(fn):
         calls = []
@@ -380,7 +388,7 @@ def test_get_status_de_dups_ids_passed_to_launchers(
 
         return calls, impl
 
-    exp = make_populated_experment(num_active_launchers=1)
+    exp = make_populated_experiment(num_active_launchers=1)
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     calls, tracked_get_status = track_calls(launcher.get_status)
     monkeypatch.setattr(launcher, "get_status", tracked_get_status)
@@ -390,3 +398,68 @@ def test_get_status_de_dups_ids_passed_to_launchers(
     assert len(calls) == 1, "Launcher's `get_status` was called more than once"
     (call,) = calls
     assert call == ((id_,), {}), "IDs were not de-duplicated"
+
+
+@pytest.mark.parametrize(
+    "num_launchers",
+    [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
+)
+@pytest.mark.parametrize(
+    "select_ids",
+    [
+        pytest.param(
+            lambda history: history._id_to_issuer.keys(), id="All launched jobs"
+        ),
+        pytest.param(
+            lambda history: next(iter(history.group_by_launcher().values())),
+            id="All from one launcher",
+        ),
+        pytest.param(
+            lambda history: itertools.chain.from_iterable(
+                random.sample(tuple(ids), len(JobStatus) // 2)
+                for ids in history.group_by_launcher().values()
+            ),
+            id="Subset per launcher",
+        ),
+        pytest.param(
+            lambda history: random.sample(
+                tuple(history._id_to_issuer), len(history._id_to_issuer) // 3
+            ),
+            id=f"Random subset across all launchers",
+        ),
+    ],
+)
+def test_experiment_can_stop_jobs(make_populated_experiment, num_launchers, select_ids):
+    exp = make_populated_experiment(num_launchers)
+    ids = (launcher.known_ids for launcher in exp._launch_history.iter_past_launchers())
+    ids = tuple(itertools.chain.from_iterable(ids))
+    before_stop_stats = exp.get_status(*ids)
+    to_cancel = tuple(select_ids(exp._launch_history))
+    stats = exp.stop(*to_cancel)
+    after_stop_stats = exp.get_status(*ids)
+    assert stats == (JobStatus.CANCELLED,) * len(to_cancel)
+    assert dict(zip(ids, before_stop_stats)) | dict(zip(to_cancel, stats)) == dict(
+        zip(ids, after_stop_stats)
+    )
+
+
+def test_experiment_raises_if_asked_to_stop_no_jobs(experiment):
+    with pytest.raises(ValueError, match="No job ids provided"):
+        experiment.stop()
+
+
+@pytest.mark.parametrize(
+    "num_launchers",
+    [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
+)
+def test_experiment_does_not_raise_on_unknown_job_id(
+    make_populated_experiment, num_launchers
+):
+    exp = make_populated_experiment(num_launchers)
+    new_id = create_job_id()
+    all_known_ids = tuple(exp._launch_history._id_to_issuer)
+    before_cancel = exp.get_status(*all_known_ids)
+    (stat,) = exp.stop(new_id)
+    assert stat == InvalidJobStatus.NEVER_STARTED
+    after_cancel = exp.get_status(*all_known_ids)
+    assert before_cancel == after_cancel
