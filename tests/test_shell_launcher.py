@@ -88,6 +88,14 @@ def generate_directory(test_dir: str):
 
 
 @pytest.fixture
+def shell_launcher():
+    launcher = ShellLauncher()
+    yield launcher
+    if any(proc.poll() is None for proc in launcher._launched.values()):
+        raise ("Test leaked processes")
+
+
+@pytest.fixture
 def shell_cmd(test_dir: str) -> ShellLauncherCommand:
     """Fixture to create an instance of Generator."""
     run_dir, out_file, err_file = generate_directory(test_dir)
@@ -108,23 +116,24 @@ def test_shell_launcher_command_init(shell_cmd: ShellLauncherCommand, test_dir: 
     assert shell_cmd.command_tuple == EchoHelloWorldEntity().as_program_arguments()
 
 
-def test_shell_launcher_init():
+def test_shell_launcher_init(shell_launcher):
     """Test that ShellLauncher initializes correctly"""
-    shell_launcher = ShellLauncher()
     assert shell_launcher._launched == {}
 
 
-def test_shell_launcher_start_calls_popen(shell_cmd: ShellLauncherCommand):
+def test_shell_launcher_start_calls_popen(
+    shell_launcher, shell_cmd: ShellLauncherCommand
+):
     """Test that the process leading up to the shell launcher popen call was correct"""
-    shell_launcher = ShellLauncher()
     with unittest.mock.patch("smartsim._core.dispatch.sp.Popen") as mock_open:
         _ = shell_launcher.start(shell_cmd)
         mock_open.assert_called_once()
 
 
-def test_shell_launcher_start_calls_popen_with_value(shell_cmd: ShellLauncherCommand):
+def test_shell_launcher_start_calls_popen_with_value(
+    shell_launcher, shell_cmd: ShellLauncherCommand
+):
     """Test that popen was called with correct values"""
-    shell_launcher = ShellLauncher()
     with unittest.mock.patch("smartsim._core.dispatch.sp.Popen") as mock_open:
         _ = shell_launcher.start(shell_cmd)
         mock_open.assert_called_once_with(
@@ -136,9 +145,8 @@ def test_shell_launcher_start_calls_popen_with_value(shell_cmd: ShellLauncherCom
         )
 
 
-def test_popen_returns_popen_object(test_dir: str):
+def test_popen_returns_popen_object(shell_launcher, test_dir: str):
     """Test that the popen call returns a popen object"""
-    shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
@@ -152,13 +160,12 @@ def test_popen_returns_popen_object(test_dir: str):
             EchoHelloWorldEntity().as_program_arguments(),
         )
         id = shell_launcher.start(cmd)
-    proc = shell_launcher._launched[id]
-    assert isinstance(proc, sp.Popen)
+    with shell_launcher._launched[id] as proc:
+        assert isinstance(proc, sp.Popen)
 
 
-def test_popen_writes_to_output_file(test_dir: str):
+def test_popen_writes_to_output_file(shell_launcher, test_dir: str):
     """Test that popen writes to .out file upon successful process call"""
-    shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
@@ -168,24 +175,19 @@ def test_popen_writes_to_output_file(test_dir: str):
             {}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments()
         )
         id = shell_launcher.start(cmd)
-        val = shell_launcher.get_status(id)
-        print(val)
+        out.close(), err.close()
     proc = shell_launcher._launched[id]
-    # Wait for subprocess to finish
     assert proc.wait() == 0
     assert proc.returncode == 0
     with open(out_file, "r", encoding="utf-8") as out:
         assert out.read() == "Hello World!\n"
     with open(err_file, "r", encoding="utf-8") as err:
         assert err.read() == ""
-    val = shell_launcher.get_status(id)
-    print(val)
 
 
 @requires_slurm
-def test_popen_fails_with_invalid_cmd(test_dir):
+def test_popen_fails_with_invalid_cmd(shell_launcher, test_dir):
     """Test that popen returns a non zero returncode after failure"""
-    shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
@@ -204,9 +206,8 @@ def test_popen_fails_with_invalid_cmd(test_dir):
             assert "unrecognized option" in content
 
 
-def test_popen_issues_unique_ids(test_dir):
+def test_popen_issues_unique_ids(shell_launcher, test_dir):
     """Validate that all ids are unique within ShellLauncher._launched"""
-    shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
@@ -218,19 +219,18 @@ def test_popen_issues_unique_ids(test_dir):
         for _ in range(5):
             _ = shell_launcher.start(cmd)
         assert len(shell_launcher._launched) == 5
+        assert all(proc.wait() == 0 for proc in shell_launcher._launched.values())
 
 
-def test_retrieve_status_dne():
+def test_retrieve_status_dne(shell_launcher):
     """Test tht ShellLauncher returns the status of completed Jobs"""
     # Init ShellLauncher
-    shell_launcher = ShellLauncher()
     with pytest.raises(LauncherJobNotFound):
         _ = shell_launcher.get_status("dne")
 
 
-def test_shell_launcher_returns_complete_status(test_dir):
+def test_shell_launcher_returns_complete_status(shell_launcher, test_dir):
     """Test tht ShellLauncher returns the status of completed Jobs"""
-    shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
@@ -243,15 +243,13 @@ def test_shell_launcher_returns_complete_status(test_dir):
             id = shell_launcher.start(cmd)
             proc = shell_launcher._launched[id]
             proc.wait()
-            code = shell_launcher.get_status(id)
-            val = list(code.keys())[0]
-            assert code[val] == JobStatus.COMPLETED
+            code = shell_launcher.get_status(id)[id]
+            assert code == JobStatus.COMPLETED
 
 
 @requires_slurm
-def test_shell_launcher_returns_failed_status(test_dir):
+def test_shell_launcher_returns_failed_status(shell_launcher, test_dir):
     """Test tht ShellLauncher returns the status of completed Jobs"""
-    shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
@@ -263,14 +261,12 @@ def test_shell_launcher_returns_failed_status(test_dir):
             id = shell_launcher.start(cmd)
             proc = shell_launcher._launched[id]
             proc.wait()
-            code = shell_launcher.get_status(id)
-            val = list(code.keys())[0]
-            assert code[val] == JobStatus.FAILED
+            code = shell_launcher.get_status(id)[id]
+            assert code == JobStatus.FAILED
 
 
-def test_shell_launcher_returns_running_status(test_dir):
+def test_shell_launcher_returns_running_status(shell_launcher, test_dir):
     """Test tht ShellLauncher returns the status of completed Jobs"""
-    shell_launcher = ShellLauncher()
     run_dir, out_file, err_file = generate_directory(test_dir)
     with (
         open(out_file, "w", encoding="utf-8") as out,
@@ -281,9 +277,9 @@ def test_shell_launcher_returns_running_status(test_dir):
         )
         for _ in range(5):
             id = shell_launcher.start(cmd)
-            code = shell_launcher.get_status(id)
-            val = list(code.keys())[0]
-            assert code[val] == JobStatus.RUNNING
+            code = shell_launcher.get_status(id)[id]
+            assert code == JobStatus.RUNNING
+        assert all(proc.wait() == 0 for proc in shell_launcher._launched.values())
 
 
 @pytest.mark.parametrize(
@@ -320,3 +316,4 @@ def test_this(psutil_status, job_status, monkeypatch: pytest.MonkeyPatch, test_d
         monkeypatch.setattr(psutil.Process, "status", lambda self: psutil_status)
         value = shell_launcher.get_status(id)
         assert value.get(id) == job_status
+        assert proc.wait() == 0

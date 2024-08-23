@@ -150,10 +150,10 @@ def test_format_env_vars():
 def test_formatting_returns_original_exe(mock_echo_executable, test_dir):
     out = os.path.join(test_dir, "out.txt")
     err = os.path.join(test_dir, "err.txt")
-    with open(out, "w") as _, open(err, "w") as _:
-        shell_launch_cmd = _as_local_command(
-            LocalLaunchArguments({}), mock_echo_executable, test_dir, {}, out, err
-        )
+    open(out, "w"), open(err, "w")
+    shell_launch_cmd = _as_local_command(
+        LocalLaunchArguments({}), mock_echo_executable, test_dir, {}, out, err
+    )
     assert isinstance(shell_launch_cmd, ShellLauncherCommand)
     assert shell_launch_cmd.command_tuple == ("echo", "hello", "world")
     assert shell_launch_cmd.path == pathlib.Path(test_dir)

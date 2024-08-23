@@ -58,10 +58,10 @@ def _as_jsrun_command(
     command_tuple = (
         "jsrun",
         *(args.format_launch_args() or ()),
-        "--",
-        *exe.as_program_arguments(),
         f"--stdio_stdout={stdout_path}",
         f"--stdio_stderr={stderr_path}",
+        "--",
+        *exe.as_program_arguments(),
     )
     # add output and err to CMD tuple -> add dev Null for stdout and stderr
     return ShellLauncherCommand(

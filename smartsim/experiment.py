@@ -233,8 +233,7 @@ class Experiment:
                     for_experiment=self, with_arguments=args
                 )
             # Generate the job directory and return the generated job path
-            ret = self._generate(generator, job, idx)
-            job_execution_path, out, err = ret
+            job_execution_path, out, err = self._generate(generator, job, idx)
             id_ = launch_config.start(exe, job_execution_path, env, out, err)
             # Save the underlying launcher instance and launched job id. That
             # way we do not need to spin up a launcher instance for each

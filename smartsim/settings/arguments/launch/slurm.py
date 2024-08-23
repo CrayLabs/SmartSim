@@ -60,10 +60,10 @@ def _as_srun_command(
     command_tuple = (
         "srun",
         *(args.format_launch_args() or ()),
-        "--",
-        *exe.as_program_arguments(),
         f"--output={stdout_path}",
         f"--error={stderr_path}",
+        "--",
+        *exe.as_program_arguments(),
     )
     # add output and err to CMD tuple -> add dev Null for stdout and stderr
     return ShellLauncherCommand(

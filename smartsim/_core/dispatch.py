@@ -89,9 +89,13 @@ _FormatterType: TypeAlias = t.Callable[
 """A callable that is capable of formatting the components of a job into a type
 capable of being launched by a launcher.
 """
-_LaunchConfigType: TypeAlias = (
-    "_LauncherAdapter[ExecutableProtocol, _WorkingDirectory, _EnvironMappingType, pathlib.Path, pathlib.Path]"
-)
+_LaunchConfigType: TypeAlias = """_LauncherAdapter[
+        ExecutableProtocol,
+        _WorkingDirectory,
+        _EnvironMappingType,
+        pathlib.Path,
+        pathlib.Path]"""
+
 """A launcher adapater that has configured a launcher to launch the components
 of a job with some pre-determined launch settings
 """
@@ -511,16 +515,14 @@ def make_shell_format_fn(
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands"""
 
-    # add a def check
-
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
     def start(self, shell_command: ShellLauncherCommand) -> LaunchedJobID:
         id_ = create_job_id()
-        # raise ValueError -> invalid stuff throw
         exe, *rest = shell_command.command_tuple
         expanded_exe = helpers.expand_exe_path(exe)
+        # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen(
             (expanded_exe, *rest),
             cwd=shell_command.path,
@@ -540,7 +542,6 @@ class ShellLauncher:
             msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
             raise errors.LauncherJobNotFound(msg)
         ret_code = proc.poll()
-        # try/catch around here and then reaise a smartsim.error
         if ret_code is None:
             status = psutil.Process(proc.pid).status()
             return {

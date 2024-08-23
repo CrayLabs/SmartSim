@@ -34,7 +34,6 @@ import pathlib
 import pickle
 import shutil
 import typing as t
-from os import path as osp
 from typing import Callable
 
 from ...log import get_logger

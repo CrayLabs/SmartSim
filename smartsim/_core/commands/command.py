@@ -26,6 +26,9 @@
 
 import typing as t
 from collections.abc import MutableSequence
+from copy import deepcopy
+
+from typing_extensions import Self
 
 
 class Command(MutableSequence[str]):
@@ -42,15 +45,39 @@ class Command(MutableSequence[str]):
         """
         return self._command
 
-    def __getitem__(self, idx: int) -> str:
+    @t.overload
+    def __getitem__(self, idx: int) -> str: ...
+    @t.overload
+    def __getitem__(self, idx: slice) -> Self: ...
+    def __getitem__(self, idx: int | slice) -> str | Self:
         """Get the command at the specified index."""
-        return self._command[idx]
+        cmd = self._command[idx]
+        if isinstance(cmd, str):
+            return cmd
+        return type(self)(cmd)
 
-    def __setitem__(self, idx: int, value: str) -> None:
+    @t.overload
+    def __setitem__(self, idx: int, value: str) -> None: ...
+    @t.overload
+    def __setitem__(self, idx: slice, value: t.Iterable[str]) -> None: ...
+    def __setitem__(self, idx: int | slice, value: str | t.Iterable[str]) -> None:
         """Set the command at the specified index."""
-        self._command[idx] = value
+        if isinstance(idx, int):
+            if not isinstance(value, str):
+                raise ValueError(
+                    "Value must be of type `str` when assigning to an index"
+                )
+            self._command[idx] = deepcopy(value)
+        elif isinstance(idx, slice):
+            if not isinstance(value, list) or not all(
+                isinstance(item, str) for item in value
+            ):
+                raise ValueError(
+                    "Value must be a list of strings when assigning to a slice"
+                )
+            self._command[idx] = (deepcopy(val) for val in value)
 
-    def __delitem__(self, idx: int) -> None:
+    def __delitem__(self, idx: int | slice) -> None:
         """Delete the command at the specified index."""
         del self._command[idx]
 

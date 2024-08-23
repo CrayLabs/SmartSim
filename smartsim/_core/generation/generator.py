@@ -148,14 +148,9 @@ class Generator:
         # Create output files
         out_file, err_file = self._output_files(log_path, job.entity.name)
         # Open and write to .out file
-        with open(out_file, mode="w", encoding="utf-8") as log_file:
-            dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            log_file.write(f"Generation start date and time: {dt_string}\n")
-
+        open(out_file, mode="w", encoding="utf-8")
         # Open and write to .err file
-        with open(err_file, mode="w", encoding="utf-8") as log_file:
-            dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            log_file.write(f"Generation start date and time: {dt_string}\n")
+        open(err_file, mode="w", encoding="utf-8")
 
         # Perform file system operations on attached files
         self._build_operations(job, job_path)
