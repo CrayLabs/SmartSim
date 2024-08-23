@@ -108,13 +108,8 @@ jobs:
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
           python -m pip install .[dev,mypy]
 
-      - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')
-        run: smart build --device cpu -v
-
-      - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
-        if: contains( matrix.os, 'macos-14' )
-        run: smart build --device cpu -v
+      - name: Install ML Runtimes
+        run: smart build --device cpu -v --install-python-packages
 
       - name: Run mypy
         run: |
