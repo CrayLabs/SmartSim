@@ -28,20 +28,20 @@ from __future__ import annotations
 
 import typing as t
 
+from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import dispatch
 from smartsim._core.shell.shellLauncher import ShellLauncher, make_shell_format_fn
 from smartsim.log import get_logger
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 _as_aprun_command = make_shell_format_fn(run_command="aprun")
 
 
 @dispatch(with_format=_as_aprun_command, to_launcher=ShellLauncher)
-class AprunLaunchArguments(LaunchArguments):
+class AprunLaunchArguments(ShellLaunchArguments):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments.
 
@@ -177,9 +177,7 @@ class AprunLaunchArguments(LaunchArguments):
         else:
             self._launch_args.pop("quiet", None)
 
-    def format_env_vars(
-        self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]
-    ) -> t.Union[t.List[str], None]:
+    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str]:
         """Format the environment variables for aprun
 
         :return: list of env vars
@@ -190,7 +188,7 @@ class AprunLaunchArguments(LaunchArguments):
                 formatted += ["-e", name + "=" + str(value)]
         return formatted
 
-    def format_launch_args(self) -> t.Union[t.List[str], None]:
+    def format_launch_args(self) -> t.List[str]:
         """Return a list of ALPS formatted run arguments
 
         :return: list of ALPS arguments for these settings

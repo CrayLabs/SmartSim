@@ -142,7 +142,7 @@ def test_format_env_vars():
     aprunLauncher = LaunchSettings(launcher=LauncherType.Alps, env_vars=env_vars)
     assert isinstance(aprunLauncher._arguments, AprunLaunchArguments)
     aprunLauncher.update_env({"OMP_NUM_THREADS": "10"})
-    formatted = aprunLauncher.format_env_vars()
+    formatted = aprunLauncher._arguments.format_env_vars(aprunLauncher._env_vars)
     result = ["-e", "OMP_NUM_THREADS=10", "-e", "LOGGING=verbose"]
     assert formatted == result
 
@@ -152,7 +152,7 @@ def test_aprun_settings():
     aprunLauncher.launch_args.set_cpus_per_task(2)
     aprunLauncher.launch_args.set_tasks(100)
     aprunLauncher.launch_args.set_tasks_per_node(20)
-    formatted = aprunLauncher.format_launch_args()
+    formatted = aprunLauncher._arguments.format_launch_args()
     result = ["--cpus-per-pe=2", "--pes=100", "--pes-per-node=20"]
     assert formatted == result
 

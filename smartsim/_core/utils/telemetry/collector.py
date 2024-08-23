@@ -30,14 +30,16 @@ import itertools
 import logging
 import typing as t
 
-import redis.asyncio as redisa
-import redis.exceptions as redisex
-
 from smartsim._core.control.job import JobEntity
 from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.telemetry.sink import FileSink, Sink
+from smartsim.entity._mock import Mock
 
 logger = logging.getLogger("TelemetryMonitor")
+
+
+class Client(Mock):
+    """Mock Client"""
 
 
 class Collector(abc.ABC):
@@ -114,6 +116,7 @@ class _DBAddress:
         return f"{self.host}:{self.port}"
 
 
+# TODO add a new Client
 class DBCollector(Collector):
     """A base class for collectors that retrieve statistics from a feature store"""
 
@@ -124,7 +127,7 @@ class DBCollector(Collector):
         :param sink: destination to write collected information
         """
         super().__init__(entity, sink)
-        self._client: t.Optional[redisa.Redis[bytes]] = None
+        self._client: Client
         self._address = _DBAddress(
             self._entity.config.get("host", ""),
             int(self._entity.config.get("port", 0)),
@@ -134,9 +137,7 @@ class DBCollector(Collector):
         """Configure the client connection to the target feature store"""
         try:
             if not self._client:
-                self._client = redisa.Redis(
-                    host=self._address.host, port=self._address.port
-                )
+                self._client = None
         except Exception as e:
             logger.exception(e)
         finally:
@@ -218,7 +219,7 @@ class DBCollector(Collector):
         try:
             if self._client:
                 return await self._client.ping()
-        except redisex.ConnectionError:
+        except Exception:
             logger.warning(f"Cannot ping fs {self._address}")
 
         return False

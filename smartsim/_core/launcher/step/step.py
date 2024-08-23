@@ -42,9 +42,12 @@ from ....entity import Application, Ensemble, FSNode
 from ....log import get_logger
 from ....settings import RunSettings, SettingsBase
 from ...utils.helpers import encode_cmd, get_base_36_repr
-from ..colocated import write_colocated_launch_script
 
 logger = get_logger(__name__)
+
+
+def write_colocated_launch_script():
+    pass
 
 
 class Step:
