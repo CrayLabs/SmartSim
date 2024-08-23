@@ -40,22 +40,6 @@ from ..utils.helpers import expand_exe_path
 # These values can be set through environment variables to
 # override the default behavior of SmartSim.
 #
-# RAI_PATH
-#   - Path to the RAI shared library
-#   - Default: /smartsim/smartsim/_core/lib/redisai.so
-#
-# REDIS_CONF
-#   - Path to the redis.conf file
-#   - Default: /SmartSim/smartsim/_core/config/redis.conf
-#
-# REDIS_PATH
-#   - Path to the redis-server executable
-#   - Default: /SmartSim/smartsim/_core/bin/redis-server
-#
-# REDIS_CLI_PATH
-#   - Path to the redis-cli executable
-#   - Default: /SmartSim/smartsim/_core/bin/redis-cli
-#
 # SMARTSIM_LOG_LEVEL
 #   - Log level for SmartSim
 #   - Default: info
@@ -99,52 +83,8 @@ class Config:
 
         self.lib_path = Path(dependency_path, "lib").resolve()
         self.bin_path = Path(dependency_path, "bin").resolve()
-        self.conf_path = Path(dependency_path, "config", "redis.conf")
+        self.conf_path = Path(dependency_path, "config")
         self.conf_dir = Path(self.core_path, "config")
-
-    @property
-    def redisai(self) -> str:
-        rai_path = self.lib_path / "redisai.so"
-        redisai = Path(os.environ.get("RAI_PATH", rai_path)).resolve()
-        if not redisai.is_file():
-            raise SSConfigError(
-                "RedisAI dependency not found. Build with `smart` cli "
-                "or specify RAI_PATH"
-            )
-        return str(redisai)
-
-    @property
-    def database_conf(self) -> str:
-        conf = Path(os.environ.get("REDIS_CONF", self.conf_path)).resolve()
-        if not conf.is_file():
-            raise SSConfigError(
-                "Feature store configuration file at REDIS_CONF could not be found"
-            )
-        return str(conf)
-
-    @property
-    def database_exe(self) -> str:
-        try:
-            database_exe = next(self.bin_path.glob("*-server"))
-            feature_store = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
-            exe = expand_exe_path(str(feature_store))
-            return exe
-        except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError(
-                "Specified feature store binary at REDIS_PATH could not be used"
-            ) from e
-
-    @property
-    def database_cli(self) -> str:
-        try:
-            redis_cli_exe = next(self.bin_path.glob("*-cli"))
-            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
-            exe = expand_exe_path(str(redis_cli))
-            return exe
-        except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError(
-                "Specified Redis binary at REDIS_CLI_PATH could not be used"
-            ) from e
 
     @property
     def database_file_parse_trials(self) -> int:

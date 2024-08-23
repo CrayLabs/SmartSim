@@ -26,22 +26,14 @@
 
 import argparse
 import contextlib
-import io
-import multiprocessing as mp
 import os
 import os.path
 import tempfile
 import typing as t
 from types import TracebackType
 
-import numpy as np
-from smartredis import Client
-
-from smartsim import Experiment
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install.builder import Device
-from smartsim._core.utils.helpers import installed_redisai_backends
-from smartsim._core.utils.network import find_free_port
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
@@ -54,8 +46,6 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 
 if t.TYPE_CHECKING:
-    from multiprocessing.connection import Connection
-
     # pylint: disable-next=unsubscriptable-object
     _TemporaryDirectory = tempfile.TemporaryDirectory[str]
 else:
@@ -79,13 +69,10 @@ class _VerificationTempDir(_TemporaryDirectory):
             self._finalizer.detach()  # type: ignore[attr-defined]
 
 
-def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
-) -> int:
+def execute(args: argparse.Namespace) -> int:
     """Validate the SmartSim installation works as expected given a
     simple experiment
     """
-    backends = installed_redisai_backends()
     temp_dir = ""
     device = Device(args.device)
     try:
@@ -93,21 +80,10 @@ def execute(
             temp_dir = ctx.enter_context(_VerificationTempDir(dir=os.getcwd()))
             validate_env = {
                 "SR_LOG_LEVEL": os.environ.get("SR_LOG_LEVEL", "INFO"),
-                "SR_LOG_FILE": os.environ.get(
-                    "SR_LOG_FILE", os.path.join(temp_dir, "smartredis.log")
-                ),
             }
             if device == Device.GPU:
                 validate_env["CUDA_VISIBLE_DEVICES"] = "0"
             ctx.enter_context(_env_vars_set_to(validate_env))
-            test_install(
-                location=temp_dir,
-                port=args.port,
-                device=device,
-                with_tf="tensorflow" in backends,
-                with_pt="torch" in backends,
-                with_onnx="onnxruntime" in backends,
-            )
     except Exception as e:
         logger.error(
             "SmartSim failed to run a simple experiment!\n"
@@ -142,34 +118,6 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def test_install(
-    location: str,
-    port: t.Optional[int],
-    device: Device,
-    with_tf: bool,
-    with_pt: bool,
-    with_onnx: bool,
-) -> None:
-    exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
-    exp.telemetry.disable()
-    port = find_free_port() if port is None else port
-
-    with _make_managed_local_feature_store(exp, port) as client:
-        logger.info("Verifying Tensor Transfer")
-        client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
-        client.get_tensor("plain-tensor")
-        if with_pt:
-            logger.info("Verifying Torch Backend")
-            _test_torch_install(client, device)
-        if with_onnx:
-            logger.info("Verifying ONNX Backend")
-            _test_onnx_install(client, device)
-        if with_tf:  # Run last in case TF locks an entire GPU
-            logger.info("Verifying TensorFlow Backend")
-            _test_tf_install(client, location, device)
-        logger.info("Success!")
-
-
 @contextlib.contextmanager
 def _env_vars_set_to(
     evars: t.Mapping[str, t.Optional[str]]
@@ -189,127 +137,3 @@ def _set_or_del_env_var(var: str, val: t.Optional[str]) -> None:
         os.environ[var] = val
     else:
         os.environ.pop(var, None)
-
-
-@contextlib.contextmanager
-def _make_managed_local_feature_store(
-    exp: Experiment, port: int
-) -> t.Generator[Client, None, None]:
-    """Context managed feature store that will be stopped if an exception is raised"""
-    feature_store = exp.create_feature_store(fs_nodes=1, interface="lo", port=port)
-    exp.generate(feature_store)
-    exp.start(feature_store)
-    try:
-        (client_addr,) = feature_store.get_address()
-        yield Client(False, address=client_addr)
-    finally:
-        exp.stop(feature_store)
-
-
-def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
-    recv_conn, send_conn = mp.Pipe(duplex=False)
-    # Build the model in a subproc so that keras does not hog the gpu
-    proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
-    proc.start()
-
-    # do not need the sending connection in this proc anymore
-    send_conn.close()
-
-    proc.join(timeout=600)
-    if proc.is_alive():
-        proc.terminate()
-        raise Exception("Failed to build a simple keras model within 2 minutes")
-    try:
-        model_path, inputs, outputs = recv_conn.recv()
-    except EOFError as e:
-        raise Exception(
-            "Failed to receive serialized model from subprocess. "
-            "Is the `tensorflow` python package installed?"
-        ) from e
-
-    client.set_model_from_file(
-        "keras-fcn",
-        model_path,
-        "TF",
-        device=device.value.upper(),
-        inputs=inputs,
-        outputs=outputs,
-    )
-    client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
-    client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
-    client.get_tensor("keras-output")
-
-
-def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
-    from tensorflow import keras
-
-    from smartsim.ml.tf import freeze_model
-
-    fcn = keras.Sequential(
-        layers=[
-            keras.layers.InputLayer(input_shape=(28, 28), name="input"),
-            keras.layers.Flatten(input_shape=(28, 28), name="flatten"),
-            keras.layers.Dense(128, activation="relu", name="dense"),
-            keras.layers.Dense(10, activation="softmax", name="output"),
-        ],
-        name="FullyConnectedNetwork",
-    )
-    fcn.compile(
-        optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
-    )
-    model_path, inputs, outputs = freeze_model(fcn, tmp_dir, "keras_model.pb")
-    conn.send((model_path, inputs, outputs))
-
-
-def _test_torch_install(client: Client, device: Device) -> None:
-    import torch
-    from torch import nn
-
-    class Net(nn.Module):
-        def __init__(self) -> None:
-            super().__init__()
-            self.conv: t.Callable[..., torch.Tensor] = nn.Conv2d(1, 1, 3)
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            return self.conv(x)
-
-    if device == Device.GPU:
-        device_ = torch.device("cuda")
-    else:
-        device_ = torch.device("cpu")
-
-    net = Net()
-    net.to(device_)
-    net.eval()
-
-    forward_input = torch.rand(1, 1, 3, 3).to(device_)
-    traced = torch.jit.trace(net, forward_input)  # type: ignore[no-untyped-call]
-
-    buffer = io.BytesIO()
-    torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
-    model = buffer.getvalue()
-
-    client.set_model("torch-nn", model, backend="TORCH", device=device.value.upper())
-    client.put_tensor("torch-in", torch.rand(1, 1, 3, 3).numpy())
-    client.run_model("torch-nn", inputs=["torch-in"], outputs=["torch-out"])
-    client.get_tensor("torch-out")
-
-
-def _test_onnx_install(client: Client, device: Device) -> None:
-    from skl2onnx import to_onnx
-    from sklearn.cluster import KMeans
-
-    data = np.arange(20, dtype=np.float32).reshape(10, 2)
-    model = KMeans(n_clusters=2, n_init=10)
-    model.fit(data)
-
-    kmeans = to_onnx(model, data, target_opset=11)
-    model = kmeans.SerializeToString()
-    sample = np.arange(20, dtype=np.float32).reshape(10, 2)
-
-    client.put_tensor("onnx-input", sample)
-    client.set_model("onnx-kmeans", model, "ONNX", device=device.value.upper())
-    client.run_model(
-        "onnx-kmeans", inputs=["onnx-input"], outputs=["onnx-labels", "onnx-transform"]
-    )
-    client.get_tensor("onnx-labels")

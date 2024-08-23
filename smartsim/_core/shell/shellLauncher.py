@@ -37,6 +37,7 @@ import subprocess as sp
 import psutil
 
 from smartsim._core.dispatch import _EnvironMappingType, _FormatterType, _WorkingDirectory
+from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.utils import helpers
 from smartsim._core.utils.launcher import ExecutableProtocol, create_job_id
 from smartsim.error import errors
@@ -61,7 +62,9 @@ class ShellLauncherCommand(t.NamedTuple):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[LaunchArguments, ShellLauncherCommand]:
+) -> _FormatterType[
+    ShellLaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
+]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 
@@ -92,7 +95,7 @@ def make_shell_format_fn(
     """
 
     def impl(
-        args: LaunchArguments,
+        args: ShellLaunchArguments,
         exe: ExecutableProtocol,
         path: _WorkingDirectory,
         env: _EnvironMappingType,

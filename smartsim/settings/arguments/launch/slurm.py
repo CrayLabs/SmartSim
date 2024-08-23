@@ -38,11 +38,13 @@ from smartsim._core.dispatch import (
 )
 from smartsim._core.shell.shellLauncher import ShellLauncher, ShellLauncherCommand
 from smartsim._core.utils.launcher import ExecutableProtocol
+from smartsim._core.arguments.shell import ShellLaunchArguments
+from smartsim._core.dispatch import dispatch
+
 from smartsim.log import get_logger
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
-from ..launchArguments import LaunchArguments
 
 logger = get_logger(__name__)
 
@@ -70,7 +72,7 @@ def _as_srun_command(
 
 
 @dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)
-class SlurmLaunchArguments(LaunchArguments):
+class SlurmLaunchArguments(ShellLaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher
 
@@ -261,7 +263,7 @@ class SlurmLaunchArguments(LaunchArguments):
         else:
             self._launch_args.pop("quiet", None)
 
-    def format_launch_args(self) -> t.Union[t.List[str], None]:
+    def format_launch_args(self) -> t.List[str]:
         """Return a list of slurm formatted launch arguments
 
         :return: list of slurm arguments for these settings
@@ -279,9 +281,7 @@ class SlurmLaunchArguments(LaunchArguments):
                     formatted += ["=".join((prefix + key, str(value)))]
         return formatted
 
-    def format_env_vars(
-        self, env_vars: t.Dict[str, t.Optional[str]]
-    ) -> t.Union[t.List[str], None]:
+    def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str]:
         """Build bash compatible environment variable string for Slurm
 
         :returns: the formatted string of environment variables
@@ -298,6 +298,7 @@ class SlurmLaunchArguments(LaunchArguments):
         the list starts with all as to not disturb the rest of the environment
         for more information on this, see the slurm documentation for srun
 
+        :param env_vars: An environment mapping
         :returns: the formatted string of environment variables
         """
         self._check_env_vars(env_vars)
@@ -317,7 +318,7 @@ class SlurmLaunchArguments(LaunchArguments):
 
         return fmt_exported_env, compound_env
 
-    def _check_env_vars(self, env_vars: t.Dict[str, t.Optional[str]]) -> None:
+    def _check_env_vars(self, env_vars: t.Mapping[str, str | None]) -> None:
         """Warn a user trying to set a variable which is set in the environment
 
         Given Slurm's env var precedence, trying to export a variable which is already

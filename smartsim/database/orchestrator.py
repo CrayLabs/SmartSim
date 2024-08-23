@@ -35,21 +35,14 @@ from os import environ, getcwd, getenv
 from shlex import split as sh_split
 
 import psutil
-from smartredis import Client, ConfigOptions
-from smartredis.error import RedisReplyError
 
-from .._core.config import CONFIG
-from .._core.utils import fs_is_active
+from smartsim.entity._mock import Mock
+
 from .._core.utils.helpers import is_valid_cmd, unpack_fs_identifier
 from .._core.utils.network import get_ip_from_host
 from .._core.utils.shell import execute_cmd
 from ..entity import EntityList, FSNode, TelemetryConfiguration
-from ..error import (
-    SmartSimError,
-    SSConfigError,
-    SSDBFilesNotParseable,
-    SSUnsupportedError,
-)
+from ..error import SmartSimError, SSDBFilesNotParseable, SSUnsupportedError
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
@@ -71,6 +64,19 @@ from ..settings import (
 from ..wlm import detect_launcher
 
 logger = get_logger(__name__)
+
+
+class Client(Mock):
+    """Mock Client"""
+
+
+class ConfigOptions(Mock):
+    """Mock ConfigOptions"""
+
+
+def fs_is_active():
+    return False
+
 
 by_launcher: t.Dict[str, t.List[str]] = {
     "dragon": [""],
@@ -189,7 +195,7 @@ class FeatureStore(EntityList[FSNode]):
     ) -> None:
         """Initialize an ``FeatureStore`` reference for local launch
 
-        Extra configurations for RedisAI
+        Extra configurations
 
         :param path: path to location of ``FeatureStore`` directory
         :param port: TCP/IP port
@@ -253,23 +259,6 @@ class FeatureStore(EntityList[FSNode]):
             intra_op_threads=intra_op_threads,
             **kwargs,
         )
-
-        # detect if we can find at least the redis binaries. We
-        # don't want to force the user to launch with RedisAI so
-        # it's ok if that isn't present.
-        try:
-            # try to obtain redis binaries needed to launch Redis
-            # will raise SSConfigError if not found
-            self._redis_exe  # pylint: disable=W0104
-            self._redis_conf  # pylint: disable=W0104
-            CONFIG.database_cli  # pylint: disable=W0104
-        except SSConfigError as e:
-            raise SSConfigError(
-                "SmartSim not installed with pre-built extensions (Redis)\n"
-                "Use the `smart` cli tool to install needed extensions\n"
-                "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
-                "See documentation for more information"
-            ) from e
 
         if self.launcher != "local":
             self.batch_settings = self._build_batch_settings(
@@ -404,30 +393,6 @@ class FeatureStore(EntityList[FSNode]):
         except SSDBFilesNotParseable:
             return False
         return fs_is_active(hosts, self.ports, self.num_shards)
-
-    @property
-    def _rai_module(self) -> t.Tuple[str, ...]:
-        """Get the RedisAI module from third-party installations
-
-        :return: Tuple of args to pass to the FeatureStore exe
-                 to load and configure the RedisAI
-        """
-        module = ["--loadmodule", CONFIG.redisai]
-        if self.queue_threads:
-            module.extend(("THREADS_PER_QUEUE", str(self.queue_threads)))
-        if self.inter_threads:
-            module.extend(("INTER_OP_PARALLELISM", str(self.inter_threads)))
-        if self.intra_threads:
-            module.extend(("INTRA_OP_PARALLELISM", str(self.intra_threads)))
-        return tuple(module)
-
-    @property
-    def _redis_exe(self) -> str:
-        return CONFIG.database_exe
-
-    @property
-    def _redis_conf(self) -> str:
-        return CONFIG.database_conf
 
     @property
     def checkpoint_file(self) -> str:
@@ -649,10 +614,6 @@ class FeatureStore(EntityList[FSNode]):
                 for address in addresses:
                     client.config_set(key, value, address)
 
-            except RedisReplyError:
-                raise SmartSimError(
-                    f"Invalid CONFIG key-value pair ({key}: {value})"
-                ) from None
             except TypeError:
                 raise TypeError(
                     "Incompatible function arguments. The key and value used for "
@@ -883,13 +844,7 @@ class FeatureStore(EntityList[FSNode]):
     ) -> t.List[str]:
         cmd = [
             "-m",
-            "smartsim._core.entrypoints.redis",  # entrypoint
-            f"+orc-exe={self._redis_exe}",  # redis-server
-            f"+conf-file={self._redis_conf}",  # redis.conf file
-            "+rai-module",  # load redisai.so
-            *self._rai_module,
             f"+name={name}",  # name of node
-            f"+port={port}",  # redis port
             f"+ifname={','.join(self._interfaces)}",  # pass interface to start script
         ]
         if cluster:

@@ -38,7 +38,6 @@ from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
     BuildEnv,
-    DbEngine,
     SetupError,
     Version_,
     VersionConflictError,
@@ -46,7 +45,6 @@ from smartsim._core._install.buildenv import (
 )
 from smartsim._core._install.builder import BuildError, Device
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
@@ -63,9 +61,9 @@ def check_py_onnx_version(versions: Versioner) -> None:
     _check_packages_in_python_env(
         {
             "onnx": Version_(versions.ONNX),
-            "skl2onnx": Version_(versions.REDISAI.skl2onnx),
-            "onnxmltools": Version_(versions.REDISAI.onnxmltools),
-            "scikit-learn": Version_(getattr(versions.REDISAI, "scikit-learn")),
+            "skl2onnx": "1.16.0",
+            "onnxmltools": "1.12.0",
+            "scikit-learn": "1.3.2",
         },
     )
 
@@ -75,43 +73,8 @@ def check_py_tf_version(versions: Versioner) -> None:
     _check_packages_in_python_env({"tensorflow": Version_(versions.TENSORFLOW)})
 
 
-def check_backends_install() -> bool:
-    """Checks if backends have already been installed.
-    Logs details on how to proceed forward
-    if the RAI_PATH environment variable is set or if
-    backends have already been installed.
-    """
-    rai_path = os.environ.get("RAI_PATH", "")
-    installed = installed_redisai_backends()
-    msg = ""
-
-    if rai_path and installed:
-        msg = (
-            f"There is no need to build. backends are already built and "
-            f"specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
-        )
-    elif rai_path and not installed:
-        msg = (
-            "Before running 'smart build', unset your RAI_PATH environment "
-            "variable with 'unset RAI_PATH'."
-        )
-    elif not rai_path and installed:
-        msg = (
-            "If you wish to re-run `smart build`, you must first run `smart clean`."
-            " The following backend(s) must be removed: " + ", ".join(installed)
-        )
-
-    if msg:
-        logger.error(msg)
-
-    return not bool(msg)
-
-
-def build_feature_store(
-    build_env: BuildEnv, versions: Versioner, keydb: bool, verbose: bool
-) -> None:
+def build_feature_store(build_env: BuildEnv, verbose: bool) -> None:
     # check feature store installation
-    feature_store_name = "KeyDB" if keydb else "Redis"
     feature_store_builder = builder.FeatureStoreBuilder(
         build_env(),
         jobs=build_env.JOBS,
@@ -120,111 +83,12 @@ def build_feature_store(
         malloc=build_env.MALLOC,
         verbose=verbose,
     )
+
     if not feature_store_builder.is_built:
-        logger.info(
-            f"Building {feature_store_name} version {versions.REDIS} "
-            f"from {versions.REDIS_URL}"
-        )
-        feature_store_builder.build_from_git(versions.REDIS_URL, versions.REDIS_BRANCH)
+        logger.info("No feature store is currently being built by 'smart build'")
+
         feature_store_builder.cleanup()
-    logger.info(f"{feature_store_name} build complete!")
-
-
-def build_redis_ai(
-    build_env: BuildEnv,
-    versions: Versioner,
-    device: Device,
-    use_torch: bool = True,
-    use_tf: bool = True,
-    use_onnx: bool = False,
-    torch_dir: t.Union[str, Path, None] = None,
-    libtf_dir: t.Union[str, Path, None] = None,
-    verbose: bool = False,
-    torch_with_mkl: bool = True,
-) -> None:
-    # make sure user isn't trying to do something silly on MacOS
-    if build_env.PLATFORM == "darwin" and device == Device.GPU:
-        raise BuildError("SmartSim does not support GPU on MacOS")
-
-    # decide which runtimes to build
-    print("\nML Backends Requested")
-    backends_table = [
-        ["PyTorch", versions.TORCH, color_bool(use_torch)],
-        ["TensorFlow", versions.TENSORFLOW, color_bool(use_tf)],
-        ["ONNX", versions.ONNX, color_bool(use_onnx)],
-    ]
-    print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
-    print(f"Building for GPU support: {color_bool(device == Device.GPU)}\n")
-
-    if not check_backends_install():
-        sys.exit(1)
-
-    # TORCH
-    if use_torch and torch_dir:
-        torch_dir = Path(torch_dir).resolve()
-        if not torch_dir.is_dir():
-            raise SetupError(
-                f"Could not find requested user Torch installation: {torch_dir}"
-            )
-
-    # TF
-    if use_tf and libtf_dir:
-        libtf_dir = Path(libtf_dir).resolve()
-        if not libtf_dir.is_dir():
-            raise SetupError(
-                f"Could not find requested user TF installation: {libtf_dir}"
-            )
-
-    build_env_dict = build_env()
-
-    rai_builder = builder.RedisAIBuilder(
-        build_env=build_env_dict,
-        jobs=build_env.JOBS,
-        _os=builder.OperatingSystem.from_str(platform.system()),
-        architecture=builder.Architecture.from_str(platform.machine()),
-        torch_dir=str(torch_dir) if torch_dir else "",
-        libtf_dir=str(libtf_dir) if libtf_dir else "",
-        build_torch=use_torch,
-        build_tf=use_tf,
-        build_onnx=use_onnx,
-        verbose=verbose,
-        torch_with_mkl=torch_with_mkl,
-    )
-
-    if rai_builder.is_built:
-        logger.info("RedisAI installed. Run `smart clean` to remove.")
-    else:
-        # get the build environment, update with CUDNN env vars
-        # if present and building for GPU, otherwise warn the user
-        if device == Device.GPU:
-            gpu_env = build_env.get_cudnn_env()
-            cudnn_env_vars = [
-                "CUDNN_LIBRARY",
-                "CUDNN_INCLUDE_DIR",
-                "CUDNN_INCLUDE_PATH",
-                "CUDNN_LIBRARY_PATH",
-            ]
-            if not gpu_env:
-                logger.warning(
-                    "CUDNN environment variables not found.\n"
-                    f"Looked for {cudnn_env_vars}"
-                )
-            else:
-                build_env_dict.update(gpu_env)
-        # update RAI build env with cudnn env vars
-        rai_builder.env = build_env_dict
-
-        logger.info(
-            f"Building RedisAI version {versions.REDISAI}"
-            f" from {versions.REDISAI_URL}"
-        )
-
-        # NOTE: have the option to add other builds here in the future
-        # like "from_tarball"
-        rai_builder.build_from_git(
-            versions.REDISAI_URL, versions.REDISAI_BRANCH, device
-        )
-        logger.info("ML Backends and RedisAI build complete!")
+    logger.info("No feature store is currently being built by 'smart build'")
 
 
 def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> None:
@@ -359,25 +223,11 @@ def _format_incompatible_python_env_message(
     )
 
 
-def _configure_keydb_build(versions: Versioner) -> None:
-    """Configure the redis versions to be used during the build operation"""
-    versions.REDIS = Version_("6.2.0")
-    versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
-    versions.REDIS_BRANCH = "v6.2.0"
-
-    CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
-    if not CONFIG.conf_path.resolve().is_file():
-        raise SSConfigError(
-            "Database configuration file at REDIS_CONF could not be found"
-        )
-
-
 # pylint: disable-next=too-many-statements
 def execute(
     args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     verbose = args.v
-    keydb = args.keydb
     device = Device(args.device.lower())
     is_dragon_requested = args.dragon
     # torch and tf build by default
@@ -399,13 +249,9 @@ def execute(
         env_vars = list(env.keys())
         print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
 
-    if keydb:
-        _configure_keydb_build(versions)
-
     if verbose:
-        fs_name: DbEngine = "KEYDB" if keydb else "REDIS"
         logger.info("Version Information:")
-        vers = versions.as_dict(fs_name=fs_name)
+        vers = versions.as_dict()
         version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
@@ -422,32 +268,20 @@ def execute(
 
     try:
         if not args.only_python_packages:
-            # REDIS/KeyDB
-            build_feature_store(build_env, versions, keydb, verbose)
+            ...
 
-            # REDISAI
-            build_redis_ai(
-                build_env,
-                versions,
-                device,
-                pt,
-                tf,
-                onnx,
-                args.torch_dir,
-                args.libtensorflow_dir,
-                verbose=verbose,
-                torch_with_mkl=args.torch_with_mkl,
-            )
     except (SetupError, BuildError) as e:
         logger.error(str(e))
         return os.EX_SOFTWARE
 
-    backends = installed_redisai_backends()
+    backends = []
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) built")
 
     try:
-        if "torch" in backends:
+        # TODO: always installing torch, otherwise tests will fail.
+        # Should revert once torch install has been revamped
+        if "torch" in backends or True:
             check_py_torch_version(versions, device)
         if "tensorflow" in backends:
             check_py_tf_version(versions)
@@ -518,12 +352,6 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         default=None,
         type=str,
         help=f"Path to custom libtensorflow directory {warn_usage}",
-    )
-    parser.add_argument(
-        "--keydb",
-        action="store_true",
-        default=False,
-        help="Build KeyDB instead of Redis",
     )
     parser.add_argument(
         "--no_torch_with_mkl",

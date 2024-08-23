@@ -83,13 +83,13 @@ def test_pals_class_methods(function, value, flag, result):
     assert isinstance(palsLauncher.launch_args, PalsMpiexecLaunchArguments)
     getattr(palsLauncher.launch_args, function)(*value)
     assert palsLauncher.launch_args._launch_args[flag] == result
-    assert palsLauncher.format_launch_args() == ["--" + flag, str(result)]
+    assert palsLauncher._arguments.format_launch_args() == ["--" + flag, str(result)]
 
 
 def test_format_env_vars():
     env_vars = {"FOO_VERSION": "3.14", "PATH": None, "LD_LIBRARY_PATH": None}
     palsLauncher = LaunchSettings(launcher=LauncherType.Pals, env_vars=env_vars)
-    formatted = " ".join(palsLauncher.format_env_vars())
+    formatted = " ".join(palsLauncher._arguments.format_env_vars(env_vars))
     expected = "--env FOO_VERSION=3.14 --envlist PATH,LD_LIBRARY_PATH"
     assert formatted == expected
 
