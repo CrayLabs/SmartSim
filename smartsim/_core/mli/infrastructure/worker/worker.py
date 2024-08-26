@@ -110,7 +110,11 @@ class TransformInputResult:
     """A wrapper around a transformed batch of input tensors"""
 
     def __init__(
-        self, result: t.Any, slices: list[slice], dims: list[list[int]]
+        self,
+        result: t.Any,
+        slices: list[slice],
+        dims: list[list[int]],
+        dtypes: list[str],
     ) -> None:
         """Initialize the object"""
         self.transformed = result
@@ -120,6 +124,8 @@ class TransformInputResult:
         which request"""
         self.dims = dims
         """Dimension of the transformed tensors"""
+        self.dtypes = dtypes
+        """Data type of transformed tensors"""
 
 
 class ExecuteResult:

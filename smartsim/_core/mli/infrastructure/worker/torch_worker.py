@@ -46,6 +46,9 @@ from .worker import (
     TransformOutputResult,
 )
 
+# pylint: enable=import-error
+
+
 torch.set_num_threads(1)
 torch.set_num_interop_threads(4)
 logger = get_logger(__name__)
@@ -129,7 +132,7 @@ class TorchWorker(MachineLearningWorkerBase):
 
             results.append(mem_alloc.serialize())
 
-        return TransformInputResult(results, slices, all_dims)
+        return TransformInputResult(results, slices, all_dims, all_dtypes)
 
     # pylint: disable-next=unused-argument
     @staticmethod
@@ -147,15 +150,17 @@ class TorchWorker(MachineLearningWorkerBase):
 
         tensors = []
         mem_allocs = []
-        for transformed, dims in zip(
-            transform_result.transformed, transform_result.dims
+        for transformed, dims, dtype in zip(
+            transform_result.transformed, transform_result.dims, transform_result.dtypes
         ):
             mem_alloc = MemoryAlloc.attach(transformed)
             mem_allocs.append(mem_alloc)
+            itemsize = np.empty((1), dtype=dtype).itemsize
             tensors.append(
                 torch.from_numpy(
                     np.frombuffer(
-                        mem_alloc.get_memview()[0 : np.prod(dims) * 4], dtype=np.float32
+                        mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
+                        dtype=dtype,
                     ).reshape(dims)
                 )
             )

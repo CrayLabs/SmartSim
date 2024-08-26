@@ -35,13 +35,12 @@ torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
 import base64
+import multiprocessing as mp
 import os
 
 import dragon.channels as dch
 from dragon import fli
 from dragon.mpbridge.queues import DragonQueue
-
-import multiprocessing as mp
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
@@ -184,7 +183,7 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
         as_service=True,
         cooldown=5,
         device="cpu",
-        dispatcher_queue=mp.Queue(maxsize=0)
+        dispatcher_queue=mp.Queue(maxsize=0),
     )
 
     worker_queue = config_loader.get_queue()
