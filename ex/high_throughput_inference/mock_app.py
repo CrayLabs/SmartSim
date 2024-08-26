@@ -100,14 +100,11 @@ class ProtoClient:
         self.perf_timer.measure_time("build_request")
         request_bytes = MessageHandler.serialize_request(request)
         self.perf_timer.measure_time("serialize_request")
-        tensor_bytes = [bytes(tensor.data) for tensor in tensors]
-        # tensor_bytes = [tensor.reshape(-1).view(numpy.uint8).data for tensor in tensors]
         self.perf_timer.measure_time("serialize_tensor")
         with self._to_worker_fli.sendh(timeout=None, stream_channel=self._to_worker_ch) as to_sendh:
             to_sendh.send_bytes(request_bytes)
-            for tb in tensor_bytes:
-                to_sendh.send_bytes(tb) #TODO NOT FAST ENOUGH!!!
-                # to_sendh.send_bytes(bytes(t.data))
+            for tensor in tensors:
+                to_sendh.send_bytes(tensor.tobytes()) #TODO NOT FAST ENOUGH!!!
 
         self.perf_timer.measure_time("send")
         with self._from_worker_ch.recvh(timeout=None) as from_recvh:
