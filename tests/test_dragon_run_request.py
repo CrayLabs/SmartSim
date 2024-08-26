@@ -761,5 +761,3 @@ def test_can_honor_hosts_1_hosts_requested(monkeypatch: pytest.MonkeyPatch) -> N
 
     # confirm the failure is indicated
     assert can_honor, error_msg
-    # # confirm failure message indicates number of nodes requested as cause
-    # assert error_msg is None, error_msg
