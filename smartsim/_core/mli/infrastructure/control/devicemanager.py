@@ -24,12 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from contextlib import contextmanager
 import typing as t
 
 from .....log import get_logger
 from ...infrastructure.storage.featurestore import FeatureStore
-from ..worker.worker import MachineLearningWorkerBase
-from .requestdispatcher import RequestBatch
+from ..worker.worker import MachineLearningWorkerBase, RequestBatch
 
 logger = get_logger(__name__)
 
@@ -68,15 +68,33 @@ class WorkerDevice:
         """Get the model corresponding to a given key
 
         :param key: the model key
+        :returns: the model for the given key
         """
         return self._models[key]
 
     def __contains__(self, key: str) -> bool:
+        """Check if model with a given key is available on the device
+
+        :param key: the key of the model to check for existence
+        :returns: whether the model is available on the device
+        """
         return key in self._models
 
+    @contextmanager
+    def get(self, key_to_remove: t.Optional[str]):
+        yield self
+        if key_to_remove is not None:
+            self.remove_model(key_to_remove)
 
 class DeviceManager:
     def __init__(self, device: WorkerDevice):
+        """An object to manage devices such as GPUs and CPUs.
+
+        The main goal of the ``DeviceManager`` is to ensure that
+        the managed device is ready to be used by a worker to
+        run a given model
+        :param device: The managed device
+        """
         self._device = device
         """Device managed by this object"""
 
@@ -86,6 +104,14 @@ class DeviceManager:
         batch: RequestBatch,
         feature_stores: dict[str, FeatureStore],
     ) -> None:
+        """Load the model needed to execute on a batch on the managed device.
+
+        The model is loaded by the worker.
+
+        :param worker: the worker that loads the model
+        :param batch: the batch for which the model is needed
+        :param feature_stores: feature stores where the model could be stored
+        """
 
         model_bytes = worker.fetch_model(batch, feature_stores)
         loaded_model = worker.load_model(batch, model_bytes, self._device.name)
@@ -113,12 +139,7 @@ class DeviceManager:
         # Load model if not already loaded, or
         # because it is sent with the request
         if model_in_request or not batch.model_key.key in self._device:
-            try:
-                self._load_model_on_device(worker, batch, feature_stores)
-            except Exception as exc:
-                raise exc
-        try:
-            yield self._device
-        finally:
-            if model_in_request:
-                self._device.remove_model(batch.model_key.key)
+            self._load_model_on_device(worker, batch, feature_stores)
+
+        key_to_remove = batch.model_key.key if model_in_request else None
+        return self._device.get(key_to_remove)

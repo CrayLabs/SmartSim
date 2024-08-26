@@ -41,7 +41,6 @@ import time
 import typing as t
 import uuid
 from queue import Empty, Full, Queue
-from types import TracebackType
 
 from smartsim._core.entrypoints.service import Service
 
@@ -64,18 +63,6 @@ logger = get_logger("Request Dispatcher")
 
 # Placeholder
 ModelIdentifier = FeatureStoreKey
-
-
-class WorkerDevice:
-    def __init__(self, name: str) -> None:
-        """Wrapper around a device to keep track of loaded Models and availability
-        :param name: name used by the toolkit to identify this device, e.g. ``cuda:0``
-        """
-        self._name = name
-        """The name used by the toolkit to identify this device"""
-        self._models: dict[str, t.Any] = {}
-        """Dictionary of model key to model for models stored on this device"""
-
 
 class BatchQueue(Queue[InferenceRequest]):
     def __init__(
@@ -366,13 +353,36 @@ class RequestDispatcher(Service):
                 self._perf_timer.measure_time("dispatch")
         finally:
             self.flush_requests()
-            # TODO: implement this
-            # self.remove_queues()
+            self.remove_queues()
 
             self._perf_timer.end_timings()
 
         if self._perf_timer.max_length == 801 and self._perf_timer.is_active:
             self._perf_timer.print_timings(True)
+
+    def remove_queues(self) -> None:
+        """Remove references to queues that can be removed
+        and allow them to be garbage collected"""
+        queue_lists_to_remove = []
+        for key, queues in self._queues.items():
+            queues_to_remove = []
+            for queue in queues:
+                if queue.can_be_removed:
+                    queues_to_remove.append(queue)
+
+            for queue_to_remove in queues_to_remove:
+                queues.remove(queue_to_remove)
+                if (
+                    key in self._active_queues
+                    and self._active_queues[key] == queue_to_remove
+                ):
+                    del self._active_queues[key]
+
+            if len(queues) == 0:
+                queue_lists_to_remove.append(key)
+
+        for key in queue_lists_to_remove:
+            del self._queues[key]
 
     @property
     def task_queue(self) -> DragonQueue:

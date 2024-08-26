@@ -141,7 +141,7 @@ def setup_worker_manager_model_bytes(
 
     request_batch = RequestBatch(
         [request],
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]]),
+        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_id,
     )
 
@@ -200,7 +200,7 @@ def setup_worker_manager_model_key(
     )
     request_batch = RequestBatch(
         [request],
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]]),
+        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_key=model_key,
     )
 

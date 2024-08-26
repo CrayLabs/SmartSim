@@ -406,7 +406,6 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         device memory
         :param request: The request that triggered the pipeline
         :param device: The device on which the model must be placed
-        :param device: The device on which the model must be placed
         :return: ModelLoadResult wrapping the model loaded for the request"""
 
     @staticmethod

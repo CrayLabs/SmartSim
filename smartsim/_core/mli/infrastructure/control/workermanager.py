@@ -191,13 +191,12 @@ class WorkerManager(Service):
                         "Error acquiring device manager",
                     )
                 return
-            device: WorkerDevice = next(
-                self._device_manager.get_device(
+            device_cm = self._device_manager.get_device(
                     worker=self._worker,
                     batch=batch,
                     feature_stores=self._feature_stores,
                 )
-            )
+
         except Exception as exc:
             for request in batch.requests:
                 exception_handler(
@@ -208,90 +207,92 @@ class WorkerManager(Service):
             return
         self._perf_timer.measure_time("fetch_model")
 
-        try:
-            model_result = LoadModelResult(device.get_model(batch.model_key.key))
-        except Exception as exc:
-            for request in batch.requests:
-                exception_handler(
-                    exc, request.callback, "Error getting model from device."
-                )
-            return
-        self._perf_timer.measure_time("load_model")
+        with device_cm as device:
 
-        if batch.inputs is None:
-            for request in batch.requests:
-                exception_handler(
-                    ValueError("Error batching inputs"),
-                    request.callback,
-                    "Error batching inputs.",
-                )
-            return
-        transformed_input = batch.inputs
-
-        try:
-            execute_result = self._worker.execute(
-                batch, model_result, transformed_input, device.name
-            )
-        except Exception as e:
-            for request in batch.requests:
-                exception_handler(e, request.callback, "Failed while executing.")
-            return
-        self._perf_timer.measure_time("execute")
-
-        try:
-            transformed_outputs = self._worker.transform_output(batch, execute_result)
-        except Exception as e:
-            for request in batch.requests:
-                exception_handler(
-                    e, request.callback, "Failed while transforming the output."
-                )
-            return
-
-        for request, transformed_output in zip(batch.requests, transformed_outputs):
-            reply = InferenceReply()
-            if request.output_keys:
-                try:
-                    reply.output_keys = self._worker.place_output(
-                        request,
-                        transformed_output,
-                        self._feature_stores,
-                    )
-                except Exception as e:
+            try:
+                model_result = LoadModelResult(device.get_model(batch.model_key.key))
+            except Exception as exc:
+                for request in batch.requests:
                     exception_handler(
-                        e, request.callback, "Failed while placing the output."
+                        exc, request.callback, "Error getting model from device."
                     )
-                    continue
-            else:
-                reply.outputs = transformed_output.outputs
-            self._perf_timer.measure_time("assign_output")
+                return
+            self._perf_timer.measure_time("load_model")
 
-            if reply.outputs is None or not reply.outputs:
-                response = build_failure_reply("fail", "Outputs not found.")
-            else:
-                reply.status_enum = "complete"
-                reply.message = "Success"
+            if batch.inputs is None:
+                for request in batch.requests:
+                    exception_handler(
+                        ValueError("Error batching inputs"),
+                        request.callback,
+                        "Error batching inputs.",
+                    )
+                return
+            transformed_input = batch.inputs
 
-                results = self._worker.prepare_outputs(reply)
-                response = MessageHandler.build_response(
-                    status=reply.status_enum,
-                    message=reply.message,
-                    result=results,
-                    custom_attributes=None,
+            try:
+                execute_result = self._worker.execute(
+                    batch, model_result, transformed_input, device.name
                 )
+            except Exception as e:
+                for request in batch.requests:
+                    exception_handler(e, request.callback, "Failed while executing.")
+                return
+            self._perf_timer.measure_time("execute")
 
-            self._perf_timer.measure_time("build_reply")
+            try:
+                transformed_outputs = self._worker.transform_output(batch, execute_result)
+            except Exception as e:
+                for request in batch.requests:
+                    exception_handler(
+                        e, request.callback, "Failed while transforming the output."
+                    )
+                return
 
-            serialized_resp = MessageHandler.serialize_response(response)
+            for request, transformed_output in zip(batch.requests, transformed_outputs):
+                reply = InferenceReply()
+                if request.output_keys:
+                    try:
+                        reply.output_keys = self._worker.place_output(
+                            request,
+                            transformed_output,
+                            self._feature_stores,
+                        )
+                    except Exception as e:
+                        exception_handler(
+                            e, request.callback, "Failed while placing the output."
+                        )
+                        continue
+                else:
+                    reply.outputs = transformed_output.outputs
+                self._perf_timer.measure_time("assign_output")
 
-            self._perf_timer.measure_time("serialize_resp")
+                if reply.outputs is None or not reply.outputs:
+                    response = build_failure_reply("fail", "Outputs not found.")
+                else:
+                    reply.status_enum = "complete"
+                    reply.message = "Success"
 
-            if request.callback:
-                request.callback.send(serialized_resp)
-                if reply.outputs:
-                    # send tensor data after response
-                    for output in reply.outputs:
-                        request.callback.send(output)
-            self._perf_timer.measure_time("send")
+                    results = self._worker.prepare_outputs(reply)
+                    response = MessageHandler.build_response(
+                        status=reply.status_enum,
+                        message=reply.message,
+                        result=results,
+                        custom_attributes=None,
+                    )
+
+                self._perf_timer.measure_time("build_reply")
+
+                serialized_resp = MessageHandler.serialize_response(response)
+
+                self._perf_timer.measure_time("serialize_resp")
+
+                if request.callback:
+                    request.callback.send(serialized_resp)
+                    if reply.outputs:
+                        # send tensor data after response
+                        for output in reply.outputs:
+                            request.callback.send(output)
+                self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()
 

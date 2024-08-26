@@ -120,18 +120,7 @@ def mock_messages(
     feature_store[model_key] = model_bytes
 
     for iteration_number in range(2):
-        time.sleep(1)
-        # 1. for demo, ignore upstream and just put stuff into downstream
-        # 2. for demo, only one downstream but we'd normally have to filter
-        #       msg content and send to the correct downstream (worker) queue
-        # timestamp = time.time_ns()
-        # mock_channel = test_path / f"brainstorm-{timestamp}.txt"
-        # mock_channel.touch()
-
-        # thread - just look for key (wait for keys)
-        # call checkpoint, try to get non-persistent key, it blocks
-        # working set size > 1 has side-effects
-        # only incurs cost when working set size has been exceeded
+        time.sleep(0.1)
 
         channel_key = Channel.make_process_local().serialize()
         callback_channel = DragonCommChannel(channel_key)
@@ -156,7 +145,7 @@ def mock_messages(
         message_model_key = MessageHandler.build_model_key(model_key, fsd)
 
         request = MessageHandler.build_request(
-            reply_channel=callback_channel.descriptor,
+            reply_channel=base64.b64encode(callback_channel.descriptor).decode("utf-8"),
             model=message_model_key,
             inputs=[tensor_desc],
             outputs=[message_tensor_output_key],
@@ -218,11 +207,10 @@ def test_request_dispatcher_batching(prepare_environment: pathlib.Path) -> None:
     os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
     ddict = DDict(1, 1)
-    dd_descriptor = ddict.serialize()
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel,
+        callback_factory=DragonCommChannel.from_descriptor,
         queue_factory=DragonFLIChannel.from_descriptor,
     )
     integrated_worker_type = TorchWorker
@@ -260,7 +248,6 @@ def test_request_dispatcher_batching(prepare_environment: pathlib.Path) -> None:
     batch: RequestBatch = request_dispatcher.task_queue.get(timeout=None)
 
     try:
-
         assert batch.has_valid_requests
         tensors = []
         mem_allocs = []
@@ -305,7 +292,11 @@ def test_request_dispatcher_batching(prepare_environment: pathlib.Path) -> None:
 
 
 def test_request_dispatcher_queues(prepare_environment: pathlib.Path) -> None:
-    """Test the request dispatcher internal queues"""
+    """Test the request dispatcher internal queues
+
+    This also includes setting a queue to disposable, checking that it is no
+    longer referenced and that it is re-created when needed.
+    """
 
     test_path = prepare_environment
     fs_path = test_path / "feature_store"
@@ -321,11 +312,10 @@ def test_request_dispatcher_queues(prepare_environment: pathlib.Path) -> None:
     os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
     ddict = DDict(1, 1)
-    dd_descriptor = ddict.serialize()
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel,
+        callback_factory=DragonCommChannel.from_descriptor,
         queue_factory=DragonFLIChannel.from_descriptor,
     )
     integrated_worker_type = TorchWorker
@@ -346,50 +336,66 @@ def test_request_dispatcher_queues(prepare_environment: pathlib.Path) -> None:
 
     request_dispatcher._on_start()
 
-    # create a mock client application to populate the request queue
-    msg_pump = mp.Process(
-        target=mock_messages,
-        args=(
-            worker_queue,
-            DragonFeatureStore(ddict),
-            fs_path,
-            comm_path,
-        ),
-    )
-    msg_pump.start()
+    model_key = str(fs_path / "model_fs.pt")
 
-    batch: t.Optional[RequestBatch] = None
-    for attempts in range(10):
-        try:
-            request_dispatcher._on_iteration()
-            batch = request_dispatcher.task_queue.get(timeout=1)
-            break
-        except Empty as exc:
-            continue
-
-    try:
-        assert batch is not None
-        assert batch.has_valid_requests
+    for iteration in range(2):
+        batch: t.Optional[RequestBatch] = None
         mem_allocs = []
 
-        transform_result = batch.inputs
-        for transformed in transform_result.transformed:
-            mem_alloc = MemoryAlloc.attach(transformed)
-            mem_allocs.append(mem_alloc)
+        # create a mock client application to populate the request queue
+        msg_pump = mp.Process(
+            target=mock_messages,
+            args=(
+                worker_queue,
+                DragonFeatureStore(ddict),
+                fs_path,
+                comm_path,
+            ),
+        )
+        msg_pump.start()
 
-        assert len(batch.requests) == 2
-        model_key = str(fs_path / "model_fs.pt")
-        assert batch.model_key.key == model_key
-        assert model_key in request_dispatcher._queues
-        assert model_key in request_dispatcher._active_queues
-        assert len(request_dispatcher._queues[model_key]) == 1
-        assert request_dispatcher._queues[model_key][0].empty()
-        assert request_dispatcher._queues[model_key][0].model_key.key == model_key
+        for attempts in range(15):
+            try:
+                request_dispatcher._on_iteration()
+                batch = request_dispatcher.task_queue.get(timeout=1)
+                break
+            except Empty:
+                logger.info("Empty queue")
+                continue
+            except Exception as exc:
+                logger.info(f"Failed at iteration #{iteration}")
+                raise exc
 
-    except Exception as exc:
-        raise exc
-    finally:
-        for mem_alloc in mem_allocs:
-            mem_alloc.free()
+        try:
+            assert batch is not None
+            assert batch.has_valid_requests
 
-        msg_pump.kill()
+            transform_result = batch.inputs
+            for transformed in transform_result.transformed:
+                mem_alloc = MemoryAlloc.attach(transformed)
+                mem_allocs.append(mem_alloc)
+
+            assert len(batch.requests) == 2
+            assert batch.model_key.key == model_key
+            assert model_key in request_dispatcher._queues
+            assert model_key in request_dispatcher._active_queues
+            assert len(request_dispatcher._queues[model_key]) == 1
+            assert request_dispatcher._queues[model_key][0].empty()
+            assert request_dispatcher._queues[model_key][0].model_key.key == model_key
+
+        except Exception as exc:
+            logger.log(f"Failed at iteration #{iteration}")
+            raise exc
+        finally:
+            for mem_alloc in mem_allocs:
+                mem_alloc.free()
+
+            msg_pump.kill()
+
+        request_dispatcher._active_queues[model_key].make_disposable()
+        assert request_dispatcher._active_queues[model_key].can_be_removed
+
+        request_dispatcher._on_iteration()
+
+        assert model_key not in request_dispatcher._active_queues
+        assert model_key not in request_dispatcher._queues
