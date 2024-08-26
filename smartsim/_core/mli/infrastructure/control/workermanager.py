@@ -192,10 +192,10 @@ class WorkerManager(Service):
                     )
                 return
             device_cm = self._device_manager.get_device(
-                    worker=self._worker,
-                    batch=batch,
-                    feature_stores=self._feature_stores,
-                )
+                worker=self._worker,
+                batch=batch,
+                feature_stores=self._feature_stores,
+            )
 
         except Exception as exc:
             for request in batch.requests:
@@ -240,7 +240,9 @@ class WorkerManager(Service):
             self._perf_timer.measure_time("execute")
 
             try:
-                transformed_outputs = self._worker.transform_output(batch, execute_result)
+                transformed_outputs = self._worker.transform_output(
+                    batch, execute_result
+                )
             except Exception as e:
                 for request in batch.requests:
                     exception_handler(

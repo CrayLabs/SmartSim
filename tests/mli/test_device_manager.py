@@ -26,10 +26,26 @@
 
 import typing as t
 
+from smartsim._core.mli.infrastructure.control.devicemanager import (
+    DeviceManager,
+    WorkerDevice,
+)
+from smartsim._core.mli.infrastructure.storage.featurestore import (
+    FeatureStore,
+    FeatureStoreKey,
+)
+from smartsim._core.mli.infrastructure.worker.worker import (
+    ExecuteResult,
+    FetchInputResult,
+    FetchModelResult,
+    InferenceRequest,
+    LoadModelResult,
+    MachineLearningWorkerBase,
+    RequestBatch,
+    TransformInputResult,
+    TransformOutputResult,
+)
 
-from smartsim._core.mli.infrastructure.control.devicemanager import DeviceManager, WorkerDevice
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore, FeatureStoreKey
-from smartsim._core.mli.infrastructure.worker.worker import MachineLearningWorkerBase, ExecuteResult, FetchInputResult, FetchModelResult, InferenceRequest, LoadModelResult, RequestBatch, TransformInputResult, TransformOutputResult
 
 class MockWorker(MachineLearningWorkerBase):
     @staticmethod
@@ -38,7 +54,7 @@ class MockWorker(MachineLearningWorkerBase):
     ) -> FetchModelResult:
         if batch.has_raw_model:
             return FetchModelResult(batch.raw_model)
-        return FetchModelResult(b'fetched_model')
+        return FetchModelResult(b"fetched_model")
 
     @staticmethod
     def load_model(
@@ -52,7 +68,7 @@ class MockWorker(MachineLearningWorkerBase):
         fetch_results: list[FetchInputResult],
         mem_pool: "MemoryPool",
     ) -> TransformInputResult:
-        return TransformInputResult(b'result', [slice(0,1)], [[1,2]], ["float32"])
+        return TransformInputResult(b"result", [slice(0, 1)], [[1, 2]], ["float32"])
 
     @staticmethod
     def execute(
@@ -61,13 +77,13 @@ class MockWorker(MachineLearningWorkerBase):
         transform_result: TransformInputResult,
         device: str,
     ) -> ExecuteResult:
-        return ExecuteResult(b'result', [slice(0,1)])
+        return ExecuteResult(b"result", [slice(0, 1)])
 
     @staticmethod
     def transform_output(
         batch: RequestBatch, execute_result: ExecuteResult
     ) -> t.List[TransformOutputResult]:
-        return [TransformOutputResult(b'result', None, "c", "float32")]
+        return [TransformOutputResult(b"result", None, "c", "float32")]
 
 
 def test_worker_device():
@@ -95,9 +111,7 @@ def test_device_manager_model_in_request():
 
     tensor_key = FeatureStoreKey(key="key", descriptor="desc")
     output_key = FeatureStoreKey(key="key", descriptor="desc")
-    model_key = FeatureStoreKey(
-        key="model key", descriptor="desc"
-    )
+    model_key = FeatureStoreKey(key="model key", descriptor="desc")
 
     request = InferenceRequest(
         model_key=model_key,
@@ -116,7 +130,9 @@ def test_device_manager_model_in_request():
         model_key=model_key,
     )
 
-    with device_manager.get_device(worker=worker, batch=request_batch, feature_stores={}) as returned_device:
+    with device_manager.get_device(
+        worker=worker, batch=request_batch, feature_stores={}
+    ) as returned_device:
 
         assert returned_device == worker_device
         assert worker_device.get_model(model_key.key) == b"raw model"
@@ -133,9 +149,7 @@ def test_device_manager_model_key():
 
     tensor_key = FeatureStoreKey(key="key", descriptor="desc")
     output_key = FeatureStoreKey(key="key", descriptor="desc")
-    model_key = FeatureStoreKey(
-        key="model key", descriptor="desc"
-    )
+    model_key = FeatureStoreKey(key="model key", descriptor="desc")
 
     request = InferenceRequest(
         model_key=model_key,
@@ -154,7 +168,9 @@ def test_device_manager_model_key():
         model_key=model_key,
     )
 
-    with device_manager.get_device(worker=worker, batch=request_batch, feature_stores={}) as returned_device:
+    with device_manager.get_device(
+        worker=worker, batch=request_batch, feature_stores={}
+    ) as returned_device:
 
         assert returned_device == worker_device
         assert worker_device.get_model(model_key.key) == b"fetched_model"

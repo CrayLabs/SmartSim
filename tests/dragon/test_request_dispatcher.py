@@ -191,6 +191,7 @@ def service_as_dragon_proc(
         stdout=dragon_process.Popen.STDOUT,
     )
 
+
 def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
     """Test the request dispatcher batching and queueing system
 
@@ -211,7 +212,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
     descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
     os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
-    ddict = DDict(1, 1, 2*1024**2)
+    ddict = DDict(1, 1, 2 * 1024**2)
     dragon_fs = DragonFeatureStore(ddict)
 
     config_loader = EnvironmentConfigLoader(

@@ -64,6 +64,7 @@ logger = get_logger("Request Dispatcher")
 # Placeholder
 ModelIdentifier = FeatureStoreKey
 
+
 class BatchQueue(Queue[InferenceRequest]):
     def __init__(
         self, batch_timeout: float, batch_size: int, model_key: ModelIdentifier

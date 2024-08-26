@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from contextlib import contextmanager
 import typing as t
+from contextlib import contextmanager, _GeneratorContextManager
 
 from .....log import get_logger
 from ...infrastructure.storage.featurestore import FeatureStore
@@ -81,10 +81,11 @@ class WorkerDevice:
         return key in self._models
 
     @contextmanager
-    def get(self, key_to_remove: t.Optional[str]):
+    def get(self, key_to_remove: t.Optional[str]) -> t.Iterator[t.Self]:
         yield self
         if key_to_remove is not None:
             self.remove_model(key_to_remove)
+
 
 class DeviceManager:
     def __init__(self, device: WorkerDevice):
@@ -122,7 +123,7 @@ class DeviceManager:
         worker: MachineLearningWorkerBase,
         batch: RequestBatch,
         feature_stores: dict[str, FeatureStore],
-    ) -> t.Generator[WorkerDevice, None, None]:
+    ) -> _GeneratorContextManager[WorkerDevice]:
         """Get the device managed by this object
 
         the model needed to run the batch of requests is
