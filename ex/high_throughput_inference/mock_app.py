@@ -54,6 +54,7 @@ torch.set_num_interop_threads(16)
 torch.set_num_threads(1)
 
 logger = get_logger("App")
+logger.info("Started app")
 
 CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
 
