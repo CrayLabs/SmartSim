@@ -95,7 +95,6 @@ def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
         model_path.parent.mkdir(parents=True, exist_ok=True)
 
     model_path.unlink(missing_ok=True)
-    # model_path = test_path / "basic.pt"
 
     model = torch.nn.Linear(2, 1)
     torch.save(model, model_path)
@@ -110,6 +109,7 @@ def mock_messages(
     comm_channel_root_dir: pathlib.Path,
 ) -> None:
     """Mock event producer for triggering the inference pipeline"""
+    logger.info("Mocking messages")
     feature_store_root_dir.mkdir(parents=True, exist_ok=True)
     comm_channel_root_dir.mkdir(parents=True, exist_ok=True)
 
@@ -117,10 +117,11 @@ def mock_messages(
     model_bytes = model_path.read_bytes()
     model_key = str(feature_store_root_dir / "model_fs.pt")
 
+    logger.info("Putting model on FS")
     feature_store[model_key] = model_bytes
 
     for iteration_number in range(2):
-        time.sleep(0.1)
+        logger.info(f"Message #{iteration_number}")
 
         channel_key = Channel.make_process_local().serialize()
         callback_channel = DragonCommChannel(channel_key)
@@ -158,6 +159,7 @@ def mock_messages(
         ) as sendh:
             sendh.send_bytes(request_bytes)
             sendh.send_bytes(tensor.tobytes())
+        time.sleep(1)
 
 
 @pytest.fixture
@@ -189,113 +191,11 @@ def service_as_dragon_proc(
         stdout=dragon_process.Popen.STDOUT,
     )
 
-
-def test_request_dispatcher_batching(prepare_environment: pathlib.Path) -> None:
-    """Test dispatcher's batching of requests"""
-
-    test_path = prepare_environment
-    fs_path = test_path / "feature_store"
-    comm_path = test_path / "comm_store"
-
-    to_worker_channel = dch.Channel.make_process_local()
-    to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
-    to_worker_fli_serialized = to_worker_fli.serialize()
-
-    # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
-    # or test environment may be unable to send messages w/queue
-    descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
-    os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
-
-    ddict = DDict(1, 1)
-
-    config_loader = EnvironmentConfigLoader(
-        featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_descriptor,
-    )
-    integrated_worker_type = TorchWorker
-
-    request_dispatcher = RequestDispatcher(
-        batch_timeout=0,
-        batch_size=2,
-        config_loader=config_loader,
-        worker_type=integrated_worker_type,
-    )
-
-    worker_queue = config_loader.get_queue()
-    if worker_queue is None:
-        logger.warn(
-            "FLI input queue not loaded correctly from config_loader: "
-            f"{config_loader._queue_descriptor}"
-        )
-
-    # create a mock client application to populate the request queue
-    msg_pump = mp.Process(
-        target=mock_messages,
-        args=(
-            worker_queue,
-            DragonFeatureStore(ddict),
-            fs_path,
-            comm_path,
-        ),
-    )
-    msg_pump.start()
-
-    # create a process to execute commands
-    process = service_as_dragon_proc(request_dispatcher, [], [])
-    process.start()
-
-    batch: RequestBatch = request_dispatcher.task_queue.get(timeout=None)
-
-    try:
-        assert batch.has_valid_requests
-        tensors = []
-        mem_allocs = []
-
-        transform_result = batch.inputs
-        for transformed, dims, dtype in zip(
-            transform_result.transformed, transform_result.dims, transform_result.dtypes
-        ):
-            mem_alloc = MemoryAlloc.attach(transformed)
-            mem_allocs.append(mem_alloc)
-            itemsize = np.empty((1), dtype=dtype).itemsize
-            tensors.append(
-                torch.from_numpy(
-                    np.frombuffer(
-                        mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
-                        dtype=dtype,
-                    ).reshape(dims)
-                )
-            )
-
-        assert len(batch.requests) == 2
-        assert len(tensors) == 1
-        assert tensors[0].shape == torch.Size([2, 2])
-        model_key = str(fs_path / "model_fs.pt")
-        assert batch.model_key.key == model_key
-
-        for tensor in tensors:
-            for sample_idx in range(tensor.shape[0]):
-                tensor_in = tensor[sample_idx]
-                tensor_out = (sample_idx + 1) * torch.ones((2,), dtype=torch.float32)
-                assert torch.equal(tensor_in, tensor_out)
-
-    except Exception as exc:
-        raise exc
-    finally:
-        for mem_alloc in mem_allocs:
-            mem_alloc.free()
-
-        process.join(timeout=5)
-        process.kill()
-        msg_pump.kill()
-
-
-def test_request_dispatcher_queues(prepare_environment: pathlib.Path) -> None:
-    """Test the request dispatcher internal queues
+def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
+    """Test the request dispatcher batching and queueing system
 
     This also includes setting a queue to disposable, checking that it is no
-    longer referenced and that it is re-created when needed.
+    longer referenced by the dispatcher.
     """
 
     test_path = prepare_environment
@@ -311,7 +211,8 @@ def test_request_dispatcher_queues(prepare_environment: pathlib.Path) -> None:
     descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
     os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
-    ddict = DDict(1, 1)
+    ddict = DDict(1, 1, 2*1024**2)
+    dragon_fs = DragonFeatureStore(ddict)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -336,66 +237,86 @@ def test_request_dispatcher_queues(prepare_environment: pathlib.Path) -> None:
 
     request_dispatcher._on_start()
 
+    batch: t.Optional[RequestBatch] = None
+    mem_allocs = []
+    tensors = []
+    fs_path = test_path / f"feature_store"
+    comm_path = test_path / f"comm_store"
     model_key = str(fs_path / "model_fs.pt")
 
-    for iteration in range(2):
-        batch: t.Optional[RequestBatch] = None
-        mem_allocs = []
+    # create a mock client application to populate the request queue
+    msg_pump = mp.Process(
+        target=mock_messages,
+        args=(
+            worker_queue,
+            dragon_fs,
+            fs_path,
+            comm_path,
+        ),
+    )
 
-        # create a mock client application to populate the request queue
-        msg_pump = mp.Process(
-            target=mock_messages,
-            args=(
-                worker_queue,
-                DragonFeatureStore(ddict),
-                fs_path,
-                comm_path,
-            ),
-        )
-        msg_pump.start()
+    msg_pump.start()
 
-        for attempts in range(15):
-            try:
-                request_dispatcher._on_iteration()
-                batch = request_dispatcher.task_queue.get(timeout=1)
-                break
-            except Empty:
-                logger.info("Empty queue")
-                continue
-            except Exception as exc:
-                logger.info(f"Failed at iteration #{iteration}")
-                raise exc
+    time.sleep(1)
 
+    for attempts in range(15):
         try:
-            assert batch is not None
-            assert batch.has_valid_requests
-
-            transform_result = batch.inputs
-            for transformed in transform_result.transformed:
-                mem_alloc = MemoryAlloc.attach(transformed)
-                mem_allocs.append(mem_alloc)
-
-            assert len(batch.requests) == 2
-            assert batch.model_key.key == model_key
-            assert model_key in request_dispatcher._queues
-            assert model_key in request_dispatcher._active_queues
-            assert len(request_dispatcher._queues[model_key]) == 1
-            assert request_dispatcher._queues[model_key][0].empty()
-            assert request_dispatcher._queues[model_key][0].model_key.key == model_key
-
+            request_dispatcher._on_iteration()
+            batch = request_dispatcher.task_queue.get(timeout=1)
+            break
+        except Empty:
+            continue
         except Exception as exc:
-            logger.log(f"Failed at iteration #{iteration}")
             raise exc
-        finally:
-            for mem_alloc in mem_allocs:
-                mem_alloc.free()
 
-            msg_pump.kill()
+    try:
+        assert batch is not None
+        assert batch.has_valid_requests
 
-        request_dispatcher._active_queues[model_key].make_disposable()
-        assert request_dispatcher._active_queues[model_key].can_be_removed
+        transform_result = batch.inputs
+        for transformed, dims, dtype in zip(
+            transform_result.transformed, transform_result.dims, transform_result.dtypes
+        ):
+            mem_alloc = MemoryAlloc.attach(transformed)
+            mem_allocs.append(mem_alloc)
+            itemsize = np.empty((1), dtype=dtype).itemsize
+            tensors.append(
+                torch.from_numpy(
+                    np.frombuffer(
+                        mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
+                        dtype=dtype,
+                    ).reshape(dims)
+                )
+            )
 
-        request_dispatcher._on_iteration()
+        assert len(batch.requests) == 2
+        assert batch.model_key.key == model_key
+        assert model_key in request_dispatcher._queues
+        assert model_key in request_dispatcher._active_queues
+        assert len(request_dispatcher._queues[model_key]) == 1
+        assert request_dispatcher._queues[model_key][0].empty()
+        assert request_dispatcher._queues[model_key][0].model_key.key == model_key
+        assert len(tensors) == 1
+        assert tensors[0].shape == torch.Size([2, 2])
 
-        assert model_key not in request_dispatcher._active_queues
-        assert model_key not in request_dispatcher._queues
+        for tensor in tensors:
+            for sample_idx in range(tensor.shape[0]):
+                tensor_in = tensor[sample_idx]
+                tensor_out = (sample_idx + 1) * torch.ones((2,), dtype=torch.float32)
+                assert torch.equal(tensor_in, tensor_out)
+
+    except Exception as exc:
+        raise exc
+    finally:
+        for mem_alloc in mem_allocs:
+            mem_alloc.free()
+
+        msg_pump.kill()
+
+    request_dispatcher._active_queues[model_key].make_disposable()
+    assert request_dispatcher._active_queues[model_key].can_be_removed
+
+    request_dispatcher._on_iteration()
+
+    assert model_key not in request_dispatcher._active_queues
+    assert model_key not in request_dispatcher._queues

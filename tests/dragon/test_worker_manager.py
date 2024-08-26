@@ -36,6 +36,12 @@ dragon = pytest.importorskip("dragon")
 
 import base64
 import multiprocessing as mp
+
+try:
+    mp.set_start_method("dragon")
+except Exception:
+    pass
+
 import os
 
 import dragon.channels as dch
