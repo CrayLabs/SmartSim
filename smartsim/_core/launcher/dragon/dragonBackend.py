@@ -326,7 +326,7 @@ class DragonBackend:
         in the future it will also look at other constraints
         such as memory, accelerators, and so on.
         """
-        if request.nodes > len(self._hosts):
+        if request.nodes and request.nodes > len(self._hosts):
             message = f"Cannot satisfy request. Requested {request.nodes} nodes, "
             message += f"but only {len(self._hosts)} nodes are available."
             return False, message
