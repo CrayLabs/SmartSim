@@ -635,8 +635,7 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
     hosts = dragon_backend.hosts
     dragon_backend._prioritizer.increment(hosts[0])
 
-    expected_msg = textwrap.dedent(
-        f"""\
+    expected_msg = textwrap.dedent(f"""\
         Dragon server backend update
         | Host   |  Status  |
         |--------|----------|
@@ -649,8 +648,7 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
         | del999-2 | Cancelled    | {hosts[1]}         |       -9       |      1      |
         | c101vz-3 | Completed    | {hosts[1]},{hosts[2]} |       0        |      2      |
         | 0ghjk1-4 | Failed       | {hosts[2]}         |       -1       |      1      |
-        | ljace0-5 | NeverStarted |                 |                |      0      |"""
-    )
+        | ljace0-5 | NeverStarted |                 |                |      0      |""")
 
     # get rid of white space to make the comparison easier
     actual_msg = dragon_backend.status_message.replace(" ", "")
