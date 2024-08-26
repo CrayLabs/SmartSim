@@ -88,15 +88,6 @@ class Application(SmartSimEntity):
     # TODO Discuss with the core team when/if properties shoulda always be returned via reference
     #     or deep copy
     # TODO Ticket says to remove prefixing, but I think that needs to stay
-    # TODO @property for _exe
-    # TODO @exe.setter for _exe
-    # TODO @property for _files
-    # TODO @pfiles.setter for _files
-    # TODO @property for _file_parameters
-    # TODO @file_parameters.setter for _file_parameters
-    # TODO @property for _incoming_entities
-    # TODO @incoming_entities.setter for _incoming_entites
-    # TODO Update __str__
     # TODO Should attached_files_table be deleted and replaced with @property?
     # TODO Put create pinning string into a new ticket for finding a home for it
     # TODO check consistency of variable names and constructor with Ensemble, where appropriate
@@ -120,24 +111,6 @@ class Application(SmartSimEntity):
         self._exe = value
 
     @property
-    def files(self) -> t.Optional[EntityFiles]:
-        """Return files to be copied, symlinked, and/or configured prior to
-        execution.
-
-        :returns: files
-        """
-        return self._files
-
-    @files.setter
-    def files(self, value: t.Optional[EntityFiles]) -> None:
-        """Set files to be copied, symlinked, and/or configured prior to
-        execution.
-
-        :param value: files
-        """
-        self._files = value
-
-    @property
     def exe_args(self) -> t.Sequence[str]:
         # TODO why does this say immutable if it is not a deep copy?
         # TODO review whether this should be a deepcopy - are we relying of having this be a reference?
@@ -154,6 +127,24 @@ class Application(SmartSimEntity):
         :param value: executable arguments
         """
         self._exe_args = self._build_exe_args(value)
+
+    @property
+    def files(self) -> t.Optional[EntityFiles]:
+        """Return files to be copied, symlinked, and/or configured prior to
+        execution.
+
+        :returns: files
+        """
+        return self._files
+
+    @files.setter
+    def files(self, value: t.Optional[EntityFiles]) -> None:
+        """Set files to be copied, symlinked, and/or configured prior to
+        execution.
+
+        :param value: files
+        """
+        self._files = value
 
     @property
     def file_parameters(self) -> t.Mapping[str, str]:
@@ -193,7 +184,7 @@ class Application(SmartSimEntity):
 
     @key_prefixing_enabled.setter
     def key_prefixing_enabled(self, value: bool) -> None:
-        self.key_prefixing_enabled
+        self.key_prefixing_enabled = value
 
     def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
         """Add executable arguments to executable
