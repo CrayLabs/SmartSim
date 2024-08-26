@@ -176,7 +176,7 @@ def set_mock_group_infos(
     }
 
     monkeypatch.setattr(dragon_backend, "_group_infos", group_infos)
-    monkeypatch.setattr(dragon_backend, "_allocated_hosts", {hosts[0]: "abc123-1"})
+    monkeypatch.setattr(dragon_backend, "_allocated_hosts", {hosts[0]: {"abc123-1"}})
     monkeypatch.setattr(dragon_backend, "_running_steps", ["abc123-1"])
 
     return group_infos
@@ -221,8 +221,8 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
     assert len(dragon_backend.free_hosts) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     monkeypatch.setattr(
         dragon_backend._group_infos[step_id].process_group, "status", "Running"
@@ -233,8 +233,8 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
     assert len(dragon_backend.free_hosts) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
 
@@ -316,8 +316,8 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
     assert len(dragon_backend._prioritizer.unassigned()) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     monkeypatch.setattr(
         dragon_backend._group_infos[step_id].process_group, "status", "Running"
@@ -328,8 +328,8 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
     assert len(dragon_backend._prioritizer.unassigned()) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
 
@@ -635,7 +635,8 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
     hosts = dragon_backend.hosts
     dragon_backend._prioritizer.increment(hosts[0])
 
-    expected_msg = textwrap.dedent(f"""\
+    expected_msg = textwrap.dedent(
+        f"""\
         Dragon server backend update
         | Host   |  Status  |
         |--------|----------|
@@ -648,7 +649,8 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
         | del999-2 | Cancelled    | {hosts[1]}         |       -9       |      1      |
         | c101vz-3 | Completed    | {hosts[1]},{hosts[2]} |       0        |      2      |
         | 0ghjk1-4 | Failed       | {hosts[2]}         |       -1       |      1      |
-        | ljace0-5 | NeverStarted |                 |                |      0      |""")
+        | ljace0-5 | NeverStarted |                 |                |      0      |"""
+    )
 
     # get rid of white space to make the comparison easier
     actual_msg = dragon_backend.status_message.replace(" ", "")
@@ -728,3 +730,36 @@ def test_can_honor_hosts_unavailable_hosts_ok(monkeypatch: pytest.MonkeyPatch) -
     assert can_honor, error_msg
     # confirm failure message indicates number of nodes requested as cause
     assert error_msg is None, error_msg
+
+
+def test_can_honor_hosts_1_hosts_requested(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify that requesting nodes with invalid names causes number of available
+    nodes check to be reduced but still passes if enough valid named nodes are passed"""
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
+
+    # let's supply 2 valid and 1 invalid hostname
+    actual_hosts = list(dragon_backend._hosts)
+    actual_hosts[0] = f"x{actual_hosts[0]}"
+
+    host_list = ",".join(actual_hosts)
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=1,  # <----- requesting 0 nodes - should be ignored
+        hostlist=host_list,  # <--- two valid names are available
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+        policy=DragonRunPolicy(),
+    )
+
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    # confirm the failure is indicated
+    assert can_honor, error_msg
+    # # confirm failure message indicates number of nodes requested as cause
+    # assert error_msg is None, error_msg

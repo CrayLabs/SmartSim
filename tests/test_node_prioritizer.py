@@ -457,9 +457,9 @@ def test_node_prioritizer_multi_increment_subheap_assigned() -> None:
     assert len(all_tracking_info) == 0
 
 
-def test_node_prioritizer_empty_subheap_next_w_hosts() -> None:
+def test_node_prioritizer_empty_subheap_next_w_no_hosts() -> None:
     """Verify that retrieving multiple nodes via `next_n` API does
-    not allow an empty host list"""
+    with an empty host list uses the entire available host list"""
 
     num_cpu_nodes, num_gpu_nodes = 8, 0
     cpu_hosts, gpu_hosts = mock_node_hosts(num_cpu_nodes, num_gpu_nodes)
@@ -476,15 +476,15 @@ def test_node_prioritizer_empty_subheap_next_w_hosts() -> None:
 
     # request n == {num_requested} nodes from set of 3 available
     num_requested = 1
-    with pytest.raises(ValueError) as ex:
-        p.next(hosts=hostnames)
+    node = p.next(hosts=hostnames)
+    assert node
 
-    assert "No hostnames provided" == ex.value.args[0]
+    # assert "No hostnames provided" == ex.value.args[0]
 
 
 def test_node_prioritizer_empty_subheap_next_n_w_hosts() -> None:
     """Verify that retrieving multiple nodes via `next_n` API does
-    not allow an empty host list"""
+    not blow up with an empty host list"""
 
     num_cpu_nodes, num_gpu_nodes = 8, 0
     cpu_hosts, gpu_hosts = mock_node_hosts(num_cpu_nodes, num_gpu_nodes)
@@ -501,10 +501,8 @@ def test_node_prioritizer_empty_subheap_next_n_w_hosts() -> None:
 
     # request n == {num_requested} nodes from set of 3 available
     num_requested = 1
-    with pytest.raises(ValueError) as ex:
-        p.next_n(num_requested, hosts=hostnames)
-
-    assert "No hostnames provided" == ex.value.args[0]
+    node = p.next_n(num_requested, hosts=hostnames)
+    assert node is not None
 
 
 @pytest.mark.parametrize("num_requested", [-100, -1, 0])

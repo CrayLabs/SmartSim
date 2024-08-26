@@ -157,7 +157,6 @@ class DragonBackend:
         self._step_ids = (f"{create_short_id_str()}-{id}" for id in itertools.count())
         """Incremental ID to assign to new steps prior to execution"""
 
-        self._initialize_hosts()
         self._queued_steps: "collections.OrderedDict[str, DragonRunRequest]" = (
             collections.OrderedDict()
         )
@@ -188,11 +187,7 @@ class DragonBackend:
             else 5
         )
         """Time in seconds needed to server to complete shutdown"""
-
-        self._view = DragonBackendView(self)
-        logger.debug(self._view.host_desc)
         self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
-        self._prioritizer = NodePrioritizer(self._nodes, self._queue_lock)
 
         self._nodes: t.List["dragon_machine.Node"] = []
         """Node capability information for hosts in the allocation"""
@@ -204,6 +199,11 @@ class DragonBackend:
         """List of gpu-count by node"""
         self._allocated_hosts: t.Dict[str, t.Set[str]] = {}
         """Mapping with hostnames as keys and a set of running step IDs as the value"""
+
+        self._initialize_hosts()
+        self._view = DragonBackendView(self)
+        logger.debug(self._view.host_desc)
+        self._prioritizer = NodePrioritizer(self._nodes, self._queue_lock)
 
     @property
     def hosts(self) -> list[str]:
