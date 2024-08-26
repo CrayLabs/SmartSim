@@ -46,6 +46,24 @@ from .files import EntityFiles
 logger = get_logger(__name__)
 
 
+def _read_model_parameters(params_dict: t.Dict[str, t.Any]) -> t.Dict[str, str]:
+    """Convert the values in a params dict to strings
+    :raises TypeError: if params are of the wrong type
+    :return: param dictionary with values and keys cast as strings
+    """
+    param_names: t.List[str] = []
+    parameters: t.List[t.List[str]] = []
+    for name, val in params_dict.items():
+        param_names.append(name)
+        if isinstance(val, (int, str)):
+            parameters.append(str(val))
+        else:
+            raise TypeError(
+                "Incorrect type for ensemble parameters\n" + "Must be int, or string."
+            )
+    return dict(zip(param_names, parameters))
+
+
 class Model(SmartSimEntity):
     def __init__(
         self,
@@ -70,7 +88,7 @@ class Model(SmartSimEntity):
                                model as a batch job
         """
         super().__init__(name, str(path), run_settings)
-        self.params = params
+        self.params = _read_model_parameters(params)
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False

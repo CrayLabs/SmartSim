@@ -32,6 +32,7 @@ from smartsim import Experiment
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.launcher.step import SbatchStep, SrunStep
 from smartsim.entity import Ensemble, Model
+from smartsim.entity.model import _read_model_parameters
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
 from smartsim.settings.mpiSettings import _BaseMPISettings
@@ -176,3 +177,17 @@ def test_models_batch_settings_are_ignored_in_ensemble(
     step_cmd = step.step_cmds[0]
     assert any("srun" in tok for tok in step_cmd)  # call the model using run settings
     assert not any("sbatch" in tok for tok in step_cmd)  # no sbatch in sbatch
+
+
+def test_bad_model_params():
+    params_1 = {"j": 5}
+    params_2 = {"P": ["eggs"]}
+    params_3 = {"m": {"n": 5}}
+
+    params_1 = _read_model_parameters(params_1)
+
+    with pytest.raises(TypeError):
+        params_2 = _read_model_parameters(params_2)
+
+    with pytest.raises(TypeError):
+        params_3 = _read_model_parameters(params_3)
