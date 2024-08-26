@@ -31,11 +31,14 @@ from __future__ import annotations
 
 import base64
 import collections.abc
+import itertools
 import os
 import signal
 import subprocess
+import sys
 import typing as t
 import uuid
+import warnings
 from datetime import datetime
 from functools import lru_cache
 from shutil import which
@@ -515,3 +518,50 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         if did_push := fn not in self:
             self.push(fn)
         return did_push
+
+    def _create_pinning_string(
+        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
+    ) -> t.Optional[str]:
+        """Create a comma-separated string of CPU ids. By default, ``None``
+        returns 0,1,...,cpus-1; an empty iterable will disable pinning
+        altogether, and an iterable constructs a comma separated string of
+        integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
+        """
+
+        def _stringify_id(_id: int) -> str:
+            """Return the cPU id as a string if an int, otherwise raise a ValueError"""
+            if isinstance(_id, int):
+                if _id < 0:
+                    raise ValueError("CPU id must be a nonnegative number")
+                return str(_id)
+
+            raise TypeError(f"Argument is of type '{type(_id)}' not 'int'")
+
+        try:
+            pin_ids = tuple(pin_ids) if pin_ids is not None else None
+        except TypeError:
+            raise TypeError(
+                "Expected a cpu pinning specification of type iterable of ints or "
+                f"iterables of ints. Instead got type `{type(pin_ids)}`"
+            ) from None
+
+        # Deal with MacOSX limitations first. The "None" (default) disables pinning
+        # and is equivalent to []. The only invalid option is a non-empty pinning
+        if sys.platform == "darwin":
+            if pin_ids:
+                warnings.warn(
+                    "CPU pinning is not supported on MacOSX. Ignoring pinning "
+                    "specification.",
+                    RuntimeWarning,
+                )
+            return None
+
+        # Flatten the iterable into a list and check to make sure that the resulting
+        # elements are all ints
+        if pin_ids is None:
+            return ",".join(_stringify_id(i) for i in range(cpus))
+        if not pin_ids:
+            return None
+        pin_ids = ((x,) if isinstance(x, int) else x for x in pin_ids)
+        to_fmt = itertools.chain.from_iterable(pin_ids)
+        return ",".join(sorted({_stringify_id(x) for x in to_fmt}))

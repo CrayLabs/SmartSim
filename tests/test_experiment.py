@@ -186,7 +186,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
     def __init__(self):
-        super().__init__("test-entity", _mock.Mock())
+        super().__init__("test-entity")
 
     def __eq__(self, other):
         if type(self) is not type(other):

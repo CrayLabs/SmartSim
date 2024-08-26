@@ -98,17 +98,15 @@ class TelemetryConfiguration:
 
 
 class SmartSimEntity:
-    def __init__(self, name: str, run_settings: "RunSettings") -> None:
+    def __init__(self, name: str) -> None:
         """Initialize a SmartSim entity.
 
-        Each entity must have a name, path, and
-        run_settings. All entities within SmartSim
+        Each entity must have a name and path. All entities within SmartSim
         share these attributes.
 
         :param name: Name of the entity
         """
         self.name = name
-        self.run_settings = run_settings
 
     @property
     def type(self) -> str:

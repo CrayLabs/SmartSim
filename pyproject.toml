@@ -166,6 +166,8 @@ module = [
   "smartsim._core.utils.telemetry.*",
   "smartsim.database.*",
   "smartsim.settings.sgeSettings",
+  "smartsim._core.control.controller_utils",
+  "smartsim.entity.dbnode",
 ]
 ignore_missing_imports = true
 ignore_errors = true
