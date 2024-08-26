@@ -70,6 +70,129 @@ class Ensemble(entity.CompoundEntity):
         self.permutation_strategy = permutation_strategy
         self.max_permutations = max_permutations
         self.replicas = replicas
+        """Initialize an ``Ensemble`` of application instances
+
+        :param name: name of the ensemble
+        :param exe: executable to run
+        :param exe_args: executable arguments
+        :param exe_arg_parameters:
+        :param files: files to be copied, symlinked, and/or configured prior to
+                      execution
+        :param file_parameters: parameters and values to be used when configuring
+                                files
+        :param permutation_strategy: 
+        :param max_permutations: 
+        :param replicas: number of ``Application`` replicas to create
+        :return: and ``Ensemble`` instance
+        """
+
+
+        @property
+        def exe(self) -> str | os.PathLike[str]:
+            """Return executable to run.
+
+            :returns: application executable to run
+            """
+            return self.exe
+        
+        @exe.setter
+        def exe(self, value: str | os.PathLike[str]) -> None:
+            """Set executable to run.
+
+            :param value: executable to run
+            """
+            self.exe = value
+
+        @property
+        def exe_args(self) -> t.Sequence[str] | None:
+            """Return an immutable list of attached executable arguments.
+
+            :returns: application executable arguments
+            """
+            return self.exe_args
+        
+        @exe_args.setter
+        def exe_args(self, value: t.Sequence[str] | None) -> None:
+            """Set the executable arguments.
+
+            :param value: executable arguments
+            """
+            self.exe_args = value
+
+        @property
+        def exe_arg_parameters(self) -> t.Mapping[str, t.Sequence[t.Sequence[str]]] | None:
+            """Return the executable argument parameters
+
+            :returns: executable arguments parameters
+            """
+            return self.exe_arg_parameters
+        
+        @exe_arg_parameters.setter
+        def exe_arg_parameters(self, value: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None) -> None:
+            """Set the executable arguments.
+
+            :param value: executable arguments
+            """
+            self.exe_arg_parameters = value
+
+        @property
+        def files(self) -> EntityFiles | None:
+            """Return files to be copied, symlinked, and/or configured prior to
+            execution.
+
+            :returns: files
+            """
+            return self.files
+       
+        @files.setter
+        def files(self, value: EntityFiles | None) -> None:
+            """Set files to be copied, symlinked, and/or configured prior to
+            execution.
+
+            :param value: files
+            """
+            self.files = value
+        
+        @property
+        def file_parameters(self) -> t.Mapping[str, t.Sequence[str]] | None:
+            """Return file parameters.
+
+            :returns: application file parameters
+            """
+            return self.file_parameters
+        
+        @file_parameters.setter
+        def file_parameters(self, value: t.Mapping[str, t.Sequence[str]] | None) -> None:
+            """Set the file parameters.
+
+            :param value: file parameters
+            """
+            self.file_parameters = value
+
+        @property
+        def permutation_strategy(self) -> str | strategies.PermutationStrategyType:
+            return self.permutation_strategy
+        
+        @permutation_strategy.setter
+        def permutation_strategy(self, value: str | strategies.PermutationStrategyType) -> None:
+            self.permutation_strategy = value
+        
+        @property
+        def max_permutations(self) -> int:
+            return self.max_permutations
+        
+        @max_permutations.setter
+        def max_permutations(self, value: int) -> None:
+            self.max_permutations = value
+        
+        @property
+        def replicas(self) -> int:
+            return self.replicas
+        
+        @replicas.setter
+        def replicas(self, value: int) -> None:
+            self.replicas = value
+
 
     def _create_applications(self) -> tuple[Application, ...]:
         """Concretize the ensemble attributes into a collection of
