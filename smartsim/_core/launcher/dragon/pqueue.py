@@ -143,9 +143,6 @@ class _TrackedNode:
         :param tracking_id: a unique task identifier executing on the node
         to remove
         :raises ValueError: if tracking_id is already assigned to this node"""
-        if tracking_id and tracking_id not in self.assigned_tasks:
-            raise ValueError("Attempted removal of untracked item")
-
         self._num_refs = max(self._num_refs - 1, 0)
         if tracking_id:
             self._assigned_tasks = self._assigned_tasks - {tracking_id}
@@ -460,8 +457,5 @@ class NodePrioritizer:
         :param hosts: a list of hostnames used to filter the available nodes
         :returns: Collection of reserved nodes
         :raises ValueError: if the hosts parameter is an empty list"""
-        if hosts is not None and not hosts:
-            raise ValueError("No hostnames provided")
-
         heap = self._create_sub_heap(hosts, filter_on)
         return self._get_next_n_available_nodes(num_items, heap, tracking_id)
