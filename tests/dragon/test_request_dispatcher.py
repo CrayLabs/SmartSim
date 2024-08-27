@@ -225,7 +225,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
         batch_size=2,
         config_loader=config_loader,
         worker_type=integrated_worker_type,
-        mem_pool_size=2*1024**2,
+        mem_pool_size=2 * 1024**2,
     )
 
     worker_queue = config_loader.get_queue()
@@ -276,7 +276,9 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
 
             transform_result = batch.inputs
             for transformed, dims, dtype in zip(
-                transform_result.transformed, transform_result.dims, transform_result.dtypes
+                transform_result.transformed,
+                transform_result.dims,
+                transform_result.dtypes,
             ):
                 mem_alloc = MemoryAlloc.attach(transformed)
                 mem_allocs.append(mem_alloc)
@@ -303,7 +305,9 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
             for tensor in tensors:
                 for sample_idx in range(tensor.shape[0]):
                     tensor_in = tensor[sample_idx]
-                    tensor_out = (sample_idx + 1) * torch.ones((2,), dtype=torch.float32)
+                    tensor_out = (sample_idx + 1) * torch.ones(
+                        (2,), dtype=torch.float32
+                    )
                     assert torch.equal(tensor_in, tensor_out)
 
         except Exception as exc:

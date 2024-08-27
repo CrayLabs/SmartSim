@@ -50,6 +50,7 @@ logger = get_logger(__name__)
 # Placeholder
 ModelIdentifier = FeatureStoreKey
 
+
 class InferenceRequest:
     """Internal representation of an inference request from a client"""
 

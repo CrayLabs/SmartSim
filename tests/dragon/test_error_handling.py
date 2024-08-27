@@ -184,9 +184,7 @@ def setup_worker_manager_model_key(
 
     tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
     output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
-    model_id = FeatureStoreKey(
-        key="model key", descriptor=app_feature_store.descriptor
-    )
+    model_id = FeatureStoreKey(key="model key", descriptor=app_feature_store.descriptor)
 
     request = InferenceRequest(
         model_key=model_id,
@@ -296,6 +294,7 @@ def setup_request_dispatcher_model_key(
     request_dispatcher._incoming_channel.send(ser_request)
 
     return request_dispatcher, integrated_worker_type
+
 
 def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stage):
     def mock_stage(*args, **kwargs):
