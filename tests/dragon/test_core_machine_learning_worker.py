@@ -27,6 +27,8 @@
 import pathlib
 import time
 
+dragon = pytest.importorskip("dragon")
+
 import pytest
 import torch
 
