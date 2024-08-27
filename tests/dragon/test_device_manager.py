@@ -46,6 +46,8 @@ from smartsim._core.mli.infrastructure.worker.worker import (
     TransformOutputResult,
 )
 
+# The tests in this file belong to the dragon group
+pytestmark = pytest.mark.dragon
 
 class MockWorker(MachineLearningWorkerBase):
     @staticmethod

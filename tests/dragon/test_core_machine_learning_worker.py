@@ -42,8 +42,8 @@ from smartsim._core.utils import installed_redisai_backends
 
 from .featurestore import FileSystemFeatureStore, MemoryFeatureStore
 
-# The tests in this file belong to the group_a group
-pytestmark = pytest.mark.group_b
+# The tests in this file belong to the group_dragon group
+pytestmark = pytest.mark.group_dragon
 
 # retrieved from pytest fixtures
 is_dragon = (
