@@ -452,7 +452,7 @@ def test_experiment_raises_if_asked_to_stop_no_jobs(experiment):
     "num_launchers",
     [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
 )
-def test_experiment_does_not_raise_on_unknown_job_id(
+def test_experiment_stop_does_not_raise_on_unknown_job_id(
     make_populated_experiment, num_launchers
 ):
     exp = make_populated_experiment(num_launchers)
