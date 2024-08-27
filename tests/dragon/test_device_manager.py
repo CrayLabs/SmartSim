@@ -24,8 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
 import typing as t
+
+import pytest
 
 from smartsim._core.mli.infrastructure.control.devicemanager import (
     DeviceManager,
@@ -49,6 +50,7 @@ from smartsim._core.mli.infrastructure.worker.worker import (
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
+
 
 class MockWorker(MachineLearningWorkerBase):
     @staticmethod

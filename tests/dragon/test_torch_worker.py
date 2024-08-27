@@ -25,16 +25,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import io
+import typing as t
 
 import numpy as np
 import pytest
 import torch
-import typing as t
 
 dragon = pytest.importorskip("dragon")
 import dragon.globalservices.pool as dragon_gs_pool
-from dragon.managed_memory import MemoryPool, MemoryAlloc
-
+from dragon.managed_memory import MemoryAlloc, MemoryPool
 from torch import nn
 from torch.nn import functional as F
 
@@ -120,9 +119,13 @@ def get_request() -> InferenceRequest:
         batch_size=0,
     )
 
-def get_request_batch_from_request(request: InferenceRequest, inputs: t.Optional[TransformInputResult] = None) -> RequestBatch:
+
+def get_request_batch_from_request(
+    request: InferenceRequest, inputs: t.Optional[TransformInputResult] = None
+) -> RequestBatch:
 
     return RequestBatch([request], inputs, request.model_key)
+
 
 sample_request: InferenceRequest = get_request()
 sample_request_batch: RequestBatch = get_request_batch_from_request(sample_request)
@@ -137,7 +140,7 @@ def test_load_model(mlutils) -> None:
 
     assert load_model_result.model(
         get_batch().to(torch_device[mlutils.get_test_device().lower()]),
-        get_batch().to(torch_device[mlutils.get_test_device().lower()])
+        get_batch().to(torch_device[mlutils.get_test_device().lower()]),
     ).shape == torch.Size((20, 10))
 
 
@@ -161,13 +164,17 @@ def test_transform_input(mlutils) -> None:
         mem_alloc = MemoryAlloc.attach(transform_input_result.transformed[tensor_index])
         itemsize = batch.itemsize
         tensor = torch.from_numpy(
-                np.frombuffer(
-                    mem_alloc.get_memview()[0 : np.prod(transform_input_result.dims[tensor_index]) * itemsize],
-                    dtype=transform_input_result.dtypes[tensor_index],
-                ).reshape(transform_input_result.dims[tensor_index])
-            )
+            np.frombuffer(
+                mem_alloc.get_memview()[
+                    0 : np.prod(transform_input_result.dims[tensor_index]) * itemsize
+                ],
+                dtype=transform_input_result.dtypes[tensor_index],
+            ).reshape(transform_input_result.dims[tensor_index])
+        )
 
-        assert torch.equal(tensor, torch.from_numpy(sample_request.raw_inputs[tensor_index]))
+        assert torch.equal(
+            tensor, torch.from_numpy(sample_request.raw_inputs[tensor_index])
+        )
 
     mem_pool.destroy()
 
@@ -188,7 +195,12 @@ def test_execute(mlutils) -> None:
         request_batch, [fetch_input_result], mem_pool
     )
 
-    execute_result = worker.execute(request_batch, load_model_result, transform_result, mlutils.get_test_device().lower())
+    execute_result = worker.execute(
+        request_batch,
+        load_model_result,
+        transform_result,
+        mlutils.get_test_device().lower(),
+    )
 
     assert all(
         result.shape == torch.Size((20, 10)) for result in execute_result.predictions
@@ -201,13 +213,9 @@ def test_transform_output(mlutils):
     tensors = [torch.rand((20, 10)) for _ in range(2)]
     execute_result = ExecuteResult(tensors, [slice(0, 20)])
 
-    transformed_output = worker.transform_output(
-        sample_request_batch, execute_result
-    )
+    transformed_output = worker.transform_output(sample_request_batch, execute_result)
 
-    assert transformed_output[0].outputs == [
-        item.numpy().tobytes() for item in tensors
-    ]
+    assert transformed_output[0].outputs == [item.numpy().tobytes() for item in tensors]
     assert transformed_output[0].shape == None
     assert transformed_output[0].order == "c"
     assert transformed_output[0].dtype == "float32"

@@ -254,7 +254,9 @@ def test_fetch_input_feature_store(persist_torch_tensor: pathlib.Path) -> None:
 
     fetch_result = worker.fetch_inputs(batch, {fsd: feature_store})
     assert fetch_result[0].inputs
-    assert list(fetch_result[0].inputs)[0][:10] == persist_torch_tensor.read_bytes()[:10]
+    assert (
+        list(fetch_result[0].inputs)[0][:10] == persist_torch_tensor.read_bytes()[:10]
+    )
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
