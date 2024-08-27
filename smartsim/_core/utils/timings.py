@@ -56,13 +56,13 @@ class PerfTimer:
             self._timings[label] = []
 
     @staticmethod
-    def _format_number(number: float | int) -> str:
+    def _format_number(number: t.Union[float, int]) -> str:
         return f"{number:0.4e}"
 
     def start_timings(
         self,
         first_label: t.Optional[str] = None,
-        first_value: t.Optional[float | int] = None,
+        first_value: t.Optional[t.Union[float, int]] = None,
     ) -> None:
         if self._timing_on:
             if first_label is not None and first_value is not None:
@@ -86,7 +86,7 @@ class PerfTimer:
     def _make_label(self, label: str) -> str:
         return self._prefix + label
 
-    def _get_delta(self) -> float | int:
+    def _get_delta(self) -> t.Union[float, int]:
         if self._interm is None:
             return 0
         return time.perf_counter() - self._interm
