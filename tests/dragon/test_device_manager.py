@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
 import typing as t
 
 from smartsim._core.mli.infrastructure.control.devicemanager import (
@@ -129,7 +130,7 @@ def test_device_manager_model_in_request():
     request_batch = RequestBatch(
         [request],
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_key=model_key,
+        model_id=model_key,
     )
 
     with device_manager.get_device(
@@ -167,7 +168,7 @@ def test_device_manager_model_key():
     request_batch = RequestBatch(
         [request],
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_key=model_key,
+        model_id=model_key,
     )
 
     with device_manager.get_device(
