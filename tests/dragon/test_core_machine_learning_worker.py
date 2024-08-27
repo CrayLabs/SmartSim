@@ -27,9 +27,10 @@
 import pathlib
 import time
 
+import pytest
+
 dragon = pytest.importorskip("dragon")
 
-import pytest
 import torch
 
 import smartsim.error as sse
