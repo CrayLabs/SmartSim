@@ -108,11 +108,12 @@ class Generator:
         """
         return pathlib.Path(log_path) / "smartsim_params.txt"
 
+    @staticmethod
     def _output_files(
-        self, log_path: pathlib.Path, job_name: str
+        log_path: pathlib.Path, job_name: str
     ) -> t.Tuple[pathlib.Path, pathlib.Path]:
-        out_file_path = log_path / (job_name + ".out")
-        err_file_path = log_path / (job_name + ".err")
+        out_file_path = log_path / f"{job_name}.out"
+        err_file_path = log_path / f"{job_name}.err"
         return out_file_path, err_file_path
 
     def generate_job(
@@ -147,10 +148,6 @@ class Generator:
 
         # Create output files
         out_file, err_file = self._output_files(log_path, job.entity.name)
-        # Open and write to .out file
-        open(out_file, mode="w", encoding="utf-8")
-        # Open and write to .err file
-        open(err_file, mode="w", encoding="utf-8")
 
         # Perform file system operations on attached files
         self._build_operations(job, job_path)

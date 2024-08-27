@@ -33,7 +33,7 @@ import subprocess
 import typing as t
 
 from smartsim._core.arguments.shell import ShellLaunchArguments
-from smartsim._core.dispatch import _EnvironMappingType, dispatch
+from smartsim._core.dispatch import EnvironMappingType, dispatch
 from smartsim._core.shell.shellLauncher import ShellLauncher, ShellLauncherCommand
 from smartsim._core.utils.launcher import ExecutableProtocol
 from smartsim.log import get_logger
@@ -48,7 +48,7 @@ def _as_srun_command(
     args: ShellLaunchArguments,
     exe: ExecutableProtocol,
     path: pathlib.Path,
-    env: _EnvironMappingType,
+    env: EnvironMappingType,
     stdout_path: pathlib.Path,
     stderr_path: pathlib.Path,
 ) -> ShellLauncherCommand:

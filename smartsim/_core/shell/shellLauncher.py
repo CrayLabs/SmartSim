@@ -35,11 +35,7 @@ import typing as t
 import psutil
 
 from smartsim._core.arguments.shell import ShellLaunchArguments
-from smartsim._core.dispatch import (
-    _EnvironMappingType,
-    _FormatterType,
-    _WorkingDirectory,
-)
+from smartsim._core.dispatch import EnvironMappingType, FormatterType, WorkingDirectory
 from smartsim._core.utils import helpers
 from smartsim._core.utils.launcher import ExecutableProtocol, create_job_id
 from smartsim.error import errors
@@ -57,7 +53,7 @@ logger = get_logger(__name__)
 
 
 class ShellLauncherCommand(t.NamedTuple):
-    env: _EnvironMappingType
+    env: EnvironMappingType
     path: pathlib.Path
     stdout: io.TextIOWrapper | int
     stderr: io.TextIOWrapper | int
@@ -66,7 +62,7 @@ class ShellLauncherCommand(t.NamedTuple):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[ShellLaunchArguments, ShellLauncherCommand]:
+) -> FormatterType[ShellLaunchArguments, ShellLauncherCommand]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 
@@ -99,8 +95,8 @@ def make_shell_format_fn(
     def impl(
         args: ShellLaunchArguments,
         exe: ExecutableProtocol,
-        path: _WorkingDirectory,
-        env: _EnvironMappingType,
+        path: WorkingDirectory,
+        env: EnvironMappingType,
         stdout_path: pathlib.Path,
         stderr_path: pathlib.Path,
     ) -> ShellLauncherCommand:
@@ -114,6 +110,7 @@ def make_shell_format_fn(
             if run_command is not None
             else exe.as_program_arguments()
         )
+        # pylint: disable-next=consider-using-with
         return ShellLauncherCommand(
             env, pathlib.Path(path), open(stdout_path), open(stderr_path), command_tuple
         )
@@ -127,7 +124,12 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
+    def check_popen_inputs(self, shell_command: ShellLauncherCommand) -> None:
+        if not shell_command.path.exists():
+            raise ValueError("Please provide a valid shell command path.")
+
     def start(self, shell_command: ShellLauncherCommand) -> LaunchedJobID:
+        self.check_popen_inputs(shell_command)
         id_ = create_job_id()
         exe, *rest = shell_command.command_tuple
         expanded_exe = helpers.expand_exe_path(exe)

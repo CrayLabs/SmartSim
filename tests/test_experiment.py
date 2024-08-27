@@ -68,7 +68,7 @@ def dispatcher():
     dispatches any jobs with `MockLaunchArgs` to a `NoOpRecordLauncher`
     """
     d = dispatch.Dispatcher()
-    to_record: dispatch._FormatterType[MockLaunchArgs, LaunchRecord] = (
+    to_record: dispatch.FormatterType[MockLaunchArgs, LaunchRecord] = (
         lambda settings, exe, path, env, out, err: LaunchRecord(
             settings, exe, env, path, out, err
         )

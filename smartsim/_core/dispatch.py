@@ -47,7 +47,7 @@ if t.TYPE_CHECKING:
 _Ts = TypeVarTuple("_Ts")
 
 
-_WorkingDirectory: TypeAlias = pathlib.Path
+WorkingDirectory: TypeAlias = pathlib.Path
 """A working directory represented as a string or PathLike object"""
 
 _DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArguments")
@@ -59,16 +59,16 @@ _LaunchableT = t.TypeVar("_LaunchableT")
 to the to the `LauncherProtocol.start` method
 """
 
-_EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
+EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
 """A mapping of user provided mapping of environment variables in which to run
 a job
 """
-_FormatterType: TypeAlias = t.Callable[
+FormatterType: TypeAlias = t.Callable[
     [
         _DispatchableT,
         "ExecutableProtocol",
-        _WorkingDirectory,
-        _EnvironMappingType,
+        WorkingDirectory,
+        EnvironMappingType,
         pathlib.Path,
         pathlib.Path,
     ],
@@ -79,8 +79,8 @@ capable of being launched by a launcher.
 """
 _LaunchConfigType: TypeAlias = """_LauncherAdapter[
         ExecutableProtocol,
-        _WorkingDirectory,
-        _EnvironMappingType,
+        WorkingDirectory,
+        EnvironMappingType,
         pathlib.Path,
         pathlib.Path]"""
 
@@ -145,7 +145,7 @@ class Dispatcher:
         self,
         args: None = ...,
         *,
-        with_format: _FormatterType[_DispatchableT, _LaunchableT],
+        with_format: FormatterType[_DispatchableT, _LaunchableT],
         to_launcher: type[LauncherProtocol[_LaunchableT]],
         allow_overwrite: bool = ...,
     ) -> t.Callable[[type[_DispatchableT]], type[_DispatchableT]]: ...
@@ -154,7 +154,7 @@ class Dispatcher:
         self,
         args: type[_DispatchableT],
         *,
-        with_format: _FormatterType[_DispatchableT, _LaunchableT],
+        with_format: FormatterType[_DispatchableT, _LaunchableT],
         to_launcher: type[LauncherProtocol[_LaunchableT]],
         allow_overwrite: bool = ...,
     ) -> None: ...
@@ -162,7 +162,7 @@ class Dispatcher:
         self,
         args: type[_DispatchableT] | None = None,
         *,
-        with_format: _FormatterType[_DispatchableT, _LaunchableT],
+        with_format: FormatterType[_DispatchableT, _LaunchableT],
         to_launcher: type[LauncherProtocol[_LaunchableT]],
         allow_overwrite: bool = False,
     ) -> t.Callable[[type[_DispatchableT]], type[_DispatchableT]] | None:
@@ -228,7 +228,7 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
     to be launched by the afore mentioned launcher.
     """
 
-    formatter: _FormatterType[_DispatchableT, _LaunchableT]
+    formatter: FormatterType[_DispatchableT, _LaunchableT]
     launcher_type: type[LauncherProtocol[_LaunchableT]]
 
     def _is_compatible_launcher(self, launcher: LauncherProtocol[t.Any]) -> bool:
@@ -273,7 +273,7 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
         def format_(
             exe: ExecutableProtocol,
             path: pathlib.Path,
-            env: _EnvironMappingType,
+            env: EnvironMappingType,
             out: pathlib.Path,
             err: pathlib.Path,
         ) -> _LaunchableT:

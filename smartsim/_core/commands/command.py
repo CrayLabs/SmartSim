@@ -70,14 +70,14 @@ class Command(MutableSequence[str]):
                     "Value must be of type `str` when assigning to an index"
                 )
             self._command[idx] = deepcopy(value)
-        elif isinstance(idx, slice):
-            if not isinstance(value, list) or not all(
-                isinstance(item, str) for item in value
-            ):
-                raise ValueError(
-                    "Value must be a list of strings when assigning to a slice"
-                )
-            self._command[idx] = (deepcopy(val) for val in value)
+            return
+        if not isinstance(value, list) or not all(
+            isinstance(item, str) for item in value
+        ):
+            raise ValueError(
+                "Value must be a list of strings when assigning to a slice"
+            )
+        self._command[idx] = (deepcopy(val) for val in value)
 
     def __delitem__(self, idx: t.Union[int, slice]) -> None:
         """Delete the command at the specified index."""

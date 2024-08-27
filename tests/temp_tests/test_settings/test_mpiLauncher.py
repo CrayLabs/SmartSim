@@ -299,4 +299,6 @@ def test_formatting_launch_args(
     assert shell_launch_cmd.path == pathlib.Path(test_dir)
     assert shell_launch_cmd.env == {}
     assert isinstance(shell_launch_cmd.stdout, io.TextIOWrapper)
+    assert shell_launch_cmd.stdout.name == out
     assert isinstance(shell_launch_cmd.stderr, io.TextIOWrapper)
+    assert shell_launch_cmd.stderr.name == err
