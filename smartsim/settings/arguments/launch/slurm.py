@@ -50,7 +50,7 @@ logger = get_logger(__name__)
 
 
 def _as_srun_command(
-    args: LaunchArguments,
+    args: ShellLaunchArguments,
     exe: ExecutableProtocol,
     path: pathlib.Path,
     env: _EnvironMappingType,
@@ -65,7 +65,6 @@ def _as_srun_command(
         "--",
         *exe.as_program_arguments(),
     )
-    # add output and err to CMD tuple -> add dev Null for stdout and stderr
     return ShellLauncherCommand(
         env, path, subprocess.DEVNULL, subprocess.DEVNULL, command_tuple
     )

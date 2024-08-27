@@ -27,7 +27,6 @@
 
 from __future__ import annotations
 
-import os
 import subprocess as sp
 import typing as t
 import io
@@ -62,9 +61,7 @@ class ShellLauncherCommand(t.NamedTuple):
 
 def make_shell_format_fn(
     run_command: str | None,
-) -> _FormatterType[
-    ShellLaunchArguments, tuple[str | os.PathLike[str], t.Sequence[str]]
-]:
+) -> _FormatterType[ShellLaunchArguments, ShellLauncherCommand]:
     """A function that builds a function that formats a `LaunchArguments` as a
     shell executable sequence of strings for a given launching utility.
 

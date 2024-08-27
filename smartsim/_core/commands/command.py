@@ -49,7 +49,7 @@ class Command(MutableSequence[str]):
     def __getitem__(self, idx: int) -> str: ...
     @t.overload
     def __getitem__(self, idx: slice) -> Self: ...
-    def __getitem__(self, idx: int | slice) -> str | Self:
+    def __getitem__(self, idx: t.Union[int, slice]) -> t.Union[str, Self]:
         """Get the command at the specified index."""
         cmd = self._command[idx]
         if isinstance(cmd, str):
@@ -60,7 +60,7 @@ class Command(MutableSequence[str]):
     def __setitem__(self, idx: int, value: str) -> None: ...
     @t.overload
     def __setitem__(self, idx: slice, value: t.Iterable[str]) -> None: ...
-    def __setitem__(self, idx: int | slice, value: str | t.Iterable[str]) -> None:
+    def __setitem__(self, idx: t.Union[int, slice], value: t.Union[str, t.Iterable[str]]) -> None:
         """Set the command at the specified index."""
         if isinstance(idx, int):
             if not isinstance(value, str):
@@ -77,7 +77,7 @@ class Command(MutableSequence[str]):
                 )
             self._command[idx] = (deepcopy(val) for val in value)
 
-    def __delitem__(self, idx: int | slice) -> None:
+    def __delitem__(self, idx: t.Union[int, slice]) -> None:
         """Delete the command at the specified index."""
         del self._command[idx]
 

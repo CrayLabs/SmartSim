@@ -51,7 +51,7 @@ class CommandList(MutableSequence[Command]):
     def __getitem__(self, idx: int) -> Command: ...
     @t.overload
     def __getitem__(self, idx: slice) -> t.List[Command]: ...
-    def __getitem__(self, idx: slice | int) -> Command | t.List[Command]:
+    def __getitem__(self, idx: t.Union[slice, int]) -> t.Union[Command, t.List[Command]]:
         """Get the Command at the specified index."""
         return self._commands[idx]
 
@@ -60,7 +60,7 @@ class CommandList(MutableSequence[Command]):
     @t.overload
     def __setitem__(self, idx: slice, value: t.Iterable[Command]) -> None: ...
     def __setitem__(
-        self, idx: int | slice, value: Command | t.Iterable[Command]
+        self, idx: t.Union[int, slice], value: t.Union[Command, t.Iterable[Command]]
     ) -> None:
         """Set the Commands at the specified index."""
         if isinstance(idx, int):
@@ -83,7 +83,7 @@ class CommandList(MutableSequence[Command]):
                     )
             self._commands[idx] = (deepcopy(val) for val in value)
 
-    def __delitem__(self, idx: int | slice) -> None:
+    def __delitem__(self, idx: t.Union[int, slice]) -> None:
         """Delete the Command at the specified index."""
         del self._commands[idx]
 
