@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import gc
 import io
 import logging
 import pathlib
@@ -109,7 +110,6 @@ def mock_messages(
     comm_channel_root_dir: pathlib.Path,
 ) -> None:
     """Mock event producer for triggering the inference pipeline"""
-    logger.info("Mocking messages")
     feature_store_root_dir.mkdir(parents=True, exist_ok=True)
     comm_channel_root_dir.mkdir(parents=True, exist_ok=True)
 
@@ -117,11 +117,9 @@ def mock_messages(
     model_bytes = model_path.read_bytes()
     model_key = str(feature_store_root_dir / "model_fs.pt")
 
-    logger.info("Putting model on FS")
     feature_store[model_key] = model_bytes
 
     for iteration_number in range(2):
-        logger.info(f"Message #{iteration_number}")
 
         channel_key = Channel.make_process_local().serialize()
         callback_channel = DragonCommChannel(channel_key)
@@ -212,7 +210,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
     descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
     os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
-    ddict = DDict(1, 1, 2 * 1024**2)
+    ddict = DDict(1, 2, 4 * 1024**2)
     dragon_fs = DragonFeatureStore(ddict)
 
     config_loader = EnvironmentConfigLoader(
@@ -227,6 +225,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
         batch_size=2,
         config_loader=config_loader,
         worker_type=integrated_worker_type,
+        mem_pool_size=2*1024**2,
     )
 
     worker_queue = config_loader.get_queue()
@@ -238,86 +237,91 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
 
     request_dispatcher._on_start()
 
-    batch: t.Optional[RequestBatch] = None
-    mem_allocs = []
-    tensors = []
-    fs_path = test_path / f"feature_store"
-    comm_path = test_path / f"comm_store"
-    model_key = str(fs_path / "model_fs.pt")
+    for _ in range(2):
+        batch: t.Optional[RequestBatch] = None
+        mem_allocs = []
+        tensors = []
+        fs_path = test_path / f"feature_store"
+        comm_path = test_path / f"comm_store"
+        model_key = str(fs_path / "model_fs.pt")
 
-    # create a mock client application to populate the request queue
-    msg_pump = mp.Process(
-        target=mock_messages,
-        args=(
-            worker_queue,
-            dragon_fs,
-            fs_path,
-            comm_path,
-        ),
-    )
+        # create a mock client application to populate the request queue
+        msg_pump = mp.Process(
+            target=mock_messages,
+            args=(
+                worker_queue,
+                dragon_fs,
+                fs_path,
+                comm_path,
+            ),
+        )
 
-    msg_pump.start()
+        msg_pump.start()
 
-    time.sleep(1)
+        time.sleep(1)
 
-    for attempts in range(15):
+        for attempts in range(15):
+            try:
+                request_dispatcher._on_iteration()
+                batch = request_dispatcher.task_queue.get(timeout=1)
+                break
+            except Empty:
+                continue
+            except Exception as exc:
+                raise exc
+
         try:
-            request_dispatcher._on_iteration()
-            batch = request_dispatcher.task_queue.get(timeout=1)
-            break
-        except Empty:
-            continue
+            assert batch is not None
+            assert batch.has_valid_requests
+
+            transform_result = batch.inputs
+            for transformed, dims, dtype in zip(
+                transform_result.transformed, transform_result.dims, transform_result.dtypes
+            ):
+                mem_alloc = MemoryAlloc.attach(transformed)
+                mem_allocs.append(mem_alloc)
+                itemsize = np.empty((1), dtype=dtype).itemsize
+                tensors.append(
+                    torch.from_numpy(
+                        np.frombuffer(
+                            mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
+                            dtype=dtype,
+                        ).reshape(dims)
+                    )
+                )
+
+            assert len(batch.requests) == 2
+            assert batch.model_id.key == model_key
+            assert model_key in request_dispatcher._queues
+            assert model_key in request_dispatcher._active_queues
+            assert len(request_dispatcher._queues[model_key]) == 1
+            assert request_dispatcher._queues[model_key][0].empty()
+            assert request_dispatcher._queues[model_key][0].model_id.key == model_key
+            assert len(tensors) == 1
+            assert tensors[0].shape == torch.Size([2, 2])
+
+            for tensor in tensors:
+                for sample_idx in range(tensor.shape[0]):
+                    tensor_in = tensor[sample_idx]
+                    tensor_out = (sample_idx + 1) * torch.ones((2,), dtype=torch.float32)
+                    assert torch.equal(tensor_in, tensor_out)
+
         except Exception as exc:
             raise exc
+        finally:
+            for mem_alloc in mem_allocs:
+                mem_alloc.free()
 
-    try:
-        assert batch is not None
-        assert batch.has_valid_requests
+            msg_pump.kill()
 
-        transform_result = batch.inputs
-        for transformed, dims, dtype in zip(
-            transform_result.transformed, transform_result.dims, transform_result.dtypes
-        ):
-            mem_alloc = MemoryAlloc.attach(transformed)
-            mem_allocs.append(mem_alloc)
-            itemsize = np.empty((1), dtype=dtype).itemsize
-            tensors.append(
-                torch.from_numpy(
-                    np.frombuffer(
-                        mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
-                        dtype=dtype,
-                    ).reshape(dims)
-                )
-            )
+        request_dispatcher._active_queues[model_key].make_disposable()
+        assert request_dispatcher._active_queues[model_key].can_be_removed
 
-        assert len(batch.requests) == 2
-        assert batch.model_key.key == model_key
-        assert model_key in request_dispatcher._queues
-        assert model_key in request_dispatcher._active_queues
-        assert len(request_dispatcher._queues[model_key]) == 1
-        assert request_dispatcher._queues[model_key][0].empty()
-        assert request_dispatcher._queues[model_key][0].model_key.key == model_key
-        assert len(tensors) == 1
-        assert tensors[0].shape == torch.Size([2, 2])
+        request_dispatcher._on_iteration()
 
-        for tensor in tensors:
-            for sample_idx in range(tensor.shape[0]):
-                tensor_in = tensor[sample_idx]
-                tensor_out = (sample_idx + 1) * torch.ones((2,), dtype=torch.float32)
-                assert torch.equal(tensor_in, tensor_out)
+        assert model_key not in request_dispatcher._active_queues
+        assert model_key not in request_dispatcher._queues
 
-    except Exception as exc:
-        raise exc
-    finally:
-        for mem_alloc in mem_allocs:
-            mem_alloc.free()
-
-        msg_pump.kill()
-
-    request_dispatcher._active_queues[model_key].make_disposable()
-    assert request_dispatcher._active_queues[model_key].can_be_removed
-
-    request_dispatcher._on_iteration()
-
-    assert model_key not in request_dispatcher._active_queues
-    assert model_key not in request_dispatcher._queues
+    # Try to remove the dispatcher and free the memory
+    del request_dispatcher
+    gc.collect()

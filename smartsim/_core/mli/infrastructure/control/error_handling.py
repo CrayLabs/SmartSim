@@ -66,3 +66,5 @@ def exception_handler(
     )
     if reply_channel:
         reply_channel.send(serialized_resp)
+    else:
+        logger.warning("Unable to notify client of error without reply_channel")

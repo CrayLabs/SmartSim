@@ -31,6 +31,7 @@ import time
 import torch
 from mpi4py import MPI
 from smartsim.log import get_logger
+from smartsim._core.utils.timings import PerfTimer
 from smartredis import Client
 
 logger = get_logger("App")
@@ -69,26 +70,21 @@ if __name__ == "__main__":
     client = Client(cluster=False, address=None)
     client.set_model(resnet.name, resnet.model, backend='TORCH', device=args.device.upper())
 
+    perf_timer: PerfTimer = PerfTimer(debug=False, timing_on=timing_on, prefix=f"redis{rank}_")
+
     total_iterations = 100
     timings=[]
     for batch_size in [1, 2, 4, 8, 16, 32, 64, 128]:
         logger.info(f"Batch size: {batch_size}")
         for iteration_number in range(total_iterations + int(batch_size==1)):
-            timing = [batch_size]
+            perf_timer.start_timings("batch_size", batch_size)
             logger.info(f"Iteration: {iteration_number}")
-            start = time.perf_counter()
             input_name = f"batch_{rank}"
             output_name = f"result_{rank}"
             client.put_tensor(name=input_name, data=resnet.get_batch(batch_size).numpy())
             client.run_model(name=resnet.name, inputs=[input_name], outputs=[output_name])
             result = client.get_tensor(name=output_name)
-            end = time.perf_counter()
-            timing.append(end-start)
-            timings.append(timing)
+            perf_timer.end_timings()
 
 
-
-    timings_np = numpy.asarray(timings)
-    numpy.save(f"timings_{rank}.npy", timings_np)
-    for timing in timings:
-        print(" ".join(str(t) for t in timing))
+    perf_timer.print_timings(True)

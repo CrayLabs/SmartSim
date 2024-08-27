@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Add RequestDispatcher and the possibility of batching inference requests
 - Enable hostname selection for dragon tasks
 - Remove pydantic dependency from MLI code
 - Update MLI environment variables using new naming convention

@@ -48,33 +48,31 @@ from .....error import SmartSimError
 from .....log import get_logger
 from ....utils.timings import PerfTimer
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
-from ...infrastructure.storage.featurestore import FeatureStore, FeatureStoreKey
+from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import (
     InferenceRequest,
     MachineLearningWorkerBase,
+    ModelIdentifier,
     RequestBatch,
 )
-from .commons import exception_handler
+from .error_handling import exception_handler
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger("Request Dispatcher")
 
-# Placeholder
-ModelIdentifier = FeatureStoreKey
-
 
 class BatchQueue(Queue[InferenceRequest]):
     def __init__(
-        self, batch_timeout: float, batch_size: int, model_key: ModelIdentifier
+        self, batch_timeout: float, batch_size: int, model_id: ModelIdentifier
     ) -> None:
         """Queue used to store inference requests waiting to be batched and
         sent to Worker Managers.
         :param batch_timeout: Time in seconds that has to be waited before flushing a
         non-full queue. The time of the first item put is 0 seconds.
         :param batch_size: Total capacity of the queue.
-        :param model_key: Key of the model which needs to be executed on the queued
+        :param model_id: Key of the model which needs to be executed on the queued
         requests
         """
         super().__init__(maxsize=batch_size)
@@ -88,8 +86,8 @@ class BatchQueue(Queue[InferenceRequest]):
         self._disposable = False
         """Whether the queue will not be used again and can be deleted.
         A disposable queue is always full."""
-        self._model_key: FeatureStoreKey = model_key
-        """Key of the model which needs to be executed on the queued requets"""
+        self._model_id: ModelIdentifier = model_id
+        """Key of the model which needs to be executed on the queued requests"""
         self._uid = str(uuid.uuid4())
         """Unique ID of queue"""
 
@@ -99,9 +97,9 @@ class BatchQueue(Queue[InferenceRequest]):
         return self._uid
 
     @property
-    def model_key(self) -> ModelIdentifier:
+    def model_id(self) -> ModelIdentifier:
         """Key of the model which needs to be run on the queued requests"""
-        return self._model_key
+        return self._model_id
 
     def put(
         self,
@@ -115,11 +113,9 @@ class BatchQueue(Queue[InferenceRequest]):
         :param timeout: Time (in seconds) to wait if block==True
         :raises Full: If an item cannot be put on the queue
         """
-        if self.full():
-            raise Full
+        super().put(item, block=block, timeout=timeout)
         if self._first_put is None:
             self._first_put = time.time()
-        super().put(item, block=block, timeout=timeout)
 
     @property
     def _elapsed_time(self) -> float:
@@ -168,8 +164,6 @@ class BatchQueue(Queue[InferenceRequest]):
         """Return True if the queue has reached its maximum capacity"""
         if self._disposable:
             return True
-        if self._batch_size <= 0:
-            return False
         return self.qsize() >= self._batch_size
 
     def empty(self) -> bool:
@@ -184,6 +178,7 @@ class RequestDispatcher(Service):
         batch_size: int,
         config_loader: EnvironmentConfigLoader,
         worker_type: t.Type[MachineLearningWorkerBase],
+        mem_pool_size: int = 2 * 1024**3,
     ) -> None:
         """The RequestDispatcher intercepts inference requests, stages them in
         queues and batches them together before making them available to Worker
@@ -195,11 +190,12 @@ class RequestDispatcher(Service):
         managers
         :param config_loader: Object to load configuration from environment
         :param worker_type: Type of worker to instantiate to batch inputs
+        :param mem_pool_size: Size of the memory pool used to allocate tensors
         :raises SmartSimError: If config_loaded.get_queue() does not return a channel
         """
         super().__init__(as_service=True, cooldown=1)
         self._queues: dict[str, list[BatchQueue]] = {}
-        """Dict of all batch queues available for a given model key"""
+        """Dict of all batch queues available for a given model id"""
         self._active_queues: dict[str, BatchQueue] = {}
         """Mapping telling which queue is the recipient of requests for a given model
         key"""
@@ -225,7 +221,7 @@ class RequestDispatcher(Service):
         """The type of communication channel to construct for callbacks"""
         self._worker = worker_type()
         """The worker used to batch inputs"""
-        self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(2 * 1024**3).sdesc)
+        self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(mem_pool_size).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
         self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
         """Performance timer"""
@@ -316,6 +312,9 @@ class RequestDispatcher(Service):
         return all(checks)
 
     def _on_iteration(self) -> None:
+        """This method is executed repeatedly until ``Service`` shutdown
+        conditions are satisfied and cooldown is elapsed.
+        """
         try:
             self._perf_timer.set_active(True)
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
@@ -390,26 +389,25 @@ class RequestDispatcher(Service):
         """The queue on which batched requests are placed"""
         return self._outgoing_queue
 
-    def _swap_queue(self, model_key: FeatureStoreKey) -> None:
+    def _swap_queue(self, model_id: ModelIdentifier) -> None:
         """Get an empty queue or create a new one
 
         and make it the active one for a given model.
-        :param model_key: The key of the model for which the
+        :param model_id: The id of the model for which the
         queue has to be swapped
         """
-
-        if model_key.key in self._queues:
-            for queue in self._queues[model_key.key]:
+        if model_id.key in self._queues:
+            for queue in self._queues[model_id.key]:
                 if not queue.full():
-                    self._active_queues[model_key.key] = queue
+                    self._active_queues[model_id.key] = queue
                     return
 
-        new_queue = BatchQueue(self._batch_timeout, self._batch_size, model_key)
-        if model_key.key in self._queues:
-            self._queues[model_key.key].append(new_queue)
+        new_queue = BatchQueue(self._batch_timeout, self._batch_size, model_id)
+        if model_id.key in self._queues:
+            self._queues[model_id.key].append(new_queue)
         else:
-            self._queues[model_key.key] = [new_queue]
-        self._active_queues[model_key.key] = new_queue
+            self._queues[model_id.key] = [new_queue]
+        self._active_queues[model_id.key] = new_queue
         return
 
     def dispatch(self, request: InferenceRequest) -> None:
@@ -422,7 +420,7 @@ class RequestDispatcher(Service):
             tmp_queue: BatchQueue = BatchQueue(
                 batch_timeout=0,
                 batch_size=1,
-                model_key=FeatureStoreKey(key=tmp_id, descriptor="TMP"),
+                model_id=ModelIdentifier(key=tmp_id, descriptor="TMP"),
             )
             self._active_queues[tmp_id] = tmp_queue
             self._queues[tmp_id] = [tmp_queue]
@@ -451,7 +449,7 @@ class RequestDispatcher(Service):
                         batch = RequestBatch(
                             requests=queue.flush(),
                             inputs=None,
-                            model_key=queue.model_key,
+                            model_id=queue.model_id,
                         )
                     finally:
                         self._perf_timer.measure_time("flush_requests")
@@ -499,4 +497,8 @@ class RequestDispatcher(Service):
                     self._perf_timer.measure_time("put")
 
     def _can_shutdown(self) -> bool:
+        """Whether the Service can be shut down"""
         return False
+
+    def __del__(self) -> None:
+        self._mem_pool.destroy()

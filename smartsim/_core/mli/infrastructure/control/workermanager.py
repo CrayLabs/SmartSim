@@ -51,7 +51,7 @@ from ...infrastructure.worker.worker import (
     RequestBatch,
 )
 from ...message_handler import MessageHandler
-from .commons import build_failure_reply, exception_handler
+from .error_handling import build_failure_reply, exception_handler
 from .devicemanager import DeviceManager, WorkerDevice
 
 if t.TYPE_CHECKING:
@@ -75,21 +75,20 @@ class WorkerManager(Service):
     ) -> None:
         """Initialize the WorkerManager
 
-        :param config_loader: Environment config loader that loads the task queue and
-        feature store
+        :param config_loader: Environment config loader for loading queues
+        and feature stores
         :param worker_type: The type of worker to manage
-        :param dispatcher_queue: Queue from which the batched requests have to be pulled
+        :param dispatcher_queue: Queue from which the batched requests are pulled
         :param as_service: Specifies run-once or run-until-complete behavior of service
         :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
-        :param comm_channel_type: The type of communication channel used for callbacks
         :param device: The device on which the Worker should run. Every worker manager
         is assigned one single GPU (if available), thus the device should have no index.
         """
         super().__init__(as_service, cooldown)
 
         self._dispatcher_queue = dispatcher_queue
-        """The dispatcher queue the manager monitors for new tasks"""
+        """The Dispatcher queue that the WorkerManager monitors for new batches"""
         self._worker = worker_type()
         """The ML Worker implementation"""
         self._callback_factory = config_loader._callback_factory
@@ -111,6 +110,8 @@ class WorkerManager(Service):
         """Performance timer"""
 
     def _on_start(self) -> None:
+        """Called on initial entry into Service `execute` event loop before
+        `_on_iteration` is invoked."""
         self._device_manager = DeviceManager(WorkerDevice(self._device))
 
     def _check_feature_stores(self, batch: RequestBatch) -> bool:
@@ -121,8 +122,8 @@ class WorkerManager(Service):
         """
         # collect all feature stores required by the request
         fs_model: t.Set[str] = set()
-        if batch.model_key.key:
-            fs_model = {batch.model_key.descriptor}
+        if batch.model_id.key:
+            fs_model = {batch.model_id.descriptor}
         fs_inputs = {key.descriptor for key in batch.input_keys}
         fs_outputs = {key.descriptor for key in batch.output_keys}
 
@@ -180,23 +181,30 @@ class WorkerManager(Service):
             )
             return
 
+        if self._device_manager is None:
+            for request in batch.requests:
+                msg = "No Device Manager found. WorkerManager._on_start() "
+                "must be called after initialization. If possible, "
+                "you should use `WorkerManager.execute()` instead of "
+                "directly calling `_on_iteration()`."
+                try:
+                    self._dispatcher_queue.put(batch)
+                except Exception:
+                    msg += "\nThe batch could not be put back in the queue "
+                    "and will not be processed."
+                exception_handler(
+                    RuntimeError(msg),
+                    request.callback,
+                    "Error acquiring device manager",
+                )
+            return
+
         try:
-            if self._device_manager is None:
-                for request in batch.requests:
-                    exception_handler(
-                        ValueError(
-                            "No Device Manager available: did you call _on_start()?"
-                        ),
-                        request.callback,
-                        "Error acquiring device manager",
-                    )
-                return
             device_cm = self._device_manager.get_device(
                 worker=self._worker,
                 batch=batch,
                 feature_stores=self._feature_stores,
             )
-
         except Exception as exc:
             for request in batch.requests:
                 exception_handler(
@@ -210,7 +218,7 @@ class WorkerManager(Service):
         with device_cm as device:
 
             try:
-                model_result = LoadModelResult(device.get_model(batch.model_key.key))
+                model_result = LoadModelResult(device.get_model(batch.model_id.key))
             except Exception as exc:
                 for request in batch.requests:
                     exception_handler(

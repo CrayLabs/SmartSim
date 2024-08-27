@@ -47,6 +47,8 @@ if t.TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# Placeholder
+ModelIdentifier = FeatureStoreKey
 
 class InferenceRequest:
     """Internal representation of an inference request from a client"""
@@ -181,24 +183,38 @@ class RequestBatch:
 
     requests: list[InferenceRequest]
     inputs: t.Optional[TransformInputResult]
-    model_key: FeatureStoreKey
+    model_id: ModelIdentifier
 
     @property
     def has_valid_requests(self) -> bool:
+        """Returns whether the batch contains at least one request.
+
+        :return: True if at least one request is available
+        """
         return len(self.requests) > 0
 
     @property
     def has_raw_model(self) -> bool:
+        """Returns whether the batch has a raw model
+
+        :return: True if the batch has a raw model
+        """
         return self.raw_model is not None
 
     @property
     def raw_model(self) -> t.Optional[t.Any]:
+        """Returns the raw model to use to execute for this batch
+        if it is available.
+        :return: A model if available, otherwise None"""
         if self.has_valid_requests:
             return self.requests[0].raw_model
         return None
 
     @property
     def input_keys(self) -> t.List[FeatureStoreKey]:
+        """All input keys available in this batch's requests
+
+        :return: All input keys belonging to requests in this batch"""
         keys = []
         for request in self.requests:
             keys.extend(request.input_keys)
@@ -207,6 +223,9 @@ class RequestBatch:
 
     @property
     def output_keys(self) -> t.List[FeatureStoreKey]:
+        """All output keys available in this batch's requests
+
+        :return: All output keys belonging to requests in this batch"""
         keys = []
         for request in self.requests:
             keys.extend(request.output_keys)
@@ -299,7 +318,11 @@ class MachineLearningWorkerCore:
         """Given a resource key, retrieve the raw model from a feature store
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: Raw bytes of the model"""
+        :return: Raw bytes of the model
+        :raises SmartSimError: if neither a key or a model are provided or the
+        model cannot be retrieved from the feature store
+        :raises ValueError: if a feature store is not available and a raw
+        model is not provided"""
 
         # All requests in the same batch share the model
         if batch.raw_model:
@@ -308,12 +331,12 @@ class MachineLearningWorkerCore:
         if not feature_stores:
             raise ValueError("Feature store is required for model retrieval")
 
-        if batch.model_key is None:
+        if batch.model_id is None:
             raise SmartSimError(
                 "Key must be provided to retrieve model from feature store"
             )
 
-        key, fsd = batch.model_key.key, batch.model_key.descriptor
+        key, fsd = batch.model_id.key, batch.model_id.descriptor
 
         try:
             feature_store = feature_stores[fsd]
@@ -331,7 +354,9 @@ class MachineLearningWorkerCore:
         and input metadata
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: the fetched input"""
+        :return: the fetched input
+        :raises ValueError: If neither an input key or an input tensor are provided
+        :raises SmartSimError: If a tensor for a given key cannot be retrieved"""
         fetch_results = []
         for request in batch.requests:
             if request.raw_inputs:
@@ -354,7 +379,7 @@ class MachineLearningWorkerCore:
                     except KeyError as ex:
                         logger.exception(ex)
                         raise SmartSimError(
-                            f"Model could not be retrieved with key {fs_key.key}"
+                            f"Tensor could not be retrieved with key {fs_key.key}"
                         ) from ex
                 fetch_results.append(
                     FetchInputResult(data, meta=None)
@@ -376,7 +401,9 @@ class MachineLearningWorkerCore:
         :param request: The request that triggered the pipeline
         :param execute_result: Results from inference
         :param feature_stores: Available feature stores used for persistence
-        :return: A collection of keys that were placed in the feature store"""
+        :return: A collection of keys that were placed in the feature store
+        :raises ValueError: If a feature store is not provided
+        """
         if not feature_stores:
             raise ValueError("Feature store is required for output persistence")
 

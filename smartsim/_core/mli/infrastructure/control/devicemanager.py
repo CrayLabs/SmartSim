@@ -116,7 +116,7 @@ class DeviceManager:
 
         model_bytes = worker.fetch_model(batch, feature_stores)
         loaded_model = worker.load_model(batch, model_bytes, self._device.name)
-        self._device.add_model(batch.model_key.key, loaded_model.model)
+        self._device.add_model(batch.model_id.key, loaded_model.model)
 
     def get_device(
         self,
@@ -139,8 +139,8 @@ class DeviceManager:
 
         # Load model if not already loaded, or
         # because it is sent with the request
-        if model_in_request or not batch.model_key.key in self._device:
+        if model_in_request or not batch.model_id.key in self._device:
             self._load_model_on_device(worker, batch, feature_stores)
 
-        key_to_remove = batch.model_key.key if model_in_request else None
+        key_to_remove = batch.model_id.key if model_in_request else None
         return self._device.get(key_to_remove)
