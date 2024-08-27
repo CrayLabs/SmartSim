@@ -60,7 +60,9 @@ class Command(MutableSequence[str]):
     def __setitem__(self, idx: int, value: str) -> None: ...
     @t.overload
     def __setitem__(self, idx: slice, value: t.Iterable[str]) -> None: ...
-    def __setitem__(self, idx: t.Union[int, slice], value: t.Union[str, t.Iterable[str]]) -> None:
+    def __setitem__(
+        self, idx: t.Union[int, slice], value: t.Union[str, t.Iterable[str]]
+    ) -> None:
         """Set the command at the specified index."""
         if isinstance(idx, int):
             if not isinstance(value, str):

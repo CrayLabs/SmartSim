@@ -30,13 +30,10 @@ import pathlib
 import subprocess
 import typing as t
 
-from smartsim._core.dispatch import (
-    _EnvironMappingType,
-    dispatch,
-)
+from smartsim._core.arguments.shell import ShellLaunchArguments
+from smartsim._core.dispatch import _EnvironMappingType, dispatch
 from smartsim._core.shell.shellLauncher import ShellLauncher, ShellLauncherCommand
 from smartsim._core.utils.launcher import ExecutableProtocol
-from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim.log import get_logger
 
 from ...common import set_check_input

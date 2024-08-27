@@ -27,16 +27,19 @@
 
 from __future__ import annotations
 
-import subprocess as sp
-import typing as t
 import io
 import pathlib
 import subprocess as sp
+import typing as t
 
 import psutil
 
-from smartsim._core.dispatch import _EnvironMappingType, _FormatterType, _WorkingDirectory
 from smartsim._core.arguments.shell import ShellLaunchArguments
+from smartsim._core.dispatch import (
+    _EnvironMappingType,
+    _FormatterType,
+    _WorkingDirectory,
+)
 from smartsim._core.utils import helpers
 from smartsim._core.utils.launcher import ExecutableProtocol, create_job_id
 from smartsim.error import errors
@@ -52,12 +55,14 @@ if t.TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+
 class ShellLauncherCommand(t.NamedTuple):
     env: _EnvironMappingType
     path: pathlib.Path
     stdout: io.TextIOWrapper | int
     stderr: io.TextIOWrapper | int
     command_tuple: tuple[str, tuple[str, ...]] | t.Sequence[str]
+
 
 def make_shell_format_fn(
     run_command: str | None,

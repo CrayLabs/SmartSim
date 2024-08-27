@@ -51,7 +51,9 @@ class CommandList(MutableSequence[Command]):
     def __getitem__(self, idx: int) -> Command: ...
     @t.overload
     def __getitem__(self, idx: slice) -> t.List[Command]: ...
-    def __getitem__(self, idx: t.Union[slice, int]) -> t.Union[Command, t.List[Command]]:
+    def __getitem__(
+        self, idx: t.Union[slice, int]
+    ) -> t.Union[Command, t.List[Command]]:
         """Get the Command at the specified index."""
         return self._commands[idx]
 

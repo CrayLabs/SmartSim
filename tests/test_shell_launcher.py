@@ -125,7 +125,9 @@ def test_shell_launcher_start_calls_popen(
     shell_launcher, shell_cmd: ShellLauncherCommand
 ):
     """Test that the process leading up to the shell launcher popen call was correct"""
-    with unittest.mock.patch("smartsim._core.shell.shellLauncher.sp.Popen") as mock_open:
+    with unittest.mock.patch(
+        "smartsim._core.shell.shellLauncher.sp.Popen"
+    ) as mock_open:
         _ = shell_launcher.start(shell_cmd)
         mock_open.assert_called_once()
 
@@ -134,7 +136,9 @@ def test_shell_launcher_start_calls_popen_with_value(
     shell_launcher, shell_cmd: ShellLauncherCommand
 ):
     """Test that popen was called with correct values"""
-    with unittest.mock.patch("smartsim._core.shell.shellLauncher.sp.Popen") as mock_open:
+    with unittest.mock.patch(
+        "smartsim._core.shell.shellLauncher.sp.Popen"
+    ) as mock_open:
         _ = shell_launcher.start(shell_cmd)
         mock_open.assert_called_once_with(
             shell_cmd.command_tuple,
