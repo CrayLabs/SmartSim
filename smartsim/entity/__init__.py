@@ -30,4 +30,4 @@ from .ensemble import Ensemble
 from .entity import SmartSimEntity, TelemetryConfiguration
 from .entityList import EntityList, EntitySequence
 from .files import TaggedFilesHierarchy
-from .model import Application
+from .application import Application

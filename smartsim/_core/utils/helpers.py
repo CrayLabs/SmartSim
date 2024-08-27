@@ -336,6 +336,16 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
     return process.stdout.decode("utf-8"), process.returncode
 
 
+def _stringify_id(_id: int) -> str:
+    """Return the CPU id as a string if an int, otherwise raise a ValueError"""
+    if isinstance(_id, int):
+        if _id < 0:
+            raise ValueError("CPU id must be a nonnegative number")
+        return str(_id)
+
+    raise TypeError(f"Argument is of type '{type(_id)}' not 'int'")
+
+
 class CrayExPlatformResult:
     locate_msg = "Unable to locate `{0}`."
 
@@ -576,15 +586,6 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         altogether, and an iterable constructs a comma separated string of
         integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
         """
-
-        def _stringify_id(_id: int) -> str:
-            """Return the cPU id as a string if an int, otherwise raise a ValueError"""
-            if isinstance(_id, int):
-                if _id < 0:
-                    raise ValueError("CPU id must be a nonnegative number")
-                return str(_id)
-
-            raise TypeError(f"Argument is of type '{type(_id)}' not 'int'")
 
         try:
             pin_ids = tuple(pin_ids) if pin_ids is not None else None

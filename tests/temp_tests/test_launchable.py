@@ -28,7 +28,7 @@ import pytest
 
 from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.entity import SmartSimEntity
-from smartsim.entity.model import Application
+from smartsim.entity.application import Application
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable import Job, Launchable
 from smartsim.launchable.launchable import SmartSimObject
@@ -37,7 +37,6 @@ from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
-# TODO replace with LaunchSettings
 
 
 def test_smartsimobject_init():
@@ -55,7 +54,7 @@ def test_invalid_job_name(wlmutils):
         "test_name",
         exe="echo",
         exe_args=["spam", "eggs"],
-    )  # Mock RunSettings
+    )
 
     settings = LaunchSettings(wlmutils.get_test_launcher())
     with pytest.raises(ValueError):

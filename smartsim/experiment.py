@@ -87,7 +87,7 @@ class Experiment:
     """The Experiment class is used to schedule, launch, track, and manage
     jobs and job groups.  Also, it is the SmartSim class that manages
     internal data structures, processes, and infrastructure for interactive
-    capabilties such as the SmartSim dashboard and historical lookback on
+    capabilities such as the SmartSim dashboard and historical lookback on
     launched jobs and job groups.  The Experiment class is designed to be
     initialized once and utilized throughout the entirety of a workflow.
     """

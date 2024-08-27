@@ -12,7 +12,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core import dispatch
 from smartsim._core.generation.generator import Generator
-from smartsim.entity import Application, Ensemble, SmartSimEntity, _mock
+from smartsim.entity import Application, Ensemble, SmartSimEntity
 from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
 from smartsim.settings import LaunchSettings
@@ -59,7 +59,7 @@ def test_generate_job_directory(test_dir, wlmutils, generator_instance):
     """Test Generator.generate_job"""
     # Create Job
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("app_name", exe="python")  # Mock RunSettings
+    app = Application("app_name", exe="python")
     job = Job(app, launch_settings)
     # Mock id
     run_id = "temp_id"
@@ -96,7 +96,7 @@ def test_exp_private_generate_method(wlmutils, test_dir, generator_instance):
     # Create Experiment
     exp = Experiment(name="experiment_name", exp_path=test_dir)
     # Create Job
-    app = Application("name", "python")  # Mock RunSettings
+    app = Application("name", "python")
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     job = Job(app, launch_settings)
     # Generate Job directory
@@ -114,7 +114,7 @@ def test_generate_copy_file(generator_instance, fileutils, wlmutils):
     """Test that attached copy files are copied into Job directory"""
     # Create the Job and attach copy generator file
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python")  # Mock RunSettings
+    app = Application("name", "python")
     script = fileutils.get_test_conf_path("sleep.py")
     app.attach_generator_files(to_copy=script)
     job = Job(app, launch_settings)
@@ -128,7 +128,7 @@ def test_generate_copy_file(generator_instance, fileutils, wlmutils):
 def test_generate_copy_directory(wlmutils, get_gen_copy_dir, generator_instance):
     # Create the Job and attach generator file
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python")  # Mock RunSettings
+    app = Application("name", "python")
     app.attach_generator_files(to_copy=get_gen_copy_dir)
     job = Job(app, launch_settings)
 
@@ -141,7 +141,7 @@ def test_generate_copy_directory(wlmutils, get_gen_copy_dir, generator_instance)
 def test_generate_symlink_directory(wlmutils, generator_instance, get_gen_symlink_dir):
     # Create the Job and attach generator file
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python")  # Mock RunSettings
+    app = Application("name", "python")
     # Attach directory to Application
     app.attach_generator_files(to_symlink=get_gen_symlink_dir)
     # Create Job
