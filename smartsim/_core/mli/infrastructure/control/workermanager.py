@@ -51,8 +51,8 @@ from ...infrastructure.worker.worker import (
     RequestBatch,
 )
 from ...message_handler import MessageHandler
-from .error_handling import build_failure_reply, exception_handler
 from .devicemanager import DeviceManager, WorkerDevice
+from .error_handling import build_failure_reply, exception_handler
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status

@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
-from contextlib import contextmanager, _GeneratorContextManager
+from contextlib import _GeneratorContextManager, contextmanager
 
 from .....log import get_logger
 from ...infrastructure.storage.featurestore import FeatureStore
