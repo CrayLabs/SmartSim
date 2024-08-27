@@ -27,6 +27,7 @@
 import typing as t
 
 import pytest
+
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.infrastructure.control.devicemanager import (
