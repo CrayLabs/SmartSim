@@ -157,17 +157,11 @@ def test_shell_launcher_start_calls_popen_with_value(
         )
 
 
-def test_popen_returns_popen_object(shell_launcher: ShellLauncher, test_dir: str):
+def test_popen_returns_popen_object(
+    shell_launcher: ShellLauncher, shell_cmd: ShellLauncherCommand, test_dir: str
+):
     """Test that the popen call returns a popen object"""
-    run_dir, _, _ = generate_directory(test_dir)
-    cmd = ShellLauncherCommand(
-        {},
-        run_dir,
-        subprocess.DEVNULL,
-        subprocess.DEVNULL,
-        EchoHelloWorldEntity().as_program_arguments(),
-    )
-    id = shell_launcher.start(cmd)
+    id = shell_launcher.start(shell_cmd)
     with shell_launcher._launched[id] as proc:
         assert isinstance(proc, sp.Popen)
 
@@ -207,23 +201,17 @@ def test_popen_fails_with_invalid_cmd(shell_launcher: ShellLauncher, test_dir: s
             assert "unrecognized option" in content
 
 
-def test_popen_issues_unique_ids(shell_launcher: ShellLauncher, test_dir: str):
+def test_popen_issues_unique_ids(
+    shell_launcher: ShellLauncher, shell_cmd: ShellLauncherCommand, test_dir: str
+):
     """Validate that all ids are unique within ShellLauncher._launched"""
-    run_dir, out_file, err_file = generate_directory(test_dir)
-    with (
-        open(out_file, "w", encoding="utf-8") as out,
-        open(err_file, "w", encoding="utf-8") as err,
-    ):
-        cmd = ShellLauncherCommand(
-            {}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments()
-        )
-        seen = set()
-        for _ in range(5):
-            id = shell_launcher.start(cmd)
-            assert id not in seen, "Duplicate ID issued"
-            seen.add(id)
-        assert len(shell_launcher._launched) == 5
-        assert all(proc.wait() == 0 for proc in shell_launcher._launched.values())
+    seen = set()
+    for _ in range(5):
+        id = shell_launcher.start(shell_cmd)
+        assert id not in seen, "Duplicate ID issued"
+        seen.add(id)
+    assert len(shell_launcher._launched) == 5
+    assert all(proc.wait() == 0 for proc in shell_launcher._launched.values())
 
 
 def test_retrieve_status_dne(shell_launcher: ShellLauncher):
@@ -233,23 +221,15 @@ def test_retrieve_status_dne(shell_launcher: ShellLauncher):
 
 
 def test_shell_launcher_returns_complete_status(
-    shell_launcher: ShellLauncher, test_dir: str
+    shell_launcher: ShellLauncher, shell_cmd: ShellLauncherCommand, test_dir: str
 ):
     """Test tht ShellLauncher returns the status of completed Jobs"""
-    run_dir, out_file, err_file = generate_directory(test_dir)
-    with (
-        open(out_file, "w", encoding="utf-8") as out,
-        open(err_file, "w", encoding="utf-8") as err,
-    ):
-        cmd = ShellLauncherCommand(
-            {}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments()
-        )
-        for _ in range(5):
-            id = shell_launcher.start(cmd)
-            proc = shell_launcher._launched[id]
-            proc.wait()
-            code = shell_launcher.get_status(id)[id]
-            assert code == JobStatus.COMPLETED
+    for _ in range(5):
+        id = shell_launcher.start(shell_cmd)
+        proc = shell_launcher._launched[id]
+        proc.wait()
+        code = shell_launcher.get_status(id)[id]
+        assert code == JobStatus.COMPLETED
 
 
 def test_shell_launcher_returns_failed_status(
@@ -310,7 +290,7 @@ def test_shell_launcher_returns_running_status(
         ),
     ],
 )
-def test_this(
+def test_get_status_maps_correctly(
     psutil_status, job_status, monkeypatch: pytest.MonkeyPatch, test_dir: str
 ):
     """Test tht ShellLauncher.get_status returns correct mapping"""

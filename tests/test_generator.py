@@ -20,9 +20,15 @@ from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
+ids = set()
+
 
 def random_id():
-    return str(random.randint(1, 100))
+    while True:
+        num = str(random.randint(1, 100))
+        if num not in ids:
+            ids.add(num)
+            return num
 
 
 @pytest.fixture
@@ -274,6 +280,7 @@ def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
         log_path = os.path.join(jobs_dir, ensemble_dir, "log")
         assert osp.isdir(run_path)
         assert osp.isdir(log_path)
+    ids.clear()
 
 
 def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_dir):
@@ -294,6 +301,7 @@ def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_di
     for ensemble_dir in job_dir:
         copy_folder_path = os.path.join(jobs_dir, ensemble_dir, "run", "to_copy_dir")
         assert osp.isdir(copy_folder_path)
+    ids.clear()
 
 
 def test_generate_ensemble_symlink(
@@ -321,6 +329,7 @@ def test_generate_ensemble_symlink(
         assert osp.isdir(sym_file_path)
         assert sym_file_path.is_symlink()
         assert os.fspath(sym_file_path.resolve()) == osp.realpath(get_gen_symlink_dir)
+    ids.clear()
 
 
 def test_generate_ensemble_configure(
@@ -343,7 +352,8 @@ def test_generate_ensemble_configure(
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     job_list = ensemble.as_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    exp.start(*job_list)
+    id = exp.start(*job_list)
+    print(id)
     run_dir = listdir(test_dir)
     jobs_dir = os.path.join(test_dir, run_dir[0], "jobs")
 
@@ -364,3 +374,4 @@ def test_generate_ensemble_configure(
     _check_generated(1, 2, os.path.join(jobs_dir, "ensemble-name-2-2", "run"))
     _check_generated(1, 3, os.path.join(jobs_dir, "ensemble-name-3-3", "run"))
     _check_generated(0, 2, os.path.join(jobs_dir, "ensemble-name-0-0", "run"))
+    ids.clear()
