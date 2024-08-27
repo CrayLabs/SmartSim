@@ -126,7 +126,7 @@ class ShellLauncher:
 
     def check_popen_inputs(self, shell_command: ShellLauncherCommand) -> None:
         if not shell_command.path.exists():
-            raise ValueError("Please provide a valid shell command path.")
+            raise ValueError("Please provide a valid path to ShellLauncherCommand.")
 
     def start(self, shell_command: ShellLauncherCommand) -> LaunchedJobID:
         self.check_popen_inputs(shell_command)
