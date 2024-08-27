@@ -91,7 +91,7 @@ class MLPackage:
             if self.pip_index:
                 install_command += ["--index-url", self.pip_index]
             if quiet:
-                install_command += ["--quiet --no-warn-conflicts"]
+                install_command += ["--quiet", "--no-warn-conflicts"]
             install_command += self.python_packages
             subprocess.check_call(install_command)
 

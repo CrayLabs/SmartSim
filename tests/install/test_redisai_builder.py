@@ -26,25 +26,29 @@
 
 import pytest
 
+from pathlib import Path
+
 from smartsim._core._install.buildenv import BuildEnv
-from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES
+from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, MLPackage
 from smartsim._core._install.platform import Platform
 from smartsim._core._install.redisaiBuilder import RedisAIBuilder
-from smartsim._core._install.utils import PackageRetriever
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
-
-def test_redisai_builder(monkeypatch, test_dir):
+@pytest.mark.parametrize(
+    "platform",
+    [platform for platform in DEFAULT_MLPACKAGES],
+    ids=[str(platform) for platform in DEFAULT_MLPACKAGES]
+)
+def test_backends_to_be_installed(monkeypatch, test_dir, platform):
     platform = Platform.from_str("linux", "x86_64", "cpu")
     mlpackages = DEFAULT_MLPACKAGES[platform]
-    monkeypatch.setattr(PackageRetriever, "retrieve", lambda *args, **kwargs: None)
-    builder = RedisAIBuilder(platform, mlpackages, BuildEnv())
+    monkeypatch.setattr(MLPackage, "retrieve", lambda *args, **kwargs: None)
+    builder = RedisAIBuilder(platform, mlpackages, BuildEnv(), Path(test_dir))
 
-    # builder.run_command = lambda *args, **kwargs: print(args)
-    builder.build()
+    BACKENDS = ["libtorch", "libtensorflow", "onnxruntime"]
+    TOGGLES = ["build_torch", "build_tensorflow", "build_onnxruntime"]
 
-    assert builder.build_torch
-    assert builder.build_tensorflow
-    assert builder.build_onnxruntime
+    for backend, toggle in zip(BACKENDS, TOGGLES):
+        assert getattr(builder, toggle) == (backend in mlpackages)
