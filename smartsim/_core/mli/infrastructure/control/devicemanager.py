@@ -81,7 +81,7 @@ class WorkerDevice:
         return key in self._models
 
     @contextmanager
-    def get(self, key_to_remove: t.Optional[str]) -> t.Iterator[t.Self]:
+    def get(self, key_to_remove: t.Optional[str]) -> t.Iterator["WorkerDevice"]:
         yield self
         if key_to_remove is not None:
             self.remove_model(key_to_remove)
