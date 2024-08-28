@@ -35,7 +35,6 @@ from smartsim._core.mli.comm.channel.dragon_channel import (
     DragonCommChannel,
     create_local,
 )
-from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,

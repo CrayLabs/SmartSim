@@ -43,6 +43,14 @@ class ReservedKeys(str, enum.Enum):
     """Storage location for the list of registered consumers that will receive
     events from an EventBroadcaster"""
 
+    MLI_BACKEND_CONSUMER = "_SMARTIM_MLI_BACKEND_CONSUMER"
+    """Storage location for the channel used to send messages directly to
+    the MLI backend"""
+
+    MLI_WORKER_QUEUE = "to_worker_fli"  # todo: ensure this adheres to standard
+    """Storage location for the channel used to send work requests 
+    to the available worker managers"""
+
     @classmethod
     def contains(cls, value: str) -> bool:
         """Convert a string representation into an enumeration member.

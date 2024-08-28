@@ -62,7 +62,7 @@ def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.Monke
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
     )
     config_queue = config.get_queue()
 

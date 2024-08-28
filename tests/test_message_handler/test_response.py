@@ -33,8 +33,8 @@ pytestmark = pytest.mark.group_a
 
 fsd = "mock-feature-store-descriptor"
 
-result_key1 = MessageHandler.build_tensor_key("result_key1", fsd)
-result_key2 = MessageHandler.build_tensor_key("result_key2", fsd)
+result_key1 = MessageHandler.build_feature_store_key("result_key1", fsd)
+result_key2 = MessageHandler.build_feature_store_key("result_key2", fsd)
 
 torch_attributes = MessageHandler.build_torch_response_attributes()
 tf_attributes = MessageHandler.build_tf_response_attributes()

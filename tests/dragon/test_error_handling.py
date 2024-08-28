@@ -116,15 +116,28 @@ def setup_worker_manager_model_bytes(
     dispatcher_task_queue = mp.Queue(maxsize=0)
 
     worker_manager = WorkerManager(
-        config_loader=config_loader,
-        worker_type=integrated_worker_type,
-        dispatcher_queue=dispatcher_task_queue,
+        EnvironmentConfigLoader(
+            featurestore_factory=DragonFeatureStore.from_descriptor,
+            callback_factory=FileSystemCommChannel.from_descriptor,
+            queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        ),
+        integrated_worker,
         as_service=False,
         cooldown=3,
     )
 
-    tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
-    output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+    tensor_key = MessageHandler.build_feature_store_key(
+        "key", app_feature_store.descriptor
+    )
+    output_key = MessageHandler.build_feature_store_key(
+        "key", app_feature_store.descriptor
+    )
+    model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
+    request = MessageHandler.build_request(
+        test_dir, model, [tensor_key], [output_key], [], None
+    )
+    ser_request = MessageHandler.serialize_request(request)
+    worker_manager._task_queue.send(ser_request)
 
     request = InferenceRequest(
         model_key=None,
@@ -175,9 +188,11 @@ def setup_worker_manager_model_key(
     dispatcher_task_queue = mp.Queue(maxsize=0)
 
     worker_manager = WorkerManager(
-        config_loader=config_loader,
-        worker_type=integrated_worker_type,
-        dispatcher_queue=dispatcher_task_queue,
+        EnvironmentConfigLoader(
+            featurestore_factory=DragonFeatureStore.from_descriptor,
+            callback_factory=FileSystemCommChannel.from_descriptor,
+            queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        ),
         as_service=False,
         cooldown=3,
     )

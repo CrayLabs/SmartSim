@@ -47,11 +47,12 @@ class DragonFeatureStore(FeatureStore):
 
         :param storage: A distributed dictionary to be used as the underlying
         storage mechanism of the feature store"""
+        descriptor = "not-set"
         if isinstance(storage, dragon_ddict.DDict):
             descriptor = str(storage.serialize())
-        else:
-            descriptor = "not-set"
 
+        # todo: follow up and ensure this descriptor is also encoded/decoded
+        # in a string-safe way here & in `from_descriptor`
         super().__init__(descriptor)
         self._storage: t.Dict[str, t.Union[str, bytes]] = storage
 
@@ -94,7 +95,8 @@ class DragonFeatureStore(FeatureStore):
         :raises SmartSimError: If attachment to DragonFeatureStore fails
         """
         try:
-            return DragonFeatureStore(dragon_ddict.DDict.attach(descriptor))
+            logger.debug(f"Attaching to FeatureStore with descriptor: {descriptor}")
+            return cls(dragon_ddict.DDict.attach(descriptor))
         except Exception as ex:
             logger.error(f"Error creating dragon feature store: {descriptor}")
             raise SmartSimError(

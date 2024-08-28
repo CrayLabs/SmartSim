@@ -26,12 +26,7 @@
 
 @0x8ca69fd1aacb6668;
 
-struct ModelKey {
-  key @0 :Text;
-  featureStoreDescriptor @1 :Text;
-}
-
-struct TensorKey {
+struct FeatureStoreKey {
   key @0 :Text;
   featureStoreDescriptor @1 :Text;
 }

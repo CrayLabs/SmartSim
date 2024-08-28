@@ -64,7 +64,7 @@ class MessageHandler:
     @staticmethod
     def build_output_tensor_descriptor(
         order: "tensor_capnp.Order",
-        keys: t.List["data_references_capnp.TensorKey"],
+        keys: t.List["data_references_capnp.FeatureStoreKey"],
         data_type: "tensor_capnp.ReturnNumericalType",
         dimensions: t.List[int],
     ) -> tensor_capnp.OutputDescriptor:
@@ -73,7 +73,7 @@ class MessageHandler:
         order, data type, and dimensions.
 
         :param order: Order of the tensor, such as row-major (c) or column-major (f)
-        :param keys: List of TensorKeys to apply transorm descriptor to
+        :param keys: List of FeatureStoreKey to apply transorm descriptor to
         :param data_type: Tranform data type of the tensor
         :param dimensions: Transform dimensions of the tensor
         :returns: The OutputDescriptor
@@ -92,20 +92,20 @@ class MessageHandler:
         return description
 
     @staticmethod
-    def build_tensor_key(
+    def build_feature_store_key(
         key: str, feature_store_descriptor: str
-    ) -> data_references_capnp.TensorKey:
+    ) -> data_references_capnp.FeatureStoreKey:
         """
-        Builds a new TensorKey message with the provided key.
+        Builds a new FeatureStoreKey message with the provided key.
 
-        :param key: String to set the TensorKey
+        :param key: String to set the FeatureStoreKey
         :param feature_store_descriptor: A descriptor identifying the feature store
         containing the key
         :returns: The TensorKey
         :raises ValueError: If building fails
         """
         try:
-            tensor_key = data_references_capnp.TensorKey.new_message()
+            tensor_key = data_references_capnp.FeatureStoreKey.new_message()
             tensor_key.key = key
             tensor_key.featureStoreDescriptor = feature_store_descriptor
         except Exception as e:
@@ -219,7 +219,7 @@ class MessageHandler:
     @staticmethod
     def _assign_model(
         request: request_capnp.Request,
-        model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
+        model: t.Union[data_references_capnp.FeatureStoreKey, model_capnp.Model],
     ) -> None:
         """
         Assigns a model to the supplied request.
@@ -232,17 +232,17 @@ class MessageHandler:
             class_name = model.schema.node.displayName.split(":")[-1]  # type: ignore
             if class_name == "Model":
                 request.model.data = model  # type: ignore
-            elif class_name == "ModelKey":
+            elif class_name == "FeatureStoreKey":
                 request.model.key = model  # type: ignore
             else:
                 raise ValueError("""Invalid custom attribute class name.
-                        Expected 'Model' or 'ModelKey'.""")
+                        Expected 'Model' or 'FeatureStoreKey'.""")
         except Exception as e:
             raise ValueError("Error building model portion of request.") from e
 
     @staticmethod
     def _assign_reply_channel(
-        request: request_capnp.Request, reply_channel: bytes
+        request: request_capnp.Request, reply_channel: str
     ) -> None:
         """
         Assigns a reply channel to the supplied request.
@@ -260,7 +260,7 @@ class MessageHandler:
     def _assign_inputs(
         request: request_capnp.Request,
         inputs: t.Union[
-            t.List[data_references_capnp.TensorKey],
+            t.List[data_references_capnp.FeatureStoreKey],
             t.List[tensor_capnp.TensorDescriptor],
         ],
     ) -> None:
@@ -277,18 +277,18 @@ class MessageHandler:
                 input_class_name = display_name.split(":")[-1]
                 if input_class_name == "TensorDescriptor":
                     request.input.descriptors = inputs  # type: ignore
-                elif input_class_name == "TensorKey":
+                elif input_class_name == "FeatureStoreKey":
                     request.input.keys = inputs  # type: ignore
                 else:
                     raise ValueError("""Invalid input class name. Expected
-                        'TensorDescriptor' or 'TensorKey'.""")
+                        'TensorDescriptor' or 'FeatureStoreKey'.""")
         except Exception as e:
             raise ValueError("Error building inputs portion of request.") from e
 
     @staticmethod
     def _assign_outputs(
         request: request_capnp.Request,
-        outputs: t.List[data_references_capnp.TensorKey],
+        outputs: t.List[data_references_capnp.FeatureStoreKey],
     ) -> None:
         """
         Assigns outputs to the supplied request.
@@ -360,13 +360,13 @@ class MessageHandler:
 
     @staticmethod
     def build_request(
-        reply_channel: bytes,
-        model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
+        reply_channel: str,
+        model: t.Union[data_references_capnp.FeatureStoreKey, model_capnp.Model],
         inputs: t.Union[
-            t.List[data_references_capnp.TensorKey],
+            t.List[data_references_capnp.FeatureStoreKey],
             t.List[tensor_capnp.TensorDescriptor],
         ],
-        outputs: t.List[data_references_capnp.TensorKey],
+        outputs: t.List[data_references_capnp.FeatureStoreKey],
         output_descriptors: t.List[tensor_capnp.OutputDescriptor],
         custom_attributes: t.Union[
             request_attributes_capnp.TorchRequestAttributes,
@@ -454,7 +454,7 @@ class MessageHandler:
         response: response_capnp.Response,
         result: t.Union[
             t.List[tensor_capnp.TensorDescriptor],
-            t.List[data_references_capnp.TensorKey],
+            t.List[data_references_capnp.FeatureStoreKey],
             None,
         ],
     ) -> None:
@@ -472,11 +472,11 @@ class MessageHandler:
                 result_class_name = display_name.split(":")[-1]
                 if result_class_name == "TensorDescriptor":
                     response.result.descriptors = result  # type: ignore
-                elif result_class_name == "TensorKey":
+                elif result_class_name == "FeatureStoreKey":
                     response.result.keys = result  # type: ignore
                 else:
                     raise ValueError("""Invalid custom attribute class name.
-                        Expected 'TensorDescriptor' or 'TensorKey'.""")
+                        Expected 'TensorDescriptor' or 'FeatureStoreKey'.""")
         except Exception as e:
             raise ValueError("Error assigning result to response.") from e
 
@@ -520,7 +520,7 @@ class MessageHandler:
         message: str,
         result: t.Union[
             t.List[tensor_capnp.TensorDescriptor],
-            t.List[data_references_capnp.TensorKey],
+            t.List[data_references_capnp.FeatureStoreKey],
             None,
         ],
         custom_attributes: t.Union[

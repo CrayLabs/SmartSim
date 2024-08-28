@@ -34,14 +34,14 @@ pytestmark = pytest.mark.group_a
 handler = MessageHandler()
 
 
-def test_build_model_key_successful():
+def test_build_feature_store_key_successful():
     fsd = "mock-feature-store-descriptor"
-    model_key = handler.build_model_key("tensor_key", fsd)
+    model_key = handler.build_feature_store_key("tensor_key", fsd)
     assert model_key.key == "tensor_key"
     assert model_key.featureStoreDescriptor == fsd
 
 
-def test_build_model_key_unsuccessful():
+def test_build_feature_store_key_unsuccessful():
     with pytest.raises(ValueError):
         fsd = "mock-feature-store-descriptor"
-        model_key = handler.build_model_key(100, fsd)
+        model_key = handler.build_feature_store_key(100, fsd)

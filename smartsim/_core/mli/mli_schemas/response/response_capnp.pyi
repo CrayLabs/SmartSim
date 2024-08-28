@@ -34,7 +34,11 @@ from contextlib import contextmanager
 from io import BufferedWriter
 from typing import Iterator, Literal, Sequence, overload
 
-from ..data.data_references_capnp import TensorKey, TensorKeyBuilder, TensorKeyReader
+from ..data.data_references_capnp import (
+    FeatureStoreKey,
+    FeatureStoreKeyBuilder,
+    FeatureStoreKeyReader,
+)
 from ..tensor.tensor_capnp import (
     TensorDescriptor,
     TensorDescriptorBuilder,
@@ -53,7 +57,7 @@ Status = Literal["complete", "fail", "timeout", "running"]
 
 class Response:
     class Result:
-        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        keys: Sequence[FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader]
         descriptors: Sequence[
             TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
         ]
@@ -76,12 +80,12 @@ class Response:
         def to_dict(self) -> dict: ...
 
     class ResultReader(Response.Result):
-        keys: Sequence[TensorKeyReader]
+        keys: Sequence[FeatureStoreKeyReader]
         descriptors: Sequence[TensorDescriptorReader]
         def as_builder(self) -> Response.ResultBuilder: ...
 
     class ResultBuilder(Response.Result):
-        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        keys: Sequence[FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader]
         descriptors: Sequence[
             TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
         ]
@@ -158,6 +162,7 @@ class Response:
         def write(file: BufferedWriter) -> None: ...
         @staticmethod
         def write_packed(file: BufferedWriter) -> None: ...
+
     status: Status
     message: str
     result: Response.Result | Response.ResultBuilder | Response.ResultReader

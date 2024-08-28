@@ -34,8 +34,12 @@ import pytest
 torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
-import base64
 import multiprocessing as mp
+
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
+)
+from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import OutputDescriptor
 
 try:
     mp.set_start_method("dragon")
@@ -45,10 +49,10 @@ except Exception:
 import os
 
 import dragon.channels as dch
+import torch.nn as nn
 from dragon import fli
-from dragon.mpbridge.queues import DragonQueue
+from dragon.data.ddict.ddict import DDict
 
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.control.worker_manager import (
     EnvironmentConfigLoader,
@@ -57,12 +61,10 @@ from smartsim._core.mli.infrastructure.control.worker_manager import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .feature_store import FileSystemFeatureStore
 from .utils.channel import FileSystemCommChannel
 
 logger = get_logger(__name__)
@@ -70,43 +72,87 @@ logger = get_logger(__name__)
 pytestmark = pytest.mark.dragon
 
 
-def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
+class MiniModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self._name = "mini-model"
+        self._net = torch.nn.Linear(2, 1)
+
+    def forward(self, input):
+        return self._net(input)
+
+    @property
+    def bytes(self) -> bytes:
+        """Returns the model serialized to a byte stream"""
+        buffer = io.BytesIO()
+        scripted = torch.jit.trace(self._net, self.get_batch())
+        torch.jit.save(scripted, buffer)
+        return buffer.getvalue()
+
+    @classmethod
+    def get_batch(cls) -> "torch.Tensor":
+        return torch.randn((100, 2), dtype=torch.float32)
+
+
+def create_model(model_path: pathlib.Path) -> pathlib.Path:
     """Create a simple torch model and persist to disk for
     testing purposes.
 
     TODO: remove once unit tests are in place"""
-    # test_path = pathlib.Path(work_dir)
     if not model_path.parent.exists():
         model_path.parent.mkdir(parents=True, exist_ok=True)
 
     model_path.unlink(missing_ok=True)
-    # model_path = test_path / "basic.pt"
 
-    model = torch.nn.Linear(2, 1)
-    torch.save(model, model_path)
+    mini_model = MiniModel()
+    torch.save(mini_model, model_path)
 
     return model_path
 
 
+def load_model() -> bytes:
+    """Create a simple torch model in memory for testing"""
+    mini_model = MiniModel()
+    return mini_model.bytes
+
+
 def mock_messages(
-    worker_manager_queue: CommChannelBase,
-    feature_store: FeatureStore,
     feature_store_root_dir: pathlib.Path,
     comm_channel_root_dir: pathlib.Path,
+    kill_queue: mp.Queue,
 ) -> None:
     """Mock event producer for triggering the inference pipeline"""
     feature_store_root_dir.mkdir(parents=True, exist_ok=True)
     comm_channel_root_dir.mkdir(parents=True, exist_ok=True)
 
-    model_path = persist_model_file(feature_store_root_dir.parent / "model_original.pt")
-    model_bytes = model_path.read_bytes()
-    model_key = str(feature_store_root_dir / "model_fs.pt")
-
-    feature_store[model_key] = model_bytes
-
     iteration_number = 0
 
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=FileSystemCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+    )
+    backbone = config_loader.get_backbone()
+
+    worker_queue = config_loader.get_queue()
+    if worker_queue is None:
+        queue_desc = config_loader._queue_descriptor
+        logger.warn(
+            f"FLI input queue not loaded correctly from config_loader: {queue_desc}"
+        )
+
+    model_key = "mini-model"
+    model_bytes = load_model()
+    backbone[model_key] = model_bytes
+
+    message_model_key = MessageHandler.build_feature_store_key(
+        model_key, backbone.descriptor
+    )
+
     while True:
+        if not kill_queue.empty():
+            return
         iteration_number += 1
         time.sleep(1)
         # 1. for demo, ignore upstream and just put stuff into downstream
@@ -124,32 +170,81 @@ def mock_messages(
         channel_key = comm_channel_root_dir / f"{iteration_number}/channel.txt"
         callback_channel = FileSystemCommChannel(pathlib.Path(channel_key))
 
-        input_path = feature_store_root_dir / f"{iteration_number}/input.pt"
-        output_path = feature_store_root_dir / f"{iteration_number}/output.pt"
+        # input_key = f"my-input-{iteration_number}"
+        output_key = f"my-output-{iteration_number}"
 
-        input_key = str(input_path)
-        output_key = str(output_path)
+        batch = MiniModel.get_batch()
+        shape = batch.shape
+        batch_bytes = batch.numpy().tobytes()
+        # backbone[input_key] = batch_bytes
 
-        buffer = io.BytesIO()
-        tensor = torch.randn((1, 2), dtype=torch.float32)
-        torch.save(tensor, buffer)
-        feature_store[input_key] = buffer.getvalue()
-        fsd = feature_store.descriptor
+        logger.debug(f"Model content: {backbone[model_key][:20]}")
+        # logger.debug(f"Input content: {backbone[input_key][:20]}")
 
-        message_tensor_output_key = MessageHandler.build_tensor_key(output_key, fsd)
-        message_tensor_input_key = MessageHandler.build_tensor_key(input_key, fsd)
-        message_model_key = MessageHandler.build_model_key(model_key, fsd)
+        fsd = backbone.descriptor
 
+        # message_tensor_output_key = MessageHandler.build_feature_store_key(
+        #     output_key, fsd
+        # )
+        # message_tensor_input_key = MessageHandler.build_feature_store_key(
+        #     input_key, fsd
+        # )
+
+        input_descriptor = MessageHandler.build_tensor_descriptor(
+            "f", "float32", list(shape)
+        )
+
+        # output_descriptor = MessageHandler.build_output_tensor_descriptor(
+        #     "f", [], "float32", list(shape)
+        # )
+
+        # The first request is always the metadata...
         request = MessageHandler.build_request(
             reply_channel=callback_channel.descriptor,
-            model=message_model_key,
-            inputs=[message_tensor_input_key],
-            outputs=[message_tensor_output_key],
+            # model=message_model_key,
+            model=MessageHandler.build_model(model_bytes, "mini-model", "1.0"),
+            # inputs=[message_tensor_input_key],
+            inputs=[input_descriptor],
+            # outputs=[message_tensor_output_key],
+            outputs=[],
+            # output_descriptors=[output_descriptor],
             output_descriptors=[],
             custom_attributes=None,
         )
         request_bytes = MessageHandler.serialize_request(request)
-        worker_manager_queue.send(request_bytes)
+        fli: DragonFLIChannel = worker_queue
+
+        with fli._fli.sendh(timeout=None, stream_channel=fli._channel) as sendh:
+            sendh.send_bytes(request_bytes)
+            sendh.send_bytes(batch_bytes)
+
+        # worker_queue.send(request_bytes)
+        # follow up with the actual data
+        # worker_queue.send(batch_bytes)
+
+        logger.info("published message")
+
+        if iteration_number > 5:
+            return
+
+
+def mock_mli_infrastructure_mgr():
+    config_loader = EnvironmentConfigLoader(
+        featurestore_factory=DragonFeatureStore.from_descriptor,
+        callback_factory=FileSystemCommChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+    )
+
+    integrated_worker = TorchWorker()
+
+    worker_manager = WorkerManager(
+        config_loader,
+        integrated_worker,
+        as_service=True,
+        cooldown=10,
+        device="cpu",
+    )
+    worker_manager.execute()
 
 
 @pytest.fixture
@@ -167,14 +262,39 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     fs_path = test_path / "feature_store"
     comm_path = test_path / "comm_store"
 
+    # old instantiation code start
+    # to_worker_channel = dch.Channel.make_process_local()
+    # to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
+    # to_worker_fli_serialized = to_worker_fli.serialize()
+
+    # # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
+    # # or test environment may be unable to send messages w/queue
+    # descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+    # os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
+
+    mgr_per_node = 1
+    num_nodes = 2
+    mem_per_node = 1024**3
+    total_mem = num_nodes * mem_per_node
+
+    storage = DDict(
+        managers_per_node=mgr_per_node,
+        n_nodes=num_nodes,
+        total_mem=total_mem,
+    )
+    backbone = BackboneFeatureStore(storage, allow_write=True)
+
     to_worker_channel = dch.Channel.make_process_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
-    to_worker_fli_serialized = to_worker_fli.serialize()
 
-    # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
+    to_worker_fli_comm_channel = DragonFLIChannel(
+        to_worker_fli, supply_stream_channel=True
+    )
+
+    # NOTE: env vars must be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
-    descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
-    os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
+    os.environ["_SMARTSIM_REQUEST_QUEUE"] = to_worker_fli_comm_channel.descriptor
+    os.environ["_SMARTSIM_INFRA_BACKBONE"] = backbone.descriptor
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -197,22 +317,24 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
         logger.warn(
             f"FLI input queue not loaded correctly from config_loader: {config_loader._queue_descriptor}"
         )
+    backbone.worker_queue = to_worker_fli_comm_channel.descriptor
 
     # create a mock client application to populate the request queue
+    kill_queue = mp.Queue()
     msg_pump = mp.Process(
         target=mock_messages,
-        args=(
-            worker_queue,
-            FileSystemFeatureStore(fs_path),
-            fs_path,
-            comm_path,
-        ),
+        args=(fs_path, comm_path, kill_queue),
     )
     msg_pump.start()
 
     # create a process to execute commands
-    process = mp.Process(target=worker_manager.execute)
+    process = mp.Process(target=mock_mli_infrastructure_mgr)
+
+    # let it send some messages before starting the worker manager
+    msg_pump.join(timeout=5)
     process.start()
+    msg_pump.join(timeout=5)
+    kill_queue.put_nowait("kill!")
     process.join(timeout=5)
-    process.kill()
     msg_pump.kill()
+    process.kill()

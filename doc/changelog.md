@@ -13,9 +13,10 @@ Jump to:
 
 Description
 
+- Implement asynchronous notifications for shared data
 - Parameterize installation of dragon package with `smart build`
 - Update docstrings
-- Implement asynchronous notifications for shared data
+- Implement callbacks for asynchronous notifications
 - Filenames conform to snake case
 - Update SmartSim environment variables using new naming convention
 - Refactor `exception_handler`

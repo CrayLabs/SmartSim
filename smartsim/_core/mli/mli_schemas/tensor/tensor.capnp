@@ -69,7 +69,7 @@ struct TensorDescriptor {
 
 struct OutputDescriptor {
   order @0 :Order;
-  optionalKeys @1 :List(DataRef.TensorKey);
+  optionalKeys @1 :List(DataRef.FeatureStoreKey);
   optionalDimension @2 :List(Int32);
   optionalDatatype @3 :ReturnNumericalType;
 }

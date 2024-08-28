@@ -35,12 +35,9 @@ from io import BufferedWriter
 from typing import Iterator, Literal, Sequence, overload
 
 from ..data.data_references_capnp import (
-    ModelKey,
-    ModelKeyBuilder,
-    ModelKeyReader,
-    TensorKey,
-    TensorKeyBuilder,
-    TensorKeyReader,
+    FeatureStoreKey,
+    FeatureStoreKeyBuilder,
+    FeatureStoreKeyReader,
 )
 from ..model.model_capnp import Model, ModelBuilder, ModelReader
 from ..tensor.tensor_capnp import (
@@ -61,7 +58,7 @@ from .request_attributes.request_attributes_capnp import (
 )
 
 class ChannelDescriptor:
-    descriptor: bytes
+    descriptor: str
     @staticmethod
     @contextmanager
     def from_bytes(
@@ -97,11 +94,11 @@ class ChannelDescriptorBuilder(ChannelDescriptor):
 
 class Request:
     class Model:
-        key: ModelKey | ModelKeyBuilder | ModelKeyReader
+        key: FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader
         data: Model | ModelBuilder | ModelReader
         def which(self) -> Literal["key", "data"]: ...
         @overload
-        def init(self, name: Literal["key"]) -> ModelKey: ...
+        def init(self, name: Literal["key"]) -> FeatureStoreKey: ...
         @overload
         def init(self, name: Literal["data"]) -> Model: ...
         @staticmethod
@@ -122,12 +119,12 @@ class Request:
         def to_dict(self) -> dict: ...
 
     class ModelReader(Request.Model):
-        key: ModelKeyReader
+        key: FeatureStoreKeyReader
         data: ModelReader
         def as_builder(self) -> Request.ModelBuilder: ...
 
     class ModelBuilder(Request.Model):
-        key: ModelKey | ModelKeyBuilder | ModelKeyReader
+        key: FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader
         data: Model | ModelBuilder | ModelReader
         @staticmethod
         def from_dict(dictionary: dict) -> Request.ModelBuilder: ...
@@ -142,7 +139,7 @@ class Request:
         def write_packed(file: BufferedWriter) -> None: ...
 
     class Input:
-        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        keys: Sequence[FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader]
         descriptors: Sequence[
             TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
         ]
@@ -165,12 +162,12 @@ class Request:
         def to_dict(self) -> dict: ...
 
     class InputReader(Request.Input):
-        keys: Sequence[TensorKeyReader]
+        keys: Sequence[FeatureStoreKeyReader]
         descriptors: Sequence[TensorDescriptorReader]
         def as_builder(self) -> Request.InputBuilder: ...
 
     class InputBuilder(Request.Input):
-        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        keys: Sequence[FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader]
         descriptors: Sequence[
             TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
         ]
@@ -250,7 +247,7 @@ class Request:
     replyChannel: ChannelDescriptor | ChannelDescriptorBuilder | ChannelDescriptorReader
     model: Request.Model | Request.ModelBuilder | Request.ModelReader
     input: Request.Input | Request.InputBuilder | Request.InputReader
-    output: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+    output: Sequence[FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader]
     outputDescriptors: Sequence[
         OutputDescriptor | OutputDescriptorBuilder | OutputDescriptorReader
     ]
@@ -288,7 +285,7 @@ class RequestReader(Request):
     replyChannel: ChannelDescriptorReader
     model: Request.ModelReader
     input: Request.InputReader
-    output: Sequence[TensorKeyReader]
+    output: Sequence[FeatureStoreKeyReader]
     outputDescriptors: Sequence[OutputDescriptorReader]
     customAttributes: Request.CustomAttributesReader
     def as_builder(self) -> RequestBuilder: ...
@@ -297,7 +294,7 @@ class RequestBuilder(Request):
     replyChannel: ChannelDescriptor | ChannelDescriptorBuilder | ChannelDescriptorReader
     model: Request.Model | Request.ModelBuilder | Request.ModelReader
     input: Request.Input | Request.InputBuilder | Request.InputReader
-    output: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+    output: Sequence[FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader]
     outputDescriptors: Sequence[
         OutputDescriptor | OutputDescriptorBuilder | OutputDescriptorReader
     ]

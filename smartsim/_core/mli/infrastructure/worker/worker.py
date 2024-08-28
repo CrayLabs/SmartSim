@@ -308,7 +308,7 @@ class MachineLearningWorkerCore:
     @staticmethod
     def deserialize_message(
         data_blob: bytes,
-        callback_factory: t.Callable[[bytes], CommChannelBase],
+        callback_factory: t.Callable[[str], CommChannelBase],
     ) -> InferenceRequest:
         """Deserialize a message from a byte stream into an InferenceRequest.
 
@@ -376,7 +376,9 @@ class MachineLearningWorkerCore:
             for value in reply.output_keys:
                 if not value:
                     continue
-                msg_key = MessageHandler.build_tensor_key(value.key, value.descriptor)
+                msg_key = MessageHandler.build_feature_store_key(
+                    value.key, value.descriptor
+                )
                 prepared_outputs.append(msg_key)
         elif reply.outputs:
             for _ in reply.outputs:

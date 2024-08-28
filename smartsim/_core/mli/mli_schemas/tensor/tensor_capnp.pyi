@@ -34,7 +34,11 @@ from contextlib import contextmanager
 from io import BufferedWriter
 from typing import Iterator, Literal, Sequence
 
-from ..data.data_references_capnp import TensorKey, TensorKeyBuilder, TensorKeyReader
+from ..data.data_references_capnp import (
+    FeatureStoreKey,
+    FeatureStoreKeyBuilder,
+    FeatureStoreKeyReader,
+)
 
 Order = Literal["c", "f"]
 NumericalType = Literal[
@@ -103,7 +107,9 @@ class TensorDescriptorBuilder(TensorDescriptor):
 
 class OutputDescriptor:
     order: Order
-    optionalKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+    optionalKeys: Sequence[
+        FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader
+    ]
     optionalDimension: Sequence[int]
     optionalDatatype: ReturnNumericalType
     @staticmethod
@@ -124,11 +130,13 @@ class OutputDescriptor:
     def to_dict(self) -> dict: ...
 
 class OutputDescriptorReader(OutputDescriptor):
-    optionalKeys: Sequence[TensorKeyReader]
+    optionalKeys: Sequence[FeatureStoreKeyReader]
     def as_builder(self) -> OutputDescriptorBuilder: ...
 
 class OutputDescriptorBuilder(OutputDescriptor):
-    optionalKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+    optionalKeys: Sequence[
+        FeatureStoreKey | FeatureStoreKeyBuilder | FeatureStoreKeyReader
+    ]
     @staticmethod
     def from_dict(dictionary: dict) -> OutputDescriptorBuilder: ...
     def copy(self) -> OutputDescriptorBuilder: ...

@@ -39,17 +39,14 @@ logger = get_logger(__name__)
 class FileSystemCommChannel(CommChannelBase):
     """Passes messages by writing to a file"""
 
-    def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
+    def __init__(self, key: pathlib.Path) -> None:
         """Initialize the FileSystemCommChannel instance
 
         :param key: a path to the root directory of the feature store"""
         self._lock = threading.RLock()
-        if isinstance(key, pathlib.Path):
-            super().__init__(key.as_posix().encode("utf-8"))
-            self._file_path = key
-        else:
-            super().__init__(key)
-            self._file_path = pathlib.Path(key.decode("utf-8"))
+
+        super().__init__(key.as_posix())
+        self._file_path = key
 
         if not self._file_path.parent.exists():
             self._file_path.parent.mkdir(parents=True)

@@ -32,20 +32,20 @@ using DataRef = import "../data/data_references.capnp";
 using Models = import "../model/model.capnp";
 
 struct ChannelDescriptor {
-  descriptor @0 :Data;
+  descriptor @0 :Text;
 }
 
 struct Request {
   replyChannel @0 :ChannelDescriptor;
   model :union {
-    key @1 :DataRef.ModelKey;
+    key @1 :DataRef.FeatureStoreKey;
     data @2 :Models.Model;
   }
   input :union {
-    keys @3 :List(DataRef.TensorKey);
+    keys @3 :List(DataRef.FeatureStoreKey);
     descriptors @4 :List(Tensors.TensorDescriptor);
   }
-  output @5 :List(DataRef.TensorKey);
+  output @5 :List(DataRef.FeatureStoreKey);
   outputDescriptors @6 :List(Tensors.OutputDescriptor);
   customAttributes :union {
     torch @7 :RequestAttributes.TorchRequestAttributes;

@@ -123,6 +123,8 @@ class DragonCommChannel(cch.CommChannelBase):
         with self._channel.recvh(timeout=timeout) as recvh:
             messages: t.List[bytes] = []
 
+            # todo: consider that this could (under load) never exit. do we need
+            # to configure a maximum number to pull at once?
             try:
                 message_bytes = recvh.recv_bytes(timeout=timeout)
                 messages.append(message_bytes)
@@ -178,3 +180,17 @@ class DragonCommChannel(cch.CommChannelBase):
             raise SmartSimError(
                 f"Failed to create dragon comm channel: {descriptor!r}"
             ) from ex
+
+    @classmethod
+    def from_local(
+        cls,
+    ) -> "DragonCommChannel":
+        """A factory method that creates a local channel instance
+
+        :returns: An attached DragonCommChannel"""
+        try:
+            channel = dch.Channel.make_process_local()
+            return DragonCommChannel(channel)
+        except:
+            logger.error(f"Failed to create local dragon comm channel", exc_info=True)
+            raise
