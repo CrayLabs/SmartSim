@@ -147,7 +147,6 @@ module = [
   # FIXME: DO NOT MERGE THIS INTO DEVELOP BRANCH UNLESS THESE ARE PASSING OR
   #        REMOVED!!
   "smartsim._core._cli.*",
-  "smartsim._core.commands.*",
   "smartsim._core.control.controller",
   "smartsim._core.control.manifest",
   "smartsim._core.entrypoints.dragon_client",
