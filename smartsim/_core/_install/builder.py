@@ -343,7 +343,7 @@ class DatabaseBuilder(Builder):
         try:
             database_exe = next(bin_path.glob("*-server"))
             database = Path(
-                os.environ.get("SMARTSIM_REDIS_PATH", database_exe)
+                os.environ.get("SMARTSIM_REDIS_SERVER_EXE", database_exe)
             ).resolve()
             _ = expand_exe_path(str(database))
         except (TypeError, FileNotFoundError) as e:
@@ -353,7 +353,7 @@ class DatabaseBuilder(Builder):
         try:
             redis_cli_exe = next(bin_path.glob("*-cli"))
             redis_cli = Path(
-                os.environ.get("SMARTSIM_REDIS_CLI_PATH", redis_cli_exe)
+                os.environ.get("SMARTSIM_REDIS_CLI_EXE", redis_cli_exe)
             ).resolve()
             _ = expand_exe_path(str(redis_cli))
         except (TypeError, FileNotFoundError) as e:
