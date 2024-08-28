@@ -85,7 +85,7 @@ class Device(enum.Enum):
 
     CPU = "cpu"
     CUDA118 = "cuda-11.8"
-    CUDA121 = "cuda-12.1"
+    CUDA125 = "cuda-12.5"
     ROCM57 = "rocm-5.7"
 
     @classmethod
