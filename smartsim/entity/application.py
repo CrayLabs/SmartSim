@@ -95,7 +95,7 @@ class Application(SmartSimEntity):
         self._exe = copy.deepcopy(value)
 
     @property
-    def exe_args(self) -> t.Sequence[str]:
+    def exe_args(self) -> t.MutableSequence[str]:
         """Return a list of attached executable arguments.
 
         :returns: application executable arguments
@@ -103,7 +103,7 @@ class Application(SmartSimEntity):
         return self._exe_args
 
     @exe_args.setter
-    def exe_args(self, value: t.Union[str, t.Sequence[str], None]) -> None:  #
+    def exe_args(self, value: t.Union[str, t.Sequence[str], None]) -> None:
         """Set the executable arguments.
 
         :param value: executable arguments
@@ -262,7 +262,7 @@ class Application(SmartSimEntity):
             """)
 
     @staticmethod
-    def _build_exe_args(exe_args: str | list[str] | None) -> t.List[str]:
+    def _build_exe_args(exe_args: t.Union[str, t.Sequence[str], None]) -> t.List[str]:
         """Check and convert exe_args input to a desired collection format
 
         :param exe_args:
