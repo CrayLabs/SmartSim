@@ -24,8 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import io
+import os
+import pathlib
+
 import pytest
 
+from smartsim._core.shell.shellLauncher import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.pals import (
     PalsMpiexecLaunchArguments,
@@ -132,8 +137,22 @@ def test_invalid_hostlist_format():
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
-    path, cmd = _as_pals_command(
-        PalsMpiexecLaunchArguments(args), mock_echo_executable, test_dir, {}
+    out = os.path.join(test_dir, "out.txt")
+    err = os.path.join(test_dir, "err.txt")
+    open(out, "w"), open(err, "w")
+    shell_launch_cmd = _as_pals_command(
+        PalsMpiexecLaunchArguments(args),
+        mock_echo_executable,
+        test_dir,
+        {},
+        out,
+        err,
     )
-    assert tuple(cmd) == expected
-    assert path == test_dir
+    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
+    assert shell_launch_cmd.command_tuple == expected
+    assert shell_launch_cmd.path == pathlib.Path(test_dir)
+    assert shell_launch_cmd.env == {}
+    assert isinstance(shell_launch_cmd.stdout, io.TextIOWrapper)
+    assert shell_launch_cmd.stdout.name == out
+    assert isinstance(shell_launch_cmd.stderr, io.TextIOWrapper)
+    assert shell_launch_cmd.stderr.name == err

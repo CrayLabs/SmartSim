@@ -26,24 +26,17 @@
 
 import typing as t
 from collections.abc import MutableSequence
+from copy import deepcopy
 
-from ...settings.launchCommand import LauncherType
+from typing_extensions import Self
 
 
 class Command(MutableSequence[str]):
     """Basic container for command information"""
 
-    def __init__(self, launcher: LauncherType, command: t.List[str]) -> None:
+    def __init__(self, command: t.List[str]) -> None:
         """Command constructor"""
-        self._launcher = launcher
         self._command = command
-
-    @property
-    def launcher(self) -> LauncherType:
-        """Get the launcher type.
-        Return a reference to the LauncherType.
-        """
-        return self._launcher
 
     @property
     def command(self) -> t.List[str]:
@@ -52,15 +45,41 @@ class Command(MutableSequence[str]):
         """
         return self._command
 
-    def __getitem__(self, idx: int) -> str:
+    @t.overload
+    def __getitem__(self, idx: int) -> str: ...
+    @t.overload
+    def __getitem__(self, idx: slice) -> Self: ...
+    def __getitem__(self, idx: t.Union[int, slice]) -> t.Union[str, Self]:
         """Get the command at the specified index."""
-        return self._command[idx]
+        cmd = self._command[idx]
+        if isinstance(cmd, str):
+            return cmd
+        return type(self)(cmd)
 
-    def __setitem__(self, idx: int, value: str) -> None:
+    @t.overload
+    def __setitem__(self, idx: int, value: str) -> None: ...
+    @t.overload
+    def __setitem__(self, idx: slice, value: t.Iterable[str]) -> None: ...
+    def __setitem__(
+        self, idx: t.Union[int, slice], value: t.Union[str, t.Iterable[str]]
+    ) -> None:
         """Set the command at the specified index."""
-        self._command[idx] = value
+        if isinstance(idx, int):
+            if not isinstance(value, str):
+                raise ValueError(
+                    "Value must be of type `str` when assigning to an index"
+                )
+            self._command[idx] = deepcopy(value)
+            return
+        if not isinstance(value, list) or not all(
+            isinstance(item, str) for item in value
+        ):
+            raise ValueError(
+                "Value must be a list of strings when assigning to a slice"
+            )
+        self._command[idx] = (deepcopy(val) for val in value)
 
-    def __delitem__(self, idx: int) -> None:
+    def __delitem__(self, idx: t.Union[int, slice]) -> None:
         """Delete the command at the specified index."""
         del self._command[idx]
 
@@ -73,6 +92,5 @@ class Command(MutableSequence[str]):
         self._command.insert(idx, value)
 
     def __str__(self) -> str:  # pragma: no cover
-        string = f"\nLauncher: {self.launcher.value}\n"
-        string += f"Command: {' '.join(str(cmd) for cmd in self.command)}"
+        string = f"\nCommand: {' '.join(str(cmd) for cmd in self.command)}"
         return string

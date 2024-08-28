@@ -108,7 +108,17 @@ class Generator:
         """
         return pathlib.Path(log_path) / "smartsim_params.txt"
 
-    def generate_job(self, job: Job, job_index: int) -> pathlib.Path:
+    @staticmethod
+    def _output_files(
+        log_path: pathlib.Path, job_name: str
+    ) -> t.Tuple[pathlib.Path, pathlib.Path]:
+        out_file_path = log_path / f"{job_name}.out"
+        err_file_path = log_path / f"{job_name}.err"
+        return out_file_path, err_file_path
+
+    def generate_job(
+        self, job: Job, job_index: int
+    ) -> t.Tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
         """Write and configure input files for a Job.
 
         To have files or directories present in the created Job
@@ -136,10 +146,13 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
+        # Create output files
+        out_file, err_file = self._output_files(log_path, job.entity.name)
+
         # Perform file system operations on attached files
         self._build_operations(job, job_path)
 
-        return job_path
+        return job_path, out_file, err_file
 
     @classmethod
     def _build_operations(cls, job: Job, job_path: pathlib.Path) -> None:
