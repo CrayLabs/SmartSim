@@ -23,8 +23,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import subprocess
+
 import pytest
 
+from smartsim._core.shell.shellLauncher import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,
@@ -290,37 +293,106 @@ def test_set_het_groups(monkeypatch):
 @pytest.mark.parametrize(
     "args, expected",
     (
-        pytest.param({}, ("srun", "--", "echo", "hello", "world"), id="Empty Args"),
+        pytest.param(
+            {},
+            (
+                "srun",
+                "--output=output.txt",
+                "--error=error.txt",
+                "--",
+                "echo",
+                "hello",
+                "world",
+            ),
+            id="Empty Args",
+        ),
         pytest.param(
             {"N": "1"},
-            ("srun", "-N", "1", "--", "echo", "hello", "world"),
+            (
+                "srun",
+                "-N",
+                "1",
+                "--output=output.txt",
+                "--error=error.txt",
+                "--",
+                "echo",
+                "hello",
+                "world",
+            ),
             id="Short Arg",
         ),
         pytest.param(
             {"nodes": "1"},
-            ("srun", "--nodes=1", "--", "echo", "hello", "world"),
+            (
+                "srun",
+                "--nodes=1",
+                "--output=output.txt",
+                "--error=error.txt",
+                "--",
+                "echo",
+                "hello",
+                "world",
+            ),
             id="Long Arg",
         ),
         pytest.param(
             {"v": None},
-            ("srun", "-v", "--", "echo", "hello", "world"),
+            (
+                "srun",
+                "-v",
+                "--output=output.txt",
+                "--error=error.txt",
+                "--",
+                "echo",
+                "hello",
+                "world",
+            ),
             id="Short Arg (No Value)",
         ),
         pytest.param(
             {"verbose": None},
-            ("srun", "--verbose", "--", "echo", "hello", "world"),
+            (
+                "srun",
+                "--verbose",
+                "--output=output.txt",
+                "--error=error.txt",
+                "--",
+                "echo",
+                "hello",
+                "world",
+            ),
             id="Long Arg (No Value)",
         ),
         pytest.param(
             {"nodes": "1", "n": "123"},
-            ("srun", "--nodes=1", "-n", "123", "--", "echo", "hello", "world"),
+            (
+                "srun",
+                "--nodes=1",
+                "-n",
+                "123",
+                "--output=output.txt",
+                "--error=error.txt",
+                "--",
+                "echo",
+                "hello",
+                "world",
+            ),
             id="Short and Long Args",
         ),
     ),
 )
 def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
-    path, cmd = _as_srun_command(
-        SlurmLaunchArguments(args), mock_echo_executable, test_dir, {}
+    shell_launch_cmd = _as_srun_command(
+        args=SlurmLaunchArguments(args),
+        exe=mock_echo_executable,
+        path=test_dir,
+        env={},
+        stdout_path="output.txt",
+        stderr_path="error.txt",
     )
-    assert tuple(cmd) == expected
-    assert path == test_dir
+    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
+    assert shell_launch_cmd.command_tuple == expected
+    assert shell_launch_cmd.path == test_dir
+    assert shell_launch_cmd.env == {}
+    assert shell_launch_cmd.stdout == subprocess.DEVNULL
+    assert shell_launch_cmd.stderr == subprocess.DEVNULL

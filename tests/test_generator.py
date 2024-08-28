@@ -10,9 +10,8 @@ from os import path as osp
 import pytest
 
 from smartsim import Experiment
-from smartsim._core import dispatch
 from smartsim._core.generation.generator import Generator
-from smartsim.entity import Application, Ensemble, SmartSimEntity, _mock
+from smartsim.entity import Application, Ensemble
 from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
 from smartsim.settings import LaunchSettings
@@ -21,11 +20,11 @@ from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
-ID_GENERATOR = (str(i) for i in itertools.count())
+_ID_GENERATOR = (str(i) for i in itertools.count())
 
 
 def random_id():
-    return next(ID_GENERATOR)
+    return next(_ID_GENERATOR)
 
 
 @pytest.fixture
@@ -68,7 +67,7 @@ def test_generate_job_directory(test_dir, wlmutils, generator_instance):
     # Mock id
     run_id = "temp_id"
     # Call Generator.generate_job
-    job_run_path = generator_instance.generate_job(job, 0)
+    job_run_path, _, _ = generator_instance.generate_job(job, 0)
     assert isinstance(job_run_path, pathlib.Path)
     expected_run_path = (
         pathlib.Path(test_dir)
@@ -105,7 +104,7 @@ def test_exp_private_generate_method(wlmutils, test_dir, generator_instance):
     job = Job(app, launch_settings)
     # Generate Job directory
     job_index = 1
-    job_execution_path = exp._generate(generator_instance, job, job_index)
+    job_execution_path, _, _ = exp._generate(generator_instance, job, job_index)
     # Assert Job run directory exists
     assert osp.isdir(job_execution_path)
     # Assert Job log directory exists
@@ -124,7 +123,7 @@ def test_generate_copy_file(generator_instance, fileutils, wlmutils):
     job = Job(app, launch_settings)
 
     # Create the experiment
-    path = generator_instance.generate_job(job, 1)
+    path, _, _ = generator_instance.generate_job(job, 1)
     expected_file = pathlib.Path(path) / "sleep.py"
     assert osp.isfile(expected_file)
 
@@ -137,7 +136,7 @@ def test_generate_copy_directory(wlmutils, get_gen_copy_dir, generator_instance)
     job = Job(app, launch_settings)
 
     # Call Generator.generate_job
-    path = generator_instance.generate_job(job, 1)
+    path, _, _ = generator_instance.generate_job(job, 1)
     expected_folder = path / "to_copy_dir"
     assert osp.isdir(expected_folder)
 
@@ -152,7 +151,7 @@ def test_generate_symlink_directory(wlmutils, generator_instance, get_gen_symlin
     job = Job(app, launch_settings)
 
     # Call Generator.generate_job
-    path = generator_instance.generate_job(job, 1)
+    path, _, _ = generator_instance.generate_job(job, 1)
     expected_folder = path / "to_symlink_dir"
     assert osp.isdir(expected_folder)
     assert expected_folder.is_symlink()
@@ -179,7 +178,7 @@ def test_generate_symlink_file(get_gen_symlink_dir, wlmutils, generator_instance
     job = Job(app, launch_settings)
 
     # Call Generator.generate_job
-    path = generator_instance.generate_job(job, 1)
+    path, _, _ = generator_instance.generate_job(job, 1)
     expected_file = path / "mock2.txt"
     assert osp.isfile(expected_file)
     assert expected_file.is_symlink()
@@ -217,7 +216,7 @@ def test_generate_configure(fileutils, wlmutils, generator_instance):
     job = Job(app, launch_settings)
 
     # Call Generator.generate_job
-    path = generator_instance.generate_job(job, 0)
+    path, _, _ = generator_instance.generate_job(job, 0)
     # Retrieve the list of configured files in the test directory
     configured_files = sorted(glob(str(path) + "/*"))
     # Use filecmp.cmp to check that the corresponding files are equal
@@ -232,7 +231,7 @@ def test_exp_private_generate_method_ensemble(test_dir, wlmutils, generator_inst
     job_list = ensemble.as_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     for i, job in enumerate(job_list):
-        job_run_path = exp._generate(generator_instance, job, i)
+        job_run_path, _, _ = exp._generate(generator_instance, job, i)
         head, _ = os.path.split(job_run_path)
         expected_log_path = pathlib.Path(head) / "log"
         assert osp.isdir(job_run_path)
@@ -245,7 +244,7 @@ def test_generate_ensemble_directory(wlmutils, generator_instance):
     job_list = ensemble.as_jobs(launch_settings)
     for i, job in enumerate(job_list):
         # Call Generator.generate_job
-        path = generator_instance.generate_job(job, i)
+        path, _, _ = generator_instance.generate_job(job, i)
         # Assert run directory created
         assert osp.isdir(path)
         # Assert smartsim params file created
@@ -262,7 +261,7 @@ def test_generate_ensemble_directory(wlmutils, generator_instance):
 def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
     monkeypatch.setattr(
         "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: random_id(),
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
@@ -282,7 +281,7 @@ def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
 def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_dir):
     monkeypatch.setattr(
         "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: random_id(),
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     ensemble = Ensemble(
         "ensemble-name", "echo", replicas=2, files=EntityFiles(copy=get_gen_copy_dir)
@@ -304,7 +303,7 @@ def test_generate_ensemble_symlink(
 ):
     monkeypatch.setattr(
         "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: random_id(),
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     ensemble = Ensemble(
         "ensemble-name",
@@ -331,7 +330,7 @@ def test_generate_ensemble_configure(
 ):
     monkeypatch.setattr(
         "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env: random_id(),
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
     # Retrieve a list of files for configuration
@@ -346,7 +345,7 @@ def test_generate_ensemble_configure(
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
     job_list = ensemble.as_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    exp.start(*job_list)
+    id = exp.start(*job_list)
     run_dir = listdir(test_dir)
     jobs_dir = os.path.join(test_dir, run_dir[0], "jobs")
 

@@ -232,8 +232,9 @@ class Experiment:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
-            job_execution_path = self._generate(generator, job, idx)
-            id_ = launch_config.start(exe, job_execution_path, env)
+            # Generate the job directory and return the generated job path
+            job_execution_path, out, err = self._generate(generator, job, idx)
+            id_ = launch_config.start(exe, job_execution_path, env, out, err)
             # Save the underlying launcher instance and launched job id. That
             # way we do not need to spin up a launcher instance for each
             # individual job, and the experiment can monitor job statuses.
@@ -277,7 +278,9 @@ class Experiment:
         return tuple(stats)
 
     @_contextualize
-    def _generate(self, generator: Generator, job: Job, job_index: int) -> pathlib.Path:
+    def _generate(
+        self, generator: Generator, job: Job, job_index: int
+    ) -> t.Tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
         """Generate the directory structure and files for a ``Job``
 
         If files or directories are attached to an ``Application`` object
@@ -293,8 +296,8 @@ class Experiment:
         :raises: A SmartSimError if an error occurs during the generation process.
         """
         try:
-            job_run_path = generator.generate_job(job, job_index)
-            return job_run_path
+            job_path, out, err = generator.generate_job(job, job_index)
+            return (job_path, out, err)
         except SmartSimError as e:
             logger.error(e)
             raise
