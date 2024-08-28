@@ -37,9 +37,13 @@ logger = get_logger(__name__)
 class MemoryFeatureStore(FeatureStore):
     """A feature store with values persisted only in local memory"""
 
-    def __init__(self) -> None:
+    def __init__(self, storage: t.Optional[t.Dict[str, bytes]] = None) -> None:
         """Initialize the MemoryFeatureStore instance"""
-        self._storage: t.Dict[str, bytes] = {}
+        super().__init__()
+        if storage is None:
+            storage = {}
+
+        self._storage: t.Dict[str, bytes] = storage
 
     def __getitem__(self, key: str) -> bytes:
         """Retrieve an item using key
@@ -54,6 +58,7 @@ class MemoryFeatureStore(FeatureStore):
 
         :param key: Unique key of an item to retrieve from the feature store
         :returns: `True` if the key is found, `False` otherwise"""
+        self._check_reserved(key)
         self._storage[key] = value
 
     def __contains__(self, key: str) -> bool:
@@ -80,6 +85,7 @@ class FileSystemFeatureStore(FeatureStore):
         """Initialize the FileSystemFeatureStore instance
 
         :param storage_dir: (optional) root directory to store all data relative to"""
+        super().__init__()
         if isinstance(storage_dir, str):
             storage_dir = pathlib.Path(storage_dir)
         self._storage_dir = storage_dir

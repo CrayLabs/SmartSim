@@ -39,6 +39,7 @@ class MemoryFeatureStore(FeatureStore):
 
     def __init__(self) -> None:
         """Initialize the MemoryFeatureStore instance"""
+        super().__init__()
         self._storage: t.Dict[str, bytes] = {}
 
     def __getitem__(self, key: str) -> bytes:
@@ -81,6 +82,7 @@ class FileSystemFeatureStore(FeatureStore):
         """Initialize the FileSystemFeatureStore instance
 
         :param storage_dir: (optional) root directory to store all data relative to"""
+        super().__init__()
         if isinstance(storage_dir, str):
             storage_dir = pathlib.Path(storage_dir)
         self._storage_dir = storage_dir

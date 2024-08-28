@@ -62,16 +62,17 @@ class DragonFLIChannel(cch.CommChannelBase):
         with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
             sendh.send_bytes(value)
 
-    def recv(self) -> t.List[bytes]:
-        """Receieve a message through the underlying communication channel
+    def recv(self, timeout: float = 0.001) -> t.List[bytes]:
+        """Receives message(s) through the underlying communication channel
 
+        :param timeout: maximum time to wait for messages to arrive
         :returns: the received message"""
         messages = []
         eot = False
-        with self._fli.recvh(timeout=0.001) as recvh:
+        with self._fli.recvh(timeout=timeout) as recvh:
             while not eot:
                 try:
-                    message, _ = recvh.recv_bytes(timeout=None)
+                    message, _ = recvh.recv_bytes(timeout=timeout)
                     messages.append(message)
                 except fli.FLIEOT:
                     eot = True

@@ -47,7 +47,9 @@ class DragonFeatureStore(FeatureStore):
 
         :param storage: A distributed dictionary to be used as the underlying
         storage mechanism of the feature store"""
+        super().__init__()
         self._storage = storage
+        self._reserved_write_enabled = False
 
     def __getitem__(self, key: str) -> t.Union[str, bytes]:
         """Retrieve an item using key
@@ -73,6 +75,7 @@ class DragonFeatureStore(FeatureStore):
 
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
+        self._check_reserved(key)
         self._storage[key] = value
 
     def __contains__(self, key: str) -> bool:

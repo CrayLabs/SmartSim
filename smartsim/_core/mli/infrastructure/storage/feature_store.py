@@ -24,13 +24,37 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import enum
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
+
+
+class ReservedKeys(str, enum.Enum):
+    """Contains constants used to identify all featurestore keys that
+    may not be to used by users. Avoids overwriting system data"""
+
+    MLI_NOTIFY_CONSUMERS = "_SMARTSIM_MLI_NOTIFY_CONSUMERS"
+    """Storage location for the list of registered consumers that will receive
+    events from an EventBroadcaster"""
+
+    @classmethod
+    def from_string(cls, value: str) -> t.Optional["ReservedKeys"]:
+        """Convert a string representation into an enumeration member
+
+        :param value: the string to convert
+        :returns: the enumeration member if the conversion succeeded, otherwise None"""
+        try:
+            return cls(value)
+        except ValueError:
+            ...  # value is not reserved, swallow
+
+        return None
 
 
 @dataclass(frozen=True)
@@ -56,6 +80,22 @@ class FeatureStoreKey:
 class FeatureStore(ABC):
     """Abstract base class providing the common interface for retrieving
     values from a feature store implementation"""
+
+    def __init__(self) -> None:
+        self._reserved_write_enabled = False
+
+    def _check_reserved(self, key: str) -> None:
+        """A utility method used to verify access to write to a reserved key
+        in the FeatureStore. Used by subclasses in __setitem___ implementations
+
+        :param key: a key to compare to the reserved keys
+        :raises SmartSimError: if the key is reserved"""
+        reserved_key_match = ReservedKeys.from_string(key)
+        if reserved_key_match and not self._reserved_write_enabled:
+            raise SmartSimError(
+                "Use of reserved key denied. "
+                "Unable to overwrite system configuration"
+            )
 
     @abstractmethod
     def __getitem__(self, key: str) -> t.Union[str, bytes]:
