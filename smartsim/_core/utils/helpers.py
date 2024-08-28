@@ -289,7 +289,7 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
 
 def _stringify_id(_id: int) -> str:
     """Return the CPU id as a string if an int, otherwise raise a ValueError
-    
+
     :params _id: the CPU id as an int
     :returns: the CPU as a string
     """
