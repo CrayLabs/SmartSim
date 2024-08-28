@@ -40,14 +40,14 @@ class SynchronousTimeInterval:
     def __init__(self, delta: float | None) -> None:
         """Initialize a new `SynchronousTimeInterval` interval
 
-        :param delta: The difference in time the interval represents. If
-            `None`, the interval will represent an infinite amount of time in
-            seconds.
-        :raises ValueError: The `delta` is negative and `strict` is `True`
+        :param delta: The difference in time the interval represents in
+            seconds. If `None`, the interval will represent an infinite amount
+            of time.
+        :raises ValueError: The `delta` is negative
         """
         if delta is not None and delta < 0:
             raise ValueError("Timeout value cannot be less than 0")
-        if delta is None or delta < 0:
+        if delta is None:
             delta = float("inf")
         self._delta = Seconds(delta)
         """The amount of time, in seconds, the interval spans."""
