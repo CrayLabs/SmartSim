@@ -32,9 +32,9 @@ from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
 
-salloc_cmd = Command(launcher=LauncherType.Slurm, command=["salloc", "-N", "1"])
-srun_cmd = Command(launcher=LauncherType.Slurm, command=["srun", "-n", "1"])
-sacct_cmd = Command(launcher=LauncherType.Slurm, command=["sacct", "--user"])
+salloc_cmd = Command(command=["salloc", "-N", "1"])
+srun_cmd = Command(command=["srun", "-n", "1"])
+sacct_cmd = Command(command=["sacct", "--user"])
 
 
 def test_command_init():
@@ -42,16 +42,47 @@ def test_command_init():
     assert cmd_list.commands == [salloc_cmd, srun_cmd]
 
 
-def test_command_getitem():
+def test_command_getitem_int():
     cmd_list = CommandList(commands=[salloc_cmd, srun_cmd])
     get_value = cmd_list[0]
     assert get_value == salloc_cmd
 
 
-def test_command_setitem():
+def test_command_getitem_slice():
+    cmd_list = CommandList(commands=[salloc_cmd, srun_cmd])
+    get_value = cmd_list[0:2]
+    assert get_value == [salloc_cmd, srun_cmd]
+
+
+def test_command_setitem_idx():
     cmd_list = CommandList(commands=[salloc_cmd, srun_cmd])
     cmd_list[0] = sacct_cmd
-    assert cmd_list.commands == [sacct_cmd, srun_cmd]
+    for cmd in cmd_list.commands:
+        assert cmd.command in [sacct_cmd.command, srun_cmd.command]
+
+
+def test_command_setitem_slice():
+    cmd_list = CommandList(commands=[srun_cmd, srun_cmd])
+    cmd_list[0:2] = [sacct_cmd, sacct_cmd]
+    for cmd in cmd_list.commands:
+        assert cmd.command == sacct_cmd.command
+
+
+def test_command_setitem_fail():
+    cmd_list = CommandList(commands=[srun_cmd, srun_cmd])
+    with pytest.raises(ValueError):
+        cmd_list[0] = "fail"
+    with pytest.raises(ValueError):
+        cmd_list[0:1] = "fail"
+    with pytest.raises(ValueError):
+        cmd_list[0:1] = "fail"
+    cmd_1 = Command(command=["salloc", "-N", 1])
+    cmd_2 = Command(command=["salloc", "-N", "1"])
+    cmd_3 = Command(command=1)
+    with pytest.raises(ValueError):
+        cmd_list[0:1] = [cmd_1, cmd_2]
+    with pytest.raises(ValueError):
+        cmd_list[0:1] = [cmd_3, cmd_2]
 
 
 def test_command_delitem():

@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import copy
+import textwrap
 import typing as t
 from os import path as osp
 
@@ -34,13 +35,6 @@ from .._core.utils.helpers import expand_exe_path
 from ..log import get_logger
 from .entity import SmartSimEntity
 from .files import EntityFiles
-
-if t.TYPE_CHECKING:
-    from smartsim.types import TODO
-
-    RunSettings = TODO
-    BatchSettings = TODO
-
 
 logger = get_logger(__name__)
 # TODO: Remove this supression when we strip fileds/functionality
@@ -164,7 +158,7 @@ class Application(SmartSimEntity):
 
         :param value: incoming entities
         """
-        self._incoming_entities = copy.deepcopy(value)
+        self._incoming_entities = copy.copy(value)
 
     @property
     def key_prefixing_enabled(self) -> bool:
@@ -251,29 +245,26 @@ class Application(SmartSimEntity):
         print(self.attached_files_table)
 
     def __str__(self) -> str:  # pragma: no cover
-        entity_str = "Name: " + self.name + "\n"
-        entity_str += "Type: " + self.type + "\n"
-        entity_str += "Executable:\n"
-        for ex in self.exe:
-            entity_str += f"{ex}\n"
-        entity_str += "Executable Arguments:\n"
-        for ex_arg in self.exe_args:
-            entity_str += f"{str(ex_arg)}\n"
-        entity_str += f"Entity Files: {self.files}\n"
-        entity_str += f"File Parameters: {self.file_parameters}\n"
-        entity_str += "Incoming Entities:\n"
-        for entity in self.incoming_entities:
-            entity_str += f"{entity}\n"
-        entity_str += f"Key Prefixing Enabled: {self.key_prefixing_enabled}\n"
-
-        return entity_str
+        exe_args_str = "\n".join(self.exe_args)
+        entities_str = "\n".join(str(entity) for entity in self.incoming_entities)
+        return textwrap.dedent(f"""\
+            Name: {self.name}
+            Type: {self.type}
+            Executable:
+            {self.exe}
+            Executable Arguments:
+            {exe_args_str}
+            Entity Files: {self.files}
+            File Parameters: {self.file_parameters}
+            Incoming Entities:
+            {entities_str}
+            Key Prefixing Enabled: {self.key_prefixing_enabled}
+            """)
 
     @staticmethod
-    def _build_exe_args(
-        exe_args: t.Optional[t.Union[str, t.Sequence[str], None]]
-    ) -> t.List[str]:
+    def _build_exe_args(exe_args: str | list[str] | None) -> t.List[str]:
         """Check and convert exe_args input to a desired collection format
-        
+
         :param exe_args:
         :raises TypeError: if exe_args is not a list of str or str
         """
@@ -290,6 +281,6 @@ class Application(SmartSimEntity):
             raise TypeError("Executable arguments were not a list of str or a str.")
 
         if isinstance(exe_args, str):
-            return copy.deepcopy(exe_args.split())
+            return exe_args.split()
 
         return copy.deepcopy(exe_args)

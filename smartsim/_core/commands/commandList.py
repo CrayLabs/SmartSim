@@ -26,6 +26,7 @@
 
 import typing as t
 from collections.abc import MutableSequence
+from copy import deepcopy
 
 from .command import Command
 
@@ -46,15 +47,45 @@ class CommandList(MutableSequence[Command]):
         """
         return self._commands
 
-    def __getitem__(self, idx: int) -> Command:
+    @t.overload
+    def __getitem__(self, idx: int) -> Command: ...
+    @t.overload
+    def __getitem__(self, idx: slice) -> t.List[Command]: ...
+    def __getitem__(
+        self, idx: t.Union[slice, int]
+    ) -> t.Union[Command, t.List[Command]]:
         """Get the Command at the specified index."""
         return self._commands[idx]
 
-    def __setitem__(self, idx: int, value: Command) -> None:
-        """Set the Command at the specified index."""
-        self._commands[idx] = value
+    @t.overload
+    def __setitem__(self, idx: int, value: Command) -> None: ...
+    @t.overload
+    def __setitem__(self, idx: slice, value: t.Iterable[Command]) -> None: ...
+    def __setitem__(
+        self, idx: t.Union[int, slice], value: t.Union[Command, t.Iterable[Command]]
+    ) -> None:
+        """Set the Commands at the specified index."""
+        if isinstance(idx, int):
+            if not isinstance(value, Command):
+                raise ValueError(
+                    "Value must be of type `Command` when assigning to an index"
+                )
+            self._commands[idx] = deepcopy(value)
+            return
+        if not isinstance(value, list):
+            raise ValueError(
+                "Value must be a list of Commands when assigning to a slice"
+            )
+        for sublist in value:
+            if not isinstance(sublist.command, list) or not all(
+                isinstance(item, str) for item in sublist.command
+            ):
+                raise ValueError(
+                    "Value sublists must be a list of Commands when assigning to a slice"
+                )
+        self._commands[idx] = (deepcopy(val) for val in value)
 
-    def __delitem__(self, idx: int) -> None:
+    def __delitem__(self, idx: t.Union[int, slice]) -> None:
         """Delete the Command at the specified index."""
         del self._commands[idx]
 
