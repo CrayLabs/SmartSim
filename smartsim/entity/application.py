@@ -273,9 +273,6 @@ class Application(SmartSimEntity):
         if not exe_args:
             return []
 
-        if isinstance(exe_args, list):
-            exe_args = copy.deepcopy(exe_args)
-
         if not (
             isinstance(exe_args, str)
             or (
