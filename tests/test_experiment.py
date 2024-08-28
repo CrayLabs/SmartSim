@@ -31,7 +31,6 @@ import io
 import itertools
 import random
 import re
-import tempfile
 import time
 import typing as t
 import uuid
@@ -59,7 +58,11 @@ def experiment(monkeypatch, test_dir, dispatcher):
     """
     exp = Experiment(f"test-exp-{uuid.uuid4()}", test_dir)
     monkeypatch.setattr(dispatch, "DEFAULT_DISPATCHER", dispatcher)
-    monkeypatch.setattr(exp, "_generate", lambda gen, job, idx: "/tmp/job")
+    monkeypatch.setattr(
+        exp,
+        "_generate",
+        lambda gen, job, idx: ("/tmp/job", "/tmp/job/out.txt", "/tmp/job/err.txt"),
+    )
     yield exp
 
 
@@ -69,8 +72,10 @@ def dispatcher():
     dispatches any jobs with `MockLaunchArgs` to a `NoOpRecordLauncher`
     """
     d = dispatch.Dispatcher()
-    to_record: dispatch._FormatterType[MockLaunchArgs, LaunchRecord] = (
-        lambda settings, exe, path, env: LaunchRecord(settings, exe, env, path)
+    to_record: dispatch.FormatterType[MockLaunchArgs, LaunchRecord] = (
+        lambda settings, exe, path, env, out, err: LaunchRecord(
+            settings, exe, env, path, out, err
+        )
     )
     d.dispatch(MockLaunchArgs, with_format=to_record, to_launcher=NoOpRecordLauncher)
     yield d
@@ -147,6 +152,8 @@ class LaunchRecord:
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
     path: str
+    out: str
+    err: str
 
     @classmethod
     def from_job(cls, job: job.Job):
@@ -162,7 +169,9 @@ class LaunchRecord:
         entity = job._entity
         env = job._launch_settings.env_vars
         path = "/tmp/job"
-        return cls(args, entity, env, path)
+        out = "/tmp/job/out.txt"
+        err = "/tmp/job/err.txt"
+        return cls(args, entity, env, path, out, err)
 
 
 class MockLaunchArgs(launchArguments.LaunchArguments):

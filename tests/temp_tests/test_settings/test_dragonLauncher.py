@@ -78,7 +78,7 @@ def test_formatting_launch_args_into_request(
     if gpu_affinity is not NOT_SET:
         launch_args.set_gpu_affinity(gpu_affinity)
     req, policy = _as_run_request_args_and_policy(
-        launch_args, mock_echo_executable, test_dir, {}
+        launch_args, mock_echo_executable, test_dir, {}, "output.txt", "error.txt"
     )
 
     expected_args = {
@@ -90,7 +90,13 @@ def test_formatting_launch_args_into_request(
         if v is not NOT_SET
     }
     expected_run_req = DragonRunRequestView(
-        exe="echo", exe_args=["hello", "world"], path=test_dir, env={}, **expected_args
+        exe="echo",
+        exe_args=["hello", "world"],
+        path=test_dir,
+        env={},
+        output_file="output.txt",
+        error_file="error.txt",
+        **expected_args,
     )
     assert req.exe == expected_run_req.exe
     assert req.exe_args == expected_run_req.exe_args
@@ -99,6 +105,8 @@ def test_formatting_launch_args_into_request(
     assert req.hostlist == expected_run_req.hostlist
     assert req.pmi_enabled == expected_run_req.pmi_enabled
     assert req.path == expected_run_req.path
+    assert req.output_file == expected_run_req.output_file
+    assert req.error_file == expected_run_req.error_file
 
     expected_run_policy_args = {
         k: v
