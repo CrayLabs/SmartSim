@@ -52,7 +52,7 @@ def _read_model_parameters(params_dict: t.Dict[str, t.Any]) -> t.Dict[str, str]:
     :return: param dictionary with values and keys cast as strings
     """
     param_names: t.List[str] = []
-    parameters: t.List[t.List[str]] = []
+    parameters: t.List[str] = []
     for name, val in params_dict.items():
         param_names.append(name)
         if isinstance(val, (int, str)):
