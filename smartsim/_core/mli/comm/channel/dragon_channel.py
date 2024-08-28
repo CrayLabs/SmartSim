@@ -162,20 +162,14 @@ class DragonCommChannel(cch.CommChannelBase):
         :param descriptor: The descriptor that uniquely identifies the resource. Output
         from `descriptor_string` is correctly encoded.
         :returns: An attached DragonCommChannel
-        :raises SmartSimError: If creation of comm channel fails
-        """
+        :raises SmartSimError: If creation of comm channel fails"""
         try:
-            utf8_descriptor: t.Union[str, bytes] = descriptor
-            if isinstance(descriptor, str):
-                utf8_descriptor = descriptor.encode("utf-8")
-
-            # todo: ensure the bytes argument and condition are removed
-            # after refactoring the RPC models
-
+            utf8_descriptor = descriptor.encode("utf-8")
             actual_descriptor = base64.b64decode(utf8_descriptor)
             channel = dch.Channel.attach(actual_descriptor)
             return DragonCommChannel(channel)
-        except Exception as ex:
-            raise SmartSimError(
-                f"Failed to create dragon comm channel: {descriptor!r}"
-            ) from ex
+        except:
+            logger.error(
+                f"Failed to create dragon comm channel: {descriptor}", exc_info=True
+            )
+            raise

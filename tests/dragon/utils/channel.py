@@ -27,6 +27,7 @@
 import base64
 import pathlib
 import threading
+import time
 import typing as t
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
@@ -123,5 +124,5 @@ class FileSystemCommChannel(CommChannelBase):
                 path = pathlib.Path(descriptor.decode("utf-8"))
             return FileSystemCommChannel(path)
         except:
-            logger.warning(f"failed to create fs comm channel: {descriptor!r}")
+            logger.warning(f"failed to create fs comm channel: {descriptor}")
             raise
