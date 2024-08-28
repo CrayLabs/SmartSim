@@ -30,18 +30,14 @@ import textwrap
 import time
 from unittest.mock import MagicMock
 
+import pydantic.error_wrappers
 import pytest
-from pydantic import ValidationError
+
+from smartsim._core.launcher.dragon.pqueue import NodePrioritizer
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
-
-try:
-    import dragon
-
-    dragon_loaded = True
-except:
-    dragon_loaded = False
+dragon = pytest.importorskip("dragon")
 
 from smartsim._core.config import CONFIG
 from smartsim._core.schemas.dragonRequests import *
@@ -54,38 +50,6 @@ if t.TYPE_CHECKING:
         DragonBackend,
         ProcessGroupInfo,
     )
-
-
-class NodeMock(MagicMock):
-    def __init__(
-        self, name: t.Optional[str] = None, num_gpus: int = 2, num_cpus: int = 8
-    ) -> None:
-        super().__init__()
-        self._mock_id = name
-        NodeMock._num_gpus = num_gpus
-        NodeMock._num_cpus = num_cpus
-
-    @property
-    def hostname(self) -> str:
-        if self._mock_id:
-            return self._mock_id
-        return create_short_id_str()
-
-    @property
-    def num_cpus(self) -> str:
-        return NodeMock._num_cpus
-
-    @property
-    def num_gpus(self) -> str:
-        return NodeMock._num_gpus
-
-    def _set_id(self, value: str) -> None:
-        self._mock_id = value
-
-    def gpus(self, parent: t.Any = None) -> t.List[str]:
-        if self._num_gpus:
-            return [f"{self.hostname}-gpu{i}" for i in range(NodeMock._num_gpus)]
-        return []
 
 
 class GroupStateMock(MagicMock):
@@ -102,69 +66,59 @@ class ProcessGroupMock(MagicMock):
     puids = [121, 122]
 
 
-def node_mock() -> NodeMock:
-    return NodeMock()
-
-
 def get_mock_backend(
-    monkeypatch: pytest.MonkeyPatch, num_gpus: int = 2
+    monkeypatch: pytest.MonkeyPatch, num_cpus: int, num_gpus: int
 ) -> "DragonBackend":
+    # create all the necessary namespaces as raw magic mocks
+    monkeypatch.setitem(sys.modules, "dragon.data.ddict.ddict", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.native.machine", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.native.group_state", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.native.process_group", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.native.process", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.infrastructure.connection", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.infrastructure.policy", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.infrastructure.process_desc", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.data.ddict.ddict", MagicMock())
 
+    node_list = ["node1", "node2", "node3"]
+    system_mock = MagicMock(return_value=MagicMock(nodes=node_list))
+    node_mock = lambda x: MagicMock(hostname=x, num_cpus=num_cpus, num_gpus=num_gpus)
+    process_group_mock = MagicMock(return_value=ProcessGroupMock())
     process_mock = MagicMock(returncode=0)
-    process_group_mock = MagicMock(**{"Process.return_value": ProcessGroupMock()})
-    process_module_mock = MagicMock()
-    process_module_mock.Process = process_mock
-    node_mock = NodeMock(num_gpus=num_gpus)
-    system_mock = MagicMock(nodes=["node1", "node2", "node3"])
+    policy_mock = MagicMock(return_value=MagicMock())
+    group_state_mock = GroupStateMock()
+
+    # customize members that must perform specific actions within the namespaces
     monkeypatch.setitem(
         sys.modules,
         "dragon",
         MagicMock(
             **{
-                "native.machine.Node.return_value": node_mock,
-                "native.machine.System.return_value": system_mock,
-                "native.group_state": GroupStateMock(),
-                "native.process_group.ProcessGroup.return_value": ProcessGroupMock(),
+                "native.machine.Node": node_mock,
+                "native.machine.System": system_mock,
+                "native.group_state": group_state_mock,
+                "native.process_group.ProcessGroup": process_group_mock,
+                "native.process_group.Process": process_mock,
+                "native.process.Process": process_mock,
+                "infrastructure.policy.Policy": policy_mock,
             }
         ),
     )
-    monkeypatch.setitem(
-        sys.modules,
-        "dragon.infrastructure.connection",
-        MagicMock(),
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "dragon.infrastructure.process_desc",
-        MagicMock(),
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "dragon.data.ddict.ddict",
-        MagicMock(),
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "dragon.infrastructure.policy",
-        MagicMock(**{"Policy.return_value": MagicMock()}),
-    )
-    monkeypatch.setitem(sys.modules, "dragon.native.process", process_module_mock)
-    monkeypatch.setitem(sys.modules, "dragon.native.process_group", process_group_mock)
 
-    monkeypatch.setitem(sys.modules, "dragon.native.group_state", GroupStateMock())
-    monkeypatch.setitem(
-        sys.modules,
-        "dragon.native.machine",
-        MagicMock(
-            **{"System.return_value": system_mock, "Node.return_value": node_mock}
-        ),
-    )
     from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 
     dragon_backend = DragonBackend(pid=99999)
-    monkeypatch.setattr(
-        dragon_backend, "_free_hosts", collections.deque(dragon_backend._hosts)
+
+    # NOTE: we're manually updating these values due to issue w/mocking namespaces
+    dragon_backend._prioritizer = NodePrioritizer(
+        [
+            MagicMock(num_cpus=num_cpus, num_gpus=num_gpus, hostname=node)
+            for node in node_list
+        ],
+        dragon_backend._queue_lock,
     )
+    dragon_backend._cpus = [num_cpus] * len(node_list)
+    dragon_backend._gpus = [num_gpus] * len(node_list)
 
     return dragon_backend
 
@@ -222,16 +176,14 @@ def set_mock_group_infos(
     }
 
     monkeypatch.setattr(dragon_backend, "_group_infos", group_infos)
-    monkeypatch.setattr(dragon_backend, "_free_hosts", collections.deque(hosts[1:3]))
-    monkeypatch.setattr(dragon_backend, "_allocated_hosts", {hosts[0]: "abc123-1"})
+    monkeypatch.setattr(dragon_backend, "_allocated_hosts", {hosts[0]: {"abc123-1"}})
     monkeypatch.setattr(dragon_backend, "_running_steps", ["abc123-1"])
 
     return group_infos
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_handshake_request(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
 
     handshake_req = DragonHandshakeRequest()
     handshake_resp = dragon_backend.process_request(handshake_req)
@@ -240,9 +192,8 @@ def test_handshake_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert handshake_resp.dragon_pid == 99999
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -269,9 +220,9 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert len(dragon_backend.free_hosts) == 1
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     monkeypatch.setattr(
         dragon_backend._group_infos[step_id].process_group, "status", "Running"
@@ -281,9 +232,9 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert len(dragon_backend.free_hosts) == 1
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
 
@@ -291,9 +242,8 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert not dragon_backend._running_steps
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_deny_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
 
     dragon_backend._shutdown_requested = True
 
@@ -319,7 +269,7 @@ def test_deny_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_run_request_with_empty_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that a policy is applied to a run request"""
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -335,10 +285,9 @@ def test_run_request_with_empty_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     assert run_req.policy is None
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that a policy is applied to a run request"""
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -366,9 +315,9 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert len(dragon_backend._prioritizer.unassigned()) == 1
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     monkeypatch.setattr(
         dragon_backend._group_infos[step_id].process_group, "status", "Running"
@@ -378,9 +327,9 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
-    assert len(dragon_backend._free_hosts) == 1
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
-    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
+    assert len(dragon_backend._prioritizer.unassigned()) == 1
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[0]]
+    assert step_id in dragon_backend._allocated_hosts[dragon_backend.hosts[1]]
 
     dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
 
@@ -388,9 +337,8 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     assert not dragon_backend._running_steps
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_udpate_status_request(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
 
     group_infos = set_mock_group_infos(monkeypatch, dragon_backend)
 
@@ -405,9 +353,8 @@ def test_udpate_status_request(monkeypatch: pytest.MonkeyPatch) -> None:
     }
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_stop_request(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     group_infos = set_mock_group_infos(monkeypatch, dragon_backend)
 
     running_steps = [
@@ -434,10 +381,9 @@ def test_stop_request(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     assert len(dragon_backend._allocated_hosts) == 0
-    assert len(dragon_backend._free_hosts) == 3
+    assert len(dragon_backend._prioritizer.unassigned()) == 3
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 @pytest.mark.parametrize(
     "immediate, kill_jobs, frontend_shutdown",
     [
@@ -456,7 +402,7 @@ def test_shutdown_request(
     frontend_shutdown: bool,
 ) -> None:
     monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     monkeypatch.setattr(dragon_backend, "_cooldown_period", 1)
     set_mock_group_infos(monkeypatch, dragon_backend)
 
@@ -496,11 +442,10 @@ def test_shutdown_request(
     assert dragon_backend._has_cooled_down == kill_jobs
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 @pytest.mark.parametrize("telemetry_flag", ["0", "1"])
 def test_cooldown_is_set(monkeypatch: pytest.MonkeyPatch, telemetry_flag: str) -> None:
     monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", telemetry_flag)
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
 
     expected_cooldown = (
         2 * CONFIG.telemetry_frequency + 5 if int(telemetry_flag) > 0 else 5
@@ -512,19 +457,17 @@ def test_cooldown_is_set(monkeypatch: pytest.MonkeyPatch, telemetry_flag: str) -
         assert dragon_backend.cooldown_period == expected_cooldown
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_heartbeat_and_time(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     first_heartbeat = dragon_backend.last_heartbeat
     assert dragon_backend.current_time > first_heartbeat
     dragon_backend._heartbeat()
     assert dragon_backend.last_heartbeat > first_heartbeat
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 @pytest.mark.parametrize("num_nodes", [1, 3, 100])
 def test_can_honor(monkeypatch: pytest.MonkeyPatch, num_nodes: int) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -537,18 +480,42 @@ def test_can_honor(monkeypatch: pytest.MonkeyPatch, num_nodes: int) -> None:
         pmi_enabled=False,
     )
 
-    assert dragon_backend._can_honor(run_req)[0] == (
-        num_nodes <= len(dragon_backend._hosts)
-    )
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    nodes_in_range = num_nodes <= len(dragon_backend._hosts)
+    assert can_honor == nodes_in_range
+    assert error_msg is None if nodes_in_range else error_msg is not None
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
+@pytest.mark.parametrize("num_nodes", [-10, -1, 0])
+def test_can_honor_invalid_num_nodes(
+    monkeypatch: pytest.MonkeyPatch, num_nodes: int
+) -> None:
+    """Verify that requests for invalid numbers of nodes (negative, zero) are rejected"""
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
+
+    with pytest.raises(pydantic.error_wrappers.ValidationError) as ex:
+        DragonRunRequest(
+            exe="sleep",
+            exe_args=["5"],
+            path="/a/fake/path",
+            nodes=num_nodes,
+            tasks=1,
+            tasks_per_node=1,
+            env={},
+            current_env={},
+            pmi_enabled=False,
+        )
+
+
 @pytest.mark.parametrize("affinity", [[0], [0, 1], list(range(8))])
 def test_can_honor_cpu_affinity(
     monkeypatch: pytest.MonkeyPatch, affinity: t.List[int]
 ) -> None:
     """Verify that valid CPU affinities are accepted"""
-    dragon_backend = get_mock_backend(monkeypatch)
+    num_cpus, num_gpus = 8, 0
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=num_cpus, num_gpus=num_gpus)
+
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -565,11 +532,10 @@ def test_can_honor_cpu_affinity(
     assert dragon_backend._can_honor(run_req)[0]
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_can_honor_cpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that invalid CPU affinities are NOT accepted
     NOTE: negative values are captured by the Pydantic schema"""
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -586,13 +552,15 @@ def test_can_honor_cpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
     assert not dragon_backend._can_honor(run_req)[0]
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 @pytest.mark.parametrize("affinity", [[0], [0, 1]])
 def test_can_honor_gpu_affinity(
     monkeypatch: pytest.MonkeyPatch, affinity: t.List[int]
 ) -> None:
     """Verify that valid GPU affinities are accepted"""
-    dragon_backend = get_mock_backend(monkeypatch)
+
+    num_cpus, num_gpus = 8, 2
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=num_cpus, num_gpus=num_gpus)
+
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -609,11 +577,10 @@ def test_can_honor_gpu_affinity(
     assert dragon_backend._can_honor(run_req)[0]
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_can_honor_gpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that invalid GPU affinities are NOT accepted
     NOTE: negative values are captured by the Pydantic schema"""
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     run_req = DragonRunRequest(
         exe="sleep",
         exe_args=["5"],
@@ -630,46 +597,45 @@ def test_can_honor_gpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
     assert not dragon_backend._can_honor(run_req)[0]
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_can_honor_gpu_device_not_available(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that a request for a GPU if none exists is not accepted"""
 
     # create a mock node class that always reports no GPUs available
-    dragon_backend = get_mock_backend(monkeypatch, num_gpus=0)
+    with monkeypatch.context() as ctx:
+        dragon_backend = get_mock_backend(ctx, num_cpus=8, num_gpus=0)
 
-    run_req = DragonRunRequest(
-        exe="sleep",
-        exe_args=["5"],
-        path="/a/fake/path",
-        nodes=2,
-        tasks=1,
-        tasks_per_node=1,
-        env={},
-        current_env={},
-        pmi_enabled=False,
-        # specify GPU device w/no affinity
-        policy=DragonRunPolicy(gpu_affinity=[0]),
-    )
+        run_req = DragonRunRequest(
+            exe="sleep",
+            exe_args=["5"],
+            path="/a/fake/path",
+            nodes=2,
+            tasks=1,
+            tasks_per_node=1,
+            env={},
+            current_env={},
+            pmi_enabled=False,
+            # specify GPU device w/no affinity
+            policy=DragonRunPolicy(gpu_affinity=[0]),
+        )
+        can_honor, _ = dragon_backend._can_honor(run_req)
+        assert not can_honor
 
-    assert not dragon_backend._can_honor(run_req)[0]
 
-
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_get_id(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     step_id = next(dragon_backend._step_ids)
 
     assert step_id.endswith("0")
     assert step_id != next(dragon_backend._step_ids)
 
 
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
-    dragon_backend = get_mock_backend(monkeypatch)
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
     set_mock_group_infos(monkeypatch, dragon_backend)
     hosts = dragon_backend.hosts
+    dragon_backend._prioritizer.increment(hosts[0])
 
-    expected_message = textwrap.dedent(f"""\
+    expected_msg = textwrap.dedent(f"""\
         Dragon server backend update
         | Host   |  Status  |
         |--------|----------|
@@ -677,7 +643,7 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
         | {hosts[1]} |   Free   |
         | {hosts[2]} |   Free   |
         | Step     | Status       | Hosts           |  Return codes  |  Num procs  |
-        |----------|--------------|-------------|----------------|-------------|
+        |----------|--------------|-----------------|----------------|-------------|
         | abc123-1 | Running      | {hosts[0]}         |                |      1      |
         | del999-2 | Cancelled    | {hosts[1]}         |       -9       |      1      |
         | c101vz-3 | Completed    | {hosts[1]},{hosts[2]} |       0        |      2      |
@@ -686,6 +652,110 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
 
     # get rid of white space to make the comparison easier
     actual_msg = dragon_backend.status_message.replace(" ", "")
-    expected_message = expected_message.replace(" ", "")
+    expected_msg = expected_msg.replace(" ", "")
 
-    assert actual_msg == expected_message
+    # ignore dashes in separators (hostname changes may cause column expansion)
+    while actual_msg.find("--") > -1:
+        actual_msg = actual_msg.replace("--", "-")
+    while expected_msg.find("--") > -1:
+        expected_msg = expected_msg.replace("--", "-")
+
+    assert actual_msg == expected_msg
+
+
+def test_can_honor_hosts_unavailable_hosts(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify that requesting nodes with invalid names causes number of available
+    nodes check to fail due to valid # of named nodes being under num_nodes"""
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
+
+    # let's supply 2 invalid and 1 valid hostname
+    actual_hosts = list(dragon_backend._hosts)
+    actual_hosts[0] = f"x{actual_hosts[0]}"
+    actual_hosts[1] = f"x{actual_hosts[1]}"
+
+    host_list = ",".join(actual_hosts)
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=2,  # <----- requesting 2 of 3 available nodes
+        hostlist=host_list,  # <--- only one valid name available
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+        policy=DragonRunPolicy(),
+    )
+
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    # confirm the failure is indicated
+    assert not can_honor
+    # confirm failure message indicates number of nodes requested as cause
+    assert "named hosts" in error_msg
+
+
+def test_can_honor_hosts_unavailable_hosts_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify that requesting nodes with invalid names causes number of available
+    nodes check to be reduced but still passes if enough valid named nodes are passed"""
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
+
+    # let's supply 2 valid and 1 invalid hostname
+    actual_hosts = list(dragon_backend._hosts)
+    actual_hosts[0] = f"x{actual_hosts[0]}"
+
+    host_list = ",".join(actual_hosts)
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=2,  # <----- requesting 2 of 3 available nodes
+        hostlist=host_list,  # <--- two valid names are available
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+        policy=DragonRunPolicy(),
+    )
+
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    # confirm the failure is indicated
+    assert can_honor, error_msg
+    # confirm failure message indicates number of nodes requested as cause
+    assert error_msg is None, error_msg
+
+
+def test_can_honor_hosts_1_hosts_requested(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify that requesting nodes with invalid names causes number of available
+    nodes check to be reduced but still passes if enough valid named nodes are passed"""
+    dragon_backend = get_mock_backend(monkeypatch, num_cpus=8, num_gpus=0)
+
+    # let's supply 2 valid and 1 invalid hostname
+    actual_hosts = list(dragon_backend._hosts)
+    actual_hosts[0] = f"x{actual_hosts[0]}"
+
+    host_list = ",".join(actual_hosts)
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=1,  # <----- requesting 0 nodes - should be ignored
+        hostlist=host_list,  # <--- two valid names are available
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+        policy=DragonRunPolicy(),
+    )
+
+    can_honor, error_msg = dragon_backend._can_honor(run_req)
+
+    # confirm the failure is indicated
+    assert can_honor, error_msg

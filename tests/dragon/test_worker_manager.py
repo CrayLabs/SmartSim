@@ -26,7 +26,6 @@
 
 import io
 import logging
-import multiprocessing as mp
 import pathlib
 import time
 
@@ -36,10 +35,18 @@ torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
 import base64
+import multiprocessing as mp
+
+try:
+    mp.set_start_method("dragon")
+except Exception:
+    pass
+
 import os
 
 import dragon.channels as dch
 from dragon import fli
+from dragon.mpbridge.queues import DragonQueue
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
@@ -167,21 +174,22 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
     descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
-    os.environ["SS_REQUEST_QUEUE"] = descriptor
+    os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
         queue_factory=DragonFLIChannel.from_descriptor,
     )
-    integrated_worker = TorchWorker()
+    integrated_worker_type = TorchWorker
 
     worker_manager = WorkerManager(
         config_loader,
-        integrated_worker,
+        integrated_worker_type,
         as_service=True,
         cooldown=5,
         device="cpu",
+        dispatcher_queue=mp.Queue(maxsize=0),
     )
 
     worker_queue = config_loader.get_queue()

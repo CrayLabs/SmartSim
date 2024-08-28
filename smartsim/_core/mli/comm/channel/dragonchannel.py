@@ -33,11 +33,7 @@ from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-try:
-    import dragon.channels as dch
-except ImportError as exc:
-    if not "pytest" in sys.modules:
-        raise exc from None
+import dragon.channels as dch
 
 
 class DragonCommChannel(cch.CommChannelBase):

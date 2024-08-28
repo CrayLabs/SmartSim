@@ -13,7 +13,12 @@ Jump to:
 
 Description
 
+
 - Update SmartSim environment variables using new naming convention
+- Add RequestDispatcher and the possibility of batching inference requests
+- Enable hostname selection for dragon tasks
+- Remove pydantic dependency from MLI code
+- Update MLI environment variables using new naming convention
 - Reduce a copy by using torch.from_numpy instead of torch.tensor
 - Enable dynamic feature store selection
 - Fix dragon package installation bug

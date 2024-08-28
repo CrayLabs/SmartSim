@@ -24,43 +24,47 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import sys
-from smartsim import Experiment
-from smartsim.status import TERMINAL_STATUSES
-import time
+import typing as t
 
-DEVICE = "gpu"
-filedir = os.path.dirname(__file__)
-app_script_name = os.path.join(filedir, "mock_app_redis.py")
-model_name = os.path.join(filedir, f"resnet50.{DEVICE}.pt")
+from .....log import get_logger
+from ...comm.channel.channel import CommChannelBase
+from ...message_handler import MessageHandler
+from ...mli_schemas.response.response_capnp import ResponseBuilder
+
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
+
+logger = get_logger(__file__)
 
 
-exp_path = os.path.join(filedir, "redis_ai_multi")
-os.makedirs(exp_path, exist_ok=True)
-exp = Experiment("redis_ai_multi", launcher="slurm", exp_path=exp_path)
-
-db = exp.create_database(interface="hsn0")
-
-app_rs = exp.create_run_settings(
-    sys.executable, exe_args = [app_script_name, "--device", DEVICE]
+def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
+    return MessageHandler.build_response(
+        status=status,
+        message=message,
+        result=[],
+        custom_attributes=None,
     )
-app_rs.set_nodes(1)
-app_rs.set_tasks(4)
-app = exp.create_model("app", run_settings=app_rs)
-app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
 
-exp.generate(db, app, overwrite=True)
 
-exp.start(db, app, block=False)
+def exception_handler(
+    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
+) -> None:
+    """
+    Logs exceptions and sends a failure response.
 
-while True:
-    if exp.get_status(app)[0] in TERMINAL_STATUSES:
-        exp.stop(db)
-        break
-    if exp.get_status(db)[0] in TERMINAL_STATUSES:
-        exp.stop(app)
-        break
-    time.sleep(5)
-
-print("Exiting.")
+    :param exc: The exception to be logged
+    :param reply_channel: The channel used to send replies
+    :param failure_message: Failure message to log and send back
+    """
+    logger.exception(
+        f"{failure_message}\n"
+        f"Exception type: {type(exc).__name__}\n"
+        f"Exception message: {str(exc)}"
+    )
+    serialized_resp = MessageHandler.serialize_response(
+        build_failure_reply("fail", failure_message)
+    )
+    if reply_channel:
+        reply_channel.send(serialized_resp)
+    else:
+        logger.warning("Unable to notify client of error without reply_channel")
