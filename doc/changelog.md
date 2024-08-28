@@ -13,7 +13,6 @@ Jump to:
 
 Description
 
-
 - Update SmartSim environment variables using new naming convention
 - Add RequestDispatcher and the possibility of batching inference requests
 - Enable hostname selection for dragon tasks
