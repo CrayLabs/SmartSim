@@ -70,7 +70,7 @@ def test_job_init():
     job = Job(entity, LaunchSettings("slurm"))
     assert isinstance(job, Job)
     assert job.entity.name == "test_name"
-    assert "echo" in job.entity.exe[0]
+    assert "echo" in job.entity.exe
     assert "spam" in job.entity.exe_args
     assert "eggs" in job.entity.exe_args
 
@@ -121,7 +121,7 @@ def test_mpmdpair_init():
     mpmd_pair = MPMDPair(entity, LaunchSettings("slurm"))
     assert isinstance(mpmd_pair, MPMDPair)
     assert mpmd_pair.entity.name == "test_name"
-    assert "echo" in mpmd_pair.entity.exe[0]
+    assert "echo" in mpmd_pair.entity.exe
     assert "spam" in mpmd_pair.entity.exe_args
     assert "eggs" in mpmd_pair.entity.exe_args
 
