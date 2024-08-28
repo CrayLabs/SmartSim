@@ -26,14 +26,14 @@
 
 import pytest
 
-from smartsim.entity.model import Application
+from smartsim.entity.application import Application
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.job import Job
 from smartsim.launchable.jobGroup import JobGroup
 from smartsim.settings.launchSettings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
-# TODO replace with LaunchSettings
+
 app_1 = Application("app_1", "python")
 app_2 = Application("app_2", "python")
 app_3 = Application("app_3", "python")

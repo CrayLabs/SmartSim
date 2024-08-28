@@ -70,32 +70,24 @@ class Application(SmartSimEntity):
                                 files
         """
         super().__init__(name)
-        self._exe = [expand_exe_path(exe)]
+        """The name of the application"""
+        self._exe = expand_exe_path(exe)
+        """The executable to run"""
         self._exe_args = self._build_exe_args(exe_args) or []
+        """The executable arguments"""
         self._files = copy.deepcopy(files) if files else None
+        """Files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
         )
+        """Parameters and values to be used when configuring files"""
         self._incoming_entities: t.List[SmartSimEntity] = []
+        """Entities for which the prefix will have to be known by other entities"""
         self._key_prefixing_enabled = False
-
-    # TODO Talk through as a group if _key_prefixing_enabled
-    #     should have proeprty and setter decorators or do we stick with something of similar syntax.
-    #     Bring this up to the group after the rest of the class is done so they see what a consistent
-    #     API is currently being formed.
-    # TODO Discuss if the exe_args parameter should be set with a str in the construct
-    #     and setter or should we stick to t.Sequence[str] only.  This might require group discussion.
-    # TODO Discuss with the core team when/if properties shoulda always be returned via reference
-    #     or deep copy
-    # TODO Ticket says to remove prefixing, but I think that needs to stay
-    # TODO Should attached_files_table be deleted and replaced with @property?
-    # TODO Put create pinning string into a new ticket for finding a home for it
-    # TODO check consistency of variable names and constructor with Ensemble, where appropriate
-    # TODO Unit tests!!!
-    # TODO Cleanup documentation
+        """Unique prefix to avoid key collisions"""
 
     @property
-    def exe(self) -> t.List[str]:
+    def exe(self) -> str:
         """Return executable to run.
 
         :returns: application executable to run
@@ -103,22 +95,20 @@ class Application(SmartSimEntity):
         return self._exe
 
     @exe.setter
-    def exe(self, value: t.List[str]) -> None:
+    def exe(self, value: str) -> None:
         """Set executable to run.
 
         :param value: executable to run
         """
-        self._exe = value
+        self._exe = copy.deepcopy(value)
 
     @property
     def exe_args(self) -> t.Sequence[str]:
-        # TODO why does this say immutable if it is not a deep copy?
-        # TODO review whether this should be a deepcopy - are we relying of having this be a reference?
-        """Return an immutable list of attached executable arguments.
+        """Return a list of attached executable arguments.
 
         :returns: application executable arguments
         """
-        return copy.deepcopy(self._exe_args)
+        return self._exe_args
 
     @exe_args.setter
     def exe_args(self, value: t.Union[str, t.Sequence[str], None]) -> None:  #
@@ -144,7 +134,7 @@ class Application(SmartSimEntity):
 
         :param value: files
         """
-        self._files = value
+        self._files = copy.deepcopy(value)
 
     @property
     def file_parameters(self) -> t.Mapping[str, str]:
@@ -160,7 +150,7 @@ class Application(SmartSimEntity):
 
         :param value: file parameters
         """
-        self._file_parameters = value
+        self._file_parameters = copy.deepcopy(value)
 
     @property
     def incoming_entities(self) -> t.List[SmartSimEntity]:
@@ -176,15 +166,23 @@ class Application(SmartSimEntity):
 
         :param value: incoming entities
         """
-        self._incoming_entities = value
+        self._incoming_entities = copy.deepcopy(value)
 
     @property
     def key_prefixing_enabled(self) -> bool:
+        """Return whether key prefixing is enabled for the application.
+
+        :param value: key prefixing enabled
+        """
         return self._key_prefixing_enabled
 
     @key_prefixing_enabled.setter
     def key_prefixing_enabled(self, value: bool) -> None:
-        self.key_prefixing_enabled = value
+        """Set whether key prefixing is enabled for the application.
+
+        :param value: key prefixing enabled
+        """
+        self.key_prefixing_enabled = copy.deepcopy(value)
 
     def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
         """Add executable arguments to executable
@@ -221,6 +219,7 @@ class Application(SmartSimEntity):
         :param to_copy: files to copy
         :param to_symlink: files to symlink
         :param to_configure: input files with tagged parameters
+        :raises ValueError: if the generator file already exists
         """
         to_copy = to_copy or []
         to_symlink = to_symlink or []
@@ -253,10 +252,6 @@ class Application(SmartSimEntity):
         """Print a table of the attached files on std out"""
         print(self.attached_files_table)
 
-    def params_to_args(self) -> None:
-        """Convert parameters to command line arguments and update run settings."""
-        ...
-
     def __str__(self) -> str:  # pragma: no cover
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
@@ -266,12 +261,12 @@ class Application(SmartSimEntity):
         entity_str += "Executable Arguments:\n"
         for ex_arg in self.exe_args:
             entity_str += f"{str(ex_arg)}\n"
-        entity_str += "Entity Files: " + str(self.files) + "\n"
-        entity_str += "File Parameters: " + str(self.file_parameters) + "\n"
+        entity_str += f"Entity Files: {self.files}\n"
+        entity_str += f"File Parameters: {self.file_parameters}\n"
         entity_str += "Incoming Entities:\n"
         for entity in self.incoming_entities:
             entity_str += f"{entity}\n"
-        entity_str += "Key Prefixing Enabled: " + str(self.key_prefixing_enabled) + "\n"
+        entity_str += f"Key Prefixing Enabled: {self.key_prefixing_enabled}\n"
 
         return entity_str
 
@@ -279,12 +274,16 @@ class Application(SmartSimEntity):
     def _build_exe_args(
         exe_args: t.Optional[t.Union[str, t.Sequence[str], None]]
     ) -> t.List[str]:
-        """Check and convert exe_args input to a desired collection format"""
+        """Check and convert exe_args input to a desired collection format
+        
+        :param exe_args:
+        :raises TypeError: if exe_args is not a list of str or str
+        """
         if not exe_args:
             return []
 
         if isinstance(exe_args, list):
-            exe_args = copy.deepcopy(exe_args)
+            exe_args = exe_args
 
         if not (
             isinstance(exe_args, str)
@@ -296,6 +295,6 @@ class Application(SmartSimEntity):
             raise TypeError("Executable arguments were not a list of str or a str.")
 
         if isinstance(exe_args, str):
-            return exe_args.split()
+            return copy.deepcopy(exe_args.split())
 
         return exe_args

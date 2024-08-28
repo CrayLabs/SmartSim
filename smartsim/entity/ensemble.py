@@ -33,8 +33,8 @@ import os.path
 import typing as t
 
 from smartsim.entity import _mock, entity, strategies
+from smartsim.entity.application import Application
 from smartsim.entity.files import EntityFiles
-from smartsim.entity.model import Application
 from smartsim.entity.strategies import ParamSet
 from smartsim.launchable.job import Job
 
