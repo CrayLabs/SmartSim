@@ -27,6 +27,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+import pathlib
 
 dragon = pytest.importorskip("dragon")
 
@@ -128,7 +129,7 @@ def setup_worker_manager_model_bytes(
 
     request = InferenceRequest(
         model_key=None,
-        callback=None,
+        callback=FileSystemCommChannel(pathlib.Path(test_dir)),
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -188,7 +189,7 @@ def setup_worker_manager_model_key(
 
     request = InferenceRequest(
         model_key=model_id,
-        callback=None,
+        callback=FileSystemCommChannel(pathlib.Path(test_dir)),
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -307,13 +308,13 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         mock_reply_fn,
     )
 
-    def mock_exception_handler(exc, reply_channel, failure_message):
-        return exception_handler(exc, None, failure_message)
+    # def mock_exception_handler(exc, reply_channel, failure_message):
+    #     return exception_handler(exc, FileSystemCommChannel(), failure_message)
 
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
-    )
+    # monkeypatch.setattr(
+    #     "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+    #     mock_exception_handler,
+    # )
 
     return mock_reply_fn
 
@@ -461,7 +462,7 @@ def test_dispatcher_pipeline_stage_errors_handled(
     mock_reply_fn.assert_called_with("fail", error_message)
 
 
-def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
+def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch, test_dir):
     """Ensures that the worker manager does not crash after a failure in the
     execute pipeline stage"""
     reply = InferenceReply()
@@ -473,7 +474,7 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     )
 
     test_exception = ValueError("Test ValueError")
-    exception_handler(test_exception, None, "Failure while fetching the model.")
+    exception_handler(test_exception, FileSystemCommChannel(pathlib.Path(test_dir)), "Failure while fetching the model.")
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")
