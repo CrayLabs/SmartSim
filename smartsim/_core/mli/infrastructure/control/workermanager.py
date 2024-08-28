@@ -24,65 +24,40 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=import-error
+# pylint: disable-next=unused-import
+import dragon
+
+# pylint: enable=import-error
+
+# isort: off
+# isort: on
+
+import multiprocessing as mp
 import time
 import typing as t
+from queue import Empty
 
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 
 from .....log import get_logger
 from ....entrypoints.service import Service
-from ...comm.channel.channel import CommChannelBase
-from ...comm.channel.dragonchannel import DragonCommChannel
+from ....utils.timings import PerfTimer
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
 from ...infrastructure.worker.worker import (
     InferenceReply,
-    InferenceRequest,
     LoadModelResult,
     MachineLearningWorkerBase,
+    RequestBatch,
 )
 from ...message_handler import MessageHandler
-from ...mli_schemas.response.response_capnp import ResponseBuilder
+from .devicemanager import DeviceManager, WorkerDevice
+from .error_handling import build_failure_reply, exception_handler
 
 if t.TYPE_CHECKING:
-    from dragon.fli import FLInterface
-
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger(__name__)
-
-
-def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
-    """Build a response indicating a failure occurred
-    :param status: The status of the response
-    :param message: The error message to include in the response"""
-    return MessageHandler.build_response(
-        status=status,
-        message=message,
-        result=None,
-        custom_attributes=None,
-    )
-
-
-def exception_handler(
-    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
-) -> None:
-    """
-    Logs exceptions and sends a failure response.
-
-    :param exc: The exception to be logged
-    :param reply_channel: The channel used to send replies
-    :param failure_message: Failure message to log and send back
-    """
-    logger.exception(
-        f"{failure_message}\n"
-        f"Exception type: {type(exc).__name__}\n"
-        f"Exception message: {str(exc)}"
-    )
-    serialized_resp = MessageHandler.serialize_response(
-        build_failure_reply("fail", failure_message)
-    )
-    if reply_channel:
-        reply_channel.send(serialized_resp)
 
 
 class WorkerManager(Service):
@@ -92,26 +67,29 @@ class WorkerManager(Service):
     def __init__(
         self,
         config_loader: EnvironmentConfigLoader,
-        worker: MachineLearningWorkerBase,
+        worker_type: t.Type[MachineLearningWorkerBase],
+        dispatcher_queue: "mp.Queue[RequestBatch]",
         as_service: bool = False,
         cooldown: int = 0,
         device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
 
-        :param config_loader: Environment config loader that loads the task queue and
-        feature store
-        :param workers: A worker to manage
+        :param config_loader: Environment config loader for loading queues
+        and feature stores
+        :param worker_type: The type of worker to manage
+        :param dispatcher_queue: Queue from which the batched requests are pulled
         :param as_service: Specifies run-once or run-until-complete behavior of service
         :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
-        :param device: The type of hardware the workers must be executed on
+        :param device: The device on which the Worker should run. Every worker manager
+        is assigned one single GPU (if available), thus the device should have no index.
         """
         super().__init__(as_service, cooldown)
 
-        self._task_queue: t.Optional[CommChannelBase] = config_loader.get_queue()
-        """the queue the manager monitors for new tasks"""
-        self._worker = worker
+        self._dispatcher_queue = dispatcher_queue
+        """The Dispatcher queue that the WorkerManager monitors for new batches"""
+        self._worker = worker_type()
         """The ML Worker implementation"""
         self._callback_factory = config_loader._callback_factory
         """The type of communication channel to construct for callbacks"""
@@ -126,19 +104,28 @@ class WorkerManager(Service):
         self._backbone: t.Optional[FeatureStore] = config_loader.get_backbone()
         """A standalone, system-created feature store used to share internal
         information among MLI components"""
+        self._device_manager: t.Optional[DeviceManager] = None
+        """Object responsible for model caching and device access"""
+        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
+        """Performance timer"""
 
-    def _check_feature_stores(self, request: InferenceRequest) -> bool:
+    def _on_start(self) -> None:
+        """Called on initial entry into Service `execute` event loop before
+        `_on_iteration` is invoked."""
+        self._device_manager = DeviceManager(WorkerDevice(self._device))
+
+    def _check_feature_stores(self, batch: RequestBatch) -> bool:
         """Ensures that all feature stores required by the request are available
 
-        :param request: The request to validate
-        :returns: False if feature store validation fails for the request, True otherwise
+        :param batch: The batch of requests to validate
+        :returns: False if feature store validation fails for the batch, True otherwise
         """
         # collect all feature stores required by the request
         fs_model: t.Set[str] = set()
-        if request.model_key:
-            fs_model = {request.model_key.descriptor}
-        fs_inputs = {key.descriptor for key in request.input_keys}
-        fs_outputs = {key.descriptor for key in request.output_keys}
+        if batch.model_id.key:
+            fs_model = {batch.model_id.descriptor}
+        fs_inputs = {key.descriptor for key in batch.input_keys}
+        fs_outputs = {key.descriptor for key in batch.output_keys}
 
         # identify which feature stores are requested and unknown
         fs_desired = fs_model.union(fs_inputs).union(fs_outputs)
@@ -158,269 +145,169 @@ class WorkerManager(Service):
 
         return True
 
-    def _check_model(self, request: InferenceRequest) -> bool:
-        """Ensure that a model is available for the request
-
-        :param request: The request to validate
-        :returns: False if model validation fails for the request, True otherwise
-        """
-        if request.model_key or request.raw_model:
-            return True
-
-        logger.error("Unable to continue without model bytes or feature store key")
-        return False
-
-    def _check_inputs(self, request: InferenceRequest) -> bool:
-        """Ensure that inputs are available for the request
-
-        :param request: The request to validate
-        :returns: False if input validation fails for the request, True otherwise
-        """
-        if request.input_keys or request.raw_inputs:
-            return True
-
-        logger.error("Unable to continue without input bytes or feature store keys")
-        return False
-
-    def _check_callback(self, request: InferenceRequest) -> bool:
-        """Ensure that a callback channel is available for the request
-
-        :param request: The request to validate
-        :returns: False if callback validation fails for the request, True otherwise
-        """
-        if request.callback is not None:
-            return True
-
-        logger.error("No callback channel provided in request")
-        return False
-
-    def _validate_request(self, request: InferenceRequest) -> bool:
+    def _validate_batch(self, batch: RequestBatch) -> bool:
         """Ensure the request can be processed
 
-        :param request: The request to validate
+        :param batch: The batch of requests to validate
         :return: False if the request fails any validation checks, True otherwise"""
-        checks = [
-            self._check_feature_stores(request),
-            self._check_model(request),
-            self._check_inputs(request),
-            self._check_callback(request),
-        ]
 
-        return all(checks)
+        if batch is None or len(batch.requests) == 0:
+            return False
 
+        return self._check_feature_stores(batch)
+
+    # remove this when we are done with time measurements
+    # pylint: disable-next=too-many-statements
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
 
         the inference pipeline"""
-        logger.debug("executing worker manager pipeline")
 
-        if self._task_queue is None:
-            logger.error("No queue to check for tasks")
+        pre_batch_time = time.perf_counter()
+        try:
+            batch: RequestBatch = self._dispatcher_queue.get(timeout=0.0001)
+        except Empty:
             return
 
-        timings = []  # timing
-
-        bytes_list: t.List[bytes] = self._task_queue.recv()
-
-        if not bytes_list:
-            exception_handler(
-                ValueError("No request data found"),
-                None,
-                "No request data found.",
-            )
-            return
-
-        request_bytes = bytes_list[0]
-        tensor_bytes_list = bytes_list[1:]
-
-        interm = time.perf_counter()  # timing
-        request = self._worker.deserialize_message(
-            request_bytes, self._callback_factory
+        self._perf_timer.start_timings(
+            "flush_requests", time.perf_counter() - pre_batch_time
         )
 
-        if request.input_meta and tensor_bytes_list:
-            request.raw_inputs = tensor_bytes_list
-
-        if not self._validate_request(request):
+        if not self._validate_batch(batch):
             exception_handler(
-                ValueError("Error validating the request"),
-                request.callback,
-                "Error validating the request.",
+                ValueError("An invalid batch was received"),
+                None,
+                "Error batching inputs, the batch was invalid.",
             )
+            return
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-
-        reply = InferenceReply()
-
-        if not request.raw_model:
-            if request.model_key is None:
+        if self._device_manager is None:
+            for request in batch.requests:
+                msg = "No Device Manager found. WorkerManager._on_start() "
+                "must be called after initialization. If possible, "
+                "you should use `WorkerManager.execute()` instead of "
+                "directly calling `_on_iteration()`."
+                try:
+                    self._dispatcher_queue.put(batch)
+                except Exception:
+                    msg += "\nThe batch could not be put back in the queue "
+                    "and will not be processed."
                 exception_handler(
-                    ValueError("Could not find model key or model"),
+                    RuntimeError(msg),
                     request.callback,
-                    "Could not find model key or model.",
+                    "Error acquiring device manager",
                 )
+            return
+
+        try:
+            device_cm = self._device_manager.get_device(
+                worker=self._worker,
+                batch=batch,
+                feature_stores=self._feature_stores,
+            )
+        except Exception as exc:
+            for request in batch.requests:
+                exception_handler(
+                    exc,
+                    request.callback,
+                    "Error loading model on device or getting device.",
+                )
+            return
+        self._perf_timer.measure_time("fetch_model")
+
+        with device_cm as device:
+
+            try:
+                model_result = LoadModelResult(device.get_model(batch.model_id.key))
+            except Exception as exc:
+                for request in batch.requests:
+                    exception_handler(
+                        exc, request.callback, "Error getting model from device."
+                    )
                 return
+            self._perf_timer.measure_time("load_model")
 
-            if request.model_key.key in self._cached_models:
-                timings.append(time.perf_counter() - interm)  # timing
-                interm = time.perf_counter()  # timing
-                model_result = LoadModelResult(
-                    self._cached_models[request.model_key.key]
-                )
-
-            else:
-                timings.append(time.perf_counter() - interm)  # timing
-                interm = time.perf_counter()  # timing
-                try:
-                    fetch_model_result = self._worker.fetch_model(
-                        request, self._feature_stores
-                    )
-                except Exception as e:
+            if batch.inputs is None:
+                for request in batch.requests:
                     exception_handler(
-                        e, request.callback, "Failed while fetching the model."
-                    )
-                    return
-
-                timings.append(time.perf_counter() - interm)  # timing
-                interm = time.perf_counter()  # timing
-                try:
-                    model_result = self._worker.load_model(
-                        request,
-                        fetch_result=fetch_model_result,
-                        device=self._device,
-                    )
-                    self._cached_models[request.model_key.key] = model_result.model
-                except Exception as e:
-                    exception_handler(
-                        e,
+                        ValueError("Error batching inputs"),
                         request.callback,
-                        "Failed while loading model from feature store.",
+                        "Error batching inputs.",
                     )
-                    return
+                return
+            transformed_input = batch.inputs
 
-        else:
-            timings.append(time.perf_counter() - interm)  # timing
-            interm = time.perf_counter()  # timing
             try:
-                fetch_model_result = self._worker.fetch_model(
-                    request, self._feature_stores
+                execute_result = self._worker.execute(
+                    batch, model_result, transformed_input, device.name
                 )
             except Exception as e:
-                exception_handler(
-                    e, request.callback, "Failed while fetching the model."
-                )
+                for request in batch.requests:
+                    exception_handler(e, request.callback, "Failed while executing.")
                 return
+            self._perf_timer.measure_time("execute")
 
-            timings.append(time.perf_counter() - interm)  # timing
-            interm = time.perf_counter()  # timing
             try:
-                model_result = self._worker.load_model(
-                    request, fetch_result=fetch_model_result, device=self._device
+                transformed_outputs = self._worker.transform_output(
+                    batch, execute_result
                 )
             except Exception as e:
-                exception_handler(
-                    e,
-                    request.callback,
-                    "Failed while loading model from feature store.",
-                )
+                for request in batch.requests:
+                    exception_handler(
+                        e, request.callback, "Failed while transforming the output."
+                    )
                 return
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-        try:
-            fetch_input_result = self._worker.fetch_inputs(
-                request, self._feature_stores
-            )
-        except Exception as e:
-            exception_handler(e, request.callback, "Failed while fetching the inputs.")
-            return
+            for request, transformed_output in zip(batch.requests, transformed_outputs):
+                reply = InferenceReply()
+                if request.output_keys:
+                    try:
+                        reply.output_keys = self._worker.place_output(
+                            request,
+                            transformed_output,
+                            self._feature_stores,
+                        )
+                    except Exception as e:
+                        exception_handler(
+                            e, request.callback, "Failed while placing the output."
+                        )
+                        continue
+                else:
+                    reply.outputs = transformed_output.outputs
+                self._perf_timer.measure_time("assign_output")
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-        try:
-            transformed_input = self._worker.transform_input(
-                request, fetch_input_result, self._device
-            )
-        except Exception as e:
-            exception_handler(
-                e, request.callback, "Failed while transforming the input."
-            )
-            return
+                if reply.outputs is None or not reply.outputs:
+                    response = build_failure_reply("fail", "Outputs not found.")
+                else:
+                    reply.status_enum = "complete"
+                    reply.message = "Success"
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-        try:
-            execute_result = self._worker.execute(
-                request, model_result, transformed_input
-            )
-        except Exception as e:
-            exception_handler(e, request.callback, "Failed while executing.")
-            return
+                    results = self._worker.prepare_outputs(reply)
+                    response = MessageHandler.build_response(
+                        status=reply.status_enum,
+                        message=reply.message,
+                        result=results,
+                        custom_attributes=None,
+                    )
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-        try:
-            transformed_output = self._worker.transform_output(
-                request, execute_result, self._device
-            )
-        except Exception as e:
-            exception_handler(
-                e, request.callback, "Failed while transforming the output."
-            )
-            return
+                self._perf_timer.measure_time("build_reply")
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-        if request.output_keys:
-            try:
-                reply.output_keys = self._worker.place_output(
-                    request, transformed_output, self._feature_stores
-                )
-            except Exception as e:
-                exception_handler(
-                    e, request.callback, "Failed while placing the output."
-                )
-                return
-        else:
-            reply.outputs = transformed_output.outputs
+                serialized_resp = MessageHandler.serialize_response(response)
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
+                self._perf_timer.measure_time("serialize_resp")
 
-        if reply.outputs is None or not reply.outputs:
-            response = build_failure_reply("fail", "Outputs not found.")
-        else:
-            reply.status_enum = "complete"
-            reply.message = "Success"
+                if request.callback:
+                    request.callback.send(serialized_resp)
+                    if reply.outputs:
+                        # send tensor data after response
+                        for output in reply.outputs:
+                            request.callback.send(output)
+                self._perf_timer.measure_time("send")
 
-            results = self._worker.prepare_outputs(reply)
-            response = MessageHandler.build_response(
-                status=reply.status_enum,
-                message=reply.message,
-                result=results,
-                custom_attributes=None,
-            )
+        self._perf_timer.end_timings()
 
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-
-        serialized_resp = MessageHandler.serialize_response(response)
-
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-        if request.callback:
-            # send serialized response
-            request.callback.send(serialized_resp)
-            if reply.outputs:
-                # send tensor data after response
-                for output in reply.outputs:
-                    request.callback.send(output)
-
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-
-        print(" ".join(str(time) for time in timings))  # timing
+        if self._perf_timer.max_length == 801:
+            self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""

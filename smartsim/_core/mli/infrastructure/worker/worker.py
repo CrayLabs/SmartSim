@@ -24,8 +24,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=import-error
+from dragon.managed_memory import MemoryPool
+
+# isort: off
+# isort: on
+
 import typing as t
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 from .....error import SmartSimError
 from .....log import get_logger
@@ -39,6 +46,9 @@ if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
+
+# Placeholder
+ModelIdentifier = FeatureStoreKey
 
 
 class InferenceRequest:
@@ -100,19 +110,34 @@ class LoadModelResult:
 
 
 class TransformInputResult:
-    """A wrapper around a transformed input"""
+    """A wrapper around a transformed batch of input tensors"""
 
-    def __init__(self, result: t.Any) -> None:
+    def __init__(
+        self,
+        result: t.Any,
+        slices: list[slice],
+        dims: list[list[int]],
+        dtypes: list[str],
+    ) -> None:
         """Initialize the object"""
         self.transformed = result
+        """List of Dragon MemoryAlloc objects on which the tensors are stored"""
+        self.slices = slices
+        """Each slice represents which portion of the input tensors belongs to
+        which request"""
+        self.dims = dims
+        """Dimension of the transformed tensors"""
+        self.dtypes = dtypes
+        """Data type of transformed tensors"""
 
 
 class ExecuteResult:
     """A wrapper around inference results"""
 
-    def __init__(self, result: t.Any) -> None:
+    def __init__(self, result: t.Any, slices: list[slice]) -> None:
         """Initialize the object"""
         self.predictions = result
+        self.slices = slices
 
 
 class FetchInputResult:
@@ -151,6 +176,62 @@ class FetchModelResult:
     def __init__(self, result: bytes) -> None:
         """Initialize the object"""
         self.model_bytes: bytes = result
+
+
+@dataclass
+class RequestBatch:
+    """A batch of aggregated inference requests"""
+
+    requests: list[InferenceRequest]
+    inputs: t.Optional[TransformInputResult]
+    model_id: ModelIdentifier
+
+    @property
+    def has_valid_requests(self) -> bool:
+        """Returns whether the batch contains at least one request.
+
+        :return: True if at least one request is available
+        """
+        return len(self.requests) > 0
+
+    @property
+    def has_raw_model(self) -> bool:
+        """Returns whether the batch has a raw model
+
+        :return: True if the batch has a raw model
+        """
+        return self.raw_model is not None
+
+    @property
+    def raw_model(self) -> t.Optional[t.Any]:
+        """Returns the raw model to use to execute for this batch
+        if it is available.
+        :return: A model if available, otherwise None"""
+        if self.has_valid_requests:
+            return self.requests[0].raw_model
+        return None
+
+    @property
+    def input_keys(self) -> t.List[FeatureStoreKey]:
+        """All input keys available in this batch's requests
+
+        :return: All input keys belonging to requests in this batch"""
+        keys = []
+        for request in self.requests:
+            keys.extend(request.input_keys)
+
+        return keys
+
+    @property
+    def output_keys(self) -> t.List[FeatureStoreKey]:
+        """All output keys available in this batch's requests
+
+        :return: All output keys belonging to requests in this batch"""
+        keys = []
+        for request in self.requests:
+            keys.extend(request.output_keys)
+
+        return keys
 
 
 class MachineLearningWorkerCore:
@@ -233,29 +314,30 @@ class MachineLearningWorkerCore:
 
     @staticmethod
     def fetch_model(
-        request: InferenceRequest, feature_stores: t.Dict[str, FeatureStore]
+        batch: RequestBatch, feature_stores: t.Dict[str, FeatureStore]
     ) -> FetchModelResult:
         """Given a resource key, retrieve the raw model from a feature store
-        :param request: The request that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: Raw bytes of the model"""
+        :return: Raw bytes of the model
+        :raises SmartSimError: if neither a key or a model are provided or the
+        model cannot be retrieved from the feature store
+        :raises ValueError: if a feature store is not available and a raw
+        model is not provided"""
 
-        if request.raw_model:
-            # Should we cache model in the feature store?
-            # model_key = hash(request.raw_model)
-            # feature_store[model_key] = request.raw_model
-            # short-circuit and return the directly supplied model
-            return FetchModelResult(request.raw_model.data)
+        # All requests in the same batch share the model
+        if batch.raw_model:
+            return FetchModelResult(batch.raw_model.data)
 
         if not feature_stores:
             raise ValueError("Feature store is required for model retrieval")
 
-        if not request.model_key:
+        if batch.model_id is None:
             raise SmartSimError(
                 "Key must be provided to retrieve model from feature store"
             )
 
-        key, fsd = request.model_key.key, request.model_key.descriptor
+        key, fsd = batch.model_id.key, batch.model_id.descriptor
 
         try:
             feature_store = feature_stores[fsd]
@@ -267,51 +349,47 @@ class MachineLearningWorkerCore:
 
     @staticmethod
     def fetch_inputs(
-        request: InferenceRequest, feature_stores: t.Dict[str, FeatureStore]
-    ) -> FetchInputResult:
+        batch: RequestBatch, feature_stores: t.Dict[str, FeatureStore]
+    ) -> t.List[FetchInputResult]:
         """Given a collection of ResourceKeys, identify the physical location
         and input metadata
-        :param request: The request that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: the fetched input"""
+        :return: the fetched input
+        :raises ValueError: If neither an input key or an input tensor are provided
+        :raises SmartSimError: If a tensor for a given key cannot be retrieved"""
+        fetch_results = []
+        for request in batch.requests:
+            if request.raw_inputs:
+                fetch_results.append(
+                    FetchInputResult(request.raw_inputs, request.input_meta)
+                )
+                continue
 
-        if request.raw_inputs:
-            return FetchInputResult(request.raw_inputs, request.input_meta)
+            if not feature_stores:
+                raise ValueError("No input and no feature store provided")
 
-        if not feature_stores:
-            raise ValueError("No input and no feature store provided")
+            if request.input_keys:
+                data: t.List[bytes] = []
 
-        if request.input_keys:
-            data: t.List[bytes] = []
+                for fs_key in request.input_keys:
+                    try:
+                        feature_store = feature_stores[fs_key.descriptor]
+                        tensor_bytes = t.cast(bytes, feature_store[fs_key.key])
+                        data.append(tensor_bytes)
+                    except KeyError as ex:
+                        logger.exception(ex)
+                        raise SmartSimError(
+                            f"Tensor could not be retrieved with key {fs_key.key}"
+                        ) from ex
+                fetch_results.append(
+                    FetchInputResult(data, meta=None)
+                )  # fixme: need to get both tensor and descriptor
+                continue
 
-            for fs_key in request.input_keys:
-                try:
-                    feature_store = feature_stores[fs_key.descriptor]
-                    tensor_bytes = t.cast(bytes, feature_store[fs_key.key])
-                    data.append(tensor_bytes)
-                except KeyError as ex:
-                    logger.exception(ex)
-                    raise SmartSimError(
-                        f"Model could not be retrieved with key {fs_key.key}"
-                    ) from ex
-            return FetchInputResult(
-                data, meta=None
-            )  # fixme: need to get both tensor and descriptor
+            raise ValueError("No input source")
 
-        raise ValueError("No input source")
-
-    @staticmethod
-    def batch_requests(
-        request: InferenceRequest, transform_result: TransformInputResult
-    ) -> CreateInputBatchResult:
-        """Create a batch of requests. Return the batch when batch_size datum have been
-        collected or a configured batch duration has elapsed.
-        :param request: The request that triggered the pipeline
-        :param transform_result: Transformed inputs ready for batching
-        :return: `None` if batch size has not been reached and timeout not exceeded."""
-        if transform_result is not None or request.batch_size:
-            raise NotImplementedError("Batching is not yet supported")
-        return CreateInputBatchResult(None)
+        return fetch_results
 
     @staticmethod
     def place_output(
@@ -324,7 +402,9 @@ class MachineLearningWorkerCore:
         :param request: The request that triggered the pipeline
         :param execute_result: Results from inference
         :param feature_stores: Available feature stores used for persistence
-        :return: A collection of keys that were placed in the feature store"""
+        :return: A collection of keys that were placed in the feature store
+        :raises ValueError: If a feature store is not provided
+        """
         if not feature_stores:
             raise ValueError("Feature store is required for output persistence")
 
@@ -342,13 +422,13 @@ class MachineLearningWorkerCore:
 
 
 class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
-    """Abstrct base class providing contract for a machine learning
+    """Abstract base class providing contract for a machine learning
     worker implementation."""
 
     @staticmethod
     @abstractmethod
     def load_model(
-        request: InferenceRequest, fetch_result: FetchModelResult, device: str
+        batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
         """Given a loaded MachineLearningModel, ensure it is loaded into
         device memory
@@ -359,35 +439,39 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_input(
-        request: InferenceRequest, fetch_result: FetchInputResult, device: str
+        batch: RequestBatch,
+        fetch_results: list[FetchInputResult],
+        mem_pool: MemoryPool,
     ) -> TransformInputResult:
-        """Given a collection of data, perform a transformation on the data
+        """Given a collection of data, perform a transformation on the data and put
+        the raw tensor data on a MemoryPool allocation.
         :param request: The request that triggered the pipeline
-        :param fetch_result: Raw output from fetching inputs out of a feature store
-        :param device: The device on which the transformed input must be placed
+        :param fetch_result: Raw outputs from fetching inputs out of a feature store
+        :param mem_pool: The memory pool used to access batched input tensors
         :return: The transformed inputs wrapped in a InputTransformResult"""
 
     @staticmethod
     @abstractmethod
     def execute(
-        request: InferenceRequest,
+        batch: RequestBatch,
         load_result: LoadModelResult,
         transform_result: TransformInputResult,
+        device: str,
     ) -> ExecuteResult:
         """Execute an ML model on inputs transformed for use by the model
-        :param request: The request that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param load_result: The result of loading the model onto device memory
         :param transform_result: The result of transforming inputs for model consumption
+        :param device: The device on which the model will be executed
         :return: The result of inference wrapped in an ExecuteResult"""
 
     @staticmethod
     @abstractmethod
     def transform_output(
-        request: InferenceRequest, execute_result: ExecuteResult, result_device: str
-    ) -> TransformOutputResult:
+        batch: RequestBatch, execute_result: ExecuteResult
+    ) -> t.List[TransformOutputResult]:
         """Given inference results, perform transformations required to
         transmit results to the requestor.
-        :param request: The request that triggered the pipeline
+        :param batch: The batch of requests that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
-        :param result_device: The device on which the result of inference is placed
-        :return:"""
+        :return: A list of transformed outputs"""
