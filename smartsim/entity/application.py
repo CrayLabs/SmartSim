@@ -70,14 +70,21 @@ class Application(SmartSimEntity):
                                 files
         """
         super().__init__(name)
+        """The name of the application"""
         self._exe = expand_exe_path(exe)
+        """The executable to run"""
         self._exe_args = self._build_exe_args(exe_args) or []
+        """The executable arguments"""
         self._files = copy.deepcopy(files) if files else None
+        """Files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
         )
+        """Parameters and values to be used when configuring files"""
         self._incoming_entities: t.List[SmartSimEntity] = []
+        """Entities for which the prefix will have to be known by other entities"""
         self._key_prefixing_enabled = False
+        """Unique prefix to avoid key collisions"""
 
     @property
     def exe(self) -> str:
@@ -97,7 +104,7 @@ class Application(SmartSimEntity):
 
     @property
     def exe_args(self) -> t.Sequence[str]:
-        """Return an immutable list of attached executable arguments.
+        """Return a list of attached executable arguments.
 
         :returns: application executable arguments
         """
@@ -212,6 +219,7 @@ class Application(SmartSimEntity):
         :param to_copy: files to copy
         :param to_symlink: files to symlink
         :param to_configure: input files with tagged parameters
+        :raises ValueError: if the generator file already exists
         """
         to_copy = to_copy or []
         to_symlink = to_symlink or []
@@ -266,12 +274,16 @@ class Application(SmartSimEntity):
     def _build_exe_args(
         exe_args: t.Optional[t.Union[str, t.Sequence[str], None]]
     ) -> t.List[str]:
-        """Check and convert exe_args input to a desired collection format"""
+        """Check and convert exe_args input to a desired collection format
+        
+        :param exe_args:
+        :raises TypeError: if exe_args is not a list of str or str
+        """
         if not exe_args:
             return []
 
         if isinstance(exe_args, list):
-            exe_args = copy.deepcopy(exe_args)
+            exe_args = exe_args
 
         if not (
             isinstance(exe_args, str)
@@ -283,6 +295,6 @@ class Application(SmartSimEntity):
             raise TypeError("Executable arguments were not a list of str or a str.")
 
         if isinstance(exe_args, str):
-            return exe_args.split()
+            return copy.deepcopy(exe_args.split())
 
         return exe_args

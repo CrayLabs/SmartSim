@@ -26,9 +26,9 @@
 
 import pytest
 
+from smartsim.entity.application import Application
 from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.entity import SmartSimEntity
-from smartsim.entity.application import Application
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable import Job, Launchable
 from smartsim.launchable.launchable import SmartSimObject

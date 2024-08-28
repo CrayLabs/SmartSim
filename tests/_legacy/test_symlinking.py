@@ -33,8 +33,8 @@ from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim.database.orchestrator import FeatureStore
-from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.application import Application
+from smartsim.entity.ensemble import Ensemble
 from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 

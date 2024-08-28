@@ -288,7 +288,11 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
 
 
 def _stringify_id(_id: int) -> str:
-    """Return the CPU id as a string if an int, otherwise raise a ValueError"""
+    """Return the CPU id as a string if an int, otherwise raise a ValueError
+    
+    :params _id: the CPU id as an int
+    :returns: the CPU as a string
+    """
     if isinstance(_id, int):
         if _id < 0:
             raise ValueError("CPU id must be a nonnegative number")
@@ -536,6 +540,11 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         returns 0,1,...,cpus-1; an empty iterable will disable pinning
         altogether, and an iterable constructs a comma separated string of
         integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
+
+        :params pin_ids: CPU ids
+        :params cpu: number of CPUs
+        :raises TypeError: if pin id is not an iterable of ints
+        :returns: a comma separated string of CPU ids
         """
 
         try:
