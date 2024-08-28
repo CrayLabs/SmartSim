@@ -32,7 +32,7 @@ import os
 import os.path
 import typing as t
 
-from smartsim.entity import _mock, entity, strategies
+from smartsim.entity import entity, strategies
 from smartsim.entity.application import Application
 from smartsim.entity.files import EntityFiles
 from smartsim.entity.strategies import ParamSet
@@ -59,139 +59,171 @@ class Ensemble(entity.CompoundEntity):
         max_permutations: int = -1,
         replicas: int = 1,
     ) -> None:
-        self.name = name
-        self.exe = os.fspath(exe)
-        self.exe_args = list(exe_args) if exe_args else []
-        self.exe_arg_parameters = (
-            copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
-        )
-        self.files = copy.deepcopy(files) if files else EntityFiles()
-        self.file_parameters = dict(file_parameters) if file_parameters else {}
-        self.permutation_strategy = permutation_strategy
-        self.max_permutations = max_permutations
-        self.replicas = replicas
         """Initialize an ``Ensemble`` of application instances
 
         :param name: name of the ensemble
         :param exe: executable to run
         :param exe_args: executable arguments
-        :param exe_arg_parameters:
+        :param exe_arg_parameters: parameters and values to be used when configuring entities
         :param files: files to be copied, symlinked, and/or configured prior to
                       execution
         :param file_parameters: parameters and values to be used when configuring
                                 files
-        :param permutation_strategy: 
-        :param max_permutations: 
-        :param replicas: number of ``Application`` replicas to create
+        :param permutation_strategy: strategy to control how the param values are applied to the Ensemble
+        :param max_permutations: max parameter permutations to set for the ensemble
+        :param replicas: number of identical entities to create within an Ensemble
         :return: and ``Ensemble`` instance
         """
+        self.name = name
+        """The name of the ensemble """
+        self._exe = os.fspath(exe)
+        """The executable to run """
+        self._exe_args = list(exe_args) if exe_args else []
+        """The executable arguments """
+        self._exe_arg_parameters = (
+            copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
+        )
+        """The parameters and values to be used when configuring entities"""
+        self._files = copy.deepcopy(files) if files else EntityFiles()
+        """The files to be copied, symlinked, and/or configured prior to execution"""
+        self._file_parameters = dict(file_parameters) if file_parameters else {}
+        """The parameters and values to be used when configuring files"""
+        self._permutation_strategy = permutation_strategy
+        """The strategy to control how the param values are applied to the Ensemble"""
+        self._max_permutations = max_permutations
+        """The maximum number of entities to come out of the permutation strategy"""
+        self._replicas = replicas
+        """How many identical entities to create within an Ensemble"""
+    
+    @property
+    def exe(self) -> str:
+        """Return executable to run.
 
+        :returns: application executable to run
+        """
+        return self._exe
+    
+    @exe.setter
+    def exe(self, value: str | os.PathLike[str]) -> None:
+        """Set executable to run.
 
-        @property
-        def exe(self) -> str | os.PathLike[str]:
-            """Return executable to run.
+        :param value: executable to run
+        """
+        self._exe = os.fspath(value)
 
-            :returns: application executable to run
-            """
-            return self.exe
+    @property
+    def exe_args(self) -> t.Sequence[str]:
+        """Return an immutable list of attached executable arguments.
+
+        :returns: application executable arguments
+        """
+        return self._exe_args
+    
+    @exe_args.setter
+    def exe_args(self, value: t.Sequence[str]) -> None:
+        """Set the executable arguments.
+
+        :param value: executable arguments
+        """
+        self._exe_args = list(value)
+
+    @property 
+    def exe_arg_parameters(self) -> t.Mapping[str, t.Sequence[t.Sequence[str]]]:
+        """Return the executable argument parameters
+
+        :returns: executable arguments parameters
+        """
+        return self._exe_arg_parameters
+    
+    @exe_arg_parameters.setter
+    def exe_arg_parameters(self, value: t.Mapping[str, t.Sequence[t.Sequence[str]]]) -> None:
+        """Set the executable arguments.
+
+        :param value: executable arguments
+        """
+        self._exe_arg_parameters = copy.deepcopy(value)
+
+    @property
+    def files(self) -> EntityFiles:
+        """Return files to be copied, symlinked, and/or configured prior to
+        execution.
+
+        :returns: files
+        """
+        return self._files
+    
+    @files.setter
+    def files(self, value: EntityFiles) -> None:
+        """Set files to be copied, symlinked, and/or configured prior to
+        execution.
+
+        :param value: files
+        """
+        self._files = copy.deepcopy(value)
+   
+    @property
+    def file_parameters(self) -> t.Mapping[str, t.Sequence[str]]:
+        """Return file parameters.
+
+        :returns: application file parameters
+        """
+        return self._file_parameters
+    
+    @file_parameters.setter
+    def file_parameters(self, value: t.Mapping[str, t.Sequence[str]]) -> None:
+        """Set the file parameters.
+
+        :param value: file parameters
+        """
+        self._file_parameters = dict(value)
+
+    @property
+    def permutation_strategy(self) -> str | strategies.PermutationStrategyType:
+        """Return the permutation strategy
+
+        :return: permutation strategy
+        """
+        return self._permutation_strategy
+    
+    @permutation_strategy.setter
+    def permutation_strategy(self, value: str | strategies.PermutationStrategyType) -> None:
+        """Set the permutation strategy
         
-        @exe.setter
-        def exe(self, value: str | os.PathLike[str]) -> None:
-            """Set executable to run.
+        :param value: permutation strategy
+        """
+        self._permutation_strategy = value
+    
+    @property
+    def max_permutations(self) -> int:
+        """Return the maximum permutations
 
-            :param value: executable to run
-            """
-            self.exe = value
+        :return: max permutations
+        """
+        return self._max_permutations
+    
+    @max_permutations.setter
+    def max_permutations(self, value: int) -> None:
+        """Set the maximum permutations
 
-        @property
-        def exe_args(self) -> t.Sequence[str] | None:
-            """Return an immutable list of attached executable arguments.
-
-            :returns: application executable arguments
-            """
-            return self.exe_args
+        :param value: the maxpermutations
+        """
+        self._max_permutations = value
+    
+    @property
+    def replicas(self) -> int:
+        """Return the number of replicas
         
-        @exe_args.setter
-        def exe_args(self, value: t.Sequence[str] | None) -> None:
-            """Set the executable arguments.
+        :return: number of replicas
+        """
+        return self._replicas
+    
+    @replicas.setter
+    def replicas(self, value: int) -> None:
+        """Set the number of replicas
 
-            :param value: executable arguments
-            """
-            self.exe_args = value
-
-        @property
-        def exe_arg_parameters(self) -> t.Mapping[str, t.Sequence[t.Sequence[str]]] | None:
-            """Return the executable argument parameters
-
-            :returns: executable arguments parameters
-            """
-            return self.exe_arg_parameters
-        
-        @exe_arg_parameters.setter
-        def exe_arg_parameters(self, value: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None) -> None:
-            """Set the executable arguments.
-
-            :param value: executable arguments
-            """
-            self.exe_arg_parameters = value
-
-        @property
-        def files(self) -> EntityFiles | None:
-            """Return files to be copied, symlinked, and/or configured prior to
-            execution.
-
-            :returns: files
-            """
-            return self.files
-       
-        @files.setter
-        def files(self, value: EntityFiles | None) -> None:
-            """Set files to be copied, symlinked, and/or configured prior to
-            execution.
-
-            :param value: files
-            """
-            self.files = value
-        
-        @property
-        def file_parameters(self) -> t.Mapping[str, t.Sequence[str]] | None:
-            """Return file parameters.
-
-            :returns: application file parameters
-            """
-            return self.file_parameters
-        
-        @file_parameters.setter
-        def file_parameters(self, value: t.Mapping[str, t.Sequence[str]] | None) -> None:
-            """Set the file parameters.
-
-            :param value: file parameters
-            """
-            self.file_parameters = value
-
-        @property
-        def permutation_strategy(self) -> str | strategies.PermutationStrategyType:
-            return self.permutation_strategy
-        
-        @permutation_strategy.setter
-        def permutation_strategy(self, value: str | strategies.PermutationStrategyType) -> None:
-            self.permutation_strategy = value
-        
-        @property
-        def max_permutations(self) -> int:
-            return self.max_permutations
-        
-        @max_permutations.setter
-        def max_permutations(self, value: int) -> None:
-            self.max_permutations = value
-        
-        @property
-        def replicas(self) -> int:
-            return self.replicas
-        
-        @replicas.setter
-        def replicas(self, value: int) -> None:
-            self.replicas = value
+        :return: the number of replicas
+        """
+        self._replicas = value
 
 
     def _create_applications(self) -> tuple[Application, ...]:
@@ -199,6 +231,7 @@ class Ensemble(entity.CompoundEntity):
         application instances.
         """
         permutation_strategy = strategies.resolve(self.permutation_strategy)
+
         combinations = permutation_strategy(
             self.file_parameters, self.exe_arg_parameters, self.max_permutations
         )
