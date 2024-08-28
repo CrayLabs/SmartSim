@@ -129,7 +129,7 @@ def setup_worker_manager_model_bytes(
 
     request = InferenceRequest(
         model_key=None,
-        callback=FileSystemCommChannel(pathlib.Path(test_dir)),
+        callback=None,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -189,7 +189,7 @@ def setup_worker_manager_model_key(
 
     request = InferenceRequest(
         model_key=model_id,
-        callback=FileSystemCommChannel(pathlib.Path(test_dir)),
+        callback=None,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -308,13 +308,21 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         mock_reply_fn,
     )
 
-    # def mock_exception_handler(exc, reply_channel, failure_message):
-    #     return exception_handler(exc, FileSystemCommChannel(), failure_message)
+    mock_reply_channel = MagicMock()
+    mock_reply_channel.send = MagicMock()
 
-    # monkeypatch.setattr(
-    #     "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-    #     mock_exception_handler,
-    # )
+    def mock_exception_handler(exc, reply_channel, failure_message):
+        return exception_handler(exc, mock_reply_channel, failure_message)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.requestdispatcher.exception_handler",
+        mock_exception_handler,
+    )
 
     return mock_reply_fn
 
@@ -462,10 +470,12 @@ def test_dispatcher_pipeline_stage_errors_handled(
     mock_reply_fn.assert_called_with("fail", error_message)
 
 
-def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch, test_dir):
+def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     """Ensures that the worker manager does not crash after a failure in the
     execute pipeline stage"""
-    reply = InferenceReply()
+
+    mock_reply_channel = MagicMock()
+    mock_reply_channel.send = MagicMock()
 
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
@@ -474,7 +484,7 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch, test_dir):
     )
 
     test_exception = ValueError("Test ValueError")
-    exception_handler(test_exception, FileSystemCommChannel(pathlib.Path(test_dir)), "Failure while fetching the model.")
+    exception_handler(test_exception, mock_reply_channel, "Failure while fetching the model.")
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")
