@@ -94,7 +94,7 @@ class Ensemble(entity.CompoundEntity):
         """The maximum number of entities to come out of the permutation strategy"""
         self._replicas = replicas
         """How many identical entities to create within an Ensemble"""
-    
+
     @property
     def exe(self) -> str:
         """Return executable to run.
@@ -102,7 +102,7 @@ class Ensemble(entity.CompoundEntity):
         :returns: application executable to run
         """
         return self._exe
-    
+
     @exe.setter
     def exe(self, value: str | os.PathLike[str]) -> None:
         """Set executable to run.
@@ -118,7 +118,7 @@ class Ensemble(entity.CompoundEntity):
         :returns: application executable arguments
         """
         return self._exe_args
-    
+
     @exe_args.setter
     def exe_args(self, value: t.Sequence[str]) -> None:
         """Set the executable arguments.
@@ -127,16 +127,18 @@ class Ensemble(entity.CompoundEntity):
         """
         self._exe_args = list(value)
 
-    @property 
+    @property
     def exe_arg_parameters(self) -> t.Mapping[str, t.Sequence[t.Sequence[str]]]:
         """Return the executable argument parameters
 
         :returns: executable arguments parameters
         """
         return self._exe_arg_parameters
-    
+
     @exe_arg_parameters.setter
-    def exe_arg_parameters(self, value: t.Mapping[str, t.Sequence[t.Sequence[str]]]) -> None:
+    def exe_arg_parameters(
+        self, value: t.Mapping[str, t.Sequence[t.Sequence[str]]]
+    ) -> None:
         """Set the executable arguments.
 
         :param value: executable arguments
@@ -151,7 +153,7 @@ class Ensemble(entity.CompoundEntity):
         :returns: files
         """
         return self._files
-    
+
     @files.setter
     def files(self, value: EntityFiles) -> None:
         """Set files to be copied, symlinked, and/or configured prior to
@@ -160,7 +162,7 @@ class Ensemble(entity.CompoundEntity):
         :param value: files
         """
         self._files = copy.deepcopy(value)
-   
+
     @property
     def file_parameters(self) -> t.Mapping[str, t.Sequence[str]]:
         """Return file parameters.
@@ -168,7 +170,7 @@ class Ensemble(entity.CompoundEntity):
         :returns: application file parameters
         """
         return self._file_parameters
-    
+
     @file_parameters.setter
     def file_parameters(self, value: t.Mapping[str, t.Sequence[str]]) -> None:
         """Set the file parameters.
@@ -184,15 +186,17 @@ class Ensemble(entity.CompoundEntity):
         :return: permutation strategy
         """
         return self._permutation_strategy
-    
+
     @permutation_strategy.setter
-    def permutation_strategy(self, value: str | strategies.PermutationStrategyType) -> None:
+    def permutation_strategy(
+        self, value: str | strategies.PermutationStrategyType
+    ) -> None:
         """Set the permutation strategy
-        
+
         :param value: permutation strategy
         """
         self._permutation_strategy = value
-    
+
     @property
     def max_permutations(self) -> int:
         """Return the maximum permutations
@@ -200,7 +204,7 @@ class Ensemble(entity.CompoundEntity):
         :return: max permutations
         """
         return self._max_permutations
-    
+
     @max_permutations.setter
     def max_permutations(self, value: int) -> None:
         """Set the maximum permutations
@@ -208,15 +212,15 @@ class Ensemble(entity.CompoundEntity):
         :param value: the maxpermutations
         """
         self._max_permutations = value
-    
+
     @property
     def replicas(self) -> int:
         """Return the number of replicas
-        
+
         :return: number of replicas
         """
         return self._replicas
-    
+
     @replicas.setter
     def replicas(self, value: int) -> None:
         """Set the number of replicas
@@ -224,7 +228,6 @@ class Ensemble(entity.CompoundEntity):
         :return: the number of replicas
         """
         self._replicas = value
-
 
     def _create_applications(self) -> tuple[Application, ...]:
         """Concretize the ensemble attributes into a collection of
