@@ -133,7 +133,8 @@ class Config:
             return exe
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError(
-                "Specified database binary at SMARTSIM_REDIS_SERVER_EXE could not be used"
+                "Specified database binary at SMARTSIM_REDIS_SERVER_EXE "
+                "could not be used"
             ) from e
 
     @property
