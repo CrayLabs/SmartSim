@@ -102,7 +102,7 @@ class SynchronousTimeInterval:
         """
         return type(self)(self.delta)
 
-    def wait(self) -> None:
+    def block(self) -> None:
         """Block the thread until the timeout completes
 
         :raises RuntimeError: The thread would be blocked forever

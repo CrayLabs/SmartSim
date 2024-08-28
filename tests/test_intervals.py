@@ -65,7 +65,7 @@ def test_sync_timeout_can_block_thread():
     """Test that the sync timeout can block the calling thread"""
     timeout = 1
     now = time.perf_counter()
-    SynchronousTimeInterval(timeout).wait()
+    SynchronousTimeInterval(timeout).block()
     later = time.perf_counter()
     assert abs(later - now - timeout) <= 0.25
 
@@ -78,17 +78,10 @@ def test_sync_timeout_infinte():
     assert t.remaining == float("inf")
     assert t.infinite
     with pytest.raises(RuntimeError, match="block thread forever"):
-        t.wait()
+        t.block()
 
 
 def test_sync_timeout_raises_on_invalid_value(monkeypatch):
     """Cannot make a sync time interval with a negative time delta"""
     with pytest.raises(ValueError):
-        t = SynchronousTimeInterval(-1)
-        now = time.perf_counter()
-        monkeypatch.setattr(
-            time, "perf_counter", lambda *_, **__: now + 365 * 24 * 60 * 60
-        )
-        assert t._delta == float("inf")
-        assert t.expired == False
-        assert t.remaining == float("inf")
+        SynchronousTimeInterval(-1)

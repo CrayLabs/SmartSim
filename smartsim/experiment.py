@@ -290,18 +290,15 @@ class Experiment:
         if not ids:
             raise ValueError("No job ids to wait on provided")
         self._poll_for_statuses(
-            ids,
-            TERMINAL_STATUSES,
-            timeout=_interval.SynchronousTimeInterval(timeout),
-            verbose=verbose,
+            ids, TERMINAL_STATUSES, timeout=timeout, verbose=verbose
         )
 
     def _poll_for_statuses(
         self,
         ids: t.Sequence[LaunchedJobID],
         statuses: t.Collection[JobStatus],
-        timeout: _interval.SynchronousTimeInterval | None = None,
-        interval: _interval.SynchronousTimeInterval | None = None,
+        timeout: float | None = None,
+        interval: float = 5.0,
         verbose: bool = True,
     ) -> dict[LaunchedJobID, JobStatus | InvalidJobStatus]:
         """Poll the experiment's launchers for the statuses of the launched
@@ -322,8 +319,8 @@ class Experiment:
         """
         terminal = frozenset(itertools.chain(statuses, InvalidJobStatus))
         log = logger.info if verbose else lambda *_, **__: None
-        method_timeout = timeout or _interval.SynchronousTimeInterval(None)
-        iter_timeout = interval or _interval.SynchronousTimeInterval(5.0)
+        method_timeout = _interval.SynchronousTimeInterval(timeout)
+        iter_timeout = _interval.SynchronousTimeInterval(interval)
         final: dict[LaunchedJobID, JobStatus | InvalidJobStatus] = {}
 
         def is_finished(
@@ -349,7 +346,7 @@ class Experiment:
                     iter_timeout
                     if iter_timeout.remaining < method_timeout.remaining
                     else method_timeout
-                ).wait()
+                ).block()
         if ids:
             raise TimeoutError(
                 f"Job ID(s) {', '.join(map(str, ids))} failed to reach "

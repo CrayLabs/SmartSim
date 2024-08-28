@@ -471,11 +471,7 @@ def test_poll_status_blocks_until_job_is_completed(
         "smartsim.experiment.logger.info", lambda s: mock_log.write(f"{s}\n")
     )
     final_statuses = exp._poll_for_statuses(
-        [id_],
-        different_statuses,
-        timeout=SynchronousTimeInterval(10),
-        interval=SynchronousTimeInterval(0),
-        verbose=verbose,
+        [id_], different_statuses, timeout=10, interval=0, verbose=verbose
     )
     assert final_statuses == {id_: new_status}
 
@@ -501,8 +497,8 @@ def test_poll_status_raises_when_called_with_infinite_iter_wait(
         exp._poll_for_statuses(
             [id_],
             [],
-            timeout=SynchronousTimeInterval(10),
-            interval=SynchronousTimeInterval(None),
+            timeout=10,
+            interval=float("inf"),
         )
 
 
@@ -523,6 +519,6 @@ def test_poll_for_status_raises_if_ids_not_found_within_timeout(
         exp._poll_for_statuses(
             [id_],
             different_statuses,
-            timeout=SynchronousTimeInterval(1),
-            interval=SynchronousTimeInterval(0),
+            timeout=1,
+            interval=0,
         )
