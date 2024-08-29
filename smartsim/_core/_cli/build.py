@@ -78,22 +78,22 @@ def check_py_tf_version(versions: Versioner) -> None:
 def check_backends_install() -> bool:
     """Checks if backends have already been installed.
     Logs details on how to proceed forward
-    if the RAI_PATH environment variable is set or if
+    if the SMARTSIM_RAI_LIB environment variable is set or if
     backends have already been installed.
     """
-    rai_path = os.environ.get("RAI_PATH", "")
+    rai_path = os.environ.get("SMARTSIM_RAI_LIB", "")
     installed = installed_redisai_backends()
     msg = ""
 
     if rai_path and installed:
         msg = (
             f"There is no need to build. backends are already built and "
-            f"specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
+            f"specified in the environment at 'SMARTSIM_RAI_LIB': {CONFIG.redisai}"
         )
     elif rai_path and not installed:
         msg = (
-            "Before running 'smart build', unset your RAI_PATH environment "
-            "variable with 'unset RAI_PATH'."
+            "Before running 'smart build', unset your SMARTSIM_RAI_LIB environment "
+            "variable with 'unset SMARTSIM_RAI_LIB'."
         )
     elif not rai_path and installed:
         msg = (
@@ -368,7 +368,7 @@ def _configure_keydb_build(versions: Versioner) -> None:
     CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
     if not CONFIG.conf_path.resolve().is_file():
         raise SSConfigError(
-            "Database configuration file at REDIS_CONF could not be found"
+            "Database configuration file at SMARTSIM_REDIS_CONF could not be found"
         )
 
 
