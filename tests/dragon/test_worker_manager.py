@@ -62,7 +62,7 @@ from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .featurestore import FileSystemFeatureStore
+from .feature_store import FileSystemFeatureStore
 from .utils.channel import FileSystemCommChannel
 
 logger = get_logger(__name__)

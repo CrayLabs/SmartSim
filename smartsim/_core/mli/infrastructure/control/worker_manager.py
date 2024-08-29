@@ -43,6 +43,7 @@ from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from .....log import get_logger
 from ....entrypoints.service import Service
 from ....utils.timings import PerfTimer
+from ...message_handler import MessageHandler
 from ..environment_loader import EnvironmentConfigLoader
 from ..worker.worker import (
     InferenceReply,
@@ -50,7 +51,6 @@ from ..worker.worker import (
     MachineLearningWorkerBase,
     RequestBatch,
 )
-from ...message_handler import MessageHandler
 from .device_manager import DeviceManager, WorkerDevice
 from .error_handling import build_failure_reply, exception_handler
 

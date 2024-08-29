@@ -37,9 +37,9 @@ from dataclasses import dataclass
 from .....error import SmartSimError
 from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
-from ..storage.feature_store import FeatureStore, FeatureStoreKey
 from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
+from ..storage.feature_store import FeatureStore, FeatureStoreKey
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
