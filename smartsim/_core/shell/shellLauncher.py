@@ -144,6 +144,15 @@ class ShellLauncher:
         return id_
 
     def _get_proc_from_job_id(self, id_: LaunchedJobID, /) -> sp.Popen[bytes]:
+        """Given an issued job id, return the process represented by that id
+
+        :param id_: The launched job id of the process
+        :raises: errors.LauncherJobNotFound: The id could not be mapped to a
+            process. This usually means that the provided id was not issued by
+            this launcher instance.
+        :returns: The process that the shell launcher started and represented
+            by the issued id.
+        """
         if (proc := self._launched.get(id_)) is None:
             msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
             raise errors.LauncherJobNotFound(msg)
@@ -180,9 +189,30 @@ class ShellLauncher:
     def stop_jobs(
         self, *launched_ids: LaunchedJobID
     ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Take a collection of job ids and kill the corresponding processes
+        started by the shell launcher.
+
+        :param launched_ids: The ids of the launched jobs to stop.
+        :returns: A mapping of ids for jobs to stop to their reported status
+            after attempting to stop them.
+        """
         return {id_: self._stop(id_) for id_ in launched_ids}
 
     def _stop(self, id_: LaunchedJobID, /) -> JobStatus:
+        """Stop a job represented by an id
+
+        The launcher will first start by attempting to kill the process using
+        by sending a SIGTERM signal and then waiting for an amount of time. If
+        the process is not killed by the timeout time, a SIGKILL signal will be
+        sent and another waiting period will be started. If the period also
+        ends, the message will be logged and the process will be left to
+        continue running. The method will then get and return the status of the
+        job.
+
+        :param id_: The id of a launched job to stop.
+        :returns: The status of the job after sending signals to terminate the
+            started process.
+        """
         proc = self._get_proc_from_job_id(id_)
         wait_time = 5
         if proc.poll() is None:
