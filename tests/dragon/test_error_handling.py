@@ -307,11 +307,19 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         mock_reply_fn,
     )
 
+    mock_reply_channel = MagicMock()
+    mock_reply_channel.send = MagicMock()
+
     def mock_exception_handler(exc, reply_channel, failure_message):
-        return exception_handler(exc, None, failure_message)
+        return exception_handler(exc, mock_reply_channel, failure_message)
 
     monkeypatch.setattr(
         "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.requestdispatcher.exception_handler",
         mock_exception_handler,
     )
 
@@ -464,7 +472,9 @@ def test_dispatcher_pipeline_stage_errors_handled(
 def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     """Ensures that the worker manager does not crash after a failure in the
     execute pipeline stage"""
-    reply = InferenceReply()
+
+    mock_reply_channel = MagicMock()
+    mock_reply_channel.send = MagicMock()
 
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
@@ -473,7 +483,9 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     )
 
     test_exception = ValueError("Test ValueError")
-    exception_handler(test_exception, None, "Failure while fetching the model.")
+    exception_handler(
+        test_exception, mock_reply_channel, "Failure while fetching the model."
+    )
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")

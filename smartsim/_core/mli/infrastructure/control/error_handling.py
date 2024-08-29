@@ -61,10 +61,10 @@ def exception_handler(
         f"Exception type: {type(exc).__name__}\n"
         f"Exception message: {str(exc)}"
     )
-    serialized_resp = MessageHandler.serialize_response(
-        build_failure_reply("fail", failure_message)
-    )
     if reply_channel:
+        serialized_resp = MessageHandler.serialize_response(
+            build_failure_reply("fail", failure_message)
+        )
         reply_channel.send(serialized_resp)
     else:
-        logger.warning("Unable to notify client of error without reply_channel")
+        logger.warning("Unable to notify client of error without a reply channel")
