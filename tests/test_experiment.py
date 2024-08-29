@@ -143,7 +143,7 @@ class NoOpRecordLauncher(LauncherProtocol):
 
 
 @dataclasses.dataclass(frozen=True)
-class LaunchRecord:  # here
+class LaunchRecord:
     launch_args: launchArguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
@@ -248,9 +248,7 @@ def test_start_can_launch_jobs(
 
     # Check that `job_a, job_b, job_c, ...` are started in that order when
     # calling `experiemnt.start(job_a, job_b, job_c, ...)`
-    assert expected_launched == list(
-        launcher.launched_order
-    ), "Unexpected launch order"  # here
+    assert expected_launched == list(launcher.launched_order), "Unexpected launch order"
     assert sorted(launched_ids) == sorted(exp_cached_ids), "Exp did not cache ids"
 
     # Similarly, check that `id_a, id_b, id_c, ...` corresponds to

@@ -27,21 +27,13 @@
 from __future__ import annotations
 
 import abc
-import copy
 import typing as t
-from abc import ABC, abstractmethod
 
 from smartsim.launchable.jobGroup import JobGroup
-
-from .._core.utils.helpers import expand_exe_path
-from .files import EntityFiles
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
     from smartsim.settings.launchSettings import LaunchSettings
-    from smartsim.types import TODO
-
-    RunSettings = TODO
 
 
 class TelemetryConfiguration:

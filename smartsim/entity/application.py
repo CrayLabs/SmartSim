@@ -64,6 +64,7 @@ class Application(SmartSimEntity):
                                 files
         """
         super().__init__(name)
+        """The name of the application"""
         self._exe = expand_exe_path(exe)
         """The executable to run"""
         self._exe_args = self._build_exe_args(exe_args) or []

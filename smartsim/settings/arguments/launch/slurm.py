@@ -45,7 +45,7 @@ logger = get_logger(__name__)
 
 def _as_srun_command(
     args: ShellLaunchArguments,
-    exe: t.Union[str, t.Sequence[str]],
+    exe: t.Sequence[str],
     path: pathlib.Path,
     env: EnvironMappingType,
     stdout_path: pathlib.Path,
