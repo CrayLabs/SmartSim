@@ -37,6 +37,8 @@ from .entity import SmartSimEntity
 from .files import EntityFiles
 
 logger = get_logger(__name__)
+
+
 # TODO: Remove this supression when we strip fileds/functionality
 #       (run-settings/batch_settings/params_as_args/etc)!
 # pylint: disable-next=too-many-public-methods
