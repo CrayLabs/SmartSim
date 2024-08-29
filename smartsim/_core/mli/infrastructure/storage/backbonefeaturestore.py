@@ -41,7 +41,6 @@ from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import ReservedKeys
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
@@ -54,21 +53,25 @@ class BackboneFeatureStore(DragonFeatureStore):
     """A DragonFeatureStore wrapper with utility methods for accessing shared
     information stored in the MLI backbone feature store"""
 
-    def __init__(self, storage: "dragon_ddict.DDict") -> None:
+    MLI_NOTIFY_CONSUMERS = "_SMARTSIM_MLI_NOTIFY_CONSUMERS"
+
+    def __init__(
+        self, storage: "dragon_ddict.DDict", allow_reserved_writes: bool = False
+    ) -> None:
         """Initialize the DragonFeatureStore instance
 
         :param storage: A distributed dictionary to be used as the underlying
         storage mechanism of the feature store"""
         super().__init__(storage)
-        self._reserved_write_enabled = True
+        self._enable_reserved_writes = allow_reserved_writes
 
     @property
     def notification_channels(self) -> t.Sequence[str]:
         """Retrieve descriptors for all registered MLI notification channels
 
         :returns: the list of descriptors"""
-        if ReservedKeys.MLI_NOTIFY_CONSUMERS in self:
-            stored_consumers = self[ReservedKeys.MLI_NOTIFY_CONSUMERS]
+        if "_SMARTSIM_MLI_NOTIFY_CONSUMERS" in self:
+            stored_consumers = self[self.MLI_NOTIFY_CONSUMERS]
             return str(stored_consumers).split(",")
         return []
 
@@ -77,9 +80,7 @@ class BackboneFeatureStore(DragonFeatureStore):
         """Set the notification channels to be sent events
 
         :param values: the list of channel descriptors to save"""
-        self[ReservedKeys.MLI_NOTIFY_CONSUMERS] = ",".join(
-            [str(value) for value in values]
-        )
+        self[self.MLI_NOTIFY_CONSUMERS] = ",".join([str(value) for value in values])
 
 
 class EventCategory(str, enum.Enum):
@@ -87,13 +88,13 @@ class EventCategory(str, enum.Enum):
 
     CONSUMER_CREATED: str = "consumer-created"
     FEATURE_STORE_WRITTEN: str = "feature-store-written"
-    UNKNOWN: str = "unknown"
 
 
 @dataclass
 class EventBase:
     """Core API for an event"""
 
+    # todo: shift eventing code to: infrastructure / event / event.py
     category: EventCategory
     """The event category for this event; may be used for addressing,
     prioritization, or filtering of events by a event publisher/consumer"""
@@ -162,7 +163,7 @@ class OnWriteFeatureStore(EventBase):
         return f"{str(super())}|{self.descriptor}|{self.key}"
 
 
-class EventPublisher(t.Protocol):
+class EventProducer(t.Protocol):
     """Core API of a class that publishes events"""
 
     def send(self, event: EventBase) -> int:
@@ -312,7 +313,6 @@ class EventBroadcaster:
         :raises SmartSimError: if any unexpected error occurs during send"""
         try:
             self._save_to_buffer(event)
-
             return self._broadcast()
         except (KeyError, ValueError, SmartSimError):
             raise

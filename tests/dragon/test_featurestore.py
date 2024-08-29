@@ -72,7 +72,7 @@ def test_eventconsumer_eventpublisher_integration(
     directories for individual test outputs"""
 
     mock_storage = storage_for_dragon_fs
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     mock_fs_descriptor = backbone.descriptor
 
     # verify ability to write and read from ddict

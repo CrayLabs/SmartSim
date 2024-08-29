@@ -29,6 +29,7 @@ import sys
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
+from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -39,40 +40,37 @@ import dragon.channels as dch
 class DragonCommChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon channel"""
 
-    def __init__(self, channel: "dch.Channel", recv_timeout: int = 0) -> None:
+    def __init__(self, channel: "dch.Channel") -> None:
         """Initialize the DragonCommChannel instance
 
         :param channel: a channel to use for communications
         :param recv_timeout: a default timeout to apply to receive calls"""
         serialized_ch = channel.serialize()
-        safe_descriptor = base64.b64encode(serialized_ch).decode("utf-8")
-        super().__init__(safe_descriptor)
+        descriptor = base64.b64encode(serialized_ch).decode("utf-8")
+        super().__init__(descriptor)
         self._channel = channel
-        self._recv_timeout = recv_timeout
 
     @property
-    def recv_timeout(self) -> int:
-        """The timeout for receive requests (in seconds)"""
-        return self._recv_timeout
+    def channel(self) -> "dch.Channel":
+        """The underlying communication channel"""
+        return self._channel
 
-    def send(self, value: bytes) -> None:
+    def send(self, value: bytes, timeout: float = 0.001) -> None:
         """Send a message throuh the underlying communication channel
-        :param value: The value to send"""
-        with self._channel.sendh(timeout=None) as sendh:
+        :param value: The value to send
+        :param timeout: maximum time to wait (in seconds) for messages to arrive"""
+        with self._channel.sendh(timeout=timeout) as sendh:
             sendh.send_bytes(value)
 
-    def recv(self, timeout: int = 0) -> t.List[bytes]:
+    def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel
 
-        :param timeout: maximum time to wait for messages to arrive
+        :param timeout: maximum time to wait (in seconds) for messages to arrive
         :returns: the received message"""
         with self._channel.recvh(timeout=timeout) as recvh:
             messages: t.List[bytes] = []
 
-            # todo: consider that this could (under load) never exit. do we need
-            # to configure a maximum number to pull at once?
             try:
-                timeout = timeout or self._recv_timeout
                 while message_bytes := recvh.recv_bytes(timeout=timeout):
                     messages.append(message_bytes)
             except dch.ChannelEmpty:
@@ -96,7 +94,7 @@ class DragonCommChannel(cch.CommChannelBase):
     @classmethod
     def from_descriptor(
         cls,
-        descriptor: str,
+        descriptor: t.Union[bytes, str],
     ) -> "DragonCommChannel":
         """A factory method that creates an instance from a descriptor string
 
@@ -104,12 +102,17 @@ class DragonCommChannel(cch.CommChannelBase):
         from `descriptor_string` is correctly encoded.
         :returns: An attached DragonCommChannel"""
         try:
-            utf8_descriptor = descriptor.encode("utf-8")
+            utf8_descriptor: t.Union[str, bytes] = descriptor
+            if isinstance(descriptor, str):
+                utf8_descriptor = descriptor.encode("utf-8")
+
+            # todo: ensure the bytes argument and condition are removed
+            # after refactoring the RPC models
+
             actual_descriptor = base64.b64decode(utf8_descriptor)
             channel = dch.Channel.attach(actual_descriptor)
             return DragonCommChannel(channel)
-        except:
-            logger.error(
-                f"Failed to create dragon comm channel: {descriptor}", exc_info=True
-            )
-            raise
+        except Exception as ex:
+            raise SmartSimError(
+                f"Failed to create dragon comm channel: {descriptor!r}"
+            ) from ex

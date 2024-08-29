@@ -44,17 +44,17 @@ class ReservedKeys(str, enum.Enum):
     events from an EventBroadcaster"""
 
     @classmethod
-    def from_string(cls, value: str) -> t.Optional["ReservedKeys"]:
+    def contains(cls, value: str) -> bool:
         """Convert a string representation into an enumeration member
 
         :param value: the string to convert
         :returns: the enumeration member if the conversion succeeded, otherwise None"""
         try:
-            return cls(value)
+            cls(value)
         except ValueError:
-            ...  # value is not reserved, swallow
+            return False
 
-        return None
+        return True
 
 
 @dataclass(frozen=True)
@@ -81,8 +81,19 @@ class FeatureStore(ABC):
     """Abstract base class providing the common interface for retrieving
     values from a feature store implementation"""
 
-    def __init__(self) -> None:
-        self._reserved_write_enabled = False
+    def __init__(self, descriptor: str, allow_reserved_writes: bool = False) -> None:
+        """Initialize the feature store
+
+        :param descriptor: the stringified version of a storage descriptor
+        :param allow_reserved_writes: override the default behavior of blocking
+        writes to reserved keys"""
+        self._enable_reserved_writes = allow_reserved_writes
+        """Flag used to ensure that any keys written by the system to a feature store
+        are not overwritten by user code. Disabled by default. Subclasses must set the
+        value intentionally."""
+        self._descriptor = descriptor
+        """Stringified version of the unique ID enabling a client to connect
+        to the feature store"""
 
     def _check_reserved(self, key: str) -> None:
         """A utility method used to verify access to write to a reserved key
@@ -90,36 +101,85 @@ class FeatureStore(ABC):
 
         :param key: a key to compare to the reserved keys
         :raises SmartSimError: if the key is reserved"""
-        reserved_key_match = ReservedKeys.from_string(key)
-        if reserved_key_match and not self._reserved_write_enabled:
+        if not self._enable_reserved_writes and ReservedKeys.contains(key):
             raise SmartSimError(
                 "Use of reserved key denied. "
                 "Unable to overwrite system configuration"
             )
 
-    @abstractmethod
     def __getitem__(self, key: str) -> t.Union[str, bytes]:
         """Retrieve an item using key
 
         :param key: Unique key of an item to retrieve from the feature store"""
+        try:
+            return self._get(key)
+        except KeyError as ex:
+            # logger.warning(f"An unknown key was requested: {key}")
+            raise SmartSimError(f"An unknown key was requested: {key}") from ex
+        except Exception as ex:
+            # note: explicitly avoid round-trip to check for key existence
+            raise SmartSimError(
+                f"Could not get value for existing key {key}, error:\n{ex}"
+            ) from ex
 
-    @abstractmethod
     def __setitem__(self, key: str, value: t.Union[str, bytes]) -> None:
         """Assign a value using key
 
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
+        self._check_reserved(key)
+        self._set(key, value)
 
-    @abstractmethod
     def __contains__(self, key: str) -> bool:
         """Membership operator to test for a key existing within the feature store.
 
         :param key: Unique key of an item to retrieve from the feature store
         :returns: `True` if the key is found, `False` otherwise"""
+        return self._contains(key)
+
+    @abstractmethod
+    def _get(self, key: str) -> t.Union[str, bytes]:
+        """Retrieve a value from the underlying stroage mechanism
+
+        :param key: The unique key that identifies the resource
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
+
+    @abstractmethod
+    def _set(self, key: str, value: t.Union[str, bytes]) -> None:
+        """Store a value into the underlying stroage mechanism
+
+        :param key: The unique key that identifies the resource
+        :param value: The value to store
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
+
+    @abstractmethod
+    def _contains(self, key: str) -> bool:
+        """Determine if the storage mechanism contains a given key
+
+        :param key: The unique key that identifies the resource
+        :returns: `True` if the key is defined, `False` otherwise"""
 
     @property
-    @abstractmethod
+    def _allow_reserved_writes(self) -> bool:
+        """Return the boolean flag indicating if writing to reserved keys is
+        enabled for this feature store
+
+        :returns: `True` if enabled, `False` otherwise"""
+        return self._enable_reserved_writes
+
+    @_allow_reserved_writes.setter
+    def _allow_reserved_writes(self, value: bool) -> None:
+        """Modify the boolean flag indicating if writing to reserved keys is
+        enabled for this feature store
+
+        :param value: the new value to set for the flag"""
+        self._enable_reserved_writes = value
+
+    @property
     def descriptor(self) -> str:
         """Unique identifier enabling a client to connect to the feature store
 
         :returns: A descriptor encoded as a string"""
+        return self._descriptor
