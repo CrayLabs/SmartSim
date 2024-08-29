@@ -45,6 +45,8 @@ def get_gen_symlink_dir(fileutils):
 def get_gen_configure_dir(fileutils):
     yield fileutils.get_test_conf_path(osp.join("generator_files", "tag_dir_template"))
 
+def get_gen_file(fileutils, filename):
+    return fileutils.get_test_conf_path(osp.join("generator_files", filename))
 
 @pytest.fixture
 def generator_instance(test_dir) -> Generator:
@@ -375,3 +377,18 @@ def test_generate_ensemble_configure(
     _check_generated(1, 3, os.path.join(jobs_dir, "ensemble-name-3-3", "run"))
     _check_generated(0, 2, os.path.join(jobs_dir, "ensemble-name-0-0", "run"))
     ids.clear()
+
+
+def test_this(fileutils):
+    # Directory of files to configure
+    """Test the generation and configuration of applications with
+    tagged files that are directories with subdirectories and files
+    """
+    config = get_gen_file(fileutils, "tag_dir_template")
+    script = fileutils.get_test_conf_path("sleep.py")
+    #print(list(os.walk(config)))
+    print(list(os.walk(script)))
+    # for root, dirs, files in os.walk(config):
+    #     print(list(os.walk(config)))
+    #     # for name in dirs:
+    #     #     os.rmdir(os.path.join(root, name))
