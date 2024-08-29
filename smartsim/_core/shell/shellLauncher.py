@@ -198,7 +198,7 @@ class ShellLauncher:
         """
         return {id_: self._stop(id_) for id_ in launched_ids}
 
-    def _stop(self, id_: LaunchedJobID, /) -> JobStatus:
+    def _stop(self, id_: LaunchedJobID, /, wait_time: float = 5.0) -> JobStatus:
         """Stop a job represented by an id
 
         The launcher will first start by attempting to kill the process using
@@ -210,11 +210,12 @@ class ShellLauncher:
         job.
 
         :param id_: The id of a launched job to stop.
+        :param wait: The maximum amount of time, in seconds, to wait for a
+            signal to stop a process.
         :returns: The status of the job after sending signals to terminate the
             started process.
         """
         proc = self._get_proc_from_job_id(id_)
-        wait_time = 5
         if proc.poll() is None:
             msg = f"Attempting to terminate local process {proc.pid}"
             logger.debug(msg)
@@ -222,14 +223,14 @@ class ShellLauncher:
 
         try:
             proc.wait(wait_time)
-        except TimeoutError:
+        except sp.TimeoutExpired:
             msg = f"Failed to terminate process {proc.pid}. Attempting to kill."
             logger.warning(msg)
             proc.kill()
 
         try:
             proc.wait(wait_time)
-        except TimeoutError:
+        except sp.TimeoutExpired:
             logger.error(f"Failed to kill process {proc.pid}")
         return self._get_status(id_)
 
