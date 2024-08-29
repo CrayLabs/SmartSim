@@ -26,13 +26,14 @@
 
 from uuid import uuid4
 
+import numpy as np
 import pytest
 
 from smartsim import Experiment
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.launcher.step import SbatchStep, SrunStep
 from smartsim.entity import Ensemble, Model
-from smartsim.entity.model import _read_model_parameters
+from smartsim.entity.model import _parse_model_parameters
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
 from smartsim.settings.mpiSettings import _BaseMPISettings
@@ -179,15 +180,14 @@ def test_models_batch_settings_are_ignored_in_ensemble(
     assert not any("sbatch" in tok for tok in step_cmd)  # no sbatch in sbatch
 
 
-def test_bad_model_params():
-    params_1 = {"j": 5}
-    params_2 = {"P": ["eggs"]}
-    params_3 = {"m": {"n": 5}}
+@pytest.mark.parametrize("dtype", [int, np.float32, str])
+def test_good_model_params(dtype):
+    print(dtype(0.6))
+    params = {"foo": dtype(0.6)}
+    assert all(isinstance(val, str) for val in _parse_model_parameters(params).values())
 
-    params_1 = _read_model_parameters(params_1)
 
+@pytest.mark.parametrize("bad_val", [["eggs"], {"n": 5}, object])
+def test_bad_model_params(bad_val):
     with pytest.raises(TypeError):
-        params_2 = _read_model_parameters(params_2)
-
-    with pytest.raises(TypeError):
-        params_3 = _read_model_parameters(params_3)
+        _parse_model_parameters({"foo": bad_val})
