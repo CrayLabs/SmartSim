@@ -26,13 +26,10 @@
 
 from __future__ import annotations
 
-import collections
 import datetime
 import itertools
-import os
 import os.path as osp
 import pathlib
-import textwrap
 import typing as t
 from os import environ, getcwd
 
@@ -46,15 +43,8 @@ from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
-from ._core import Controller, Generator, Manifest, previewrenderer
-from .database import FeatureStore
-from .entity import (
-    Application,
-    Ensemble,
-    EntitySequence,
-    SmartSimEntity,
-    TelemetryConfiguration,
-)
+from ._core import Generator, Manifest, previewrenderer
+from .entity import TelemetryConfiguration
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
@@ -94,64 +84,51 @@ class ExperimentTelemetryConfiguration(TelemetryConfiguration):
 
 # pylint: disable=no-self-use
 class Experiment:
-    """Experiment is a factory class that creates stages of a workflow
-    and manages their execution.
-
-    The instances created by an Experiment represent executable code
-    that is either user-specified, like the ``Application`` instance created
-    by ``Experiment.create_application``, or pre-configured, like the ``FeatureStore``
-    instance created by ``Experiment.create_feature_store``.
-
-    Experiment methods that accept a variable list of arguments, such as
-    ``Experiment.start`` or ``Experiment.stop``, accept any number of the
-    instances created by the Experiment.
-
-    In general, the Experiment class is designed to be initialized once
-    and utilized throughout runtime.
+    """The Experiment class is used to schedule, launch, track, and manage
+    jobs and job groups.  Also, it is the SmartSim class that manages
+    internal data structures, processes, and infrastructure for interactive
+    capabilities such as the SmartSim dashboard and historical lookback on
+    launched jobs and job groups.  The Experiment class is designed to be
+    initialized once and utilized throughout the entirety of a workflow.
     """
 
     def __init__(self, name: str, exp_path: str | None = None):
         """Initialize an Experiment instance.
 
-        With the default settings, the Experiment will use the
-        local launcher, which will start all Experiment created
-        instances on the localhost.
 
         Example of initializing an Experiment
 
-        .. highlight:: python
-        .. code-block:: python
-
-            exp = Experiment(name="my_exp", launcher="local")
-
-        SmartSim supports multiple launchers which also can be specified
-        based on the type of system you are running on.
 
         .. highlight:: python
         .. code-block:: python
 
-            exp = Experiment(name="my_exp", launcher="slurm")
+            exp = Experiment(name="my_exp")
 
-        If you want your Experiment driver script to be run across
-        multiple system with different schedulers (workload managers)
-        you can also use the `auto` argument to have the Experiment detect
-        which launcher to use based on system installed binaries and libraries.
+        The name of a SmartSim ``Experiment`` will determine the
+        name of the ``Experiment`` directory that is created inside of the
+        current working directory.
+
+        If a different ``Experiment`` path is desired, the ``exp_path``
+        parameter can be set as shown in the example below.
 
         .. highlight:: python
         .. code-block:: python
 
-            exp = Experiment(name="my_exp", launcher="auto")
+            exp = Experiment(name="my_exp", exp_path="/full/path/to/exp")
 
 
-        The Experiment path will default to the current working directory
-        and if the ``Experiment.generate`` method is called, a directory
-        with the Experiment name will be created to house the output
-        from the Experiment.
+        Note that the provided path must exist prior to ``Experiment``
+        construction and that an experiment name subdirectory will not be
+        created inside of the provide path.
 
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
         """
+        if not name:
+            raise TypeError("Experiment name must be non-empty string")
+
         self.name = name
+
         if exp_path:
             if not isinstance(exp_path, str):
                 raise TypeError("exp_path argument was not of type str")

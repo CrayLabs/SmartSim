@@ -167,7 +167,7 @@ class Generator:
         app = t.cast(Application, job.entity)
         cls._copy_files(app.files, job_path)
         cls._symlink_files(app.files, job_path)
-        cls._write_tagged_files(app.files, app.params, job_path)
+        cls._write_tagged_files(app.files, app.file_parameters, job_path)
 
     @staticmethod
     def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:

@@ -33,8 +33,8 @@ import os.path
 import typing as t
 
 from smartsim.entity import _mock, entity, strategies
+from smartsim.entity.application import Application
 from smartsim.entity.files import EntityFiles
-from smartsim.entity.model import Application
 from smartsim.entity.strategies import ParamSet
 from smartsim.launchable.job import Job
 
@@ -87,15 +87,9 @@ class Ensemble(entity.CompoundEntity):
             Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
-                run_settings=_mock.Mock(),
-                # ^^^^^^^^^^^^^^^^^^^^^^^
-                # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
                 files=self.files,
-                params=permutation.params,
-                params_as_args=permutation.exe_args,  # type: ignore[arg-type]
-                # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                # FIXME: this is the wrong type on Application!
+                file_parameters=permutation.params,
             )
             for i, permutation in enumerate(permutations_)
         )
