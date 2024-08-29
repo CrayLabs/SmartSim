@@ -37,7 +37,7 @@ import psutil
 from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import EnvironMappingType, FormatterType, WorkingDirectory
 from smartsim._core.utils import helpers
-from smartsim._core.utils.launcher import ExecutableProtocol, create_job_id
+from smartsim._core.utils.launcher import create_job_id
 from smartsim.error import errors
 from smartsim.log import get_logger
 from smartsim.settings.arguments.launchArguments import LaunchArguments
@@ -94,7 +94,7 @@ def make_shell_format_fn(
 
     def impl(
         args: ShellLaunchArguments,
-        exe: ExecutableProtocol,
+        exe: t.Sequence[str],
         path: WorkingDirectory,
         env: EnvironMappingType,
         stdout_path: pathlib.Path,
@@ -105,10 +105,10 @@ def make_shell_format_fn(
                 run_command,
                 *(args.format_launch_args() or ()),
                 "--",
-                *exe.as_program_arguments(),
+                *exe,
             )
             if run_command is not None
-            else exe.as_program_arguments()
+            else exe
         )
         # pylint: disable-next=consider-using-with
         return ShellLauncherCommand(

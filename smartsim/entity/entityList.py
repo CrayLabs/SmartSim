@@ -41,9 +41,8 @@ _T_co = t.TypeVar("_T_co", bound=SmartSimEntity, covariant=True)
 class EntitySequence(t.Generic[_T_co]):
     """Abstract class for containers for SmartSimEntities"""
 
-    def __init__(self, name: str, path: str, **kwargs: t.Any) -> None:
+    def __init__(self, name: str, **kwargs: t.Any) -> None:
         self.name: str = name
-        self.path: str = path
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # WARNING: This class cannot be made truly covariant until the
@@ -105,11 +104,6 @@ class EntitySequence(t.Generic[_T_co]):
         """Return the name of the class"""
         return type(self).__name__
 
-    def set_path(self, new_path: str) -> None:
-        self.path = new_path
-        for entity in self.entities:
-            entity.path = new_path
-
     def __getitem__(self, name: str) -> t.Optional[_T_co]:
         for entity in self.entities:
             if entity.name == name:
@@ -127,8 +121,8 @@ class EntitySequence(t.Generic[_T_co]):
 class EntityList(EntitySequence[_T]):
     """An invariant subclass of an ``EntitySequence`` with mutable containers"""
 
-    def __init__(self, name: str, path: str, **kwargs: t.Any) -> None:
-        super().__init__(name=name, path=path, **kwargs)
+    def __init__(self, name: str, **kwargs: t.Any) -> None:
+        super().__init__(name=name, **kwargs)
         # Change container types to be invariant ``list``s
         self.entities: t.List[_T] = list(self.entities)
         self._fs_models: t.List["smartsim.entity.FSModel"] = list(self._fs_models)

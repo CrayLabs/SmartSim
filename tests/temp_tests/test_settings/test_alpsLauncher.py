@@ -215,12 +215,12 @@ def test_invalid_exclude_hostlist_format():
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+def test_formatting_launch_args(args, expected, test_dir):
     out = os.path.join(test_dir, "out.txt")
     err = os.path.join(test_dir, "err.txt")
     open(out, "w"), open(err, "w")
     shell_launch_cmd = _as_aprun_command(
-        AprunLaunchArguments(args), mock_echo_executable, test_dir, {}, out, err
+        AprunLaunchArguments(args), ("echo", "hello", "world"), test_dir, {}, out, err
     )
     assert isinstance(shell_launch_cmd, ShellLauncherCommand)
     assert shell_launch_cmd.command_tuple == expected

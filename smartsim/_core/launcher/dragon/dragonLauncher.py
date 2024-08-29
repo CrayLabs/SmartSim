@@ -64,7 +64,6 @@ from .dragonConnector import DragonConnector, _SchemaT
 if t.TYPE_CHECKING:
     from typing_extensions import Self
 
-    from smartsim._core.utils.launcher import ExecutableProtocol
     from smartsim.experiment import Experiment
 
 
@@ -381,7 +380,7 @@ from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 
 def _as_run_request_args_and_policy(
     run_req_args: DragonLaunchArguments,
-    exe: ExecutableProtocol,
+    exe: t.Sequence[str],
     path: str | os.PathLike[str],
     env: t.Mapping[str, str | None],
     stdout_path: pathlib.Path,
@@ -391,7 +390,7 @@ def _as_run_request_args_and_policy(
     # FIXME: This type is 100% unacceptable, but I don't want to spend too much
     #        time on fixing the dragon launcher API. Something that we need to
     #        revisit in the future though.
-    exe_, *args = exe.as_program_arguments()
+    exe_, *args = exe
     run_args = dict[str, "int | str | float | None"](run_req_args._launch_args)
     policy = DragonRunPolicy.from_run_args(run_args)
     return (
