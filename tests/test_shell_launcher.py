@@ -336,29 +336,21 @@ def test_get_status_maps_correctly(
     "args",
     (
         pytest.param(("sleep", "60"), id="Sleep for a minute"),
-        pytest.param(
-            (
-                sys.executable,
-                "-c",
-                textwrap.dedent("""\
-                import signal, time
-                signal.signal(signal.SIGINT, lambda n, f: print("Ignoring"))
-                time.sleep(60)
-                """),
-            ),
-            id="Process Swallows SIGINT",
-        ),
-        pytest.param(
-            (
-                sys.executable,
-                "-c",
-                textwrap.dedent("""\
-                import signal, time
-                signal.signal(signal.SIGTERM, lambda n, f: print("Ignoring"))
-                time.sleep(60)
-                """),
-            ),
-            id="Process Swallows SIGTERM",
+        *(
+            pytest.param(
+                (
+                    sys.executable,
+                    "-c",
+                    textwrap.dedent(f"""\
+                        import signal, time
+                        signal.signal(signal.{signal_name},
+                                      lambda n, f: print("Ignoring"))
+                        time.sleep(60)
+                        """),
+                ),
+                id=f"Process Swallows {signal_name}",
+            )
+            for signal_name in ("SIGINT", "SIGTERM")
         ),
     ),
 )
@@ -374,7 +366,7 @@ def test_launcher_can_stop_processes(shell_launcher, make_shell_command, args):
         proc = shell_launcher._launched[id_]
         assert proc.poll() is not None
         assert proc.poll() != 0
-        assert end - start < 1
+        assert 0.1 < end - start < 1
 
 
 def test_launcher_can_stop_many_processes(
