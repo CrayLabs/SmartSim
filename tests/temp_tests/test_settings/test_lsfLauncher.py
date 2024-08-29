@@ -185,7 +185,12 @@ def test_formatting_launch_args(args, expected, test_dir):
     outfile = "output.txt"
     errfile = "error.txt"
     env, path, stdin, stdout, args = _as_jsrun_command(
-        JsrunLaunchArguments(args), ("echo", "hello", "world"), test_dir, {}, outfile, errfile
+        JsrunLaunchArguments(args),
+        ("echo", "hello", "world"),
+        test_dir,
+        {},
+        outfile,
+        errfile,
     )
     assert tuple(args) == expected
     assert path == test_dir

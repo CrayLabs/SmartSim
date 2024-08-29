@@ -128,7 +128,6 @@ class Application(SmartSimEntity):
         :param value: files
         """
         self._files = copy.deepcopy(value)
-    
 
     def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
         """Add executable arguments to executable
@@ -138,7 +137,6 @@ class Application(SmartSimEntity):
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
-    
     @property
     def file_parameters(self) -> t.Mapping[str, str]:
         """Return file parameters.
@@ -186,7 +184,7 @@ class Application(SmartSimEntity):
         :param value: key prefixing enabled
         """
         self.key_prefixing_enabled = copy.deepcopy(value)
-    
+
     def as_program_arguments(self) -> t.Sequence[str]:
         return [self.exe, *self.exe_args]
 
