@@ -66,7 +66,7 @@ a job
 FormatterType: TypeAlias = t.Callable[
     [
         _DispatchableT,
-        t.Union[str, t.Sequence[str]],
+        t.Sequence[str],
         WorkingDirectory,
         EnvironMappingType,
         pathlib.Path,
@@ -78,7 +78,7 @@ FormatterType: TypeAlias = t.Callable[
 capable of being launched by a launcher.
 """
 _LaunchConfigType: TypeAlias = """_LauncherAdapter[
-        t.Union[str, t.Sequence[str]],
+        t.Sequence[str],
         WorkingDirectory,
         EnvironMappingType,
         pathlib.Path,
@@ -271,7 +271,7 @@ class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
             )
 
         def format_(
-            exe: t.Union[str, t.Sequence[str]],
+            exe: t.Sequence[str],
             path: pathlib.Path,
             env: EnvironMappingType,
             out: pathlib.Path,

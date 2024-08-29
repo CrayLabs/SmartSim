@@ -136,13 +136,13 @@ def test_invalid_hostlist_format():
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+def test_formatting_launch_args(args, expected, test_dir):
     out = os.path.join(test_dir, "out.txt")
     err = os.path.join(test_dir, "err.txt")
     open(out, "w"), open(err, "w")
     shell_launch_cmd = _as_pals_command(
         PalsMpiexecLaunchArguments(args),
-        mock_echo_executable,
+        ("echo", "hello", "world"),
         test_dir,
         {},
         out,

@@ -143,7 +143,7 @@ class NoOpRecordLauncher(LauncherProtocol):
 
 
 @dataclasses.dataclass(frozen=True)
-class LaunchRecord:
+class LaunchRecord: #here
     launch_args: launchArguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
@@ -162,7 +162,7 @@ class LaunchRecord:
             that of the one stored in the `NoOpRecordLauncher`
         """
         args = job._launch_settings.launch_args
-        entity = job._entity
+        entity = job._entity.as_program_arguments()
         env = job._launch_settings.env_vars
         path = "/tmp/job"
         out = "/tmp/job/out.txt"
@@ -195,7 +195,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
     def __init__(self):
-        super().__init__("test-entity","echo", None, None)
+        super().__init__("test-entity")
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -248,7 +248,7 @@ def test_start_can_launch_jobs(
 
     # Check that `job_a, job_b, job_c, ...` are started in that order when
     # calling `experiemnt.start(job_a, job_b, job_c, ...)`
-    assert expected_launched == list(launcher.launched_order), "Unexpected launch order"
+    assert expected_launched == list(launcher.launched_order), "Unexpected launch order" #here
     assert sorted(launched_ids) == sorted(exp_cached_ids), "Exp did not cache ids"
 
     # Similarly, check that `id_a, id_b, id_c, ...` corresponds to

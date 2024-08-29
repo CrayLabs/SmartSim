@@ -381,10 +381,10 @@ def test_set_het_groups(monkeypatch):
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+def test_formatting_launch_args(args, expected, test_dir):
     shell_launch_cmd = _as_srun_command(
         args=SlurmLaunchArguments(args),
-        exe=mock_echo_executable,
+        exe=("echo", "hello", "world"),
         path=test_dir,
         env={},
         stdout_path="output.txt",

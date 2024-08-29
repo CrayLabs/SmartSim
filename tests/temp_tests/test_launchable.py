@@ -26,8 +26,9 @@
 
 import pytest
 
+from smartsim import entity
+from smartsim._core.utils import helpers
 from smartsim.entity.application import Application
-from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable import Job, Launchable
@@ -37,6 +38,21 @@ from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
+
+
+class EchoHelloWorldEntity(entity.SmartSimEntity):
+    """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
+
+    def __init__(self):
+        super().__init__("test-entity")
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+        return self.as_program_arguments() == other.as_program_arguments()
+
+    def as_program_arguments(self):
+        return (helpers.expand_exe_path("echo"), "Hello", "World!")
 
 
 def test_smartsimobject_init():
@@ -100,7 +116,7 @@ def test_job_init_deepcopy():
 
 
 def test_add_mpmd_pair():
-    entity = SmartSimEntity("test_name", "echo", None, None)
+    entity = EchoHelloWorldEntity
 
     mpmd_job = MPMDJob()
     mpmd_job.add_mpmd_pair(entity, LaunchSettings("slurm"))
@@ -171,10 +187,10 @@ def test_add_mpmd_pair_check_launcher_error():
     """Test that an error is raised when a pairs is added to an mpmd
     job using add_mpmd_pair that does not have the same launcher type"""
     mpmd_pairs = []
-    entity1 = SmartSimEntity("entity1", "echo", None, None)
+    entity1 = EchoHelloWorldEntity
     launch_settings1 = LaunchSettings("slurm")
 
-    entity2 = SmartSimEntity("entity2", "echo", None, None)
+    entity2 = EchoHelloWorldEntity
     launch_settings2 = LaunchSettings("pals")
 
     pair1 = MPMDPair(entity1, launch_settings1)

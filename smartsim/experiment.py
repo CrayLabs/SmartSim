@@ -188,12 +188,7 @@ class Experiment:
         def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
-            # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            # FIXME: Remove this cast after `SmartSimEntity` conforms to
-            #        protocol. For now, live with the "dangerous" type cast
-            # ---------------------------------------------------------------------
             exe = job.entity.as_program_arguments()
-            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             dispatch = dispatcher.get_dispatch(args)
             try:
                 # Check to see if one of the existing launchers can be

@@ -94,7 +94,7 @@ def make_shell_format_fn(
 
     def impl(
         args: ShellLaunchArguments,
-        exe: t.Union[str, t.Sequence[str]],
+        exe: t.Sequence[str],
         path: WorkingDirectory,
         env: EnvironMappingType,
         stdout_path: pathlib.Path,
