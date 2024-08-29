@@ -46,10 +46,6 @@ def create_job_id() -> LaunchedJobID:
     return LaunchedJobID(str(uuid.uuid4()))
 
 
-class ExecutableProtocol(t.Protocol):
-    def as_program_arguments(self) -> t.Sequence[str]: ...
-
-
 class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
     """The protocol defining a launcher that can be used by a SmartSim
     experiment

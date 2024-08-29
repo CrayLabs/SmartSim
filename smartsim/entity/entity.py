@@ -34,9 +34,6 @@ from smartsim.launchable.jobGroup import JobGroup
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
     from smartsim.settings.launchSettings import LaunchSettings
-    from smartsim.types import TODO
-
-    RunSettings = TODO
 
 
 class TelemetryConfiguration:
@@ -97,8 +94,11 @@ class TelemetryConfiguration:
         to perform actions when attempts to change configuration are made"""
 
 
-class SmartSimEntity:
-    def __init__(self, name: str) -> None:
+class SmartSimEntity(abc.ABC):
+    def __init__(
+        self,
+        name: str,
+    ) -> None:
         """Initialize a SmartSim entity.
 
         Each entity must have a name and path. All entities within SmartSim
@@ -107,16 +107,19 @@ class SmartSimEntity:
         :param name: Name of the entity
         """
         self.name = name
+        """The name of the application"""
+
+    @abc.abstractmethod
+    def as_executable_sequence(self) -> t.Sequence[str]:
+        """Converts the executable and its arguments into a sequence of program arguments.
+
+        :return: a sequence of strings representing the executable and its arguments
+        """
 
     @property
     def type(self) -> str:
         """Return the name of the class"""
         return type(self).__name__
-
-    def set_path(self, path: str) -> None:
-        if not isinstance(path, str):
-            raise TypeError("path argument must be a string")
-        self.path = path
 
     def __repr__(self) -> str:
         return self.name
