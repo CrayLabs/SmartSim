@@ -31,6 +31,7 @@ import pytest
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbonefeaturestore import (
     BackboneFeatureStore,
     EventBroadcaster,
