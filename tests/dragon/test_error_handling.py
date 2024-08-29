@@ -483,7 +483,9 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     )
 
     test_exception = ValueError("Test ValueError")
-    exception_handler(test_exception, mock_reply_channel, "Failure while fetching the model.")
+    exception_handler(
+        test_exception, mock_reply_channel, "Failure while fetching the model."
+    )
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")
