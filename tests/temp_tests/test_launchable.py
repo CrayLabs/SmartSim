@@ -41,7 +41,7 @@ pytestmark = pytest.mark.group_a
 
 
 class EchoHelloWorldEntity(entity.SmartSimEntity):
-    """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
+    """A simple smartsim entity"""
 
     def __init__(self):
         super().__init__("test-entity")
