@@ -38,20 +38,20 @@ from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 from dragon.mpbridge.queues import DragonQueue
 
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.control.devicemanager import WorkerDevice
-from smartsim._core.mli.infrastructure.control.requestdispatcher import (
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.control.device_manager import WorkerDevice
+from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
-from smartsim._core.mli.infrastructure.control.workermanager import (
+from smartsim._core.mli.infrastructure.control.worker_manager import (
     WorkerManager,
     exception_handler,
 )
-from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import (
+from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
     FeatureStoreKey,
 )
@@ -314,12 +314,12 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         return exception_handler(exc, mock_reply_channel, failure_message)
 
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        "smartsim._core.mli.infrastructure.control.worker_manager.exception_handler",
         mock_exception_handler,
     )
 
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.requestdispatcher.exception_handler",
+        "smartsim._core.mli.infrastructure.control.request_dispatcher.exception_handler",
         mock_exception_handler,
     )
 

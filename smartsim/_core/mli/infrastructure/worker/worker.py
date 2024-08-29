@@ -37,7 +37,7 @@ from dataclasses import dataclass
 from .....error import SmartSimError
 from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
-from ...infrastructure.storage.featurestore import FeatureStore, FeatureStoreKey
+from ..storage.feature_store import FeatureStore, FeatureStoreKey
 from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
 

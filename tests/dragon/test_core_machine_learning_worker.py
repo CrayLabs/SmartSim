@@ -34,7 +34,7 @@ dragon = pytest.importorskip("dragon")
 import torch
 
 import smartsim.error as sse
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.worker import (
     InferenceRequest,
     MachineLearningWorkerCore,

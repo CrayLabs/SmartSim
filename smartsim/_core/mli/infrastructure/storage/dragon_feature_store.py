@@ -32,7 +32,7 @@ import dragon.data.ddict.ddict as dragon_ddict
 
 # isort: on
 
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim.error import SmartSimError
 from smartsim.log import get_logger
 

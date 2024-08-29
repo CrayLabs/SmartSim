@@ -37,7 +37,7 @@ from dragon.managed_memory import MemoryAlloc, MemoryPool
 from torch import nn
 from torch.nn import functional as F
 
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
