@@ -27,17 +27,21 @@
 from __future__ import annotations
 
 import dataclasses
+import io
 import itertools
 import random
+import re
+import time
 import typing as t
 import uuid
 
 import pytest
 
 from smartsim._core import dispatch
+from smartsim._core.control.interval import SynchronousTimeInterval
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
-from smartsim.entity import _mock, entity
+from smartsim.entity import entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import launchSettings
@@ -198,7 +202,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
     def __init__(self):
-        super().__init__("test-entity", _mock.Mock())
+        super().__init__("test-entity")
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -407,6 +411,134 @@ def test_get_status_de_dups_ids_passed_to_launchers(
     assert len(calls) == 1, "Launcher's `get_status` was called more than once"
     (call,) = calls
     assert call == ((id_,), {}), "IDs were not de-duplicated"
+
+
+def test_wait_handles_empty_call_args(experiment):
+    """An exception is raised when there are no jobs to complete"""
+    with pytest.raises(ValueError, match="No job ids"):
+        experiment.wait()
+
+
+def test_wait_does_not_block_unknown_id(experiment):
+    """If an experiment does not recognize a job id, it should not wait for its
+    completion
+    """
+    now = time.perf_counter()
+    experiment.wait(create_job_id())
+    assert time.perf_counter() - now < 1
+
+
+def test_wait_calls_prefered_impl(make_populated_experiment, monkeypatch):
+    """Make wait is calling the expected method for checking job statuses.
+    Right now we only have the "polling" impl, but in future this might change
+    to an event based system.
+    """
+    exp = make_populated_experiment(1)
+    ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    was_called = False
+
+    def mocked_impl(*args, **kwargs):
+        nonlocal was_called
+        was_called = True
+
+    monkeypatch.setattr(exp, "_poll_for_statuses", mocked_impl)
+    exp.wait(id_)
+    assert was_called
+
+
+@pytest.mark.parametrize(
+    "num_polls",
+    [
+        pytest.param(i, id=f"Poll for status {i} times")
+        for i in (1, 5, 10, 20, 100, 1_000)
+    ],
+)
+@pytest.mark.parametrize("verbose", [True, False])
+def test_poll_status_blocks_until_job_is_completed(
+    monkeypatch, make_populated_experiment, num_polls, verbose
+):
+    """Make sure that the polling based implementation blocks the calling
+    thread. Use varying number of polls to simulate varying lengths of job time
+    for a job to complete.
+
+    Additionally check to make sure that the expected log messages are present
+    """
+    exp = make_populated_experiment(1)
+    ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    (current_status,) = launcher.get_status(id_).values()
+    different_statuses = set(JobStatus) - {current_status}
+    (new_status, *_) = different_statuses
+    mock_log = io.StringIO()
+
+    @dataclasses.dataclass
+    class ChangeStatusAfterNPolls:
+        n: int
+        from_: JobStatus
+        to: JobStatus
+        num_calls: int = dataclasses.field(default=0, init=False)
+
+        def __call__(self, *args, **kwargs):
+            self.num_calls += 1
+            ret_status = self.to if self.num_calls >= self.n else self.from_
+            return (ret_status,)
+
+    mock_get_status = ChangeStatusAfterNPolls(num_polls, current_status, new_status)
+    monkeypatch.setattr(exp, "get_status", mock_get_status)
+    monkeypatch.setattr(
+        "smartsim.experiment.logger.info", lambda s: mock_log.write(f"{s}\n")
+    )
+    final_statuses = exp._poll_for_statuses(
+        [id_], different_statuses, timeout=10, interval=0, verbose=verbose
+    )
+    assert final_statuses == {id_: new_status}
+
+    expected_log = io.StringIO()
+    expected_log.writelines(
+        f"Job({id_}): Running with status '{current_status.value}'\n"
+        for _ in range(num_polls - 1)
+    )
+    expected_log.write(f"Job({id_}): Finished with status '{new_status.value}'\n")
+    assert mock_get_status.num_calls == num_polls
+    assert mock_log.getvalue() == (expected_log.getvalue() if verbose else "")
+
+
+def test_poll_status_raises_when_called_with_infinite_iter_wait(
+    make_populated_experiment,
+):
+    """Cannot wait forever between polls. That will just block the thread after
+    the first poll
+    """
+    exp = make_populated_experiment(1)
+    ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    with pytest.raises(ValueError, match="Polling interval cannot be infinite"):
+        exp._poll_for_statuses(
+            [id_],
+            [],
+            timeout=10,
+            interval=float("inf"),
+        )
+
+
+def test_poll_for_status_raises_if_ids_not_found_within_timeout(
+    make_populated_experiment,
+):
+    """If there is a timeout, a timeout error should be raised when it is exceeded"""
+    exp = make_populated_experiment(1)
+    ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    (current_status,) = launcher.get_status(id_).values()
+    different_statuses = set(JobStatus) - {current_status}
+    with pytest.raises(
+        TimeoutError,
+        match=re.escape(
+            f"Job ID(s) {id_} failed to reach terminal status before timeout"
+        ),
+    ):
+        exp._poll_for_statuses(
+            [id_],
+            different_statuses,
+            timeout=1,
+            interval=0,
+        )
 
 
 @pytest.mark.parametrize(

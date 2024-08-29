@@ -31,17 +31,24 @@ from __future__ import annotations
 
 import base64
 import collections.abc
+import functools
+import itertools
 import os
 import signal
 import subprocess
+import sys
 import typing as t
 import uuid
+import warnings
 from datetime import datetime
-from functools import lru_cache
 from shutil import which
 
 if t.TYPE_CHECKING:
     from types import FrameType
+
+    from typing_extensions import TypeVarTuple, Unpack
+
+    _Ts = TypeVarTuple("_Ts")
 
 
 _T = t.TypeVar("_T")
@@ -94,7 +101,7 @@ def create_lockfile_name() -> str:
     return f"smartsim-{lock_suffix}.lock"
 
 
-@lru_cache(maxsize=20, typed=False)
+@functools.lru_cache(maxsize=20, typed=False)
 def check_dev_log_level() -> bool:
     lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
     return lvl == "developer"
@@ -284,6 +291,20 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
     return process.stdout.decode("utf-8"), process.returncode
 
 
+def _stringify_id(_id: int) -> str:
+    """Return the CPU id as a string if an int, otherwise raise a ValueError
+
+    :params _id: the CPU id as an int
+    :returns: the CPU as a string
+    """
+    if isinstance(_id, int):
+        if _id < 0:
+            raise ValueError("CPU id must be a nonnegative number")
+        return str(_id)
+
+    raise TypeError(f"Argument is of type '{type(_id)}' not 'int'")
+
+
 class CrayExPlatformResult:
     locate_msg = "Unable to locate `{0}`."
 
@@ -437,6 +458,43 @@ def group_by(
     return dict(groups)
 
 
+def pack_params(
+    fn: t.Callable[[Unpack[_Ts]], _T]
+) -> t.Callable[[tuple[Unpack[_Ts]]], _T]:
+    r"""Take a function that takes an unspecified number of positional arguments
+    and turn it into a function that takes one argument of type `tuple` of
+    unspecified length. The main use case is largely just for iterating over an
+    iterable where arguments are "pre-zipped" into tuples. E.g.
+
+    .. highlight:: python
+    .. code-block:: python
+
+        def pretty_print_dict(d):
+            fmt_pair = lambda key, value: f"{repr(key)}: {repr(value)},"
+            body = "\n".join(map(pack_params(fmt_pair), d.items()))
+            #                    ^^^^^^^^^^^^^^^^^^^^^
+            print(f"{{\n{textwrap.indent(body, '    ')}\n}}")
+
+        pretty_print_dict({"spam": "eggs", "foo": "bar", "hello": "world"})
+        # prints:
+        # {
+        #     'spam': 'eggs',
+        #     'foo': 'bar',
+        #     'hello': 'world',
+        # }
+
+    :param fn: A callable that takes many positional parameters.
+    :returns: A callable that takes a single positional parameter of type tuple
+        of with the same shape as the original callable parameter list.
+    """
+
+    @functools.wraps(fn)
+    def packed(args: tuple[Unpack[_Ts]]) -> _T:
+        return fn(*args)
+
+    return packed
+
+
 @t.final
 class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
     """Registers a stack of callables to be called when a signal is
@@ -515,3 +573,46 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         if did_push := fn not in self:
             self.push(fn)
         return did_push
+
+    def _create_pinning_string(
+        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
+    ) -> t.Optional[str]:
+        """Create a comma-separated string of CPU ids. By default, ``None``
+        returns 0,1,...,cpus-1; an empty iterable will disable pinning
+        altogether, and an iterable constructs a comma separated string of
+        integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
+
+        :params pin_ids: CPU ids
+        :params cpu: number of CPUs
+        :raises TypeError: if pin id is not an iterable of ints
+        :returns: a comma separated string of CPU ids
+        """
+
+        try:
+            pin_ids = tuple(pin_ids) if pin_ids is not None else None
+        except TypeError:
+            raise TypeError(
+                "Expected a cpu pinning specification of type iterable of ints or "
+                f"iterables of ints. Instead got type `{type(pin_ids)}`"
+            ) from None
+
+        # Deal with MacOSX limitations first. The "None" (default) disables pinning
+        # and is equivalent to []. The only invalid option is a non-empty pinning
+        if sys.platform == "darwin":
+            if pin_ids:
+                warnings.warn(
+                    "CPU pinning is not supported on MacOSX. Ignoring pinning "
+                    "specification.",
+                    RuntimeWarning,
+                )
+            return None
+
+        # Flatten the iterable into a list and check to make sure that the resulting
+        # elements are all ints
+        if pin_ids is None:
+            return ",".join(_stringify_id(i) for i in range(cpus))
+        if not pin_ids:
+            return None
+        pin_ids = ((x,) if isinstance(x, int) else x for x in pin_ids)
+        to_fmt = itertools.chain.from_iterable(pin_ids)
+        return ",".join(sorted({_stringify_id(x) for x in to_fmt}))

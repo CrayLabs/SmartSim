@@ -89,27 +89,33 @@ def test_strategy_error_raised_if_a_strategy_that_dne_is_requested(test_dir):
 
 
 @pytest.mark.parametrize(
-    "params",
+    "file_parameters",
     (
         pytest.param({"SPAM": ["eggs"]}, id="Non-Empty Params"),
         pytest.param({}, id="Empty Params"),
         pytest.param(None, id="Nullish Params"),
     ),
 )
-def test_replicated_applications_have_eq_deep_copies_of_parameters(params, test_dir):
+def test_replicated_applications_have_eq_deep_copies_of_parameters(
+    file_parameters, test_dir
+):
     apps = list(
         Ensemble(
             "test_ensemble",
             "echo",
             ("hello",),
             replicas=4,
-            file_parameters=params,
+            file_parameters=file_parameters,
         )._create_applications()
     )
     assert len(apps) >= 2  # Sanitiy check to make sure the test is valid
-    assert all(app_1.params == app_2.params for app_1 in apps for app_2 in apps)
     assert all(
-        app_1.params is not app_2.params
+        app_1.file_parameters == app_2.file_parameters
+        for app_1 in apps
+        for app_2 in apps
+    )
+    assert all(
+        app_1.file_parameters is not app_2.file_parameters
         for app_1 in apps
         for app_2 in apps
         if app_1 is not app_2

@@ -24,17 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=too-many-lines
-
 from __future__ import annotations
 
-import collections
 import datetime
 import itertools
-import os
 import os.path as osp
 import pathlib
-import textwrap
 import typing as t
 from os import environ, getcwd
 
@@ -42,19 +37,14 @@ from tabulate import tabulate
 
 from smartsim._core import dispatch
 from smartsim._core.config import CONFIG
+from smartsim._core.control import interval as _interval
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
+from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
-from smartsim.status import InvalidJobStatus, JobStatus
+from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
-from ._core import Controller, Generator, Manifest, previewrenderer
-from .database import FeatureStore
-from .entity import (
-    Application,
-    Ensemble,
-    EntitySequence,
-    SmartSimEntity,
-    TelemetryConfiguration,
-)
+from ._core import Generator, Manifest, previewrenderer
+from .entity import TelemetryConfiguration
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
@@ -94,64 +84,51 @@ class ExperimentTelemetryConfiguration(TelemetryConfiguration):
 
 # pylint: disable=no-self-use
 class Experiment:
-    """Experiment is a factory class that creates stages of a workflow
-    and manages their execution.
-
-    The instances created by an Experiment represent executable code
-    that is either user-specified, like the ``Application`` instance created
-    by ``Experiment.create_application``, or pre-configured, like the ``FeatureStore``
-    instance created by ``Experiment.create_feature_store``.
-
-    Experiment methods that accept a variable list of arguments, such as
-    ``Experiment.start`` or ``Experiment.stop``, accept any number of the
-    instances created by the Experiment.
-
-    In general, the Experiment class is designed to be initialized once
-    and utilized throughout runtime.
+    """The Experiment class is used to schedule, launch, track, and manage
+    jobs and job groups.  Also, it is the SmartSim class that manages
+    internal data structures, processes, and infrastructure for interactive
+    capabilities such as the SmartSim dashboard and historical lookback on
+    launched jobs and job groups.  The Experiment class is designed to be
+    initialized once and utilized throughout the entirety of a workflow.
     """
 
     def __init__(self, name: str, exp_path: str | None = None):
         """Initialize an Experiment instance.
 
-        With the default settings, the Experiment will use the
-        local launcher, which will start all Experiment created
-        instances on the localhost.
 
         Example of initializing an Experiment
 
-        .. highlight:: python
-        .. code-block:: python
-
-            exp = Experiment(name="my_exp", launcher="local")
-
-        SmartSim supports multiple launchers which also can be specified
-        based on the type of system you are running on.
 
         .. highlight:: python
         .. code-block:: python
 
-            exp = Experiment(name="my_exp", launcher="slurm")
+            exp = Experiment(name="my_exp")
 
-        If you want your Experiment driver script to be run across
-        multiple system with different schedulers (workload managers)
-        you can also use the `auto` argument to have the Experiment detect
-        which launcher to use based on system installed binaries and libraries.
+        The name of a SmartSim ``Experiment`` will determine the
+        name of the ``Experiment`` directory that is created inside of the
+        current working directory.
+
+        If a different ``Experiment`` path is desired, the ``exp_path``
+        parameter can be set as shown in the example below.
 
         .. highlight:: python
         .. code-block:: python
 
-            exp = Experiment(name="my_exp", launcher="auto")
+            exp = Experiment(name="my_exp", exp_path="/full/path/to/exp")
 
 
-        The Experiment path will default to the current working directory
-        and if the ``Experiment.generate`` method is called, a directory
-        with the Experiment name will be created to house the output
-        from the Experiment.
+        Note that the provided path must exist prior to ``Experiment``
+        construction and that an experiment name subdirectory will not be
+        created inside of the provide path.
 
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
         """
+        if not name:
+            raise TypeError("Experiment name must be non-empty string")
+
         self.name = name
+
         if exp_path:
             if not isinstance(exp_path, str):
                 raise TypeError("exp_path argument was not of type str")
@@ -276,6 +253,84 @@ class Experiment:
         stats_map = dict(itertools.chain.from_iterable(stats_iter))
         stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
         return tuple(stats)
+
+    def wait(
+        self, *ids: LaunchedJobID, timeout: float | None = None, verbose: bool = True
+    ) -> None:
+        """Block execution until all of the provided launched jobs, represented
+        by an ID, have entered a terminal status.
+
+        :param ids: The ids of the launched jobs to wait for.
+        :param timeout: The max time to wait for all of the launched jobs to end.
+        :param verbose: Whether found statuses should be displayed in the console.
+        :raises ValueError: No IDs were provided.
+        """
+        if not ids:
+            raise ValueError("No job ids to wait on provided")
+        self._poll_for_statuses(
+            ids, TERMINAL_STATUSES, timeout=timeout, verbose=verbose
+        )
+
+    def _poll_for_statuses(
+        self,
+        ids: t.Sequence[LaunchedJobID],
+        statuses: t.Collection[JobStatus],
+        timeout: float | None = None,
+        interval: float = 5.0,
+        verbose: bool = True,
+    ) -> dict[LaunchedJobID, JobStatus | InvalidJobStatus]:
+        """Poll the experiment's launchers for the statuses of the launched
+        jobs with the provided ids, until the status of the changes to one of
+        the provided statuses.
+
+        :param ids: The ids of the launched jobs to wait for.
+        :param statuses: A collection of statuses to poll for.
+        :param timeout: The minimum amount of time to spend polling all jobs to
+            reach one of the supplied statuses. If not supplied or `None`, the
+            experiment will poll indefinitely.
+        :param interval: The minimum time between polling launchers.
+        :param verbose: Whether or not to log polled states to the console.
+        :raises ValueError: The interval between polling launchers is infinite
+        :raises TimeoutError: The polling interval was exceeded.
+        :returns: A mapping of ids to the status they entered that ended
+            polling.
+        """
+        terminal = frozenset(itertools.chain(statuses, InvalidJobStatus))
+        log = logger.info if verbose else lambda *_, **__: None
+        method_timeout = _interval.SynchronousTimeInterval(timeout)
+        iter_timeout = _interval.SynchronousTimeInterval(interval)
+        final: dict[LaunchedJobID, JobStatus | InvalidJobStatus] = {}
+
+        def is_finished(
+            id_: LaunchedJobID, status: JobStatus | InvalidJobStatus
+        ) -> bool:
+            job_title = f"Job({id_}): "
+            if done := status in terminal:
+                log(f"{job_title}Finished with status '{status.value}'")
+            else:
+                log(f"{job_title}Running with status '{status.value}'")
+            return done
+
+        if iter_timeout.infinite:
+            raise ValueError("Polling interval cannot be infinite")
+        while ids and not method_timeout.expired:
+            iter_timeout = iter_timeout.new_interval()
+            stats = zip(ids, self.get_status(*ids))
+            is_done = _helpers.group_by(_helpers.pack_params(is_finished), stats)
+            final |= dict(is_done.get(True, ()))
+            ids = tuple(id_ for id_, _ in is_done.get(False, ()))
+            if ids:
+                (
+                    iter_timeout
+                    if iter_timeout.remaining < method_timeout.remaining
+                    else method_timeout
+                ).block()
+        if ids:
+            raise TimeoutError(
+                f"Job ID(s) {', '.join(map(str, ids))} failed to reach "
+                "terminal status before timeout"
+            )
+        return final
 
     @_contextualize
     def _generate(
