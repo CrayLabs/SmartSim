@@ -110,7 +110,11 @@ class SmartSimEntity(abc.ABC):
         """The name of the application"""
 
     @abc.abstractmethod
-    def as_program_arguments(self) -> t.Sequence[str]: ...
+    def as_executable_sequence(self) -> t.Sequence[str]:
+        """Converts the executable and its arguments into a sequence of program arguments.
+
+        :return: a sequence of strings representing the executable and its arguments
+        """
 
     @property
     def type(self) -> str:

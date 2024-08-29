@@ -112,6 +112,14 @@ class Application(SmartSimEntity):
         """
         self._exe_args = self._build_exe_args(value)
 
+    def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
+        """Add executable arguments to executable
+
+        :param args: executable arguments
+        """
+        args = self._build_exe_args(args)
+        self._exe_args.extend(args)
+
     @property
     def files(self) -> t.Optional[EntityFiles]:
         """Return files to be copied, symlinked, and/or configured prior to
@@ -129,14 +137,6 @@ class Application(SmartSimEntity):
         :param value: files
         """
         self._files = copy.deepcopy(value)
-
-    def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
-        """Add executable arguments to executable
-
-        :param args: executable arguments
-        """
-        args = self._build_exe_args(args)
-        self._exe_args.extend(args)
 
     @property
     def file_parameters(self) -> t.Mapping[str, str]:
@@ -186,7 +186,11 @@ class Application(SmartSimEntity):
         """
         self.key_prefixing_enabled = copy.deepcopy(value)
 
-    def as_program_arguments(self) -> t.Sequence[str]:
+    def as_executable_sequence(self) -> t.Sequence[str]:
+        """Converts the executable and its arguments into a sequence of program arguments.
+
+        :return: a sequence of strings representing the executable and its arguments
+        """
         return [self.exe, *self.exe_args]
 
     def attach_generator_files(

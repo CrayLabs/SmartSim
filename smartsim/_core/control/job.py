@@ -299,7 +299,7 @@ class Job:
         warning += f"Job status at failure: {self.status} \n"
         warning += f"Launcher status at failure: {self.raw_status} \n"
         warning += f"Job returncode: {self.returncode} \n"
-        # warning += f"Error and output file located at: {self.job.path}"
+        # warning += f"Error and output file located at: {self.entity.path}"
         return warning
 
     def __str__(self) -> str:

@@ -31,15 +31,6 @@ from smartsim.settings.arguments import launchArguments as launch
 
 
 @pytest.fixture
-def mock_echo_executable():
-    class _MockExe:
-        def as_program_arguments(self):
-            return ("echo", "hello", "world")
-
-    yield _MockExe()
-
-
-@pytest.fixture
 def mock_launch_args():
     class _MockLaunchArgs(launch.LaunchArguments):
         def set(self, arg, val): ...

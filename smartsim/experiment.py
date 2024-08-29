@@ -188,7 +188,7 @@ class Experiment:
         def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
-            exe = job.entity.as_program_arguments()
+            exe = job.entity.as_executable_sequence()
             dispatch = dispatcher.get_dispatch(args)
             try:
                 # Check to see if one of the existing launchers can be

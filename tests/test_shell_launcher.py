@@ -51,9 +51,9 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     def __eq__(self, other):
         if type(self) is not type(other):
             return NotImplemented
-        return self.as_program_arguments() == other.as_program_arguments()
+        return self.as_executable_sequence() == other.as_executable_sequence()
 
-    def as_program_arguments(self):
+    def as_executable_sequence(self):
         return (helpers.expand_exe_path("echo"), "Hello", "World!")
 
 
@@ -95,7 +95,7 @@ def shell_cmd(test_dir: str) -> ShellLauncherCommand:
         open(err_file, "w", encoding="utf-8") as err,
     ):
         yield ShellLauncherCommand(
-            {}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments()
+            {}, run_dir, out, err, EchoHelloWorldEntity().as_executable_sequence()
         )
 
 
@@ -108,7 +108,7 @@ def test_shell_launcher_command_init(shell_cmd: ShellLauncherCommand, test_dir: 
     assert shell_cmd.path == pathlib.Path(test_dir) / "tmp"
     assert shell_cmd.stdout.name == os.path.join(test_dir, "tmp", "tmp.out")
     assert shell_cmd.stderr.name == os.path.join(test_dir, "tmp", "tmp.err")
-    assert shell_cmd.command_tuple == EchoHelloWorldEntity().as_program_arguments()
+    assert shell_cmd.command_tuple == EchoHelloWorldEntity().as_executable_sequence()
 
 
 def test_shell_launcher_init(shell_launcher: ShellLauncher):
@@ -123,7 +123,7 @@ def test_check_popen_inputs(shell_launcher: ShellLauncher, test_dir: str):
         pathlib.Path(test_dir) / "directory_dne",
         subprocess.DEVNULL,
         subprocess.DEVNULL,
-        EchoHelloWorldEntity().as_program_arguments(),
+        EchoHelloWorldEntity().as_executable_sequence(),
     )
     with pytest.raises(ValueError):
         _ = shell_launcher.start(cmd)
@@ -301,7 +301,7 @@ def test_get_status_maps_correctly(
         open(err_file, "w", encoding="utf-8") as err,
     ):
         cmd = ShellLauncherCommand(
-            {}, run_dir, out, err, EchoHelloWorldEntity().as_program_arguments()
+            {}, run_dir, out, err, EchoHelloWorldEntity().as_executable_sequence()
         )
         id = shell_launcher.start(cmd)
         proc = shell_launcher._launched[id]

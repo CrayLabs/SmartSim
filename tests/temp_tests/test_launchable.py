@@ -49,9 +49,9 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     def __eq__(self, other):
         if type(self) is not type(other):
             return NotImplemented
-        return self.as_program_arguments() == other.as_program_arguments()
+        return self.as_executable_sequence() == other.as_executable_sequence()
 
-    def as_program_arguments(self):
+    def as_executable_sequence(self):
         return (helpers.expand_exe_path("echo"), "Hello", "World!")
 
 
@@ -116,7 +116,7 @@ def test_job_init_deepcopy():
 
 
 def test_add_mpmd_pair():
-    entity = EchoHelloWorldEntity
+    entity = EchoHelloWorldEntity()
 
     mpmd_job = MPMDJob()
     mpmd_job.add_mpmd_pair(entity, LaunchSettings("slurm"))
@@ -187,10 +187,10 @@ def test_add_mpmd_pair_check_launcher_error():
     """Test that an error is raised when a pairs is added to an mpmd
     job using add_mpmd_pair that does not have the same launcher type"""
     mpmd_pairs = []
-    entity1 = EchoHelloWorldEntity
+    entity1 = EchoHelloWorldEntity()
     launch_settings1 = LaunchSettings("slurm")
 
-    entity2 = EchoHelloWorldEntity
+    entity2 = EchoHelloWorldEntity()
     launch_settings2 = LaunchSettings("pals")
 
     pair1 = MPMDPair(entity1, launch_settings1)
