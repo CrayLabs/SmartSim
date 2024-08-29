@@ -27,7 +27,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-import pathlib
 
 dragon = pytest.importorskip("dragon")
 
