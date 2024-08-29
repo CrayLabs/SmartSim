@@ -287,6 +287,9 @@ class EventBroadcaster:
                 comm_channel = self._get_comm_channel(descriptor)
 
                 try:
+                    # todo: given a failure, the message is not sent to any other
+                    # recipients. consider retrying, adding a dead letter queue, or
+                    # logging the message details more intentionally
                     comm_channel.send(next_event)
                     num_sent += 1
                 except Exception as ex:
