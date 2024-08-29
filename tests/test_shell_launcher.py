@@ -46,7 +46,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
     def __init__(self):
-        super().__init__("test-entity")
+        super().__init__("test-entity", "echo", None, None)
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -221,7 +221,7 @@ def test_retrieve_status_dne(shell_launcher: ShellLauncher):
 
 
 def test_shell_launcher_returns_complete_status(
-    shell_launcher: ShellLauncher, shell_cmd: ShellLauncherCommand, test_dir: str
+    shell_launcher: ShellLauncher, shell_cmd: ShellLauncherCommand
 ):
     """Test tht ShellLauncher returns the status of completed Jobs"""
     for _ in range(5):

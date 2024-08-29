@@ -35,7 +35,6 @@ import typing as t
 from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import EnvironMappingType, dispatch
 from smartsim._core.shell.shellLauncher import ShellLauncher, ShellLauncherCommand
-from smartsim._core.utils.launcher import ExecutableProtocol
 from smartsim.log import get_logger
 
 from ...common import set_check_input
@@ -46,7 +45,7 @@ logger = get_logger(__name__)
 
 def _as_srun_command(
     args: ShellLaunchArguments,
-    exe: ExecutableProtocol,
+    exe: t.Union[str, t.Sequence[str]],
     path: pathlib.Path,
     env: EnvironMappingType,
     stdout_path: pathlib.Path,
@@ -58,7 +57,7 @@ def _as_srun_command(
         f"--output={stdout_path}",
         f"--error={stderr_path}",
         "--",
-        *exe.as_program_arguments(),
+        *exe,
     )
     return ShellLauncherCommand(
         env, path, subprocess.DEVNULL, subprocess.DEVNULL, command_tuple

@@ -63,13 +63,7 @@ class Application(SmartSimEntity):
         :param file_parameters: parameters and values to be used when configuring
                                 files
         """
-        super().__init__(name)
-        """The name of the application"""
-        self._exe = expand_exe_path(exe)
-        """The executable to run"""
-        self._exe_args = self._build_exe_args(exe_args) or []
-        """The executable arguments"""
-        self._files = copy.deepcopy(files) if files else None
+        super().__init__(name, exe, exe_args, files)
         """Files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
@@ -79,56 +73,6 @@ class Application(SmartSimEntity):
         """Entities for which the prefix will have to be known by other entities"""
         self._key_prefixing_enabled = False
         """Unique prefix to avoid key collisions"""
-
-    @property
-    def exe(self) -> str:
-        """Return executable to run.
-
-        :returns: application executable to run
-        """
-        return self._exe
-
-    @exe.setter
-    def exe(self, value: str) -> None:
-        """Set executable to run.
-
-        :param value: executable to run
-        """
-        self._exe = copy.deepcopy(value)
-
-    @property
-    def exe_args(self) -> t.MutableSequence[str]:
-        """Return a list of attached executable arguments.
-
-        :returns: application executable arguments
-        """
-        return self._exe_args
-
-    @exe_args.setter
-    def exe_args(self, value: t.Union[str, t.Sequence[str], None]) -> None:
-        """Set the executable arguments.
-
-        :param value: executable arguments
-        """
-        self._exe_args = self._build_exe_args(value)
-
-    @property
-    def files(self) -> t.Optional[EntityFiles]:
-        """Return files to be copied, symlinked, and/or configured prior to
-        execution.
-
-        :returns: files
-        """
-        return self._files
-
-    @files.setter
-    def files(self, value: t.Optional[EntityFiles]) -> None:
-        """Set files to be copied, symlinked, and/or configured prior to
-        execution.
-
-        :param value: files
-        """
-        self._files = copy.deepcopy(value)
 
     @property
     def file_parameters(self) -> t.Mapping[str, str]:
@@ -177,14 +121,9 @@ class Application(SmartSimEntity):
         :param value: key prefixing enabled
         """
         self.key_prefixing_enabled = copy.deepcopy(value)
-
-    def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
-        """Add executable arguments to executable
-
-        :param args: executable arguments
-        """
-        args = self._build_exe_args(args)
-        self._exe_args.extend(args)
+    
+    def as_program_arguments(self) -> t.Sequence[str]:
+        return self.exe_args
 
     def attach_generator_files(
         self,
@@ -262,27 +201,3 @@ class Application(SmartSimEntity):
             {entities_str}
             Key Prefixing Enabled: {self.key_prefixing_enabled}
             """)
-
-    @staticmethod
-    def _build_exe_args(exe_args: t.Union[str, t.Sequence[str], None]) -> t.List[str]:
-        """Check and convert exe_args input to a desired collection format
-
-        :param exe_args:
-        :raises TypeError: if exe_args is not a list of str or str
-        """
-        if not exe_args:
-            return []
-
-        if not (
-            isinstance(exe_args, str)
-            or (
-                isinstance(exe_args, list)
-                and all(isinstance(arg, str) for arg in exe_args)
-            )
-        ):
-            raise TypeError("Executable arguments were not a list of str or a str.")
-
-        if isinstance(exe_args, str):
-            return exe_args.split()
-
-        return exe_args

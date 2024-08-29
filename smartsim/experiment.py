@@ -49,7 +49,6 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim._core.utils.launcher import ExecutableProtocol
     from smartsim.launchable.job import Job
     from smartsim.types import LaunchedJobID
 
@@ -193,7 +192,7 @@ class Experiment:
             # FIXME: Remove this cast after `SmartSimEntity` conforms to
             #        protocol. For now, live with the "dangerous" type cast
             # ---------------------------------------------------------------------
-            exe = t.cast("ExecutableProtocol", job.entity)
+            exe = job.entity.as_program_arguments()
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             dispatch = dispatcher.get_dispatch(args)
             try:
