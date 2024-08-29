@@ -77,11 +77,11 @@ def test_mli_reserved_keys_conversion() -> None:
 
     for reserved_key in ReservedKeys:
         # iterate through all keys and verify `from_string` works
-        assert ReservedKeys.from_string(reserved_key.value)
+        assert ReservedKeys.contains(reserved_key.value)
 
         # show that the value (actual key) not the enum member name
         # will not be incorrectly identified as reserved
-        assert not ReservedKeys.from_string(str(reserved_key).split(".")[1])
+        assert not ReservedKeys.contains(str(reserved_key).split(".")[1])
 
 
 def test_mli_reserved_keys_writes() -> None:
@@ -90,7 +90,7 @@ def test_mli_reserved_keys_writes() -> None:
 
     mock_storage = {}
     dfs = DragonFeatureStore(mock_storage)
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     other = MemoryFeatureStore(mock_storage)
 
     expected_value = "value"
@@ -122,7 +122,7 @@ def test_mli_consumers_read_by_key() -> None:
 
     mock_storage = {}
     dfs = DragonFeatureStore(mock_storage)
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     other = MemoryFeatureStore(mock_storage)
 
     expected_value = "value"
@@ -140,7 +140,7 @@ def test_mli_consumers_read_by_backbone() -> None:
     when using the backbone feature store API instead of mapping API"""
 
     mock_storage = {}
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     expected_value = "value"
 
     backbone[ReservedKeys.MLI_NOTIFY_CONSUMERS] = expected_value
@@ -154,7 +154,7 @@ def test_mli_consumers_write_by_backbone() -> None:
     when using the backbone feature store API instead of mapping API"""
 
     mock_storage = {}
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     expected_value = ["value"]
 
     backbone.notification_channels = expected_value
@@ -211,7 +211,7 @@ def test_eventpublisher_broadcast_to_empty_consumer_list(test_dir: str) -> None:
     consumer_descriptor = storage_path / "test-consumer"
 
     # prep our backbone with a consumer list
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = []
 
     event = OnCreateConsumer(consumer_descriptor)
@@ -243,7 +243,7 @@ def test_eventpublisher_broadcast_without_channel_factory(test_dir: str) -> None
     consumer_descriptor = storage_path / "test-consumer"
 
     # prep our backbone with a consumer list
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = [consumer_descriptor]
 
     event = OnCreateConsumer(consumer_descriptor)
@@ -270,7 +270,7 @@ def test_eventpublisher_broadcast_empties_buffer(test_dir: str) -> None:
     # note: file-system descriptors are just paths
     consumer_descriptor = storage_path / "test-consumer"
 
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = (consumer_descriptor,)
 
     publisher = EventBroadcaster(
@@ -322,7 +322,7 @@ def test_eventpublisher_broadcast_returns_total_sent(
     for i in range(num_consumers):
         consumers.append(storage_path / f"test-consumer-{i}")
 
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = consumers
 
     publisher = EventBroadcaster(
@@ -356,7 +356,7 @@ def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
     # note: file-system descriptors are just paths
     consumer_descriptor = storage_path / "test-consumer"
 
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
 
     publisher = EventBroadcaster(
         backbone, channel_factory=FileSystemCommChannel.from_descriptor
@@ -426,7 +426,7 @@ def test_eventpublisher_serialize_failure(
     # note: file-system descriptors are just paths
     target_descriptor = str(storage_path / "test-consumer")
 
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     publisher = EventBroadcaster(
         backbone, channel_factory=FileSystemCommChannel.from_descriptor
     )
@@ -466,7 +466,7 @@ def test_eventpublisher_factory_failure(
     def boom(descriptor: str) -> None:
         raise Exception(f"you shall not pass! {descriptor}")
 
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     publisher = EventBroadcaster(backbone, channel_factory=boom)
 
     with monkeypatch.context() as patch:
@@ -497,7 +497,7 @@ def test_eventpublisher_failure(test_dir: str, monkeypatch: pytest.MonkeyPatch) 
     # note: file-system descriptors are just paths
     target_descriptor = str(storage_path / "test-consumer")
 
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     publisher = EventBroadcaster(
         backbone, channel_factory=FileSystemCommChannel.from_descriptor
     )
@@ -620,7 +620,7 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     storage_path.mkdir(parents=True, exist_ok=True)
 
     mock_storage = {}
-    backbone = BackboneFeatureStore(mock_storage)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     mock_fs_descriptor = str(storage_path / f"mock-feature-store")
 
     wmgr_channel = FileSystemCommChannel(storage_path / "test-wmgr")

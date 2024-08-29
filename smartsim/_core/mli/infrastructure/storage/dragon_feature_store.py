@@ -46,8 +46,7 @@ class DragonFeatureStore(FeatureStore):
         """Initialize the DragonFeatureStore instance.
 
         :param storage: A distributed dictionary to be used as the underlying
-        
-        """
+        storage mechanism of the feature store"""
         if isinstance(storage, dragon_ddict.DDict):
             descriptor = str(storage.serialize())
         else:
@@ -55,8 +54,6 @@ class DragonFeatureStore(FeatureStore):
 
         super().__init__(descriptor)
         self._storage: t.Dict[str, t.Union[str, bytes]] = storage
-        self._storage = storage
-        self._reserved_write_enabled = False
 
     def _get(self, key: str) -> t.Union[str, bytes]:
         """Retrieve a value from the underlying storage mechanism.
