@@ -72,14 +72,13 @@ class Ensemble(entity.CompoundEntity):
         :param permutation_strategy: strategy to control how the param values are applied to the Ensemble
         :param max_permutations: max parameter permutations to set for the ensemble
         :param replicas: number of identical entities to create within an Ensemble
-        :return: and ``Ensemble`` instance
         """
         self.name = name
-        """The name of the ensemble """
+        """The name of the ensemble"""
         self._exe = os.fspath(exe)
-        """The executable to run """
+        """The executable to run"""
         self._exe_args = list(exe_args) if exe_args else []
-        """The executable arguments """
+        """The executable arguments"""
         self._exe_arg_parameters = (
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         )
@@ -112,8 +111,8 @@ class Ensemble(entity.CompoundEntity):
         self._exe = os.fspath(value)
 
     @property
-    def exe_args(self) -> t.Sequence[str]:
-        """Return an immutable list of attached executable arguments.
+    def exe_args(self) -> t.MutableSequence[str]:
+        """Return a list of attached executable arguments.
 
         :returns: application executable arguments
         """
