@@ -119,16 +119,28 @@ def make_shell_format_fn(
 
 
 class ShellLauncher:
-    """Mock launcher for launching/tracking simple shell commands"""
+    """A launcher for launching/tracking local shell commands"""
 
     def __init__(self) -> None:
+        """Initialize a new shell launcher."""
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
     def check_popen_inputs(self, shell_command: ShellLauncherCommand) -> None:
+        """Validate that the contents of a shell command are valid.
+
+        :param shell_command: The command to validate
+        :raises ValueError: If the command is not valid
+        """
         if not shell_command.path.exists():
             raise ValueError("Please provide a valid path to ShellLauncherCommand.")
 
     def start(self, shell_command: ShellLauncherCommand) -> LaunchedJobID:
+        """Have the shell launcher start and track the progress of a new
+        subprocess.
+
+        :param shell_command: The template of a subprocess to start.
+        :returns: An id to reference the process for status.
+        """
         self.check_popen_inputs(shell_command)
         id_ = create_job_id()
         exe, *rest = shell_command.command_tuple
@@ -144,7 +156,7 @@ class ShellLauncher:
         return id_
 
     def _get_proc_from_job_id(self, id_: LaunchedJobID, /) -> sp.Popen[bytes]:
-        """Given an issued job id, return the process represented by that id
+        """Given an issued job id, return the process represented by that id.
 
         :param id_: The launched job id of the process
         :raises: errors.LauncherJobNotFound: The id could not be mapped to a
@@ -161,9 +173,21 @@ class ShellLauncher:
     def get_status(
         self, *launched_ids: LaunchedJobID
     ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Take a collection of job ids and return the status of the
+        corresponding processes started by the shell launcher.
+
+        :param launched_ids: A collection of ids of the launched jobs to get
+            the statuses of.
+        :returns: A mapping of ids for jobs to stop to their reported status.
+        """
         return {id_: self._get_status(id_) for id_ in launched_ids}
 
     def _get_status(self, id_: LaunchedJobID, /) -> JobStatus:
+        """Given an issued job id, return the process represented by that id
+
+        :param id_: The launched job id of the process to get the status of.
+        :returns: The status of that process represented by the given id.
+        """
         proc = self._get_proc_from_job_id(id_)
         ret_code = proc.poll()
         if ret_code is None:
@@ -236,4 +260,9 @@ class ShellLauncher:
 
     @classmethod
     def create(cls, _: Experiment) -> Self:
+        """Create a new launcher instance from an experiment instance.
+        
+        :param _: <Unused> An experiment instance.
+        :returns: A new launcher instance.
+        """
         return cls()
