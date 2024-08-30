@@ -30,11 +30,11 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.infrastructure.control.devicemanager import (
+from smartsim._core.mli.infrastructure.control.device_manager import (
     DeviceManager,
     WorkerDevice,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import (
+from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
     FeatureStoreKey,
 )

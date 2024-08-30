@@ -58,17 +58,17 @@ import os
 
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.control.requestdispatcher import (
+from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
-from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
-from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.infrastructure.control.worker_manager import WorkerManager
+from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
 from smartsim._core.mli.infrastructure.worker.worker import MachineLearningWorkerBase

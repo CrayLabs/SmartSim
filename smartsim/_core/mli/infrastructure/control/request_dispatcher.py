@@ -47,9 +47,9 @@ from smartsim._core.entrypoints.service import Service
 from .....error import SmartSimError
 from .....log import get_logger
 from ....utils.timings import PerfTimer
-from ...infrastructure.environmentloader import EnvironmentConfigLoader
-from ...infrastructure.storage.featurestore import FeatureStore
-from ...infrastructure.worker.worker import (
+from ..environment_loader import EnvironmentConfigLoader
+from ..storage.feature_store import FeatureStore
+from ..worker.worker import (
     InferenceRequest,
     MachineLearningWorkerBase,
     ModelIdentifier,

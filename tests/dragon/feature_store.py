@@ -28,7 +28,7 @@ import pathlib
 import typing as t
 
 import smartsim.error as sse
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
