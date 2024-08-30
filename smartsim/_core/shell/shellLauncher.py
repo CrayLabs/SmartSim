@@ -261,7 +261,7 @@ class ShellLauncher:
     @classmethod
     def create(cls, _: Experiment) -> Self:
         """Create a new launcher instance from an experiment instance.
-        
+
         :param _: <Unused> An experiment instance.
         :returns: A new launcher instance.
         """
