@@ -53,7 +53,7 @@ def python_version() -> str:
 def dragon_pin() -> str:
     """Return a string indicating the pinned major/minor version of the dragon
     package to install"""
-    return "0.9"
+    return "0.91"
 
 
 def _platform_filter(asset_name: str) -> bool:
@@ -92,7 +92,7 @@ def _get_release_assets() -> t.Collection[GitReleaseAsset]:
     :returns: A collection of release assets"""
     git = Github()
 
-    dragon_repo = git.get_repo("DragonHPC/dragon")
+    dragon_repo = git.get_repo("DragonHPC/dragon-nightly")
 
     if dragon_repo is None:
         raise SmartSimCLIActionCancelled("Unable to locate dragon repo")
