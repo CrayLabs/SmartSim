@@ -166,7 +166,7 @@ class LaunchRecord:
             that of the one stored in the `NoOpRecordLauncher`
         """
         args = job._launch_settings.launch_args
-        entity = job._entity
+        entity = job._entity.as_executable_sequence()
         env = job._launch_settings.env_vars
         path = "/tmp/job"
         out = "/tmp/job/out.txt"
@@ -196,7 +196,7 @@ class MockLaunchArgs(launchArguments.LaunchArguments):
 
 
 class EchoHelloWorldEntity(entity.SmartSimEntity):
-    """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
+    """A simple smartsim entity"""
 
     def __init__(self):
         super().__init__("test-entity")
@@ -204,9 +204,9 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     def __eq__(self, other):
         if type(self) is not type(other):
             return NotImplemented
-        return self.as_program_arguments() == other.as_program_arguments()
+        return self.as_executable_sequence() == other.as_executable_sequence()
 
-    def as_program_arguments(self):
+    def as_executable_sequence(self):
         return ("echo", "Hello", "World!")
 
 

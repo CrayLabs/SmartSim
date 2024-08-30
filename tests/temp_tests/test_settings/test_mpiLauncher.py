@@ -287,13 +287,13 @@ def test_invalid_hostlist_format(launcher):
         ),
     ),
 )
-def test_formatting_launch_args(
-    mock_echo_executable, cls, fmt, cmd, args, expected, test_dir
-):
+def test_formatting_launch_args(cls, fmt, cmd, args, expected, test_dir):
     out = os.path.join(test_dir, "out.txt")
     err = os.path.join(test_dir, "err.txt")
     open(out, "w"), open(err, "w")
-    shell_launch_cmd = fmt(cls(args), mock_echo_executable, test_dir, {}, out, err)
+    shell_launch_cmd = fmt(
+        cls(args), ("echo", "hello", "world"), test_dir, {}, out, err
+    )
     assert isinstance(shell_launch_cmd, ShellLauncherCommand)
     assert shell_launch_cmd.command_tuple == (cmd,) + expected
     assert shell_launch_cmd.path == pathlib.Path(test_dir)

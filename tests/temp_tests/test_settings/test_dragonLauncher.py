@@ -66,7 +66,7 @@ NOT_SET = object()
 @pytest.mark.parametrize("cpu_affinity", (NOT_SET, [1], [1, 2, 3]))
 @pytest.mark.parametrize("gpu_affinity", (NOT_SET, [1], [1, 2, 3]))
 def test_formatting_launch_args_into_request(
-    mock_echo_executable, nodes, tasks_per_node, cpu_affinity, gpu_affinity, test_dir
+    nodes, tasks_per_node, cpu_affinity, gpu_affinity, test_dir
 ):
     launch_args = DragonLaunchArguments({})
     if nodes is not NOT_SET:
@@ -78,7 +78,7 @@ def test_formatting_launch_args_into_request(
     if gpu_affinity is not NOT_SET:
         launch_args.set_gpu_affinity(gpu_affinity)
     req, policy = _as_run_request_args_and_policy(
-        launch_args, mock_echo_executable, test_dir, {}, "output.txt", "error.txt"
+        launch_args, ("echo", "hello", "world"), test_dir, {}, "output.txt", "error.txt"
     )
 
     expected_args = {

@@ -112,6 +112,14 @@ class Application(SmartSimEntity):
         """
         self._exe_args = self._build_exe_args(value)
 
+    def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
+        """Add executable arguments to executable
+
+        :param args: executable arguments
+        """
+        args = self._build_exe_args(args)
+        self._exe_args.extend(args)
+
     @property
     def files(self) -> t.Optional[EntityFiles]:
         """Return files to be copied, symlinked, and/or configured prior to
@@ -178,13 +186,12 @@ class Application(SmartSimEntity):
         """
         self.key_prefixing_enabled = copy.deepcopy(value)
 
-    def add_exe_args(self, args: t.Union[str, t.List[str], None]) -> None:
-        """Add executable arguments to executable
+    def as_executable_sequence(self) -> t.Sequence[str]:
+        """Converts the executable and its arguments into a sequence of program arguments.
 
-        :param args: executable arguments
+        :return: a sequence of strings representing the executable and its arguments
         """
-        args = self._build_exe_args(args)
-        self._exe_args.extend(args)
+        return [self.exe, *self.exe_args]
 
     def attach_generator_files(
         self,
@@ -242,27 +249,6 @@ class Application(SmartSimEntity):
             return "No file attached to this application."
         return str(self.files)
 
-    def print_attached_files(self) -> None:
-        """Print a table of the attached files on std out"""
-        print(self.attached_files_table)
-
-    def __str__(self) -> str:  # pragma: no cover
-        exe_args_str = "\n".join(self.exe_args)
-        entities_str = "\n".join(str(entity) for entity in self.incoming_entities)
-        return textwrap.dedent(f"""\
-            Name: {self.name}
-            Type: {self.type}
-            Executable:
-            {self.exe}
-            Executable Arguments:
-            {exe_args_str}
-            Entity Files: {self.files}
-            File Parameters: {self.file_parameters}
-            Incoming Entities:
-            {entities_str}
-            Key Prefixing Enabled: {self.key_prefixing_enabled}
-            """)
-
     @staticmethod
     def _build_exe_args(exe_args: t.Union[str, t.Sequence[str], None]) -> t.List[str]:
         """Check and convert exe_args input to a desired collection format
@@ -286,3 +272,24 @@ class Application(SmartSimEntity):
             return exe_args.split()
 
         return copy.deepcopy(exe_args)
+
+    def print_attached_files(self) -> None:
+        """Print a table of the attached files on std out"""
+        print(self.attached_files_table)
+
+    def __str__(self) -> str:  # pragma: no cover
+        exe_args_str = "\n".join(self.exe_args)
+        entities_str = "\n".join(str(entity) for entity in self.incoming_entities)
+        return textwrap.dedent(f"""\
+            Name: {self.name}
+            Type: {self.type}
+            Executable:
+            {self.exe}
+            Executable Arguments:
+            {exe_args_str}
+            Entity Files: {self.files}
+            File Parameters: {self.file_parameters}
+            Incoming Entities:
+            {entities_str}
+            Key Prefixing Enabled: {self.key_prefixing_enabled}
+            """)
