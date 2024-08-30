@@ -97,6 +97,7 @@ class Config:
         # TODO: Turn this into a property. Need to modify the configuration
         # of KeyDB vs Redis at build time
         self.conf_path = Path(self.dependency_path / "config" / "redis.conf")
+        self.conf_dir = Path(self.core_path, "config")
 
     @property
     def dependency_path(self) -> Path:
@@ -113,10 +114,6 @@ class Config:
     @property
     def build_path(self) -> Path:
         return Path(self.dependency_path, "build").resolve()
-
-    @property
-    def conf_dir(self) -> Path:
-        return Path(self.core_path, "config")
 
     @property
     def redisai(self) -> str:

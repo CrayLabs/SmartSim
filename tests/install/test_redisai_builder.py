@@ -24,9 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
-
 from pathlib import Path
+
+import pytest
 
 from smartsim._core._install.buildenv import BuildEnv
 from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, MLPackage
@@ -36,10 +36,11 @@ from smartsim._core._install.redisaiBuilder import RedisAIBuilder
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+
 @pytest.mark.parametrize(
     "platform",
     [platform for platform in DEFAULT_MLPACKAGES],
-    ids=[str(platform) for platform in DEFAULT_MLPACKAGES]
+    ids=[str(platform) for platform in DEFAULT_MLPACKAGES],
 )
 def test_backends_to_be_installed(monkeypatch, test_dir, platform):
     platform = Platform.from_str("linux", "x86_64", "cpu")

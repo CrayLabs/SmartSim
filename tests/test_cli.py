@@ -439,14 +439,6 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
     "command,mock_location,exp_output,optional_arg,exp_valid,exp_err_msg,check_prop,exp_prop_val",
     [
         pytest.param("build", "build_execute", "verbose mocked-build", "-v", True, "", "v", True, id="verbose 'on'"),
-        pytest.param("build", "build_execute", "cpu mocked-build", "--device=cpu", True, "", "device", "cpu", id="device 'cpu'"),
-        pytest.param("build", "build_execute", "gpu mocked-build", "--device=gpu", True, "", "device", "gpu", id="device 'gpu'"),
-        pytest.param("build", "build_execute", "gpuX mocked-build", "--device=gpux", False, "invalid choice: 'gpux'", "", "", id="set bad device 'gpuX'"),
-        pytest.param("build", "build_execute", "no tensorflow mocked-build", "--no_tf", True, "", "no_tf", True, id="set no TF"),
-        pytest.param("build", "build_execute", "no torch mocked-build", "--no_pt", True, "", "no_pt", True, id="set no torch"),
-        pytest.param("build", "build_execute", "onnx mocked-build", "--onnx", True, "", "onnx", True, id="set w/onnx"),
-        pytest.param("build", "build_execute", "torch-dir mocked-build", "--torch_dir /foo/bar", True, "", "torch_dir", "/foo/bar", id="set torch dir"),
-        pytest.param("build", "build_execute", "bad-torch-dir mocked-build", "--torch_dir", False, "error: argument --torch_dir", "", "", id="set torch dir, no path"),
         pytest.param("build", "build_execute", "keydb mocked-build", "--keydb", True, "", "keydb", True, id="keydb on"),
         pytest.param("clean", "clean_execute", "clobbering mocked-clean", "--clobber", True, "", "clobber", True, id="clean w/clobber"),
         pytest.param("validate", "validate_execute", "port mocked-validate", "--port=12345", True, "", "port", 12345, id="validate w/ manual port"),
@@ -735,15 +727,6 @@ def test_cli_full_build_execute(capsys, monkeypatch):
     monkeypatch.setattr(smartsim._core._cli.build, "tabulate", mock_operation)
     monkeypatch.setattr(smartsim._core._cli.build, "build_database", mock_operation)
     monkeypatch.setattr(smartsim._core._cli.build, "build_redis_ai", mock_operation)
-    monkeypatch.setattr(
-        smartsim._core._cli.build, "check_py_torch_version", mock_operation
-    )
-    monkeypatch.setattr(
-        smartsim._core._cli.build, "check_py_tf_version", mock_operation
-    )
-    monkeypatch.setattr(
-        smartsim._core._cli.build, "check_py_onnx_version", mock_operation
-    )
 
     command = "build"
     cfg = MenuItemConfig(

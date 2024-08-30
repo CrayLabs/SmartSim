@@ -173,6 +173,9 @@ class DragonLauncher(WLMLauncher):
 
             policy = DragonRunPolicy.from_run_args(run_args)
 
+            print("*" * 20)
+            print(merged_env)
+            print("*" * 20)
             response = _assert_schema_type(
                 self._connector.send_request(
                     DragonRunRequest(

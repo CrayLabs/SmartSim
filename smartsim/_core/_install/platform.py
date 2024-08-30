@@ -144,7 +144,7 @@ class Device(enum.Enum):
         :return: True for any supported CUDA enums
         """
         cls = type(self)
-        return self in (cls.CUDA118, cls.CUDA121)
+        return self in cls.cuda_enums()
 
     def is_rocm(self) -> bool:
         """Whether the enum is associated with a ROCm device
@@ -152,10 +152,10 @@ class Device(enum.Enum):
         :return: True for any supported ROCm enums
         """
         cls = type(self)
-        return self in (cls.ROCM57,)
+        return self in cls.rocm_enums()
 
     @classmethod
-    def _cuda_enums(cls) -> t.Tuple["Device", ...]:
+    def cuda_enums(cls) -> t.Tuple["Device", ...]:
         """Detect all CUDA devices supported by SmartSim
 
         :return: all enums associated with CUDA
@@ -163,7 +163,7 @@ class Device(enum.Enum):
         return tuple(device for device in cls if "cuda" in device.value)
 
     @classmethod
-    def _rocm_enums(cls) -> t.Tuple["Device", ...]:
+    def rocm_enums(cls) -> t.Tuple["Device", ...]:
         """Detect all ROCm devices supported by SmartSim
 
         :return: all enums associated with ROCm

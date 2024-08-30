@@ -32,7 +32,6 @@ import sys
 import typing as t
 from collections.abc import MutableMapping
 from dataclasses import dataclass
-from importlib import resources
 
 from tabulate import tabulate
 
@@ -153,27 +152,6 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
     def __setitem__(self, key: str, value: MLPackage) -> None:
         self.ml_packages[key] = value
 
-    # def values(self) -> t.Iterable[MLPackage]:
-    #     """Accesses the MLPackages directly
-
-    #     :return: All the MLPackages in this collection
-    #     """
-    #     return self.ml_packages.values()
-
-    # def items(self) -> t.ItemsView[str, MLPackage]:
-    #     """Retrieve all MLPackages and their names
-
-    #     :return: MLPackages and names in this collection
-    #     """
-    #     return self.ml_packages.items()
-
-    # def keys(self) -> t.Iterable[str]:
-    #     """Retrieve just the names of the MLPackages
-
-    #     :return: The names of the MLPackages
-    #     """
-    #     return self.ml_packages.keys()
-
     def tabulate_versions(self, tablefmt: str = "github") -> str:
         """Display package names and versions as a table
 
@@ -205,10 +183,7 @@ def load_platform_configs(
     return configs
 
 
-# Note this conversion str -> pathlib.Path is needed for mypy
-DEFAULT_MLPACKAGE_PATH: pathlib.Path = pathlib.Path(
-    str(resources.files("smartsim._core._install.configs.mlpackages").joinpath(""))
-)
+DEFAULT_MLPACKAGE_PATH = pathlib.Path(__file__).parent / "configs" / "mlpackages"
 
 DEFAULT_MLPACKAGES: t.Dict[Platform, MLPackageCollection] = load_platform_configs(
     DEFAULT_MLPACKAGE_PATH

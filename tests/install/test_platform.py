@@ -43,7 +43,7 @@ def test_device_cpu():
     assert not cpu_enum.is_rocm()
 
 
-@pytest.mark.parametrize("cuda_device", Device._cuda_enums())
+@pytest.mark.parametrize("cuda_device", Device.cuda_enums())
 def test_cuda(monkeypatch, test_dir, cuda_device):
     version = cuda_device.value.split("-")[1]
     fake_full_version = version + ".9999"
@@ -59,7 +59,7 @@ def test_cuda(monkeypatch, test_dir, cuda_device):
     assert not cuda_device.is_rocm()
 
 
-@pytest.mark.parametrize("rocm_device", Device._rocm_enums())
+@pytest.mark.parametrize("rocm_device", Device.rocm_enums())
 def test_rocm(monkeypatch, test_dir, rocm_device):
     version = rocm_device.value.split("-")[1]
     fake_full_version = version + "-9999"
