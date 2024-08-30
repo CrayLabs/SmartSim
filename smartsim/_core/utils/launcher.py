@@ -85,3 +85,15 @@ class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
             the ids of the `launched_ids` collection is not recognized.
         :returns: A mapping of launched id to current status
         """
+
+    @abc.abstractmethod
+    def stop_jobs(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Given a collection of launched job ids, cancel the launched jobs
+
+        :param launched_ids: The ids of the jobs to stop
+        :raises smartsim.error.errors.LauncherJobNotFound: If at least one of
+            the ids of the `launched_ids` collection is not recognized.
+        :returns: A mapping of launched id to status upon cancellation
+        """

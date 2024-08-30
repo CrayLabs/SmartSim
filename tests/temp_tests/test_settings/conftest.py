@@ -55,4 +55,7 @@ def mock_launcher():
         def get_status(self, *ids):
             raise NotImplementedError
 
+        def stop_jobs(self, *ids):
+            raise NotImplementedError
+
     yield _MockLauncher()

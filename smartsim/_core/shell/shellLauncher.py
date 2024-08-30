@@ -119,16 +119,28 @@ def make_shell_format_fn(
 
 
 class ShellLauncher:
-    """Mock launcher for launching/tracking simple shell commands"""
+    """A launcher for launching/tracking local shell commands"""
 
     def __init__(self) -> None:
+        """Initialize a new shell launcher."""
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
     def check_popen_inputs(self, shell_command: ShellLauncherCommand) -> None:
+        """Validate that the contents of a shell command are valid.
+
+        :param shell_command: The command to validate
+        :raises ValueError: If the command is not valid
+        """
         if not shell_command.path.exists():
             raise ValueError("Please provide a valid path to ShellLauncherCommand.")
 
     def start(self, shell_command: ShellLauncherCommand) -> LaunchedJobID:
+        """Have the shell launcher start and track the progress of a new
+        subprocess.
+
+        :param shell_command: The template of a subprocess to start.
+        :returns: An id to reference the process for status.
+        """
         self.check_popen_inputs(shell_command)
         id_ = create_job_id()
         exe, *rest = shell_command.command_tuple
@@ -143,15 +155,40 @@ class ShellLauncher:
         )
         return id_
 
-    def get_status(
-        self, *launched_ids: LaunchedJobID
-    ) -> t.Mapping[LaunchedJobID, JobStatus]:
-        return {id_: self._get_status(id_) for id_ in launched_ids}
+    def _get_proc_from_job_id(self, id_: LaunchedJobID, /) -> sp.Popen[bytes]:
+        """Given an issued job id, return the process represented by that id.
 
-    def _get_status(self, id_: LaunchedJobID, /) -> JobStatus:
+        :param id_: The launched job id of the process
+        :raises: errors.LauncherJobNotFound: The id could not be mapped to a
+            process. This usually means that the provided id was not issued by
+            this launcher instance.
+        :returns: The process that the shell launcher started and represented
+            by the issued id.
+        """
         if (proc := self._launched.get(id_)) is None:
             msg = f"Launcher `{self}` has not launched a job with id `{id_}`"
             raise errors.LauncherJobNotFound(msg)
+        return proc
+
+    def get_status(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Take a collection of job ids and return the status of the
+        corresponding processes started by the shell launcher.
+
+        :param launched_ids: A collection of ids of the launched jobs to get
+            the statuses of.
+        :returns: A mapping of ids for jobs to stop to their reported status.
+        """
+        return {id_: self._get_status(id_) for id_ in launched_ids}
+
+    def _get_status(self, id_: LaunchedJobID, /) -> JobStatus:
+        """Given an issued job id, return the process represented by that id
+
+        :param id_: The launched job id of the process to get the status of.
+        :returns: The status of that process represented by the given id.
+        """
+        proc = self._get_proc_from_job_id(id_)
         ret_code = proc.poll()
         if ret_code is None:
             status = psutil.Process(proc.pid).status()
@@ -173,6 +210,59 @@ class ShellLauncher:
             return JobStatus.COMPLETED
         return JobStatus.FAILED
 
+    def stop_jobs(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Take a collection of job ids and kill the corresponding processes
+        started by the shell launcher.
+
+        :param launched_ids: The ids of the launched jobs to stop.
+        :returns: A mapping of ids for jobs to stop to their reported status
+            after attempting to stop them.
+        """
+        return {id_: self._stop(id_) for id_ in launched_ids}
+
+    def _stop(self, id_: LaunchedJobID, /, wait_time: float = 5.0) -> JobStatus:
+        """Stop a job represented by an id
+
+        The launcher will first start by attempting to kill the process using
+        by sending a SIGTERM signal and then waiting for an amount of time. If
+        the process is not killed by the timeout time, a SIGKILL signal will be
+        sent and another waiting period will be started. If the period also
+        ends, the message will be logged and the process will be left to
+        continue running. The method will then get and return the status of the
+        job.
+
+        :param id_: The id of a launched job to stop.
+        :param wait: The maximum amount of time, in seconds, to wait for a
+            signal to stop a process.
+        :returns: The status of the job after sending signals to terminate the
+            started process.
+        """
+        proc = self._get_proc_from_job_id(id_)
+        if proc.poll() is None:
+            msg = f"Attempting to terminate local process {proc.pid}"
+            logger.debug(msg)
+            proc.terminate()
+
+        try:
+            proc.wait(wait_time)
+        except sp.TimeoutExpired:
+            msg = f"Failed to terminate process {proc.pid}. Attempting to kill."
+            logger.warning(msg)
+            proc.kill()
+
+        try:
+            proc.wait(wait_time)
+        except sp.TimeoutExpired:
+            logger.error(f"Failed to kill process {proc.pid}")
+        return self._get_status(id_)
+
     @classmethod
     def create(cls, _: Experiment) -> Self:
+        """Create a new launcher instance from an experiment instance.
+
+        :param _: <Unused> An experiment instance.
+        :returns: A new launcher instance.
+        """
         return cls()

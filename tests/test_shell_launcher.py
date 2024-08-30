@@ -24,9 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import contextlib
 import os
 import pathlib
 import subprocess
+import sys
+import textwrap
 import unittest.mock
 
 import psutil
@@ -83,20 +88,37 @@ def shell_launcher():
     launcher = ShellLauncher()
     yield launcher
     if any(proc.poll() is None for proc in launcher._launched.values()):
-        raise ("Test leaked processes")
+        raise RuntimeError("Test leaked processes")
 
 
 @pytest.fixture
-def shell_cmd(test_dir: str) -> ShellLauncherCommand:
-    """Fixture to create an instance of Generator."""
-    run_dir, out_file, err_file = generate_directory(test_dir)
-    with (
-        open(out_file, "w", encoding="utf-8") as out,
-        open(err_file, "w", encoding="utf-8") as err,
+def make_shell_command(test_dir):
+    run_dir, out_file_, err_file_ = generate_directory(test_dir)
+
+    @contextlib.contextmanager
+    def impl(
+        args: t.Sequence[str],
+        working_dir: str | os.PathLike[str] = run_dir,
+        env: dict[str, str] | None = None,
+        out_file: str | os.PathLike[str] = out_file_,
+        err_file: str | os.PathLike[str] = err_file_,
     ):
-        yield ShellLauncherCommand(
-            {}, run_dir, out, err, EchoHelloWorldEntity().as_executable_sequence()
-        )
+        with (
+            open(out_file, "w", encoding="utf-8") as out,
+            open(err_file, "w", encoding="utf-8") as err,
+        ):
+            yield ShellLauncherCommand(
+                env or {}, pathlib.Path(working_dir), out, err, tuple(args)
+            )
+
+    yield impl
+
+
+@pytest.fixture
+def shell_cmd(make_shell_command) -> ShellLauncherCommand:
+    """Fixture to create an instance of Generator."""
+    with make_shell_command(EchoHelloWorldEntity().as_executable_sequence()) as hello:
+        yield hello
 
 
 # UNIT TESTS
@@ -310,3 +332,61 @@ def test_get_status_maps_correctly(
         value = shell_launcher.get_status(id)
         assert value.get(id) == job_status
         assert proc.wait() == 0
+
+
+@pytest.mark.parametrize(
+    "args",
+    (
+        pytest.param(("sleep", "60"), id="Sleep for a minute"),
+        *(
+            pytest.param(
+                (
+                    sys.executable,
+                    "-c",
+                    textwrap.dedent(f"""\
+                        import signal, time
+                        signal.signal(signal.{signal_name},
+                                      lambda n, f: print("Ignoring"))
+                        time.sleep(60)
+                        """),
+                ),
+                id=f"Process Swallows {signal_name}",
+            )
+            for signal_name in ("SIGINT", "SIGTERM")
+        ),
+    ),
+)
+def test_launcher_can_stop_processes(shell_launcher, make_shell_command, args):
+    with make_shell_command(args) as cmd:
+        start = time.perf_counter()
+        id_ = shell_launcher.start(cmd)
+        time.sleep(0.1)
+        assert {id_: JobStatus.RUNNING} == shell_launcher.get_status(id_)
+        assert JobStatus.FAILED == shell_launcher._stop(id_, wait_time=0.25)
+        end = time.perf_counter()
+        assert {id_: JobStatus.FAILED} == shell_launcher.get_status(id_)
+        proc = shell_launcher._launched[id_]
+        assert proc.poll() is not None
+        assert proc.poll() != 0
+        assert 0.1 < end - start < 1
+
+
+def test_launcher_can_stop_many_processes(
+    make_shell_command, shell_launcher, shell_cmd
+):
+    with (
+        make_shell_command(("sleep", "60")) as sleep_60,
+        make_shell_command(("sleep", "45")) as sleep_45,
+        make_shell_command(("sleep", "30")) as sleep_30,
+    ):
+        id_60 = shell_launcher.start(sleep_60)
+        id_45 = shell_launcher.start(sleep_45)
+        id_30 = shell_launcher.start(sleep_30)
+        id_short = shell_launcher.start(shell_cmd)
+        time.sleep(0.1)
+        assert {
+            id_60: JobStatus.FAILED,
+            id_45: JobStatus.FAILED,
+            id_30: JobStatus.FAILED,
+            id_short: JobStatus.COMPLETED,
+        } == shell_launcher.stop_jobs(id_30, id_45, id_60, id_short)

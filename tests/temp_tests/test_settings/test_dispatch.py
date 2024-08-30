@@ -263,6 +263,9 @@ class BufferWriterLauncher(LauncherProtocol[list[str]]):
     def get_status(self, *ids):
         raise NotImplementedError
 
+    def stop_jobs(self, *ids):
+        raise NotImplementedError
+
 
 class BufferWriterLauncherSubclass(BufferWriterLauncher): ...
 
