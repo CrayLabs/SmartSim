@@ -43,7 +43,7 @@ import time
 import torch
 
 from mpi4py import MPI
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
 from smartsim._core.mli.message_handler import MessageHandler

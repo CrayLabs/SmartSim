@@ -28,7 +28,7 @@ import os
 import typing as t
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)

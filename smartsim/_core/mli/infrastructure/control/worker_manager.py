@@ -38,20 +38,20 @@ import time
 import typing as t
 from queue import Empty
 
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 
 from .....log import get_logger
 from ....entrypoints.service import Service
 from ....utils.timings import PerfTimer
-from ...infrastructure.environmentloader import EnvironmentConfigLoader
-from ...infrastructure.worker.worker import (
+from ...message_handler import MessageHandler
+from ..environment_loader import EnvironmentConfigLoader
+from ..worker.worker import (
     InferenceReply,
     LoadModelResult,
     MachineLearningWorkerBase,
     RequestBatch,
 )
-from ...message_handler import MessageHandler
-from .devicemanager import DeviceManager, WorkerDevice
+from .device_manager import DeviceManager, WorkerDevice
 from .error_handling import build_failure_reply, exception_handler
 
 if t.TYPE_CHECKING:

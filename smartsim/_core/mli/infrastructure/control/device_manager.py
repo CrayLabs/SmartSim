@@ -28,7 +28,7 @@ import typing as t
 from contextlib import _GeneratorContextManager, contextmanager
 
 from .....log import get_logger
-from ...infrastructure.storage.featurestore import FeatureStore
+from ..storage.feature_store import FeatureStore
 from ..worker.worker import MachineLearningWorkerBase, RequestBatch
 
 logger = get_logger(__name__)
