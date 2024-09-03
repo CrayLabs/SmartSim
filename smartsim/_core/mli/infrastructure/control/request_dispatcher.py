@@ -316,10 +316,10 @@ class RequestDispatcher(Service):
         conditions are satisfied and cooldown is elapsed.
         """
         try:
-            self._perf_timer.set_active(True)
+            self._perf_timer.is_active = True
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
         except Exception:
-            self._perf_timer.set_active(False)
+            self._perf_timer.is_active = False
         else:
             if not bytes_list:
                 exception_handler(
