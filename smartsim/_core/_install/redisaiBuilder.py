@@ -41,6 +41,7 @@ from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
+
 class RedisAIBuildError(Exception):
     pass
 

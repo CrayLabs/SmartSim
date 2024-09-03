@@ -156,7 +156,6 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
         """Display package names and versions as a table
 
         :param tablefmt: Tabulate format, defaults to "github"
-        :type tablefmt: str, optional
         """
 
         return tabulate(
