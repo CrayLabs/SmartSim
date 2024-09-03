@@ -15,6 +15,7 @@ To be released at some future point in time
 
 Description
 
+- Pin watchdog to 4.x
 - Update codecov to 4.5.0
 - Remove build of Redis from setup.py
 - Mitigate dependency installation issues
@@ -30,6 +31,9 @@ Description
 
 Detailed Notes
 
+- Pin watchdog to 4.x because v5 introduces new types and requires
+  updates to the type-checking
+  ([SmartSim-PR690](https://github.com/CrayLabs/SmartSim/pull/690))
 - Update codecov to 4.5.0 to mitigate GitHub action failure
   ([SmartSim-PR657](https://github.com/CrayLabs/SmartSim/pull/657))
 - The builder module was included in setup.py to allow us to ship the
