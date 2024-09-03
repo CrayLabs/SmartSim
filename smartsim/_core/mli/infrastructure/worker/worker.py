@@ -42,6 +42,7 @@ from ...mli_schemas.model.model_capnp import Model
 from ..storage.feature_store import FeatureStore, FeatureStoreKey
 
 if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.data.data_references_capnp import TensorKey
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
     from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
@@ -180,11 +181,14 @@ class FetchModelResult:
 
 @dataclass
 class RequestBatch:
-    """A batch of aggregated inference requests"""
+    """A batch of aggregated inference requests."""
 
     requests: list[InferenceRequest]
+    """List of InferenceRequests in the batch"""
     inputs: t.Optional[TransformInputResult]
+    """Transformed batch of input tensors"""
     model_id: ModelIdentifier
+    """Model id"""
 
     @property
     def has_valid_requests(self) -> bool:
@@ -196,7 +200,7 @@ class RequestBatch:
 
     @property
     def has_raw_model(self) -> bool:
-        """Returns whether the batch has a raw model
+        """Returns whether the batch has a raw model.
 
         :return: True if the batch has a raw model
         """
@@ -206,6 +210,7 @@ class RequestBatch:
     def raw_model(self) -> t.Optional[t.Any]:
         """Returns the raw model to use to execute for this batch
         if it is available.
+
         :return: A model if available, otherwise None"""
         if self.has_valid_requests:
             return self.requests[0].raw_model
@@ -213,7 +218,7 @@ class RequestBatch:
 
     @property
     def input_keys(self) -> t.List[FeatureStoreKey]:
-        """All input keys available in this batch's requests
+        """All input keys available in this batch's requests.
 
         :return: All input keys belonging to requests in this batch"""
         keys = []
@@ -224,7 +229,7 @@ class RequestBatch:
 
     @property
     def output_keys(self) -> t.List[FeatureStoreKey]:
-        """All output keys available in this batch's requests
+        """All output keys available in this batch's requests.
 
         :return: All output keys belonging to requests in this batch"""
         keys = []
@@ -242,7 +247,8 @@ class MachineLearningWorkerCore:
         data_blob: bytes,
         callback_factory: t.Callable[[bytes], CommChannelBase],
     ) -> InferenceRequest:
-        """Deserialize a message from a byte stream into an InferenceRequest
+        """Deserialize a message from a byte stream into an InferenceRequest.
+
         :param data_blob: The byte stream to deserialize
         :param callback_factory: A factory method that can create an instance
         of the desired concrete comm channel type
@@ -294,7 +300,16 @@ class MachineLearningWorkerCore:
         return inference_request
 
     @staticmethod
-    def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
+    def prepare_outputs(
+        reply: InferenceReply,
+    ) -> t.Union[t.List["TensorDescriptor"], t.List["TensorKey"]]:
+        """Assemble the output information based on whether the output
+        information will be in the form of TensorKeys or TensorDescriptors.
+
+        :param reply: The reply that the output belongs to
+        :return: The list of prepared outputs, depending on the output
+        information needed in the reply
+        """
         prepared_outputs: t.List[t.Any] = []
         if reply.output_keys:
             for value in reply.output_keys:
@@ -316,13 +331,14 @@ class MachineLearningWorkerCore:
     def fetch_model(
         batch: RequestBatch, feature_stores: t.Dict[str, FeatureStore]
     ) -> FetchModelResult:
-        """Given a resource key, retrieve the raw model from a feature store
+        """Given a resource key, retrieve the raw model from a feature store.
+
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
         :return: Raw bytes of the model
-        :raises SmartSimError: if neither a key or a model are provided or the
+        :raises SmartSimError: If neither a key or a model are provided or the
         model cannot be retrieved from the feature store
-        :raises ValueError: if a feature store is not available and a raw
+        :raises ValueError: If a feature store is not available and a raw
         model is not provided"""
 
         # All requests in the same batch share the model
@@ -352,10 +368,11 @@ class MachineLearningWorkerCore:
         batch: RequestBatch, feature_stores: t.Dict[str, FeatureStore]
     ) -> t.List[FetchInputResult]:
         """Given a collection of ResourceKeys, identify the physical location
-        and input metadata
+        and input metadata.
+
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: the fetched input
+        :return: The fetched input
         :raises ValueError: If neither an input key or an input tensor are provided
         :raises SmartSimError: If a tensor for a given key cannot be retrieved"""
         fetch_results = []
@@ -398,7 +415,8 @@ class MachineLearningWorkerCore:
         feature_stores: t.Dict[str, FeatureStore],
     ) -> t.Collection[t.Optional[FeatureStoreKey]]:
         """Given a collection of data, make it available as a shared resource in the
-        feature store
+        feature store.
+
         :param request: The request that triggered the pipeline
         :param execute_result: Results from inference
         :param feature_stores: Available feature stores used for persistence
@@ -431,7 +449,8 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
         """Given a loaded MachineLearningModel, ensure it is loaded into
-        device memory
+        device memory.
+
         :param request: The request that triggered the pipeline
         :param device: The device on which the model must be placed
         :return: ModelLoadResult wrapping the model loaded for the request"""
@@ -445,6 +464,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     ) -> TransformInputResult:
         """Given a collection of data, perform a transformation on the data and put
         the raw tensor data on a MemoryPool allocation.
+
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
         :param mem_pool: The memory pool used to access batched input tensors
@@ -458,7 +478,8 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         transform_result: TransformInputResult,
         device: str,
     ) -> ExecuteResult:
-        """Execute an ML model on inputs transformed for use by the model
+        """Execute an ML model on inputs transformed for use by the model.
+
         :param batch: The batch of requests that triggered the pipeline
         :param load_result: The result of loading the model onto device memory
         :param transform_result: The result of transforming inputs for model consumption
@@ -472,6 +493,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     ) -> t.List[TransformOutputResult]:
         """Given inference results, perform transformations required to
         transmit results to the requestor.
+
         :param batch: The batch of requests that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
         :return: A list of transformed outputs"""

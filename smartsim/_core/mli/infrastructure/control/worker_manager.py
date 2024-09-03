@@ -310,7 +310,7 @@ class WorkerManager(Service):
 
     def _can_shutdown(self) -> bool:
         """Determine if the service can be shutdown.
-        
+
         :return: True when criteria to shutdown the service are met, False otherwise
         """
         # todo: determine shutdown criteria

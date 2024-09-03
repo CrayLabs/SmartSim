@@ -48,7 +48,7 @@ class WorkerDevice:
     @property
     def name(self) -> str:
         """The identifier of the device represented by this object
-        
+
         :return: Name used by the toolkit to identify this device
         """
         return self._name

@@ -95,7 +95,7 @@ class BatchQueue(Queue[InferenceRequest]):
     @property
     def uid(self) -> str:
         """ID of this queue.
-        
+
         :return: Queue ID
         """
         return self._uid
@@ -103,7 +103,7 @@ class BatchQueue(Queue[InferenceRequest]):
     @property
     def model_id(self) -> ModelIdentifier:
         """Key of the model which needs to be run on the queued requests.
-        
+
         :return: Model key
         """
         return self._model_id
@@ -128,7 +128,7 @@ class BatchQueue(Queue[InferenceRequest]):
     @property
     def _elapsed_time(self) -> float:
         """Time elapsed since the first item was put on this queue.
-        
+
         :return: Time elapsed
         """
         if self.empty() or self._first_put is None:
@@ -138,7 +138,7 @@ class BatchQueue(Queue[InferenceRequest]):
     @property
     def ready(self) -> bool:
         """Check if the queue can be flushed.
-        
+
         :return: True if the queue can be flushed, False otherwise
         """
         if self.empty():
@@ -157,7 +157,7 @@ class BatchQueue(Queue[InferenceRequest]):
     @property
     def can_be_removed(self) -> bool:
         """Determine whether this queue can be deleted and garbage collected.
-        
+
         :return: True if queue can be removed, False otherwise
         """
         return self.empty() and self._disposable
@@ -413,7 +413,7 @@ class RequestDispatcher(Service):
     @property
     def task_queue(self) -> DragonQueue:
         """The queue on which batched requests are placed.
-        
+
         :return: The queue
         """
         return self._outgoing_queue
@@ -528,7 +528,7 @@ class RequestDispatcher(Service):
 
     def _can_shutdown(self) -> bool:
         """Determine whether the Service can be shut down.
-        
+
         :return: False
         """
         return False
