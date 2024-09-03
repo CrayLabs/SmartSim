@@ -51,7 +51,7 @@ class Ensemble(entity.CompoundEntity):
         self,
         name: str,
         exe: str | os.PathLike[str],
-        exe_args: t.Sequence[str] | None = None,
+        exe_args: t.MutableSequence[str] | None = None,
         exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
         files: EntityFiles | None = None,
         file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
@@ -77,7 +77,7 @@ class Ensemble(entity.CompoundEntity):
         """The name of the ensemble"""
         self._exe = os.fspath(exe)
         """The executable to run"""
-        self._exe_args = list(exe_args) if exe_args else []
+        self._exe_args = copy.deepcopy(exe_args) if exe_args else []
         """The executable arguments"""
         self._exe_arg_parameters = (
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
@@ -85,7 +85,7 @@ class Ensemble(entity.CompoundEntity):
         """The parameters and values to be used when configuring entities"""
         self._files = copy.deepcopy(files) if files else EntityFiles()
         """The files to be copied, symlinked, and/or configured prior to execution"""
-        self._file_parameters = dict(file_parameters) if file_parameters else {}
+        self._file_parameters = copy.deepcopy(file_parameters) if file_parameters else {}
         """The parameters and values to be used when configuring files"""
         self._permutation_strategy = permutation_strategy
         """The strategy to control how the param values are applied to the Ensemble"""
