@@ -206,25 +206,6 @@ def _make_managed_local_orc(
 
 
 def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
-    # recv_conn, send_conn = mp.Pipe(duplex=False)
-    # # Build the model in a subproc so that keras does not hog the gpu
-    # proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
-    # proc.start()
-
-    # # do not need the sending connection in this proc anymore
-    # send_conn.close()
-
-    # proc.join(timeout=600)
-    # if proc.is_alive():
-    #     proc.terminate()
-    #     raise Exception("Failed to build a simple keras model within 2 minutes")
-    # try:
-    #     model_path, inputs, outputs = recv_conn.recv()
-    # except EOFError as e:
-    #     raise Exception(
-    #         "Failed to receive serialized model from subprocess. "
-    #         "Is the `tensorflow` python package installed?"
-    #     ) from e
 
     model_path, inputs, outputs = _build_tf_frozen_model(tmp_dir)
 
@@ -242,7 +223,7 @@ def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
 
 
 # def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
-def _build_tf_frozen_model(tmp_dir: str) -> None:
+def _build_tf_frozen_model(tmp_dir: str) -> t.Tuple[str, t.List[str], t.List[str]]:
 
     from tensorflow import keras  # pylint: disable=no-name-in-module
 
@@ -262,7 +243,6 @@ def _build_tf_frozen_model(tmp_dir: str) -> None:
     )
     model_path, inputs, outputs = freeze_model(fcn, tmp_dir, "keras_model.pb")
     return model_path, inputs, outputs
-    # conn.send((model_path, inputs, outputs))
 
 
 def _test_torch_install(client: Client, device: Device) -> None:

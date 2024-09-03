@@ -41,6 +41,9 @@ from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
+class RedisAIBuildError(Exception):
+    pass
+
 
 class RedisAIBuilder:
     """Class to build RedisAI from Source"""
@@ -208,6 +211,9 @@ class RedisAIBuilder:
         )
         if proc.returncode != 0:
             print(proc.stderr.decode("utf-8"))
+            raise RedisAIBuildError(
+                f"RedisAI build failed during command: {' '.join(cmd)}"
+            )
 
     def _rai_cmake_cmd(self) -> t.List[str]:
         """Build the CMake configuration command
@@ -229,6 +235,8 @@ class RedisAIBuilder:
             "CMAKE_C_COMPILER": self.build_env.CC,
             "CMAKE_CXX_COMPILER": self.build_env.CXX,
         }
+        if self.platform.device.is_rocm():
+            cmake_args["Torch_DIR"] = str(self.package_path / "libtorch")
         cmd = ["cmake"]
         cmd += (f"-D{key}={value}" for key, value in cmake_args.items())
         cmd.append(str(self.src_path))
