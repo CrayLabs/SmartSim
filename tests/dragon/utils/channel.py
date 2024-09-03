@@ -57,9 +57,10 @@ class FileSystemCommChannel(CommChannelBase):
 
         self._file_path.touch()
 
-    def send(self, value: bytes) -> None:
+    def send(self, value: bytes, _timeout: float = 0) -> None:
         """Send a message throuh the underlying communication channel
 
+        :param _timeout: maximum time to wait (in seconds) for messages to send
         :param value: The value to send"""
         logger.debug(
             f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
@@ -70,10 +71,10 @@ class FileSystemCommChannel(CommChannelBase):
                 encoded_value = base64.b64encode(value).decode("utf-8")
                 fp.write(f"{encoded_value}\n")
 
-    def recv(self, _timeout: int = 0) -> t.List[bytes]:
+    def recv(self, _timeout: float = 0) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel
 
-        :param _timeout: maximum time to wait for messages to arrive
+        :param _timeout: maximum time to wait (in seconds) for messages to arrive
         :returns: the received message
         :raises SmartSimError: if the descriptor points to a missing file"""
         with self._lock:

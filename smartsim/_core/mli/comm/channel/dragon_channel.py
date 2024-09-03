@@ -57,8 +57,9 @@ class DragonCommChannel(cch.CommChannelBase):
 
     def send(self, value: bytes, timeout: float = 0.001) -> None:
         """Send a message throuh the underlying communication channel
+
         :param value: The value to send
-        :param timeout: maximum time to wait (in seconds) for messages to arrive"""
+        :param timeout: maximum time to wait (in seconds) for messages to send"""
         with self._channel.sendh(timeout=timeout) as sendh:
             sendh.send_bytes(value)
 

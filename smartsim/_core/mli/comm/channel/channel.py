@@ -41,16 +41,17 @@ class CommChannelBase(ABC):
         self._descriptor = descriptor
 
     @abstractmethod
-    def send(self, value: bytes) -> None:
+    def send(self, value: bytes, timeout: float = 0) -> None:
         """Send a message through the underlying communication channel
 
+        :param timeout: maximum time to wait (in seconds) for messages to send
         :param value: The value to send"""
 
     @abstractmethod
-    def recv(self, timeout: int = 0) -> t.List[bytes]:
+    def recv(self, timeout: float = 0) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel
 
-        :param timeout: maximum time to wait for messages to arrive
+        :param timeout: maximum time to wait (in seconds) for messages to arrive
         :returns: the received message"""
 
     @property

@@ -38,7 +38,7 @@ import dragon.data.ddict.ddict as dragon_ddict
 # isort: on
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
 from smartsim.error.errors import SmartSimError
@@ -166,8 +166,11 @@ class OnWriteFeatureStore(EventBase):
 class EventProducer(t.Protocol):
     """Core API of a class that publishes events"""
 
-    def send(self, event: EventBase) -> int:
-        """The send operation"""
+    def send(self, event: EventBase, timeout: float = 0.001) -> int:
+        """The send operation
+
+        :param event: the event to send
+        :param timeout: maximum time to wait (in seconds) for messages to send"""
 
 
 class EventBroadcaster:
@@ -261,9 +264,10 @@ class EventBroadcaster:
             logger.error(msg, exc_info=True)
             raise SmartSimError(msg) from ex
 
-    def _broadcast(self) -> int:
+    def _broadcast(self, timeout: float = 0.001) -> int:
         """Broadcasts all buffered events to registered event consumers.
 
+        :param timeout: maximum time to wait (in seconds) for messages to send
         :return: the number of events broadcasted to consumers
         :raises ValueError: if event serialization fails
         :raises KeyError: if channel fails to attach using registered descriptors
@@ -290,7 +294,7 @@ class EventBroadcaster:
                     # todo: given a failure, the message is not sent to any other
                     # recipients. consider retrying, adding a dead letter queue, or
                     # logging the message details more intentionally
-                    comm_channel.send(next_event)
+                    comm_channel.send(next_event, timeout)
                     num_sent += 1
                 except Exception as ex:
                     raise SmartSimError(
@@ -305,18 +309,19 @@ class EventBroadcaster:
 
         return num_sent
 
-    def send(self, event: EventBase) -> int:
+    def send(self, event: EventBase, timeout: float = 0.001) -> int:
         """Implementation of `send` method of the `EventPublisher` protocol. Publishes
         the supplied event to all registered broadcast consumers
 
         :param event: an event to publish
+        :param timeout: maximum time to wait (in seconds) for messages to send
         :returns: the number of events successfully published
         :raises ValueError: if event serialization fails
         :raises KeyError: if channel fails to attach using registered descriptors
         :raises SmartSimError: if any unexpected error occurs during send"""
         try:
             self._save_to_buffer(event)
-            return self._broadcast()
+            return self._broadcast(timeout)
         except (KeyError, ValueError, SmartSimError):
             raise
         except Exception as ex:

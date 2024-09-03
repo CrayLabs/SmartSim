@@ -30,9 +30,9 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.storage.backbonefeaturestore import (
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
     EventCategory,
@@ -40,7 +40,7 @@ from smartsim._core.mli.infrastructure.storage.backbonefeaturestore import (
     OnCreateConsumer,
     OnWriteFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import dragon_ddict
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import dragon_ddict
 
 # isort: off
 from dragon.channels import Channel
