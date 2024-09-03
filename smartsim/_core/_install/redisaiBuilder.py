@@ -25,8 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import fileinput
+import os
 import pathlib
 import shutil
+import stat
 import subprocess
 import typing as t
 from collections import deque
@@ -34,7 +36,7 @@ from collections import deque
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install.buildenv import BuildEnv
 from smartsim._core._install.mlpackages import MLPackageCollection, RAIPatch
-from smartsim._core._install.platform import Platform
+from smartsim._core._install.platform import OperatingSystem, Platform
 from smartsim._core._install.utils import retrieve
 from smartsim._core.config import CONFIG
 from smartsim.log import get_logger
@@ -157,6 +159,18 @@ class RedisAIBuilder:
         if self.verbose:
             print(" ".join(cmake_command))
         self.run_command(build_command, self.build_path)
+
+        if self.platform.operating_system == OperatingSystem.LINUX:
+            self._set_execute(CONFIG.lib_path / "redisai.so")
+
+    @staticmethod
+    def _set_execute(target: pathlib.Path) -> None:
+        """Set execute permissions for file
+
+        :param target: The target file to add execute permission
+        """
+        permissions = os.stat(target).st_mode | stat.S_IXUSR
+        os.chmod(target, permissions)
 
     @staticmethod
     def _find_closest_object(
