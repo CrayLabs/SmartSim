@@ -151,7 +151,7 @@ extras_require = {
         "nbsphinx==0.9.3",
         "docutils==0.18.1",
         "torch==2.0.1",
-        "tensorflow==2.13.1",
+        "tensorflow>=2.14",
         "ipython",
         "jinja2==3.1.2",
         "sphinx-design",
