@@ -72,8 +72,8 @@ class DragonCommChannel(cch.CommChannelBase):
             messages: t.List[bytes] = []
 
             try:
-                while message_bytes := recvh.recv_bytes(timeout=timeout):
-                    messages.append(message_bytes)
+                message_bytes = recvh.recv_bytes(timeout=timeout)
+                messages.append(message_bytes)
             except dch.ChannelEmpty:
                 ...  # emptied the queue, swallow this ex
 
