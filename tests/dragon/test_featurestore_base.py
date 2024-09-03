@@ -50,8 +50,8 @@ if t.TYPE_CHECKING:
     import conftest
 
 
-# The tests in this file belong to the group_a group
-pytestmark = pytest.mark.group_a
+# The tests in this file belong to the dragon group
+pytestmark = pytest.mark.dragon
 
 
 def test_event_uid() -> None:
