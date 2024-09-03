@@ -114,7 +114,6 @@ class FeatureStore(ABC):
         try:
             return self._get(key)
         except KeyError as ex:
-            # logger.warning(f"An unknown key was requested: {key}")
             raise SmartSimError(f"An unknown key was requested: {key}") from ex
         except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence

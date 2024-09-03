@@ -57,6 +57,5 @@ class CommChannelBase(ABC):
     def descriptor(self) -> bytes:
         """Return the channel descriptor for the underlying dragon channel"""
         if isinstance(self._descriptor, str):
-            # return self._descriptor.encode("utf-8")
             return base64.b64decode(self._descriptor.encode("utf-8"))
         return self._descriptor
