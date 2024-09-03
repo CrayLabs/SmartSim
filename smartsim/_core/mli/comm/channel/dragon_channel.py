@@ -126,12 +126,12 @@ class DragonCommChannel(cch.CommChannelBase):
             try:
                 message_bytes = recvh.recv_bytes(timeout=timeout)
                 messages.append(message_bytes)
-                logger.debug(f"DragonCommChannel {self.descriptor!r} received message")
+                logger.debug(f"DragonCommChannel {self.descriptor} received message")
             except dch.ChannelEmpty:
                 # emptied the queue, ok to swallow this ex
-                logger.debug(f"DragonCommChannel exhausted: {self.descriptor!r}")
+                logger.debug(f"DragonCommChannel exhausted: {self.descriptor}")
             except dch.ChannelRecvTimeout as ex:
-                logger.debug(f"Timeout exceeded on channel.recv: {self.descriptor!r}")
+                logger.debug(f"Timeout exceeded on channel.recv: {self.descriptor}")
 
             return messages
 
