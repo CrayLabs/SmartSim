@@ -85,7 +85,9 @@ class Ensemble(entity.CompoundEntity):
         """The parameters and values to be used when configuring entities"""
         self._files = copy.deepcopy(files) if files else EntityFiles()
         """The files to be copied, symlinked, and/or configured prior to execution"""
-        self._file_parameters = copy.deepcopy(file_parameters) if file_parameters else {}
+        self._file_parameters = (
+            copy.deepcopy(file_parameters) if file_parameters else {}
+        )
         """The parameters and values to be used when configuring files"""
         self._permutation_strategy = permutation_strategy
         """The strategy to control how the param values are applied to the Ensemble"""
