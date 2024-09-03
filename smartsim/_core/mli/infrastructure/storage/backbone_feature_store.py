@@ -352,7 +352,7 @@ class EventConsumer:
         self._global_timeout = timeout
 
     def receive(
-        self, filters: t.Optional[t.List[EventCategory]] = None, timeout: int = 0
+        self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0
     ) -> t.List[EventBase]:
         """Receives available published event(s)
 
