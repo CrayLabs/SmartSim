@@ -15,6 +15,7 @@ To be released at some future point in time
 
 Description
 
+- Add type check to model params
 - Pin watchdog to 4.x
 - Update codecov to 4.5.0
 - Remove build of Redis from setup.py
@@ -31,6 +32,8 @@ Description
 
 Detailed Notes
 
+- Added type checking to params on model
+  ([SmartSim-PR676](https://github.com/CrayLabs/SmartSim/pull/676))
 - Pin watchdog to 4.x because v5 introduces new types and requires
   updates to the type-checking
   ([SmartSim-PR690](https://github.com/CrayLabs/SmartSim/pull/690))
