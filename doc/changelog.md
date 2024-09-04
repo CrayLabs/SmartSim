@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Update docstrings 
 - Filenames conform to snake case
 - Update SmartSim environment variables using new naming convention
 - Refactor `exception_handler`
