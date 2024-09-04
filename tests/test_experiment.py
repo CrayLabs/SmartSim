@@ -37,7 +37,7 @@ import pytest
 from smartsim._core import dispatch
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
-from smartsim.entity import _mock, entity
+from smartsim.entity import entity
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import launchSettings
@@ -195,7 +195,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
     def __init__(self):
-        super().__init__("test-entity", _mock.Mock())
+        super().__init__("test-entity")
 
     def __eq__(self, other):
         if type(self) is not type(other):

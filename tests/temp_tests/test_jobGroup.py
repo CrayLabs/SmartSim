@@ -26,17 +26,17 @@
 
 import pytest
 
-from smartsim.entity.model import Application
+from smartsim.entity.application import Application
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.job import Job
 from smartsim.launchable.jobGroup import JobGroup
 from smartsim.settings.launchSettings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
-# TODO replace with LaunchSettings
-app_1 = Application("app_1", "python", LaunchSettings("slurm"))
-app_2 = Application("app_2", "python", LaunchSettings("slurm"))
-app_3 = Application("app_3", "python", LaunchSettings("slurm"))
+
+app_1 = Application("app_1", "python")
+app_2 = Application("app_2", "python")
+app_3 = Application("app_3", "python")
 
 
 class MockJob(BaseJob):
@@ -45,8 +45,8 @@ class MockJob(BaseJob):
 
 
 def test_invalid_job_name(wlmutils):
-    job_1 = Job(app_1, wlmutils.get_test_launcher())
-    job_2 = Job(app_2, wlmutils.get_test_launcher())
+    job_1 = Job(app_1, LaunchSettings("slurm"))
+    job_2 = Job(app_2, LaunchSettings("slurm"))
     with pytest.raises(ValueError):
         _ = JobGroup([job_1, job_2], name="name/not/allowed")
 
@@ -58,26 +58,26 @@ def test_create_JobGroup():
 
 
 def test_name_setter(wlmutils):
-    job_1 = Job(app_1, wlmutils.get_test_launcher())
-    job_2 = Job(app_2, wlmutils.get_test_launcher())
+    job_1 = Job(app_1, LaunchSettings("slurm"))
+    job_2 = Job(app_2, LaunchSettings("slurm"))
     job_group = JobGroup([job_1, job_2])
     job_group.name = "new_name"
     assert job_group.name == "new_name"
 
 
 def test_getitem_JobGroup(wlmutils):
-    job_1 = Job(app_1, wlmutils.get_test_launcher())
-    job_2 = Job(app_2, wlmutils.get_test_launcher())
+    job_1 = Job(app_1, LaunchSettings("slurm"))
+    job_2 = Job(app_2, LaunchSettings("slurm"))
     job_group = JobGroup([job_1, job_2])
     get_value = job_group[0].entity.name
     assert get_value == job_1.entity.name
 
 
 def test_setitem_JobGroup(wlmutils):
-    job_1 = Job(app_1, wlmutils.get_test_launcher())
-    job_2 = Job(app_2, wlmutils.get_test_launcher())
+    job_1 = Job(app_1, LaunchSettings("slurm"))
+    job_2 = Job(app_2, LaunchSettings("slurm"))
     job_group = JobGroup([job_1, job_2])
-    job_3 = Job(app_3, wlmutils.get_test_launcher())
+    job_3 = Job(app_3, LaunchSettings("slurm"))
     job_group[1] = job_3
     assert len(job_group) == 2
     get_value = job_group[1]
