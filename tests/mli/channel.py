@@ -27,7 +27,6 @@
 import base64
 import pathlib
 import threading
-import time
 import typing as t
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
