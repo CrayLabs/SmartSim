@@ -51,7 +51,7 @@ class Ensemble(entity.CompoundEntity):
         self,
         name: str,
         exe: str | os.PathLike[str],
-        exe_args: t.MutableSequence[str] | None = None,
+        exe_args: t.Sequence[str] | None = None,
         exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
         files: EntityFiles | None = None,
         file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
@@ -77,7 +77,7 @@ class Ensemble(entity.CompoundEntity):
         """The name of the ensemble"""
         self._exe = os.fspath(exe)
         """The executable to run"""
-        self._exe_args = copy.deepcopy(exe_args) if exe_args else []
+        self.exe_args = list(exe_args) if exe_args else []
         """The executable arguments"""
         self._exe_arg_parameters = (
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
@@ -113,7 +113,7 @@ class Ensemble(entity.CompoundEntity):
         self._exe = os.fspath(value)
 
     @property
-    def exe_args(self) -> t.MutableSequence[str]:
+    def exe_args(self) -> t.List[str]:
         """Return a list of attached executable arguments.
 
         :returns: application executable arguments

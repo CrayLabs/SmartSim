@@ -271,7 +271,7 @@ class Application(SmartSimEntity):
         if isinstance(exe_args, str):
             return exe_args.split()
 
-        return copy.deepcopy(exe_args)
+        return list(exe_args)
 
     def print_attached_files(self) -> None:
         """Print a table of the attached files on std out"""
