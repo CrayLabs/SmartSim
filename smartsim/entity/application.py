@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import collections
 import copy
 import textwrap
 import typing as t
@@ -262,7 +263,7 @@ class Application(SmartSimEntity):
         if not (
             isinstance(exe_args, str)
             or (
-                isinstance(exe_args, list)
+                isinstance(exe_args, collections.abc.Sequence)                
                 and all(isinstance(arg, str) for arg in exe_args)
             )
         ):
