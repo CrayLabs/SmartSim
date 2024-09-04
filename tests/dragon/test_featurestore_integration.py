@@ -30,7 +30,11 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_channel import (
+    DEFAULT_CHANNEL_BUFFER_SIZE,
+    DragonCommChannel,
+    create_local,
+)
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
@@ -208,3 +212,56 @@ def test_eventconsumer_max_dequeue(
 
     # make sure we made all the expected dequeue calls and got everything
     assert num_dequeued == num_events
+
+
+@pytest.mark.parametrize(
+    "buffer_size",
+    [
+        pytest.param(-1, id="use default: 500"),
+        pytest.param(0, id="use default: 500"),
+        pytest.param(1, id="non-zero buffer size: 1"),
+        pytest.param(500, id="buffer size: 500"),
+        pytest.param(1000, id="buffer size: 1000"),
+    ],
+)
+def test_channel_buffer_size(
+    buffer_size: int,
+    storage_for_dragon_fs: t.Any,
+) -> None:
+    """Verify that a consumer does not sit and collect messages indefinitely
+    by checking that a consumer returns after a maximum timeout is exceeded
+
+    :param buffer_size: the maximum number of messages allowed in a channel buffer
+    :param storage_for_dragon_fs: the dragon storage engine to use"""
+
+    mock_storage = storage_for_dragon_fs
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
+
+    wmgr_channel_ = create_local(buffer_size)  # <--- vary buffer size
+    wmgr_channel = DragonCommChannel(wmgr_channel_)
+    wmgr_consumer_descriptor = wmgr_channel.descriptor_string
+
+    # create a broadcaster to publish messages. create no consumers to
+    # push the number of sent messages past the allotted buffer size
+    mock_client_app = EventBroadcaster(
+        backbone,
+        channel_factory=DragonCommChannel.from_descriptor,
+    )
+
+    # register all of the consumers even though the OnCreateConsumer really should
+    # trigger its registration. event processing is tested elsewhere.
+    backbone.notification_channels = [wmgr_consumer_descriptor]
+
+    if buffer_size < 1:
+        # NOTE: we set this after creating the channel above to ensure
+        # the default parameter value was used during instantiation
+        buffer_size = DEFAULT_CHANNEL_BUFFER_SIZE
+
+    # simulate the app updating a model a lot of times
+    for key in (f"key-{i}" for i in range(buffer_size)):
+        event = OnWriteFeatureStore(backbone.descriptor, key)
+        mock_client_app.send(event, timeout=0.1)
+
+    # adding 1 more over the configured buffer size should report the error
+    with pytest.raises(Exception) as ex:
+        mock_client_app.send(event, timeout=0.1)

@@ -28,6 +28,12 @@ import base64
 import sys
 import typing as t
 
+import dragon.channels as dch
+import dragon.infrastructure.facts as df
+import dragon.infrastructure.parameters as dp
+import dragon.managed_memory as dm
+import dragon.utils as du
+
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
@@ -35,6 +41,39 @@ from smartsim.log import get_logger
 logger = get_logger(__name__)
 
 import dragon.channels as dch
+
+DEFAULT_CHANNEL_BUFFER_SIZE = 500
+
+
+def create_local(capacity: int = 0) -> dch.Channel:
+    """Creates a Channel attached to the local memory pool
+
+    :param capacity: the number of events the channel can buffer; uses the default
+    buffer size `DEFAULT_CHANNEL_BUFFER_SIZE` when not supplied
+    :returns: the instantiated channel"""
+    pool = dm.MemoryPool.attach(du.B64.str_to_bytes(dp.this_process.default_pd))
+    channel: t.Optional[dch.Channel] = None
+    offset = 0
+
+    capacity = capacity if capacity > 0 else DEFAULT_CHANNEL_BUFFER_SIZE
+
+    while not channel:
+        # search for an open channel ID
+        offset += 1
+        try:
+            cid = df.BASE_USER_MANAGED_CUID + offset
+            channel = dch.Channel(
+                mem_pool=pool,
+                c_uid=cid,
+                capacity=capacity,
+            )
+            logger.debug(
+                f"Channel {cid} created in pool {pool.serialize()} w/capacity {capacity}"
+            )
+        except:
+            ...
+
+    return channel
 
 
 class DragonCommChannel(cch.CommChannelBase):

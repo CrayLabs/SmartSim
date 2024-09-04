@@ -27,6 +27,10 @@
 # isort: off
 from dragon import fli
 import dragon.channels as dch
+import dragon.infrastructure.facts as df
+import dragon.infrastructure.parameters as dp
+import dragon.managed_memory as dm
+import dragon.utils as du
 
 # isort: on
 
@@ -34,6 +38,7 @@ import base64
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
+from smartsim._core.mli.comm.channel.dragon_channel import create_local
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -42,17 +47,22 @@ logger = get_logger(__name__)
 class DragonFLIChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon FLI Channel"""
 
-    def __init__(self, fli_desc: bytes, sender_supplied: bool = True) -> None:
+    def __init__(
+        self,
+        fli_desc: bytes,
+        sender_supplied: bool = True,
+        buffer_size: int = 0,
+    ) -> None:
         """Initialize the DragonFLIChannel instance
 
         :param fli_desc: the descriptor of the FLI channel to attach
         :param sender_supplied: flag indicating if the FLI uses sender-supplied streams
+        :param buffer_size: maximum number of sent messages that can be buffered
         """
         super().__init__(fli_desc)
-        # todo: do we need memory pool information to construct the channel correctly?
         self._fli: "fli" = fli.FLInterface.attach(fli_desc)
         self._channel: t.Optional["dch"] = (
-            dch.Channel.make_process_local() if sender_supplied else None
+            create_local(buffer_size or 500) if sender_supplied else None
         )
 
     def send(self, value: bytes, timeout: float = 0.001) -> None:

@@ -501,4 +501,9 @@ class RequestDispatcher(Service):
         return False
 
     def __del__(self) -> None:
-        self._mem_pool.destroy()
+        """Destroy allocated memory resources"""
+        # pool may be null if a failure occurs prior to successful attach
+        pool: t.Optional[MemoryPool] = getattr(self, "_mem_pool", None)
+
+        if pool:
+            pool.destroy()
