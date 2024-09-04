@@ -145,9 +145,10 @@ class TransformInputResult:
     ) -> None:
         """Initialize the TransformInputResult.
 
-        :param result: List of Dragon MemoryAlloc objects on which the tensors are stored
-        :param slices: The slices that represent which portion of the input tensors belongs to
-        which request
+        :param result: List of Dragon MemoryAlloc objects on which
+        the tensors are stored
+        :param slices: The slices that represent which portion of the
+        input tensors belongs to which request
         :param dims: Dimension of the transformed tensors
         :param dtypes: Data type of transformed tensors
         """
@@ -184,7 +185,7 @@ class FetchInputResult:
 
     def __init__(self, result: t.List[bytes], meta: t.Optional[t.List[t.Any]]) -> None:
         """Initialize the FetchInputResult.
-        
+
         :param result: List of input tensor bytes
         :param meta: List of metadata that corresponds with the inputs
         """
@@ -201,7 +202,7 @@ class TransformOutputResult:
         self, result: t.Any, shape: t.Optional[t.List[int]], order: str, dtype: str
     ) -> None:
         """Initialize the TransformOutputResult.
-        
+
         :param result: Transformed output results
         :param shape: Shape of output results
         :param order: Order of output results
@@ -222,7 +223,7 @@ class CreateInputBatchResult:
 
     def __init__(self, result: t.Any) -> None:
         """Initialize the CreateInputBatchResult.
-        
+
         :param result: Inputs batched into a single request
         """
         self.batch = result
@@ -234,7 +235,7 @@ class FetchModelResult:
 
     def __init__(self, result: bytes) -> None:
         """Initialize the FetchModelResult.
-        
+
         :param result: The raw fetched model
         """
         self.model_bytes: bytes = result
