@@ -137,6 +137,10 @@ class RedisAIBuilder:
         :param device: cpu or gpu
         """
 
+        # Following is needed to make sure that the clone/checkout is not
+        # impeded by git LFS limits imposed by RedisAI
+        os.environ["GIT_LFS_SKIP_SMUDGE"] = "1"
+
         self.src_path.mkdir(parents=True)
         self.build_path.mkdir(parents=True)
         self.package_path.mkdir(parents=True)

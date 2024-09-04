@@ -237,11 +237,11 @@ def execute(
     mlpackages = configs[current_platform]
 
     # Build all backends by default, pop off the ones that user wants skipped
-    if args.skip_torch:
+    if args.skip_torch and "libtorch" in mlpackages:
         mlpackages.pop("libtorch")
-    if args.skip_tensorflow:
+    if args.skip_tensorflow and "libtensorflow" in mlpackages:
         mlpackages.pop("libtensorflow")
-    if args.skip_onnx:
+    if args.skip_onnx and "onnxruntime" in mlpackages:
         mlpackages.pop("onnxruntime")
 
     build_env = BuildEnv(checks=True)
