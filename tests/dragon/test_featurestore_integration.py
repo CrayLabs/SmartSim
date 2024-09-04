@@ -131,13 +131,9 @@ def test_eventconsumer_eventpublisher_integration(
     mock_worker_mgr.send(event_1)
 
     # simulate the app updating a model a few times
-    event_2 = OnWriteFeatureStore(backbone.descriptor, "key-1")
-    event_3 = OnWriteFeatureStore(backbone.descriptor, "key-2")
-    event_4 = OnWriteFeatureStore(backbone.descriptor, "key-1")
-
-    mock_client_app.send(event_2)
-    mock_client_app.send(event_3)
-    mock_client_app.send(event_4)
+    for key in ["key-1", "key-2", "key-1"]:
+        event = OnWriteFeatureStore(backbone.descriptor, key)
+        mock_client_app.send(event, timeout=0.1)
 
     # worker manager should only get updates about feature update
     wmgr_messages = wmgr_consumer.receive()
@@ -150,3 +146,65 @@ def test_eventconsumer_eventpublisher_integration(
     # hypothetical app has no filters and will get all events
     app_messages = capp_consumer.receive()
     assert len(app_messages) == 4
+
+
+@pytest.mark.parametrize(
+    "num_events, batch_timeout",
+    [
+        pytest.param(1, 1.0, id="under 1s timeout"),
+        pytest.param(20, 1.0, id="test 1s timeout w/20"),
+        pytest.param(50, 1.0, id="test 1s timeout w/50"),
+        pytest.param(60, 0.1, id="small batches"),
+        pytest.param(100, 0.1, id="many small batches"),
+    ],
+)
+def test_eventconsumer_max_dequeue(
+    num_events: int,
+    batch_timeout: float,
+    storage_for_dragon_fs: t.Any,
+) -> None:
+    """Verify that a consumer does not sit and collect messages indefinitely
+    by checking that a consumer returns after a maximum timeout is exceeded
+
+    :param num_events: the total number of events to raise in the test
+    :param batch_timeout: the maximum wait time for a message to be sent.
+    :param storage_for_dragon_fs: the dragon storage engine to use"""
+
+    mock_storage = storage_for_dragon_fs
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
+
+    wmgr_channel_ = Channel.make_process_local()
+    wmgr_channel = DragonCommChannel(wmgr_channel_)
+    wmgr_consumer_descriptor = wmgr_channel.descriptor_string
+
+    # create some consumers to receive messages
+    wmgr_consumer = EventConsumer(
+        wmgr_channel,
+        backbone,
+        filters=[EventCategory.FEATURE_STORE_WRITTEN],
+        batch_timeout=batch_timeout,
+    )
+
+    # create a broadcaster to publish messages
+    mock_client_app = EventBroadcaster(
+        backbone,
+        channel_factory=DragonCommChannel.from_descriptor,
+    )
+
+    # register all of the consumers even though the OnCreateConsumer really should
+    # trigger its registration. event processing is tested elsewhere.
+    backbone.notification_channels = [wmgr_consumer_descriptor]
+
+    # simulate the app updating a model a lot of times
+    for key in (f"key-{i}" for i in range(num_events)):
+        event = OnWriteFeatureStore(backbone.descriptor, key)
+        mock_client_app.send(event, timeout=0.1)
+
+    num_dequeued = 0
+
+    while wmgr_messages := wmgr_consumer.receive(timeout=0.01):
+        # worker manager should not get more than `max_num_msgs` events
+        num_dequeued += len(wmgr_messages)
+
+    # make sure we made all the expected dequeue calls and got everything
+    assert num_dequeued == num_events

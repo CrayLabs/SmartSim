@@ -62,6 +62,7 @@ class DragonCommChannel(cch.CommChannelBase):
         :param timeout: maximum time to wait (in seconds) for messages to send"""
         with self._channel.sendh(timeout=timeout) as sendh:
             sendh.send_bytes(value)
+            logger.debug(f"DragonCommChannel {self.descriptor!r} sent message")
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel
@@ -74,8 +75,12 @@ class DragonCommChannel(cch.CommChannelBase):
             try:
                 message_bytes = recvh.recv_bytes(timeout=timeout)
                 messages.append(message_bytes)
+                logger.debug(f"DragonCommChannel {self.descriptor!r} received message")
             except dch.ChannelEmpty:
                 ...  # emptied the queue, swallow this ex
+                logger.debug(f"DragonCommChannel exhausted: {self.descriptor!r}")
+            except dch.ChannelRecvTimeout as ex:
+                logger.debug(f"Timeout exceeded on channel.recv: {self.descriptor!r}")
 
             return messages
 

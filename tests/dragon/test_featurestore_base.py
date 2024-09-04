@@ -689,3 +689,34 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     # hypothetical app has no filters and will get all events
     app_messages = capp_consumer.receive()
     assert len(app_messages) == 4
+
+
+@pytest.mark.parametrize("invalid_timeout", [-100.0, -1.0, 0.0])
+def test_eventconsumer_batch_timeout(
+    invalid_timeout: float,
+    test_dir: str,
+) -> None:
+    """Verify that a consumer allows only positive, non-zero values for timeout
+    if it is supplied.
+
+    :param invalid_timeout: any invalid timeout that should fail validation
+    :param test_dir: pytest fixture automatically generating unique working
+    directories for individual test outputs"""
+    storage_path = pathlib.Path(test_dir) / "features"
+    storage_path.mkdir(parents=True, exist_ok=True)
+
+    mock_storage = {}
+    backbone = BackboneFeatureStore(mock_storage)
+
+    channel = FileSystemCommChannel(storage_path / "test-wmgr")
+
+    with pytest.raises(ValueError) as ex:
+        # try to create a consumer w/a max recv size of 0
+        EventConsumer(
+            channel,
+            backbone,
+            filters=[EventCategory.FEATURE_STORE_WRITTEN],
+            batch_timeout=invalid_timeout,
+        )
+
+    assert "positive" in ex.value.args[0]

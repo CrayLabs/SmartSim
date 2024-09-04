@@ -26,6 +26,7 @@
 
 import enum
 import pickle
+import time
 import typing as t
 import uuid
 from collections import defaultdict, deque
@@ -200,6 +201,8 @@ class EventBroadcaster:
         self._descriptors: t.Set[str]
         """Stores the most recent list of broadcast consumers. Updated automatically
         on each broadcast"""
+        self._uid = str(uuid.uuid4())
+        """A unique identifer assigned to the broadcaster for logging"""
 
     @property
     def num_buffered(self) -> int:
@@ -216,13 +219,15 @@ class EventBroadcaster:
             event_bytes = bytes(event)
             self._event_buffer.append(event_bytes)
         except Exception as ex:
-            raise ValueError("Unable to serialize event for sending") from ex
+            raise ValueError(f"Unable to serialize event from {self._uid}") from ex
 
     def _log_broadcast_start(self) -> None:
         """Logs broadcast statistics"""
-        num_pending = len(self._event_buffer)
-        num_consumers = len(self._descriptors)
-        logger.debug(f"Broadcasting {num_pending} events to {num_consumers} consumers")
+        num_events = len(self._event_buffer)
+        num_copies = len(self._descriptors)
+        logger.debug(
+            f"Broadcast {num_events} events to {num_copies} consumers from {self._uid}"
+        )
 
     def _prune_unused_consumers(self) -> None:
         """Performs maintenance on the channel cache by pruning any channel
@@ -238,8 +243,8 @@ class EventBroadcaster:
             self._channel_cache.pop(descriptor)
 
         logger.debug(
-            f"Pruning {len(inactive_channels)} stale consumer channels"
-            f" and found {len(new_channels)} new channels"
+            f"Pruning {len(inactive_channels)} stale consumers and"
+            f" found {len(new_channels)} new channels for {self._uid}"
         )
 
     def _get_comm_channel(self, descriptor: str) -> CommChannelBase:
@@ -276,7 +281,7 @@ class EventBroadcaster:
         # allow descriptors to be empty since events are buffered
         self._descriptors = set(x for x in self._backbone.notification_channels if x)
         if not self._descriptors:
-            logger.warning("No event consumers are registered")
+            logger.warning(f"No event consumers are registered for {self._uid}")
             return 0
 
         self._prune_unused_consumers()
@@ -298,14 +303,14 @@ class EventBroadcaster:
                     num_sent += 1
                 except Exception as ex:
                     raise SmartSimError(
-                        f"Failed broadcast to channel: {descriptor}"
+                        f"Failed broadcast to channel {descriptor} from {self._uid}"
                     ) from ex
 
             try:
                 next_event = self._event_buffer.popleft()
             except IndexError:
                 next_event = None
-                logger.debug("Event buffer exhausted")
+                logger.debug(f"Broadcast buffer exhausted for {self._uid}")
 
         return num_sent
 
@@ -336,7 +341,7 @@ class EventConsumer:
         comm_channel: CommChannelBase,
         backbone: BackboneFeatureStore,
         filters: t.Optional[t.List[EventCategory]] = None,
-        timeout: int = 0,
+        batch_timeout: t.Optional[float] = None,
     ) -> None:
         """Initialize the EventConsumer instance
 
@@ -346,10 +351,13 @@ class EventConsumer:
         events will be delivered
         :param timeout: maximum time to wait for messages to arrive; may be overridden
         on individual calls to `receive`"""
+        if batch_timeout is not None and batch_timeout <= 0:
+            raise ValueError("batch_timeout must be a non-zero, positive value")
+
         self._comm_channel = comm_channel
         self._backbone = backbone
         self._global_filters = filters or []
-        self._global_timeout = timeout
+        self._global_timeout = batch_timeout or 1.0
 
     def receive(
         self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0
@@ -367,23 +375,31 @@ class EventConsumer:
         messages: t.List[t.Any] = []
 
         # use the local timeout to override a global setting
-        timeout = timeout or self._global_timeout
-        msg_bytes_list = self._comm_channel.recv(timeout)
+        start_at = time.time_ns()
 
-        # remove any empty messages that will fail to decode
-        msg_bytes_list = [msg for msg in msg_bytes_list if msg]
+        while msg_bytes_list := self._comm_channel.recv(timeout=timeout):
+            # remove any empty messages that will fail to decode
+            msg_bytes_list = [msg for msg in msg_bytes_list if msg]
 
-        msg: t.Optional[EventBase] = None
-        if msg_bytes_list:
-            for message in msg_bytes_list:
-                msg = pickle.loads(message)
+            msg: t.Optional[EventBase] = None
+            if msg_bytes_list:
+                for message in msg_bytes_list:
+                    msg = pickle.loads(message)
 
-                if not msg:
-                    continue
+                    if not msg:
+                        print("unable to unpickle message")
+                        continue
 
-                # ignore anything that doesn't match a filter (if one is
-                # supplied), otherwise return everything
-                if not filter_set or msg.category in filter_set:
-                    messages.append(msg)
+                    # ignore anything that doesn't match a filter (if one is
+                    # supplied), otherwise return everything
+                    if not filter_set or msg.category in filter_set:
+                        messages.append(msg)
+
+            # avoid getting stuck indefinitely waiting for the channel
+            elapsed = (time.time_ns() - start_at) / 1000000000
+            remaining = elapsed - self._global_timeout
+            if remaining > 0:
+                logger.debug(f"consumer batch timeout exceeded by: {abs(remaining)}")
+                break
 
         return messages
