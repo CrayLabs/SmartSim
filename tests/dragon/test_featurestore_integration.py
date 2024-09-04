@@ -228,8 +228,8 @@ def test_channel_buffer_size(
     buffer_size: int,
     storage_for_dragon_fs: t.Any,
 ) -> None:
-    """Verify that a consumer does not sit and collect messages indefinitely
-    by checking that a consumer returns after a maximum timeout is exceeded
+    """Verify that a channel used by an EventBroadcaster can buffer messages
+    until a configured maximum value is exceeded.
 
     :param buffer_size: the maximum number of messages allowed in a channel buffer
     :param storage_for_dragon_fs: the dragon storage engine to use"""

@@ -62,7 +62,7 @@ class DragonFLIChannel(cch.CommChannelBase):
         super().__init__(fli_desc)
         self._fli: "fli" = fli.FLInterface.attach(fli_desc)
         self._channel: t.Optional["dch"] = (
-            create_local(buffer_size or 500) if sender_supplied else None
+            create_local(buffer_size) if sender_supplied else None
         )
 
     def send(self, value: bytes, timeout: float = 0.001) -> None:
