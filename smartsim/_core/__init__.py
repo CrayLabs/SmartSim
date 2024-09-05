@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .control import Controller, Manifest, previewrenderer
+from .control import Manifest, previewrenderer
 from .generation import Generator
 
-__all__ = ["Controller", "Manifest", "Generator", "previewrenderer"]
+__all__ = ["Manifest", "Generator", "previewrenderer"]
