@@ -263,7 +263,7 @@ class Application(SmartSimEntity):
         if not (
             isinstance(exe_args, str)
             or (
-                isinstance(exe_args, collections.abc.Sequence)                
+                isinstance(exe_args, collections.abc.Sequence)
                 and all(isinstance(arg, str) for arg in exe_args)
             )
         ):
