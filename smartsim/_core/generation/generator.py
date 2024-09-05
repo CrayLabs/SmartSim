@@ -33,8 +33,6 @@ import subprocess
 import sys
 import typing as t
 from datetime import datetime
-from os import mkdir, path
-from os.path import join
 
 from ...entity import Application
 from ...entity.files import EntityFiles
@@ -136,20 +134,15 @@ class Generator:
         :param log_path: The path to the "log" directory for the job instance.
         """
 
-        # Generate ../job_name/run directory
         job_path = self._generate_run_path(job, job_index)
-        # Generate ../job_name/log directory
         log_path = self._generate_log_path(job, job_index)
 
-        # Create and write to the parameter settings file
         with open(self._log_file(log_path), mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        # Create output files
         out_file, err_file = self._output_files(log_path, job.entity.name)
 
-        # Perform file system operations on attached files
         self._build_operations(job, job_path)
 
         return job_path, out_file, err_file
@@ -173,7 +166,7 @@ class Generator:
     def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
         """Perform copy file sys operations on a list of files.
 
-        :param app: The Application attached to the Job
+        :param files: The paths to copy
         :param dest: Path to the Jobs run directory
         """
         # Return if no files are attached
@@ -213,7 +206,7 @@ class Generator:
     def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
         """Perform symlink file sys operations on a list of files.
 
-        :param app: The Application attached to the Job
+        :param files: The paths to symlink
         :param dest: Path to the Jobs run directory
         """
         # Return if no files are attached
@@ -247,7 +240,8 @@ class Generator:
            a Job instance. This function specifically deals with the tagged
            files attached to an entity.
 
-        :param app: The Application attached to the Job
+        :param files: The paths to configure
+        :param params: A dictionary of params
         :param dest: Path to the Jobs run directory
         """
         if files is None:
@@ -271,7 +265,7 @@ class Generator:
                 if os.path.isdir(file_sys_path):
                     file_entrypoint = "configure_directory"
                 elif os.path.isfile(file_sys_path):
-                    file_entrypoint = "configure"
+                    file_entrypoint = "configure_file"
                 else:
                     raise ValueError(f"Invalid path: {file_sys_path}")
                 subprocess.run(
