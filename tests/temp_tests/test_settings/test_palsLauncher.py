@@ -30,7 +30,7 @@ import pathlib
 
 import pytest
 
-from smartsim._core.shell.shell_launcher import ShellLauncherCommand
+from smartsim._core.launcher_.shell.shell_launcher import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.pals import (
     PalsMpiexecLaunchArguments,

@@ -33,11 +33,11 @@ from copy import deepcopy
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable.base_job import BaseJob
 from smartsim.launchable.mpmd_pair import MPMDPair
-from smartsim.settings.launch_settings import LaunchSettings
 
 if t.TYPE_CHECKING:
     from smartsim._core.commands.launch_commands import LaunchCommands
     from smartsim.entity.entity import SmartSimEntity
+    from smartsim.settings.launch_settings import LaunchSettings
 
 
 def _check_launcher(mpmd_pairs: t.List[MPMDPair]) -> None:

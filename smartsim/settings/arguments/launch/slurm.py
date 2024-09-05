@@ -27,14 +27,14 @@
 from __future__ import annotations
 
 import os
+import os.path
 import pathlib
 import re
-import subprocess
 import typing as t
 
 from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import EnvironMappingType, dispatch
-from smartsim._core.shell.shell_launcher import ShellLauncher, ShellLauncherCommand
+from smartsim._core.launcher_.slurm.slurm_launcher import SlurmLauncher, SrunCommand
 from smartsim.log import get_logger
 
 from ...common import set_check_input
@@ -44,27 +44,45 @@ logger = get_logger(__name__)
 
 
 def _as_srun_command(
-    args: ShellLaunchArguments,
+    args: SlurmLaunchArguments,
     exe: t.Sequence[str],
     path: pathlib.Path,
     env: EnvironMappingType,
     stdout_path: pathlib.Path,
     stderr_path: pathlib.Path,
-) -> ShellLauncherCommand:
-    command_tuple = (
-        "srun",
+) -> SrunCommand:
+    # TODO: Should probably use the `SmartSimEntity` name here, but right now
+    #       there is no way to access it. In the meantime, we will just use the
+    #       exe being called.
+    app, *_ = exe
+    try:
+        _, job_name = app.rsplit(os.path.sep, maxsplit=1)
+    except ValueError:
+        job_name = app
+
+    # TODO: This logic should probably be moved onto the `SlurmLaunchArguments`
+    #       themselves to remove the protected access, and remove it from the
+    #       formatted launch args sequence
+    # pylint: disable-next=protected-access
+    job_id = args._launch_args.get("jobid", None)
+
+    csv_env, extra_env_str = args.format_comma_sep_env_vars(dict(env))
+    extra_env = dict(var.split("=", maxsplit=1) for var in extra_env_str)
+    #                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    # TODO: Really dislike how we are assuming the format of these strings to
+    #       be in the same format as if they were passed to `env`. Can we
+    #       refactor this method to return a `Mapping[str, str]` instead?
+    srun_args = (
         *(args.format_launch_args() or ()),
-        f"--output={stdout_path}",
-        f"--error={stderr_path}",
-        "--",
-        *exe,
+        f"--chdir={os.fspath(path)}",
+        f"--output={os.fspath(stdout_path)}",
+        f"--error={os.fspath(stderr_path)}",
+        f"--export=ALL,{csv_env}" if csv_env else "--export=ALL",
     )
-    return ShellLauncherCommand(
-        env, path, subprocess.DEVNULL, subprocess.DEVNULL, command_tuple
-    )
+    return SrunCommand(job_name, srun_args, exe, job_id, extra_env)
 
 
-@dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)
+@dispatch(with_format=_as_srun_command, to_launcher=SlurmLauncher)
 class SlurmLaunchArguments(ShellLaunchArguments):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher
@@ -284,7 +302,7 @@ class SlurmLaunchArguments(ShellLaunchArguments):
 
     def format_comma_sep_env_vars(
         self, env_vars: t.Dict[str, t.Optional[str]]
-    ) -> t.Union[t.Tuple[str, t.List[str]], None]:
+    ) -> t.Tuple[str, t.List[str]]:
         """Build environment variable string for Slurm
 
         Slurm takes exports in comma separated lists

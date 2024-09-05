@@ -24,16 +24,21 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import abc
 import typing as t
 
-from ...entity import SmartSimEntity
 from ...error import AllocationError, LauncherError, SSUnsupportedError
-from ...settings import SettingsBase
 from .step import Step
 from .step_info import StepInfo, UnmanagedStepInfo
 from .step_mapping import StepMap, StepMapping
 from .task_manager import TaskManager
+
+if t.TYPE_CHECKING:
+    from smartsim._core.launcher.stepMapping import StepMap
+    from smartsim.entity.entity import SmartSimEntity
+    from smartsim.settings.launchSettings import SettingsBase
 
 
 class Launcher(abc.ABC):  # pragma: no cover

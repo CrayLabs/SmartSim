@@ -121,7 +121,10 @@ def parse_sstat_nodes(output: str, job_id: str) -> t.List[str]:
     return list(set(nodes))
 
 
-def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[str]:
+StepID = t.NewType("StepID", str)
+
+
+def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[StepID]:
     """Parse and return the step id from a sacct command
 
     :param output: output of sacct --noheader -p
@@ -135,4 +138,4 @@ def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[str]:
         if len(sacct_string) >= 2:
             if sacct_string[0] == step_name:
                 step_id = sacct_string[1]
-    return step_id
+    return StepID(step_id) if step_id is not None else None

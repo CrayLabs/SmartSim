@@ -29,10 +29,9 @@ from __future__ import annotations
 import copy
 import typing as t
 
-from smartsim.settings.launch_settings import LaunchSettings
-
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
+    from smartsim.settings.launch_settings import LaunchSettings
 
 
 class MPMDPair:
