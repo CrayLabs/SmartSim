@@ -139,9 +139,13 @@ def mock_messages(
             "c", "float32", list(tensor.shape)
         )
 
-        message_tensor_output_key = MessageHandler.build_tensor_key(output_key, fsd)
-        message_tensor_input_key = MessageHandler.build_tensor_key(input_key, fsd)
-        message_model_key = MessageHandler.build_model_key(model_key, fsd)
+        message_tensor_output_key = MessageHandler.build_feature_store_key(
+            output_key, fsd
+        )
+        message_tensor_input_key = MessageHandler.build_feature_store_key(
+            input_key, fsd
+        )
+        message_model_key = MessageHandler.build_feature_store_key(model_key, fsd)
 
         request = MessageHandler.build_request(
             reply_channel=base64.b64encode(channel.serialize()).decode("utf-8"),

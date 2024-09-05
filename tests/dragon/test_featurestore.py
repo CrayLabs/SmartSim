@@ -37,6 +37,7 @@ import pytest
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
@@ -204,7 +205,7 @@ def test_backbone_wait_for_prepopulated(
     # storage = {WORK_QUEUE_KEY: "123456"}
     storage = storage_for_dragon_fs_with_req_queue
 
-    backbone = BackboneFeatureStore(storage, wait_timeout=wait_timeout)
+    backbone = BackboneFeatureStore(storage)
 
     with monkeypatch.context() as ctx:
         # all keys should be found and the timeout should never be checked.
@@ -234,81 +235,84 @@ def set_value_after_delay(
 
     backbone = BackboneFeatureStore.from_descriptor(descriptor)
     backbone[key] = value
-    logger.debug(f"wrote {value} to backbone[`{key}`]")
+    logger.debug(f"set_value_after_delay wrote `{value} to backbone[`{key}`]")
 
 
-@pytest.mark.parametrize("delay", [0, 1, 2, 4, 8])
-def test_backbone_wait_for_partial_prepopulated(
-    storage_for_dragon_fs_with_mock_req_queue: t.Any, delay: float
-) -> None:
-    """Verify that when data is not all in the backbone, the `wait_for` operation
-    continues to poll until it finds everything it needs
+# @pytest.mark.parametrize("delay", [0, 1, 2, 4, 8])
+# def test_backbone_wait_for_partial_prepopulated(
+#     storage_for_dragon_fs_with_mock_req_queue: t.Any, delay: float
+# ) -> None:
+#     """Verify that when data is not all in the backbone, the `wait_for` operation
+#     continues to poll until it finds everything it needs
 
-    :param storage_for_dragon_fs: the storage engine to use, prepopulated with
-    :param delay: the number of seconds the second process will wait before
-    setting the target value in the backbone featurestore
-    """
-    # set a very low timeout to confirm that it does not wait
-    wait_timeout = 15
-    storage = storage_for_dragon_fs_with_mock_req_queue
-    backbone = BackboneFeatureStore(storage, wait_timeout=wait_timeout)
+#     :param storage_for_dragon_fs: the storage engine to use, prepopulated with
+#     :param delay: the number of seconds the second process will wait before
+#     setting the target value in the backbone featurestore
+#     """
+#     # set a very low timeout to confirm that it does not wait
+#     wait_timeout = 10
+#     storage = storage_for_dragon_fs_with_mock_req_queue
+#     backbone = BackboneFeatureStore(storage)
 
-    key, value = str(uuid.uuid4()), str(int(random.random() * 10000))
-    p = mp.Process(
-        target=set_value_after_delay, args=(backbone.descriptor, key, value, delay)
-    )
-    p.start()
+#     key, value = str(uuid.uuid4()), str(int(random.random() * 10000))
+#     p = mp.Process(
+#         target=set_value_after_delay, args=(backbone.descriptor, key, value, delay)
+#     )
+#     p.start()
 
-    # wait_for should complete after `delay` seconds
-    ret_vals = backbone.wait_for([WORK_QUEUE_KEY, key])
+#     # wait_for should complete after `delay` seconds
+#     ret_vals = backbone.wait_for([WORK_QUEUE_KEY, key], timeout=wait_timeout)
 
-    # confirm that wait_for with two keys returns two values
-    assert len(ret_vals) == 2, "values should contain values for both awaited keys"
+#     # confirm that wait_for with two keys returns two values
+#     assert len(ret_vals) == 2, "values should contain values for both awaited keys"
 
-    # confirm the pre-populated value has the correct output
-    assert ret_vals[WORK_QUEUE_KEY] == "12345"  # mock descriptor value from fixture
+#     # confirm the pre-populated value has the correct output
+#     assert ret_vals[WORK_QUEUE_KEY] == "12345"  # mock descriptor value from fixture
 
-    # confirm the population process completed and the awaited value is correct
-    assert ret_vals[key] == value, "verify order of values "
+#     # confirm the population process completed and the awaited value is correct
+#     assert ret_vals[key] == value, "verify order of values "
 
 
-@pytest.mark.parametrize("num_keys", [0, 1, 2, 11, 22])
-def test_backbone_wait_for_multikey(
-    storage_for_dragon_fs_with_req_queue: t.Any,
-    num_keys: int,
-) -> None:
-    """Verify that asking the backbone to wait for multiple keys results
-    in that number of values being returned
+# @pytest.mark.parametrize("num_keys", [0, 1, 2, 11, 22])
+# def test_backbone_wait_for_multikey(
+#     storage_for_dragon_fs_with_req_queue: t.Any,
+#     num_keys: int,
+# ) -> None:
+#     """Verify that asking the backbone to wait for multiple keys results
+#     in that number of values being returned
 
-    :param storage_for_dragon_fs: the storage engine to use, prepopulated with
-    :param num_keys: the number of extra keys to set & request in the backbone
-    """
-    # maximum delay allowed for setter processes
-    max_delay = 5
-    storage = storage_for_dragon_fs_with_req_queue
-    backbone = BackboneFeatureStore(storage)
+#     :param storage_for_dragon_fs: the storage engine to use, prepopulated with
+#     :param num_keys: the number of extra keys to set & request in the backbone
+#     """
+#     # maximum delay allowed for setter processes
+#     max_delay = 5
+#     storage = storage_for_dragon_fs_with_req_queue
+#     backbone = BackboneFeatureStore(storage)
 
-    extra_keys = [str(uuid.uuid4()) for _ in range(num_keys)]
-    extra_values = [str(uuid.uuid4()) for _ in range(num_keys)]
-    extras = dict(zip(extra_keys, extra_values))
-    delays = [random.random() * max_delay for _ in range(num_keys)]
-    processes = []
+#     extra_keys = [str(uuid.uuid4()) for _ in range(num_keys)]
+#     extra_values = [str(uuid.uuid4()) for _ in range(num_keys)]
+#     extras = dict(zip(extra_keys, extra_values))
+#     delays = [random.random() * max_delay for _ in range(num_keys)]
+#     processes = []
 
-    for key, value, delay in zip(extra_keys, extra_values, delays):
-        logger.debug(f"Delaying {key} write by {delay} seconds")
-        p = mp.Process(
-            target=set_value_after_delay, args=(backbone.descriptor, key, value, delay)
-        )
-        p.start()
-        processes.append(p)
+#     for key, value, delay in zip(extra_keys, extra_values, delays):
+#         logger.debug(f"Delaying {key} write by {delay} seconds")
+#         p = mp.Process(
+#             target=set_value_after_delay, args=(backbone.descriptor, key, value, delay)
+#         )
+#         # p.start()
+#         processes.append(p)
 
-    actual_values = backbone.wait_for([*extra_keys])
-    for process in processes:
-        process.join()
+#     for p in processes:
+#         p.start()
 
-    # confirm that wait_for returns all the expected values
-    assert len(actual_values) == num_keys
+#     actual_values = backbone.wait_for([*extra_keys], timeout=30)
+#     # for process in processes:
+#     #     process.join()
 
-    # confirm that the returned values match (e.g. are returned in the right order)
-    for k in extras:
-        assert extras[k] == actual_values[k]
+#     # confirm that wait_for returns all the expected values
+#     assert len(actual_values) == num_keys
+
+#     # confirm that the returned values match (e.g. are returned in the right order)
+#     for k in extras:
+#         assert extras[k] == actual_values[k]

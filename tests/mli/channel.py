@@ -107,17 +107,14 @@ class FileSystemCommChannel(CommChannelBase):
     @classmethod
     def from_descriptor(
         cls,
-        descriptor: t.Union[str, bytes],
+        descriptor: str,
     ) -> "FileSystemCommChannel":
         """A factory method that creates an instance from a descriptor string
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached FileSystemCommChannel"""
         try:
-            if isinstance(descriptor, str):
-                path = pathlib.Path(descriptor)
-            else:
-                path = pathlib.Path(descriptor.decode("utf-8"))
+            path = pathlib.Path(descriptor)
             return FileSystemCommChannel(path)
         except:
             logger.warning(f"failed to create fs comm channel: {descriptor}")

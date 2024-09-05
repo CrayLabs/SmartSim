@@ -47,9 +47,10 @@ class DragonFeatureStore(FeatureStore):
 
         :param storage: A distributed dictionary to be used as the underlying
         storage mechanism of the feature store"""
-        descriptor = "not-set"
         if isinstance(storage, dragon_ddict.DDict):
             descriptor = str(storage.serialize())
+        else:
+            descriptor = "not-set"
 
         # todo: follow up and ensure this descriptor is also encoded/decoded
         # in a string-safe way here & in `from_descriptor`

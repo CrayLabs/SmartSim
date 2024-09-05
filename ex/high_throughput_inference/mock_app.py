@@ -46,6 +46,7 @@ from mpi4py import MPI
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
+from smartsim.log import get_logger
 from smartsim._core.utils.timings import PerfTimer
 
 torch.set_num_interop_threads(16)
@@ -64,7 +65,7 @@ from smartsim._core.mli.message_handler import MessageHandler
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
-    EventPublisher,
+    EventProducer,
     OnWriteFeatureStore,
 )
 from smartsim.error.errors import SmartSimError
@@ -78,6 +79,7 @@ log_to_file("_smartsim.log", "debug")
 _TIMING_DICT = OrderedDict[str, list[numbers.Number]]
 
 CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
+
 
 class ProtoClient:
     def __init__(self, timing_on: bool):
@@ -130,12 +132,12 @@ class ProtoClient:
 
         return _from_worker_ch, _to_worker_ch
 
-    def _create_publisher(self) -> EventPublisher:
+    def _create_publisher(self) -> EventProducer:
         """Create an event publisher that will broadcast updates to
         other MLI components. This publisher
 
         :returns: the event publisher instance"""
-        publisher: EventPublisher = EventBroadcaster(
+        publisher: EventProducer = EventBroadcaster(
             self._backbone, DragonCommChannel.from_descriptor
         )
         return publisher
@@ -174,7 +176,9 @@ class ProtoClient:
 
         self._publisher = self._create_publisher()
 
-        self.perf_timer: PerfTimer = PerfTimer(debug=False, timing_on=timing_on, prefix=f"a{rank}_")
+        self.perf_timer: PerfTimer = PerfTimer(
+            debug=False, timing_on=timing_on, prefix=f"a{rank}_"
+        )
         self._start = None
         self._interm = None
         self._timings: _TIMING_DICT = OrderedDict()
@@ -288,7 +292,6 @@ class ProtoClient:
         self._publisher.send(event)
 
 
-
 class ResNetWrapper:
     def __init__(self, name: str, model: str):
         self._model = torch.jit.load(model)
@@ -309,6 +312,7 @@ class ResNetWrapper:
     def name(self):
         return self._name
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Mock application")
@@ -324,24 +328,32 @@ if __name__ == "__main__":
     if CHECK_RESULTS_AND_MAKE_ALL_SLOWER:
         # TODO: adapt to non-Nvidia devices
         torch_device = args.device.replace("gpu", "cuda")
-        pt_model = torch.jit.load(io.BytesIO(initial_bytes=(resnet.model))).to(torch_device)
+        pt_model = torch.jit.load(io.BytesIO(initial_bytes=(resnet.model))).to(
+            torch_device
+        )
 
     TOTAL_ITERATIONS = 100
 
-    for log2_bsize in range(args.log_max_batchsize+1):
+    for log2_bsize in range(args.log_max_batchsize + 1):
         b_size: int = 2**log2_bsize
         logger.info(f"Batch size: {b_size}")
-        for iteration_number in range(TOTAL_ITERATIONS + int(b_size==1)):
+        for iteration_number in range(TOTAL_ITERATIONS + int(b_size == 1)):
             logger.info(f"Iteration: {iteration_number}")
             sample_batch = resnet.get_batch(b_size)
             remote_result = client.run_model(resnet.name, sample_batch)
             logger.info(client.perf_timer.get_last("total_time"))
             if CHECK_RESULTS_AND_MAKE_ALL_SLOWER:
                 local_res = pt_model(sample_batch.to(torch_device))
-                err_norm = torch.linalg.vector_norm(torch.flatten(remote_result).to(torch_device)-torch.flatten(local_res), ord=1).cpu()
+                err_norm = torch.linalg.vector_norm(
+                    torch.flatten(remote_result).to(torch_device)
+                    - torch.flatten(local_res),
+                    ord=1,
+                ).cpu()
                 res_norm = torch.linalg.vector_norm(remote_result, ord=1).item()
                 local_res_norm = torch.linalg.vector_norm(local_res, ord=1).item()
-                logger.info(f"Avg norm of error {err_norm.item()/b_size} compared to result norm of {res_norm/b_size}:{local_res_norm/b_size}")
+                logger.info(
+                    f"Avg norm of error {err_norm.item()/b_size} compared to result norm of {res_norm/b_size}:{local_res_norm/b_size}"
+                )
                 torch.cuda.synchronize()
 
     client.perf_timer.print_timings(to_file=True)

@@ -555,7 +555,7 @@ def test_eventconsumer_receive(test_dir: str) -> None:
     # note: file-system descriptors are just paths
     target_descriptor = str(storage_path / "test-consumer")
 
-    backbone = BackboneFeatureStore(mock_storage, allow_write=True)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     comm_channel = FileSystemCommChannel.from_descriptor(target_descriptor)
     event = OnCreateConsumer(target_descriptor, [])
 
@@ -588,7 +588,7 @@ def test_eventconsumer_receive_multi(test_dir: str, num_sent: int) -> None:
     # note: file-system descriptors are just paths
     target_descriptor = str(storage_path / "test-consumer")
 
-    backbone = BackboneFeatureStore(mock_storage, allow_write=True)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     comm_channel = FileSystemCommChannel.from_descriptor(target_descriptor)
 
     # simulate multiple sent events by writing directly to the input comm channel
@@ -616,7 +616,7 @@ def test_eventconsumer_receive_empty(test_dir: str) -> None:
     # note: file-system descriptors are just paths
     target_descriptor = str(storage_path / "test-consumer")
 
-    backbone = BackboneFeatureStore(mock_storage, allow_write=True)
+    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     comm_channel = FileSystemCommChannel.from_descriptor(target_descriptor)
 
     # simulate a sent event by writing directly to the input comm channel
@@ -736,7 +736,7 @@ def test_backbone_wait_timeout(wait_timeout: float, exp_wait_max: float) -> None
     start_time = time.time()
 
     storage = {}
-    backbone = BackboneFeatureStore(storage, wait_timeout=wait_timeout)
+    backbone = BackboneFeatureStore(storage)
 
     with pytest.raises(SmartSimError) as ex:
         backbone.wait_for(["does-not-exist"])

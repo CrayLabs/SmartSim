@@ -63,7 +63,7 @@ def storage_for_dragon_fs() -> t.Dict[str, str]:
 
 @pytest.fixture
 def the_backbone(storage_for_dragon_fs) -> BackboneFeatureStore:
-    return BackboneFeatureStore(storage_for_dragon_fs, allow_write=True)
+    return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
 
 @pytest.fixture

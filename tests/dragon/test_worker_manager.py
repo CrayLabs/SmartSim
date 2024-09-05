@@ -235,7 +235,7 @@ def mock_mli_infrastructure_mgr():
         queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
     )
 
-    integrated_worker = TorchWorker()
+    integrated_worker = TorchWorker
 
     worker_manager = WorkerManager(
         config_loader,
@@ -243,6 +243,7 @@ def mock_mli_infrastructure_mgr():
         as_service=True,
         cooldown=10,
         device="cpu",
+        dispatcher_queue=mp.Queue(maxsize=0),
     )
     worker_manager.execute()
 
@@ -282,14 +283,12 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
         n_nodes=num_nodes,
         total_mem=total_mem,
     )
-    backbone = BackboneFeatureStore(storage, allow_write=True)
+    backbone = BackboneFeatureStore(storage, allow_reserved_writes=True)
 
     to_worker_channel = dch.Channel.make_process_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
 
-    to_worker_fli_comm_channel = DragonFLIChannel(
-        to_worker_fli, supply_stream_channel=True
-    )
+    to_worker_fli_comm_channel = DragonFLIChannel(to_worker_fli, sender_supplied=True)
 
     # NOTE: env vars must be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
