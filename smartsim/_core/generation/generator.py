@@ -36,7 +36,7 @@ from datetime import datetime
 from os import mkdir, path
 from os.path import join
 
-from ...entity import Application, TaggedFilesHierarchy
+from ...entity import Application
 from ...entity.files import EntityFiles
 from ...launchable import Job
 from ...log import get_logger
@@ -240,7 +240,7 @@ class Generator:
     @staticmethod
     def _write_tagged_files(
         files: t.Union[EntityFiles, None],
-        params: t.Mapping[str, str],
+        params: t.Mapping[str, t.Any],
         dest: pathlib.Path,
     ) -> None:
         """Read, configure and write the tagged input files for
@@ -250,47 +250,39 @@ class Generator:
         :param app: The Application attached to the Job
         :param dest: Path to the Jobs run directory
         """
-        # Return if no files are attached
         if files is None:
             return
         if files.tagged:
             to_write = []
-
-            def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
-                """Using a TaggedFileHierarchy, reproduce the tagged file
-                directory structure
-
-                :param tagged: a TaggedFileHierarchy to be built as a
-                               directory structure
-                """
-                for file in tagged.files:
-                    dst_path = path.join(dest, tagged.base, path.basename(file))
-                    shutil.copyfile(file, dst_path)
+            for file in files.tagged:
+                if os.path.isfile(file):
+                    dst_path = os.path.join(dest, os.path.basename(file))
+                    dst_path = shutil.copyfile(file, dst_path)
                     to_write.append(dst_path)
-
-                for tagged_dir in tagged.dirs:
-                    mkdir(path.join(dest, tagged.base, path.basename(tagged_dir.base)))
-                    _build_tagged_files(tagged_dir)
-
-            if files.tagged_hierarchy:
-                _build_tagged_files(files.tagged_hierarchy)
-
-            # Pickle the dictionary
+                elif os.path.isdir(file):
+                    dst_path = shutil.copytree(file, dest, dirs_exist_ok=True)
+                    to_write.append(dst_path)
+                else:
+                    raise ValueError(f"Invalid path: {file}")
+            tag_delimiter = ";"
             pickled_dict = pickle.dumps(params)
-            # Default tag delimiter
-            tag = ";"
-            # Encode the pickled dictionary with Base64
             encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
-            for dest_path in to_write:
+            for file_sys_path in to_write:
+                if os.path.isdir(file_sys_path):
+                    file_entrypoint = "configure_directory"
+                elif os.path.isfile(file_sys_path):
+                    file_entrypoint = "configure"
+                else:
+                    raise ValueError(f"Invalid path: {file_sys_path}")
                 subprocess.run(
                     args=[
                         sys.executable,
                         "-m",
                         "smartsim._core.entrypoints.file_operations",
-                        "configure",
-                        dest_path,
-                        dest_path,
-                        tag,
+                        file_entrypoint,
+                        file_sys_path,
+                        file_sys_path,
+                        tag_delimiter,
                         encoded_dict,
                     ]
                 )

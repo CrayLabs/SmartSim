@@ -1,8 +1,12 @@
+import builtins
+import contextlib
 import filecmp
+import io
 import itertools
 import os
 import pathlib
 import random
+from contextlib import contextmanager
 from glob import glob
 from os import listdir
 from os import path as osp
@@ -11,9 +15,10 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.generation.generator import Generator
-from smartsim.entity import Application, Ensemble
+from smartsim.entity import Application, Ensemble, entity
 from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
+from smartsim.launchable.basejob import BaseJob
 from smartsim.settings import LaunchSettings
 
 # TODO Add JobGroup tests when JobGroup becomes a Launchable
@@ -45,57 +50,223 @@ def get_gen_symlink_dir(fileutils):
 def get_gen_configure_dir(fileutils):
     yield fileutils.get_test_conf_path(osp.join("generator_files", "tag_dir_template"))
 
+
 def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(osp.join("generator_files", filename))
+
 
 @pytest.fixture
 def generator_instance(test_dir) -> Generator:
     """Fixture to create an instance of Generator."""
     root = pathlib.Path(test_dir, "temp_id")
+    os.mkdir(root)
     yield Generator(root=root)
 
 
+class EchoHelloWorldEntity(entity.SmartSimEntity):
+    """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
+
+    def __init__(self):
+        self.name = "entity_name"
+
+
+class MockJob(BaseJob):
+    """Mock Job for testing."""
+
+    def __init__(self):
+        self.name = "test_job"
+        self.index = 1
+        self.entity = EchoHelloWorldEntity()
+
+    def get_launch_steps(self):
+        raise NotImplementedError
+
+
+# UNIT TESTS
+
+
+def test_init_generator(generator_instance, test_dir):
+    """Test Generator init"""
+    assert generator_instance.root == pathlib.Path(test_dir) / "temp_id"
+
+
+def test_generate_job_root(generator_instance):
+    """Test Generator._generate_job_root returns correct path"""
+    mock_job = MockJob()
+    root_path = generator_instance._generate_job_root(mock_job, mock_job.index)
+    expected_path = (
+        generator_instance.root
+        / f"{MockJob.__name__.lower()}s"
+        / f"{mock_job.name}-{mock_job.index}"
+    )
+    assert root_path == expected_path
+
+
+def test_generate_run_path(generator_instance):
+    """Test Generator._generate_run_path returns correct path"""
+    mock_job = MockJob()
+    run_path = generator_instance._generate_run_path(mock_job, mock_job.index)
+    expected_path = (
+        generator_instance.root
+        / f"{MockJob.__name__.lower()}s"
+        / f"{mock_job.name}-{mock_job.index}"
+        / "run"
+    )
+    assert run_path == expected_path
+
+
+def test_generate_log_path(generator_instance):
+    """Test Generator._generate_log_path returns correct path"""
+    mock_job = MockJob()
+    log_path = generator_instance._generate_log_path(mock_job, mock_job.index)
+    expected_path = (
+        generator_instance.root
+        / f"{MockJob.__name__.lower()}s"
+        / f"{mock_job.name}-{mock_job.index}"
+        / "log"
+    )
+    assert log_path == expected_path
+
+
 def test_log_file_path(generator_instance):
-    """Test if the log_file function returns the correct log path."""
+    """Test Generator._log_file returns correct path"""
     base_path = "/tmp"
     expected_path = osp.join(base_path, "smartsim_params.txt")
     assert generator_instance._log_file(base_path) == pathlib.Path(expected_path)
 
 
-def test_generate_job_directory(test_dir, wlmutils, generator_instance):
-    """Test Generator.generate_job"""
-    # Create Job
-    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("app_name", exe="python")
-    job = Job(app, launch_settings)
-    # Mock id
-    run_id = "temp_id"
-    # Call Generator.generate_job
-    job_run_path, _, _ = generator_instance.generate_job(job, 0)
-    assert isinstance(job_run_path, pathlib.Path)
-    expected_run_path = (
-        pathlib.Path(test_dir)
-        / run_id
-        / f"{job.__class__.__name__.lower()}s"
-        / f"{app.name}-{0}"
-        / "run"
+def test_output_files(generator_instance):
+    """Test Generator._output_files returns err/out paths"""
+    base_path = pathlib.Path("/tmp")
+    out_file_path, err_file_path = generator_instance._output_files(
+        base_path, MockJob().name
     )
-    assert job_run_path == expected_run_path
-    expected_log_path = (
-        pathlib.Path(test_dir)
-        / run_id
-        / f"{job.__class__.__name__.lower()}s"
-        / f"{app.name}-{0}"
-        / "log"
+    assert out_file_path == base_path / f"{MockJob().name}.out"
+    assert err_file_path == base_path / f"{MockJob().name}.err"
+
+
+def test_copy_file(generator_instance, fileutils):
+    """Test Generator._copy_files helper function with file list"""
+    script = fileutils.get_test_conf_path("sleep.py")
+    files = EntityFiles(copy=script)
+    generator_instance._copy_files(files, generator_instance.root)
+    expected_file = generator_instance.root / "sleep.py"
+    assert osp.isfile(expected_file)
+
+
+def test_copy_directory(get_gen_copy_dir, generator_instance):
+    """Test Generator._copy_files helper function with directory"""
+    files = EntityFiles(copy=get_gen_copy_dir)
+    generator_instance._copy_files(files, generator_instance.root)
+    copied_folder = generator_instance.root / os.path.basename(get_gen_copy_dir)
+    assert osp.isdir(copied_folder)
+
+
+def test_symlink_directory(generator_instance, get_gen_symlink_dir):
+    """Test Generator._symlink_files helper function with directory"""
+    files = EntityFiles(symlink=get_gen_symlink_dir)
+    generator_instance._symlink_files(files, generator_instance.root)
+    symlinked_folder = generator_instance.root / os.path.basename(get_gen_symlink_dir)
+    assert osp.isdir(symlinked_folder)
+    assert symlinked_folder.is_symlink()
+    assert os.fspath(symlinked_folder.resolve()) == osp.realpath(get_gen_symlink_dir)
+    for written, correct in itertools.zip_longest(
+        listdir(get_gen_symlink_dir), listdir(symlinked_folder)
+    ):
+        assert written == correct
+
+
+def test_symlink_file(get_gen_symlink_dir, generator_instance):
+    """Test Generator._symlink_files helper function with file list"""
+    symlink_files = sorted(glob(get_gen_symlink_dir + "/*"))
+    files = EntityFiles(symlink=symlink_files)
+    generator_instance._symlink_files(files, generator_instance.root)
+    symlinked_file = generator_instance.root / os.path.basename(symlink_files[0])
+    assert osp.isfile(symlinked_file)
+    assert symlinked_file.is_symlink()
+    assert os.fspath(symlinked_file.resolve()) == osp.join(
+        osp.realpath(get_gen_symlink_dir), "mock2.txt"
     )
-    assert osp.isdir(expected_run_path)
-    assert osp.isdir(expected_log_path)
-    # Assert smartsim params file created
-    assert osp.isfile(osp.join(expected_log_path, "smartsim_params.txt"))
-    # Assert smartsim params correctly written to
-    with open(expected_log_path / "smartsim_params.txt", "r") as file:
+
+
+def test_write_tagged_file(fileutils, generator_instance):
+    """Test Generator._write_tagged_files helper function with file list"""
+    conf_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "marked/")
+    )
+    tagged_files = sorted(glob(conf_path + "/*"))
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    correct_files = sorted(glob(correct_path + "/*"))
+    files = EntityFiles(tagged=tagged_files)
+    param_set = {
+        "5": 10,
+        "FIRST": "SECOND",
+        "17": 20,
+        "65": "70",
+        "placeholder": "group leftupper region",
+        "1200": "120",
+        "VALID": "valid",
+    }
+    generator_instance._write_tagged_files(
+        files=files, params=param_set, dest=generator_instance.root
+    )
+    configured_files = sorted(glob(os.path.join(generator_instance.root) + "/*"))
+    for written, correct in itertools.zip_longest(configured_files, correct_files):
+        assert filecmp.cmp(written, correct)
+
+
+def test_write_tagged_directory(fileutils, generator_instance):
+    """Test Generator._write_tagged_files helper function with directory path"""
+    config = get_gen_file(fileutils, "tag_dir_template")
+    files = EntityFiles(tagged=config)
+    param_set = {"PARAM0": "param_value_1", "PARAM1": "param_value_2"}
+    generator_instance._write_tagged_files(
+        files=files, params=param_set, dest=generator_instance.root
+    )
+
+    def _check_generated(param_0, param_1):
+        assert osp.isdir(osp.join(generator_instance.root, "nested_0"))
+        assert osp.isdir(osp.join(generator_instance.root, "nested_1"))
+
+        with open(osp.join(generator_instance.root, "nested_0", "tagged_0.sh")) as f:
+            line = f.readline()
+            assert line.strip() == f'echo "Hello with parameter 0 = {param_0}"'
+
+        with open(osp.join(generator_instance.root, "nested_1", "tagged_1.sh")) as f:
+            line = f.readline()
+            assert line.strip() == f'echo "Hello with parameter 1 = {param_1}"'
+
+    _check_generated("param_value_1", "param_value_2")
+
+
+def test_generate_job(generator_instance, monkeypatch: pytest.MonkeyPatch):
+    """Test Generator.generate_job returns correct paths and calls correct functions and writes to params file."""
+    monkeypatch.setattr(
+        Generator, "_generate_run_path", lambda self, job, job_index: "/tmp_run"
+    )
+    log_path = generator_instance.root / "tmp_log"
+    os.mkdir(log_path)
+    monkeypatch.setattr(
+        Generator, "_generate_log_path", lambda self, job, job_index: log_path
+    )
+    monkeypatch.setattr(Generator, "_output_files", lambda self, x, y: ("out", "err"))
+    monkeypatch.setattr(
+        Generator, "_build_operations", lambda self, job, job_path: None
+    )
+    job_path, out_file, err_file = generator_instance.generate_job(
+        MockJob(), MockJob().index
+    )
+    assert job_path == "/tmp_run"
+    assert out_file == "out"
+    assert err_file == "err"
+    with open(log_path / "smartsim_params.txt", "r") as file:
         content = file.read()
         assert "Generation start date and time:" in content
+
+
+# INTEGRATED TESTS
 
 
 def test_exp_private_generate_method(wlmutils, test_dir, generator_instance):
@@ -115,117 +286,6 @@ def test_exp_private_generate_method(wlmutils, test_dir, generator_instance):
     head, _ = os.path.split(job_execution_path)
     expected_log_path = pathlib.Path(head) / "log"
     assert osp.isdir(expected_log_path)
-
-
-def test_generate_copy_file(generator_instance, fileutils, wlmutils):
-    """Test that attached copy files are copied into Job directory"""
-    # Create the Job and attach copy generator file
-    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python")
-    script = fileutils.get_test_conf_path("sleep.py")
-    app.attach_generator_files(to_copy=script)
-    job = Job(app, launch_settings)
-
-    # Create the experiment
-    path, _, _ = generator_instance.generate_job(job, 1)
-    expected_file = pathlib.Path(path) / "sleep.py"
-    assert osp.isfile(expected_file)
-
-
-def test_generate_copy_directory(wlmutils, get_gen_copy_dir, generator_instance):
-    # Create the Job and attach generator file
-    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python")
-    app.attach_generator_files(to_copy=get_gen_copy_dir)
-    job = Job(app, launch_settings)
-
-    # Call Generator.generate_job
-    path, _, _ = generator_instance.generate_job(job, 1)
-    expected_folder = path / "to_copy_dir"
-    assert osp.isdir(expected_folder)
-
-
-def test_generate_symlink_directory(wlmutils, generator_instance, get_gen_symlink_dir):
-    # Create the Job and attach generator file
-    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python")
-    # Attach directory to Application
-    app.attach_generator_files(to_symlink=get_gen_symlink_dir)
-    # Create Job
-    job = Job(app, launch_settings)
-
-    # Call Generator.generate_job
-    path, _, _ = generator_instance.generate_job(job, 1)
-    expected_folder = path / "to_symlink_dir"
-    assert osp.isdir(expected_folder)
-    assert expected_folder.is_symlink()
-    assert os.fspath(expected_folder.resolve()) == osp.realpath(get_gen_symlink_dir)
-    # Combine symlinked file list and original file list for comparison
-    for written, correct in itertools.zip_longest(
-        listdir(get_gen_symlink_dir), listdir(expected_folder)
-    ):
-        # For each pair, check if the filenames are equal
-        assert written == correct
-
-
-def test_generate_symlink_file(get_gen_symlink_dir, wlmutils, generator_instance):
-    # Create the Job and attach generator file
-    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    app = Application("name", "python")
-    # Path of directory to symlink
-    symlink_dir = get_gen_symlink_dir
-    # Get a list of all files in the directory
-    symlink_files = sorted(glob(symlink_dir + "/*"))
-    # Attach directory to Application
-    app.attach_generator_files(to_symlink=symlink_files)
-    # Create Job
-    job = Job(app, launch_settings)
-
-    # Call Generator.generate_job
-    path, _, _ = generator_instance.generate_job(job, 1)
-    expected_file = path / "mock2.txt"
-    assert osp.isfile(expected_file)
-    assert expected_file.is_symlink()
-    assert os.fspath(expected_file.resolve()) == osp.join(
-        osp.realpath(get_gen_symlink_dir), "mock2.txt"
-    )
-
-
-def test_generate_configure(fileutils, wlmutils, generator_instance):
-    # Directory of files to configure
-    conf_path = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "marked/")
-    )
-    # Retrieve a list of files for configuration
-    tagged_files = sorted(glob(conf_path + "/*"))
-    # Retrieve directory of files to compare after Experiment.generate_experiment completion
-    correct_path = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "correct/")
-    )
-    # Retrieve list of files in correctly tagged directory for comparison
-    correct_files = sorted(glob(correct_path + "/*"))
-    # Initialize a Job
-    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    param_dict = {
-        "5": 10,
-        "FIRST": "SECOND",
-        "17": 20,
-        "65": "70",
-        "placeholder": "group leftupper region",
-        "1200": "120",
-        "VALID": "valid",
-    }
-    app = Application("name_1", "python", file_parameters=param_dict)
-    app.attach_generator_files(to_configure=tagged_files)
-    job = Job(app, launch_settings)
-
-    # Call Generator.generate_job
-    path, _, _ = generator_instance.generate_job(job, 0)
-    # Retrieve the list of configured files in the test directory
-    configured_files = sorted(glob(str(path) + "/*"))
-    # Use filecmp.cmp to check that the corresponding files are equal
-    for written, correct in itertools.zip_longest(configured_files, correct_files):
-        assert filecmp.cmp(written, correct)
 
 
 def test_exp_private_generate_method_ensemble(test_dir, wlmutils, generator_instance):
@@ -353,7 +413,6 @@ def test_generate_ensemble_configure(
     job_list = ensemble.as_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     id = exp.start(*job_list)
-    print(id)
     run_dir = listdir(test_dir)
     jobs_dir = os.path.join(test_dir, run_dir[0], "jobs")
 
@@ -375,18 +434,3 @@ def test_generate_ensemble_configure(
     _check_generated(1, 3, os.path.join(jobs_dir, "ensemble-name-3-3", "run"))
     _check_generated(0, 2, os.path.join(jobs_dir, "ensemble-name-0-0", "run"))
     ids.clear()
-
-
-def test_this(fileutils):
-    # Directory of files to configure
-    """Test the generation and configuration of applications with
-    tagged files that are directories with subdirectories and files
-    """
-    config = get_gen_file(fileutils, "tag_dir_template")
-    script = fileutils.get_test_conf_path("sleep.py")
-    #print(list(os.walk(config)))
-    print(list(os.walk(script)))
-    # for root, dirs, files in os.walk(config):
-    #     print(list(os.walk(config)))
-    #     # for name in dirs:
-    #     #     os.rmdir(os.path.join(root, name))
