@@ -57,7 +57,7 @@ class ShellLauncherCommand(t.NamedTuple):
     path: pathlib.Path
     stdout: io.TextIOWrapper | int
     stderr: io.TextIOWrapper | int
-    command_tuple: tuple[str, tuple[str, ...]] | t.Sequence[str]
+    command_tuple: t.Sequence[str]
 
 
 def make_shell_format_fn(
