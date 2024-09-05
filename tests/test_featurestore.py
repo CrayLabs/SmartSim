@@ -43,13 +43,13 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     time as bbtime,
 )
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import ReservedKeys
+from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
 from smartsim.error import SmartSimError
 from tests.mli.channel import FileSystemCommChannel
-from tests.mli.featurestore import MemoryFeatureStore
+from tests.mli.feature_store import MemoryFeatureStore
 
 if t.TYPE_CHECKING:
     import conftest

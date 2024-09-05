@@ -32,14 +32,14 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
     OnWriteFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import dragon_ddict
-from smartsim._core.mli.infrastructure.storage.featurestore import ReservedKeys
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import dragon_ddict
+from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 

@@ -73,7 +73,6 @@ class BackboneFeatureStore(DragonFeatureStore):
         self,
         storage: "dragon_ddict.DDict",
         allow_reserved_writes: bool = False,
-        wait_timeout: float = 30,
     ) -> None:
         """Initialize the DragonFeatureStore instance.
 
@@ -155,8 +154,9 @@ class BackboneFeatureStore(DragonFeatureStore):
                 f"Error creating dragon feature store: {descriptor}"
             ) from ex
 
+    @staticmethod
     def _check_wait_timeout(
-        self, start_time: float, timeout: float, indicators: t.Dict[str, bool]
+        start_time: float, timeout: float, indicators: t.Dict[str, bool]
     ) -> None:
         """Perform timeout verification
 

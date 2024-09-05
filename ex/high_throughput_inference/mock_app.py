@@ -57,9 +57,9 @@ import typing as t
 import numbers
 
 from collections import OrderedDict
-from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.storage.featurestore import ReservedKeys
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,

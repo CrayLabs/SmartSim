@@ -71,7 +71,7 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import ReservedKeys
+from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
 from smartsim._core.mli.infrastructure.worker.worker import MachineLearningWorkerBase
 from smartsim.log import get_logger
 
