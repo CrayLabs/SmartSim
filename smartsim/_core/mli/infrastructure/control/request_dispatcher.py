@@ -534,5 +534,5 @@ class RequestDispatcher(Service):
         return False
 
     def __del__(self) -> None:
-        """Destroy allocated memory resources"""
+        """Destroy allocated memory resources."""
         self._mem_pool.destroy()
