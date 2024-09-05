@@ -165,7 +165,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
 
 
 # pylint: disable-next=too-many-public-methods
-class FeatureStore():
+class FeatureStore:
     """The FeatureStore is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
     entities by using one of the Python, C, C++ or Fortran clients

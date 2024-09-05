@@ -261,9 +261,7 @@ class Job:
         """Record the launching history of a job."""
         self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
-    def reset(
-        self, new_job_name: str, new_job_id: t.Optional[str]
-    ) -> None:
+    def reset(self, new_job_name: str, new_job_id: t.Optional[str]) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step

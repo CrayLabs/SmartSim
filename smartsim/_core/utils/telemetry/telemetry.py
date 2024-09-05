@@ -130,7 +130,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         raise ValueError("Launcher type not supported: " + launcher)
 
-
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment
         :param launcher_type: the name of the workload manager used by the experiment
@@ -139,7 +138,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         if self._launcher is None:
             raise SmartSimError("Launcher init failed")
-
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the manifest for the experiment. Process the
