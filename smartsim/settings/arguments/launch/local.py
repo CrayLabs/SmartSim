@@ -30,7 +30,10 @@ import typing as t
 
 from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import dispatch
-from smartsim._core.shell.shell_launcher import ShellLauncher, make_shell_format_fn
+from smartsim._core.launcher_.shell.shell_launcher import (
+    ShellLauncher,
+    make_shell_format_fn,
+)
 from smartsim.log import get_logger
 
 from ...common import StringArgument, set_check_input
