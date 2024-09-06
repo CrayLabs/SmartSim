@@ -71,9 +71,7 @@ class FileSystemFeatureStore(FeatureStore):
     """Alternative feature store implementation for testing. Stores all
     data on the file system"""
 
-    def __init__(
-        self, storage_dir: t.Optional[t.Union[pathlib.Path, str]] = None
-    ) -> None:
+    def __init__(self, storage_dir: t.Union[pathlib.Path, str] = None) -> None:
         """Initialize the FileSystemFeatureStore instance
 
         :param storage_dir: (optional) root directory to store all data relative to"""
@@ -97,6 +95,8 @@ class FileSystemFeatureStore(FeatureStore):
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
         path = self._key_path(key, create=True)
+        if isinstance(value, str):
+            value = value.encode("utf-8")
         path.write_bytes(value)
 
     def _contains(self, key: str) -> bool:

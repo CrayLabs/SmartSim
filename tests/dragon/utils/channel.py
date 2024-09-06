@@ -123,5 +123,5 @@ class FileSystemCommChannel(CommChannelBase):
                 path = pathlib.Path(descriptor.decode("utf-8"))
             return FileSystemCommChannel(path)
         except:
-            logger.warning(f"failed to create fs comm channel: {descriptor}")
+            logger.warning(f"failed to create fs comm channel: {descriptor!r}")
             raise

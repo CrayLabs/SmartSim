@@ -37,12 +37,14 @@ logger = get_logger(__name__)
 class MemoryFeatureStore(FeatureStore):
     """A feature store with values persisted only in local memory"""
 
-    def __init__(self, storage: t.Optional[t.Dict[str, bytes]] = None) -> None:
+    def __init__(
+        self, storage: t.Optional[t.Dict[str, t.Union[str, bytes]]] = None
+    ) -> None:
         """Initialize the MemoryFeatureStore instance"""
         super().__init__("in-memory-fs")
         if storage is None:
             storage = {"_": "abc"}
-        self._storage: t.Dict[str, bytes] = storage
+        self._storage = storage
 
     def _get(self, key: str) -> t.Union[str, bytes]:
         """Retrieve a value from the underlying storage mechanism
@@ -73,9 +75,7 @@ class FileSystemFeatureStore(FeatureStore):
     """Alternative feature store implementation for testing. Stores all
     data on the file system"""
 
-    def __init__(
-        self, storage_dir: t.Optional[t.Union[pathlib.Path, str]] = None
-    ) -> None:
+    def __init__(self, storage_dir: t.Union[pathlib.Path, str]) -> None:
         """Initialize the FileSystemFeatureStore instance
 
         :param storage_dir: (optional) root directory to store all data relative to"""
@@ -103,6 +103,8 @@ class FileSystemFeatureStore(FeatureStore):
         :returns: the value identified by the key
         :raises KeyError: if the key has not been used to store a value"""
         path = self._key_path(key, create=True)
+        if isinstance(value, str):
+            value = value.encode("utf-8")
         path.write_bytes(value)
 
     def _contains(self, key: str) -> bool:
@@ -120,7 +122,7 @@ class FileSystemFeatureStore(FeatureStore):
         :param key: Unique key of an item to retrieve from the feature store"""
         value = pathlib.Path(key)
 
-        if self._storage_dir:
+        if self._storage_dir is not None:
             value = self._storage_dir / key
 
         if create:
