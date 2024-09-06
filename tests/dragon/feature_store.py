@@ -45,7 +45,7 @@ class MemoryFeatureStore(FeatureStore):
         self._storage: t.Dict[str, bytes] = storage
 
     def _get(self, key: str) -> t.Union[str, bytes]:
-        """Retrieve a value from the underlying stroage mechanism
+        """Retrieve a value from the underlying storage mechanism
 
         :param key: The unique key that identifies the resource
         :returns: the value identified by the key
@@ -53,7 +53,7 @@ class MemoryFeatureStore(FeatureStore):
         return self._storage[key]
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
-        """Store a value into the underlying stroage mechanism
+        """Store a value into the underlying storage mechanism
 
         :param key: The unique key that identifies the resource
         :param value: The value to store
@@ -85,7 +85,7 @@ class FileSystemFeatureStore(FeatureStore):
         super().__init__(storage_dir.as_posix())
 
     def _get(self, key: str) -> t.Union[str, bytes]:
-        """Retrieve a value from the underlying stroage mechanism
+        """Retrieve a value from the underlying storage mechanism
 
         :param key: The unique key that identifies the resource
         :returns: the value identified by the key
@@ -96,7 +96,7 @@ class FileSystemFeatureStore(FeatureStore):
         return path.read_bytes()
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
-        """Store a value into the underlying stroage mechanism
+        """Store a value into the underlying storage mechanism
 
         :param key: The unique key that identifies the resource
         :param value: The value to store

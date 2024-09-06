@@ -56,7 +56,7 @@ class DragonFeatureStore(FeatureStore):
         self._storage: t.Dict[str, t.Union[str, bytes]] = storage
 
     def _get(self, key: str) -> t.Union[str, bytes]:
-        """Retrieve a value from the underlying stroage mechanism
+        """Retrieve a value from the underlying storage mechanism
 
         :param key: The unique key that identifies the resource
         :returns: the value identified by the key
@@ -64,7 +64,7 @@ class DragonFeatureStore(FeatureStore):
         return self._storage[key]
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
-        """Store a value into the underlying stroage mechanism
+        """Store a value into the underlying storage mechanism
 
         :param key: The unique key that identifies the resource
         :param value: The value to store

@@ -60,8 +60,8 @@ def create_local(capacity: int = 0) -> dch.Channel:
     while not channel:
         # search for an open channel ID
         offset += 1
+        cid = df.BASE_USER_MANAGED_CUID + offset
         try:
-            cid = df.BASE_USER_MANAGED_CUID + offset
             channel = dch.Channel(
                 mem_pool=pool,
                 c_uid=cid,
@@ -70,8 +70,12 @@ def create_local(capacity: int = 0) -> dch.Channel:
             logger.debug(
                 f"Channel {cid} created in pool {pool.serialize()} w/capacity {capacity}"
             )
-        except:
-            ...
+        except Exception:
+            if offset < 100:
+                logger.warning(f"Unable to attach to channnel id {cid}. Retrying...")
+            else:
+                logger.error(f"All attempts to attach local channel have failed")
+                raise
 
     return channel
 
@@ -116,7 +120,7 @@ class DragonCommChannel(cch.CommChannelBase):
                 messages.append(message_bytes)
                 logger.debug(f"DragonCommChannel {self.descriptor!r} received message")
             except dch.ChannelEmpty:
-                ...  # emptied the queue, swallow this ex
+                # emptied the queue, ok to swallow this ex
                 logger.debug(f"DragonCommChannel exhausted: {self.descriptor!r}")
             except dch.ChannelRecvTimeout as ex:
                 logger.debug(f"Timeout exceeded on channel.recv: {self.descriptor!r}")

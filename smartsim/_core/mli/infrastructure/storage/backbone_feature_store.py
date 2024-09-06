@@ -387,7 +387,7 @@ class EventConsumer:
                     msg = pickle.loads(message)
 
                     if not msg:
-                        print("unable to unpickle message")
+                        logger.warning("Unable to unpickle message")
                         continue
 
                     # ignore anything that doesn't match a filter (if one is
