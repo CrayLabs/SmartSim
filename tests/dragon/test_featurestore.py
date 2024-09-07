@@ -323,7 +323,9 @@ def test_backbone_wait_for_multikey(
     p2.start()
     for p in processes:
         p.join(timeout=max_delay * 2)
-    p2.join(timeout=max_delay * 2)  # give it 10 seconds longer than p2 timeout for backoff
+    p2.join(
+        timeout=max_delay * 2
+    )  # give it 10 seconds longer than p2 timeout for backoff
 
     # use without a wait to verify all values are written
     actual_values = backbone.wait_for([*extra_keys], timeout=0.01)
