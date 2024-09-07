@@ -37,259 +37,26 @@ from dragon.utils import b64decode, b64encode
 
 import argparse
 import io
-import numpy
-import os
-import time
+
 import torch
 
-from mpi4py import MPI
-from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
-    DragonFeatureStore,
-)
 from smartsim.log import get_logger
-from smartsim._core.utils.timings import PerfTimer
 
 torch.set_num_interop_threads(16)
 torch.set_num_threads(1)
 
 logger = get_logger("App")
 logger.info("Started app")
-import typing as t
-import numbers
 
 from collections import OrderedDict
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
-from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
-from smartsim._core.mli.message_handler import MessageHandler
-from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
-    BackboneFeatureStore,
-    EventBroadcaster,
-    EventProducer,
-    OnWriteFeatureStore,
-)
-from smartsim.error.errors import SmartSimError
+
 from smartsim.log import get_logger, log_to_file
+from smartsim.protoclient import ProtoClient
 
 logger = get_logger("App", "DEBUG")
 
-log_to_file("_smartsim.log", "debug")
-
-
-_TIMING_DICT = OrderedDict[str, list[numbers.Number]]
 
 CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
-
-
-class ProtoClient:
-    def __init__(self, timing_on: bool):
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-
-    def _attach_to_backbone(
-        self, wait_timeout: float = 0, create_bb: bool = False
-    ) -> BackboneFeatureStore:
-        """Use the supplied environment variables to attach
-        to a pre-existing backbone featurestore. Requires the
-        environment to contain `_SMARTSIM_INFRA_BACKBONE`
-        environment variable
-
-        :returns: the attached backbone featurestore"""
-        # todo: ensure this env var from config loader or constant
-        descriptor = os.environ.get("_SMARTSIM_INFRA_BACKBONE", None)
-        if descriptor is None:
-            raise SmartSimError(
-                "Missing required backbone configuration in environment"
-            )
-
-        backbone = t.cast(
-            BackboneFeatureStore, BackboneFeatureStore.from_descriptor(descriptor)
-        )
-        backbone.wait_timeout = wait_timeout
-        return backbone
-
-    def _attach_to_worker_queue(self) -> None:
-        """Wait until the backbone contains the worker queue configuration,
-        then attach an FLI to the given worker queue"""
-        configuration = self._backbone.wait_for(
-            [ReservedKeys.MLI_WORKER_QUEUE], timeout=self._queue_timeout
-        )
-
-        descriptor = configuration.get(ReservedKeys.MLI_WORKER_QUEUE, None)
-        if not descriptor:
-            raise ValueError("Unable to locate worker queue using backbone")
-
-        # self._to_worker_fli = DragonFLIChannel.from_descriptor(descriptor)
-        return DragonFLIChannel.from_descriptor(descriptor)
-
-    def _create_worker_channels(self) -> t.Tuple[DragonCommChannel, DragonCommChannel]:
-        """Create channels to be used in the worker queue"""
-        # self._from_worker_ch = Channel.make_process_local()
-        _from_worker_ch = DragonCommChannel.from_local()
-        # self._from_worker_ch_serialized = self._from_worker_ch.serialize()
-        # self._to_worker_ch = Channel.make_process_local()
-        _to_worker_ch = DragonCommChannel.from_local()
-
-        return _from_worker_ch, _to_worker_ch
-
-    def _create_publisher(self) -> EventProducer:
-        """Create an event publisher that will broadcast updates to
-        other MLI components. This publisher
-
-        :returns: the event publisher instance"""
-        publisher: EventProducer = EventBroadcaster(
-            self._backbone, DragonCommChannel.from_descriptor
-        )
-        return publisher
-
-    def __init__(self, timing_on: bool, wait_timeout: float = 0):
-        """Initialize the client instance
-
-        :param timing_on: Flag indicating if timing information should be written to file
-        :param wait_timeout: Maximum wait time allowed to attach to the worker queue
-
-        :raises: SmartSimError if unable to attach to a backbone featurestore"""
-        self._queue_timeout = wait_timeout
-
-        connect_to_infrastructure()
-        # ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]
-        # self._ddict = DDict.attach(ddict_str)
-        # self._backbone_descriptor = DragonFeatureStore(self._ddict).descriptor
-        self._backbone = self._attach_to_backbone(wait_timeout=wait_timeout)
-
-        # # to_worker_fli_str = None
-        # # while to_worker_fli_str is None:
-        # #     try:
-        # #         to_worker_fli_str = self._ddict["to_worker_fli"]
-        # #         self._to_worker_fli = fli.FLInterface.attach(to_worker_fli_str)
-        # #     except KeyError:
-        # #         time.sleep(1)
-
-        self._to_worker_fli = self._attach_to_worker_queue()
-
-        # # # self._from_worker_ch = Channel.make_process_local()
-        # # # self._from_worker_ch_serialized = self._from_worker_ch.serialize()
-        # # # self._to_worker_ch = Channel.make_process_local()
-        channels = self._create_worker_channels()
-        self._from_worker_ch = channels[0]
-        self._to_worker_ch = channels[1]
-
-        self._publisher = self._create_publisher()
-
-        self.perf_timer: PerfTimer = PerfTimer(
-            debug=False, timing_on=timing_on, prefix=f"a{rank}_"
-        )
-        self._start = None
-        self._interm = None
-        self._timings: _TIMING_DICT = OrderedDict()
-        self._timing_on = timing_on
-
-    def _add_label_to_timings(self, label: str):
-        if label not in self._timings:
-            self._timings[label] = []
-
-    @staticmethod
-    def _format_number(number: numbers.Number):
-        return f"{number:0.4e}"
-
-    def start_timings(self, batch_size: int):
-        if self._timing_on:
-            self._add_label_to_timings("batch_size")
-            self._timings["batch_size"].append(batch_size)
-            self._start = time.perf_counter()
-            self._interm = time.perf_counter()
-
-    def end_timings(self):
-        if self._timing_on:
-            self._add_label_to_timings("total_time")
-            self._timings["total_time"].append(
-                self._format_number(time.perf_counter() - self._start)
-            )
-
-    def measure_time(self, label: str):
-        if self._timing_on:
-            self._add_label_to_timings(label)
-            self._timings[label].append(
-                self._format_number(time.perf_counter() - self._interm)
-            )
-            self._interm = time.perf_counter()
-
-    def print_timings(self, to_file: bool = False):
-        print(" ".join(self._timings.keys()))
-        value_array = numpy.array(
-            [value for value in self._timings.values()], dtype=float
-        )
-        value_array = numpy.transpose(value_array)
-        for i in range(value_array.shape[0]):
-            print(" ".join(self._format_number(value) for value in value_array[i]))
-        if to_file:
-            numpy.save("timings.npy", value_array)
-            numpy.savetxt("timings.txt", value_array)
-
-    def run_model(self, model: bytes | str, batch: torch.Tensor):
-        tensors = [batch.numpy()]
-        self.perf_timer.start_timings("batch_size", batch.shape[0])
-        built_tensor_desc = MessageHandler.build_tensor_descriptor(
-            "c", "float32", list(batch.shape)
-        )
-        self.perf_timer.measure_time("build_tensor_descriptor")
-        if isinstance(model, str):
-            model_arg = MessageHandler.build_feature_store_key(
-                model, self._backbone.descriptor
-            )
-        else:
-            model_arg = MessageHandler.build_model(model, "resnet-50", "1.0")
-        request = MessageHandler.build_request(
-            reply_channel=self._from_worker_ch.descriptor,
-            model=model_arg,
-            inputs=[built_tensor_desc],
-            outputs=[],
-            output_descriptors=[],
-            custom_attributes=None,
-        )
-        self.perf_timer.measure_time("build_request")
-        request_bytes = MessageHandler.serialize_request(request)
-        self.perf_timer.measure_time("serialize_request")
-
-        with self._to_worker_fli._channel.sendh(
-            timeout=None, stream_channel=self._to_worker_ch.channel
-        ) as to_sendh:
-            to_sendh.send_bytes(request_bytes)
-            self.perf_timer.measure_time("send_request")
-            for t in tensors:
-                to_sendh.send_bytes(t.tobytes())  # TODO NOT FAST ENOUGH!!!
-                # to_sendh.send_bytes(bytes(t.data))
-        logger.info(f"Message size: {len(request_bytes)} bytes")
-
-        self.perf_timer.measure_time("send_tensors")
-        with self._from_worker_ch.channel.recvh(timeout=None) as from_recvh:
-            resp = from_recvh.recv_bytes(timeout=None)
-            self.perf_timer.measure_time("receive_response")
-            response = MessageHandler.deserialize_response(resp)
-            self.perf_timer.measure_time("deserialize_response")
-            # list of data blobs? recv depending on the len(response.result.descriptors)?
-            data_blob: bytes = from_recvh.recv_bytes(timeout=None)
-            self.perf_timer.measure_time("receive_tensor")
-            result = torch.from_numpy(
-                numpy.frombuffer(
-                    data_blob,
-                    dtype=str(response.result.descriptors[0].dataType),
-                )
-            )
-            self.perf_timer.measure_time("deserialize_tensor")
-
-        self.perf_timer.end_timings()
-        return result
-
-    def set_model(self, key: str, model: bytes):
-        # todo: incorrect usage of backbone here to store
-        # user models? are we using the backbone if they do NOT
-        # have a feature store of their own?
-        self._backbone[key] = model
-
-        # notify components of a change in the data at this key
-        event = OnWriteFeatureStore(self._backbone.descriptor, key)
-        self._publisher.send(event)
 
 
 class ResNetWrapper:

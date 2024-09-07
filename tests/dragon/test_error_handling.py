@@ -115,7 +115,7 @@ def setup_worker_manager_model_bytes(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
     )
 
     dispatcher_task_queue: mp.Queue[RequestBatch] = mp.Queue(maxsize=0)
@@ -178,7 +178,7 @@ def setup_worker_manager_model_key(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
     )
 
     dispatcher_task_queue: mp.Queue[RequestBatch] = mp.Queue(maxsize=0)
@@ -235,7 +235,7 @@ def setup_request_dispatcher_model_bytes(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
     )
 
     request_dispatcher = RequestDispatcher(
@@ -283,7 +283,7 @@ def setup_request_dispatcher_model_key(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
     )
 
     request_dispatcher = RequestDispatcher(

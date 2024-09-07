@@ -68,6 +68,7 @@ class BackboneFeatureStore(DragonFeatureStore):
     MLI_NOTIFY_CONSUMERS = "_SMARTSIM_MLI_NOTIFY_CONSUMERS"
     MLI_BACKEND_CONSUMER = "_SMARTIM_MLI_BACKEND_CONSUMER"
     MLI_WORKER_QUEUE = "to_worker_fli"
+    MLI_BACKBONE = "_SMARTSIM_INFRA_BACKBONE"
 
     def __init__(
         self,
@@ -82,6 +83,14 @@ class BackboneFeatureStore(DragonFeatureStore):
         """
         super().__init__(storage)
         self._enable_reserved_writes = allow_reserved_writes
+
+    @property
+    def wait_timeout(self) -> float:
+        return self._wait_timeout
+
+    @wait_timeout.setter
+    def wait_timeout(self, value: float) -> None:
+        self._wait_timeout = value
 
     @property
     def notification_channels(self) -> t.Sequence[str]:
@@ -183,7 +192,7 @@ class BackboneFeatureStore(DragonFeatureStore):
         was_found = [False for _ in to_check]  # add test ensuring dupes are handled..
         values: t.List[t.Union[str, bytes, None]] = [None for _ in to_check]
 
-        backoff = [0.1, 0.5, 1, 2, 4, 8]
+        backoff: t.List[float] = [0.1, 0.5, 1, 2, 4, 8]
         backoff_iter = itertools.cycle(backoff)
         start_time = time.time()
 
@@ -198,7 +207,8 @@ class BackboneFeatureStore(DragonFeatureStore):
                     values[index] = self[key]
                     was_found[index] = True
                 except KeyError:
-                    logger.debug(f"Re-attempting `{key}` retrieval in {delay}s")
+                    if delay == backoff[-1]:
+                        logger.debug(f"Re-attempting `{key}` retrieval in {delay}s")
 
             if all(was_found):
                 continue
