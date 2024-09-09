@@ -599,7 +599,7 @@ def test_run_step_fail(test_dir: str) -> None:
         return_value=DragonRunResponse(step_id=step0.name, error_message="mock fail!")
     )
     mock_connector.merge_persisted_env = MagicMock(
-        return_value={"FOO": "bar", "BAZ": None}
+        return_value={"FOO": "bar", "BAZ": "boop"}
     )
 
     launcher = DragonLauncher()
@@ -688,7 +688,7 @@ def test_run_step_success(test_dir: str) -> None:
     launcher = DragonLauncher()
     launcher._connector = mock_connector
     mock_connector.merge_persisted_env = MagicMock(
-        return_value={"FOO": "bar", "BAZ": None}
+        return_value={"FOO": "bar", "BAZ": "boop"}
     )
 
     result = launcher.run(step0)

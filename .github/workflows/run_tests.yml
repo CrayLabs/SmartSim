@@ -109,7 +109,7 @@ jobs:
           python -m pip install .[dev,mypy]
 
       - name: Install ML Runtimes
-        run: smart build --device cpu -v --install-python-packages
+        run: smart build --device cpu -v
 
       - name: Run mypy
         run: |

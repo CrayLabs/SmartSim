@@ -96,24 +96,24 @@ class Config:
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
         # TODO: Turn this into a property. Need to modify the configuration
         # of KeyDB vs Redis at build time
-        self.conf_path = Path(self.dependency_path / "config" / "redis.conf")
-        self.conf_dir = Path(self.core_path, "config")
+        self.conf_dir = self.core_path / "config"
+        self.conf_path = self.conf_dir / "redis.conf"
 
     @property
     def dependency_path(self) -> Path:
-        return Path(os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path)))
+        return Path(os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path))).resolve()
 
     @property
     def lib_path(self) -> Path:
-        return Path(self.dependency_path, "lib").resolve()
+        return Path(self.dependency_path, "lib")
 
     @property
     def bin_path(self) -> Path:
-        return Path(self.dependency_path, "bin").resolve()
+        return Path(self.dependency_path, "bin")
 
     @property
     def build_path(self) -> Path:
-        return Path(self.dependency_path, "build").resolve()
+        return Path(self.dependency_path, "build")
 
     @property
     def redisai(self) -> str:

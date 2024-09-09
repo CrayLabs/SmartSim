@@ -46,8 +46,6 @@ class UnsupportedError(PlatformError):
 class Architecture(enum.Enum):
     """Identifiers for supported CPU architectures
 
-    :raises UnsupportedError: If a given architecture is not enumerated
-                              (i.e not supported)
     :return: An enum representing the CPU architecture
     """
 
@@ -59,14 +57,10 @@ class Architecture(enum.Enum):
         """Return enum associated with the architecture
 
         :param string: String representing the architecture, see platform.machine
-        :raises UnsupportedError: If not enumerated here, unsupported architecture
         :return: Enum for a specific architecture
         """
         string = string.lower()
-        for type_ in cls:
-            if string in type_.value:
-                return type_
-        raise UnsupportedError(f"Unrecognized or unsupported architecture: {string}")
+        return cls(string)
 
     @classmethod
     def autodetect(cls) -> "Architecture":
@@ -93,7 +87,6 @@ class Device(enum.Enum):
         """Return enum associated with the device
 
         :param string: String representing the device and version
-        :raises UnsupportedError: If not enumerated here, unsupported
         :return: Enum for a specific device
         """
         str_ = str_.lower()
@@ -174,7 +167,6 @@ class Device(enum.Enum):
 class OperatingSystem(enum.Enum):
     """Enum for all supported operating systems
 
-    :raises UnsupportedError: If operating system is not not supported
     """
 
     LINUX = "linux"
@@ -185,16 +177,10 @@ class OperatingSystem(enum.Enum):
         """Return enum associated with the OS
 
         :param string: String representing the OS
-        :raises UnsupportedError: If not enumerated here, unsupported
         :return: Enum for a specific OS
         """
         string = string.lower()
-        for type_ in cls:
-            if string in type_.value:
-                return type_
-        raise UnsupportedError(
-            f"Unrecognized or unsupported operating system: {string}"
-        )
+        return cls(string)
 
     @classmethod
     def autodetect(cls) -> "OperatingSystem":
@@ -214,7 +200,7 @@ class Platform:
     device: Device
 
     @classmethod
-    def from_str(cls, operating_system: str, architecture: str, device: str) -> Self:
+    def from_strs(cls, operating_system: str, architecture: str, device: str) -> Self:
         """Factory method for Platform from string onput
 
         :param os: String identifier for the OS

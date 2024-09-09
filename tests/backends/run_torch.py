@@ -127,5 +127,4 @@ if __name__ == "__main__":
         help="Number of devices to set the model on",
     )
     args = parser.parse_args()
-    print(args)
     run(args.device, args.num_devices)

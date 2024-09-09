@@ -161,7 +161,7 @@ class RedisAIBuilder:
 
         logger.info("Building RedisAI")
         if self.verbose:
-            print(" ".join(cmake_command))
+            print(" ".join(build_command))
         self.run_command(build_command, self.build_path)
 
         if self.platform.operating_system == OperatingSystem.LINUX:
@@ -211,7 +211,7 @@ class RedisAIBuilder:
                 logger.debug(
                     (
                         "Non-standard location found: \n",
-                        "{str(actual_root)} -> {str(target_dir)}",
+                        f"{actual_root} -> {target_dir}",
                     )
                 )
                 for file in actual_root.iterdir():
@@ -229,7 +229,8 @@ class RedisAIBuilder:
             cmd, cwd=str(cwd), stdout=stdout, stderr=stderr, check=False
         )
         if proc.returncode != 0:
-            print(proc.stderr.decode("utf-8"))
+            if stderr:
+                print(proc.stderr.decode("utf-8"))
             raise RedisAIBuildError(
                 f"RedisAI build failed during command: {' '.join(cmd)}"
             )
@@ -275,7 +276,7 @@ class RedisAIBuilder:
         return "make install -j VERBOSE=1".split(" ")
 
     def _patch_source_files(
-        self, patches: t.Union[t.Tuple[RAIPatch], t.Tuple[()]]
+        self, patches: t.Tuple[RAIPatch, ...]
     ) -> None:
         """Apply specified RedisAI patches"""
         for patch in patches:

@@ -191,8 +191,8 @@ def _format_incompatible_python_env_message(
         "Requested packages are missing or have have a version mismatch with\n"
         "their respective backend:\n\n"
         f"{missing_str}{sep}{conflict_str}\n\n"
-        "Consider rerunning smart build with --install-python-packages if you\n"
-        "encounter issues."
+        "Consider uninstalling those packages and rerunning `smart build` if\n"
+        "you encounter issues."
     )
 
 
@@ -230,7 +230,7 @@ def execute(
     )
 
     # Configure the ML Packages
-    if args.alternate_config_dir:
+    if args.alternate_config_dir != DEFAULT_MLPACKAGE_PATH:
         configs = load_platform_configs(Path(args.alternate_config_dir))
     else:
         configs = DEFAULT_MLPACKAGES
@@ -269,7 +269,7 @@ def execute(
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     logger.info("ML Packages")
-    print(mlpackages.tabulate_versions())
+    print(mlpackages)
 
     if is_dragon_requested:
         install_to = CONFIG.core_path / ".dragon"
@@ -294,7 +294,7 @@ def execute(
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) available")
 
-    if args.install_python_packages:
+    if not args.skip_python_packages:
         for package in mlpackages.values():
             logger.info(f"Installing python packages for {package.name}")
             package.pip_install(quiet=not verbose)
@@ -326,9 +326,9 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Install the dragon runtime",
     )
     parser.add_argument(
-        "--install-python-packages",
+        "--skip-python-packages",
         action="store_true",
-        help="Install the python packages that match the backends",
+        help="Do not install the python packages that match the ",
     )
     parser.add_argument(
         "--skip-torch",
@@ -343,11 +343,11 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--skip-onnx",
         action="store_true",
-        help="Build ONNX backend (off by default)",
+        help="Do not build the ONNX backend",
     )
     parser.add_argument(
-        "--alternate-config-dir",
-        default=DEFAULT_MLPACKAGE_PATH,
+        "--config-dir",
+        default=str(DEFAULT_MLPACKAGE_PATH),
         type=str,
         help="Path to directory with JSON files describing platform and packages",
     )

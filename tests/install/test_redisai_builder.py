@@ -43,7 +43,6 @@ pytestmark = pytest.mark.group_a
     ids=[str(platform) for platform in DEFAULT_MLPACKAGES],
 )
 def test_backends_to_be_installed(monkeypatch, test_dir, platform):
-    platform = Platform.from_str("linux", "x86_64", "cpu")
     mlpackages = DEFAULT_MLPACKAGES[platform]
     monkeypatch.setattr(MLPackage, "retrieve", lambda *args, **kwargs: None)
     builder = RedisAIBuilder(platform, mlpackages, BuildEnv(), Path(test_dir))

@@ -49,7 +49,10 @@ class RAIPatch:
     """Holds information about how to patch a RedisAI source file
 
     :param description: Human-readable description of the patch's purpose
-    :param source_file: A relative path to the
+    :param replacement: "The replacement for the line found by the regex"
+    :param source_file: A relative path to the chosen file
+    :param regex: A regex pattern to match in the given file
+
     """
 
     description: str
@@ -71,7 +74,7 @@ class MLPackage:
     pip_index: str
     python_packages: t.List[str]
     lib_source: PathLike
-    rai_patches: t.Union[t.Tuple[RAIPatch], t.Tuple[()]] = ()
+    rai_patches: t.Tuple[RAIPatch, ...] = ()
 
     def retrieve(self, destination: PathLike) -> None:
         """Retrieve an archive and/or repository for the package
@@ -103,7 +106,7 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
 
     def __init__(self, platform: Platform, ml_packages: t.Dict[str, MLPackage]):
         self.platform = platform
-        self.ml_packages = ml_packages
+        self._ml_packages = ml_packages
 
     @classmethod
     def from_json_file(cls, json_file: PathLike) -> "MLPackageCollection":
@@ -114,7 +117,7 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
         """
         with open(json_file, "r", encoding="utf-8") as file_handle:
             config_json = json.load(file_handle)
-        platform = Platform.from_str(**config_json["platform"])
+        platform = Platform.from_strs(**config_json["platform"])
 
         for ml_package in config_json["ml_packages"]:
             # Convert the dictionary representation to a RAIPatch
@@ -122,10 +125,9 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
                 patch_list = ml_package.pop("rai_patches")
                 ml_package["rai_patches"] = [RAIPatch(**patch) for patch in patch_list]
 
-        ml_packages = {
-            ml_package["name"]: MLPackage(**ml_package)
-            for ml_package in config_json["ml_packages"]
-        }
+        ml_packages = [
+            MLPackage(**ml_package) for ml_package in config_json["ml_packages"]
+        ]
         return cls(platform, ml_packages)
 
     def __iter__(self) -> t.Iterator[str]:
@@ -133,7 +135,7 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
 
         :return: Iterator over mlpackages
         """
-        return iter(self.ml_packages)
+        return iter(self._ml_packages)
 
     def __getitem__(self, key: str) -> MLPackage:
         """Retrieve an MLPackage based on its name
@@ -141,25 +143,28 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
         :param key: Name of the python package (e.g. libtorch)
         :return: MLPackage with all requirements
         """
-        return self.ml_packages[key]
+        return self._ml_packages[key]
 
     def __len__(self) -> int:
-        return len(self.ml_packages)
+        return len(self._ml_packages)
 
     def __delitem__(self, key: str) -> None:
-        del self.ml_packages[key]
+        del self._ml_packages[key]
 
-    def __setitem__(self, key: str, value: MLPackage) -> None:
-        self.ml_packages[key] = value
+    def __setitem__(self, key: t.Any, value: t.Any) -> t.NoReturn:
+        raise TypeError("MLPackageCollection does not support item assignment")
 
-    def tabulate_versions(self, tablefmt: str = "github") -> str:
+    def __contains__(self, key: str):
+        return key in self._ml_packages
+    
+    def __str__(self, tablefmt: str = "github") -> str:
         """Display package names and versions as a table
 
         :param tablefmt: Tabulate format, defaults to "github"
         """
 
         return tabulate(
-            [[k, v.version] for k, v in self.items()],
+            [[k, v.version] for k, v in self._ml_packages.items()],
             headers=["Package", "Version"],
             tablefmt=tablefmt,
         )
@@ -184,6 +189,6 @@ def load_platform_configs(
 
 DEFAULT_MLPACKAGE_PATH = pathlib.Path(__file__).parent / "configs" / "mlpackages"
 
-DEFAULT_MLPACKAGES: t.Dict[Platform, MLPackageCollection] = load_platform_configs(
+DEFAULT_MLPACKAGES: t.Mapping[Platform, MLPackageCollection] = load_platform_configs(
     DEFAULT_MLPACKAGE_PATH
 )

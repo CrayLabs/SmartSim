@@ -101,6 +101,6 @@ def test_git(test_dir):
 def test_https(test_dir):
     output_dir = pathlib.Path(test_dir) / "output"
     retrieve(
-        "https://github.com/CrayLabs/SmartSim/archive/refs/tags/v0.6.0.zip", output_dir
+        "https://github.com/CrayLabs/SmartSim/archive/refs/tags/v0.5.0.zip", output_dir
     )
     assert output_dir.exists()

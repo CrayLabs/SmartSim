@@ -222,7 +222,6 @@ def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
     client.get_tensor("keras-output")
 
 
-# def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
 def _build_tf_frozen_model(tmp_dir: str) -> t.Tuple[str, t.List[str], t.List[str]]:
 
     from tensorflow import keras  # pylint: disable=no-name-in-module
