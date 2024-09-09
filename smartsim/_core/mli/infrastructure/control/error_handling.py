@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import traceback
 import typing as t
 
 from .....log import get_logger
@@ -47,7 +48,9 @@ def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
 
 
 def exception_handler(
-    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
+    exc: Exception,
+    reply_channel: t.Optional[CommChannelBase],
+    failure_message: t.Optional[str],
 ) -> None:
     """
     Logs exceptions and sends a failure response.
@@ -56,10 +59,13 @@ def exception_handler(
     :param reply_channel: The channel used to send replies
     :param failure_message: Failure message to log and send back
     """
+    if failure_message is None:
+        failure_message = str(exc)
     logger.exception(
         f"{failure_message}\n"
         f"Exception type: {type(exc).__name__}\n"
-        f"Exception message: {str(exc)}"
+        f"Exception message: {str(exc)}\n"
+        f"Traceback: {traceback.format_exc()}"
     )
     if reply_channel:
         serialized_resp = MessageHandler.serialize_response(

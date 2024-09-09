@@ -431,10 +431,13 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
         """Given a loaded MachineLearningModel, ensure it is loaded into
-        device memory
+        device memory.
+
         :param request: The request that triggered the pipeline
         :param device: The device on which the model must be placed
-        :return: ModelLoadResult wrapping the model loaded for the request"""
+        :return: ModelLoadResult wrapping the model loaded for the request
+        :raises ValueError:
+        """
 
     @staticmethod
     @abstractmethod
