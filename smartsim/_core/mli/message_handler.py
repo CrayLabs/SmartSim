@@ -235,10 +235,8 @@ class MessageHandler:
             elif class_name == "FeatureStoreKey":
                 request.model.key = model  # type: ignore
             else:
-                raise ValueError(
-                    """Invalid custom attribute class name.
-                        Expected 'Model' or 'FeatureStoreKey'."""
-                )
+                raise ValueError("""Invalid custom attribute class name.
+                        Expected 'Model' or 'FeatureStoreKey'.""")
         except Exception as e:
             raise ValueError("Error building model portion of request.") from e
 
@@ -282,10 +280,8 @@ class MessageHandler:
                 elif input_class_name == "FeatureStoreKey":
                     request.input.keys = inputs  # type: ignore
                 else:
-                    raise ValueError(
-                        """Invalid input class name. Expected
-                        'TensorDescriptor' or 'FeatureStoreKey'."""
-                    )
+                    raise ValueError("""Invalid input class name. Expected
+                        'TensorDescriptor' or 'FeatureStoreKey'.""")
         except Exception as e:
             raise ValueError("Error building inputs portion of request.") from e
 
@@ -354,11 +350,9 @@ class MessageHandler:
                 elif custom_attribute_class_name == "TensorFlowRequestAttributes":
                     request.customAttributes.tf = custom_attrs  # type: ignore
                 else:
-                    raise ValueError(
-                        """Invalid custom attribute class name.
+                    raise ValueError("""Invalid custom attribute class name.
                         Expected 'TensorFlowRequestAttributes' or
-                        'TorchRequestAttributes'."""
-                    )
+                        'TorchRequestAttributes'.""")
         except Exception as e:
             raise ValueError(
                 "Error building custom attributes portion of request."
@@ -481,10 +475,8 @@ class MessageHandler:
                 elif result_class_name == "FeatureStoreKey":
                     response.result.keys = result  # type: ignore
                 else:
-                    raise ValueError(
-                        """Invalid custom attribute class name.
-                        Expected 'TensorDescriptor' or 'FeatureStoreKey'."""
-                    )
+                    raise ValueError("""Invalid custom attribute class name.
+                        Expected 'TensorDescriptor' or 'FeatureStoreKey'.""")
         except Exception as e:
             raise ValueError("Error assigning result to response.") from e
 
@@ -516,11 +508,9 @@ class MessageHandler:
                 elif custom_attribute_class_name == "TensorFlowResponseAttributes":
                     response.customAttributes.tf = custom_attrs  # type: ignore
                 else:
-                    raise ValueError(
-                        """Invalid custom attribute class name.
+                    raise ValueError("""Invalid custom attribute class name.
                         Expected 'TensorFlowResponseAttributes' or
-                        'TorchResponseAttributes'."""
-                    )
+                        'TorchResponseAttributes'.""")
         except Exception as e:
             raise ValueError("Error assigning custom attributes to response.") from e
 

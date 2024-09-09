@@ -29,9 +29,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.mli_schemas.response.response_capnp import ResponseBuilder
-
 dragon = pytest.importorskip("dragon")
 
 import multiprocessing as mp
@@ -42,6 +39,7 @@ from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 from dragon.mpbridge.queues import DragonQueue
 
+from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.control.device_manager import WorkerDevice
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
@@ -72,6 +70,7 @@ from smartsim._core.mli.infrastructure.worker.worker import (
     TransformOutputResult,
 )
 from smartsim._core.mli.message_handler import MessageHandler
+from smartsim._core.mli.mli_schemas.response.response_capnp import ResponseBuilder
 
 from .utils.channel import FileSystemCommChannel
 from .utils.worker import IntegratedTorchWorker
