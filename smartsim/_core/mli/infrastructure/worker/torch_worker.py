@@ -73,9 +73,12 @@ class TorchWorker(MachineLearningWorkerBase):
             device = device.replace(old, new)
 
         buffer = io.BytesIO(initial_bytes=model_bytes)
-        with torch.no_grad():
-            model = torch.jit.load(buffer, map_location=device)  # type: ignore
-            model.eval()
+        try:
+            with torch.no_grad():
+                model = torch.jit.load(buffer, map_location=device)  # type: ignore
+                model.eval()
+        except Exception as e:
+            raise RuntimeError("Failed to load and evaluate the model") from e
         result = LoadModelResult(model)
         return result
 
@@ -123,12 +126,18 @@ class TorchWorker(MachineLearningWorkerBase):
             alloc_size = int(np.prod(dims) * itemsize)
             mem_alloc = mem_pool.alloc(alloc_size)
             mem_view = mem_alloc.get_memview()
-            mem_view[:alloc_size] = b"".join(
-                [
-                    fetch_result.inputs[result_tensor_idx]
-                    for fetch_result in fetch_results
-                ]
-            )
+            try:
+                mem_view[:alloc_size] = b"".join(
+                    [
+                        fetch_result.inputs[result_tensor_idx]
+                        for fetch_result in fetch_results
+                    ]
+                )
+            except IndexError as e:
+                raise IndexError(
+                    f"Error accessing elements in fetch_result.inputs "
+                    f"with index {result_tensor_idx}"
+                ) from e
 
             results.append(mem_alloc.serialize())
 
@@ -156,26 +165,34 @@ class TorchWorker(MachineLearningWorkerBase):
             mem_alloc = MemoryAlloc.attach(transformed)
             mem_allocs.append(mem_alloc)
             itemsize = np.empty((1), dtype=dtype).itemsize
-            tensors.append(
-                torch.from_numpy(
-                    np.frombuffer(
-                        mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
-                        dtype=dtype,
-                    ).reshape(dims)
+            try:
+                tensors.append(
+                    torch.from_numpy(
+                        np.frombuffer(
+                            mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
+                            dtype=dtype,
+                        ).reshape(dims)
+                    )
                 )
-            )
+            except IndexError as e:
+                raise IndexError("Error during memory slicing") from e
+            except Exception as e:
+                raise ValueError("Error during tensor creation") from e
 
         model: torch.nn.Module = load_result.model
-        with torch.no_grad():
-            model.eval()
-            results = [
-                model(
-                    *[
-                        tensor.to(device, non_blocking=True).detach()
-                        for tensor in tensors
-                    ]
-                )
-            ]
+        try:
+            with torch.no_grad():
+                model.eval()
+                results = [
+                    model(
+                        *[
+                            tensor.to(device, non_blocking=True).detach()
+                            for tensor in tensors
+                        ]
+                    )
+                ]
+        except Exception as e:
+            raise ValueError("Error while evaluating the model") from e
 
         transform_result.transformed = []
 
@@ -196,12 +213,19 @@ class TorchWorker(MachineLearningWorkerBase):
         for result_slice in execute_result.slices:
             transformed = []
             for cpu_item in cpu_predictions:
-                transformed.append(cpu_item[result_slice].numpy().tobytes())
+                try:
+                    transformed.append(cpu_item[result_slice].numpy().tobytes())
 
-                # todo: need the shape from latest schemas added here.
-                transformed_list.append(
-                    TransformOutputResult(transformed, None, "c", "float32")
-                )  # fixme
+                    # todo: need the shape from latest schemas added here.
+                    transformed_list.append(
+                        TransformOutputResult(transformed, None, "c", "float32")
+                    )  # fixme
+                except IndexError as e:
+                    raise IndexError(
+                        f"Error accessing elements with result_slice {result_slice}"
+                    ) from e
+                except Exception as e:
+                    raise ValueError("Error transforming output") from e
 
         execute_result.predictions = []
 

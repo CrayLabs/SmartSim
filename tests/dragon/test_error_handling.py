@@ -302,6 +302,10 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
 
     monkeypatch.setattr(integrated_worker, stage, mock_stage)
     mock_reply_fn = MagicMock()
+    mock_response = MagicMock()
+    mock_response.schema.node.displayName = "Response"
+    mock_reply_fn.return_value = mock_response
+
     monkeypatch.setattr(
         "smartsim._core.mli.infrastructure.control.error_handling.build_failure_reply",
         mock_reply_fn,
@@ -346,14 +350,14 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
             "Error loading model on device or getting device.",
             id="load model",
         ),
-        pytest.param("execute", "Failed while executing.", id="execute"),
+        pytest.param("execute", "Error while executing.", id="execute"),
         pytest.param(
             "transform_output",
-            "Failed while transforming the output.",
+            "Error while transforming the output.",
             id="transform output",
         ),
         pytest.param(
-            "place_output", "Failed while placing the output.", id="place output"
+            "place_output", "Error while placing the output.", id="place output"
         ),
     ],
 )
@@ -436,7 +440,7 @@ def test_wm_pipeline_stage_errors_handled(
         ),
         pytest.param(
             "transform_input",
-            "Error Transforming input.",
+            "Error transforming input.",
             id="transform input",
         ),
     ],
@@ -477,6 +481,11 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     mock_reply_channel.send = MagicMock()
 
     mock_reply_fn = MagicMock()
+
+    mock_response = MagicMock()
+    mock_response.schema.node.displayName = "Response"
+    mock_reply_fn.return_value = mock_response
+
     monkeypatch.setattr(
         "smartsim._core.mli.infrastructure.control.error_handling.build_failure_reply",
         mock_reply_fn,

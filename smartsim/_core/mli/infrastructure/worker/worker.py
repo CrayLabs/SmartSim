@@ -436,7 +436,8 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param request: The request that triggered the pipeline
         :param device: The device on which the model must be placed
         :return: ModelLoadResult wrapping the model loaded for the request
-        :raises ValueError:
+        :raises ValueError: If model reference object is not found
+        :raises RuntimeError: If loading and evaluating the model failed
         """
 
     @staticmethod
@@ -448,10 +449,14 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     ) -> TransformInputResult:
         """Given a collection of data, perform a transformation on the data and put
         the raw tensor data on a MemoryPool allocation.
+
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
         :param mem_pool: The memory pool used to access batched input tensors
-        :return: The transformed inputs wrapped in a InputTransformResult"""
+        :return: The transformed inputs wrapped in a InputTransformResult
+        :raises ValueError: If tensors cannot be reconstructed
+        :raises IndexError: If index out of range
+        """
 
     @staticmethod
     @abstractmethod
@@ -461,12 +466,17 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         transform_result: TransformInputResult,
         device: str,
     ) -> ExecuteResult:
-        """Execute an ML model on inputs transformed for use by the model
+        """Execute an ML model on inputs transformed for use by the model.
+
         :param batch: The batch of requests that triggered the pipeline
         :param load_result: The result of loading the model onto device memory
         :param transform_result: The result of transforming inputs for model consumption
         :param device: The device on which the model will be executed
-        :return: The result of inference wrapped in an ExecuteResult"""
+        :return: The result of inference wrapped in an ExecuteResult
+        :raises SmartSimError: If model is not loaded
+        :raises IndexError: If memory slicing is out of range
+        :raises ValueError: If tensor creation fails or is unable to evaluate the model
+        """
 
     @staticmethod
     @abstractmethod
@@ -475,6 +485,10 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     ) -> t.List[TransformOutputResult]:
         """Given inference results, perform transformations required to
         transmit results to the requestor.
+
         :param batch: The batch of requests that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
-        :return: A list of transformed outputs"""
+        :return: A list of transformed outputs
+        :raises IndexError: If indexing is out of range
+        :raises ValueError: If transforming output fails
+        """
