@@ -26,11 +26,13 @@
 
 import itertools
 import typing as t
+from glob import glob
+from os import path as osp
 
 import pytest
 
-from smartsim.entity import _mock
 from smartsim.entity.ensemble import Ensemble
+from smartsim.entity.files import EntityFiles
 from smartsim.entity.strategies import ParamSet
 from smartsim.settings.launchSettings import LaunchSettings
 
@@ -38,6 +40,54 @@ pytestmark = pytest.mark.group_a
 
 _2x2_PARAMS = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
 _2x2_EXE_ARG = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
+
+
+@pytest.fixture
+def get_gen_configure_dir(fileutils):
+    yield fileutils.get_test_conf_path(osp.join("generator_files", "tag_dir_template"))
+
+
+def test_exe_property():
+    e = Ensemble(name="test", exe="path/to/example_simulation_program")
+    exe = e.exe
+    assert exe == e.exe
+
+
+def test_exe_args_property():
+    e = Ensemble("test", exe="path/to/example_simulation_program", exe_args="sleepy.py")
+    exe_args = e.exe_args
+    assert exe_args == e.exe_args
+
+
+def test_exe_arg_parameters_property():
+    exe_arg_parameters = {"-N": 2}
+    e = Ensemble(
+        "test",
+        exe="path/to/example_simulation_program",
+        exe_arg_parameters=exe_arg_parameters,
+    )
+    exe_arg_parameters = e.exe_arg_parameters
+    assert exe_arg_parameters == e.exe_arg_parameters
+
+
+def test_files_property(get_gen_configure_dir):
+    tagged_files = sorted(glob(get_gen_configure_dir + "/*"))
+    files = EntityFiles(tagged=tagged_files)
+    e = Ensemble("test", exe="path/to/example_simulation_program", files=files)
+    files = e.files
+    assert files == e.files
+
+
+def test_file_parameters_property():
+    file_parameters = {"h": [5, 6, 7, 8]}
+    e = Ensemble(
+        "test",
+        exe="path/to/example_simulation_program",
+        file_parameters=file_parameters,
+    )
+    file_parameters = e.file_parameters
+
+    assert file_parameters == e.file_parameters
 
 
 def user_created_function(
