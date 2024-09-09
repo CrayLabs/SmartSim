@@ -86,6 +86,11 @@ class WorkerDevice:
 
     @contextmanager
     def get(self, key_to_remove: t.Optional[str]) -> t.Iterator["WorkerDevice"]:
+        """Get the WorkerDevice generator and optionally remove a model.
+
+        :param key_to_remove: The key of the model to optionally remove
+        :returns: WorkerDevice generator
+        """
         yield self
         if key_to_remove is not None:
             self.remove_model(key_to_remove)
@@ -110,7 +115,7 @@ class DeviceManager:
         batch: RequestBatch,
         feature_stores: dict[str, FeatureStore],
     ) -> None:
-        """Load the model needed to execute on a batch on the managed device.
+        """Load the model needed to execute a batch on the managed device.
 
         The model is loaded by the worker.
 
@@ -132,7 +137,7 @@ class DeviceManager:
         """Get the device managed by this object.
 
         The model needed to run the batch of requests is
-        guaranteed to be available on the model.
+        guaranteed to be available on the device.
 
         :param worker: The worker that wants to access the device
         :param batch: The batch of requests
