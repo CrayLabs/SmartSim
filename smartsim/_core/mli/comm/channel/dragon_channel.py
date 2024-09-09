@@ -43,6 +43,8 @@ logger = get_logger(__name__)
 import dragon.channels as dch
 
 DEFAULT_CHANNEL_BUFFER_SIZE = 500
+"""Maximum number of messages that can be buffered. DragonCommChannel will
+raise an exception if no clients consume messages before the buffer is filled."""
 
 
 def create_local(capacity: int = 0) -> dch.Channel:
