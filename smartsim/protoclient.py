@@ -213,7 +213,7 @@ class ProtoClient:
             numpy.save("timings.npy", value_array)
             numpy.savetxt("timings.txt", value_array)
 
-    def run_model(self, model: bytes | str, batch: torch.Tensor) -> t.Any:
+    def run_model(self, model: t.Union[bytes, str], batch: torch.Tensor) -> t.Any:
         tensors = [batch.numpy()]
         self.perf_timer.start_timings("batch_size", batch.shape[0])
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
