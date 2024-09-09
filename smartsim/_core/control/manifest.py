@@ -112,7 +112,7 @@ class Manifest:
     @staticmethod
     def _check_types(deployables: t.List[t.Any]) -> None:
         for deployable in deployables:
-            if not isinstance(deployable, (SmartSimEntity)):
+            if not isinstance(deployable, SmartSimEntity):
                 raise TypeError(
                     f"Entity has type {type(deployable)}, not " + "SmartSimEntity"
                 )

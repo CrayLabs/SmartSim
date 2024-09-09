@@ -191,10 +191,8 @@ class JobEntity:
 
 
 class Job:
-    """Keep track of various information for the controller.
-    In doing so, continuously add various fields of information
-    that is queryable by the user through interface methods in
-    the controller class.
+    """Keep track of various information.
+    In doing so, continuously add various fields of information.
     """
 
     def __init__(
@@ -208,7 +206,7 @@ class Job:
 
         :param job_name: Name of the job step
         :param job_id: The id associated with the job
-        :param entity: The SmartSim entity(list) associated with the job
+        :param entity: The SmartSim entity associated with the job
         :param launcher: Launcher job was started with
         """
         self.name = job_name
