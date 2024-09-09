@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -104,9 +105,9 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
     Define a collection of MLPackages available for a specific platform
     """
 
-    def __init__(self, platform: Platform, ml_packages: t.Dict[str, MLPackage]):
+    def __init__(self, platform: Platform, ml_packages: t.Sequence[MLPackage]):
         self.platform = platform
-        self._ml_packages = ml_packages
+        self._ml_packages = {pkg.name: pkg for pkg in ml_packages}
 
     @classmethod
     def from_json_file(cls, json_file: PathLike) -> "MLPackageCollection":
@@ -152,11 +153,11 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
         del self._ml_packages[key]
 
     def __setitem__(self, key: t.Any, value: t.Any) -> t.NoReturn:
-        raise TypeError("MLPackageCollection does not support item assignment")
+        raise TypeError(f"{type(self).__name__} does not support item assignment")
 
-    def __contains__(self, key: str):
+    def __contains__(self, key: object) -> bool:
         return key in self._ml_packages
-    
+
     def __str__(self, tablefmt: str = "github") -> str:
         """Display package names and versions as a table
 
@@ -180,6 +181,10 @@ def load_platform_configs(
     :return: Dictionary whose keys are the supported platform and values
              are its associated MLPackageCollection
     """
+    if not config_file_path.is_dir():
+        path = os.fspath(config_file_path)
+        msg = f"Platform configuration directory `{path}` does not exist"
+        raise FileNotFoundError(msg)
     configs = {}
     for config_file in config_file_path.glob("*.json"):
         dependencies = MLPackageCollection.from_json_file(config_file)
@@ -187,8 +192,4 @@ def load_platform_configs(
     return configs
 
 
-DEFAULT_MLPACKAGE_PATH = pathlib.Path(__file__).parent / "configs" / "mlpackages"
-
-DEFAULT_MLPACKAGES: t.Mapping[Platform, MLPackageCollection] = load_platform_configs(
-    DEFAULT_MLPACKAGE_PATH
-)
+DEFAULT_MLPACKAGE_PATH: t.Final = pathlib.Path(__file__).parent / "configs/mlpackages"

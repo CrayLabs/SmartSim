@@ -275,9 +275,7 @@ class RedisAIBuilder:
         """
         return "make install -j VERBOSE=1".split(" ")
 
-    def _patch_source_files(
-        self, patches: t.Tuple[RAIPatch, ...]
-    ) -> None:
+    def _patch_source_files(self, patches: t.Tuple[RAIPatch, ...]) -> None:
         """Apply specified RedisAI patches"""
         for patch in patches:
             with fileinput.input(

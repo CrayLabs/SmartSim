@@ -41,7 +41,6 @@ from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
 from smartsim._core._install.mlpackages import (
     DEFAULT_MLPACKAGE_PATH,
-    DEFAULT_MLPACKAGES,
     MLPackageCollection,
     load_platform_configs,
 )
@@ -230,10 +229,7 @@ def execute(
     )
 
     # Configure the ML Packages
-    if args.alternate_config_dir != DEFAULT_MLPACKAGE_PATH:
-        configs = load_platform_configs(Path(args.alternate_config_dir))
-    else:
-        configs = DEFAULT_MLPACKAGES
+    configs = load_platform_configs(Path(args.config_dir))
     mlpackages = configs[current_platform]
 
     # Build all backends by default, pop off the ones that user wants skipped

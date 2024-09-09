@@ -29,12 +29,18 @@ from pathlib import Path
 import pytest
 
 from smartsim._core._install.buildenv import BuildEnv
-from smartsim._core._install.mlpackages import DEFAULT_MLPACKAGES, MLPackage
+from smartsim._core._install.mlpackages import (
+    DEFAULT_MLPACKAGE_PATH,
+    MLPackage,
+    load_platform_configs,
+)
 from smartsim._core._install.platform import Platform
 from smartsim._core._install.redisaiBuilder import RedisAIBuilder
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
+
+DEFAULT_MLPACKAGES = load_platform_configs(DEFAULT_MLPACKAGE_PATH)
 
 
 @pytest.mark.parametrize(
