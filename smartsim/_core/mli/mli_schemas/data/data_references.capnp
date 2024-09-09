@@ -28,5 +28,5 @@
 
 struct FeatureStoreKey {
   key @0 :Text;
-  featureStoreDescriptor @1 :Text;
+  descriptor @1 :Text;
 }

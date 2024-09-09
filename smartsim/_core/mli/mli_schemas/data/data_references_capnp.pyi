@@ -36,7 +36,7 @@ from typing import Iterator
 
 class FeatureStoreKey:
     key: str
-    featureStoreDescriptor: str
+    descriptor: str
     @staticmethod
     @contextmanager
     def from_bytes(

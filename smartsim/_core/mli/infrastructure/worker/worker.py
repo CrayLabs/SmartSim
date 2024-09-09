@@ -324,7 +324,7 @@ class MachineLearningWorkerCore:
         if request.model.which() == "key":
             model_key = FeatureStoreKey(
                 key=request.model.key.key,
-                descriptor=request.model.key.featureStoreDescriptor,
+                descriptor=request.model.key.descriptor,
             )
         elif request.model.which() == "data":
             model_bytes = request.model.data
@@ -338,7 +338,7 @@ class MachineLearningWorkerCore:
 
         if request.input.which() == "keys":
             input_keys = [
-                FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
+                FeatureStoreKey(key=value.key, descriptor=value.descriptor)
                 for value in request.input.keys
             ]
         elif request.input.which() == "descriptors":
@@ -346,7 +346,7 @@ class MachineLearningWorkerCore:
 
         if request.output:
             output_keys = [
-                FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
+                FeatureStoreKey(key=value.key, descriptor=value.descriptor)
                 for value in request.output
             ]
 
