@@ -49,6 +49,7 @@ pytestmark = pytest.mark.group_a
 
 ids = set()
 
+
 def random_id():
     while True:
         num = str(random.randint(1, 100))
