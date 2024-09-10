@@ -121,8 +121,8 @@ def mock_messages(
 
     for iteration_number in range(2):
 
-        channel_key = Channel.make_process_local().serialize()
-        callback_channel = DragonCommChannel(channel_key)
+        channel = Channel.make_process_local()
+        callback_channel = DragonCommChannel(channel)
 
         input_path = feature_store_root_dir / f"{iteration_number}/input.pt"
         output_path = feature_store_root_dir / f"{iteration_number}/output.pt"
@@ -144,7 +144,7 @@ def mock_messages(
         message_model_key = MessageHandler.build_model_key(model_key, fsd)
 
         request = MessageHandler.build_request(
-            reply_channel=base64.b64encode(callback_channel.descriptor).decode("utf-8"),
+            reply_channel=base64.b64encode(channel.serialize()).decode("utf-8"),
             model=message_model_key,
             inputs=[tensor_desc],
             outputs=[message_tensor_output_key],

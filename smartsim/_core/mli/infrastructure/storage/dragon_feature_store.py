@@ -47,47 +47,37 @@ class DragonFeatureStore(FeatureStore):
 
         :param storage: A distributed dictionary to be used as the underlying
         storage mechanism of the feature store"""
-        self._storage = storage
+        if isinstance(storage, dragon_ddict.DDict):
+            descriptor = str(storage.serialize())
+        else:
+            descriptor = "not-set"
 
-    def __getitem__(self, key: str) -> t.Union[str, bytes]:
-        """Retrieve an item using key
+        super().__init__(descriptor)
+        self._storage: t.Dict[str, t.Union[str, bytes]] = storage
 
-        :param key: Unique key of an item to retrieve from the feature store
-        :returns: The value identified by the supplied key
-        :raises KeyError: if the key is not found in the feature store
-        :raises SmartSimError: if retrieval from the feature store fails"""
-        try:
-            value: t.Union[str, bytes] = self._storage[key]
-            return value
-        except KeyError:
-            logger.warning(f"An unknown key was requested: {key}")
-            raise
-        except Exception as ex:
-            # note: explicitly avoid round-trip to check for key existence
-            raise SmartSimError(
-                f"Could not get value for existing key {key}, error:\n{ex}"
-            ) from ex
+    def _get(self, key: str) -> t.Union[str, bytes]:
+        """Retrieve a value from the underlying storage mechanism
 
-    def __setitem__(self, key: str, value: t.Union[str, bytes]) -> None:
-        """Assign a value using key
+        :param key: The unique key that identifies the resource
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
+        return self._storage[key]
 
-        :param key: Unique key of an item to set in the feature store
-        :param value: Value to persist in the feature store"""
+    def _set(self, key: str, value: t.Union[str, bytes]) -> None:
+        """Store a value into the underlying storage mechanism
+
+        :param key: The unique key that identifies the resource
+        :param value: The value to store
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
         self._storage[key] = value
 
-    def __contains__(self, key: str) -> bool:
-        """Membership operator to test for a key existing within the feature store.
+    def _contains(self, key: str) -> bool:
+        """Determine if the storage mechanism contains a given key
 
-        :param key: Unique key of an item to retrieve from the feature store
-        :returns: `True` if the key is found, `False` otherwise"""
+        :param key: The unique key that identifies the resource
+        :returns: True if the key is defined, False otherwise"""
         return key in self._storage
-
-    @property
-    def descriptor(self) -> str:
-        """A unique identifier enabling a client to connect to the feature store
-
-        :returns: A descriptor encoded as a string"""
-        return str(self._storage.serialize())
 
     @classmethod
     def from_descriptor(
