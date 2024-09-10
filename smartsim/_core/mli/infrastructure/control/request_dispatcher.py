@@ -69,9 +69,10 @@ class BatchQueue(Queue[InferenceRequest]):
     ) -> None:
         """Queue used to store inference requests waiting to be batched and
         sent to Worker Managers.
+
         :param batch_timeout: Time in seconds that has to be waited before flushing a
         non-full queue. The time of the first item put is 0 seconds.
-        :param batch_size: Total capacity of the queue.
+        :param batch_size: Total capacity of the queue
         :param model_id: Key of the model which needs to be executed on the queued
         requests
         """
@@ -93,12 +94,18 @@ class BatchQueue(Queue[InferenceRequest]):
 
     @property
     def uid(self) -> str:
-        """ID of this queue"""
+        """ID of this queue.
+
+        :return: Queue ID
+        """
         return self._uid
 
     @property
     def model_id(self) -> ModelIdentifier:
-        """Key of the model which needs to be run on the queued requests"""
+        """Key of the model which needs to be run on the queued requests.
+
+        :return: Model key
+        """
         return self._model_id
 
     def put(
@@ -107,7 +114,8 @@ class BatchQueue(Queue[InferenceRequest]):
         block: bool = False,
         timeout: t.Optional[float] = 0.0,
     ) -> None:
-        """Put an inference request in the queue
+        """Put an inference request in the queue.
+
         :param item: The request
         :param block: Whether to block when trying to put the item
         :param timeout: Time (in seconds) to wait if block==True
@@ -119,14 +127,20 @@ class BatchQueue(Queue[InferenceRequest]):
 
     @property
     def _elapsed_time(self) -> float:
-        """Time elapsed since the first item was put on this queue"""
+        """Time elapsed since the first item was put on this queue.
+
+        :return: Time elapsed
+        """
         if self.empty() or self._first_put is None:
             return 0
         return time.time() - self._first_put
 
     @property
     def ready(self) -> bool:
-        """True if the queue can be flushed"""
+        """Check if the queue can be flushed.
+
+        :return: True if the queue can be flushed, False otherwise
+        """
         if self.empty():
             return False
 
@@ -142,11 +156,15 @@ class BatchQueue(Queue[InferenceRequest]):
 
     @property
     def can_be_removed(self) -> bool:
-        """Whether this queue can be deleted and garbage collected"""
+        """Determine whether this queue can be deleted and garbage collected.
+
+        :return: True if queue can be removed, False otherwise
+        """
         return self.empty() and self._disposable
 
     def flush(self) -> list[t.Any]:
-        """Get all requests from queue
+        """Get all requests from queue.
+
         :return: Requests waiting to be executed
         """
         num_items = self.qsize()
@@ -161,13 +179,20 @@ class BatchQueue(Queue[InferenceRequest]):
         return items
 
     def full(self) -> bool:
-        """Return True if the queue has reached its maximum capacity"""
+        """Check if the queue has reached its maximum capacity.
+
+        :return: True if the queue has reached its maximum capacity,
+        False otherwise
+        """
         if self._disposable:
             return True
         return self.qsize() >= self._batch_size
 
     def empty(self) -> bool:
-        """Return True if the queue has 0 elements"""
+        """Check if the queue is empty.
+
+        :return: True if the queue has 0 elements, False otherwise
+        """
         return self.qsize() == 0
 
 
@@ -183,9 +208,10 @@ class RequestDispatcher(Service):
         """The RequestDispatcher intercepts inference requests, stages them in
         queues and batches them together before making them available to Worker
         Managers.
+
         :param batch_timeout: Maximum elapsed time before flushing a complete or
         incomplete batch
-        :param batch_size: Total capacity of each batch queue.
+        :param batch_size: Total capacity of each batch queue
         :param mem_pool: Memory pool used to share batched input tensors with worker
         managers
         :param config_loader: Object to load configuration from environment
@@ -227,7 +253,7 @@ class RequestDispatcher(Service):
         """Performance timer"""
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
-        """Ensures that all feature stores required by the request are available
+        """Ensures that all feature stores required by the request are available.
 
         :param request: The request to validate
         :returns: False if feature store validation fails for the request, True
@@ -260,7 +286,7 @@ class RequestDispatcher(Service):
 
     # pylint: disable-next=no-self-use
     def _check_model(self, request: InferenceRequest) -> bool:
-        """Ensure that a model is available for the request
+        """Ensure that a model is available for the request.
 
         :param request: The request to validate
         :returns: False if model validation fails for the request, True otherwise
@@ -273,7 +299,7 @@ class RequestDispatcher(Service):
 
     # pylint: disable-next=no-self-use
     def _check_inputs(self, request: InferenceRequest) -> bool:
-        """Ensure that inputs are available for the request
+        """Ensure that inputs are available for the request.
 
         :param request: The request to validate
         :returns: False if input validation fails for the request, True otherwise
@@ -286,7 +312,7 @@ class RequestDispatcher(Service):
 
     # pylint: disable-next=no-self-use
     def _check_callback(self, request: InferenceRequest) -> bool:
-        """Ensure that a callback channel is available for the request
+        """Ensure that a callback channel is available for the request.
 
         :param request: The request to validate
         :returns: False if callback validation fails for the request, True otherwise
@@ -298,7 +324,7 @@ class RequestDispatcher(Service):
         return False
 
     def _validate_request(self, request: InferenceRequest) -> bool:
-        """Ensure the request can be processed
+        """Ensure the request can be processed.
 
         :param request: The request to validate
         :return: False if the request fails any validation checks, True otherwise"""
@@ -362,7 +388,7 @@ class RequestDispatcher(Service):
 
     def remove_queues(self) -> None:
         """Remove references to queues that can be removed
-        and allow them to be garbage collected"""
+        and allow them to be garbage collected."""
         queue_lists_to_remove = []
         for key, queues in self._queues.items():
             queues_to_remove = []
@@ -386,13 +412,16 @@ class RequestDispatcher(Service):
 
     @property
     def task_queue(self) -> DragonQueue:
-        """The queue on which batched requests are placed"""
+        """The queue on which batched requests are placed.
+
+        :return: The queue
+        """
         return self._outgoing_queue
 
     def _swap_queue(self, model_id: ModelIdentifier) -> None:
         """Get an empty queue or create a new one
-
         and make it the active one for a given model.
+
         :param model_id: The id of the model for which the
         queue has to be swapped
         """
@@ -411,8 +440,9 @@ class RequestDispatcher(Service):
         return
 
     def dispatch(self, request: InferenceRequest) -> None:
-        """Assign a request to a batch queue
-        :param request: the request to place
+        """Assign a request to a batch queue.
+
+        :param request: The request to place
         """
         if request.raw_model is not None:
             logger.debug("Direct inference requested, creating tmp queue")
@@ -439,7 +469,7 @@ class RequestDispatcher(Service):
 
     def flush_requests(self) -> None:
         """Get all requests from queues which are ready to be flushed. Place all
-        avaliable request batches in the outgoing queue.
+        available request batches in the outgoing queue.
         """
         for queue_list in self._queues.values():
             for queue in queue_list:
@@ -497,11 +527,14 @@ class RequestDispatcher(Service):
                     self._perf_timer.measure_time("put")
 
     def _can_shutdown(self) -> bool:
-        """Whether the Service can be shut down"""
+        """Determine whether the Service can be shut down.
+
+        :return: False
+        """
         return False
 
     def __del__(self) -> None:
-        """Destroy allocated memory resources"""
+        """Destroy allocated memory resources."""
         # pool may be null if a failure occurs prior to successful attach
         pool: t.Optional[MemoryPool] = getattr(self, "_mem_pool", None)
 

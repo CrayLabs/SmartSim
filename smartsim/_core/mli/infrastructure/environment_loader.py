@@ -70,7 +70,7 @@ class EnvironmentConfigLoader:
     def get_backbone(self) -> t.Optional[FeatureStore]:
         """Attach to the backbone feature store using the descriptor found in
         an environment variable. The backbone is a standalone, system-created
-        feature store used to share internal information among MLI components
+        feature store used to share internal information among MLI components.
 
         :returns: The attached feature store via _SMARTSIM_INFRA_BACKBONE"""
         descriptor = os.getenv("_SMARTSIM_INFRA_BACKBONE", "")
