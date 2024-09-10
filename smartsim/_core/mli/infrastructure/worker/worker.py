@@ -400,8 +400,8 @@ class MachineLearningWorkerCore:
         :raises SmartSimError: If neither a key or a model are provided or the
         model cannot be retrieved from the feature store
         :raises ValueError: If a feature store is not available and a raw
-        model is not provided"""
-
+        model is not provided
+        """
         # All requests in the same batch share the model
         if batch.raw_model:
             return FetchModelResult(batch.raw_model.data)
@@ -435,7 +435,8 @@ class MachineLearningWorkerCore:
         :param feature_stores: Available feature stores used for persistence
         :returns: The fetched input
         :raises ValueError: If neither an input key or an input tensor are provided
-        :raises SmartSimError: If a tensor for a given key cannot be retrieved"""
+        :raises SmartSimError: If a tensor for a given key cannot be retrieved
+        """
         fetch_results = []
         for request in batch.requests:
             if request.raw_inputs:
