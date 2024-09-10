@@ -49,7 +49,7 @@ class WorkerDevice:
     def name(self) -> str:
         """The identifier of the device represented by this object
 
-        :return: Name used by the toolkit to identify this device
+        :returns: Name used by the toolkit to identify this device
         """
         return self._name
 
@@ -143,7 +143,7 @@ class DeviceManager:
         :param batch: The batch of requests
         :param feature_store: The feature store on which part of the
         data needed by the request may be stored
-        :return: A generator yielding the device
+        :returns: A generator yielding the device
         """
         model_in_request = batch.has_raw_model
 

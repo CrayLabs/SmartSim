@@ -81,7 +81,7 @@ class BatchQueue(Queue[InferenceRequest]):
         """Time in seconds that has to be waited before flushing a non-full queue.
         The time of the first item put is 0 seconds."""
         self._batch_size = batch_size
-        """Total capacity of the queue."""
+        """Total capacity of the queue"""
         self._first_put: t.Optional[float] = None
         """Time at which the first item was put on the queue"""
         self._disposable = False
@@ -96,7 +96,7 @@ class BatchQueue(Queue[InferenceRequest]):
     def uid(self) -> str:
         """ID of this queue.
 
-        :return: Queue ID
+        :returns: Queue ID
         """
         return self._uid
 
@@ -104,7 +104,7 @@ class BatchQueue(Queue[InferenceRequest]):
     def model_id(self) -> ModelIdentifier:
         """Key of the model which needs to be run on the queued requests.
 
-        :return: Model key
+        :returns: Model key
         """
         return self._model_id
 
@@ -129,7 +129,7 @@ class BatchQueue(Queue[InferenceRequest]):
     def _elapsed_time(self) -> float:
         """Time elapsed since the first item was put on this queue.
 
-        :return: Time elapsed
+        :returns: Time elapsed
         """
         if self.empty() or self._first_put is None:
             return 0
@@ -139,7 +139,7 @@ class BatchQueue(Queue[InferenceRequest]):
     def ready(self) -> bool:
         """Check if the queue can be flushed.
 
-        :return: True if the queue can be flushed, False otherwise
+        :returns: True if the queue can be flushed, False otherwise
         """
         if self.empty():
             return False
@@ -151,21 +151,22 @@ class BatchQueue(Queue[InferenceRequest]):
         return self.full() or timed_out
 
     def make_disposable(self) -> None:
-        """Set this queue as disposable, and never use it again after it gets flushed"""
+        """Set this queue as disposable, and never use it again after it gets
+        flushed."""
         self._disposable = True
 
     @property
     def can_be_removed(self) -> bool:
         """Determine whether this queue can be deleted and garbage collected.
 
-        :return: True if queue can be removed, False otherwise
+        :returns: True if queue can be removed, False otherwise
         """
         return self.empty() and self._disposable
 
     def flush(self) -> list[t.Any]:
         """Get all requests from queue.
 
-        :return: Requests waiting to be executed
+        :returns: Requests waiting to be executed
         """
         num_items = self.qsize()
         self._first_put = None
@@ -181,7 +182,7 @@ class BatchQueue(Queue[InferenceRequest]):
     def full(self) -> bool:
         """Check if the queue has reached its maximum capacity.
 
-        :return: True if the queue has reached its maximum capacity,
+        :returns: True if the queue has reached its maximum capacity,
         False otherwise
         """
         if self._disposable:
@@ -191,7 +192,7 @@ class BatchQueue(Queue[InferenceRequest]):
     def empty(self) -> bool:
         """Check if the queue is empty.
 
-        :return: True if the queue has 0 elements, False otherwise
+        :returns: True if the queue has 0 elements, False otherwise
         """
         return self.qsize() == 0
 
@@ -228,7 +229,7 @@ class RequestDispatcher(Service):
         self._batch_timeout = batch_timeout
         """Time in seconds that has to be waited before flushing a non-full queue"""
         self._batch_size = batch_size
-        """Total capacity of each batch queue."""
+        """Total capacity of each batch queue"""
         incoming_channel = config_loader.get_queue()
         if incoming_channel is None:
             raise SmartSimError("No incoming channel for dispatcher")
@@ -327,7 +328,8 @@ class RequestDispatcher(Service):
         """Ensure the request can be processed.
 
         :param request: The request to validate
-        :return: False if the request fails any validation checks, True otherwise"""
+        :returns: False if the request fails any validation checks, True otherwise
+        """
         checks = [
             self._check_feature_stores(request),
             self._check_model(request),
@@ -339,8 +341,7 @@ class RequestDispatcher(Service):
 
     def _on_iteration(self) -> None:
         """This method is executed repeatedly until ``Service`` shutdown
-        conditions are satisfied and cooldown is elapsed.
-        """
+        conditions are satisfied and cooldown is elapsed."""
         try:
             self._perf_timer.is_active = True
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
@@ -414,7 +415,7 @@ class RequestDispatcher(Service):
     def task_queue(self) -> DragonQueue:
         """The queue on which batched requests are placed.
 
-        :return: The queue
+        :returns: The queue
         """
         return self._outgoing_queue
 
@@ -469,8 +470,7 @@ class RequestDispatcher(Service):
 
     def flush_requests(self) -> None:
         """Get all requests from queues which are ready to be flushed. Place all
-        available request batches in the outgoing queue.
-        """
+        available request batches in the outgoing queue."""
         for queue_list in self._queues.values():
             for queue in queue_list:
                 if queue.ready:
@@ -529,7 +529,7 @@ class RequestDispatcher(Service):
     def _can_shutdown(self) -> bool:
         """Determine whether the Service can be shut down.
 
-        :return: False
+        :returns: False
         """
         return False
 
