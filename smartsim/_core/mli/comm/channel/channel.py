@@ -37,26 +37,34 @@ class CommChannelBase(ABC):
     """Base class for abstracting a message passing mechanism"""
 
     def __init__(self, descriptor: t.Union[str, bytes]) -> None:
-        """Initialize the CommChannel instance"""
+        """Initialize the CommChannel instance.
+
+        :param descriptor: Channel descriptor
+        """
         self._descriptor = descriptor
 
     @abstractmethod
     def send(self, value: bytes, timeout: float = 0) -> None:
-        """Send a message through the underlying communication channel
+        """Send a message through the underlying communication channel.
 
-        :param timeout: maximum time to wait (in seconds) for messages to send
-        :param value: The value to send"""
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param value: The value to send
+        """
 
     @abstractmethod
     def recv(self, timeout: float = 0) -> t.List[bytes]:
-        """Receives message(s) through the underlying communication channel
+        """Receives message(s) through the underlying communication channel.
 
-        :param timeout: maximum time to wait (in seconds) for messages to arrive
-        :returns: the received message"""
+        :param timeout: Maximum time to wait (in seconds) for messages to arrive
+        :returns: The received message
+        """
 
     @property
     def descriptor(self) -> bytes:
-        """Return the channel descriptor for the underlying dragon channel"""
+        """Return the channel descriptor for the underlying dragon channel.
+
+        :returns: Byte encoded channel descriptor
+        """
         if isinstance(self._descriptor, str):
             return base64.b64decode(self._descriptor.encode("utf-8"))
         return self._descriptor

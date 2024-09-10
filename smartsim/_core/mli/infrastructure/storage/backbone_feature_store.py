@@ -52,25 +52,28 @@ logger = get_logger(__name__)
 # and passes it wherever they need a FeatureStore?
 class BackboneFeatureStore(DragonFeatureStore):
     """A DragonFeatureStore wrapper with utility methods for accessing shared
-    information stored in the MLI backbone feature store"""
+    information stored in the MLI backbone feature store."""
 
     MLI_NOTIFY_CONSUMERS = "_SMARTSIM_MLI_NOTIFY_CONSUMERS"
 
     def __init__(
         self, storage: "dragon_ddict.DDict", allow_reserved_writes: bool = False
     ) -> None:
-        """Initialize the DragonFeatureStore instance
+        """Initialize the DragonFeatureStore instance.
 
         :param storage: A distributed dictionary to be used as the underlying
-        storage mechanism of the feature store"""
+        storage mechanism of the feature store
+        :param allow_reserved_writes: Whether reserved writes are allowed
+        """
         super().__init__(storage)
         self._enable_reserved_writes = allow_reserved_writes
 
     @property
     def notification_channels(self) -> t.Sequence[str]:
-        """Retrieve descriptors for all registered MLI notification channels
+        """Retrieve descriptors for all registered MLI notification channels.
 
-        :returns: the list of descriptors"""
+        :returns: The list of descriptors
+        """
         if "_SMARTSIM_MLI_NOTIFY_CONSUMERS" in self:
             stored_consumers = self[self.MLI_NOTIFY_CONSUMERS]
             return str(stored_consumers).split(",")
@@ -78,14 +81,15 @@ class BackboneFeatureStore(DragonFeatureStore):
 
     @notification_channels.setter
     def notification_channels(self, values: t.Sequence[str]) -> None:
-        """Set the notification channels to be sent events
+        """Set the notification channels to be sent events.
 
-        :param values: the list of channel descriptors to save"""
+        :param values: The list of channel descriptors to save
+        """
         self[self.MLI_NOTIFY_CONSUMERS] = ",".join([str(value) for value in values])
 
 
 class EventCategory(str, enum.Enum):
-    """Predefined event types raised by SmartSim backend"""
+    """Predefined event types raised by SmartSim backend."""
 
     CONSUMER_CREATED: str = "consumer-created"
     FEATURE_STORE_WRITTEN: str = "feature-store-written"
@@ -93,7 +97,7 @@ class EventCategory(str, enum.Enum):
 
 @dataclass
 class EventBase:
-    """Core API for an event"""
+    """Core API for an event."""
 
     # todo: shift eventing code to: infrastructure / event / event.py
     category: EventCategory
@@ -105,41 +109,42 @@ class EventBase:
 
     def __bytes__(self) -> bytes:
         """Default conversion to bytes for an event required to publish
-        messages using byte-oriented communication channels
+        messages using byte-oriented communication channels.
 
-        :returns: this entity encoded as bytes"""
+        :returns: This entity encoded as bytes"""
         return pickle.dumps(self)
 
     def __str__(self) -> str:
-        """Convert the event to a string
+        """Convert the event to a string.
 
-        :returns: a string representation of this instance"""
+        :returns: A string representation of this instance"""
         return f"{self.uid}|{self.category}"
 
 
 class OnCreateConsumer(EventBase):
-    """Publish this event when a new event consumer registration is required"""
+    """Publish this event when a new event consumer registration is required."""
 
     descriptor: str
     """Descriptor of the comm channel exposed by the consumer"""
 
     def __init__(self, descriptor: str) -> None:
-        """Initialize the event
+        """Initialize the OnCreateConsumer event.
 
-        :param descriptor: descriptor of the comm channel exposed by the consumer
+        :param descriptor: Descriptor of the comm channel exposed by the consumer
         """
         super().__init__(EventCategory.CONSUMER_CREATED, str(uuid.uuid4()))
         self.descriptor = descriptor
 
     def __str__(self) -> str:
-        """Convert the event to a string
+        """Convert the event to a string.
 
-        :returns: a string representation of this instance"""
+        :returns: A string representation of this instance
+        """
         return f"{str(super())}|{self.descriptor}"
 
 
 class OnWriteFeatureStore(EventBase):
-    """Publish this event when a feature store key is written"""
+    """Publish this event when a feature store key is written."""
 
     descriptor: str
     """The descriptor of the feature store where the write occurred"""
@@ -148,7 +153,7 @@ class OnWriteFeatureStore(EventBase):
     """The key identifying where the write occurred"""
 
     def __init__(self, descriptor: str, key: str) -> None:
-        """Initialize the event
+        """Initialize the OnWriteFeatureStore event.
 
         :param descriptor: The descriptor of the feature store where the write occurred
         :param key: The key identifying where the write occurred
@@ -158,34 +163,36 @@ class OnWriteFeatureStore(EventBase):
         self.key = key
 
     def __str__(self) -> str:
-        """Convert the event to a string
+        """Convert the event to a string.
 
-        :returns: a string representation of this instance"""
+        :returns: A string representation of this instance
+        """
         return f"{str(super())}|{self.descriptor}|{self.key}"
 
 
 class EventProducer(t.Protocol):
-    """Core API of a class that publishes events"""
+    """Core API of a class that publishes events."""
 
     def send(self, event: EventBase, timeout: float = 0.001) -> int:
-        """The send operation
+        """The send operation.
 
-        :param event: the event to send
-        :param timeout: maximum time to wait (in seconds) for messages to send"""
+        :param event: The event to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        """
 
 
 class EventBroadcaster:
-    """Performs fan-out publishing of system events"""
+    """Performs fan-out publishing of system events."""
 
     def __init__(
         self,
         backbone: BackboneFeatureStore,
         channel_factory: t.Optional[t.Callable[[str], CommChannelBase]] = None,
     ) -> None:
-        """Initialize the EventPublisher instance
+        """Initialize the EventPublisher instance.
 
-        :param backbone: the MLI backbone feature store
-        :param channel_factory: factory method to construct new channel instances
+        :param backbone: The MLI backbone feature store
+        :param channel_factory: Factory method to construct new channel instances
         """
         self._backbone = backbone
         """The backbone feature store used to retrieve consumer descriptors"""
@@ -197,7 +204,7 @@ class EventBroadcaster:
         """A mapping of instantiated channels that can be re-used. Automatically 
         calls the channel factory if a descriptor is not already in the collection"""
         self._event_buffer: t.Deque[bytes] = deque()
-        """A buffer for storing events when a consumer list is not found."""
+        """A buffer for storing events when a consumer list is not found"""
         self._descriptors: t.Set[str]
         """Stores the most recent list of broadcast consumers. Updated automatically
         on each broadcast"""
@@ -206,15 +213,19 @@ class EventBroadcaster:
 
     @property
     def num_buffered(self) -> int:
-        """Return the number of events currently buffered to send"""
+        """Return the number of events currently buffered to send.
+
+        :returns: Number of buffered events
+        """
         return len(self._event_buffer)
 
     def _save_to_buffer(self, event: EventBase) -> None:
         """Places a serialized event in the buffer to be sent once a consumer
         list is available.
 
-        :param event: The event to serialize and buffer"""
-
+        :param event: The event to serialize and buffer
+        :raises ValueError: If the event cannot be serialized
+        """
         try:
             event_bytes = bytes(event)
             self._event_buffer.append(event_bytes)
@@ -222,7 +233,7 @@ class EventBroadcaster:
             raise ValueError(f"Unable to serialize event from {self._uid}") from ex
 
     def _log_broadcast_start(self) -> None:
-        """Logs broadcast statistics"""
+        """Logs broadcast statistics."""
         num_events = len(self._event_buffer)
         num_copies = len(self._descriptors)
         logger.debug(
@@ -231,7 +242,7 @@ class EventBroadcaster:
 
     def _prune_unused_consumers(self) -> None:
         """Performs maintenance on the channel cache by pruning any channel
-        that has been removed from the consumers list"""
+        that has been removed from the consumers list."""
         active_consumers = set(self._descriptors)
         current_channels = set(self._channel_cache.keys())
 
@@ -248,11 +259,12 @@ class EventBroadcaster:
         )
 
     def _get_comm_channel(self, descriptor: str) -> CommChannelBase:
-        """Helper method to build and cache a comm channel
+        """Helper method to build and cache a comm channel.
 
-        :param descriptor: the descriptor to pass to the channel factory
-        :returns: the instantiated channel
-        :raises SmartSimError: if the channel fails to build"""
+        :param descriptor: The descriptor to pass to the channel factory
+        :returns: The instantiated channel
+        :raises SmartSimError: If the channel fails to build
+        """
         comm_channel = self._channel_cache[descriptor]
         if comm_channel is not None:
             return comm_channel
@@ -272,12 +284,10 @@ class EventBroadcaster:
     def _broadcast(self, timeout: float = 0.001) -> int:
         """Broadcasts all buffered events to registered event consumers.
 
-        :param timeout: maximum time to wait (in seconds) for messages to send
-        :return: the number of events broadcasted to consumers
-        :raises ValueError: if event serialization fails
-        :raises KeyError: if channel fails to attach using registered descriptors
-        :raises SmartSimError: if broadcasting fails"""
-
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :returns: The number of events broadcasted to consumers
+        :raises SmartSimError: If broadcasting fails
+        """
         # allow descriptors to be empty since events are buffered
         self._descriptors = set(x for x in self._backbone.notification_channels if x)
         if not self._descriptors:
@@ -316,14 +326,15 @@ class EventBroadcaster:
 
     def send(self, event: EventBase, timeout: float = 0.001) -> int:
         """Implementation of `send` method of the `EventPublisher` protocol. Publishes
-        the supplied event to all registered broadcast consumers
+        the supplied event to all registered broadcast consumers.
 
-        :param event: an event to publish
-        :param timeout: maximum time to wait (in seconds) for messages to send
-        :returns: the number of events successfully published
-        :raises ValueError: if event serialization fails
-        :raises KeyError: if channel fails to attach using registered descriptors
-        :raises SmartSimError: if any unexpected error occurs during send"""
+        :param event: An event to publish
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :returns: The number of events successfully published
+        :raises ValueError: If event serialization fails
+        :raises KeyError: If channel fails to attach using registered descriptors
+        :raises SmartSimError: If any unexpected error occurs during send
+        """
         try:
             self._save_to_buffer(event)
             return self._broadcast(timeout)
@@ -334,7 +345,7 @@ class EventBroadcaster:
 
 
 class EventConsumer:
-    """Reads system events published to a communications channel"""
+    """Reads system events published to a communications channel."""
 
     def __init__(
         self,
@@ -343,14 +354,16 @@ class EventConsumer:
         filters: t.Optional[t.List[EventCategory]] = None,
         batch_timeout: t.Optional[float] = None,
     ) -> None:
-        """Initialize the EventConsumer instance
+        """Initialize the EventConsumer instance.
 
-        :param comm_channel: communications channel to listen to for events
-        :param backbone: the MLI backbone feature store
-        :param filters: a list of event types to deliver. when empty, all
+        :param comm_channel: Communications channel to listen to for events
+        :param backbone: The MLI backbone feature store
+        :param filters: A list of event types to deliver. when empty, all
         events will be delivered
-        :param timeout: maximum time to wait for messages to arrive; may be overridden
-        on individual calls to `receive`"""
+        :param timeout: Maximum time to wait for messages to arrive; may be overridden
+        on individual calls to `receive`
+        :raises ValueError: If batch_timeout <= 0
+        """
         if batch_timeout is not None and batch_timeout <= 0:
             raise ValueError("batch_timeout must be a non-zero, positive value")
 
@@ -362,12 +375,13 @@ class EventConsumer:
     def receive(
         self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0
     ) -> t.List[EventBase]:
-        """Receives available published event(s)
+        """Receives available published event(s).
 
-        :param filters: additional filters to add to the global filters configured
+        :param filters: Additional filters to add to the global filters configured
         on the EventConsumer instance
-        :param timeout: maximum time to wait for messages to arrive
-        :returns: a list of events that pass any configured filters"""
+        :param timeout: Maximum time to wait for messages to arrive
+        :returns: A list of events that pass any configured filters
+        """
         if filters is None:
             filters = []
 

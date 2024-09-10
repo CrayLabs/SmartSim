@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Update docstrings
 - Implement asynchronous notifications for shared data
 - Filenames conform to snake case
 - Update SmartSim environment variables using new naming convention

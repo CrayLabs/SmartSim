@@ -39,6 +39,13 @@ logger = get_logger(__file__)
 
 
 def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
+    """
+    Builds a failure response message.
+
+    :param status: Status enum
+    :param message: Status message
+    :returns: Failure response
+    """
     return MessageHandler.build_response(
         status=status,
         message=message,

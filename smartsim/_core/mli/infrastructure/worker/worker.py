@@ -42,6 +42,7 @@ from ...mli_schemas.model.model_capnp import Model
 from ..storage.feature_store import FeatureStore, FeatureStoreKey
 
 if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.data.data_references_capnp import TensorKey
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
     from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
@@ -52,7 +53,7 @@ ModelIdentifier = FeatureStoreKey
 
 
 class InferenceRequest:
-    """Internal representation of an inference request from a client"""
+    """Internal representation of an inference request from a client."""
 
     def __init__(
         self,
@@ -65,7 +66,17 @@ class InferenceRequest:
         raw_model: t.Optional[Model] = None,
         batch_size: int = 0,
     ):
-        """Initialize the object"""
+        """Initialize the InferenceRequest.
+
+        :param model_key: A tuple containing a (key, descriptor) pair
+        :param callback: The channel used for notification of inference completion
+        :param raw_inputs: Raw bytes of tensor inputs
+        :param input_keys: A list of tuples containing a (key, descriptor) pair
+        :param input_meta: Metadata about the input data
+        :param output_keys: A list of tuples containing a (key, descriptor) pair
+        :param raw_model: Raw bytes of an ML model
+        :param batch_size: The batch size to apply when batching
+        """
         self.model_key = model_key
         """A tuple containing a (key, descriptor) pair"""
         self.raw_model = raw_model
@@ -85,7 +96,7 @@ class InferenceRequest:
 
 
 class InferenceReply:
-    """Internal representation of the reply to a client request for inference"""
+    """Internal representation of the reply to a client request for inference."""
 
     def __init__(
         self,
@@ -94,18 +105,31 @@ class InferenceReply:
         status_enum: "Status" = "running",
         message: str = "In progress",
     ) -> None:
-        """Initialize the object"""
+        """Initialize the InferenceReply.
+
+        :param outputs: List of output data
+        :param output_keys: List of keys used for output data
+        :param status_enum: Status of the reply
+        :param message: Status message that corresponds with the status enum
+        """
         self.outputs: t.Collection[t.Any] = outputs or []
+        """List of output data"""
         self.output_keys: t.Collection[t.Optional[FeatureStoreKey]] = output_keys or []
+        """List of keys used for output data"""
         self.status_enum = status_enum
+        """Status of the reply"""
         self.message = message
+        """Status message that corresponds with the status enum"""
 
 
 class LoadModelResult:
-    """A wrapper around a loaded model"""
+    """A wrapper around a loaded model."""
 
     def __init__(self, model: t.Any) -> None:
-        """Initialize the object"""
+        """Initialize the LoadModelResult.
+
+        :param model: The loaded model
+        """
         self.model = model
 
 
@@ -119,7 +143,15 @@ class TransformInputResult:
         dims: list[list[int]],
         dtypes: list[str],
     ) -> None:
-        """Initialize the object"""
+        """Initialize the TransformInputResult.
+
+        :param result: List of Dragon MemoryAlloc objects on which
+        the tensors are stored
+        :param slices: The slices that represent which portion of the
+        input tensors belongs to which request
+        :param dims: Dimension of the transformed tensors
+        :param dtypes: Data type of transformed tensors
+        """
         self.transformed = result
         """List of Dragon MemoryAlloc objects on which the tensors are stored"""
         self.slices = slices
@@ -132,73 +164,108 @@ class TransformInputResult:
 
 
 class ExecuteResult:
-    """A wrapper around inference results"""
+    """A wrapper around inference results."""
 
     def __init__(self, result: t.Any, slices: list[slice]) -> None:
-        """Initialize the object"""
+        """Initialize the ExecuteResult.
+
+        :param result: Result of the execution
+        :param slices: The slices that represent which portion of the input
+        tensors belongs to which request
+        """
         self.predictions = result
+        """Result of the execution"""
         self.slices = slices
+        """The slices that represent which portion of the input
+        tensors belongs to which request"""
 
 
 class FetchInputResult:
-    """A wrapper around fetched inputs"""
+    """A wrapper around fetched inputs."""
 
     def __init__(self, result: t.List[bytes], meta: t.Optional[t.List[t.Any]]) -> None:
-        """Initialize the object"""
+        """Initialize the FetchInputResult.
+
+        :param result: List of input tensor bytes
+        :param meta: List of metadata that corresponds with the inputs
+        """
         self.inputs = result
+        """List of input tensor bytes"""
         self.meta = meta
+        """List of metadata that corresponds with the inputs"""
 
 
 class TransformOutputResult:
-    """A wrapper around inference results transformed for transmission"""
+    """A wrapper around inference results transformed for transmission."""
 
     def __init__(
         self, result: t.Any, shape: t.Optional[t.List[int]], order: str, dtype: str
     ) -> None:
-        """Initialize the OutputTransformResult"""
+        """Initialize the TransformOutputResult.
+
+        :param result: Transformed output results
+        :param shape: Shape of output results
+        :param order: Order of output results
+        :param dtype: Datatype of output results
+        """
         self.outputs = result
+        """Transformed output results"""
         self.shape = shape
+        """Shape of output results"""
         self.order = order
+        """Order of output results"""
         self.dtype = dtype
+        """Datatype of output results"""
 
 
 class CreateInputBatchResult:
-    """A wrapper around inputs batched into a single request"""
+    """A wrapper around inputs batched into a single request."""
 
     def __init__(self, result: t.Any) -> None:
-        """Initialize the object"""
+        """Initialize the CreateInputBatchResult.
+
+        :param result: Inputs batched into a single request
+        """
         self.batch = result
+        """Inputs batched into a single request"""
 
 
 class FetchModelResult:
-    """A wrapper around raw fetched models"""
+    """A wrapper around raw fetched models."""
 
     def __init__(self, result: bytes) -> None:
-        """Initialize the object"""
+        """Initialize the FetchModelResult.
+
+        :param result: The raw fetched model
+        """
         self.model_bytes: bytes = result
+        """The raw fetched model"""
 
 
 @dataclass
 class RequestBatch:
-    """A batch of aggregated inference requests"""
+    """A batch of aggregated inference requests."""
 
     requests: list[InferenceRequest]
+    """List of InferenceRequests in the batch"""
     inputs: t.Optional[TransformInputResult]
+    """Transformed batch of input tensors"""
     model_id: ModelIdentifier
+    """Model (key, descriptor) tuple"""
 
     @property
     def has_valid_requests(self) -> bool:
         """Returns whether the batch contains at least one request.
 
-        :return: True if at least one request is available
+        :returns: True if at least one request is available
         """
         return len(self.requests) > 0
 
     @property
     def has_raw_model(self) -> bool:
-        """Returns whether the batch has a raw model
+        """Returns whether the batch has a raw model.
 
-        :return: True if the batch has a raw model
+        :returns: True if the batch has a raw model
         """
         return self.raw_model is not None
 
@@ -206,16 +273,17 @@ class RequestBatch:
     def raw_model(self) -> t.Optional[t.Any]:
         """Returns the raw model to use to execute for this batch
         if it is available.
-        :return: A model if available, otherwise None"""
+
+        :returns: A model if available, otherwise None"""
         if self.has_valid_requests:
             return self.requests[0].raw_model
         return None
 
     @property
     def input_keys(self) -> t.List[FeatureStoreKey]:
-        """All input keys available in this batch's requests
+        """All input keys available in this batch's requests.
 
-        :return: All input keys belonging to requests in this batch"""
+        :returns: All input keys belonging to requests in this batch"""
         keys = []
         for request in self.requests:
             keys.extend(request.input_keys)
@@ -224,9 +292,9 @@ class RequestBatch:
 
     @property
     def output_keys(self) -> t.List[FeatureStoreKey]:
-        """All output keys available in this batch's requests
+        """All output keys available in this batch's requests.
 
-        :return: All output keys belonging to requests in this batch"""
+        :returns: All output keys belonging to requests in this batch"""
         keys = []
         for request in self.requests:
             keys.extend(request.output_keys)
@@ -235,14 +303,15 @@ class RequestBatch:
 
 
 class MachineLearningWorkerCore:
-    """Basic functionality of ML worker that is shared across all worker types"""
+    """Basic functionality of ML worker that is shared across all worker types."""
 
     @staticmethod
     def deserialize_message(
         data_blob: bytes,
         callback_factory: t.Callable[[bytes], CommChannelBase],
     ) -> InferenceRequest:
-        """Deserialize a message from a byte stream into an InferenceRequest
+        """Deserialize a message from a byte stream into an InferenceRequest.
+
         :param data_blob: The byte stream to deserialize
         :param callback_factory: A factory method that can create an instance
         of the desired concrete comm channel type
@@ -295,6 +364,13 @@ class MachineLearningWorkerCore:
 
     @staticmethod
     def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
+        """Assemble the output information based on whether the output
+        information will be in the form of TensorKeys or TensorDescriptors.
+
+        :param reply: The reply that the output belongs to
+        :returns: The list of prepared outputs, depending on the output
+        information needed in the reply
+        """
         prepared_outputs: t.List[t.Any] = []
         if reply.output_keys:
             for value in reply.output_keys:
@@ -316,13 +392,14 @@ class MachineLearningWorkerCore:
     def fetch_model(
         batch: RequestBatch, feature_stores: t.Dict[str, FeatureStore]
     ) -> FetchModelResult:
-        """Given a resource key, retrieve the raw model from a feature store
+        """Given a resource key, retrieve the raw model from a feature store.
+
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: Raw bytes of the model
-        :raises SmartSimError: if neither a key or a model are provided or the
+        :returns: Raw bytes of the model
+        :raises SmartSimError: If neither a key or a model are provided or the
         model cannot be retrieved from the feature store
-        :raises ValueError: if a feature store is not available and a raw
+        :raises ValueError: If a feature store is not available and a raw
         model is not provided"""
 
         # All requests in the same batch share the model
@@ -352,10 +429,11 @@ class MachineLearningWorkerCore:
         batch: RequestBatch, feature_stores: t.Dict[str, FeatureStore]
     ) -> t.List[FetchInputResult]:
         """Given a collection of ResourceKeys, identify the physical location
-        and input metadata
+        and input metadata.
+
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: the fetched input
+        :returns: The fetched input
         :raises ValueError: If neither an input key or an input tensor are provided
         :raises SmartSimError: If a tensor for a given key cannot be retrieved"""
         fetch_results = []
@@ -398,11 +476,12 @@ class MachineLearningWorkerCore:
         feature_stores: t.Dict[str, FeatureStore],
     ) -> t.Collection[t.Optional[FeatureStoreKey]]:
         """Given a collection of data, make it available as a shared resource in the
-        feature store
+        feature store.
+
         :param request: The request that triggered the pipeline
         :param execute_result: Results from inference
         :param feature_stores: Available feature stores used for persistence
-        :return: A collection of keys that were placed in the feature store
+        :returns: A collection of keys that were placed in the feature store
         :raises ValueError: If a feature store is not provided
         """
         if not feature_stores:
@@ -435,7 +514,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
 
         :param request: The request that triggered the pipeline
         :param device: The device on which the model must be placed
-        :return: ModelLoadResult wrapping the model loaded for the request
+        :returns: LoadModelResult wrapping the model loaded for the request
         :raises ValueError: If model reference object is not found
         :raises RuntimeError: If loading and evaluating the model failed
         """
@@ -453,7 +532,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
         :param mem_pool: The memory pool used to access batched input tensors
-        :return: The transformed inputs wrapped in a InputTransformResult
+        :returns: The transformed inputs wrapped in a TransformInputResult
         :raises ValueError: If tensors cannot be reconstructed
         :raises IndexError: If index out of range
         """
@@ -472,7 +551,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param load_result: The result of loading the model onto device memory
         :param transform_result: The result of transforming inputs for model consumption
         :param device: The device on which the model will be executed
-        :return: The result of inference wrapped in an ExecuteResult
+        :returns: The result of inference wrapped in an ExecuteResult
         :raises SmartSimError: If model is not loaded
         :raises IndexError: If memory slicing is out of range
         :raises ValueError: If tensor creation fails or is unable to evaluate the model
@@ -488,7 +567,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
 
         :param batch: The batch of requests that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
-        :return: A list of transformed outputs
+        :returns: A list of transformed outputs
         :raises IndexError: If indexing is out of range
         :raises ValueError: If transforming output fails
         """

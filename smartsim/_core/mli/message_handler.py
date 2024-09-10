@@ -48,7 +48,8 @@ class MessageHandler:
         :param order: Order of the tensor, such as row-major (c) or column-major (f)
         :param data_type: Data type of the tensor
         :param dimensions: Dimensions of the tensor
-        :raises ValueError: if building fails
+        :returns: The TensorDescriptor
+        :raises ValueError: If building fails
         """
         try:
             description = tensor_capnp.TensorDescriptor.new_message()
@@ -56,9 +57,7 @@ class MessageHandler:
             description.dataType = data_type
             description.dimensions = dimensions
         except Exception as e:
-            raise ValueError(
-                "Error building tensor descriptor."
-            ) from e  # TODO: create custom exception
+            raise ValueError("Error building tensor descriptor.") from e
 
         return description
 
@@ -77,7 +76,8 @@ class MessageHandler:
         :param keys: List of TensorKeys to apply transorm descriptor to
         :param data_type: Tranform data type of the tensor
         :param dimensions: Transform dimensions of the tensor
-        :raises ValueError: if building fails
+        :returns: The OutputDescriptor
+        :raises ValueError: If building fails
         """
         try:
             description = tensor_capnp.OutputDescriptor.new_message()
@@ -101,7 +101,8 @@ class MessageHandler:
         :param key: String to set the TensorKey
         :param feature_store_descriptor: A descriptor identifying the feature store
         containing the key
-        :raises ValueError: if building fails
+        :returns: The TensorKey
+        :raises ValueError: If building fails
         """
         try:
             tensor_key = data_references_capnp.TensorKey.new_message()
@@ -119,7 +120,8 @@ class MessageHandler:
         :param data: Model data
         :param name: Model name
         :param version: Model version
-        :raises ValueError: if building fails
+        :returns: The Model
+        :raises ValueError: If building fails
         """
         try:
             model = model_capnp.Model.new_message()
@@ -140,7 +142,8 @@ class MessageHandler:
         :param key: String to set the ModelKey
         :param feature_store_descriptor: A descriptor identifying the feature store
         containing the key
-        :raises ValueError: if building fails
+        :returns: The ModelKey
+        :raises ValueError: If building fails
         """
         try:
             model_key = data_references_capnp.ModelKey.new_message()
@@ -158,7 +161,8 @@ class MessageHandler:
         Builds a new TorchRequestAttributes message with the provided tensor type.
 
         :param tensor_type: Type of the tensor passed in
-        :raises ValueError: if building fails
+        :returns: The TorchRequestAttributes
+        :raises ValueError: If building fails
         """
         try:
             attributes = request_attributes_capnp.TorchRequestAttributes.new_message()
@@ -177,7 +181,8 @@ class MessageHandler:
 
         :param name: Name of the tensor
         :param tensor_type: Type of the tensor passed in
-        :raises ValueError: if building fails
+        :returns: The TensorFlowRequestAttributes
+        :raises ValueError: If building fails
         """
         try:
             attributes = (
@@ -195,6 +200,8 @@ class MessageHandler:
     ):
         """
         Builds a new TorchResponseAttributes message.
+
+        :returns: The TorchResponseAttributes
         """
         return response_attributes_capnp.TorchResponseAttributes.new_message()
 
@@ -204,6 +211,8 @@ class MessageHandler:
     ):
         """
         Builds a new TensorFlowResponseAttributes message.
+
+        :returns: The TensorFlowResponseAttributes
         """
         return response_attributes_capnp.TensorFlowResponseAttributes.new_message()
 
@@ -217,7 +226,7 @@ class MessageHandler:
 
         :param request: Request being built
         :param model: Model to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             class_name = model.schema.node.displayName.split(":")[-1]  # type: ignore
@@ -240,7 +249,7 @@ class MessageHandler:
 
         :param request: Request being built
         :param reply_channel: Reply channel to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             request.replyChannel.descriptor = reply_channel
@@ -260,7 +269,7 @@ class MessageHandler:
 
         :param request: Request being built
         :param inputs: Inputs to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             if inputs:
@@ -286,7 +295,7 @@ class MessageHandler:
 
         :param request: Request being built
         :param outputs: Outputs to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             request.output = outputs
@@ -304,7 +313,7 @@ class MessageHandler:
 
         :param request: Request being built
         :param output_descriptors: Output descriptors to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             request.outputDescriptors = output_descriptors
@@ -327,7 +336,7 @@ class MessageHandler:
 
         :param request: Request being built
         :param custom_attrs: Custom attributes to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             if custom_attrs is None:
@@ -374,6 +383,7 @@ class MessageHandler:
         :param outputs: Outputs to be assigned to request
         :param output_descriptors: Output descriptors to be assigned to request
         :param custom_attributes: Custom attributes to be assigned to request
+        :returns: The Request
         """
         request = request_capnp.Request.new_message()
         MessageHandler._assign_reply_channel(request, reply_channel)
@@ -390,7 +400,7 @@ class MessageHandler:
         Serializes a built request message.
 
         :param request: Request to be serialized
-        :return: Serialized request bytes
+        :returns: Serialized request bytes
         :raises ValueError: If serialization fails
         """
         display_name = request.schema.node.displayName  # type: ignore
@@ -410,7 +420,7 @@ class MessageHandler:
         Deserializes a serialized request message.
 
         :param request_bytes: Bytes to be deserialized into a request
-        :return: Deserialized request
+        :returns: Deserialized request
         :raises ValueError: If deserialization fails
         """
         try:
@@ -432,7 +442,7 @@ class MessageHandler:
 
         :param response: Response being built
         :param status: Status to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             response.status = status
@@ -446,7 +456,7 @@ class MessageHandler:
 
         :param response: Response being built
         :param message: Message to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             response.message = message
@@ -467,7 +477,7 @@ class MessageHandler:
 
         :param response: Response being built
         :param result: Result to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             if result:
@@ -498,7 +508,7 @@ class MessageHandler:
 
         :param response: Response being built
         :param custom_attrs: Custom attributes to be assigned
-        :raises ValueError: if building fails
+        :raises ValueError: If building fails
         """
         try:
             if custom_attrs is None:
@@ -540,6 +550,7 @@ class MessageHandler:
         :param message: Message to be assigned to response
         :param result: Result to be assigned to response
         :param custom_attributes: Custom attributes to be assigned to response
+        :returns: The Response
         """
         response = response_capnp.Response.new_message()
         MessageHandler._assign_status(response, status)
@@ -554,7 +565,7 @@ class MessageHandler:
         Serializes a built response message.
 
         :param response: Response to be serialized
-        :return: Serialized response bytes
+        :returns: Serialized response bytes
         :raises ValueError: If serialization fails
         """
         display_name = response.schema.node.displayName  # type: ignore
@@ -574,7 +585,7 @@ class MessageHandler:
         Deserializes a serialized response message.
 
         :param response_bytes: Bytes to be deserialized into a response
-        :return: Deserialized response
+        :returns: Deserialized response
         :raises ValueError: If deserialization fails
         """
         try:

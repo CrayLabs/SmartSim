@@ -62,7 +62,7 @@ logger = get_logger(__name__)
 
 class WorkerManager(Service):
     """An implementation of a service managing distribution of tasks to
-    machine learning workers"""
+    machine learning workers."""
 
     def __init__(
         self,
@@ -73,7 +73,7 @@ class WorkerManager(Service):
         cooldown: int = 0,
         device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
-        """Initialize the WorkerManager
+        """Initialize the WorkerManager.
 
         :param config_loader: Environment config loader for loading queues
         and feature stores
@@ -115,7 +115,7 @@ class WorkerManager(Service):
         self._device_manager = DeviceManager(WorkerDevice(self._device))
 
     def _check_feature_stores(self, batch: RequestBatch) -> bool:
-        """Ensures that all feature stores required by the request are available
+        """Ensures that all feature stores required by the request are available.
 
         :param batch: The batch of requests to validate
         :returns: False if feature store validation fails for the batch, True otherwise
@@ -146,11 +146,11 @@ class WorkerManager(Service):
         return True
 
     def _validate_batch(self, batch: RequestBatch) -> bool:
-        """Ensure the request can be processed
+        """Ensure the request can be processed.
 
         :param batch: The batch of requests to validate
-        :return: False if the request fails any validation checks, True otherwise"""
-
+        :returns: False if the request fails any validation checks, True otherwise
+        """
         if batch is None or len(batch.requests) == 0:
             return False
 
@@ -160,9 +160,7 @@ class WorkerManager(Service):
     # pylint: disable-next=too-many-statements
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
-
-        the inference pipeline"""
-
+        the inference pipeline."""
         pre_batch_time = time.perf_counter()
         try:
             batch: RequestBatch = self._dispatcher_queue.get(timeout=0.0001)
@@ -310,7 +308,10 @@ class WorkerManager(Service):
             self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
-        """Return true when the criteria to shut down the service are met."""
+        """Determine if the service can be shutdown.
+
+        :returns: True when criteria to shutdown the service are met, False otherwise
+        """
         # todo: determine shutdown criteria
         # will we receive a completion message?
         # will we let MLI mgr just kill this?

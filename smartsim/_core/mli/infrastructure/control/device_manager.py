@@ -36,8 +36,9 @@ logger = get_logger(__name__)
 
 class WorkerDevice:
     def __init__(self, name: str) -> None:
-        """Wrapper around a device to keep track of loaded Models and availability
-        :param name: name used by the toolkit to identify this device, e.g. ``cuda:0``
+        """Wrapper around a device to keep track of loaded Models and availability.
+
+        :param name: Name used by the toolkit to identify this device, e.g. ``cuda:0``
         """
         self._name = name
         """The name used by the toolkit to identify this device"""
@@ -46,11 +47,14 @@ class WorkerDevice:
 
     @property
     def name(self) -> str:
-        """The identifier of the device represented by this object"""
+        """The identifier of the device represented by this object
+
+        :returns: Name used by the toolkit to identify this device
+        """
         return self._name
 
     def add_model(self, key: str, model: t.Any) -> None:
-        """Add a reference to a model loaded on this device and assign it a key
+        """Add a reference to a model loaded on this device and assign it a key.
 
         :param key: The key under which the model is saved
         :param model: The model which is added
@@ -58,7 +62,7 @@ class WorkerDevice:
         self._models[key] = model
 
     def remove_model(self, key: str) -> None:
-        """Remove the reference to a model loaded on this device
+        """Remove the reference to a model loaded on this device.
 
         :param key: The key of the model to remove
         """
@@ -69,10 +73,10 @@ class WorkerDevice:
             raise
 
     def get_model(self, key: str) -> t.Any:
-        """Get the model corresponding to a given key
+        """Get the model corresponding to a given key.
 
-        :param key: the model key
-        :returns: the model for the given key
+        :param key: The model key
+        :returns: The model for the given key
         """
         try:
             return self._models[key]
@@ -81,15 +85,20 @@ class WorkerDevice:
             raise
 
     def __contains__(self, key: str) -> bool:
-        """Check if model with a given key is available on the device
+        """Check if model with a given key is available on the device.
 
-        :param key: the key of the model to check for existence
-        :returns: whether the model is available on the device
+        :param key: The key of the model to check for existence
+        :returns: Whether the model is available on the device
         """
         return key in self._models
 
     @contextmanager
     def get(self, key_to_remove: t.Optional[str]) -> t.Iterator["WorkerDevice"]:
+        """Get the WorkerDevice generator and optionally remove a model.
+
+        :param key_to_remove: The key of the model to optionally remove
+        :returns: WorkerDevice generator
+        """
         yield self
         if key_to_remove is not None:
             self.remove_model(key_to_remove)
@@ -101,7 +110,8 @@ class DeviceManager:
 
         The main goal of the ``DeviceManager`` is to ensure that
         the managed device is ready to be used by a worker to
-        run a given model
+        run a given model.
+
         :param device: The managed device
         """
         self._device = device
@@ -113,13 +123,13 @@ class DeviceManager:
         batch: RequestBatch,
         feature_stores: dict[str, FeatureStore],
     ) -> None:
-        """Load the model needed to execute on a batch on the managed device.
+        """Load the model needed to execute a batch on the managed device.
 
         The model is loaded by the worker.
 
-        :param worker: the worker that loads the model
-        :param batch: the batch for which the model is needed
-        :param feature_stores: feature stores where the model could be stored
+        :param worker: The worker that loads the model
+        :param batch: The batch for which the model is needed
+        :param feature_stores: Feature stores where the model could be stored
         """
 
         model_bytes = worker.fetch_model(batch, feature_stores)
@@ -132,16 +142,16 @@ class DeviceManager:
         batch: RequestBatch,
         feature_stores: dict[str, FeatureStore],
     ) -> _GeneratorContextManager[WorkerDevice]:
-        """Get the device managed by this object
+        """Get the device managed by this object.
 
-        the model needed to run the batch of requests is
-        guaranteed to be available on the model
+        The model needed to run the batch of requests is
+        guaranteed to be available on the device.
 
         :param worker: The worker that wants to access the device
         :param batch: The batch of requests
         :param feature_store: The feature store on which part of the
         data needed by the request may be stored
-        :return: A generator yielding the device
+        :returns: A generator yielding the device
         """
         model_in_request = batch.has_raw_model
 
