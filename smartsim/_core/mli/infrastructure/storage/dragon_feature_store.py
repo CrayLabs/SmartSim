@@ -40,13 +40,14 @@ logger = get_logger(__name__)
 
 
 class DragonFeatureStore(FeatureStore):
-    """A feature store backed by a dragon distributed dictionary"""
+    """A feature store backed by a dragon distributed dictionary."""
 
     def __init__(self, storage: "dragon_ddict.DDict") -> None:
-        """Initialize the DragonFeatureStore instance
+        """Initialize the DragonFeatureStore instance.
 
         :param storage: A distributed dictionary to be used as the underlying
-        storage mechanism of the feature store"""
+        storage mechanism of the feature store
+        """
         if isinstance(storage, dragon_ddict.DDict):
             descriptor = str(storage.serialize())
         else:
@@ -56,27 +57,30 @@ class DragonFeatureStore(FeatureStore):
         self._storage: t.Dict[str, t.Union[str, bytes]] = storage
 
     def _get(self, key: str) -> t.Union[str, bytes]:
-        """Retrieve a value from the underlying storage mechanism
+        """Retrieve a value from the underlying storage mechanism.
 
         :param key: The unique key that identifies the resource
-        :returns: the value identified by the key
-        :raises KeyError: if the key has not been used to store a value"""
+        :returns: The value identified by the key
+        :raises KeyError: If the key has not been used to store a value
+        """
         return self._storage[key]
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
-        """Store a value into the underlying storage mechanism
+        """Store a value into the underlying storage mechanism.
 
         :param key: The unique key that identifies the resource
         :param value: The value to store
-        :returns: the value identified by the key
-        :raises KeyError: if the key has not been used to store a value"""
+        :returns: The value identified by the key
+        :raises KeyError: If the key has not been used to store a value
+        """
         self._storage[key] = value
 
     def _contains(self, key: str) -> bool:
-        """Determine if the storage mechanism contains a given key
+        """Determine if the storage mechanism contains a given key.
 
         :param key: The unique key that identifies the resource
-        :returns: True if the key is defined, False otherwise"""
+        :returns: True if the key is defined, False otherwise
+        """
         return key in self._storage
 
     @classmethod
@@ -84,11 +88,12 @@ class DragonFeatureStore(FeatureStore):
         cls,
         descriptor: str,
     ) -> "DragonFeatureStore":
-        """A factory method that creates an instance from a descriptor string
+        """A factory method that creates an instance from a descriptor string.
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFeatureStore
-        :raises SmartSimError: if attachment to DragonFeatureStore fails"""
+        :raises SmartSimError: If attachment to DragonFeatureStore fails
+        """
         try:
             return DragonFeatureStore(dragon_ddict.DDict.attach(descriptor))
         except Exception as ex:

@@ -81,7 +81,7 @@ class BatchQueue(Queue[InferenceRequest]):
         """Time in seconds that has to be waited before flushing a non-full queue.
         The time of the first item put is 0 seconds."""
         self._batch_size = batch_size
-        """Total capacity of the queue."""
+        """Total capacity of the queue"""
         self._first_put: t.Optional[float] = None
         """Time at which the first item was put on the queue"""
         self._disposable = False
@@ -151,7 +151,8 @@ class BatchQueue(Queue[InferenceRequest]):
         return self.full() or timed_out
 
     def make_disposable(self) -> None:
-        """Set this queue as disposable, and never use it again after it gets flushed"""
+        """Set this queue as disposable, and never use it again after it gets
+        flushed."""
         self._disposable = True
 
     @property
@@ -228,7 +229,7 @@ class RequestDispatcher(Service):
         self._batch_timeout = batch_timeout
         """Time in seconds that has to be waited before flushing a non-full queue"""
         self._batch_size = batch_size
-        """Total capacity of each batch queue."""
+        """Total capacity of each batch queue"""
         incoming_channel = config_loader.get_queue()
         if incoming_channel is None:
             raise SmartSimError("No incoming channel for dispatcher")
@@ -327,7 +328,8 @@ class RequestDispatcher(Service):
         """Ensure the request can be processed.
 
         :param request: The request to validate
-        :return: False if the request fails any validation checks, True otherwise"""
+        :return: False if the request fails any validation checks, True otherwise
+        """
         checks = [
             self._check_feature_stores(request),
             self._check_model(request),
@@ -339,8 +341,7 @@ class RequestDispatcher(Service):
 
     def _on_iteration(self) -> None:
         """This method is executed repeatedly until ``Service`` shutdown
-        conditions are satisfied and cooldown is elapsed.
-        """
+        conditions are satisfied and cooldown is elapsed."""
         try:
             self._perf_timer.is_active = True
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
@@ -469,8 +470,7 @@ class RequestDispatcher(Service):
 
     def flush_requests(self) -> None:
         """Get all requests from queues which are ready to be flushed. Place all
-        available request batches in the outgoing queue.
-        """
+        available request batches in the outgoing queue."""
         for queue_list in self._queues.values():
             for queue in queue_list:
                 if queue.ready:

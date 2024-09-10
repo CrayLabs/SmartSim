@@ -53,7 +53,8 @@ class EnvironmentConfigLoader:
         :param callback_factory: A factory method that produces a callback
         channel given a descriptor
         :param queue_factory: A factory method that produces a queue
-        channel given a descriptor"""
+        channel given a descriptor
+        """
         self.queue: t.Optional[CommChannelBase] = None
         """The attached incoming event queue channel"""
         self.backbone: t.Optional[FeatureStore] = None
@@ -72,7 +73,8 @@ class EnvironmentConfigLoader:
         an environment variable. The backbone is a standalone, system-created
         feature store used to share internal information among MLI components.
 
-        :returns: The attached feature store via _SMARTSIM_INFRA_BACKBONE"""
+        :returns: The attached feature store via _SMARTSIM_INFRA_BACKBONE
+        """
         descriptor = os.getenv("_SMARTSIM_INFRA_BACKBONE", "")
 
         if not descriptor:
@@ -90,7 +92,8 @@ class EnvironmentConfigLoader:
         """Attach to a queue-like communication channel using the descriptor
         found in an environment variable.
 
-        :returns: The attached queue specified via `_SMARTSIM_REQUEST_QUEUE`"""
+        :returns: The attached queue specified via `_SMARTSIM_REQUEST_QUEUE`
+        """
         descriptor = os.getenv("_SMARTSIM_REQUEST_QUEUE", "")
 
         if not descriptor:

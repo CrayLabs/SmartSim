@@ -45,7 +45,7 @@ logger = get_logger(__name__)
 
 
 class DragonFLIChannel(cch.CommChannelBase):
-    """Passes messages by writing to a Dragon FLI Channel"""
+    """Passes messages by writing to a Dragon FLI Channel."""
 
     def __init__(
         self,
@@ -53,11 +53,11 @@ class DragonFLIChannel(cch.CommChannelBase):
         sender_supplied: bool = True,
         buffer_size: int = 0,
     ) -> None:
-        """Initialize the DragonFLIChannel instance
+        """Initialize the DragonFLIChannel instance.
 
-        :param fli_desc: the descriptor of the FLI channel to attach
-        :param sender_supplied: flag indicating if the FLI uses sender-supplied streams
-        :param buffer_size: maximum number of sent messages that can be buffered
+        :param fli_desc: The descriptor of the FLI channel to attach
+        :param sender_supplied: Flag indicating if the FLI uses sender-supplied streams
+        :param buffer_size: Maximum number of sent messages that can be buffered
         """
         super().__init__(fli_desc)
         self._fli: "fli" = fli.FLInterface.attach(fli_desc)
@@ -66,19 +66,21 @@ class DragonFLIChannel(cch.CommChannelBase):
         )
 
     def send(self, value: bytes, timeout: float = 0.001) -> None:
-        """Send a message through the underlying communication channel
+        """Send a message through the underlying communication channel.
 
-        :param timeout: maximum time to wait (in seconds) for messages to send
-        :param value: The value to send"""
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param value: The value to send
+        """
         with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
             sendh.send_bytes(value, timeout=timeout)
             logger.debug(f"DragonFLIChannel {self.descriptor!r} sent message")
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
-        """Receives message(s) through the underlying communication channel
+        """Receives message(s) through the underlying communication channel.
 
-        :param timeout: maximum time to wait (in seconds) for messages to arrive
-        :returns: the received message"""
+        :param timeout: Maximum time to wait (in seconds) for messages to arrive
+        :returns: The received message
+        """
         messages = []
         eot = False
         with self._fli.recvh(timeout=timeout) as recvh:
@@ -98,10 +100,12 @@ class DragonFLIChannel(cch.CommChannelBase):
         cls,
         descriptor: str,
     ) -> "DragonFLIChannel":
-        """A factory method that creates an instance from a descriptor string
+        """A factory method that creates an instance from a descriptor string.
 
         :param descriptor: The descriptor that uniquely identifies the resource
-        :returns: An attached DragonFLIChannel"""
+        :returns: An attached DragonFLIChannel
+        :raises: If creation of DragonFLIChanenel fails
+        """
         try:
             return DragonFLIChannel(
                 fli_desc=base64.b64decode(descriptor),
