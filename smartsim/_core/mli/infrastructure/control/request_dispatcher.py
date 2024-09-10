@@ -342,10 +342,10 @@ class RequestDispatcher(Service):
         conditions are satisfied and cooldown is elapsed.
         """
         try:
-            self._perf_timer.set_active(True)
+            self._perf_timer.is_active = True
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
         except Exception:
-            self._perf_timer.set_active(False)
+            self._perf_timer.is_active = False
         else:
             if not bytes_list:
                 exception_handler(
@@ -535,4 +535,8 @@ class RequestDispatcher(Service):
 
     def __del__(self) -> None:
         """Destroy allocated memory resources."""
-        self._mem_pool.destroy()
+        # pool may be null if a failure occurs prior to successful attach
+        pool: t.Optional[MemoryPool] = getattr(self, "_mem_pool", None)
+
+        if pool:
+            pool.destroy()
