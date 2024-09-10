@@ -24,11 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import pathlib
 import threading
 import typing as t
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
+from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -42,7 +44,6 @@ class FileSystemCommChannel(CommChannelBase):
 
         :param key: a path to the root directory of the feature store"""
         self._lock = threading.RLock()
-
         if not isinstance(key, bytes):
             super().__init__(key.as_posix().encode("utf-8"))
             self._file_path = key
@@ -55,25 +56,56 @@ class FileSystemCommChannel(CommChannelBase):
 
         self._file_path.touch()
 
-    def send(self, value: bytes) -> None:
+    def send(self, value: bytes, timeout: float = 0) -> None:
         """Send a message throuh the underlying communication channel
 
+        :param timeout: maximum time to wait (in seconds) for messages to send
         :param value: The value to send"""
-        logger.debug(
-            f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
-        )
         with self._lock:
-            self._file_path.write_bytes(value)
+            # write as text so we can add newlines as delimiters
+            with open(self._file_path, "a") as fp:
+                encoded_value = base64.b64encode(value).decode("utf-8")
+                fp.write(f"{encoded_value}\n")
+                logger.debug(f"FileSystemCommChannel {self._file_path} sent message")
 
-    def recv(self) -> bytes:
-        """Receieve a message through the underlying communication channel
+    def recv(self, timeout: float = 0) -> t.List[bytes]:
+        """Receives message(s) through the underlying communication channel
 
-        :returns: the received message"""
+        :param timeout: maximum time to wait (in seconds) for messages to arrive
+        :returns: the received message
+        :raises SmartSimError: if the descriptor points to a missing file"""
         with self._lock:
-            if self._file_path.exists():
-                incoming = self._file_path.read_bytes()
-                self._file_path.unlink()
-                return incoming
+            messages: t.List[bytes] = []
+            if not self._file_path.exists():
+                raise SmartSimError("Empty channel")
+
+            # read as text so we can split on newlines
+            with open(self._file_path, "r") as fp:
+                lines = fp.readlines()
+
+            if lines:
+                line = lines.pop(0)
+                event_bytes = base64.b64decode(line.encode("utf-8"))
+                messages.append(event_bytes)
+
+            self.clear()
+
+            # remove the first message only, write remainder back...
+            if len(lines) > 0:
+                with open(self._file_path, "w") as fp:
+                    fp.writelines(lines)
+
+                logger.debug(
+                    f"FileSystemCommChannel {self._file_path} received message"
+                )
+
+            return messages
+
+    def clear(self) -> None:
+        """Create an empty file for events"""
+        if self._file_path.exists():
+            self._file_path.unlink()
+        self._file_path.touch()
 
     @classmethod
     def from_descriptor(
@@ -91,4 +123,5 @@ class FileSystemCommChannel(CommChannelBase):
                 path = pathlib.Path(descriptor.decode("utf-8"))
             return FileSystemCommChannel(path)
         except:
-            print("failed to create FS comm channel: {descriptor}")
+            logger.warning(f"failed to create fs comm channel: {descriptor!r}")
+            raise

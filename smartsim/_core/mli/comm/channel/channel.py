@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -40,20 +41,22 @@ class CommChannelBase(ABC):
         self._descriptor = descriptor
 
     @abstractmethod
-    def send(self, value: bytes) -> None:
+    def send(self, value: bytes, timeout: float = 0) -> None:
         """Send a message through the underlying communication channel
 
+        :param timeout: maximum time to wait (in seconds) for messages to send
         :param value: The value to send"""
 
     @abstractmethod
-    def recv(self) -> t.List[bytes]:
-        """Receieve a message through the underlying communication channel
+    def recv(self, timeout: float = 0) -> t.List[bytes]:
+        """Receives message(s) through the underlying communication channel
 
+        :param timeout: maximum time to wait (in seconds) for messages to arrive
         :returns: the received message"""
 
     @property
     def descriptor(self) -> bytes:
         """Return the channel descriptor for the underlying dragon channel"""
         if isinstance(self._descriptor, str):
-            return self._descriptor.encode("utf-8")
+            return base64.b64decode(self._descriptor.encode("utf-8"))
         return self._descriptor
