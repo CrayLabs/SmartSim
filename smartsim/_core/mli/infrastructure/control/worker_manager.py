@@ -149,7 +149,7 @@ class WorkerManager(Service):
         """Ensure the request can be processed.
 
         :param batch: The batch of requests to validate
-        :return: False if the request fails any validation checks, True otherwise
+        :returns: False if the request fails any validation checks, True otherwise
         """
         if batch is None or len(batch.requests) == 0:
             return False
@@ -310,7 +310,7 @@ class WorkerManager(Service):
     def _can_shutdown(self) -> bool:
         """Determine if the service can be shutdown.
 
-        :return: True when criteria to shutdown the service are met, False otherwise
+        :returns: True when criteria to shutdown the service are met, False otherwise
         """
         # todo: determine shutdown criteria
         # will we receive a completion message?

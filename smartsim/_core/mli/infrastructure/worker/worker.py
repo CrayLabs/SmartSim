@@ -257,7 +257,7 @@ class RequestBatch:
     def has_valid_requests(self) -> bool:
         """Returns whether the batch contains at least one request.
 
-        :return: True if at least one request is available
+        :returns: True if at least one request is available
         """
         return len(self.requests) > 0
 
@@ -265,7 +265,7 @@ class RequestBatch:
     def has_raw_model(self) -> bool:
         """Returns whether the batch has a raw model.
 
-        :return: True if the batch has a raw model
+        :returns: True if the batch has a raw model
         """
         return self.raw_model is not None
 
@@ -274,7 +274,7 @@ class RequestBatch:
         """Returns the raw model to use to execute for this batch
         if it is available.
 
-        :return: A model if available, otherwise None"""
+        :returns: A model if available, otherwise None"""
         if self.has_valid_requests:
             return self.requests[0].raw_model
         return None
@@ -283,7 +283,7 @@ class RequestBatch:
     def input_keys(self) -> t.List[FeatureStoreKey]:
         """All input keys available in this batch's requests.
 
-        :return: All input keys belonging to requests in this batch"""
+        :returns: All input keys belonging to requests in this batch"""
         keys = []
         for request in self.requests:
             keys.extend(request.input_keys)
@@ -294,7 +294,7 @@ class RequestBatch:
     def output_keys(self) -> t.List[FeatureStoreKey]:
         """All output keys available in this batch's requests.
 
-        :return: All output keys belonging to requests in this batch"""
+        :returns: All output keys belonging to requests in this batch"""
         keys = []
         for request in self.requests:
             keys.extend(request.output_keys)
@@ -368,7 +368,7 @@ class MachineLearningWorkerCore:
         information will be in the form of TensorKeys or TensorDescriptors.
 
         :param reply: The reply that the output belongs to
-        :return: The list of prepared outputs, depending on the output
+        :returns: The list of prepared outputs, depending on the output
         information needed in the reply
         """
         prepared_outputs: t.List[t.Any] = []
@@ -396,7 +396,7 @@ class MachineLearningWorkerCore:
 
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: Raw bytes of the model
+        :returns: Raw bytes of the model
         :raises SmartSimError: If neither a key or a model are provided or the
         model cannot be retrieved from the feature store
         :raises ValueError: If a feature store is not available and a raw
@@ -433,7 +433,7 @@ class MachineLearningWorkerCore:
 
         :param batch: The batch of requests that triggered the pipeline
         :param feature_stores: Available feature stores used for persistence
-        :return: The fetched input
+        :returns: The fetched input
         :raises ValueError: If neither an input key or an input tensor are provided
         :raises SmartSimError: If a tensor for a given key cannot be retrieved"""
         fetch_results = []
@@ -481,7 +481,7 @@ class MachineLearningWorkerCore:
         :param request: The request that triggered the pipeline
         :param execute_result: Results from inference
         :param feature_stores: Available feature stores used for persistence
-        :return: A collection of keys that were placed in the feature store
+        :returns: A collection of keys that were placed in the feature store
         :raises ValueError: If a feature store is not provided
         """
         if not feature_stores:
@@ -514,7 +514,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
 
         :param request: The request that triggered the pipeline
         :param device: The device on which the model must be placed
-        :return: LoadModelResult wrapping the model loaded for the request"""
+        :returns: LoadModelResult wrapping the model loaded for the request"""
 
     @staticmethod
     @abstractmethod
@@ -529,7 +529,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
         :param mem_pool: The memory pool used to access batched input tensors
-        :return: The transformed inputs wrapped in a TransformInputResult"""
+        :returns: The transformed inputs wrapped in a TransformInputResult"""
 
     @staticmethod
     @abstractmethod
@@ -545,7 +545,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param load_result: The result of loading the model onto device memory
         :param transform_result: The result of transforming inputs for model consumption
         :param device: The device on which the model will be executed
-        :return: The result of inference wrapped in an ExecuteResult"""
+        :returns: The result of inference wrapped in an ExecuteResult"""
 
     @staticmethod
     @abstractmethod
@@ -557,4 +557,4 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
 
         :param batch: The batch of requests that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
-        :return: A list of transformed outputs"""
+        :returns: A list of transformed outputs"""

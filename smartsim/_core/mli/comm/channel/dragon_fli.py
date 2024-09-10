@@ -79,7 +79,7 @@ class DragonFLIChannel(cch.CommChannelBase):
         """Receives message(s) through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
-        :returns: The received message
+        :returns: The received message(s)
         """
         messages = []
         eot = False
@@ -104,7 +104,7 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFLIChannel
-        :raises: If creation of DragonFLIChanenel fails
+        :raises Exception: If creation of DragonFLIChanenel fails
         """
         try:
             return DragonFLIChannel(

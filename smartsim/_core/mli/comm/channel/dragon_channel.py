@@ -118,7 +118,7 @@ class DragonCommChannel(cch.CommChannelBase):
         """Receives message(s) through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
-        :returns: The received message
+        :returns: The received message(s)
         """
         with self._channel.recvh(timeout=timeout) as recvh:
             messages: t.List[bytes] = []

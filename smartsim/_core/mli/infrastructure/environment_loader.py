@@ -70,10 +70,11 @@ class EnvironmentConfigLoader:
 
     def get_backbone(self) -> t.Optional[FeatureStore]:
         """Attach to the backbone feature store using the descriptor found in
-        an environment variable. The backbone is a standalone, system-created
-        feature store used to share internal information among MLI components.
+        the environment variable `_SMARTSIM_INFRA_BACKBONE`. The backbone is
+        a standalone, system-created feature store used to share internal
+        information among MLI components.
 
-        :returns: The attached feature store via _SMARTSIM_INFRA_BACKBONE
+        :returns: The attached feature store via `_SMARTSIM_INFRA_BACKBONE`
         """
         descriptor = os.getenv("_SMARTSIM_INFRA_BACKBONE", "")
 
@@ -90,7 +91,7 @@ class EnvironmentConfigLoader:
 
     def get_queue(self) -> t.Optional[CommChannelBase]:
         """Attach to a queue-like communication channel using the descriptor
-        found in an environment variable.
+        found in the environment variable `_SMARTSIM_REQUEST_QUEUE`.
 
         :returns: The attached queue specified via `_SMARTSIM_REQUEST_QUEUE`
         """

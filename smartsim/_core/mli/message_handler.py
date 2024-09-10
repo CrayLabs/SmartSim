@@ -48,7 +48,7 @@ class MessageHandler:
         :param order: Order of the tensor, such as row-major (c) or column-major (f)
         :param data_type: Data type of the tensor
         :param dimensions: Dimensions of the tensor
-        :return: The TensorDescriptor
+        :returns: The TensorDescriptor
         :raises ValueError: If building fails
         """
         try:
@@ -76,7 +76,7 @@ class MessageHandler:
         :param keys: List of TensorKeys to apply transorm descriptor to
         :param data_type: Tranform data type of the tensor
         :param dimensions: Transform dimensions of the tensor
-        :return: The OutputDescriptor
+        :returns: The OutputDescriptor
         :raises ValueError: If building fails
         """
         try:
@@ -101,7 +101,7 @@ class MessageHandler:
         :param key: String to set the TensorKey
         :param feature_store_descriptor: A descriptor identifying the feature store
         containing the key
-        :return: The TensorKey
+        :returns: The TensorKey
         :raises ValueError: If building fails
         """
         try:
@@ -120,7 +120,7 @@ class MessageHandler:
         :param data: Model data
         :param name: Model name
         :param version: Model version
-        :return: The Model
+        :returns: The Model
         :raises ValueError: If building fails
         """
         try:
@@ -142,7 +142,7 @@ class MessageHandler:
         :param key: String to set the ModelKey
         :param feature_store_descriptor: A descriptor identifying the feature store
         containing the key
-        :return: The ModelKey
+        :returns: The ModelKey
         :raises ValueError: If building fails
         """
         try:
@@ -161,7 +161,7 @@ class MessageHandler:
         Builds a new TorchRequestAttributes message with the provided tensor type.
 
         :param tensor_type: Type of the tensor passed in
-        :return: The TorchRequestAttributes
+        :returns: The TorchRequestAttributes
         :raises ValueError: If building fails
         """
         try:
@@ -181,7 +181,7 @@ class MessageHandler:
 
         :param name: Name of the tensor
         :param tensor_type: Type of the tensor passed in
-        :return: The TensorFlowRequestAttributes
+        :returns: The TensorFlowRequestAttributes
         :raises ValueError: If building fails
         """
         try:
@@ -201,7 +201,7 @@ class MessageHandler:
         """
         Builds a new TorchResponseAttributes message.
 
-        :return: The TorchResponseAttributes
+        :returns: The TorchResponseAttributes
         """
         return response_attributes_capnp.TorchResponseAttributes.new_message()
 
@@ -212,7 +212,7 @@ class MessageHandler:
         """
         Builds a new TensorFlowResponseAttributes message.
 
-        :return: The TensorFlowResponseAttributes
+        :returns: The TensorFlowResponseAttributes
         """
         return response_attributes_capnp.TensorFlowResponseAttributes.new_message()
 
@@ -383,7 +383,7 @@ class MessageHandler:
         :param outputs: Outputs to be assigned to request
         :param output_descriptors: Output descriptors to be assigned to request
         :param custom_attributes: Custom attributes to be assigned to request
-        :return: The Request
+        :returns: The Request
         """
         request = request_capnp.Request.new_message()
         MessageHandler._assign_reply_channel(request, reply_channel)
@@ -400,7 +400,7 @@ class MessageHandler:
         Serializes a built request message.
 
         :param request: Request to be serialized
-        :return: Serialized request bytes
+        :returns: Serialized request bytes
         """
         return request.to_bytes()
 
@@ -410,7 +410,7 @@ class MessageHandler:
         Deserializes a serialized request message.
 
         :param request_bytes: Bytes to be deserialized into a request
-        :return: Deserialized request
+        :returns: Deserialized request
         """
         bytes_message = request_capnp.Request.from_bytes(
             request_bytes, traversal_limit_in_words=2**63
@@ -536,7 +536,7 @@ class MessageHandler:
         :param message: Message to be assigned to response
         :param result: Result to be assigned to response
         :param custom_attributes: Custom attributes to be assigned to response
-        :return: The Response
+        :returns: The Response
         """
         response = response_capnp.Response.new_message()
         MessageHandler._assign_status(response, status)
@@ -551,7 +551,7 @@ class MessageHandler:
         Serializes a built response message.
 
         :param response: Response to be serialized
-        :return: Serialized response bytes
+        :returns: Serialized response bytes
         """
         return response.to_bytes()
 
@@ -561,7 +561,7 @@ class MessageHandler:
         Deserializes a serialized response message.
 
         :param response_bytes: Bytes to be deserialized into a response
-        :return: Deserialized response
+        :returns: Deserialized response
         """
         bytes_message = response_capnp.Response.from_bytes(
             response_bytes, traversal_limit_in_words=2**63

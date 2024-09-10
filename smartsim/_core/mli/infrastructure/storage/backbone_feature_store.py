@@ -285,7 +285,7 @@ class EventBroadcaster:
         """Broadcasts all buffered events to registered event consumers.
 
         :param timeout: Maximum time to wait (in seconds) for messages to send
-        :return: The number of events broadcasted to consumers
+        :returns: The number of events broadcasted to consumers
         :raises SmartSimError: If broadcasting fails
         """
         # allow descriptors to be empty since events are buffered
