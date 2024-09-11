@@ -67,7 +67,7 @@ Supported Versions
     .. group-tab:: MacOS
 
         .. list-table:: Supported System for Pre-built Wheels
-           :widths: 50 50 50
+           :widths: 50 50 50 50
            :header-rows: 1
            :align: center
 
@@ -79,7 +79,7 @@ Supported Versions
              - 3.9 - 3.1
         
         .. list-table:: Support for various machine learning libraries
-           :widths: 50 50 50
+           :widths: 50 50 50 50
            :header-rows: 1
            :align: center
 
@@ -96,7 +96,7 @@ Supported Versions
     .. group-tab:: Linux
 
         .. list-table:: Supported System for Pre-built Wheels
-           :widths: 50 50 50
+           :widths: 50 50 50 50
            :header-rows: 1
            :align: center
 
@@ -108,7 +108,7 @@ Supported Versions
              - 3.9 - 3.11
 
        .. list-table:: Support for various machine learning libraries
-             :widths: 50 50 50
+             :widths: 50 50 50 50
              :header-rows: 1
              :align: center
 
