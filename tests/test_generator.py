@@ -91,6 +91,9 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     def __init__(self):
         self.name = "entity_name"
 
+    def as_program_arguments(self):
+        return ("echo", "Hello", "World!")
+
 
 class MockJob(BaseJob):
     """Mock Job for testing."""
@@ -184,6 +187,19 @@ def test_copy_directory(get_gen_copy_dir, generator_instance):
     assert osp.isdir(copied_folder)
 
 
+def test_symlink_file(get_gen_symlink_dir, generator_instance):
+    """Test Generator._symlink_files helper function with file list"""
+    symlink_files = sorted(glob(get_gen_symlink_dir + "/*"))
+    files = EntityFiles(symlink=symlink_files)
+    generator_instance._symlink_files(files, generator_instance.root)
+    symlinked_file = generator_instance.root / os.path.basename(symlink_files[0])
+    assert osp.isfile(symlinked_file)
+    assert symlinked_file.is_symlink()
+    assert os.fspath(symlinked_file.resolve()) == osp.join(
+        osp.realpath(get_gen_symlink_dir), "mock2.txt"
+    )
+
+
 def test_symlink_directory(generator_instance, get_gen_symlink_dir):
     """Test Generator._symlink_files helper function with directory"""
     files = EntityFiles(symlink=get_gen_symlink_dir)
@@ -196,19 +212,6 @@ def test_symlink_directory(generator_instance, get_gen_symlink_dir):
         listdir(get_gen_symlink_dir), listdir(symlinked_folder)
     ):
         assert written == correct
-
-
-def test_symlink_file(get_gen_symlink_dir, generator_instance):
-    """Test Generator._symlink_files helper function with file list"""
-    symlink_files = sorted(glob(get_gen_symlink_dir + "/*"))
-    files = EntityFiles(symlink=symlink_files)
-    generator_instance._symlink_files(files, generator_instance.root)
-    symlinked_file = generator_instance.root / os.path.basename(symlink_files[0])
-    assert osp.isfile(symlinked_file)
-    assert symlinked_file.is_symlink()
-    assert os.fspath(symlinked_file.resolve()) == osp.join(
-        osp.realpath(get_gen_symlink_dir), "mock2.txt"
-    )
 
 
 def test_write_tagged_file(fileutils, generator_instance):

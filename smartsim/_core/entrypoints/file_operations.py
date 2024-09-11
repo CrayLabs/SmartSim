@@ -49,7 +49,7 @@ def _abspath(input_path: str) -> pathlib.Path:
     """Helper function to check that paths are absolute"""
     path = pathlib.Path(input_path)
     if not path.is_absolute():
-        raise ValueError(f"path `{path}` must be absolute")
+        raise ValueError(f"Path `{path}` must be absolute.")
     return path
 
 
@@ -63,13 +63,19 @@ def _make_substitution(
 
 
 def _prepare_param_dict(param_dict: str) -> dict[str, t.Any]:
+    """Decode and deserialize a base64-encoded parameter dictionary.
+
+    This function takes a base64-encoded string representation of a dictionary,
+    decodes it, and then deserializes it using pickle. It performs validation
+    to ensure the resulting object is a non-empty dictionary.
+    """
     decoded_dict = base64.b64decode(param_dict)
-    encoded_param_dict = pickle.loads(decoded_dict)
-    if not encoded_param_dict:
+    deserialized_dict = pickle.loads(decoded_dict)
+    if not deserialized_dict:
         raise ValueError("param dictionary is empty")
-    if not isinstance(encoded_param_dict, dict):
+    if not isinstance(deserialized_dict, dict):
         raise TypeError("param dict is not a valid dictionary")
-    return encoded_param_dict
+    return deserialized_dict
 
 
 def _replace_tags_in(
@@ -176,7 +182,7 @@ def configure_file(parsed_args: argparse.Namespace) -> None:
     .. highlight:: bash
     .. code-block:: bash
             python -m smartsim._core.entrypoints.file_operations \
-                configure_file /absolute/file/source/pat /absolute/file/dest/path \
+                configure_file /absolute/file/source/path /absolute/file/dest/path \
                 tag_deliminator param_dict
 
     /absolute/file/source/path: The tagged files the search and replace operations
@@ -189,20 +195,22 @@ def configure_file(parsed_args: argparse.Namespace) -> None:
 
     """
     tag_delimiter = parsed_args.tag_delimiter
-
     param_dict = _prepare_param_dict(parsed_args.param_dict)
-
     substitutions = tuple(
         _make_substitution(k, v, tag_delimiter) for k, v in param_dict.items()
     )
-
-    # Set the lines to iterate over
-    with open(parsed_args.source, "r+", encoding="utf-8") as file_stream:
-        lines = [_replace_tags_in(line, substitutions) for line in file_stream]
-
-    # write configured file to destination specified
-    with open(parsed_args.dest, "w+", encoding="utf-8") as file_stream:
-        file_stream.writelines(lines)
+    try:
+        # Set the lines to iterate over
+        with open(parsed_args.source, "r+", encoding="utf-8") as file_stream:
+            try:
+                lines = [_replace_tags_in(line, substitutions) for line in file_stream]
+            except IOError as e:
+                raise e from None
+        # write configured file to destination specified
+        with open(parsed_args.dest, "w+", encoding="utf-8") as file_stream:
+            file_stream.writelines(lines)
+    except (FileNotFoundError, PermissionError) as e:
+        raise e from None
 
 
 def configure_directory(parsed_args: argparse.Namespace) -> None:
