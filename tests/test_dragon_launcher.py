@@ -37,7 +37,10 @@ import pytest
 import zmq
 
 import smartsim._core.config
-from smartsim._core._cli.scripts.dragon_install import create_dotenv
+from smartsim._core._cli.scripts.dragon_install import (
+    DEFAULT_DRAGON_VERSION,
+    create_dotenv,
+)
 from smartsim._core.config.config import get_config
 from smartsim._core.launcher.dragon.dragonLauncher import (
     DragonConnector,
@@ -494,7 +497,7 @@ def test_load_env_env_file_created(monkeypatch: pytest.MonkeyPatch, test_dir: st
 
     with monkeypatch.context() as ctx:
         ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
-        create_dotenv(mock_dragon_root)
+        create_dotenv(mock_dragon_root, DEFAULT_DRAGON_VERSION)
         dragon_conf = smartsim._core.config.CONFIG.dragon_dotenv
 
         # verify config does exist
@@ -517,7 +520,7 @@ def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
     with monkeypatch.context() as ctx:
         ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
-        create_dotenv(mock_dragon_root)
+        create_dotenv(mock_dragon_root, DEFAULT_DRAGON_VERSION)
 
         # load config w/launcher
         connector = DragonConnector()
@@ -541,7 +544,7 @@ def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
     with monkeypatch.context() as ctx:
         ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
-        create_dotenv(mock_dragon_root)
+        create_dotenv(mock_dragon_root, DEFAULT_DRAGON_VERSION)
 
         # load config w/launcher
         connector = DragonConnector()

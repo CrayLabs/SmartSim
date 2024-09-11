@@ -33,7 +33,12 @@ from pathlib import Path
 
 from tabulate import tabulate
 
-from smartsim._core._cli.scripts.dragon_install import install_dragon
+from smartsim._core._cli.scripts.dragon_install import (
+    DEFAULT_DRAGON_REPO,
+    DEFAULT_DRAGON_VERSION,
+    DragonInstallRequest,
+    install_dragon,
+)
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
@@ -380,6 +385,8 @@ def execute(
     keydb = args.keydb
     device = Device(args.device.lower())
     is_dragon_requested = args.dragon
+    dragon_repo = args.dragon_repo
+    dragon_version = args.dragon_version
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name
@@ -409,9 +416,17 @@ def execute(
         version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
-    if is_dragon_requested:
-        install_to = CONFIG.core_path / ".dragon"
-        return_code = install_dragon(install_to)
+    if is_dragon_requested or dragon_repo or dragon_version:
+        try:
+            request = DragonInstallRequest(
+                CONFIG.core_path / ".dragon",
+                dragon_repo,
+                dragon_version,
+            )
+            return_code = install_dragon(request)
+        except ValueError as ex:
+            return_code = 2
+            logger.error(" ".join(ex.args))
 
         if return_code == 0:
             logger.info("Dragon installation complete")
@@ -482,6 +497,21 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         default=False,
         help="Install the dragon runtime",
+    )
+    parser.add_argument(
+        "--dragon-repo",
+        default=None,
+        type=str,
+        help=(
+            "Specify a git repo containing dragon release assets "
+            f"(e.g. {DEFAULT_DRAGON_REPO})"
+        ),
+    )
+    parser.add_argument(
+        "--dragon-version",
+        default=None,
+        type=str,
+        help=f"Specify the dragon version to install (e.g. {DEFAULT_DRAGON_VERSION})",
     )
     parser.add_argument(
         "--only_python_packages",
