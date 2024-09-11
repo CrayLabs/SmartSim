@@ -39,17 +39,17 @@ _SUPPORTED_OPERATORS = ("==", ">=", ">", "<=", "<")
 
 
 @pytest.mark.parametrize(
-    "spec, name, version",
+    "spec, name, pin",
     (
         pytest.param("foo", "foo", None, id="Just Name"),
-        pytest.param("foo==1", "foo", Version_("1"), id="With Major"),
-        pytest.param("foo==1.2", "foo", Version_("1.2"), id="With Minor"),
-        pytest.param("foo==1.2.3", "foo", Version_("1.2.3"), id="With Patch"),
+        pytest.param("foo==1", "foo", "==1", id="With Major"),
+        pytest.param("foo==1.2", "foo", "==1.2", id="With Minor"),
+        pytest.param("foo==1.2.3", "foo", "==1.2.3", id="With Patch"),
         *(
             pytest.param(
                 f"foo{symbol}1.2.3{tag}",
                 "foo",
-                Version_(f"1.2.3{tag}"),
+                f"{symbol}1.2.3{tag}",
                 id=f"{symbol=} | {tag=}",
             )
             for symbol in _SUPPORTED_OPERATORS
@@ -57,10 +57,10 @@ _SUPPORTED_OPERATORS = ("==", ">=", ">", "<=", "<")
         ),
     ),
 )
-def test_parse_requirement_name_and_version(spec, name, version):
-    p_name, p_version, _ = parse_requirement(spec)
+def test_parse_requirement_name_and_version(spec, name, pin):
+    p_name, p_pin, _ = parse_requirement(spec)
     assert p_name == name
-    assert p_version == version
+    assert p_pin == pin
 
 
 # fmt: off
