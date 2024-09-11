@@ -46,7 +46,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
-from urllib.request import build_opener, install_opener, urlretrieve
+from urllib.request import build_opener, install_opener, urlcleanup, urlretrieve
 
 # NOTE: This will be imported by setup.py and hence no smartsim related
 # items should be imported into this file.
@@ -824,8 +824,11 @@ class _WebArchive(_WebLocation):
             opener.addheaders = list(self._headers.items())
             install_opener(opener)
 
-        urlretrieve(self.url, target)
-        return Path(target).resolve()
+        try:
+            file, _ = urlretrieve(self.url, target)
+            return Path(file).resolve()
+        finally:
+            urlcleanup()
 
 
 class _ExtractableWebArchive(_WebArchive, ABC):
@@ -854,7 +857,6 @@ class _WebTGZ(_ExtractableWebArchive):
         :param url: URL pointing to a .tar.gz file
         :param headers: Additional headers required to download the file"""
         super().__init__(headers)
-
         self._url = url
 
     @property

@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 DEFAULT_DRAGON_REPO = "DragonHPC/dragon"
 DEFAULT_DRAGON_VERSION = "0.9"
 DEFAULT_DRAGON_VERSION_TAG = f"v{DEFAULT_DRAGON_VERSION}"
-_GH_TOKEN = "GH_TOKEN"
+_GH_TOKEN = "SMARTSIM_DRAGON_TOKEN"
 
 
 class DragonInstallRequest:
@@ -68,7 +68,7 @@ class DragonInstallRequest:
         if not self.pkg_version or not match:
             raise ValueError("Invalid dragon version. Examples: `0.9, 0.91, 0.10`")
 
-        # attempting to retrieve from a non-default repository requires GH_TOKEN
+        # attempting to retrieve from a non-default repository requires an auth token
         if self.repo_name.lower() != DEFAULT_DRAGON_REPO.lower() and not self.raw_token:
             raise ValueError(
                 f"An access token must be available to access {self.repo_name}. "
