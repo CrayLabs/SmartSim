@@ -65,8 +65,8 @@ class DragonFeatureStore(FeatureStore):
         """
         try:
             return self._storage[key]
-        except KeyError:
-            raise KeyError(f"Key not found in FeatureStore: {key}")
+        except KeyError as e:
+            raise KeyError(f"Key not found in FeatureStore: {key}") from e
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
         """Store a value into the underlying storage mechanism.
