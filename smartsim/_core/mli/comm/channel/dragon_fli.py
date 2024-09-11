@@ -39,6 +39,7 @@ import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim._core.mli.comm.channel.dragon_channel import create_local
+from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -70,10 +71,14 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         :param timeout: Maximum time to wait (in seconds) for messages to send
         :param value: The value to send
+        :raises SmartSimError: If sending message fails
         """
-        with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
-            sendh.send_bytes(value, timeout=timeout)
-            logger.debug(f"DragonFLIChannel {self.descriptor!r} sent message")
+        try:
+            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
+                sendh.send_bytes(value, timeout=timeout)
+                logger.debug(f"DragonFLIChannel {self.descriptor!r} sent message")
+        except Exception as e:
+            raise SmartSimError("Error sending message") from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
@@ -93,6 +98,8 @@ class DragonFLIChannel(cch.CommChannelBase):
                     )
                 except fli.FLIEOT:
                     eot = True
+                except Exception:
+                    break
         return messages
 
     @classmethod
@@ -104,13 +111,13 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFLIChannel
-        :raises Exception: If creation of DragonFLIChanenel fails
+        :raises SmartSimError: If creation of DragonFLIChanenel fails
         """
         try:
             return DragonFLIChannel(
                 fli_desc=base64.b64decode(descriptor),
                 sender_supplied=True,
             )
-        except:
+        except Exception as e:
             logger.error(f"Error while creating DragonFLIChannel: {descriptor}")
-            raise
+            raise SmartSimError("Error while creating DragonFLIChannel") from e

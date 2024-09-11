@@ -110,10 +110,14 @@ class DragonCommChannel(cch.CommChannelBase):
 
         :param value: The value to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
+        :raises SmartSimError: If sending message fails
         """
-        with self._channel.sendh(timeout=timeout) as sendh:
-            sendh.send_bytes(value)
-            logger.debug(f"DragonCommChannel {self.descriptor!r} sent message")
+        try:
+            with self._channel.sendh(timeout=timeout) as sendh:
+                sendh.send_bytes(value)
+                logger.debug(f"DragonCommChannel {self.descriptor!r} sent message")
+        except Exception as e:
+            raise SmartSimError("Error sending message") from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
