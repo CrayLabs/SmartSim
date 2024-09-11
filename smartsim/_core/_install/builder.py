@@ -814,8 +814,7 @@ class _WebArchive(_WebLocation):
         """Retrieve the remote file
 
         :param target: The desired target path for writing the downloaded file
-        :returns: If the file can be successfully downloaded, the path to the
-        downloaded file. Otherwise, None"""
+        :returns: The path to the downloaded file"""
         target = Path(target)
         if target.is_dir():
             target = target / self.name
