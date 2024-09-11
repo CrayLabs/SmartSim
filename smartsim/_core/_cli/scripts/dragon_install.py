@@ -329,9 +329,9 @@ def install_package(request: DragonInstallRequest, asset_dir: pathlib.Path) -> i
 
     try:
         wheels = list(map(str, found_wheels))
-        pkg_list = "\n\t".join(wheels)
-        logger.debug(f"Installing packages:\n\t{pkg_list}")
-        pip("install", *wheels)
+        for wheel_path in wheels:
+            logger.info(f"Installing package: {wheel_path}")
+            pip("install", wheel_path)
     except Exception:
         logger.error(f"Unable to install from {asset_dir}")
         return 1
