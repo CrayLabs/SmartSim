@@ -46,7 +46,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
-from urllib.request import build_opener, install_opener, urlcleanup, urlretrieve
+from urllib.request import build_opener, install_opener, urlretrieve
 
 # NOTE: This will be imported by setup.py and hence no smartsim related
 # items should be imported into this file.
