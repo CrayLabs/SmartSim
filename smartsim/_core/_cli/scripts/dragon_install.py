@@ -4,12 +4,13 @@ import re
 import shutil
 import sys
 import typing as t
-from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from github import Github, Repository, UnknownObjectException
+from github import Github
 from github.Auth import Token
+from github.GitRelease import GitRelease
 from github.GitReleaseAsset import GitReleaseAsset
+from github.Repository import Repository
 
 from smartsim._core._cli.utils import pip
 from smartsim._core._install.builder import _WebTGZ
@@ -61,11 +62,11 @@ class DragonInstallRequest:
         :raises: ValueError if any value fails validation"""
         if not self.repo_name or len(self.repo_name.split("/")) != 2:
             raise ValueError(
-                "Invalid dragon repository name. Example: `dragonhpc/dragon`"
+                f"Invalid dragon repository name. Example: `dragonhpc/dragon`"
             )
 
         # version must match standard dragon tag & filename format `vX.YZ`
-        match = re.match("^\d\.\d+$", self.pkg_version)
+        match = re.match(r"^\d\.\d+$", self.pkg_version)
         if not self.pkg_version or not match:
             raise ValueError("Invalid dragon version. Examples: `0.9, 0.91, 0.10`")
 
@@ -152,6 +153,14 @@ def _pin_filter(asset_name: str, dragon_version: str) -> bool:
     return f"dragon-{dragon_version}" in asset_name
 
 
+def _get_all_releases(dragon_repo: Repository) -> t.Collection[GitRelease]:
+    """Retrieve all available releases for the configured dragon repository
+
+    :returns: A list of GitRelease"""
+    all_releases = [release for release in list(dragon_repo.get_releases())]
+    return all_releases
+
+
 def _get_release_assets(request: DragonInstallRequest) -> t.Collection[GitReleaseAsset]:
     """Retrieve a collection of available assets for all releases that satisfy
     the dragon version pin
@@ -160,14 +169,14 @@ def _get_release_assets(request: DragonInstallRequest) -> t.Collection[GitReleas
     :returns: A collection of release assets"""
     auth = get_auth_token(request)
     git = Github(auth=auth)
-
     dragon_repo = git.get_repo(request.repo_name)
 
     if dragon_repo is None:
         raise SmartSimCLIActionCancelled("Unable to locate dragon repo")
 
-    all_releases = [release for release in list(dragon_repo.get_releases())]
-    all_releases = sorted(all_releases, key=lambda r: r.published_at, reverse=True)
+    all_releases = sorted(
+        _get_all_releases(dragon_repo), key=lambda r: r.published_at, reverse=True
+    )
 
     # filter the list of releases to include only the target version
     releases = [
@@ -339,15 +348,16 @@ def cleanup(
     if not archive_path:
         return
 
+    if archive_path.exists() and archive_path.is_file():
+        archive_path.unlink()
+        archive_path = archive_path.parent
+
     if archive_path.exists() and archive_path.is_dir():
         shutil.rmtree(archive_path, ignore_errors=True)
         logger.debug(f"Deleted temporary files in: {archive_path}")
 
 
-def install_dragon(
-    # extraction_dir: t.Union[str, os.PathLike[str]], git_repo: str
-    request: DragonInstallRequest,
-) -> int:
+def install_dragon(request: DragonInstallRequest) -> int:
     """Retrieve a dragon runtime appropriate for the current platform
     and install to the current python environment
 

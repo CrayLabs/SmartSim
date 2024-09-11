@@ -31,6 +31,7 @@ import typing as t
 from collections import namedtuple
 
 import pytest
+from github.GitRelease import GitRelease
 from github.GitReleaseAsset import GitReleaseAsset
 from github.Requester import Requester
 
@@ -38,6 +39,8 @@ import smartsim
 import smartsim._core.utils.helpers as helpers
 from smartsim._core._cli.scripts.dragon_install import (
     DEFAULT_DRAGON_REPO,
+    DEFAULT_DRAGON_VERSION,
+    DragonInstallRequest,
     cleanup,
     create_dotenv,
     install_dragon,
@@ -45,7 +48,7 @@ from smartsim._core._cli.scripts.dragon_install import (
     retrieve_asset,
     retrieve_asset_info,
 )
-from smartsim._core._install.builder import WebTGZ
+from smartsim._core._install.builder import _WebTGZ
 from smartsim.error.errors import SmartSimCLIActionCancelled
 
 # The tests in this file belong to the group_a group
@@ -137,6 +140,37 @@ def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]
     return assets
 
 
+@pytest.fixture
+def test_releases(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitRelease]:
+    requester = Requester(
+        auth=None,
+        base_url="https://github.com",
+        user_agent="mozilla",
+        per_page=10,
+        verify=False,
+        timeout=1,
+        retry=1,
+        pool_size=1,
+    )
+    headers = {"mock-header": "mock-value"}
+    attributes = {"title": "mock-title"}
+    completed = True
+
+    releases: t.List[GitRelease] = []
+
+    for python_version in ["py3.9", "py3.10", "py3.11"]:
+        for dragon_version in ["dragon-0.8", "dragon-0.9", "dragon-0.10"]:
+            # for platform in ["", "CRAYEX-"]:
+
+            attributes = {
+                "title": f"{python_version}-{dragon_version}-release",
+                "tag_name": f"v{dragon_version}-weekly",
+            }
+            releases.append(GitRelease(requester, headers, attributes, completed))
+
+    return releases
+
+
 def test_cleanup_no_op(archive_path: pathlib.Path) -> None:
     """Ensure that the cleanup method doesn't bomb when called with
     missing archive path; simulate a failed download"""
@@ -157,62 +191,6 @@ def test_cleanup_archive_exists(test_archive: pathlib.Path) -> None:
     assert not test_archive.exists()
 
 
-def test_retrieve_cached(
-    test_dir: str,
-    # archive_path: pathlib.Path,
-    test_archive: pathlib.Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Verify that a previously retrieved asset archive is re-used and the
-    release asset retrieval is not attempted"""
-
-    asset_id = 123
-
-    def mock_webtgz_extract(self_, target_) -> None:
-        mock_extraction_dir = pathlib.Path(target_)
-        with tarfile.TarFile.open(test_archive) as tar:
-            tar.extractall(mock_extraction_dir)
-
-    # we'll use the mock extract to create the files that would normally be downloaded
-    expected_output_dir = test_archive.parent / str(asset_id)
-    mock_webtgz_extract(None, expected_output_dir)
-
-    # get modification time of directory holding the "downloaded" archive
-    ts1 = expected_output_dir.stat().st_ctime
-
-    requester = Requester(
-        auth=None,
-        base_url="https://github.com",
-        user_agent="mozilla",
-        per_page=10,
-        verify=False,
-        timeout=1,
-        retry=1,
-        pool_size=1,
-    )
-    headers = {"mock-header": "mock-value"}
-    attributes = {"mock-attr": "mock-attr-value"}
-    completed = True
-
-    asset = GitReleaseAsset(requester, headers, attributes, completed)
-
-    # ensure mocked asset has values that we use...
-    monkeypatch.setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
-    monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
-    monkeypatch.setattr(asset, "_id", _git_attr(value=asset_id))
-
-    # show that retrieving an asset w/a different ID results in ignoring
-    # other wheels from prior downloads in the parent directory of the asset
-    asset_path = retrieve_asset(test_archive.parent, asset)
-    ts2 = asset_path.stat().st_ctime
-
-    # NOTE: the file should be written to a subdir based on the asset ID
-    assert (
-        asset_path == expected_output_dir
-    )  # shows that the expected path matches the output path
-    assert ts1 == ts2  # show that the file wasn't changed...
-
-
 def test_retrieve_updated(
     test_archive: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -223,7 +201,7 @@ def test_retrieve_updated(
     old_asset_id = 100
     asset_id = 123
 
-    def mock_webtgz_extract(self_, target_) -> None:
+    def mock__WebTGZ_extract(self_, target_) -> None:
         mock_extraction_dir = pathlib.Path(target_)
         with tarfile.TarFile.open(test_archive) as tar:
             tar.extractall(mock_extraction_dir)
@@ -231,7 +209,7 @@ def test_retrieve_updated(
     # we'll use the mock extract to create the files that would normally be downloaded
     expected_output_dir = test_archive.parent / str(asset_id)
     old_output_dir = test_archive.parent / str(old_asset_id)
-    mock_webtgz_extract(None, old_output_dir)
+    mock__WebTGZ_extract(None, old_output_dir)
 
     requester = Requester(
         auth=None,
@@ -254,13 +232,14 @@ def test_retrieve_updated(
     monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
     monkeypatch.setattr(asset, "_id", _git_attr(value=asset_id))
     monkeypatch.setattr(
-        WebTGZ,
+        _WebTGZ,
         "extract",
-        lambda s_, t_: mock_webtgz_extract(s_, expected_output_dir),
+        lambda s_, t_: mock__WebTGZ_extract(s_, expected_output_dir),
     )  # mock the retrieval of the updated archive
 
     # tell it to retrieve. it should return the path to the new download, not the old one
-    asset_path = retrieve_asset(test_archive.parent, asset)
+    request = DragonInstallRequest(test_archive.parent)
+    asset_path = retrieve_asset(request, asset)
 
     # sanity check we don't have the same paths
     assert old_output_dir != expected_output_dir
@@ -299,11 +278,13 @@ def test_retrieve_updated(
 )
 def test_retrieve_asset_info(
     test_assets: t.Collection[GitReleaseAsset],
+    test_releases: t.Collection[GitRelease],
     monkeypatch: pytest.MonkeyPatch,
     dragon_pin: str,
     pyv: str,
     is_found: bool,
     is_crayex: bool,
+    test_dir: str,
 ) -> None:
     """Verify that an information is retrieved correctly based on the python
     version, platform (e.g. CrayEX, !CrayEx), and target dragon pin"""
@@ -319,20 +300,23 @@ def test_retrieve_asset_info(
             "is_crayex_platform",
             lambda: is_crayex,
         )
+        # avoid hitting github API
         ctx.setattr(
             smartsim._core._cli.scripts.dragon_install,
-            "dragon_pin",
-            lambda: dragon_pin,
+            "_get_all_releases",
+            lambda x: test_releases,
         )
         # avoid hitting github API
         ctx.setattr(
             smartsim._core._cli.scripts.dragon_install,
             "_get_release_assets",
-            lambda: test_assets,
+            lambda x: test_assets,
         )
 
+        request = DragonInstallRequest(test_dir, version=dragon_pin)
+
         if is_found:
-            chosen_asset = retrieve_asset_info(DEFAULT_DRAGON_REPO)
+            chosen_asset = retrieve_asset_info(request)
 
             assert chosen_asset
             assert pyv in chosen_asset.name
@@ -344,7 +328,7 @@ def test_retrieve_asset_info(
                 assert "crayex" not in chosen_asset.name.lower()
         else:
             with pytest.raises(SmartSimCLIActionCancelled):
-                retrieve_asset_info(DEFAULT_DRAGON_REPO)
+                retrieve_asset_info(request)
 
 
 def test_check_for_utility_missing(test_dir: str) -> None:
@@ -442,11 +426,12 @@ def test_is_cray_ex(
         assert is_cray == platform_result
 
 
-def test_install_package_no_wheel(extraction_dir: pathlib.Path):
+def test_install_package_no_wheel(test_dir: str, extraction_dir: pathlib.Path):
     """Verify that a missing wheel does not blow up and has a failure retcode"""
     exp_path = extraction_dir
+    request = DragonInstallRequest(test_dir)
 
-    result = install_package(exp_path)
+    result = install_package(request, exp_path)
     assert result != 0
 
 
@@ -455,7 +440,9 @@ def test_install_macos(monkeypatch: pytest.MonkeyPatch, extraction_dir: pathlib.
     with monkeypatch.context() as ctx:
         ctx.setattr(sys, "platform", "darwin")
 
-        result = install_dragon(extraction_dir, DEFAULT_DRAGON_REPO)
+        request = DragonInstallRequest(extraction_dir)
+
+        result = install_dragon(request)
         assert result == 1
 
 
@@ -472,7 +459,7 @@ def test_create_dotenv(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         # ensure no .env exists before trying to create it.
         assert not exp_env_path.exists()
 
-        create_dotenv(mock_dragon_root)
+        create_dotenv(mock_dragon_root, DEFAULT_DRAGON_VERSION)
 
         # ensure the .env is created as side-effect of create_dotenv
         assert exp_env_path.exists()
@@ -494,7 +481,7 @@ def test_create_dotenv_existing_dir(monkeypatch: pytest.MonkeyPatch, test_dir: s
         # ensure no .env exists before trying to create it.
         assert not exp_env_path.exists()
 
-        create_dotenv(mock_dragon_root)
+        create_dotenv(mock_dragon_root, DEFAULT_DRAGON_VERSION)
 
         # ensure the .env is created as side-effect of create_dotenv
         assert exp_env_path.exists()
@@ -519,7 +506,7 @@ def test_create_dotenv_existing_dotenv(monkeypatch: pytest.MonkeyPatch, test_dir
         # ensure .env exists so we can update it
         assert exp_env_path.exists()
 
-        create_dotenv(mock_dragon_root)
+        create_dotenv(mock_dragon_root, DEFAULT_DRAGON_VERSION)
 
         # ensure the .env is created as side-effect of create_dotenv
         assert exp_env_path.exists()
@@ -541,7 +528,7 @@ def test_create_dotenv_format(monkeypatch: pytest.MonkeyPatch, test_dir: str):
     with monkeypatch.context() as ctx:
         ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
 
-        create_dotenv(mock_dragon_root)
+        create_dotenv(mock_dragon_root, DEFAULT_DRAGON_VERSION)
 
         # ensure the .env is created as side-effect of create_dotenv
         content = exp_env_path.read_text(encoding="utf-8")

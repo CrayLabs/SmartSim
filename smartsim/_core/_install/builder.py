@@ -820,7 +820,7 @@ class _WebArchive(_WebLocation):
         if target.is_dir():
             target = target / self.name
 
-        if self._headers:
+        if hasattr(self, "_headers") and self._headers:
             opener = build_opener()
             opener.addheaders = list(self._headers.items())
             install_opener(opener)
