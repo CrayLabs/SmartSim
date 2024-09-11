@@ -380,8 +380,6 @@ def install_dragon(request: DragonInstallRequest) -> int:
         logger.warning(*ex.args)
     except Exception as ex:
         logger.error("Unable to install dragon runtime", exc_info=True)
-    finally:
-        cleanup(asset_dir)
 
     return 2
 

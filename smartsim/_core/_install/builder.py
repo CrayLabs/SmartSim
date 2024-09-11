@@ -828,7 +828,8 @@ class _WebArchive(_WebLocation):
             file, _ = urlretrieve(self.url, target)
             return Path(file).resolve()
         finally:
-            urlcleanup()
+            opener = build_opener()
+            install_opener(opener)
 
 
 class _ExtractableWebArchive(_WebArchive, ABC):
