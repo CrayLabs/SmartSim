@@ -40,13 +40,13 @@ import sys
 import tarfile
 import tempfile
 import typing as t
-import urllib.request
 import zipfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
+from urllib.request import build_opener, install_opener, urlretrieve
 
 # NOTE: This will be imported by setup.py and hence no smartsim related
 # items should be imported into this file.
@@ -795,48 +795,88 @@ class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
 
 
 class _WebArchive(_WebLocation):
+    """Used to download a remote resource"""
+
+    def __init__(self, headers: t.Optional[t.Dict[str, str]] = None) -> None:
+        """Initialize the instance"""
+        self._headers: t.Dict[str, str] = headers or {}
+
     @property
     def name(self) -> str:
-        _, name = self.url.rsplit("/", 1)
+        """Return the resource name identified by the URL."""
+        # omit the querystring to find the resource name
+        addressparts = self.url.split("?", maxsplit=1)
+        address = addressparts[0]
+        _, name = address.rsplit("/", 1)
         return name
 
     def download(self, target: _PathLike) -> Path:
+        """Retrieve the remote file
+
+        :param target: The desired target path for writing the downloaded file
+        :returns: If the file can be successfully downloaded, the path to the
+        downloaded file. Otherwise, None"""
         target = Path(target)
         if target.is_dir():
             target = target / self.name
-        file, _ = urllib.request.urlretrieve(self.url, target)
-        return Path(file).resolve()
+
+        if self._headers:
+            opener = build_opener()
+            opener.addheaders = list(self._headers.items())
+            install_opener(opener)
+
+        urlretrieve(self.url, target)
+        return Path(target).resolve()
 
 
 class _ExtractableWebArchive(_WebArchive, ABC):
+    """Abstract base class for implementing download and
+    extraction of a remote archive file"""
+
     @abstractmethod
-    def _extract_download(self, download_path: Path, target: _PathLike) -> None: ...
+    def _extract_download(self, download_path: Path, target: _PathLike) -> None:
+        """Called during file handling to perform format-specific extraction
+        operations. Must be overridden in child classes"""
 
     def extract(self, target: _PathLike) -> None:
+        """Extract the downloaded file into the desired target location"""
         with tempfile.TemporaryDirectory() as tmp_dir:
             arch_path = self.download(tmp_dir)
             self._extract_download(arch_path, target)
 
 
 class _WebTGZ(_ExtractableWebArchive):
+    """Performs download and extraction of a remote archive file
+    in the `.tar.gz` format."""
+
+    def __init__(self, url: str, headers: t.Optional[t.Dict[str, str]] = None) -> None:
+        """Initialize the instance
+
+        :param url: URL pointing to a .tar.gz file
+        :param headers: Additional headers required to download the file"""
+        super().__init__(headers)
+
+        self._url = url
+
+    @property
+    def url(self) -> str:
+        """Returns the url that was downloaded"""
+        return self._url
+
     def _extract_download(self, download_path: Path, target: _PathLike) -> None:
+        """Called during file handling to perform extraction of `.tar.gz` files"""
         with tarfile.open(download_path, "r") as tgz_file:
             tgz_file.extractall(target)
 
 
 class _WebZip(_ExtractableWebArchive):
+    """Performs download and extraction of a remote archive file
+    in the `.zip` format."""
+
     def _extract_download(self, download_path: Path, target: _PathLike) -> None:
+        """Called during file handling to perform extraction of `.zip` files"""
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
-
-
-class WebTGZ(_WebTGZ):
-    def __init__(self, url: str) -> None:
-        self._url = url
-
-    @property
-    def url(self) -> str:
-        return self._url
 
 
 @dataclass(frozen=True)

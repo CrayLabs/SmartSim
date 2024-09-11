@@ -37,6 +37,7 @@ from github.Requester import Requester
 import smartsim
 import smartsim._core.utils.helpers as helpers
 from smartsim._core._cli.scripts.dragon_install import (
+    DEFAULT_DRAGON_REPO,
     cleanup,
     create_dotenv,
     install_dragon,
@@ -331,7 +332,7 @@ def test_retrieve_asset_info(
         )
 
         if is_found:
-            chosen_asset = retrieve_asset_info()
+            chosen_asset = retrieve_asset_info(DEFAULT_DRAGON_REPO)
 
             assert chosen_asset
             assert pyv in chosen_asset.name
@@ -343,7 +344,7 @@ def test_retrieve_asset_info(
                 assert "crayex" not in chosen_asset.name.lower()
         else:
             with pytest.raises(SmartSimCLIActionCancelled):
-                retrieve_asset_info()
+                retrieve_asset_info(DEFAULT_DRAGON_REPO)
 
 
 def test_check_for_utility_missing(test_dir: str) -> None:
@@ -454,7 +455,7 @@ def test_install_macos(monkeypatch: pytest.MonkeyPatch, extraction_dir: pathlib.
     with monkeypatch.context() as ctx:
         ctx.setattr(sys, "platform", "darwin")
 
-        result = install_dragon(extraction_dir)
+        result = install_dragon(extraction_dir, DEFAULT_DRAGON_REPO)
         assert result == 1
 
 
