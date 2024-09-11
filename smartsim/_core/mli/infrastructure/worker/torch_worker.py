@@ -61,6 +61,15 @@ class TorchWorker(MachineLearningWorkerBase):
     def load_model(
         batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
+        """Given a loaded MachineLearningModel, ensure it is loaded into
+        device memory.
+
+        :param request: The request that triggered the pipeline
+        :param device: The device on which the model must be placed
+        :returns: LoadModelResult wrapping the model loaded for the request
+        :raises ValueError: If model reference object is not found
+        :raises RuntimeError: If loading and evaluating the model failed
+        """
         if fetch_result.model_bytes:
             model_bytes = fetch_result.model_bytes
         elif batch.raw_model and batch.raw_model.data:
@@ -88,6 +97,16 @@ class TorchWorker(MachineLearningWorkerBase):
         fetch_results: list[FetchInputResult],
         mem_pool: MemoryPool,
     ) -> TransformInputResult:
+        """Given a collection of data, perform a transformation on the data and put
+        the raw tensor data on a MemoryPool allocation.
+
+        :param request: The request that triggered the pipeline
+        :param fetch_result: Raw outputs from fetching inputs out of a feature store
+        :param mem_pool: The memory pool used to access batched input tensors
+        :returns: The transformed inputs wrapped in a TransformInputResult
+        :raises ValueError: If tensors cannot be reconstructed
+        :raises IndexError: If index out of range
+        """
         results: list[torch.Tensor] = []
         total_samples = 0
         slices: list[slice] = []
@@ -151,6 +170,17 @@ class TorchWorker(MachineLearningWorkerBase):
         transform_result: TransformInputResult,
         device: str,
     ) -> ExecuteResult:
+        """Execute an ML model on inputs transformed for use by the model.
+
+        :param batch: The batch of requests that triggered the pipeline
+        :param load_result: The result of loading the model onto device memory
+        :param transform_result: The result of transforming inputs for model consumption
+        :param device: The device on which the model will be executed
+        :returns: The result of inference wrapped in an ExecuteResult
+        :raises SmartSimError: If model is not loaded
+        :raises IndexError: If memory slicing is out of range
+        :raises ValueError: If tensor creation fails or is unable to evaluate the model
+        """
         if not load_result.model:
             raise SmartSimError("Model must be loaded to execute")
         device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
@@ -206,6 +236,15 @@ class TorchWorker(MachineLearningWorkerBase):
         batch: RequestBatch,
         execute_result: ExecuteResult,
     ) -> list[TransformOutputResult]:
+        """Given inference results, perform transformations required to
+        transmit results to the requestor.
+
+        :param batch: The batch of requests that triggered the pipeline
+        :param execute_result: The result of inference wrapped in an ExecuteResult
+        :returns: A list of transformed outputs
+        :raises IndexError: If indexing is out of range
+        :raises ValueError: If transforming output fails
+        """
         transformed_list: list[TransformOutputResult] = []
         cpu_predictions = [
             prediction.cpu() for prediction in execute_result.predictions
