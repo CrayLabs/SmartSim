@@ -67,7 +67,7 @@ Supported Versions
     .. group-tab:: MacOS
 
         .. list-table:: Supported System for Pre-built Wheels
-           :widths: 50 50 50 50
+           :widths: 50 50 50
            :header-rows: 1
            :align: center
 
@@ -96,7 +96,7 @@ Supported Versions
     .. group-tab:: Linux
 
         .. list-table:: Supported System for Pre-built Wheels
-           :widths: 50 50 50 50
+           :widths: 50 50 50
            :header-rows: 1
            :align: center
 
