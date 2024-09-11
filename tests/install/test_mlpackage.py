@@ -43,6 +43,7 @@ pytestmark = pytest.mark.group_a
 
 mock_platform = MagicMock(spec=Platform)
 
+
 @pytest.fixture
 def mock_ml_packages():
     foo = MagicMock(spec=MLPackage)

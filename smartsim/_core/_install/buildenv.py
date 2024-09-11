@@ -55,30 +55,6 @@ class SetupError(Exception):
     """
 
 
-class VersionConflictError(SetupError):
-    """An error for when version numbers of some library/package/program/etc
-    do not match and build may not be able to continue
-    """
-
-    def __init__(
-        self,
-        name: str,
-        current_version: "Version_",
-        target_version: "Version_",
-        msg: t.Optional[str] = None,
-    ) -> None:
-        if msg is None:
-            msg = (
-                f"Incompatible version for {name} detected: "
-                f"{name} {target_version} requested but {name} {current_version} "
-                "installed."
-            )
-        super().__init__(msg)
-        self.name = name
-        self.current_version = current_version
-        self.target_version = target_version
-
-
 # so as to not conflict with pkg_resources.packaging.version.Version
 # pylint: disable-next=invalid-name
 class Version_(str):
@@ -390,23 +366,6 @@ class BuildEnv:
             )
         except OSError:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
-
-    @classmethod
-    def check_installed(
-        cls, package: str, version: t.Optional[Version_] = None
-    ) -> bool:
-        """Check if a package is installed. If version is provided, check if
-        it's a compatible version. (major and minor the same)
-        """
-        try:
-            installed = cls.get_py_package_version(package)
-        except importlib.metadata.PackageNotFoundError:
-            return False
-        if version:
-            # detect if major or minor versions differ
-            if installed.major != version.major or installed.minor != version.minor:
-                raise VersionConflictError(package, installed, version)
-        return True
 
     @staticmethod
     def get_py_package_version(package: str) -> Version_:

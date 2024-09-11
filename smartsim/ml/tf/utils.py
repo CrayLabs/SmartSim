@@ -62,7 +62,7 @@ def freeze_model(
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
 
-    frozen_func = convert_variables_to_constants_v2(full_model)
+    frozen_func = convert_variables_to_constants_v2(full_model)  # type: ignore[no-untyped-call]
     frozen_func.graph.as_graph_def()
 
     input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
@@ -97,7 +97,7 @@ def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
 
-    frozen_func = convert_variables_to_constants_v2(full_model)
+    frozen_func = convert_variables_to_constants_v2(full_model)  # type: ignore[no-untyped-call]
     frozen_func.graph.as_graph_def()
 
     input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
