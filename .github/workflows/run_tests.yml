@@ -71,6 +71,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py_v }}
+        env:
+          GH_DRAGON_TOKEN: ${{ secrets.DRAGON_TOKEN }}
 
       - name: Install build-essentials for Ubuntu
         if: contains( matrix.os, 'ubuntu' )
@@ -116,9 +118,11 @@ jobs:
         run: smart build --device cpu --onnx -v
 
       - name: Install ML Runtimes with Smart (with pt, tf, dragon, and onnx support)
+        with:
+          DRAGON_TOKEN: ${{ secrets.DRAGON_TOKEN }}
         if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset == 'dragon' )
         run: |
-          smart build --device cpu --onnx --dragon -v
+          GH_TOKEN="$DRAGON_TOKEN" smart build --device cpu --onnx -v --dragon-repo dragonhpc/dragon-nightly --dragon-version 0.10
           SP=$(python -c 'import site; print(site.getsitepackages()[0])')/smartsim/_core/config/dragon/.env
           LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
           echo "LD_LIBRARY_PATH=$LLP:$LD_LIBRARY_PATH" >> $GITHUB_ENV
