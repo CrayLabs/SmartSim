@@ -94,6 +94,14 @@ class InferenceRequest:
         self.batch_size = batch_size
         """The batch size to apply when batching"""
 
+    @property
+    def has_raw_model(self):
+        return self.raw_model is not None
+    
+    @property
+    def has_model_key(self):
+        return self.model_key is not None
+
 
 class InferenceReply:
     """Internal representation of the reply to a client request for inference."""
@@ -119,7 +127,25 @@ class InferenceReply:
         self.status_enum = status_enum
         """Status of the reply"""
         self.message = message
-        """Status message that corresponds with the status enum"""
+        """Status message that corresponds with the status enum""" 
+
+    @property
+    def has_outputs(self) -> bool:
+        """Check if the InferenceReply contains outputs.
+
+        :returns: True if outputs is not None and is not an empty list,
+        False otherwise
+        """
+        return self.outputs is not None and bool(self.outputs)
+    
+    @property
+    def has_output_keys(self) -> bool:
+        """Check if the InferenceReply contains output_keys.
+
+        :returns: True if output_keys is not None and is not an empty list,
+        False otherwise
+        """
+        return self.output_keys is not None and bool(self.output_keys)
 
 
 class LoadModelResult:
@@ -262,6 +288,14 @@ class RequestBatch:
         return len(self.requests) > 0
 
     @property
+    def has_inputs(self) -> bool:
+        """Returns whether the batch has inputs.
+
+        :returns: True if the batch has inputs
+        """
+        return self.inputs is not None and bool(self.inputs)
+
+    @property
     def has_raw_model(self) -> bool:
         """Returns whether the batch has a raw model.
 
@@ -372,13 +406,13 @@ class MachineLearningWorkerCore:
         information needed in the reply
         """
         prepared_outputs: t.List[t.Any] = []
-        if reply.output_keys:
+        if reply.has_output_keys:
             for value in reply.output_keys:
                 if not value:
                     continue
                 msg_key = MessageHandler.build_tensor_key(value.key, value.descriptor)
                 prepared_outputs.append(msg_key)
-        elif reply.outputs:
+        elif reply.has_outputs:
             for _ in reply.outputs:
                 msg_tensor_desc = MessageHandler.build_tensor_descriptor(
                     "c",

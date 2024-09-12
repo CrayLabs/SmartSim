@@ -292,7 +292,7 @@ class RequestDispatcher(Service):
         :param request: The request to validate
         :returns: False if model validation fails for the request, True otherwise
         """
-        if request.model_key or request.raw_model:
+        if request.has_model_key or request.has_raw_model:
             return True
 
         logger.error("Unable to continue without model bytes or feature store key")
@@ -445,7 +445,7 @@ class RequestDispatcher(Service):
 
         :param request: The request to place
         """
-        if request.raw_model is not None:
+        if request.has_raw_model:
             logger.debug("Direct inference requested, creating tmp queue")
             tmp_id = f"_tmp_{str(uuid.uuid4())}"
             tmp_queue: BatchQueue = BatchQueue(
@@ -459,7 +459,7 @@ class RequestDispatcher(Service):
             tmp_queue.make_disposable()
             return
 
-        if request.model_key:
+        if request.has_model_key:
             success = False
             while not success:
                 try:
