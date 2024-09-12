@@ -119,6 +119,7 @@ smartsim_version = versions.write_version(setup_path)
 class BuildError(Exception):
     pass
 
+
 # Define needed dependencies for the installation
 
 extras_require = {
