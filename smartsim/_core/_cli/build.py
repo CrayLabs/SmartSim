@@ -429,7 +429,21 @@ def execute(
             logger.error(" ".join(ex.args))
 
         if return_code == 0:
-            logger.info("Dragon installation complete")
+            logger.info("*************** Dragon Package Installed ********************")
+            logger.warning(
+                "To complete the installation, please configure the following:"
+            )
+            logger.warning("\tofi-include")
+            logger.warning("\tofi-build-lib")
+            logger.warning("\tofi-runtime-lib")
+            ofi_inc = "ofi-include=/opt/cray/include"
+            ofi_bld = "ofi-build-lib=/opt/cray/lib64"
+            ofi_rtm = "ofi-runtime-lib=/opt/cray/lib64"
+            logger.warning(
+                f'Example: `dragon-config -a "{ofi_inc}:{ofi_bld}:{ofi_rtm}"`'
+            )
+            logger.info("*************************************************************")
+
         elif return_code == 1:
             logger.info("Dragon installation not supported on platform")
         else:
