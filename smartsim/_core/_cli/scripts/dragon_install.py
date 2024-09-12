@@ -85,7 +85,7 @@ def get_auth_token(request: DragonInstallRequest) -> t.Optional[Token]:
     """Create a Github.Auth.Token if an access token can be found
     in the environment
 
-    :param request: details of a requesst for the installation of the dragon package
+    :param request: details of a request for the installation of the dragon package
     :returns: an auth token if one can be built, otherwise `None`"""
     if gh_token := request.raw_token:
         return Token(gh_token)
@@ -167,7 +167,7 @@ def _get_release_assets(request: DragonInstallRequest) -> t.Collection[GitReleas
     """Retrieve a collection of available assets for all releases that satisfy
     the dragon version pin
 
-    :param request: details of a requesst for the installation of the dragon package
+    :param request: details of a request for the installation of the dragon package
     :returns: A collection of release assets"""
     auth = get_auth_token(request)
     git = Github(auth=auth)
@@ -214,7 +214,7 @@ def filter_assets(
     """Filter the available release assets so that HSTA agents are used
     when run on a Cray EX platform
 
-    :param request: details of a requesst for the installation of the dragon package
+    :param request: details of a request for the installation of the dragon package
     :param assets: The collection of dragon release assets to filter
     :returns: An asset meeting platform & version filtering requirements"""
     # Expect cray & non-cray assets that require a filter, e.g.
@@ -252,7 +252,7 @@ def filter_assets(
 def retrieve_asset_info(request: DragonInstallRequest) -> GitReleaseAsset:
     """Find a release asset that meets all necessary filtering criteria
 
-    :param request: details of a requesst for the installation of the dragon package
+    :param request: details of a request for the installation of the dragon package
     :returns: A GitHub release asset"""
     assets = _get_release_assets(request)
     asset = filter_assets(request, assets)
@@ -275,7 +275,7 @@ def retrieve_asset(
 ) -> pathlib.Path:
     """Retrieve the physical file associated to a given GitHub release asset
 
-    :param request: details of a requesst for the installation of the dragon package
+    :param request: details of a request for the installation of the dragon package
     :param asset: GitHub release asset to retrieve
     :returns: path to the directory containing the extracted release asset
     :raises: SmartSimCLIActionCancelled if the asset cannot be downloaded or extracted
@@ -326,7 +326,7 @@ def retrieve_asset(
 def install_package(request: DragonInstallRequest, asset_dir: pathlib.Path) -> int:
     """Install the package found in `asset_dir` into the current python environment
 
-    :param request: details of a requesst for the installation of the dragon package
+    :param request: details of a request for the installation of the dragon package
     :param asset_dir: path to a decompressed archive contents for a release asset
     :returns: Integer return code, 0 for success, non-zero on failures"""
     found_wheels = list(asset_dir.rglob("*.whl"))
@@ -370,7 +370,7 @@ def install_dragon(request: DragonInstallRequest) -> int:
     """Retrieve a dragon runtime appropriate for the current platform
     and install to the current python environment
 
-    :param request: details of a requesst for the installation of the dragon package
+    :param request: details of a request for the installation of the dragon package
     :returns: Integer return code, 0 for success, non-zero on failures"""
     if sys.platform == "darwin":
         logger.debug(f"Dragon not supported on platform: {sys.platform}")
