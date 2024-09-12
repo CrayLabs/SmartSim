@@ -28,9 +28,7 @@ from enum import Enum
 
 
 class LauncherType(Enum):
-    """Launchers that are supported by
-    SmartSim.
-    """
+    """Launchers supported by SmartSim."""
 
     Dragon = "dragon"
     Slurm = "slurm"

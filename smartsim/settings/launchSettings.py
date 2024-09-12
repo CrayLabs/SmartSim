@@ -52,12 +52,75 @@ logger = get_logger(__name__)
 
 
 class LaunchSettings(BaseSettings):
+    """The LaunchSettings class manages the configuration and execution of jobs
+    across the resources of a compute system.
+
+    LaunchSettings is designed to be extended by a LaunchArguments child class that
+    corresponds to the launcher provided during initialization. The supported launchers
+    are Dragon, Slurm, PALS, ALPS, Local, Mpiexec, Mpirun, Orterun, and LSF. Using the
+    LaunchSettings class, users can:
+
+    - Set the launcher type of a job.
+    - Configure launch arguments and environment variables.
+    - Access and modify custom launch arguments.
+    - Update environment variables.
+    - Retrieve information associated with the ``LaunchSettings`` object.
+        - The launcher value (LaunchSettings.launcher).
+        - The derived LaunchSettings child class (LaunchSettings.launch_args).
+        - The set environment variables (LaunchSettings.env_vars).
+    """
+
+    # Manage Environment Setup, set configuration parameters based on your machines launcher
     def __init__(
         self,
         launcher: t.Union[LauncherType, str],
         launch_args: StringArgument | None = None,
         env_vars: StringArgument | None = None,
     ) -> None:
+        """Initialize a LaunchSettings instance.
+
+        Example of initializing LaunchSettings:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            srun_settings = LaunchSettings(launcher="slurm")
+            # OR
+            srun_settings = LaunchSettings(launcher=LauncherType.Slurm)
+
+        The "launcher" of SmartSim LaunchSettings will determine the
+        child type assigned to the LaunchSettings.launch_args attribute.
+        The example above will return a SlurmLaunchArguments object. Using
+        the object, users may access the child class functions to set launch
+        configurations. For example:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            srun_settings.launch_args.set_nodes(5)
+            srun_settings.launch_args.set_cpus_per_task(2)
+
+        To set customized launch arguments, use the set() function provided by
+        the LaunchSettings child class. For example:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            srun_settings.launch_args.set(key="nodes", value="6")
+
+        If the key already exists in the existing launch arguments, the value will
+        be overwritten.
+
+        :param launcher: The type of launcher to initialize (e.g., Dragon, Slurm,
+            PALS, ALPS, Local, Mpiexec, Mpirun, Orterun, LSF)
+        :param launch_args: A dictionary of arguments for the launcher, where the keys
+            are strings and the values can be either strings or None. This argument is optional
+            and defaults to None.
+        :param env_vars: Environment variables for the launch settings, where the keys
+            are strings and the values can be either strings or None. This argument is
+            also optional and defaults to None.
+        :raises ValueError: Raises if the launcher provided does not exist.
+        """
         try:
             self._launcher = LauncherType(launcher)
         except ValueError:

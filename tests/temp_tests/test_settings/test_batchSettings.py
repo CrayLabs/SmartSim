@@ -62,7 +62,7 @@ def test_create_scheduler_settings(scheduler_enum):
 
 def test_launcher_property():
     bs = BatchSettings(batch_scheduler="slurm")
-    assert bs.batch_scheduler == "slurm"
+    assert bs.scheduler == "slurm"
 
 
 def test_env_vars_property():

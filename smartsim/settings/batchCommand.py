@@ -28,9 +28,7 @@ from enum import Enum
 
 
 class SchedulerType(Enum):
-    """Schedulers that are supported by
-    SmartSim.
-    """
+    """Schedulers supported by SmartSim."""
 
     Slurm = "slurm"
     Pbs = "pbs"

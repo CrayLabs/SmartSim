@@ -25,5 +25,8 @@
 
 # fmt: off
 class BaseSettings:
+    """
+    A base class for LaunchSettings and BatchSettings.
+    """
     ...
 # fmt: on
