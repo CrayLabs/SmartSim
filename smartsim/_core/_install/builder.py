@@ -839,7 +839,10 @@ class _ExtractableWebArchive(_WebArchive, ABC):
     @abstractmethod
     def _extract_download(self, download_path: Path, target: _PathLike) -> None:
         """Called during file handling to perform format-specific extraction
-        operations. Must be overridden in child classes"""
+        operations. Must be overridden in child classes
+        
+        :param download_path: Path to the downloaded archive file
+        :param target: Desired target location for extraction"""
 
     def extract(self, target: _PathLike) -> None:
         """Extract the downloaded file into the desired target location"""
@@ -866,7 +869,10 @@ class _WebTGZ(_ExtractableWebArchive):
         return self._url
 
     def _extract_download(self, download_path: Path, target: _PathLike) -> None:
-        """Called during file handling to perform extraction of `.tar.gz` files"""
+        """Called during file handling to perform extraction of `.tar.gz` files
+
+        :param download_path: Path to the downloaded archive file
+        :param target: Desired target location for extraction"""
         with tarfile.open(download_path, "r") as tgz_file:
             tgz_file.extractall(target)
 
@@ -876,7 +882,10 @@ class _WebZip(_ExtractableWebArchive):
     in the `.zip` format."""
 
     def _extract_download(self, download_path: Path, target: _PathLike) -> None:
-        """Called during file handling to perform extraction of `.zip` files"""
+        """Called during file handling to perform extraction of `.zip` files
+
+        :param download_path: Path to the downloaded archive file
+        :param target: Desired target location for extraction"""
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
 

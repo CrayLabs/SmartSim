@@ -197,8 +197,14 @@ def _get_release_assets(request: DragonInstallRequest) -> t.Collection[GitReleas
         )
 
     # install the latest release of the target version (including pre-release)
-    release = releases[0]
-    assets = list(release.get_assets())
+    for release in releases:
+        # delay in attaching release assets may leave us with an empty list, retry
+        # with the next available release
+        if assets := list(release.get_assets()):
+            logger.debug(f"Found assets for dragon release {release.title}")
+            break
+        else:
+            logger.debug(f"No assets for dragon release {release.title}. Retrying.")
 
     if not assets:
         raise SmartSimCLIActionCancelled(
