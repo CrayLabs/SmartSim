@@ -37,6 +37,7 @@ from smartsim._core._cli.scripts.dragon_install import (
     DEFAULT_DRAGON_REPO,
     DEFAULT_DRAGON_VERSION,
     DragonInstallRequest,
+    display_post_install_logs,
     install_dragon,
 )
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
@@ -429,20 +430,7 @@ def execute(
             logger.error(" ".join(ex.args))
 
         if return_code == 0:
-            logger.info("*************** Dragon Package Installed ********************")
-            logger.warning(
-                "To complete the installation, please configure the following:"
-            )
-            logger.warning("\tofi-include")
-            logger.warning("\tofi-build-lib")
-            logger.warning("\tofi-runtime-lib")
-            ofi_inc = "ofi-include=/opt/cray/include"
-            ofi_bld = "ofi-build-lib=/opt/cray/lib64"
-            ofi_rtm = "ofi-runtime-lib=/opt/cray/lib64"
-            logger.warning(
-                f'Example: `dragon-config -a "{ofi_inc}:{ofi_bld}:{ofi_rtm}"`'
-            )
-            logger.info("*************************************************************")
+            display_post_install_logs()
 
         elif return_code == 1:
             logger.info("Dragon installation not supported on platform")

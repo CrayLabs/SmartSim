@@ -400,6 +400,35 @@ def install_dragon(request: DragonInstallRequest) -> int:
     return 2
 
 
+def display_post_install_logs() -> None:
+    """Display post-installation instructions for the user"""
+
+    examples = {
+        "ofi-include": "/opt/cray/include",
+        "ofi-build-lib": "/opt/cray/lib64",
+        "ofi-runtime-lib": "/opt/cray/lib64",
+    }
+
+    config = ":".join(f"{k}={v}" for k, v in examples.items())
+    example_msg1 = f"dragon-config -a \\"
+    example_msg2 = f'    "{config}"'
+
+    logger.info(
+        "************************** Dragon Package Installed *****************************"
+    )
+    logger.info("To enable Dragon to use HSTA (default: TCP), configure the following:")
+
+    for key in examples:
+        logger.info(f"\t{key}")
+
+    logger.info("Example:")
+    logger.info(example_msg1)
+    logger.info(example_msg2)
+    logger.info(
+        "*********************************************************************************"
+    )
+
+
 if __name__ == "__main__":
     # path for download and extraction of assets
     extraction_dir = CONFIG.core_path / ".dragon"
