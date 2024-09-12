@@ -196,6 +196,8 @@ def _get_release_assets(request: DragonInstallRequest) -> t.Collection[GitReleas
             f"Available releases: {release_titles}"
         )
 
+    assets: t.List[GitReleaseAsset] = []
+
     # install the latest release of the target version (including pre-release)
     for release in releases:
         # delay in attaching release assets may leave us with an empty list, retry
