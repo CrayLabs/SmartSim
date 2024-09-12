@@ -840,7 +840,7 @@ class _ExtractableWebArchive(_WebArchive, ABC):
     def _extract_download(self, download_path: Path, target: _PathLike) -> None:
         """Called during file handling to perform format-specific extraction
         operations. Must be overridden in child classes
-        
+
         :param download_path: Path to the downloaded archive file
         :param target: Desired target location for extraction"""
 
