@@ -157,6 +157,7 @@ def _pin_filter(asset_name: str, dragon_version: str) -> bool:
 def _get_all_releases(dragon_repo: Repository) -> t.Collection[GitRelease]:
     """Retrieve all available releases for the configured dragon repository
 
+    :param dragon_repo: A GitHub repository object for the dragon package
     :returns: A list of GitRelease"""
     all_releases = [release for release in list(dragon_repo.get_releases())]
     return all_releases
