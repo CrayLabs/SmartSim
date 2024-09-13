@@ -85,6 +85,7 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
         :returns: The received message(s)
+        :raises SmartSimError: If receiving message(s) fails
         """
         messages = []
         eot = False
@@ -98,8 +99,8 @@ class DragonFLIChannel(cch.CommChannelBase):
                     )
                 except fli.FLIEOT:
                     eot = True
-                except Exception:
-                    break
+                except Exception as e:
+                    raise SmartSimError("Error receiving messages") from e
         return messages
 
     @classmethod
