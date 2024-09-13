@@ -42,7 +42,6 @@ from ...mli_schemas.model.model_capnp import Model
 from ..storage.feature_store import FeatureStore, FeatureStoreKey
 
 if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.data.data_references_capnp import TensorKey
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
     from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
@@ -250,7 +249,7 @@ class RequestBatch:
     """List of InferenceRequests in the batch"""
     inputs: t.Optional[TransformInputResult]
     """Transformed batch of input tensors"""
-    model_id: ModelIdentifier
+    model_id: "ModelIdentifier"
     """Model (key, descriptor) tuple"""
 
     @property
@@ -365,7 +364,7 @@ class MachineLearningWorkerCore:
     @staticmethod
     def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
         """Assemble the output information based on whether the output
-        information will be in the form of TensorKeys or TensorDescriptors.
+        information will be in the form of FeatureStoreKeys or TensorDescriptors.
 
         :param reply: The reply that the output belongs to
         :returns: The list of prepared outputs, depending on the output

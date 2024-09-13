@@ -101,7 +101,7 @@ class MessageHandler:
         :param key: String to set the FeatureStoreKey
         :param feature_store_descriptor: A descriptor identifying the feature store
         containing the key
-        :returns: The TensorKey
+        :returns: The FeatureStoreKey
         :raises ValueError: If building fails
         """
         try:
@@ -131,27 +131,6 @@ class MessageHandler:
         except Exception as e:
             raise ValueError("Error building model.") from e
         return model
-
-    @staticmethod
-    def build_model_key(
-        key: str, feature_store_descriptor: str
-    ) -> data_references_capnp.ModelKey:
-        """
-        Builds a new ModelKey message with the provided key.
-
-        :param key: String to set the ModelKey
-        :param feature_store_descriptor: A descriptor identifying the feature store
-        containing the key
-        :returns: The ModelKey
-        :raises ValueError: If building fails
-        """
-        try:
-            model_key = data_references_capnp.ModelKey.new_message()
-            model_key.key = key
-            model_key.featureStoreDescriptor = feature_store_descriptor
-        except Exception as e:
-            raise ValueError("Error building model key.") from e
-        return model_key
 
     @staticmethod
     def build_torch_request_attributes(
