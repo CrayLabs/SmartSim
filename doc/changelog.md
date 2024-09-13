@@ -14,6 +14,7 @@ Jump to:
 Description
 
 - Update error handling for consistency
+- Parameterize installation of dragon package with `smart build`
 - Update docstrings
 - Implement asynchronous notifications for shared data
 - Filenames conform to snake case
@@ -43,6 +44,9 @@ To be released at some future point in time
 
 Description
 
+- Allow specifying Model and Ensemble parameters with 
+  number-like types (e.g. numpy types)
+- Pin watchdog to 4.x
 - Update codecov to 4.5.0
 - Remove build of Redis from setup.py
 - Mitigate dependency installation issues
@@ -58,6 +62,14 @@ Description
 
 Detailed Notes
 
+- The serializer would fail if a parameter for a Model or Ensemble 
+  was specified as a numpy dtype. The constructors for these 
+  methods now validate that the input is number-like and convert 
+  them to strings
+  ([SmartSim-PR676](https://github.com/CrayLabs/SmartSim/pull/676))
+- Pin watchdog to 4.x because v5 introduces new types and requires
+  updates to the type-checking
+  ([SmartSim-PR690](https://github.com/CrayLabs/SmartSim/pull/690))
 - Update codecov to 4.5.0 to mitigate GitHub action failure
   ([SmartSim-PR657](https://github.com/CrayLabs/SmartSim/pull/657))
 - The builder module was included in setup.py to allow us to ship the

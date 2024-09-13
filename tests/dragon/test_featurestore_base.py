@@ -43,8 +43,9 @@ from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
 )
 from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
 from smartsim.error import SmartSimError
-from tests.mli.channel import FileSystemCommChannel
-from tests.mli.feature_store import MemoryFeatureStore
+
+from .channel import FileSystemCommChannel
+from .feature_store import MemoryFeatureStore
 
 if t.TYPE_CHECKING:
     import conftest
