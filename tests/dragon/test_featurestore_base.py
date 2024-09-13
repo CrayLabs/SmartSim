@@ -54,6 +54,21 @@ if t.TYPE_CHECKING:
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
 
+WORK_QUEUE_KEY = "_SMARTSIM_REQUEST_QUEUE"
+RANDOMLY_SET_KEY = "_SOMETHING_ELSE"
+
+
+@pytest.fixture
+def storage_for_dragon_fs_with_req_queue() -> t.Dict[str, str]:
+    storage = {WORK_QUEUE_KEY: "12345", RANDOMLY_SET_KEY: "67890"}
+    return storage
+
+
+def boom(*args, **kwargs) -> None:
+    """Helper function that blows up when used to mock up
+    some other function"""
+    raise Exception(f"you shall not pass! {args}, {kwargs}")
+
 
 def test_event_uid() -> None:
     """Verify that all events include a unique identifier"""
@@ -721,3 +736,43 @@ def test_eventconsumer_batch_timeout(
         )
 
     assert "positive" in ex.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "wait_timeout, exp_wait_max",
+    [
+        # aggregate the 1+1+1 into 3 on remaining parameters
+        pytest.param(1, 1 + 1 + 1, id="1s wait, 3 cycle steps"),
+        pytest.param(2, 3 + 2, id="2s wait, 4 cycle steps"),
+        pytest.param(4, 3 + 2 + 4, id="4s wait, 5 cycle steps"),
+        pytest.param(9, 3 + 2 + 4 + 8, id="9s wait, 6 cycle steps"),
+        # aggregate an entire cycle into 16
+        pytest.param(19.5, 16 + 3 + 2 + 4, id="20s wait, repeat cycle"),
+    ],
+)
+def test_backbone_wait_timeout(wait_timeout: float, exp_wait_max: float) -> None:
+    """Verify that attempts to attach to the worker queue from the protoclient
+    timeout in an appropriate amount of time. Note: due to the backoff, we verify
+    the elapsed time is less than the 15s of a cycle of waits
+
+    :param storage_for_dragon_fs: the dragon storage engine to use
+    """
+
+    # NOTE: exp_wait_time maps to the cycled backoff of [.1, .5, 1, 2, 4, 8]
+    # with leeway added (by allowing 1s each for the 0.1 and 0.5 steps)
+    start_time = time.time()
+
+    storage = {}
+    backbone = BackboneFeatureStore(storage)
+
+    with pytest.raises(SmartSimError) as ex:
+        backbone.wait_for(["does-not-exist"])
+
+    end_time = time.time()
+    elapsed = end_time - start_time
+
+    # confirm that we met our timeout
+    assert elapsed > wait_timeout, f"below configured timeout {wait_timeout}"
+
+    # confirm that the total wait time is aligned with the sleep cycle
+    assert elapsed < exp_wait_max, f"above expected max wait {exp_wait_max}"
