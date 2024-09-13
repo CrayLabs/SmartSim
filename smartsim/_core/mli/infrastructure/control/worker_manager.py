@@ -121,7 +121,7 @@ class WorkerManager(Service):
     def has_device_manager(self) -> bool:
         """Check if the WorkerManager has a DeviceManager.
 
-        :returns: True if there is a DeviceManager False otherwise
+        :returns: True if there is a DeviceManager, False otherwise
         """
         return self._device_manager is not None
 
@@ -167,7 +167,7 @@ class WorkerManager(Service):
         :param batch: The batch of requests to validate
         :returns: False if the request fails any validation checks, True otherwise
         """
-        if batch is None or len(batch.requests) == 0:
+        if batch is None or not batch.has_valid_requests:
             return False
 
         return self._check_feature_stores(batch)
@@ -310,7 +310,7 @@ class WorkerManager(Service):
 
                 self._perf_timer.measure_time("serialize_resp")
 
-                if request.callback:
+                if request.has_callback:
                     request.callback.send(serialized_resp)
                     if reply.has_outputs:
                         # send tensor data after response

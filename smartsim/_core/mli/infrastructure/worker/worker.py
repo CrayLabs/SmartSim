@@ -101,6 +101,18 @@ class InferenceRequest:
     @property
     def has_model_key(self):
         return self.model_key is not None
+    
+    @property
+    def has_raw_inputs(self):
+        return self.raw_inputs is not None and bool(self.raw_inputs)
+    
+    @property
+    def has_input_keys(self):
+        return self.input_keys is not None and bool(self.input_keys)
+    
+    @property
+    def has_callback(self):
+        return self.callback is not None
 
 
 class InferenceReply:
