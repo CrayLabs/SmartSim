@@ -62,6 +62,66 @@ Supported Versions
 ==================
 
 
+.. tabs::
+
+    .. group-tab:: MacOS
+
+        .. list-table:: Supported System for Pre-built Wheels
+           :widths: 50 50 50
+           :header-rows: 1
+           :align: center
+
+           * - CPU
+             - GPU
+             - Python Versions
+           * - x86_64, aarch64
+             - Not supported
+             - 3.9 - 3.1
+        
+        .. list-table:: Support for various machine learning libraries
+           :widths: 50 50 50 50
+           :header-rows: 1
+           :align: center
+
+           * - RedisAI  
+             - PyTorch  
+             - Tensorflow 
+             - ONNX Runtime
+           * - 1.2.7 (default) 
+             - 2.0.1  
+             - 2.13.1
+             - 1.16.3  
+      
+
+    .. group-tab:: Linux
+
+        .. list-table:: Supported System for Pre-built Wheels
+           :widths: 50 50 50
+           :header-rows: 1
+           :align: center
+
+           * - CPU
+             - GPU
+             - Python Versions
+           * - x86_64
+             - Nvidia
+             - 3.9 - 3.11
+
+       .. list-table:: Support for various machine learning libraries
+             :widths: 50 50 50 50
+             :header-rows: 1
+             :align: center
+
+             * - RedisAI  
+               - PyTorch  
+               - Tensorflow 
+               - ONNX Runtime
+             * - 1.2.7 (default) 
+               - 2.0.1  
+               - 2.13.1
+               - 1.16.3 
+
+
 .. list-table:: Supported System for Pre-built Wheels
    :widths: 50 50 50 50
    :header-rows: 1
