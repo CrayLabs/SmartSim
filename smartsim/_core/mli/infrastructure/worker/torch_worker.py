@@ -87,7 +87,10 @@ class TorchWorker(MachineLearningWorkerBase):
                 model = torch.jit.load(buffer, map_location=device)  # type: ignore
                 model.eval()
         except Exception as e:
-            raise RuntimeError("Failed to load and evaluate the model") from e
+            raise RuntimeError(
+                "Failed to load and evaluate the model: "
+                f"Model key {batch.model_id.key}, Device {device}"
+            ) from e
         result = LoadModelResult(model)
         return result
 
@@ -154,7 +157,7 @@ class TorchWorker(MachineLearningWorkerBase):
                 )
             except IndexError as e:
                 raise IndexError(
-                    f"Error accessing elements in fetch_result.inputs "
+                    "Error accessing elements in fetch_result.inputs "
                     f"with index {result_tensor_idx}"
                 ) from e
 
@@ -222,7 +225,9 @@ class TorchWorker(MachineLearningWorkerBase):
                     )
                 ]
         except Exception as e:
-            raise ValueError("Error while evaluating the model") from e
+            raise ValueError(
+                f"Error while evaluating the model: Model {batch.model_id.key}"
+            ) from e
 
         transform_result.transformed = []
 
@@ -261,7 +266,7 @@ class TorchWorker(MachineLearningWorkerBase):
                     )  # fixme
                 except IndexError as e:
                     raise IndexError(
-                        f"Error accessing elements with result_slice {result_slice}"
+                        f"Error accessing elements: result_slice {result_slice}"
                     ) from e
                 except Exception as e:
                     raise ValueError("Error transforming output") from e

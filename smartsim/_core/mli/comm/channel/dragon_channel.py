@@ -76,7 +76,7 @@ def create_local(capacity: int = 0) -> dch.Channel:
             )
         except Exception as e:
             if offset < 100:
-                logger.warning(f"Unable to attach to channnel id {cid}. Retrying...")
+                logger.warning(f"Unable to attach to channel id {cid}. Retrying...")
             else:
                 logger.error(f"All attempts to attach local channel have failed")
                 raise SmartSimError("Failed to attach local channel") from e
@@ -117,7 +117,9 @@ class DragonCommChannel(cch.CommChannelBase):
                 sendh.send_bytes(value)
                 logger.debug(f"DragonCommChannel {self.descriptor!r} sent message")
         except Exception as e:
-            raise SmartSimError("Error sending message") from e
+            raise SmartSimError(
+                f"Error sending message: DragonCommChannel {self.descriptor!r}"
+            ) from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.

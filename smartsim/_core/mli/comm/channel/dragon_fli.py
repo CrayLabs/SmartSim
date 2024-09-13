@@ -78,7 +78,9 @@ class DragonFLIChannel(cch.CommChannelBase):
                 sendh.send_bytes(value, timeout=timeout)
                 logger.debug(f"DragonFLIChannel {self.descriptor!r} sent message")
         except Exception as e:
-            raise SmartSimError("Error sending message") from e
+            raise SmartSimError(
+                f"Error sending message: DragonFLIChannel {self.descriptor!r}"
+            ) from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
@@ -100,7 +102,9 @@ class DragonFLIChannel(cch.CommChannelBase):
                 except fli.FLIEOT:
                     eot = True
                 except Exception as e:
-                    raise SmartSimError("Error receiving messages") from e
+                    raise SmartSimError(
+                        f"Error receiving messages: DragonFLIChannel {self.descriptor!r}"
+                    ) from e
         return messages
 
     @classmethod
@@ -120,5 +124,6 @@ class DragonFLIChannel(cch.CommChannelBase):
                 sender_supplied=True,
             )
         except Exception as e:
-            logger.error(f"Error while creating DragonFLIChannel: {descriptor}")
-            raise SmartSimError("Error while creating DragonFLIChannel") from e
+            raise SmartSimError(
+                f"Error while creating DragonFLIChannel: {descriptor}"
+            ) from e

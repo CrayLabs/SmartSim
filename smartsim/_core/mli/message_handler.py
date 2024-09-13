@@ -407,7 +407,8 @@ class MessageHandler:
         class_name = display_name.split(":")[-1]
         if class_name != "Request":
             raise ValueError(
-                "Error serializing the request. Value passed in is not a request"
+                "Error serializing the request. Value passed in is not "
+                f"a request: {class_name}"
             )
         try:
             return request.to_bytes()
@@ -572,7 +573,8 @@ class MessageHandler:
         class_name = display_name.split(":")[-1]
         if class_name != "Response":
             raise ValueError(
-                "Error serializing the response. Value passed in is not a response"
+                "Error serializing the response. Value passed in is not "
+                f"a response: {class_name}"
             )
         try:
             return response.to_bytes()
