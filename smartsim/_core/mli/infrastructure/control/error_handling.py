@@ -66,15 +66,11 @@ def exception_handler(
     :param reply_channel: The channel used to send replies
     :param failure_message: Failure message to log and send back
     """
-    if failure_message is None:
-        failure_message = str(exc)
-    logger.exception(
-        f"{failure_message}\n"
-        f"Exception type: {type(exc).__name__}\n"
-        f"Exception message: {str(exc)}\n"
-        f"Traceback: {traceback.format_exc()}"
-    )
+    logger.exception(exc)
     if reply_channel:
+        if failure_message is None:
+            failure_message = str(exc)
+
         serialized_resp = MessageHandler.serialize_response(
             build_failure_reply("fail", failure_message)
         )
