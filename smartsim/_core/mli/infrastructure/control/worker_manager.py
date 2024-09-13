@@ -274,7 +274,7 @@ class WorkerManager(Service):
 
             for request, transformed_output in zip(batch.requests, transformed_outputs):
                 reply = InferenceReply()
-                if request.output_keys:
+                if request.has_output_keys:
                     try:
                         reply.output_keys = self._worker.place_output(
                             request,

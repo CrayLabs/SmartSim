@@ -253,6 +253,14 @@ class RequestDispatcher(Service):
         self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
         """Performance timer"""
 
+    @property
+    def has_featurestore_factory(self) -> bool:
+        """Check if the RequestDispatcher has a FeatureStore factory.
+
+        :returns: True if there is a FeatureStore factory, False otherwise
+        """
+        return self._featurestore_factory is not None
+
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
         """Ensures that all feature stores required by the request are available.
 
@@ -272,7 +280,7 @@ class RequestDispatcher(Service):
         fs_actual = {item.descriptor for item in self._feature_stores.values()}
         fs_missing = fs_desired - fs_actual
 
-        if self._featurestore_factory is None:
+        if self.has_featurestore_factory:
             logger.error("No feature store factory configured")
             return False
 
@@ -362,7 +370,7 @@ class RequestDispatcher(Service):
             request = self._worker.deserialize_message(
                 request_bytes, self._callback_factory
             )
-            if request.input_meta and tensor_bytes_list:
+            if request.has_input_meta and tensor_bytes_list:
                 request.raw_inputs = tensor_bytes_list
 
             self._perf_timer.measure_time("deserialize_message")

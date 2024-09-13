@@ -96,22 +96,62 @@ class InferenceRequest:
 
     @property
     def has_raw_model(self):
+        """Check if the InferenceRequest contains a raw_model.
+
+        :returns: True if raw_model is not None, False otherwise
+        """
         return self.raw_model is not None
     
     @property
     def has_model_key(self):
+        """Check if the InferenceRequest contains a model_key.
+
+        :returns: True if model_key is not None, False otherwise
+        """
         return self.model_key is not None
     
     @property
     def has_raw_inputs(self):
+        """Check if the InferenceRequest contains raw_outputs.
+
+        :returns: True if raw_outputs is not None and is not an empty list,
+        False otherwise
+        """
         return self.raw_inputs is not None and bool(self.raw_inputs)
     
     @property
     def has_input_keys(self):
+        """Check if the InferenceRequest contains input_keys.
+
+        :returns: True if input_keys is not None and is not an empty list,
+        False otherwise
+        """
         return self.input_keys is not None and bool(self.input_keys)
     
     @property
+    def has_output_keys(self):
+        """Check if the InferenceRequest contains output_keys.
+
+        :returns: True if output_keys is not None and is not an empty list,
+        False otherwise
+        """
+        return self.output_keys is not None and bool(self.output_keys)
+    
+    @property
+    def has_input_meta(self):
+        """Check if the InferenceRequest contains input_meta.
+
+        :returns: True if input_meta is not None and is not an empty list,
+        False otherwise
+        """
+        return self.input_meta is not None and bool(self.input_meta)
+    
+    @property
     def has_callback(self):
+        """Check if the InferenceRequest contains a callback.
+
+        :returns: True if callback is not None, False otherwise
+        """
         return self.callback is not None
 
 
