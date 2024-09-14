@@ -30,6 +30,7 @@ import operator
 import os
 import re
 import shutil
+import textwrap
 import typing as t
 from pathlib import Path
 
@@ -41,7 +42,6 @@ from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
 from smartsim._core._install.mlpackages import (
     DEFAULT_MLPACKAGE_PATH,
-    DEFAULT_MLPACKAGES,
     MLPackageCollection,
     load_platform_configs,
 )
@@ -138,8 +138,7 @@ def build_redis_ai(
 
 def parse_requirement(
     requirement: str,
-) -> t.Tuple[str, t.Optional[t.Callable[[t.Any, t.Any], bool]], t.Optional[Version_]]:
-
+) -> t.Tuple[str, t.Optional[str], t.Callable[[Version_], bool]]:
     operators = {
         "==": operator.eq,
         "<=": operator.le,
@@ -147,14 +146,27 @@ def parse_requirement(
         "<": operator.lt,
         ">": operator.gt,
     }
-    pattern = r"^([a-zA-Z0-9_\-]+)([<>=!~]+)?([\d\.\*]+)?$"
+    semantic_version_pattern = r"\d+(?:\.\d+(?:\.\d+)?)?([^\s]*)"
+    pattern = rf"^([a-zA-Z0-9_\-]+)(?:([<>=!~]{{1,2}})({semantic_version_pattern}))?$"
     match = re.match(pattern, requirement)
-    if match:
-        module_name = match.group(1)
-        parsed_operator = operators[match.group(2)] if match.group(2) else None
-        version = Version_(match.group(3)) if match.group(3) else None
-        return module_name, parsed_operator, version
-    raise ValueError(f"Invalid requirement string: {requirement}")
+    if match is None:
+        raise ValueError(f"Invalid requirement string: {requirement}")
+    module_name, cmp_op, version_str, suffix = match.groups()
+    version = Version_(version_str) if version_str is not None else None
+    if cmp_op is None:
+        is_compatible = lambda _: True  # pylint: disable=unnecessary-lambda-assignment
+    elif (cmp := operators.get(cmp_op, None)) is None:
+        raise ValueError(f"Unrecognized comparison operator: {cmp_op}")
+    else:
+
+        def is_compatible(other: Version_) -> bool:
+            assert version is not None  # For type check, always should be true
+            match_ = re.match(rf"^{semantic_version_pattern}$", other)
+            return (
+                cmp(other, version) and match_ is not None and match_.group(1) == suffix
+            )
+
+    return module_name, f"{cmp_op}{version}" if version else None, is_compatible
 
 
 def check_ml_python_packages(packages: MLPackageCollection) -> None:
@@ -163,12 +175,14 @@ def check_ml_python_packages(packages: MLPackageCollection) -> None:
 
     for package in packages.values():
         for requirement in package.python_packages:
-            module_name, parsed_operator, version = parse_requirement(requirement)
+            module_name, version_spec, is_compatible = parse_requirement(requirement)
             try:
-                dist = importlib.metadata.distribution(module_name)
-                if parsed_operator and version:
-                    if not parsed_operator(version, dist.version):
-                        conflicts.append(f"{module_name} {version}")
+                installed = BuildEnv.get_py_package_version(module_name)
+                if not is_compatible(installed):
+                    conflicts.append(
+                        f"{module_name}: {installed} is installed, "
+                        f"but {version_spec or 'Any'} is required"
+                    )
             except importlib.metadata.PackageNotFoundError:
                 missing.append(module_name)
 
@@ -186,14 +200,18 @@ def _format_incompatible_python_env_message(
     missing_str = fmt_list("Missing", missing)
     conflict_str = fmt_list("Conflicting", conflicting)
     sep = "\n" if missing_str and conflict_str else ""
-    return (
-        "Python Package Warning:\n"
-        "Requested packages are missing or have have a version mismatch with\n"
-        "their respective backend:\n\n"
-        f"{missing_str}{sep}{conflict_str}\n\n"
-        "Consider uninstalling those packages and rerunning `smart build` if\n"
-        "you encounter issues."
-    )
+
+    return textwrap.dedent(f"""\
+        Python Package Warning:
+
+        Requested packages are missing or have a version mismatch with
+        their respective backend:
+
+        {missing_str}{sep}{conflict_str}
+
+        Consider uninstalling any conflicting packages and rerunning
+        `smart build` if you encounter issues.
+        """)
 
 
 def _configure_keydb_build(versions: Versioner) -> None:
@@ -230,10 +248,7 @@ def execute(
     )
 
     # Configure the ML Packages
-    if args.alternate_config_dir != DEFAULT_MLPACKAGE_PATH:
-        configs = load_platform_configs(Path(args.alternate_config_dir))
-    else:
-        configs = DEFAULT_MLPACKAGES
+    configs = load_platform_configs(Path(args.config_dir))
     mlpackages = configs[current_platform]
 
     # Build all backends by default, pop off the ones that user wants skipped

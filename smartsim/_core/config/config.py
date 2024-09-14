@@ -101,7 +101,9 @@ class Config:
 
     @property
     def dependency_path(self) -> Path:
-        return Path(os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path))).resolve()
+        return Path(
+            os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path))
+        ).resolve()
 
     @property
     def lib_path(self) -> Path:

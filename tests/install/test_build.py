@@ -34,26 +34,111 @@ from smartsim._core._install.buildenv import Version_
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
-valid_operators = {
-    "==": operator.eq,
-    "<=": operator.le,
-    ">=": operator.ge,
-    "<": operator.lt,
-    ">": operator.gt,
-}
+
+_SUPPORTED_OPERATORS = ("==", ">=", ">", "<=", "<")
 
 
-def test_simple_requirement():
-    assert parse_requirement("foo") == ("foo", None, None)
+@pytest.mark.parametrize(
+    "spec, name, pin",
+    (
+        pytest.param("foo", "foo", None, id="Just Name"),
+        pytest.param("foo==1", "foo", "==1", id="With Major"),
+        pytest.param("foo==1.2", "foo", "==1.2", id="With Minor"),
+        pytest.param("foo==1.2.3", "foo", "==1.2.3", id="With Patch"),
+        *(
+            pytest.param(
+                f"foo{symbol}1.2.3{tag}",
+                "foo",
+                f"{symbol}1.2.3{tag}",
+                id=f"{symbol=} | {tag=}",
+            )
+            for symbol in _SUPPORTED_OPERATORS
+            for tag in ("", "+cuda", "+rocm", "+cpu")
+        ),
+    ),
+)
+def test_parse_requirement_name_and_version(spec, name, pin):
+    p_name, p_pin, _ = parse_requirement(spec)
+    assert p_name == name
+    assert p_pin == pin
 
 
-@pytest.mark.parametrize("operator_string, operator", valid_operators.items())
-def test_complex_requirement(operator_string, operator):
-    name = "foo"
-    version = "1.2.3"
-    version_string = f"{name}{operator_string}{version}"
-    mod_name, mod_operator, mod_version = parse_requirement(version_string)
-    assert mod_name == name
-    assert mod_operator == operator
-    assert isinstance(mod_version, Version_)
-    assert mod_version == Version_(version)
+# fmt: off
+@pytest.mark.parametrize(
+    "spec, ver, should_pass",
+    (
+        pytest.param("foo"            , Version_("1.2.3")     ,  True, id="No spec"),
+        # EQ --------------------------------------------------------------------------
+        pytest.param("foo==1.2.3"     , Version_("1.2.3")     ,  True, id="EQ Spec, EQ Version"),
+        pytest.param("foo==1.2.3"     , Version_("1.2.5")     , False, id="EQ Spec, GT Version"),
+        pytest.param("foo==1.2.3"     , Version_("1.2.2")     , False, id="EQ Spec, LT Version"),
+        pytest.param("foo==1.2.3+rocm", Version_("1.2.3+rocm"),  True, id="EQ Spec, Compatable Version with suffix"),
+        pytest.param("foo==1.2.3"     , Version_("1.2.3+cuda"), False, id="EQ Spec, Compatable Version, Extra Suffix"),
+        pytest.param("foo==1.2.3+cuda", Version_("1.2.3")     , False, id="EQ Spec, Compatable Version, Missing Suffix"),
+        pytest.param("foo==1.2.3+cuda", Version_("1.2.3+rocm"), False, id="EQ Spec, Compatable Version, Mismatched Suffix"),
+        # LT --------------------------------------------------------------------------
+        pytest.param("foo<1.2.3"      , Version_("1.2.3")     , False, id="LT Spec, EQ Version"),
+        pytest.param("foo<1.2.3"      , Version_("1.2.5")     , False, id="LT Spec, GT Version"),
+        pytest.param("foo<1.2.3"      , Version_("1.2.2")     ,  True, id="LT Spec, LT Version"),
+        pytest.param("foo<1.2.3+rocm" , Version_("1.2.2+rocm"),  True, id="LT Spec, Compatable Version with suffix"),
+        pytest.param("foo<1.2.3"      , Version_("1.2.2+cuda"), False, id="LT Spec, Compatable Version, Extra Suffix"),
+        pytest.param("foo<1.2.3+cuda" , Version_("1.2.2")     , False, id="LT Spec, Compatable Version, Missing Suffix"),
+        pytest.param("foo<1.2.3+cuda" , Version_("1.2.2+rocm"), False, id="LT Spec, Compatable Version, Mismatched Suffix"),
+        # LE --------------------------------------------------------------------------
+        pytest.param("foo<=1.2.3"     , Version_("1.2.3")     ,  True, id="LE Spec, EQ Version"),
+        pytest.param("foo<=1.2.3"     , Version_("1.2.5")     , False, id="LE Spec, GT Version"),
+        pytest.param("foo<=1.2.3"     , Version_("1.2.2")     ,  True, id="LE Spec, LT Version"),
+        pytest.param("foo<=1.2.3+rocm", Version_("1.2.3+rocm"),  True, id="LE Spec, Compatable Version with suffix"),
+        pytest.param("foo<=1.2.3"     , Version_("1.2.3+cuda"), False, id="LE Spec, Compatable Version, Extra Suffix"),
+        pytest.param("foo<=1.2.3+cuda", Version_("1.2.3")     , False, id="LE Spec, Compatable Version, Missing Suffix"),
+        pytest.param("foo<=1.2.3+cuda", Version_("1.2.3+rocm"), False, id="LE Spec, Compatable Version, Mismatched Suffix"),
+        # GT --------------------------------------------------------------------------
+        pytest.param("foo>1.2.3"      , Version_("1.2.3")     , False, id="GT Spec, EQ Version"),
+        pytest.param("foo>1.2.3"      , Version_("1.2.5")     ,  True, id="GT Spec, GT Version"),
+        pytest.param("foo>1.2.3"      , Version_("1.2.2")     , False, id="GT Spec, LT Version"),
+        pytest.param("foo>1.2.3+rocm" , Version_("1.2.4+rocm"),  True, id="GT Spec, Compatable Version with suffix"),
+        pytest.param("foo>1.2.3"      , Version_("1.2.4+cuda"), False, id="GT Spec, Compatable Version, Extra Suffix"),
+        pytest.param("foo>1.2.3+cuda" , Version_("1.2.4")     , False, id="GT Spec, Compatable Version, Missing Suffix"),
+        pytest.param("foo>1.2.3+cuda" , Version_("1.2.4+rocm"), False, id="GT Spec, Compatable Version, Mismatched Suffix"),
+        # GE --------------------------------------------------------------------------
+        pytest.param("foo>=1.2.3"     , Version_("1.2.3")     ,  True, id="GE Spec, EQ Version"),
+        pytest.param("foo>=1.2.3"     , Version_("1.2.5")     ,  True, id="GE Spec, GT Version"),
+        pytest.param("foo>=1.2.3"     , Version_("1.2.2")     , False, id="GE Spec, LT Version"),
+        pytest.param("foo>=1.2.3+rocm", Version_("1.2.3+rocm"),  True, id="GE Spec, Compatable Version with suffix"),
+        pytest.param("foo>=1.2.3"     , Version_("1.2.3+cuda"), False, id="GE Spec, Compatable Version, Extra Suffix"),
+        pytest.param("foo>=1.2.3+cuda", Version_("1.2.3")     , False, id="GE Spec, Compatable Version, Missing Suffix"),
+        pytest.param("foo>=1.2.3+cuda", Version_("1.2.3+rocm"), False, id="GE Spec, Compatable Version, Mismatched Suffix"),
+    )
+)
+# fmt: on
+def test_parse_requirement_comparison_fn(spec, ver, should_pass):
+    _, _, cmp = parse_requirement(spec)
+    assert cmp(ver) == should_pass
+
+
+@pytest.mark.parametrize(
+    "spec, ctx",
+    (
+        *(
+            pytest.param(
+                f"thing{symbol}",
+                pytest.raises(ValueError, match="Invalid requirement string:"),
+                id=f"No version w/ operator {symbol}",
+            )
+            for symbol in _SUPPORTED_OPERATORS
+        ),
+        pytest.param(
+            "thing>=>1.2.3",
+            pytest.raises(ValueError, match="Invalid requirement string:"),
+            id="Operator too long",
+        ),
+        pytest.param(
+            "thing<>1.2.3",
+            pytest.raises(ValueError, match="Unrecognized comparison operator: <>"),
+            id="Nonsense operator",
+        ),
+    ),
+)
+def test_parse_requirement_errors_on_invalid_spec(spec, ctx):
+    with ctx:
+        parse_requirement(spec)

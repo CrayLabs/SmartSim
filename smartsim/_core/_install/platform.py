@@ -165,9 +165,7 @@ class Device(enum.Enum):
 
 
 class OperatingSystem(enum.Enum):
-    """Enum for all supported operating systems
-
-    """
+    """Enum for all supported operating systems"""
 
     LINUX = "linux"
     DARWIN = "darwin"
