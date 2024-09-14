@@ -17,9 +17,9 @@
             "version": "2.2.2",
             "pip_index": "https://download.pytorch.org/whl/rocm5.7",
             "python_packages": [
-                "torch==2.2.2",
-                "torchvision==0.17.2",
-                "torchaudio==2.2.2"
+                "torch==2.2.2+rocm5.7",
+                "torchvision==0.17.2+rocm5.7",
+                "torchaudio==2.2.2+rocm5.7"
             ],
             "lib_source": "/home/users/shao/dev/ml_lib_builder/install/libtorch-2.2.2-linux-x64-rocm-5.7.0.tgz",
             "rai_patches": [

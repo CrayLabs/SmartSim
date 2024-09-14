@@ -30,7 +30,7 @@ The base prerequisites to install SmartSim and SmartRedis wtih CPU-only support 
 
 .. note::
 
-  GCC 5-9, 11, and 12 is recommended. There are known issues compiling with GCC 10.
+  GCC 5-9, 11-13 is recommended. There are known issues compiling with GCC 10.
 
 .. warning::
 
@@ -62,7 +62,7 @@ Linux
     .. group-tab:: CUDA 11.8
 
       .. list-table:: Nvidia CUDA 11.8
-         :widths: 50 50 50
+         :widths: 50 50 50 50
          :header-rows: 1
          :align: center
 
@@ -78,7 +78,7 @@ Linux
     .. group-tab:: CUDA 12.5
 
       .. list-table:: Nvidia CUDA 12.5
-         :widths: 50 50 50
+         :widths: 50 50 50 50
          :header-rows: 1
          :align: center
 
@@ -94,7 +94,7 @@ Linux
     .. group-tab:: ROCm 5.7.0
 
       .. list-table:: AMD ROCm 5.7.0
-         :widths: 50 50 50
+         :widths: 50 50 50 50
          :header-rows: 1
          :align: center
 
@@ -110,7 +110,7 @@ Linux
     .. group-tab:: CPU
 
       .. list-table:: CPU-only
-         :widths: 50 50 50
+         :widths: 50 50 50 50
          :header-rows: 1
          :align: center
 
@@ -126,10 +126,12 @@ Linux
 MacOSX
 ------
 
+.. tabs::
+
     .. group-tab:: Apple Silicon
 
       .. list-table:: Apple Silicon ARM64 (no Metal support)
-         :widths: 50 50 50
+         :widths: 50 50 50 50
          :header-rows: 1
          :align: center
 
@@ -145,7 +147,7 @@ MacOSX
     .. group-tab:: Intel Mac (x86)
 
       .. list-table:: CPU-only
-         :widths: 50 50 50
+         :widths: 50 50 50 50
          :header-rows: 1
          :align: center
 
@@ -159,25 +161,6 @@ MacOSX
            - 1.17.3
 
 
-.. list-table:: Supported System for Pre-built Wheels
-   :widths: 50 50 50 50
-   :header-rows: 1
-   :align: center
-
-   * - Platform
-     - CPU
-     - GPU
-     - Python Versions
-   * - MacOS
-     - x86_64, aarch64
-     - Not supported
-     - 3.9 - 3.11
-   * - Linux
-     - x86_64
-     - Nvidia
-     - 3.9 - 3.11
-
-
 .. note::
 
     Users have succesfully run SmartSim on Windows using Windows Subsystem for Linux
@@ -185,7 +168,7 @@ MacOSX
     however we make no guarantee or offer of support.
 
 
-TensorFlow_ 2.0 and Keras_ are supported through `graph freezing`_.
+TensorFlow_ and Keras_ are supported through `graph freezing`_.
 
 ScikitLearn_ and Spark_ models are supported by SmartSim as well
 through the use of the ONNX_ runtime (which is not built by
