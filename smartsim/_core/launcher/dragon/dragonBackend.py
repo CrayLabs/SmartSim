@@ -46,6 +46,7 @@ import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
 from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import BackboneFeatureStore
 
 # pylint: enable=import-error
 # isort: on
@@ -187,8 +188,8 @@ class DragonBackend:
             else 5
         )
         """Time in seconds needed to server to complete shutdown"""
-        self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
-
+        self._backbone: t.Optional[BackboneFeatureStore] = None
+        """The backbone feature store"""
         self._nodes: t.List["dragon_machine.Node"] = []
         """Node capability information for hosts in the allocation"""
         self._hosts: t.List[str] = []
@@ -540,20 +541,21 @@ class DragonBackend:
                 self._group_infos[step_id].return_codes = [-9]
 
     @property
-    def infra_ddict(self) -> str:
+    def backbone_descriptor(self) -> str:
         """Create a Dragon distributed dictionary and return its
         serialized descriptor
         """
-        if self._infra_ddict is None:
-            logger.info("Creating DDict")
-            self._infra_ddict = dragon_ddict.DDict(
+        if self._backbone is None:
+            logger.info("Creating backbone storage DDict")
+            backbone_storage = dragon_ddict.DDict(
                 n_nodes=len(self._hosts), total_mem=len(self._hosts) * 1024**3
             )  # todo: parametrize
-            logger.info("Created DDict")
-            self._infra_ddict["creation"] = str(time.time())
-            logger.info(self._infra_ddict["creation"])
+            logger.info("Created backbone storage DDict")
+            self._backbone = BackboneFeatureStore(backbone_storage, allow_reserved_writes=True)
+            logger.info(self._backbone.creation_date)
 
-        return str(self._infra_ddict.serialize())
+
+        return self._backbone.descriptor
 
     @staticmethod
     def create_run_policy(
@@ -622,7 +624,7 @@ class DragonBackend:
                         env={
                             **request.current_env,
                             **request.env,
-                            "_SMARTSIM_INFRA_BACKBONE": self.infra_ddict,
+                            **self._backbone.get_env(),
                         },
                         stdout=dragon_process.Popen.PIPE,
                         stderr=dragon_process.Popen.PIPE,

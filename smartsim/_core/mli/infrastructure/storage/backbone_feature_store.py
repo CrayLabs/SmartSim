@@ -69,6 +69,7 @@ class BackboneFeatureStore(DragonFeatureStore):
     MLI_BACKEND_CONSUMER = "_SMARTIM_MLI_BACKEND_CONSUMER"
     MLI_WORKER_QUEUE = "to_worker_fli"
     MLI_BACKBONE = "_SMARTSIM_INFRA_BACKBONE"
+    _CREATED_ON = "creation"
 
     def __init__(
         self,
@@ -83,6 +84,9 @@ class BackboneFeatureStore(DragonFeatureStore):
         """
         super().__init__(storage)
         self._enable_reserved_writes = allow_reserved_writes
+
+        if self._CREATED_ON not in self:
+            self._record_creation_date()
 
     @property
     def wait_timeout(self) -> float:
@@ -144,6 +148,18 @@ class BackboneFeatureStore(DragonFeatureStore):
 
         :param value: a stringified channel descriptor"""
         self[self.MLI_WORKER_QUEUE] = value
+
+    @property
+    def creation_date(self) -> str:
+        """Return the creation date for the backbone feature store"""
+        return self[self._CREATED_ON]
+    
+    def _record_creation_date(self) -> None:
+        """Write the creation timestamp to the feature store"""
+        if self._CREATED_ON not in self:
+            if not self._allow_reserved_writes:
+                logger.warning("Recorded creation from a write-protected backbone instance")
+            self[self._CREATED_ON] = str(time.time())            
 
     @classmethod
     def from_writable_descriptor(
@@ -221,6 +237,10 @@ class BackboneFeatureStore(DragonFeatureStore):
 
         return dict(zip(keys, values))
 
+    def get_env(self) -> t.Dict[str, str]:
+        """Returns a dictionary populated with environment variables necessary to
+        connect a process to the existing backbone instance."""
+        return {self.MLI_BACKBONE: self.descriptor}
 
 class EventCategory(str, enum.Enum):
     """Predefined event types raised by SmartSim backend."""
