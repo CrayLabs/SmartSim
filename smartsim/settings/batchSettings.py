@@ -92,7 +92,7 @@ class BatchSettings(BaseSettings):
             sbatch_settings.schedule_args.set_nodes(5)
             sbatch_settings.schedule_args.set_cpus_per_task(2)
 
-        To set customized batch arguments, use the set() function provided by
+        To set customized batch arguments, use the `set()` function provided by
         the BatchSettings child class. For example:
 
         .. highlight:: python
@@ -114,10 +114,13 @@ class BatchSettings(BaseSettings):
         """
         try:
             self._scheduler = SchedulerType(scheduler)
+            """The scheduler type"""
         except ValueError:
             raise ValueError(f"Invalid scheduler type: {scheduler}") from None
         self._arguments = self._get_arguments(schedule_args)
+        """The BatchSettings child class based on scheduler type"""
         self.env_vars = env_vars or {}
+        """The environment configuration"""
 
     @property
     def scheduler(self) -> str:

@@ -71,4 +71,4 @@ def test_env_vars_property():
     bs = BatchSettings(scheduler="slurm", env_vars={"ENV": "VAR"})
     assert bs.env_vars == {"ENV": "VAR"}
     ref = bs.env_vars
-    assert ref == bs.env_vars
+    assert ref is bs.env_vars

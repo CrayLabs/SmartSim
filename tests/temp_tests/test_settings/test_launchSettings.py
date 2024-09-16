@@ -65,7 +65,7 @@ def test_env_vars_property():
     ls = LaunchSettings(launcher="local", env_vars={"ENV": "VAR"})
     assert ls.env_vars == {"ENV": "VAR"}
     ref = ls.env_vars
-    assert ref == ls.env_vars
+    assert ref is ls.env_vars
 
 
 def test_update_env_vars():

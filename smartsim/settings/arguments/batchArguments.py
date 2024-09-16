@@ -46,6 +46,7 @@ class BatchArguments(ABC):
 
     def __init__(self, schedule_args: t.Dict[str, str | None] | None) -> None:
         self._schedule_args = copy.deepcopy(schedule_args) or {}
+        """A dictionary of batch arguments"""
 
     @abstractmethod
     def scheduler_str(self) -> str:

@@ -100,7 +100,7 @@ class LaunchSettings(BaseSettings):
             srun_settings.launch_args.set_nodes(5)
             srun_settings.launch_args.set_cpus_per_task(2)
 
-        To set customized launch arguments, use the set() function provided by
+        To set customized launch arguments, use the  `set()`function provided by
         the LaunchSettings child class. For example:
 
         .. highlight:: python
@@ -123,10 +123,13 @@ class LaunchSettings(BaseSettings):
         """
         try:
             self._launcher = LauncherType(launcher)
+            """The launcher type"""
         except ValueError:
             raise ValueError(f"Invalid launcher type: {launcher}")
         self._arguments = self._get_arguments(launch_args)
+        """The LaunchSettings child class based on launcher type"""
         self.env_vars = env_vars or {}
+        """The environment configuration"""
 
     @property
     def launcher(self) -> str:
