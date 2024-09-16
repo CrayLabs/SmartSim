@@ -42,6 +42,7 @@ from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
 from smartsim._core._install.mlpackages import (
     DEFAULT_MLPACKAGE_PATH,
+    DEFAULT_MLPACKAGES,
     MLPackageCollection,
     load_platform_configs,
 )
@@ -302,8 +303,10 @@ def execute(
 
     if (CONFIG.lib_path / "redisai.so").exists():
         logger.warning("RedisAI was previously built, run 'smart clean' to rebuild")
-    else:
+    elif not args.skip_backends:
         build_redis_ai(current_platform, mlpackages, build_env, verbose)
+    else:
+        logger.info("Skipping compilation of RedisAI and backends")
 
     backends = installed_redisai_backends()
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
@@ -321,6 +324,18 @@ def execute(
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
     """Builds the parser for the command"""
+
+    available_devices = []
+    for platform in DEFAULT_MLPACKAGES:
+        if (
+            # (platform.operating_system == OperatingSystem.autodetect()) and
+            # (platform.architecture == Architecture.autodetect())
+            (platform.operating_system == OperatingSystem.LINUX) and
+            (platform.architecture == Architecture.X64)
+        ):
+            available_devices.append(platform.device.value)
+
+
     parser.add_argument(
         "-v",
         action="store_true",
@@ -331,7 +346,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--device",
         type=str.lower,
         default=Device.CPU.value,
-        choices=[*(device.value for device in Device), "gpu"],
+        choices=available_devices,
         help="Device to build ML runtimes for",
     )
     parser.add_argument(
@@ -343,7 +358,12 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--skip-python-packages",
         action="store_true",
-        help="Do not install the python packages that match the ",
+        help="Do not install the python packages that match the backends",
+    )
+    parser.add_argument(
+        "--skip-backends",
+        action="store_true",
+        help="Do not compile RedisAI and the backends",
     )
     parser.add_argument(
         "--skip-torch",

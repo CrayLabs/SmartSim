@@ -192,4 +192,5 @@ def load_platform_configs(
     return configs
 
 
-DEFAULT_MLPACKAGE_PATH: t.Final = pathlib.Path(__file__).parent / "configs/mlpackages"
+DEFAULT_MLPACKAGE_PATH: t.Final = pathlib.Path(__file__).parent / "configs" / "mlpackages"
+DEFAULT_MLPACKAGES: t.Final = load_platform_configs(DEFAULT_MLPACKAGE_PATH)

@@ -61,6 +61,12 @@ Linux
 
     .. group-tab:: CUDA 11.8
 
+      Additional requirements:
+
+      * GCC <= 11
+      * CUDA Toolkit 11.8
+      * cuDNN 8.9
+
       .. list-table:: Nvidia CUDA 11.8
          :widths: 50 50 50 50
          :header-rows: 1
@@ -76,6 +82,11 @@ Linux
            - 1.17.3
 
     .. group-tab:: CUDA 12.5
+
+      Additional requirements:
+
+      * CUDA Toolkit 12.5
+      * cuDNN 8.9
 
       .. list-table:: Nvidia CUDA 12.5
          :widths: 50 50 50 50
