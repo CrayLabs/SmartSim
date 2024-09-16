@@ -327,14 +327,10 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 
     available_devices = []
     for platform in DEFAULT_MLPACKAGES:
-        if (
-            # (platform.operating_system == OperatingSystem.autodetect()) and
-            # (platform.architecture == Architecture.autodetect())
-            (platform.operating_system == OperatingSystem.LINUX) and
-            (platform.architecture == Architecture.X64)
+        if (platform.operating_system == OperatingSystem.autodetect()) and (
+            platform.architecture == Architecture.autodetect()
         ):
             available_devices.append(platform.device.value)
-
 
     parser.add_argument(
         "-v",
