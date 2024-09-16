@@ -30,7 +30,8 @@ The base prerequisites to install SmartSim and SmartRedis wtih CPU-only support 
 
 .. note::
 
-  GCC 5-9, 11-13 is recommended. There are known issues compiling with GCC 10.
+  GCC 9, 11-13 is recommended (here are known issues compiling with GCC 10). For
+  CUDA 11.8, GCC 9 or 11 must be used.
 
 .. warning::
 

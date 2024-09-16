@@ -42,6 +42,7 @@ from smartsim._core.config import CONFIG
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
+_SUPPORTED_ROCM_ARCH = "gfx90a"
 
 
 class RedisAIBuildError(Exception):
@@ -158,6 +159,20 @@ class RedisAIBuilder:
         if self.verbose:
             print(" ".join(cmake_command))
         self.run_command(cmake_command, self.build_path)
+
+        if self.platform.device.is_rocm():
+            pytorch_rocm_arch = os.environ.get("PYTORCH_ROCM_ARCH")
+            if pytorch_rocm_arch is not None:
+                logger.info(
+                    f"PYTORCH_ROCM_ARCH not set. Defaulting to '{_SUPPORTED_ROCM_ARCH}'"
+                )
+                os.environ["PYTORCH_ROCM_ARCH"] = _SUPPORTED_ROCM_ARCH
+            if pytorch_rocm_arch != _SUPPORTED_ROCM_ARCH:
+                logger.warning(
+                    f"PYTORCH_ROCM_ARCH is not {_SUPPORTED_ROCM_ARCH} which is the\n"
+                    "only officially supported architecture. This may work\n"
+                    "if you are supplying your own version of libtensorflow."
+                )
 
         logger.info("Building RedisAI")
         if self.verbose:

@@ -17,9 +17,9 @@
             "version": "2.4.0",
             "pip_index": "https://download.pytorch.org/whl/cu124",
             "python_packages": [
-                "torch<=2.4.0+cu125",
-                "torchvision<=0.19.0+cu125",
-                "torchaudio<=2.4.0+cu125"
+                "torch==2.4.0+cu125",
+                "torchvision==0.19.0+cu125",
+                "torchaudio==2.4.0+cu125"
             ],
             "lib_source": "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.2/libtorch-2.4.0-linux-x64-cuda-12.5.0.tgz",
             "rai_patches": [
