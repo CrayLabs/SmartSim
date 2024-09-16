@@ -148,7 +148,7 @@ def parse_requirement(
         ">": operator.gt,
     }
     semantic_version_pattern = r"\d+(?:\.\d+(?:\.\d+)?)?([^\s]*)"
-    pattern = rf"^([a-zA-Z0-9_\-]+)(?:([<>=!~]{{1,2}})({semantic_version_pattern}))?$"
+    pattern = rf"^([a-zA-Z0-9_\-]+(?:\[[a-zA-Z0-9_\-,]+\])?)(?:([<>=!~]{{1,2}})({semantic_version_pattern}))?$"
     match = re.match(pattern, requirement)
     if match is None:
         raise ValueError(f"Invalid requirement string: {requirement}")
