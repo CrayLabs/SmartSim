@@ -255,7 +255,10 @@ class Ensemble(entity.CompoundEntity):
         )
 
     def as_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
-        apps = self._create_applications()
-        if not apps:
-            raise ValueError("There are no members as part of this ensemble")
-        return tuple(Job(app, settings, app.name) for app in apps)
+        if not settings is None:
+            apps = self._create_applications()
+            if not apps:
+                raise ValueError("There are no members as part of this ensemble")
+            return tuple(Job(app, settings, app.name) for app in apps)
+        else:
+            raise ValueError("The Launch Settings provided are empty")

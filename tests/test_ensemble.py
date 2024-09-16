@@ -34,6 +34,8 @@ import pytest
 from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.files import EntityFiles
 from smartsim.entity.strategies import ParamSet
+from smartsim.error.errors import SmartSimError
+from smartsim.experiment import Experiment
 from smartsim.settings.launchSettings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
@@ -45,6 +47,19 @@ _2x2_EXE_ARG = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
 @pytest.fixture
 def get_gen_configure_dir(fileutils):
     yield fileutils.get_test_conf_path(osp.join("generator_files", "tag_dir_template"))
+
+
+def user_created_function(
+    file_params: t.Mapping[str, t.Sequence[str]],
+    exe_arg_params: t.Mapping[str, t.Sequence[t.Sequence[str]]],
+    n_permutations: int = 0,
+) -> list[ParamSet]:
+    return [ParamSet({}, {})]
+
+
+@pytest.fixture
+def mock_launcher_settings(wlmutils):
+    return LaunchSettings(wlmutils.get_test_launcher(), {}, {})
 
 
 def test_exe_property():
@@ -86,21 +101,32 @@ def test_file_parameters_property():
         file_parameters=file_parameters,
     )
     file_parameters = e.file_parameters
-
     assert file_parameters == e.file_parameters
 
 
-def user_created_function(
-    file_params: t.Mapping[str, t.Sequence[str]],
-    exe_arg_params: t.Mapping[str, t.Sequence[t.Sequence[str]]],
-    n_permutations: int = 0,
-) -> list[ParamSet]:
-    return [ParamSet({}, {})]
+def test_ensemble_init_empty_params(test_dir: str) -> None:
+    """params supplied without run settings"""
+    exp = Experiment("test", exp_path=test_dir)
+    with pytest.raises(TypeError):
+        Ensemble()
 
 
-@pytest.fixture
-def mock_launcher_settings(wlmutils):
-    return LaunchSettings(wlmutils.get_test_launcher(), {}, {})
+def test_ensemble_as_jobs():
+    """Test a call to as_jobs with empty launchsettings"""
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+    launch_settings = None
+    with pytest.raises(ValueError):
+        ensemble.as_jobs(launch_settings)
+
+
+def test_ensemble_no_launch_settings(test_dir):
+    """test starting an ensemble with invalid launch settings"""
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+    launch_settings = "invalid"
+    job_list = ensemble.as_jobs(launch_settings)
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(AttributeError):
+        exp.start(*job_list)
 
 
 def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):

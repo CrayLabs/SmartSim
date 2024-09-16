@@ -140,6 +140,8 @@ def expand_exe_path(exe: str) -> str:
     :raises FileNotFoundError: if executable cannot be found
     """
 
+    if not exe:
+        raise ValueError("No executable provided")
     # which returns none if not found
     in_path = which(exe)
     if not in_path:

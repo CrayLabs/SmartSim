@@ -247,7 +247,7 @@ class Application(SmartSimEntity):
         :returns: String version of table
         """
         if not self.files:
-            return "No file attached to this application."
+            raise ValueError("No file attached to this application.")
         return str(self.files)
 
     @staticmethod

@@ -159,11 +159,14 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        # Create the run id
-        run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
-        # Generate the root path
-        root = pathlib.Path(self.exp_path, run_id)
-        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
+        if jobs:
+            # Create the run id
+            run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
+            # Generate the root path
+            root = pathlib.Path(self.exp_path, run_id)
+            return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
+        else:
+            raise ValueError("No job ids provided to start")
 
     def _dispatch(
         self,
@@ -240,6 +243,9 @@ class Experiment:
         :returns: A tuple of statuses with order respective of the order of the
             calling arguments.
         """
+        if not ids:
+            raise ValueError("No job ids provided to get status")
+
         to_query = self._launch_history.group_by_launcher(
             set(ids), unknown_ok=True
         ).items()

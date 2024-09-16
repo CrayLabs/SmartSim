@@ -214,11 +214,6 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
         return ("echo", "Hello", "World!")
 
 
-def test_start_raises_if_no_args_supplied(experiment):
-    with pytest.raises(TypeError, match="missing 1 required positional argument"):
-        experiment.start()
-
-
 # fmt: off
 @pytest.mark.parametrize(
     "num_jobs", [pytest.param(i, id=f"{i} job(s)") for i in (1, 2, 3, 5, 10, 100, 1_000)]
@@ -611,3 +606,35 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
     assert stat == InvalidJobStatus.NEVER_STARTED
     after_cancel = exp.get_status(*all_known_ids)
     assert before_cancel == after_cancel
+
+
+def test_start_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No job ids provided to start"):
+        exp.start()
+
+
+def test_stop_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No job ids provided"):
+        exp.stop()
+
+
+def test_get_status_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No job ids provided"):
+        exp.get_status()
+
+
+def test_poll_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(
+        TypeError, match="missing 2 required positional arguments: 'ids' and 'statuses'"
+    ):
+        exp._poll_for_statuses()
+
+
+def test_wait_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No job ids to wait on provided"):
+        exp.wait()
