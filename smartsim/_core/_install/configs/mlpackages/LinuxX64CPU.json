@@ -17,9 +17,9 @@
             "version": "2.4.0",
             "pip_index": "https://download.pytorch.org/whl/cpu",
             "python_packages": [
-                "torch<=2.4.0+cpu",
-                "torchvision<=0.19.0+cpu",
-                "torchaudio<=2.4.0+cpu"
+                "torch==2.4.0+cpu",
+                "torchvision==0.19.0+cpu",
+                "torchaudio==2.4.0+cpu"
             ],
             "lib_source": "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.4.0%2Bcpu.zip",
             "rai_patches": [
