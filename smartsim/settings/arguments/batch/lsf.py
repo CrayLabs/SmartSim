@@ -141,7 +141,7 @@ class BsubBatchArguments(BatchArguments):
         """
         opts = []
 
-        for opt, value in self._scheduler_args.items():
+        for opt, value in self._schedule_args.items():
 
             prefix = "-"  # LSF only uses single dashses
 
@@ -160,4 +160,4 @@ class BsubBatchArguments(BatchArguments):
             argument (if applicable), otherwise `None`
         """
         # Store custom arguments in the launcher_args
-        self._scheduler_args[key] = value
+        self._schedule_args[key] = value

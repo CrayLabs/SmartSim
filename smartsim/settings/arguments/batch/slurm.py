@@ -131,7 +131,7 @@ class SlurmBatchArguments(BatchArguments):
         """
         opts = []
         # TODO add restricted here
-        for opt, value in self._scheduler_args.items():
+        for opt, value in self._schedule_args.items():
             # attach "-" prefix if argument is 1 character otherwise "--"
             short_arg = len(opt) == 1
             prefix = "-" if short_arg else "--"
@@ -153,4 +153,4 @@ class SlurmBatchArguments(BatchArguments):
             argument (if applicable), otherwise `None`
         """
         # Store custom arguments in the launcher_args
-        self._scheduler_args[key] = value
+        self._schedule_args[key] = value

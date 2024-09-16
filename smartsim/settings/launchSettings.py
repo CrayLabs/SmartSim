@@ -52,8 +52,8 @@ logger = get_logger(__name__)
 
 
 class LaunchSettings(BaseSettings):
-    """The LaunchSettings class manages the configuration and execution of jobs
-    across the resources of a compute system.
+    """The LaunchSettings class stores launcher configuration settings and is
+    used to inject launcher-specific behavior into a job.
 
     LaunchSettings is designed to be extended by a LaunchArguments child class that
     corresponds to the launcher provided during initialization. The supported launchers
@@ -78,7 +78,10 @@ class LaunchSettings(BaseSettings):
     ) -> None:
         """Initialize a LaunchSettings instance.
 
-        Example of initializing LaunchSettings:
+        The "launcher" of SmartSim LaunchSettings will determine the
+        child type assigned to the LaunchSettings.launch_args attribute.
+        To configure a job for SLURM, assign LaunchSettings.launcher
+        to "slurm" or LauncherType.Slurm:
 
         .. highlight:: python
         .. code-block:: python
@@ -87,11 +90,9 @@ class LaunchSettings(BaseSettings):
             # OR
             srun_settings = LaunchSettings(launcher=LauncherType.Slurm)
 
-        The "launcher" of SmartSim LaunchSettings will determine the
-        child type assigned to the LaunchSettings.launch_args attribute.
-        The example above will return a SlurmLaunchArguments object. Using
-        the object, users may access the child class functions to set launch
-        configurations. For example:
+        This will assign a SlurmLaunchArguments object to ``srun_settings.launch_args``.
+        Using the object, users may access the child class functions to set
+        batch configurations. For example:
 
         .. highlight:: python
         .. code-block:: python

@@ -123,7 +123,7 @@ class QsubBatchArguments(BatchArguments):
         :return: batch arguments for `qsub`
         :raises ValueError: if options are supplied without values
         """
-        opts, batch_arg_copy = self._create_resource_list(self._scheduler_args)
+        opts, batch_arg_copy = self._create_resource_list(self._schedule_args)
         for opt, value in batch_arg_copy.items():
             prefix = "-"
             if not value:
@@ -183,4 +183,4 @@ class QsubBatchArguments(BatchArguments):
         :param value: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
-        self._scheduler_args[key] = value
+        self._schedule_args[key] = value

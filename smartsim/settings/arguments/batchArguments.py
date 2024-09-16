@@ -44,8 +44,8 @@ class BatchArguments(ABC):
     the input parameter to a properly formatted launcher argument.
     """
 
-    def __init__(self, scheduler_args: t.Dict[str, str | None] | None) -> None:
-        self._scheduler_args = copy.deepcopy(scheduler_args) or {}
+    def __init__(self, schedule_args: t.Dict[str, str | None] | None) -> None:
+        self._schedule_args = copy.deepcopy(schedule_args) or {}
 
     @abstractmethod
     def scheduler_str(self) -> str:
@@ -104,5 +104,5 @@ class BatchArguments(ABC):
         pass
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nScheduler Arguments:\n{fmt_dict(self._scheduler_args)}"
+        string = f"\nScheduler Arguments:\n{fmt_dict(self._schedule_args)}"
         return string

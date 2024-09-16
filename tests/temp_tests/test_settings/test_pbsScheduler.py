@@ -34,8 +34,8 @@ pytestmark = pytest.mark.group_a
 
 def test_scheduler_str():
     """Ensure scheduler_str returns appropriate value"""
-    bs = BatchSettings(batch_scheduler=SchedulerType.Pbs)
-    assert bs.scheduler_args.scheduler_str() == SchedulerType.Pbs.value
+    bs = BatchSettings(scheduler=SchedulerType.Pbs)
+    assert bs.schedule_args.scheduler_str() == SchedulerType.Pbs.value
 
 
 @pytest.mark.parametrize(
@@ -61,20 +61,20 @@ def test_scheduler_str():
     ],
 )
 def test_create_pbs_batch(function, value, flag, result):
-    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.Pbs)
-    assert isinstance(pbsScheduler.scheduler_args, QsubBatchArguments)
-    getattr(pbsScheduler.scheduler_args, function)(*value)
-    assert pbsScheduler.scheduler_args._scheduler_args[flag] == result
+    pbsScheduler = BatchSettings(scheduler=SchedulerType.Pbs)
+    assert isinstance(pbsScheduler.schedule_args, QsubBatchArguments)
+    getattr(pbsScheduler.schedule_args, function)(*value)
+    assert pbsScheduler.schedule_args._schedule_args[flag] == result
 
 
 def test_format_pbs_batch_args():
-    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.Pbs)
-    pbsScheduler.scheduler_args.set_nodes(1)
-    pbsScheduler.scheduler_args.set_walltime("10:00:00")
-    pbsScheduler.scheduler_args.set_queue("default")
-    pbsScheduler.scheduler_args.set_account("myproject")
-    pbsScheduler.scheduler_args.set_ncpus(10)
-    pbsScheduler.scheduler_args.set_hostlist(["host_a", "host_b", "host_c"])
+    pbsScheduler = BatchSettings(scheduler=SchedulerType.Pbs)
+    pbsScheduler.schedule_args.set_nodes(1)
+    pbsScheduler.schedule_args.set_walltime("10:00:00")
+    pbsScheduler.schedule_args.set_queue("default")
+    pbsScheduler.schedule_args.set_account("myproject")
+    pbsScheduler.schedule_args.set_ncpus(10)
+    pbsScheduler.schedule_args.set_hostlist(["host_a", "host_b", "host_c"])
     args = pbsScheduler.format_batch_args()
     assert args == [
         "-l",

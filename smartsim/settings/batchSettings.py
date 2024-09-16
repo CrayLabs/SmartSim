@@ -44,8 +44,8 @@ logger = get_logger(__name__)
 
 
 class BatchSettings(BaseSettings):
-    """The BatchSettings class manages the configuration and execution of batch jobs
-    across the resources of an HPC system.
+    """The BatchSettings class stores scheduler configuration settings and is
+    used to inject scheduler-specific behavior into a job.
 
     BatchSettings is designed to be extended by a BatchArguments child class that
     corresponds to the scheduler provided during initialization. The supported schedulers
@@ -57,39 +57,40 @@ class BatchSettings(BaseSettings):
     - Update environment variables.
     - Retrieve information associated with the ``BatchSettings`` object.
         - The scheduler value (BatchSettings.scheduler).
-        - The derived BatchArguments child class (BatchSettings.scheduler_args).
+        - The derived BatchArguments child class (BatchSettings.schedule_args).
         - The set environment variables (BatchSettings.env_vars).
         - A formatted output of set batch arguments (BatchSettings.format_batch_args).
     """
 
     def __init__(
         self,
-        batch_scheduler: t.Union[SchedulerType, str],
-        scheduler_args: StringArgument | None = None,
+        scheduler: t.Union[SchedulerType, str],
+        schedule_args: StringArgument | None = None,
         env_vars: StringArgument | None = None,
     ) -> None:
         """Initialize a BatchSettings instance.
 
-        Example of initializing BatchSettings:
+        The "scheduler" of SmartSim BatchSettings will determine the
+        child type assigned to the BatchSettings.schedule_args attribute.
+        To configure a job for SLURM batch jobs, assign BatchSettings.scheduler
+        to "slurm" or SchedulerType.Slurm:
 
         .. highlight:: python
         .. code-block:: python
 
-            sbatch_settings = BatchSettings(batch_scheduler="slurm")
+            sbatch_settings = BatchSettings(scheduler="slurm")
             # OR
-            sbatch_settings = BatchSettings(batch_scheduler=SchedulerType.Slurm)
+            sbatch_settings = BatchSettings(scheduler=SchedulerType.Slurm)
 
-        The "batch_scheduler" of SmartSim BatchSettings will determine the
-        child type assigned to the BatchSettings.scheduler_args attribute.
-        The example above will return a SlurmBatchArguments object. Using
-        the object, users may access the child class functions to set batch
-        configurations. For example:
+        This will assign a SlurmBatchArguments object to ``sbatch_settings.schedule_args``.
+        Using the object, users may access the child class functions to set
+        batch configurations. For example:
 
         .. highlight:: python
         .. code-block:: python
 
-            sbatch_settings.scheduler_args.set_nodes(5)
-            sbatch_settings.scheduler_args.set_cpus_per_task(2)
+            sbatch_settings.schedule_args.set_nodes(5)
+            sbatch_settings.schedule_args.set_cpus_per_task(2)
 
         To set customized batch arguments, use the set() function provided by
         the BatchSettings child class. For example:
@@ -97,34 +98,34 @@ class BatchSettings(BaseSettings):
         .. highlight:: python
         .. code-block:: python
 
-            sbatch_settings.scheduler_args.set(key="nodes", value="6")
+            sbatch_settings.schedule_args.set(key="nodes", value="6")
 
         If the key already exists in the existing batch arguments, the value will
         be overwritten.
 
-        :param batch_scheduler: The type of scheduler to initialize (e.g., Slurm, PBS, LSF)
-        :param scheduler_args: A dictionary of arguments for the scheduler, where the keys
+        :param scheduler: The type of scheduler to initialize (e.g., Slurm, PBS, LSF)
+        :param schedule_args: A dictionary of arguments for the scheduler, where the keys
             are strings and the values can be either strings or None. This argument is optional
             and defaults to None.
         :param env_vars: Environment variables for the batch settings, where the keys
             are strings and the values can be either strings or None. This argument is
             also optional and defaults to None.
-        :raises ValueError: Raises if the batch_scheduler provided does not exist.
+        :raises ValueError: Raises if the scheduler provided does not exist.
         """
         try:
-            self._batch_scheduler = SchedulerType(batch_scheduler)
+            self._scheduler = SchedulerType(scheduler)
         except ValueError:
-            raise ValueError(f"Invalid scheduler type: {batch_scheduler}") from None
-        self._arguments = self._get_arguments(scheduler_args)
+            raise ValueError(f"Invalid scheduler type: {scheduler}") from None
+        self._arguments = self._get_arguments(schedule_args)
         self.env_vars = env_vars or {}
 
     @property
     def scheduler(self) -> str:
         """Return the scheduler type."""
-        return self._batch_scheduler.value
+        return self._scheduler.value
 
     @property
-    def scheduler_args(self) -> BatchArguments:
+    def schedule_args(self) -> BatchArguments:
         """Return the BatchArguments child class."""
         return self._arguments
 
@@ -138,23 +139,23 @@ class BatchSettings(BaseSettings):
         """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arguments(self, scheduler_args: StringArgument | None) -> BatchArguments:
+    def _get_arguments(self, schedule_args: StringArgument | None) -> BatchArguments:
         """Map the Scheduler to the BatchArguments. This method should only be
         called once during construction.
 
-        :param scheduler_args: A mapping of arguments names to values to be
+        :param schedule_args: A mapping of arguments names to values to be
             used to initialize the arguments
         :returns: The appropriate type for the settings instance.
         :raises ValueError: An invalid scheduler type was provided.
         """
-        if self._batch_scheduler == SchedulerType.Slurm:
-            return SlurmBatchArguments(scheduler_args)
-        elif self._batch_scheduler == SchedulerType.Lsf:
-            return BsubBatchArguments(scheduler_args)
-        elif self._batch_scheduler == SchedulerType.Pbs:
-            return QsubBatchArguments(scheduler_args)
+        if self._scheduler == SchedulerType.Slurm:
+            return SlurmBatchArguments(schedule_args)
+        elif self._scheduler == SchedulerType.Lsf:
+            return BsubBatchArguments(schedule_args)
+        elif self._scheduler == SchedulerType.Pbs:
+            return QsubBatchArguments(schedule_args)
         else:
-            raise ValueError(f"Invalid scheduler type: {self._batch_scheduler}")
+            raise ValueError(f"Invalid scheduler type: {self._scheduler}")
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments to preview
@@ -164,7 +165,7 @@ class BatchSettings(BaseSettings):
         return self._arguments.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nScheduler: {self.scheduler}{self.scheduler_args}"
+        string = f"\nScheduler: {self.scheduler}{self.schedule_args}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

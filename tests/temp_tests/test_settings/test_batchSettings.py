@@ -32,41 +32,43 @@ pytestmark = pytest.mark.group_a
 
 
 @pytest.mark.parametrize(
-    "scheduler_enum",
+    "scheduler_enum,formatted_batch_args",
     [
-        pytest.param(SchedulerType.Slurm, id="slurm"),
-        pytest.param(SchedulerType.Pbs, id="dragon"),
-        pytest.param(SchedulerType.Lsf, id="lsf"),
+        pytest.param(SchedulerType.Slurm, ["--launch=var", "--nodes=1"], id="slurm"),
+        pytest.param(SchedulerType.Pbs, ["-l", "nodes=1", "-launch", "var"], id="pbs"),
+        pytest.param(SchedulerType.Lsf, ["-launch", "var", "-nnodes", "1"], id="lsf"),
     ],
 )
-def test_create_scheduler_settings(scheduler_enum):
+def test_create_scheduler_settings(scheduler_enum, formatted_batch_args):
     bs_str = BatchSettings(
-        batch_scheduler=scheduler_enum.value,
-        scheduler_args={"launch": "var"},
+        scheduler=scheduler_enum.value,
+        schedule_args={"launch": "var"},
         env_vars={"ENV": "VAR"},
     )
-    print(bs_str)
-    assert bs_str._batch_scheduler == scheduler_enum
-    # TODO need to test scheduler_args
+    bs_str.schedule_args.set_nodes(1)
+    assert bs_str._scheduler == scheduler_enum
     assert bs_str._env_vars == {"ENV": "VAR"}
+    print(bs_str.format_batch_args())
+    assert bs_str.format_batch_args() == formatted_batch_args
 
     bs_enum = BatchSettings(
-        batch_scheduler=scheduler_enum,
-        scheduler_args={"launch": "var"},
+        scheduler=scheduler_enum,
+        schedule_args={"launch": "var"},
         env_vars={"ENV": "VAR"},
     )
-    assert bs_enum._batch_scheduler == scheduler_enum
-    # TODO need to test scheduler_args
+    bs_enum.schedule_args.set_nodes(1)
+    assert bs_enum._scheduler == scheduler_enum
     assert bs_enum._env_vars == {"ENV": "VAR"}
+    assert bs_enum.format_batch_args() == formatted_batch_args
 
 
 def test_launcher_property():
-    bs = BatchSettings(batch_scheduler="slurm")
+    bs = BatchSettings(scheduler="slurm")
     assert bs.scheduler == "slurm"
 
 
 def test_env_vars_property():
-    bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
+    bs = BatchSettings(scheduler="slurm", env_vars={"ENV": "VAR"})
     assert bs.env_vars == {"ENV": "VAR"}
     ref = bs.env_vars
     assert ref == bs.env_vars

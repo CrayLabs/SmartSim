@@ -33,8 +33,8 @@ pytestmark = pytest.mark.group_a
 
 def test_scheduler_str():
     """Ensure scheduler_str returns appropriate value"""
-    bs = BatchSettings(batch_scheduler=SchedulerType.Lsf)
-    assert bs.scheduler_args.scheduler_str() == SchedulerType.Lsf.value
+    bs = BatchSettings(scheduler=SchedulerType.Lsf)
+    assert bs.schedule_args.scheduler_str() == SchedulerType.Lsf.value
 
 
 @pytest.mark.parametrize(
@@ -60,18 +60,16 @@ def test_scheduler_str():
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.Lsf)
-    getattr(lsfScheduler.scheduler_args, function)(*value)
-    assert lsfScheduler.scheduler_args._scheduler_args[flag] == result
+    lsfScheduler = BatchSettings(scheduler=SchedulerType.Lsf)
+    getattr(lsfScheduler.schedule_args, function)(*value)
+    assert lsfScheduler.schedule_args._schedule_args[flag] == result
 
 
 def test_create_bsub():
     batch_args = {"core_isolation": None}
-    lsfScheduler = BatchSettings(
-        batch_scheduler=SchedulerType.Lsf, scheduler_args=batch_args
-    )
-    lsfScheduler.scheduler_args.set_nodes(1)
-    lsfScheduler.scheduler_args.set_walltime("10:10:10")
-    lsfScheduler.scheduler_args.set_queue("default")
+    lsfScheduler = BatchSettings(scheduler=SchedulerType.Lsf, schedule_args=batch_args)
+    lsfScheduler.schedule_args.set_nodes(1)
+    lsfScheduler.schedule_args.set_walltime("10:10:10")
+    lsfScheduler.schedule_args.set_queue("default")
     args = lsfScheduler.format_batch_args()
     assert args == ["-core_isolation", "-nnodes", "1", "-W", "10:10", "-q", "default"]
