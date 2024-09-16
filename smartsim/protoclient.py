@@ -115,15 +115,15 @@ class ProtoClient:
 
         return _from_worker_ch, _to_worker_ch
 
-    def _create_publisher(self) -> EventProducer:
+    def _create_broadcaster(self) -> EventProducer:
         """Create an event publisher that will broadcast updates to
         other MLI components. This publisher
 
         :returns: the event publisher instance"""
-        publisher: EventProducer = EventBroadcaster(
+        broadcaster: EventProducer = EventBroadcaster(
             self._backbone, DragonCommChannel.from_descriptor
         )
-        return publisher
+        return broadcaster
 
     def __init__(self, timing_on: bool, wait_timeout: float = 0) -> None:
         """Initialize the client instance
@@ -162,7 +162,7 @@ class ProtoClient:
         self._from_worker_ch = channels[0]
         self._to_worker_ch = channels[1]
 
-        self._publisher = self._create_publisher()
+        self._publisher = self._create_broadcaster()
 
         self.perf_timer: PerfTimer = PerfTimer(
             debug=False, timing_on=timing_on, prefix=f"a{rank}_"
