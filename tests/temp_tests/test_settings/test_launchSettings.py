@@ -64,13 +64,8 @@ def test_launcher_property():
 def test_env_vars_property():
     ls = LaunchSettings(launcher="local", env_vars={"ENV": "VAR"})
     assert ls.env_vars == {"ENV": "VAR"}
-
-
-def test_env_vars_property_deep_copy():
-    ls = LaunchSettings(launcher="local", env_vars={"ENV": "VAR"})
-    copy_env_vars = ls.env_vars
-    copy_env_vars.update({"test": "no_update"})
-    assert ls.env_vars == {"ENV": "VAR"}
+    ref = ls.env_vars
+    assert ref == ls.env_vars
 
 
 def test_update_env_vars():

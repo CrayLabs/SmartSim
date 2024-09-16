@@ -38,6 +38,10 @@ logger = get_logger(__name__)
 
 
 class BsubBatchArguments(BatchArguments):
+    """A class to represent the arguments required for submitting batch
+    jobs using the bsub command.
+    """
+
     def scheduler_str(self) -> str:
         """Get the string representation of the scheduler
 

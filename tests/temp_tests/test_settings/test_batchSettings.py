@@ -68,10 +68,5 @@ def test_launcher_property():
 def test_env_vars_property():
     bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
     assert bs.env_vars == {"ENV": "VAR"}
-
-
-def test_env_vars_property_deep_copy():
-    bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
-    copy_env_vars = bs.env_vars
-    copy_env_vars.update({"test": "no_update"})
-    assert bs.env_vars == {"ENV": "VAR"}
+    ref = bs.env_vars
+    assert ref == bs.env_vars

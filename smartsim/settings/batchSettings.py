@@ -131,7 +131,7 @@ class BatchSettings(BaseSettings):
     @property
     def env_vars(self) -> StringArgument:
         """Return an immutable list of attached environment variables."""
-        return copy.deepcopy(self._env_vars)
+        return self._env_vars
 
     @env_vars.setter
     def env_vars(self, value: t.Dict[str, str | None]) -> None:
@@ -145,6 +145,7 @@ class BatchSettings(BaseSettings):
         :param scheduler_args: A mapping of arguments names to values to be
             used to initialize the arguments
         :returns: The appropriate type for the settings instance.
+        :raises ValueError: An invalid scheduler type was provided.
         """
         if self._batch_scheduler == SchedulerType.Slurm:
             return SlurmBatchArguments(scheduler_args)

@@ -70,7 +70,6 @@ class LaunchSettings(BaseSettings):
         - The set environment variables (LaunchSettings.env_vars).
     """
 
-    # Manage Environment Setup, set configuration parameters based on your machines launcher
     def __init__(
         self,
         launcher: t.Union[LauncherType, str],
@@ -152,7 +151,7 @@ class LaunchSettings(BaseSettings):
 
         :returns: An environment mapping
         """
-        return copy.deepcopy(self._env_vars)
+        return self._env_vars
 
     @env_vars.setter
     def env_vars(self, value: dict[str, str | None]) -> None:
@@ -171,6 +170,7 @@ class LaunchSettings(BaseSettings):
         :param launch_args: A mapping of arguments names to values to be used
             to initialize the arguments
         :returns: The appropriate type for the settings instance.
+        :raises ValueError: An invalid launcher type was provided.
         """
         if self._launcher == LauncherType.Slurm:
             return SlurmLaunchArguments(launch_args)
