@@ -456,6 +456,12 @@ def test_dispatcher_pipeline_stage_errors_handled(
 
     mock_reply_fn = mock_pipeline_stage(monkeypatch, integrated_worker, stage)
 
+    monkeypatch.setattr(
+        request_dispatcher,
+        "_validate_request",
+        MagicMock(return_value=True),
+    )
+
     if stage not in ["fetch_inputs"]:
         monkeypatch.setattr(
             integrated_worker,
