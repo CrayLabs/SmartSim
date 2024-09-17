@@ -543,6 +543,7 @@ class EventConsumer:
         filters: t.Optional[t.List[EventCategory]] = None,
         batch_timeout: t.Optional[float] = None,
         name: t.Optional[str] = None,
+        event_handler: t.Optional[t.Callable[[EventBase], None]] = None
     ) -> None:
         """Initialize the EventConsumer instance.
 
@@ -562,6 +563,14 @@ class EventConsumer:
         self._global_filters = filters or []
         self._global_timeout = batch_timeout or 1.0
         self._name = name
+        self._event_handler = event_handler
+
+    @property
+    def descriptor(self) -> str:
+        """The descriptor of the underlying comm channel where events are received
+        
+        :returns: The comm channel descriptor"""
+        return self._comm_channel.descriptor
 
     def receive(
         self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0
@@ -616,6 +625,8 @@ class EventConsumer:
         backoffs = itertools.cycle((0.1, 0.5, 1.0, 2.0, 4.0, 8.0))
         event = OnCreateConsumer(descriptor, self._global_filters)
 
+        # we're going to sit in this loop to wait for the backbone to get
+        # updated with the registration (to avoid SEND/ACK)
         while awaiting_confirmation:
             registered_channels = self._backbone.notification_channels
             # todo: this should probably be descriptor_string? maybe i need to
@@ -626,16 +637,25 @@ class EventConsumer:
             yield not awaiting_confirmation
             time.sleep(next(backoffs))
 
-            if backend_descriptor := self._backbone.backend_channel:
-                backend_channel = DragonCommChannel.from_descriptor(backend_descriptor)
-                backend = EventSender(self._backbone, backend_channel)
-                backend.send(event)
+            # if backend_descriptor := self._backbone.backend_channel:
+            #     backend_channel = DragonCommChannel.from_descriptor(backend_descriptor)
+            #     backend = EventSender(self._backbone, backend_channel)
+            #     backend.send(event)
+
+            # broadcast that this consumer is now ready to mingle
+            publisher = EventBroadcaster(self._backbone, DragonCommChannel.from_local())
+            publisher.send(event, timeout=0.1)
+
+                
 
     # def register_callback(self, callback: t.Callable[[EventBase], None]) -> None: ...
 
-    def listen(self, fn: t.Callable[[EventBase], None]) -> None:
+    def listen(self) -> None:
         """Function to handle incoming events"""
+        print("starting listener...")
+            
         while True:
+            print("awaiting new message")
             incoming_messages = self.receive()
             for message in incoming_messages:
-                fn(message)
+                self._event_handler(message)
