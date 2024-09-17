@@ -34,6 +34,7 @@ from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 import git
+import tqdm
 
 from smartsim._core._install.platform import Architecture, OperatingSystem
 from smartsim._core._install.types import PathLike
@@ -42,6 +43,24 @@ from smartsim._core._install.types import PathLike
 class UnsupportedArchive(Exception):
     pass
 
+
+class _TqdmUpTo(tqdm.tqdm):
+    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`.
+
+    From tqdm doumentation for progress bar when downloading
+    """
+    def update_to(self, b=1, bsize=1, tsize=None):
+        """
+        b  : int, optional
+            Number of blocks transferred so far [default: 1].
+        bsize  : int, optional
+            Size of each block (in tqdm units) [default: 1].
+        tsize  : int, optional
+            Total size (in tqdm units). If [default: None] remains unchanged.
+        """
+        if tsize is not None:
+            self.total = tsize
+        return self.update(b * bsize - self.n)  # also sets self.n = b * bsize
 
 def _from_local_archive(
     source: PathLike,
@@ -84,7 +103,11 @@ def _from_http(
     :param source: URL to a particular package
     :param destination: Where to unpack the archive
     """
-    local_file, _ = urlretrieve(source, **kwargs)
+    with _TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
+                desc=source.split('/')[-1]) as t:  # all optional kwargs
+        local_file, _ = urlretrieve(source, reporthook=t.update_to, **kwargs)
+        t.total = t.n
+
     _from_local_archive(local_file, destination)
     os.remove(local_file)
 

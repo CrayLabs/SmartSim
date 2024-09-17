@@ -155,11 +155,6 @@ class RedisAIBuilder:
         cmake_command = self._rai_cmake_cmd()
         build_command = self._rai_build_cmd
 
-        logger.info("Configuring CMake Build")
-        if self.verbose:
-            print(" ".join(cmake_command))
-        self.run_command(cmake_command, self.build_path)
-
         if self.platform.device.is_rocm():
             pytorch_rocm_arch = os.environ.get("PYTORCH_ROCM_ARCH")
             if pytorch_rocm_arch is not None:
@@ -173,6 +168,11 @@ class RedisAIBuilder:
                     "only officially supported architecture. This may work\n"
                     "if you are supplying your own version of libtensorflow."
                 )
+
+        logger.info("Configuring CMake Build")
+        if self.verbose:
+            print(" ".join(cmake_command))
+        self.run_command(cmake_command, self.build_path)
 
         logger.info("Building RedisAI")
         if self.verbose:
