@@ -116,7 +116,7 @@ class WorkerManager(Service):
         :returns: True if there is a FeatureStore factory, False otherwise
         """
         return self._featurestore_factory is not None
-    
+
     @property
     def has_device_manager(self) -> bool:
         """Check if the WorkerManager has a DeviceManager.

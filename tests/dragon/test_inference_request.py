@@ -25,24 +25,22 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
-from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest
+
 from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
-
-# from smartsim._core.mli.mli_schemas.model.model_capnp import Model
-
-from channel import FileSystemCommChannel
-
+from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest
 from smartsim._core.mli.message_handler import MessageHandler
 
 handler = MessageHandler()
+
 
 @pytest.fixture
 def inference_request() -> InferenceRequest:
     return InferenceRequest()
 
+
 @pytest.fixture
 def fs_key() -> FeatureStoreKey:
-    return FeatureStoreKey('key', 'descriptor')
+    return FeatureStoreKey("key", "descriptor")
 
 
 @pytest.mark.parametrize(
@@ -73,24 +71,17 @@ def test_has_model_key(monkeypatch, inference_request, model_key, expected):
 
 @pytest.mark.parametrize(
     "raw_inputs, expected",
-    [
-        ([b'raw input bytes'], True),
-        (None, False),
-        ([], False)
-    ],
+    [([b"raw input bytes"], True), (None, False), ([], False)],
 )
 def test_has_raw_inputs(monkeypatch, inference_request, raw_inputs, expected):
     """Test the has_raw_inputs property with different values for raw_inputs."""
-    monkeypatch.setattr(inference_request, "model_key", raw_inputs)
+    monkeypatch.setattr(inference_request, "raw_inputs", raw_inputs)
     assert inference_request.has_raw_inputs == expected
+
 
 @pytest.mark.parametrize(
     "input_keys, expected",
-    [
-        ([fs_key], True),
-        (None, False),
-        ([], False)
-    ],
+    [([fs_key], True), (None, False), ([], False)],
 )
 def test_has_input_keys(monkeypatch, inference_request, input_keys, expected):
     """Test the has_input_keys property with different values for input_keys."""
@@ -100,23 +91,20 @@ def test_has_input_keys(monkeypatch, inference_request, input_keys, expected):
 
 @pytest.mark.parametrize(
     "output_keys, expected",
-    [
-        ([fs_key], True),
-        (None, False),
-        ([], False)
-    ],
+    [([fs_key], True), (None, False), ([], False)],
 )
 def test_has_output_keys(monkeypatch, inference_request, output_keys, expected):
     """Test the has_output_keys property with different values for output_keys."""
     monkeypatch.setattr(inference_request, "output_keys", output_keys)
     assert inference_request.has_output_keys == expected
 
+
 @pytest.mark.parametrize(
     "input_meta, expected",
     [
-        ([handler.build_tensor_descriptor('c', float, [1,2,3])], True),
+        ([handler.build_tensor_descriptor("c", "float32", [1, 2, 3])], True),
         (None, False),
-        ([], False)
+        ([], False),
     ],
 )
 def test_has_input_meta(monkeypatch, inference_request, input_meta, expected):

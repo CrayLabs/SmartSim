@@ -101,7 +101,7 @@ class InferenceRequest:
         :returns: True if raw_model is not None, False otherwise
         """
         return self.raw_model is not None
-    
+
     @property
     def has_model_key(self):
         """Check if the InferenceRequest contains a model_key.
@@ -109,7 +109,7 @@ class InferenceRequest:
         :returns: True if model_key is not None, False otherwise
         """
         return self.model_key is not None
-    
+
     @property
     def has_raw_inputs(self):
         """Check if the InferenceRequest contains raw_outputs.
@@ -118,7 +118,7 @@ class InferenceRequest:
         False otherwise
         """
         return self.raw_inputs is not None and bool(self.raw_inputs)
-    
+
     @property
     def has_input_keys(self):
         """Check if the InferenceRequest contains input_keys.
@@ -127,7 +127,7 @@ class InferenceRequest:
         False otherwise
         """
         return self.input_keys is not None and bool(self.input_keys)
-    
+
     @property
     def has_output_keys(self):
         """Check if the InferenceRequest contains output_keys.
@@ -136,7 +136,7 @@ class InferenceRequest:
         False otherwise
         """
         return self.output_keys is not None and bool(self.output_keys)
-    
+
     @property
     def has_input_meta(self):
         """Check if the InferenceRequest contains input_meta.
@@ -145,7 +145,7 @@ class InferenceRequest:
         False otherwise
         """
         return self.input_meta is not None and bool(self.input_meta)
-    
+
     @property
     def has_callback(self):
         """Check if the InferenceRequest contains a callback.
@@ -179,7 +179,7 @@ class InferenceReply:
         self.status_enum = status_enum
         """Status of the reply"""
         self.message = message
-        """Status message that corresponds with the status enum""" 
+        """Status message that corresponds with the status enum"""
 
     @property
     def has_outputs(self) -> bool:
@@ -189,7 +189,7 @@ class InferenceReply:
         False otherwise
         """
         return self.outputs is not None and bool(self.outputs)
-    
+
     @property
     def has_output_keys(self) -> bool:
         """Check if the InferenceReply contains output_keys.
