@@ -44,6 +44,7 @@ from smartsim.error import errors
 from smartsim.status import InvalidJobStatus, JobStatus
 
 from ._core import Generator, Manifest, previewrenderer
+from ._core.generation.generator import Job_Path
 from .entity import TelemetryConfiguration
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
@@ -210,8 +211,10 @@ class Experiment:
                     for_experiment=self, with_arguments=args
                 )
             # Generate the job directory and return the generated job path
-            job_execution_path, out, err = self._generate(generator, job, idx)
-            id_ = launch_config.start(exe, job_execution_path, env, out, err)
+            job_paths = self._generate(generator, job, idx)
+            id_ = launch_config.start(
+                exe, job_paths.run_path, env, job_paths.out_path, job_paths.err_path
+            )
             # Save the underlying launcher instance and launched job id. That
             # way we do not need to spin up a launcher instance for each
             # individual job, and the experiment can monitor job statuses.
@@ -255,9 +258,7 @@ class Experiment:
         return tuple(stats)
 
     @_contextualize
-    def _generate(
-        self, generator: Generator, job: Job, job_index: int
-    ) -> t.Tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> Job_Path:
         """Generate the directory structure and files for a ``Job``
 
         If files or directories are attached to an ``Application`` object
@@ -269,12 +270,12 @@ class Experiment:
             run and log directory.
         :param job: The Job instance for which the output is generated.
         :param job_index: The index of the Job instance (used for naming).
-        :returns: The path to the generated output for the Job instance.
+        :returns: The paths to the generated output for the Job instance.
         :raises: A SmartSimError if an error occurs during the generation process.
         """
         try:
-            job_path, out, err = generator.generate_job(job, job_index)
-            return (job_path, out, err)
+            job_paths = generator.generate_job(job, job_index)
+            return job_paths
         except SmartSimError as e:
             logger.error(e)
             raise

@@ -71,10 +71,10 @@ def _prepare_param_dict(param_dict: str) -> dict[str, t.Any]:
     """
     decoded_dict = base64.b64decode(param_dict)
     deserialized_dict = pickle.loads(decoded_dict)
-    if not deserialized_dict:
-        raise ValueError("param dictionary is empty")
     if not isinstance(deserialized_dict, dict):
         raise TypeError("param dict is not a valid dictionary")
+    if not deserialized_dict:
+        raise ValueError("param dictionary is empty")
     return deserialized_dict
 
 
@@ -84,6 +84,23 @@ def _replace_tags_in(
 ) -> str:
     """Helper function to derive the lines in which to make the substitutions"""
     return functools.reduce(lambda a, fn: fn(a), substitutions, item)
+
+
+def _process_file(
+    substitutions: t.Sequence[Callable[[str], str]],
+    source: pathlib.Path,
+    destination: pathlib.Path,
+) -> None:
+    """
+    Process a source file by replacing tags with specified substitutions and
+    write the result to a destination file.
+    """
+    # Set the lines to iterate over
+    with open(source, "r+", encoding="utf-8") as file_stream:
+        lines = [_replace_tags_in(line, substitutions) for line in file_stream]
+    # write configured file to destination specified
+    with open(destination, "w+", encoding="utf-8") as file_stream:
+        file_stream.writelines(lines)
 
 
 def move(parsed_args: argparse.Namespace) -> None:
@@ -169,7 +186,7 @@ def symlink(parsed_args: argparse.Namespace) -> None:
     os.symlink(parsed_args.source, parsed_args.dest)
 
 
-def configure_file(parsed_args: argparse.Namespace) -> None:
+def configure(parsed_args: argparse.Namespace) -> None:
     """Set, search and replace the tagged parameters for the
     configure_file operation within tagged files attached to an entity.
 
@@ -196,69 +213,24 @@ def configure_file(parsed_args: argparse.Namespace) -> None:
     """
     tag_delimiter = parsed_args.tag_delimiter
     param_dict = _prepare_param_dict(parsed_args.param_dict)
-    substitutions = tuple(
-        _make_substitution(k, v, tag_delimiter) for k, v in param_dict.items()
-    )
-    try:
-        # Set the lines to iterate over
-        with open(parsed_args.source, "r+", encoding="utf-8") as file_stream:
-            try:
-                lines = [_replace_tags_in(line, substitutions) for line in file_stream]
-            except IOError as e:
-                raise e from None
-        # write configured file to destination specified
-        with open(parsed_args.dest, "w+", encoding="utf-8") as file_stream:
-            file_stream.writelines(lines)
-    except (FileNotFoundError, PermissionError) as e:
-        raise e from None
-
-
-def configure_directory(parsed_args: argparse.Namespace) -> None:
-    """Set, search and replace the tagged parameters for the
-    configure_directory operation within tagged directories attached to an entity.
-
-    User-formatted directories can be attached using the `configure_directory` argument.
-    These files within the directory will be modified during ``Application`` generation to replace
-    tagged sections in the user-formatted files with values from the `params`
-    initializer argument used during ``Application`` creation:
-
-    Sample usage:
-    .. highlight:: bash
-    .. code-block:: bash
-            python -m smartsim._core.entrypoints.file_operations \
-                configure_directory /absolute/file/source/path /absolute/file/dest/path \
-                tag_deliminator param_dict
-
-    /absolute/file/source/path: The tagged directories the search and replace operations
-    to be performed upon
-    /absolute/file/dest/path: The destination for configured directories to be
-    written to.
-    tag_delimiter: tag for the configure_directory operation to search for, defaults to
-        semi-colon e.g. ";"
-    param_dict: A dict of parameter names and values set for the file
-
-    """
-    tag_delimiter = parsed_args.tag_delimiter
-    param_dict = _prepare_param_dict(parsed_args.param_dict)
 
     substitutions = tuple(
         _make_substitution(k, v, tag_delimiter) for k, v in param_dict.items()
     )
-    for dirpath, _, filenames in os.walk(parsed_args.dest):
-        if filenames:
+    if parsed_args.source.is_dir():
+        for dirpath, _, filenames in os.walk(parsed_args.source):
+            new_dir_dest = dirpath.replace(
+                str(parsed_args.source), str(parsed_args.dest), 1
+            )
+            os.makedirs(new_dir_dest, exist_ok=True)
             for file_name in filenames:
-                # Set the lines to iterate over
-                with open(
-                    os.path.join(dirpath, file_name), "r+", encoding="utf-8"
-                ) as file_stream:
-                    lines = [
-                        _replace_tags_in(line, substitutions) for line in file_stream
-                    ]
-                # write configured file to destination specified
-                with open(
-                    os.path.join(dirpath, file_name), "w+", encoding="utf-8"
-                ) as file_stream:
-                    file_stream.writelines(lines)
+                src_file = os.path.join(dirpath, file_name)
+                dst_file = os.path.join(new_dir_dest, file_name)
+                print(type(substitutions))
+                _process_file(substitutions, src_file, dst_file)
+    else:
+        dst_file = parsed_args.dest / os.path.basename(parsed_args.source)
+        _process_file(substitutions, parsed_args.source, dst_file)
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -295,16 +267,8 @@ def get_parser() -> argparse.ArgumentParser:
     symlink_parser.add_argument("dest", type=_abspath)
 
     # Subparser for configure op
-    configure_parser = subparsers.add_parser("configure_file")
-    configure_parser.set_defaults(func=configure_file)
-    configure_parser.add_argument("source", type=_abspath)
-    configure_parser.add_argument("dest", type=_abspath)
-    configure_parser.add_argument("tag_delimiter", type=str, default=";")
-    configure_parser.add_argument("param_dict", type=str)
-
-    # Subparser for configure op
-    configure_parser = subparsers.add_parser("configure_directory")
-    configure_parser.set_defaults(func=configure_directory)
+    configure_parser = subparsers.add_parser("configure")
+    configure_parser.set_defaults(func=configure)
     configure_parser.add_argument("source", type=_abspath)
     configure_parser.add_argument("dest", type=_abspath)
     configure_parser.add_argument("tag_delimiter", type=str, default=";")

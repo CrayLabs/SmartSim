@@ -28,13 +28,12 @@ import base64
 import os
 import pathlib
 import pickle
-import shutil
 import subprocess
 import sys
 import typing as t
+from collections import namedtuple
 from datetime import datetime
 
-from ...entity import Application
 from ...entity.files import EntityFiles
 from ...launchable import Job
 from ...log import get_logger
@@ -43,11 +42,28 @@ logger = get_logger(__name__)
 logger.propagate = False
 
 
+@t.runtime_checkable
+class _GenerableProtocol(t.Protocol):
+    """A protocol that defines a generable entity with a method to retrieve
+    a list of file names. This protocol is used to ensure that functions
+    implementing it provide a `files` and `file_parameters` property.
+    """
+
+    files: t.Union[EntityFiles, None]
+    file_parameters: t.Mapping[str, str]
+
+
+Job_Path = namedtuple("Job_Path", ["run_path", "out_path", "err_path"])
+
+
 class Generator:
     """The primary job of the Generator is to create the directory and file structure
     for a SmartSim Job. The Generator is also responsible for writing and configuring
     files into the Job directory.
     """
+
+    run = "run"
+    log = "log"
 
     def __init__(self, root: pathlib.Path) -> None:
         """Initialize a Generator object
@@ -79,7 +95,7 @@ class Generator:
         :param job_index (int): The index of the Job instance (used for naming).
         :returns: The path to the "run" directory for the Job instance.
         """
-        path = self._generate_job_root(job, job_index) / "run"
+        path = self._generate_job_root(job, job_index) / self.run
         path.mkdir(exist_ok=False, parents=True)
         return pathlib.Path(path)
 
@@ -91,7 +107,9 @@ class Generator:
         :param job_index: The index of the Job instance (used for naming).
         :returns: The path to the "log" directory for the Job instance.
         """
-        path = self._generate_job_root(job, job_index) / "log"
+        path = (
+            self._generate_job_root(job, job_index) / self.log
+        )  # module or class level constant
         path.mkdir(exist_ok=False, parents=True)
         return pathlib.Path(path)
 
@@ -107,16 +125,28 @@ class Generator:
         return pathlib.Path(log_path) / "smartsim_params.txt"
 
     @staticmethod
-    def _output_files(
-        log_path: pathlib.Path, job_name: str
-    ) -> t.Tuple[pathlib.Path, pathlib.Path]:
-        out_file_path = log_path / f"{job_name}.out"
-        err_file_path = log_path / f"{job_name}.err"
-        return out_file_path, err_file_path
+    def _out_file(log_path: pathlib.Path, job_name: str) -> pathlib.Path:
+        """Return the path to the output file.
 
-    def generate_job(
-        self, job: Job, job_index: int
-    ) -> t.Tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
+        :param log_path: Path to log directory
+        :param job_name: Name of Job
+        :returns: Path to output file
+        """
+        out_file_path = log_path / f"{job_name}.out"
+        return out_file_path
+
+    @staticmethod
+    def _err_file(log_path: pathlib.Path, job_name: str) -> pathlib.Path:
+        """Return the path to the error file.
+
+        :param log_path: Path to log directory
+        :param job_name: Name of Job
+        :returns: Path to error file
+        """
+        err_file_path = log_path / f"{job_name}.err"
+        return err_file_path
+
+    def generate_job(self, job: Job, job_index: int) -> Job_Path:
         """Write and configure input files for a Job.
 
         To have files or directories present in the created Job
@@ -141,11 +171,12 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        out_file, err_file = self._output_files(log_path, job.entity.name)
+        out_file = self._out_file(log_path, job.entity.name)
+        err_file = self._err_file(log_path, job.entity.name)
 
         self._build_operations(job, job_path)
 
-        return job_path, out_file, err_file
+        return Job_Path(job_path, out_file, err_file)
 
     @classmethod
     def _build_operations(cls, job: Job, job_path: pathlib.Path) -> None:
@@ -157,10 +188,12 @@ class Generator:
         :param job: The Job to perform file ops on attached entity files
         :param job_path: Path to the Jobs run directory
         """
-        app = t.cast(Application, job.entity)
-        cls._copy_files(app.files, job_path)
-        cls._symlink_files(app.files, job_path)
-        cls._write_tagged_files(app.files, app.file_parameters, job_path)
+        if isinstance(job.entity, _GenerableProtocol):
+            cls._copy_files(job.entity.files, job_path)
+            cls._symlink_files(job.entity.files, job_path)
+            cls._write_tagged_files(
+                job.entity.files, job.entity.file_parameters, job_path
+            )
 
     @staticmethod
     def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
@@ -169,38 +202,25 @@ class Generator:
         :param files: The paths to copy
         :param dest: Path to the Jobs run directory
         """
-        # Return if no files are attached
         if files is None:
             return
         for src in files.copy:
+            args = [
+                sys.executable,
+                "-m",
+                "smartsim._core.entrypoints.file_operations",
+                "copy",
+                src,
+            ]
+            destination = str(dest)
             if os.path.isdir(src):
-                # Remove basename of source
                 base_source_name = os.path.basename(src)
-                # Attach source basename to destination
-                new_dst_path = os.path.join(dest, base_source_name)
-                # Copy source contents to new destination path
-                subprocess.run(
-                    args=[
-                        sys.executable,
-                        "-m",
-                        "smartsim._core.entrypoints.file_operations",
-                        "copy",
-                        src,
-                        new_dst_path,
-                        "--dirs_exist_ok",
-                    ]
-                )
+                destination = os.path.join(dest, base_source_name)
+                args.append(str(destination))
+                args.append("--dirs_exist_ok")
             else:
-                subprocess.run(
-                    args=[
-                        sys.executable,
-                        "-m",
-                        "smartsim._core.entrypoints.file_operations",
-                        "copy",
-                        src,
-                        dest,
-                    ]
-                )
+                args.append(str(dest))
+            subprocess.run(args)
 
     @staticmethod
     def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> None:
@@ -209,7 +229,6 @@ class Generator:
         :param files: The paths to symlink
         :param dest: Path to the Jobs run directory
         """
-        # Return if no files are attached
         if files is None:
             return
         for src in files.link:
@@ -217,7 +236,6 @@ class Generator:
             normalized_path = os.path.normpath(src)
             # Get the parent directory (last folder)
             parent_dir = os.path.basename(normalized_path)
-            # Create destination
             new_dest = os.path.join(str(dest), parent_dir)
             subprocess.run(
                 args=[
@@ -233,49 +251,31 @@ class Generator:
     @staticmethod
     def _write_tagged_files(
         files: t.Union[EntityFiles, None],
-        params: t.Mapping[str, t.Any],
+        params: t.Mapping[str, str],
         dest: pathlib.Path,
     ) -> None:
-        """Read, configure and write the tagged input files for
-           a Job instance. This function specifically deals with the tagged
-           files attached to an entity.
+        """Read, configure and write the tagged files and directories for
+           a Job instance.
 
-        :param files: The paths to configure
+        :param files: Paths to configure
         :param params: A dictionary of params
         :param dest: Path to the Jobs run directory
         """
         if files is None:
             return
         if files.tagged:
-            to_write = []
-            for file in files.tagged:
-                if os.path.isfile(file):
-                    dst_path = os.path.join(dest, os.path.basename(file))
-                    dst_path = shutil.copyfile(file, dst_path)
-                    to_write.append(dst_path)
-                elif os.path.isdir(file):
-                    dst_path = shutil.copytree(file, dest, dirs_exist_ok=True)
-                    to_write.append(dst_path)
-                else:
-                    raise ValueError(f"Invalid path: {file}")
             tag_delimiter = ";"
             pickled_dict = pickle.dumps(params)
             encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
-            for file_sys_path in to_write:
-                if os.path.isdir(file_sys_path):
-                    file_entrypoint = "configure_directory"
-                elif os.path.isfile(file_sys_path):
-                    file_entrypoint = "configure_file"
-                else:
-                    raise ValueError(f"Invalid path: {file_sys_path}")
+            for path in files.tagged:
                 subprocess.run(
                     args=[
                         sys.executable,
                         "-m",
                         "smartsim._core.entrypoints.file_operations",
-                        file_entrypoint,
-                        file_sys_path,
-                        file_sys_path,
+                        "configure",
+                        path,
+                        dest,
                         tag_delimiter,
                         encoded_dict,
                     ]

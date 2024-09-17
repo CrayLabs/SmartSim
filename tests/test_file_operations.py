@@ -30,7 +30,6 @@ import filecmp
 import os
 import pathlib
 import pickle
-import shutil
 from glob import glob
 from os import path as osp
 
@@ -501,21 +500,14 @@ def test_remove_op_not_absolute():
     ],
 )
 def test_configure_file_op(test_dir, fileutils, param_dict, error_type):
-    """Test configure_file operation with correct parameter dictionary, empty dicitonary, and an incorrect type"""
+    """Test configure file operation with correct parameter dictionary, empty dicitonary, and an incorrect type"""
 
     tag = ";"
 
-    conf_path = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "marked/")
-    )
     # retrieve files to compare after test
     correct_path = fileutils.get_test_conf_path(
         osp.join("generator_files", "easy", "correct/")
     )
-
-    # copy files to test directory
-    shutil.copytree(conf_path, test_dir, dirs_exist_ok=True)
-    assert osp.isdir(test_dir)
 
     tagged_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "/*"))
@@ -529,20 +521,20 @@ def test_configure_file_op(test_dir, fileutils, param_dict, error_type):
     # Run configure op on test files
     for tagged_file in tagged_files:
         parser = get_parser()
-        cmd = f"configure_file {tagged_file} {tagged_file} {tag} {encoded_dict}"
+        cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
         args = cmd.split()
         ns = parser.parse_args(args)
 
         if error_type == "ValueError":
             with pytest.raises(ValueError) as ex:
-                file_operations.configure_file(ns)
+                file_operations.configure(ns)
                 assert "param dictionary is empty" in ex.value.args[0]
         elif error_type == "TypeError":
             with pytest.raises(TypeError) as ex:
-                file_operations.configure_file(ns)
+                file_operations.configure(ns)
                 assert "param dict is not a valid dictionary" in ex.value.args[0]
         else:
-            file_operations.configure_file(ns)
+            file_operations.configure(ns)
 
     if error_type == "None":
         for written, correct in zip(tagged_files, correct_files):
@@ -550,11 +542,11 @@ def test_configure_file_op(test_dir, fileutils, param_dict, error_type):
 
 
 def test_configure_file_invalid_tags(fileutils, test_dir):
-    """Test configure_file operation with an invalid tag"""
+    """Test configure file operation with an invalid tag"""
     generator_files = pathlib.Path(fileutils.get_test_conf_path("generator_files"))
     tagged_file = generator_files / "easy/marked/invalidtag.txt"
     correct_file = generator_files / "easy/correct/invalidtag.txt"
-    target_file = pathlib.Path(test_dir, "target.txt")
+    target_file = pathlib.Path(test_dir, "invalidtag.txt")
 
     tag = ";"
     param_dict = {"VALID": "valid"}
@@ -565,17 +557,17 @@ def test_configure_file_invalid_tags(fileutils, test_dir):
     # Encode the pickled dictionary with Base64
     encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
     parser = get_parser()
-    cmd = f"configure_file {tagged_file} {target_file} {tag} {encoded_dict}"
+    cmd = f"configure {tagged_file} {test_dir} {tag} {encoded_dict}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
-    file_operations.configure_file(ns)
+    file_operations.configure(ns)
     assert filecmp.cmp(correct_file, target_file)
 
 
 def test_configure_file_not_absolute():
     """Test that ValueError is raised when tagged files
-    given to configure_file op are not absolute paths
+    given to configure file op are not absolute paths
     """
 
     tagged_file = ".."
@@ -587,7 +579,7 @@ def test_configure_file_not_absolute():
     # Encode the pickled dictionary with Base64
     encoded_dict = base64.b64encode(pickled_dict)
     parser = get_parser()
-    cmd = f"configure_file {tagged_file} {tagged_file} {tag} {encoded_dict}"
+    cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
     args = cmd.split()
 
     with pytest.raises(SystemExit) as e:
@@ -614,11 +606,9 @@ def test_configure_file_not_absolute():
     ],
 )
 def test_configure_directory(test_dir, fileutils, param_dict, error_type):
-    """Test configure_directory operation with correct parameter dictionary, empty dicitonary, and an incorrect type"""
+    """Test configure directory operation with correct parameter dictionary, empty dicitonary, and an incorrect type"""
     tag = ";"
     config = get_gen_file(fileutils, "tag_dir_template")
-    path = shutil.copytree(config, test_dir, dirs_exist_ok=True)
-    assert osp.isdir(path)
 
     # Pickle the dictionary
     pickled_dict = pickle.dumps(param_dict)
@@ -626,35 +616,30 @@ def test_configure_directory(test_dir, fileutils, param_dict, error_type):
     encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
 
     parser = get_parser()
-    cmd = f"configure_directory {path} {path} {tag} {encoded_dict}"
+    cmd = f"configure {config} {test_dir} {tag} {encoded_dict}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     if error_type == "ValueError":
         with pytest.raises(ValueError) as ex:
-            file_operations.configure_directory(ns)
+            file_operations.configure(ns)
             assert "param dictionary is empty" in ex.value.args[0]
     elif error_type == "TypeError":
         with pytest.raises(TypeError) as ex:
-            file_operations.configure_directory(ns)
+            file_operations.configure(ns)
             assert "param dict is not a valid dictionary" in ex.value.args[0]
     else:
-        file_operations.configure_directory(ns)
-    if error_type == "None":
+        file_operations.configure(ns)
+        assert osp.isdir(osp.join(test_dir, "nested_0"))
+        assert osp.isdir(osp.join(test_dir, "nested_1"))
 
-        def _check_generated(param_0, param_1):
-            assert osp.isdir(osp.join(path, "nested_0"))
-            assert osp.isdir(osp.join(path, "nested_1"))
+        with open(osp.join(test_dir, "nested_0", "tagged_0.sh")) as f:
+            line = f.readline()
+            assert line.strip() == f'echo "Hello with parameter 0 = param_value_1"'
 
-            with open(osp.join(path, "nested_0", "tagged_0.sh")) as f:
-                line = f.readline()
-                assert line.strip() == f'echo "Hello with parameter 0 = {param_0}"'
-
-            with open(osp.join(path, "nested_1", "tagged_1.sh")) as f:
-                line = f.readline()
-                assert line.strip() == f'echo "Hello with parameter 1 = {param_1}"'
-
-        _check_generated("param_value_1", "param_value_2")
+        with open(osp.join(test_dir, "nested_1", "tagged_1.sh")) as f:
+            line = f.readline()
+            assert line.strip() == f'echo "Hello with parameter 1 = param_value_2"'
 
 
 def test_configure_directory_not_absolute():
@@ -671,7 +656,7 @@ def test_configure_directory_not_absolute():
     # Encode the pickled dictionary with Base64
     encoded_dict = base64.b64encode(pickled_dict)
     parser = get_parser()
-    cmd = f"configure_directory {tagged_directory} {tagged_directory} {tag} {encoded_dict}"
+    cmd = f"configure {tagged_directory} {tagged_directory} {tag} {encoded_dict}"
     args = cmd.split()
 
     with pytest.raises(SystemExit) as e:
@@ -742,7 +727,7 @@ def test_parser_copy():
 
 
 def test_parser_configure_file_parse():
-    """Test that the parser succeeds when receiving expected args for the configure_file operation"""
+    """Test that the parser succeeds when receiving expected args for the configure file operation"""
     parser = get_parser()
 
     src_path = pathlib.Path("/absolute/file/src/path")
@@ -761,7 +746,7 @@ def test_parser_configure_file_parse():
     pickled_dict = pickle.dumps(param_dict)
     encoded_dict = base64.b64encode(pickled_dict)
 
-    cmd = f"configure_file {src_path} {dest_path} {tag_delimiter} {encoded_dict}"
+    cmd = f"configure {src_path} {dest_path} {tag_delimiter} {encoded_dict}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
@@ -772,7 +757,7 @@ def test_parser_configure_file_parse():
 
 
 def test_parser_configure_directory_parse():
-    """Test that the parser succeeds when receiving expected args for the configure_directory operation"""
+    """Test that the parser succeeds when receiving expected args for the configure directory operation"""
     parser = get_parser()
 
     src_path = pathlib.Path("/absolute/file/src/path")
@@ -791,7 +776,7 @@ def test_parser_configure_directory_parse():
     pickled_dict = pickle.dumps(param_dict)
     encoded_dict = base64.b64encode(pickled_dict)
 
-    cmd = f"configure_directory {src_path} {dest_path} {tag_delimiter} {encoded_dict}"
+    cmd = f"configure {src_path} {dest_path} {tag_delimiter} {encoded_dict}"
     args = cmd.split()
     ns = parser.parse_args(args)
 

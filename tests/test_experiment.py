@@ -36,6 +36,7 @@ import pytest
 
 from smartsim._core import dispatch
 from smartsim._core.control.launch_history import LaunchHistory
+from smartsim._core.generation.generator import Job_Path
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
 from smartsim.entity import entity
 from smartsim.experiment import Experiment
@@ -57,7 +58,9 @@ def experiment(monkeypatch, test_dir, dispatcher):
     monkeypatch.setattr(
         exp,
         "_generate",
-        lambda gen, job, idx: ("/tmp/job", "/tmp/job/out.txt", "/tmp/job/err.txt"),
+        lambda generator, job, idx: Job_Path(
+            "/tmp/job", "/tmp/job/out.txt", "/tmp/job/err.txt"
+        ),
     )
     yield exp
 
