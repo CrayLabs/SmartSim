@@ -63,7 +63,7 @@ class TorchWorker(MachineLearningWorkerBase):
     ) -> LoadModelResult:
         if fetch_result.model_bytes:
             model_bytes = fetch_result.model_bytes
-        elif batch.raw_model and batch.raw_model.data:
+        elif batch.has_raw_model_data:
             model_bytes = batch.raw_model.data
         else:
             raise ValueError("Unable to load model without reference object")

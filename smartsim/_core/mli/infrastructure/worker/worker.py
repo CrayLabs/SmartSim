@@ -356,6 +356,14 @@ class RequestBatch:
         return self.raw_model is not None
 
     @property
+    def has_raw_model_data(self) -> bool:
+        """Returns whether the batch has raw model data.
+
+        :returns: True if the batch has raw model data
+        """
+        return self.has_raw_model and self.raw_model.data is not None
+
+    @property
     def raw_model(self) -> t.Optional[t.Any]:
         """Returns the raw model to use to execute for this batch
         if it is available.
@@ -489,7 +497,7 @@ class MachineLearningWorkerCore:
         model is not provided"""
 
         # All requests in the same batch share the model
-        if batch.raw_model:
+        if batch.has_raw_model:
             return FetchModelResult(batch.raw_model.data)
 
         if not feature_stores:
@@ -533,7 +541,7 @@ class MachineLearningWorkerCore:
             if not feature_stores:
                 raise ValueError("No input and no feature store provided")
 
-            if request.input_keys:
+            if request.has_input_keys:
                 data: t.List[bytes] = []
 
                 for fs_key in request.input_keys:
