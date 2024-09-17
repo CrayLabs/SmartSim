@@ -45,8 +45,10 @@ _SUPPORTED_OPERATORS = ("==", ">=", ">", "<=", "<")
         pytest.param("foo==1", "foo", "==1", id="With Major"),
         pytest.param("foo==1.2", "foo", "==1.2", id="With Minor"),
         pytest.param("foo==1.2.3", "foo", "==1.2.3", id="With Patch"),
-        pytest.param("foo[with-extras]==1.2.3", "foo[with-extras]", "==1.2.3", id="With Extra"),
-        pytest.param("foo[with,many,extras]==1.2.3", "foo[with,many,extras]", "==1.2.3", id="With Extra"),
+        pytest.param("foo[with-extras]==1.2.3", "foo", "==1.2.3", id="With Extra"),
+        pytest.param(
+            "foo[with,many,extras]==1.2.3", "foo", "==1.2.3", id="With Many Extras"
+        ),
         *(
             pytest.param(
                 f"foo{symbol}1.2.3{tag}",

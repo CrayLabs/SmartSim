@@ -148,7 +148,14 @@ def parse_requirement(
         ">": operator.gt,
     }
     semantic_version_pattern = r"\d+(?:\.\d+(?:\.\d+)?)?([^\s]*)"
-    pattern = rf"^([a-zA-Z0-9_\-]+(?:\[[a-zA-Z0-9_\-,]+\])?)(?:([<>=!~]{{1,2}})({semantic_version_pattern}))?$"
+    pattern = (
+        r"^"  # Start
+        r"([a-zA-Z0-9_\-]+)"  # Package name
+        r"(?:\[[a-zA-Z0-9_\-,]+\])?"  # Any extras
+        r"(?:([<>=!~]{1,2})"  # Pinning string
+        rf"({semantic_version_pattern}))?"  # A version number
+        r"$"  # End
+    )
     match = re.match(pattern, requirement)
     if match is None:
         raise ValueError(f"Invalid requirement string: {requirement}")
