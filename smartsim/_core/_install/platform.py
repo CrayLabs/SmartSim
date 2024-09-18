@@ -78,9 +78,9 @@ class Device(enum.Enum):
     """
 
     CPU = "cpu"
-    CUDA118 = "cuda-11.8"
-    CUDA125 = "cuda-12.5"
-    ROCM57 = "rocm-5.7"
+    CUDA11 = "cuda-11"
+    CUDA12 = "cuda-12"
+    ROCM6 = "rocm-6"
 
     @classmethod
     def from_str(cls, str_: str) -> "Device":
