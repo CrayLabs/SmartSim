@@ -55,7 +55,8 @@ from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
 )
 from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
-    FeatureStoreKey,
+    ModelKey,
+    TensorKey,
 )
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
@@ -145,7 +146,7 @@ def setup_worker_manager_model_bytes(
         batch_size=0,
     )
 
-    model_id = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+    model_id = ModelKey(key="key", descriptor=app_feature_store.descriptor)
 
     request_batch = RequestBatch(
         [inf_request],
@@ -190,9 +191,9 @@ def setup_worker_manager_model_key(
         cooldown=3,
     )
 
-    tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
-    output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
-    model_id = FeatureStoreKey(key="model key", descriptor=app_feature_store.descriptor)
+    tensor_key = TensorKey(key="key", descriptor=app_feature_store.descriptor)
+    output_key = TensorKey(key="key", descriptor=app_feature_store.descriptor)
+    model_id = ModelKey(key="model key", descriptor=app_feature_store.descriptor)
 
     request = InferenceRequest(
         model_key=model_id,
