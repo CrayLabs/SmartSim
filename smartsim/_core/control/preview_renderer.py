@@ -33,8 +33,8 @@ import jinja2
 import jinja2.utils as u
 from jinja2 import pass_eval_context
 
-from ..._core.config import CONFIG
-from ..._core.control import Manifest
+from ..config import CONFIG
+from . import Manifest
 from ...error.errors import PreviewFormatError
 from ...log import get_logger
 from .job import Job

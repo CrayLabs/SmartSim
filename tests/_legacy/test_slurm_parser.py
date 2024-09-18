@@ -26,7 +26,7 @@
 
 import pytest
 
-from smartsim._core.launcher.slurm import slurmParser
+from smartsim._core.launcher.slurm import slurm_parser
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -41,7 +41,7 @@ def test_parse_salloc():
         "salloc: Waiting for resource configuration\n"
         "salloc: Nodes nid00116 are ready for job"
     )
-    alloc_id = slurmParser.parse_salloc(output)
+    alloc_id = slurm_parser.parse_salloc(output)
     assert alloc_id == "118568"
 
 
@@ -54,7 +54,7 @@ def test_parse_salloc_extra():
         "salloc: Waiting for resource configuration\n"
         "salloc: Nodes prod76-0006 are ready for job\n"
     )
-    alloc_id = slurmParser.parse_salloc(output)
+    alloc_id = slurm_parser.parse_salloc(output)
     assert alloc_id == "22942"
 
 
@@ -64,14 +64,14 @@ def test_parse_salloc_high():
         "salloc: Waiting for resource configuration\n"
         "salloc: Nodes nid00034 are ready for job\n"
     )
-    alloc_id = slurmParser.parse_salloc(output)
+    alloc_id = slurm_parser.parse_salloc(output)
     assert alloc_id == "29917893"
 
 
 def test_parse_salloc_error():
     output = "salloc: error: Job submit/allocate failed: Job dependency problem"
     error = "Job submit/allocate failed: Job dependency problem"
-    parsed_error = slurmParser.parse_salloc_error(output)
+    parsed_error = slurm_parser.parse_salloc_error(output)
     assert error == parsed_error
 
 
@@ -81,7 +81,7 @@ def test_parse_salloc_error_2():
         "Try 'salloc --help' for more information\n"
     )
     error = "unrecognized option '--no-a-option'"
-    parsed_error = slurmParser.parse_salloc_error(output)
+    parsed_error = slurm_parser.parse_salloc_error(output)
     assert error == parsed_error
 
 
@@ -93,7 +93,7 @@ def test_parse_salloc_error_3():
         "\nsalloc: error: Job submit/allocate failed: Invalid node name specified\n"
     )
     error = "Job submit/allocate failed: Invalid node name specified"
-    parsed_error = slurmParser.parse_salloc_error(output)
+    parsed_error = slurm_parser.parse_salloc_error(output)
     assert error == parsed_error
 
 
@@ -103,7 +103,7 @@ def test_parse_salloc_error_4():
         "salloc: error: Job submit/allocate failed: Unspecified error\n"
     )
     error = "No hardware architecture specified (-C)!"
-    parsed_error = slurmParser.parse_salloc_error(output)
+    parsed_error = slurm_parser.parse_salloc_error(output)
     assert error == parsed_error
 
 
@@ -116,7 +116,7 @@ def test_parse_sstat_nodes():
     """
     output = "118594.extern|nid00028|38671|\n" "118594.0|nid00028|38703|"
     nodes = ["nid00028"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output, "118594")
+    parsed_nodes = slurm_parser.parse_sstat_nodes(output, "118594")
     assert nodes == parsed_nodes
 
 
@@ -126,7 +126,7 @@ def test_parse_sstat_nodes_1():
     """
     output = "22942.0|prod76-0006|354345|"
     nodes = ["prod76-0006"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output, "22942.0")
+    parsed_nodes = slurm_parser.parse_sstat_nodes(output, "22942.0")
     assert nodes == parsed_nodes
 
 
@@ -136,7 +136,7 @@ def test_parse_sstat_nodes_2():
     """
     output = "29917893.extern|nid00034|44860|\n" "29917893.0|nid00034|44887|\n"
     nodes = ["nid00034"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output, "29917893.0")
+    parsed_nodes = slurm_parser.parse_sstat_nodes(output, "29917893.0")
     assert nodes == parsed_nodes
 
 
@@ -152,7 +152,7 @@ def test_parse_sstat_nodes_3():
         "29917893.2|nid00034|45174|\n"
     )
     nodes = ["nid00034"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output, "29917893.2")
+    parsed_nodes = slurm_parser.parse_sstat_nodes(output, "29917893.2")
     assert nodes == parsed_nodes
 
 
@@ -171,7 +171,7 @@ def test_parse_sstat_nodes_4():
         "30000.2|nid00036|45174,32435|\n"
     )
     nodes = set(["nid00034", "nid00035", "nid00036"])
-    parsed_nodes = set(slurmParser.parse_sstat_nodes(output, "30000"))
+    parsed_nodes = set(slurm_parser.parse_sstat_nodes(output, "30000"))
     assert nodes == parsed_nodes
 
 
@@ -190,7 +190,7 @@ def test_parse_sstat_nodes_4():
         "30000.2|nid00036|45174,32435|\n"
     )
     nodes = set(["nid00034", "nid00035", "nid00036"])
-    parsed_nodes = set(slurmParser.parse_sstat_nodes(output, "30000"))
+    parsed_nodes = set(slurm_parser.parse_sstat_nodes(output, "30000"))
     assert nodes == parsed_nodes
 
 
@@ -206,7 +206,7 @@ def test_parse_sstat_nodes_5():
         "29917893.2|nid00034|45174|\n"
     )
     nodes = ["nid00034"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output, "29917893.2")
+    parsed_nodes = slurm_parser.parse_sstat_nodes(output, "29917893.2")
     assert nodes == parsed_nodes
 
 
@@ -221,7 +221,7 @@ def test_parse_sacct_step_id():
         "m2-119225.1|119225.1|"
     )
     step_id = "119225.0"
-    parsed_step_id = slurmParser.parse_step_id_from_sacct(output, "m1-119225.0")
+    parsed_step_id = slurm_parser.parse_step_id_from_sacct(output, "m1-119225.0")
     assert step_id == parsed_step_id
 
 
@@ -235,7 +235,7 @@ def test_parse_sacct_step_id_2():
         "n1-119225.3|119225.3|"
     )
     step_id = "119225.2"
-    parsed_step_id = slurmParser.parse_step_id_from_sacct(
+    parsed_step_id = slurm_parser.parse_step_id_from_sacct(
         output, "featurestore_0-119225.2"
     )
     assert step_id == parsed_step_id
@@ -251,7 +251,7 @@ def test_parse_sacct_step_id_2():
         "cti_dlaunch1.0|962333.3|"
     )
     step_id = "962333.1"
-    parsed_step_id = slurmParser.parse_step_id_from_sacct(output, "python-962333.1")
+    parsed_step_id = slurm_parser.parse_step_id_from_sacct(output, "python-962333.1")
     assert step_id == parsed_step_id
 
 
@@ -261,7 +261,7 @@ def test_parse_sacct_status():
     """
     output = "29917893.2|COMPLETED|0:0|\n"
     status = ("COMPLETED", "0")
-    parsed_status = slurmParser.parse_sacct(output, "29917893.2")
+    parsed_status = slurm_parser.parse_sacct(output, "29917893.2")
     assert status == parsed_status
 
 
@@ -271,7 +271,7 @@ def test_parse_sacct_status_1():
     """
     output = "22999.0|FAILED|1:0|\n"
     status = ("FAILED", "1")
-    parsed_status = slurmParser.parse_sacct(output, "22999.0")
+    parsed_status = slurm_parser.parse_sacct(output, "22999.0")
     assert status == parsed_status
 
 
@@ -281,5 +281,5 @@ def test_parse_sacct_status_2():
     """
     output = "22999.10|COMPLETED|0:0|\n22999.1|FAILED|1:0|\n"
     status = ("FAILED", "1")
-    parsed_status = slurmParser.parse_sacct(output, "22999.1")
+    parsed_status = slurm_parser.parse_sacct(output, "22999.1")
     assert status == parsed_status

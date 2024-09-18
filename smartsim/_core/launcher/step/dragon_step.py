@@ -30,7 +30,7 @@ import shutil
 import sys
 import typing as t
 
-from ...._core.schemas.dragonRequests import (
+from ...schemas.dragon_requests import (
     DragonRunPolicy,
     DragonRunRequest,
     request_registry,

@@ -32,7 +32,7 @@ import typing as t
 
 import pytest
 
-from smartsim._core.launcher.step.dragonStep import DragonBatchStep, DragonStep
+from smartsim._core.launcher.step.dragon_step import DragonBatchStep, DragonStep
 from smartsim.settings import DragonRunSettings
 from smartsim.settings.pbsSettings import QsubBatchSettings
 from smartsim.settings.slurmSettings import SbatchSettings
@@ -41,8 +41,8 @@ from smartsim.settings.slurmSettings import SbatchSettings
 pytestmark = pytest.mark.group_a
 
 
-from smartsim._core.schemas.dragonRequests import *
-from smartsim._core.schemas.dragonResponses import *
+from smartsim._core.schemas.dragon_requests import *
+from smartsim._core.schemas.dragon_responses import *
 
 
 @pytest.fixture

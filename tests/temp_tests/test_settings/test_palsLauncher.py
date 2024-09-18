@@ -30,13 +30,13 @@ import pathlib
 
 import pytest
 
-from smartsim._core.shell.shellLauncher import ShellLauncherCommand
+from smartsim._core.shell.shell_launcher import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.pals import (
     PalsMpiexecLaunchArguments,
     _as_pals_command,
 )
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 

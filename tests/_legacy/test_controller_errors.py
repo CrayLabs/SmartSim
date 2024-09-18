@@ -29,7 +29,7 @@ import pytest
 
 from smartsim._core.control import Controller, Manifest
 from smartsim._core.launcher.step import Step
-from smartsim._core.launcher.step.dragonStep import DragonStep
+from smartsim._core.launcher.step.dragon_step import DragonStep
 from smartsim.database import FeatureStore
 from smartsim.entity import Application
 from smartsim.entity.ensemble import Ensemble

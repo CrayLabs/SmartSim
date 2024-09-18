@@ -28,7 +28,7 @@ import pathlib
 
 import pytest
 
-from smartsim._core.launcher.step.dragonStep import DragonBatchStep, DragonStep
+from smartsim._core.launcher.step.dragon_step import DragonBatchStep, DragonStep
 from smartsim.settings.dragonRunSettings import DragonRunSettings
 from smartsim.settings.slurmSettings import SbatchSettings
 
@@ -45,8 +45,8 @@ except:
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
 
-from smartsim._core.schemas.dragonRequests import *
-from smartsim._core.schemas.dragonResponses import *
+from smartsim._core.schemas.dragon_requests import *
+from smartsim._core.schemas.dragon_responses import *
 
 
 @pytest.fixture

@@ -33,7 +33,7 @@ import pytest
 
 import smartsim._core.config.config
 from smartsim._core.launcher import PBSLauncher
-from smartsim._core.launcher.step.mpiStep import MpiexecStep
+from smartsim._core.launcher.step.mpi_step import MpiexecStep
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import PalsMpiexecSettings
 

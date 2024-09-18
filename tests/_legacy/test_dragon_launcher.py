@@ -47,9 +47,9 @@ from smartsim._core.launcher.dragon.dragon_sockets import (
     get_authenticator,
     get_secure_socket,
 )
-from smartsim._core.launcher.step.dragonStep import DragonBatchStep, DragonStep
-from smartsim._core.schemas.dragonRequests import DragonBootstrapRequest
-from smartsim._core.schemas.dragonResponses import (
+from smartsim._core.launcher.step.dragon_step import DragonBatchStep, DragonStep
+from smartsim._core.schemas.dragon_requests import DragonBootstrapRequest
+from smartsim._core.schemas.dragon_responses import (
     DragonHandshakeResponse,
     DragonRunResponse,
 )

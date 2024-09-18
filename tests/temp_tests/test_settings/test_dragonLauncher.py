@@ -28,10 +28,10 @@ import pytest
 from smartsim._core.launcher.dragon.dragon_launcher import (
     _as_run_request_args_and_policy,
 )
-from smartsim._core.schemas.dragonRequests import DragonRunPolicy, DragonRunRequestView
+from smartsim._core.schemas.dragon_requests import DragonRunPolicy, DragonRunRequestView
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 

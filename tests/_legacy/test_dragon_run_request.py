@@ -44,8 +44,8 @@ except:
     dragon_loaded = False
 
 from smartsim._core.config import CONFIG
-from smartsim._core.schemas.dragonRequests import *
-from smartsim._core.schemas.dragonResponses import *
+from smartsim._core.schemas.dragon_requests import *
+from smartsim._core.schemas.dragon_responses import *
 from smartsim._core.utils.helpers import create_short_id_str
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 

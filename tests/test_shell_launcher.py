@@ -37,7 +37,7 @@ import unittest.mock
 import psutil
 import pytest
 
-from smartsim._core.shell.shellLauncher import ShellLauncher, ShellLauncherCommand, sp
+from smartsim._core.shell.shell_launcher import ShellLauncher, ShellLauncherCommand, sp
 from smartsim._core.utils import helpers
 from smartsim._core.utils.shell import *
 from smartsim.entity import entity

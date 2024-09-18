@@ -27,10 +27,10 @@
 from .dragon.dragon_launcher import DragonLauncher
 from .launcher import Launcher
 from .local.local import LocalLauncher
-from .lsf.lsfLauncher import LSFLauncher
-from .pbs.pbsLauncher import PBSLauncher
-from .sge.sgeLauncher import SGELauncher
-from .slurm.slurmLauncher import SlurmLauncher
+from .lsf.lsf_launcher import LSFLauncher
+from .pbs.pbs_launcher import PBSLauncher
+from .sge.sge_launcher import SGELauncher
+from .slurm.slurm_launcher import SlurmLauncher
 
 __all__ = [
     "Launcher",

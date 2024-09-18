@@ -52,9 +52,9 @@ from ..step import (
     SrunStep,
     Step,
 )
-from ..stepInfo import SlurmStepInfo, StepInfo
-from .slurmCommands import sacct, scancel, sstat
-from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
+from ..step_info import SlurmStepInfo, StepInfo
+from .slurm_commands import sacct, scancel, sstat
+from .slurm_parser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 
 logger = get_logger(__name__)
 
