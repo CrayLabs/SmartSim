@@ -67,7 +67,9 @@ def test_update_env_initialized(function, value, flag, result):
 
 def test_create_bsub():
     batch_args = {"core_isolation": None}
-    lsfScheduler = BatchSettings(batch_scheduler=BatchSchedulerType.Lsf, batch_args=batch_args)
+    lsfScheduler = BatchSettings(
+        batch_scheduler=BatchSchedulerType.Lsf, batch_args=batch_args
+    )
     lsfScheduler.batch_args.set_nodes(1)
     lsfScheduler.batch_args.set_walltime("10:10:10")
     lsfScheduler.batch_args.set_queue("default")

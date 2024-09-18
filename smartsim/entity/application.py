@@ -53,6 +53,7 @@ class Application(SmartSimEntity):
     Applications are designed to be added to Jobs, where LaunchSettings are also
     provided to inject launcher-specific behavior into the Job.
     """
+
     def __init__(
         self,
         name: str,
