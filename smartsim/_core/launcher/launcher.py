@@ -27,13 +27,12 @@
 import abc
 import typing as t
 
-from .step_mapping import StepMap
 from ...entity import SmartSimEntity
 from ...error import AllocationError, LauncherError, SSUnsupportedError
 from ...settings import SettingsBase
 from .step import Step
 from .step_info import StepInfo, UnmanagedStepInfo
-from .step_mapping import StepMapping
+from .step_mapping import StepMap, StepMapping
 from .task_manager import TaskManager
 
 

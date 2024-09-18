@@ -32,13 +32,13 @@ from collections import ChainMap
 from threading import RLock, Thread
 from types import FrameType
 
-from ..launcher.step import Step
 from ...database import FeatureStore
 from ...entity import EntitySequence, FSNode, SmartSimEntity
 from ...log import ContextThread, get_logger
 from ...status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
+from ..launcher.step import Step
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
 

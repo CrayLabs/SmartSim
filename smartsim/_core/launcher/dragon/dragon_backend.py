@@ -45,6 +45,8 @@ import dragon.native.machine as dragon_machine
 
 # pylint: enable=import-error
 # isort: on
+from ....log import get_logger
+from ....status import TERMINAL_STATUSES, JobStatus
 from ...config import get_config
 from ...schemas import (
     DragonHandshakeRequest,
@@ -61,8 +63,6 @@ from ...schemas import (
     DragonUpdateStatusResponse,
 )
 from ...utils.helpers import create_short_id_str
-from ....log import get_logger
-from ....status import TERMINAL_STATUSES, JobStatus
 
 logger = get_logger(__name__)
 

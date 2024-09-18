@@ -30,11 +30,6 @@ import shutil
 import sys
 import typing as t
 
-from ...schemas.dragon_requests import (
-    DragonRunPolicy,
-    DragonRunRequest,
-    request_registry,
-)
 from ....error.errors import SSUnsupportedError
 from ....log import get_logger
 from ....settings import (
@@ -42,6 +37,11 @@ from ....settings import (
     QsubBatchSettings,
     SbatchSettings,
     Singularity,
+)
+from ...schemas.dragon_requests import (
+    DragonRunPolicy,
+    DragonRunRequest,
+    request_registry,
 )
 from .step import Step
 
