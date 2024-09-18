@@ -26,7 +26,6 @@
 
 from __future__ import annotations
 
-import os
 import typing as t
 from copy import deepcopy
 
@@ -45,11 +44,9 @@ if t.TYPE_CHECKING:
 @t.final
 class Job(BaseJob):
     """A Job holds a reference to a SmartSimEntity and associated
-    LaunchSettings prior to launch.  It is responsible for turning
-    the stored entity and launch settings into commands that can be
-    executed by a launcher.
-
-    Jobs will hold a deep copy of launch settings.
+    LaunchSettings prior to launch. It is responsible for turning
+    the stored SmartSimEntity and LaunchSettings into commands that can be
+    executed by a launcher. Jobs are designed to be started by the Experiment.
     """
 
     def __init__(
@@ -58,47 +55,91 @@ class Job(BaseJob):
         launch_settings: LaunchSettings,
         name: str | None = None,
     ):
+        """Initialize a ``Job``
+
+        Jobs require a SmartSimEntity and a LaunchSettings. Optionally, users may provide
+        a name. To create a simple Job that echos `Hello World!`, consider the example below:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            # Create an application that runs the 'echo' command
+            my_app = Application(name="my_app", exe="echo", exe_args="Hello World!")
+            # Define the launch settings using SLURM
+            srun_settings = LaunchSettings(launcher="slurm")
+
+            # Create a Job with the `my_app` and `srun_settings`
+            my_job = Job(my_app, srun_settings, name="my_job")
+
+        :param entity: the SmartSimEntity object
+        :param launch_settings: the LaunchSettings object
+        :param name: the Job name
+        """
         super().__init__()
+        """Initialize the parent class BaseJob"""
         self._entity = deepcopy(entity)
+        """Deepcopy of the SmartSimEntity object"""
         self._launch_settings = deepcopy(launch_settings)
+        """Deepcopy of the LaunchSettings object"""
+        check_name(name)
         self._name = name if name else entity.name
-        check_name(self._name)
+        """Name of the Job"""
 
     @property
     def name(self) -> str:
-        """Retrieves the name of the Job."""
+        """Return the name of the Job.
+
+        :return: the name of the Job
+        """
         return self._name
 
     @name.setter
     def name(self, name: str) -> None:
-        """Sets the name of the Job."""
+        """Set the name of the Job.
+
+        :param name: the name of the Job
+        """
         check_name(name)
         logger.debug(f'Overwriting the Job name from "{self._name}" to "{name}"')
         self._name = name
 
     @property
     def entity(self) -> SmartSimEntity:
-        """Retrieves the Job entity."""
+        """Return the attached entity.
+
+        :return: the attached SmartSimEntity
+        """
         return deepcopy(self._entity)
 
     @entity.setter
     def entity(self, value: SmartSimEntity) -> None:
-        """Sets the Job entity."""
+        """Set the Job entity.
+
+        :param value: the SmartSimEntity
+        """
         self._entity = deepcopy(value)
 
     @property
     def launch_settings(self) -> LaunchSettings:
-        """Retrieves the Job LaunchSettings."""
+        """Return the attached LaunchSettings.
+
+        :return: the attached LaunchSettings
+        """
         return deepcopy(self._launch_settings)
 
     @launch_settings.setter
     def launch_settings(self, value: LaunchSettings) -> None:
-        """Sets the Job LaunchSettings."""
+        """Set the Jobs LaunchSettings.
+
+        :param value: the LaunchSettings
+        """
         self._launch_settings = deepcopy(value)
 
     def get_launch_steps(self) -> LaunchCommands:
         """Return the launch steps corresponding to the
         internal data.
+
+        :returns: The Jobs launch steps
         """
         # TODO: return JobWarehouseRunner.run(self)
         raise NotImplementedError

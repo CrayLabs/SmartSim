@@ -98,25 +98,25 @@ class Ensemble(entity.CompoundEntity):
 
     @property
     def exe(self) -> str:
-        """Return executable to run.
+        """Return the attached executable.
 
-        :returns: the executable to run
+        :return: the executable
         """
         return self._exe
 
     @exe.setter
     def exe(self, value: str | os.PathLike[str]) -> None:
-        """Set executable to run.
+        """Set the executable.
 
-        :param value: the executable to run
+        :param value: the executable
         """
         self._exe = os.fspath(value)
 
     @property
     def exe_args(self) -> t.List[str]:
-        """Return a list of attached executable arguments.
+        """Return attached list of executable arguments.
 
-        :returns: the executable arguments
+        :return: the executable arguments
         """
         return self._exe_args
 
@@ -130,9 +130,9 @@ class Ensemble(entity.CompoundEntity):
 
     @property
     def exe_arg_parameters(self) -> t.Mapping[str, t.Sequence[t.Sequence[str]]]:
-        """Return the executable argument parameters
+        """Return attached executable argument parameters.
 
-        :returns: the executable argument parameters
+        :return: the executable argument parameters
         """
         return self._exe_arg_parameters
 
@@ -140,7 +140,7 @@ class Ensemble(entity.CompoundEntity):
     def exe_arg_parameters(
         self, value: t.Mapping[str, t.Sequence[t.Sequence[str]]]
     ) -> None:
-        """Set the executable arguments.
+        """Set the executable argument parameters.
 
         :param value: the executable argument parameters
         """
@@ -148,27 +148,27 @@ class Ensemble(entity.CompoundEntity):
 
     @property
     def files(self) -> EntityFiles:
-        """Return files to be copied, symlinked, and/or configured prior to
-        execution.
+        """Return attached EntityFiles object.
 
-        :returns: the attached files
+        :return: the EntityFiles object of files to be copied, symlinked,
+            and/or configured prior to execution
         """
         return self._files
 
     @files.setter
-    def files(self, value: EntityFiles) -> None:
-        """Set files to be copied, symlinked, and/or configured prior to
-        execution.
+    def files(self, value: t.Optional[EntityFiles]) -> None:
+        """Set the EntityFiles object.
 
-        :param value: the files
+        :param value: the EntityFiles object of files to be copied, symlinked,
+            and/or configured prior to execution
         """
         self._files = copy.deepcopy(value)
 
     @property
     def file_parameters(self) -> t.Mapping[str, t.Sequence[str]]:
-        """Return file parameters.
+        """Return the attached file parameters.
 
-        :returns: the file parameters
+        :return: the file parameters
         """
         return self._file_parameters
 
@@ -216,7 +216,7 @@ class Ensemble(entity.CompoundEntity):
 
     @property
     def replicas(self) -> int:
-        """Return the number of replicas
+        """Return the number of replicas.
 
         :return: the number of replicas
         """
@@ -224,7 +224,7 @@ class Ensemble(entity.CompoundEntity):
 
     @replicas.setter
     def replicas(self, value: int) -> None:
-        """Set the number of replicas
+        """Set the number of replicas.
 
         :return: the number of replicas
         """
@@ -237,7 +237,7 @@ class Ensemble(entity.CompoundEntity):
         parameters and executable arguments. Each combination is then replicated according
         to the specified number of replicas, resulting in a set of Application instances.
 
-        :returns: A tuple of Application instances
+        :return: A tuple of Application instances
         """
         permutation_strategy = strategies.resolve(self.permutation_strategy)
 
@@ -287,7 +287,7 @@ class Ensemble(entity.CompoundEntity):
         three replicas were specified. Each Job will have the provided LaunchSettings.
 
         :param settings: LaunchSettings to apply to each Job
-        :returns: List of Jobs with the provided LaunchSettings
+        :return: List of Jobs with the provided LaunchSettings
         """
         apps = self._create_applications()
         if not apps:
