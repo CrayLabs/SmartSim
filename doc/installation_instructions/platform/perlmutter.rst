@@ -27,22 +27,21 @@ To install SmartSim on Perlmutter, follow these steps:
     module load cudatoolkit/12.2 cudnn/8.9.3_cuda12
     smart build --device=cuda-12
 
-.. note::
-    To check that SmartSim has been installed and built correctly, run:
+**Step 4:** Check that SmartSim has been installed and built correctly:
 
-    .. code:: bash
-    
-        smart validate --device gpu
+.. code:: bash
 
-    The following output indicates a successful install:
+    smart validate --device gpu
 
-    .. code:: bash
-    
-        [SmartSim] INFO Verifying Tensor Transfer
-        [SmartSim] INFO Verifying Torch Backend
-        [SmartSim] INFO Verifying ONNX Backend
-        [SmartSim] INFO Verifying TensorFlow Backend
-        16:26:35 login15 SmartSim[557020:MainThread] INFO Success!
+The following output indicates a successful install:
+
+.. code:: bash
+
+    [SmartSim] INFO Verifying Tensor Transfer
+    [SmartSim] INFO Verifying Torch Backend
+    [SmartSim] INFO Verifying ONNX Backend
+    [SmartSim] INFO Verifying TensorFlow Backend
+    16:26:35 login15 SmartSim[557020:MainThread] INFO Success!
 
 Post-installation
 -----------------
