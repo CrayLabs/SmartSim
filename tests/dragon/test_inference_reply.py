@@ -26,9 +26,14 @@
 
 import pytest
 
+dragon = pytest.importorskip("dragon")
+
 from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 from smartsim._core.mli.message_handler import MessageHandler
+
+# The tests in this file belong to the dragon group
+pytestmark = pytest.mark.dragon
 
 handler = MessageHandler()
 
