@@ -49,6 +49,7 @@ class _TqdmUpTo(tqdm.tqdm):
 
     From tqdm doumentation for progress bar when downloading
     """
+
     def update_to(self, b=1, bsize=1, tsize=None):
         """
         b  : int, optional
@@ -61,6 +62,7 @@ class _TqdmUpTo(tqdm.tqdm):
         if tsize is not None:
             self.total = tsize
         return self.update(b * bsize - self.n)  # also sets self.n = b * bsize
+
 
 def _from_local_archive(
     source: PathLike,
@@ -103,8 +105,13 @@ def _from_http(
     :param source: URL to a particular package
     :param destination: Where to unpack the archive
     """
-    with _TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
-                desc=source.split('/')[-1]) as t:  # all optional kwargs
+    with _TqdmUpTo(
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        miniters=1,
+        desc=source.split("/")[-1],
+    ) as t:  # all optional kwargs
         local_file, _ = urlretrieve(source, reporthook=t.update_to, **kwargs)
         t.total = t.n
 

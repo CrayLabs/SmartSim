@@ -60,15 +60,15 @@ Linux
 
 .. tabs::
 
-    .. group-tab:: CUDA 11.8
+    .. group-tab:: CUDA 11
 
       Additional requirements:
 
       * GCC <= 11
-      * CUDA Toolkit 11.8
+      * CUDA Toolkit 11.7 or 11.8
       * cuDNN 8.9
 
-      .. list-table:: Nvidia CUDA 11.8
+      .. list-table:: Nvidia CUDA 11
          :widths: 50 50 50 50
          :header-rows: 1
          :align: center
@@ -78,18 +78,18 @@ Linux
            - Tensorflow
            - ONNX Runtime
          * - 3.9-3.11
-           - 2.4.0
+           - 2.3.1
            - 2.14.1
            - 1.17.3
 
-    .. group-tab:: CUDA 12.5
+    .. group-tab:: CUDA 12
 
       Additional requirements:
 
-      * CUDA Toolkit 12.5
+      * CUDA Toolkit 12
       * cuDNN 8.9
 
-      .. list-table:: Nvidia CUDA 12.5
+      .. list-table:: Nvidia CUDA 12
          :widths: 50 50 50 50
          :header-rows: 1
          :align: center
@@ -99,7 +99,7 @@ Linux
            - Tensorflow
            - ONNX Runtime
          * - 3.9-3.11
-           - 2.4.0
+           - 2.3.1
            - 2.17
            - 1.17.3
 
