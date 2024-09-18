@@ -31,7 +31,7 @@ import pytest
 from jinja2.filters import FILTERS
 
 from smartsim import Experiment
-from smartsim._core import Manifest, previewrenderer
+from smartsim._core import Manifest, preview_renderer
 from smartsim._core.config import CONFIG
 from smartsim.database import FeatureStore
 from smartsim.settings import QsubBatchSettings, RunSettings
@@ -102,7 +102,7 @@ def test_preview_wlm_run_commands_cluster_feature_store_model(
     preview_manifest = Manifest(feature_store, smartsim_model)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     if pytest.test_launcher != "dragon":
@@ -132,7 +132,7 @@ def test_preview_model_on_wlm(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(M1, M2)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     if pytest.test_launcher != "dragon":
         assert "Run Command" in output
@@ -166,7 +166,7 @@ def test_preview_batch_model(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(model)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     assert "Batch Launch: True" in output
     assert "Batch Command" in output
@@ -202,7 +202,7 @@ def test_preview_batch_ensemble(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(ensemble)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     assert "Batch Launch: True" in output
     assert "Batch Command" in output
@@ -261,7 +261,7 @@ def test_preview_launch_command(test_dir, wlmutils, choose_host):
     )
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     assert "feature store" in output
     assert "echo-spam" in output
@@ -307,7 +307,7 @@ def test_preview_batch_launch_command(fileutils, test_dir, wlmutils):
 
     preview_manifest = Manifest(feature_store, model)
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Batch Launch: True" in output
@@ -354,7 +354,7 @@ def test_ensemble_batch(test_dir, wlmutils):
     preview_manifest = Manifest(fs, ml_model, ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Client Configuration" in output
@@ -405,7 +405,7 @@ def test_preview_ensemble_fs_script(wlmutils, test_dir):
     preview_manifest = Manifest(ensemble, feature_store, feature_store_2)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Torch Script" in output

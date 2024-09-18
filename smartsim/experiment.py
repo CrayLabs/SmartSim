@@ -43,7 +43,7 @@ from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
-from ._core import Generator, Manifest, previewrenderer
+from ._core import Generator, Manifest, preview_renderer
 from .entity import TelemetryConfiguration
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
@@ -354,8 +354,8 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
-        output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
+        verbosity_level: preview_renderer.Verbosity = preview_renderer.Verbosity.INFO,
+        output_format: preview_renderer.Format = preview_renderer.Format.PLAINTEXT,
         output_filename: t.Optional[str] = None,
     ) -> None:
         """Preview entity information prior to launch. This method
@@ -382,7 +382,7 @@ class Experiment:
 
         preview_manifest = Manifest(*args)
 
-        previewrenderer.render(
+        preview_renderer.render(
             self,
             preview_manifest,
             verbosity_level,

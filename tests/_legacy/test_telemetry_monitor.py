@@ -39,12 +39,12 @@ import smartsim._core.config.config as cfg
 from conftest import FileUtils, WLMUtils
 from smartsim import Experiment
 from smartsim._core.control.job import Job, JobEntity
-from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.entrypoints.telemetrymonitor import get_parser
+from smartsim._core.control.job_manager import JobManager
+from smartsim._core.entrypoints.telemetry_monitor import get_parser
 from smartsim._core.launcher.launcher import WLMLauncher
-from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim._core.launcher.slurm.slurm_launcher import SlurmLauncher
 from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
-from smartsim._core.launcher.stepInfo import StepInfo
+from smartsim._core.launcher.step_info import StepInfo
 from smartsim._core.utils import serialize
 from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.telemetry.manifest import Run, RuntimeManifest

@@ -41,14 +41,14 @@ from watchdog.observers.api import BaseObserver
 
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
-from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
+from smartsim._core.control.job_manager import JobManager
+from smartsim._core.launcher.dragon.dragon_launcher import DragonLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
-from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
-from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
-from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
-from smartsim._core.launcher.stepInfo import StepInfo
+from smartsim._core.launcher.lsf.lsf_launcher import LSFLauncher
+from smartsim._core.launcher.pbs.pbs_launcher import PBSLauncher
+from smartsim._core.launcher.slurm.slurm_launcher import SlurmLauncher
+from smartsim._core.launcher.step_info import StepInfo
 from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim._core.utils.telemetry.collector import CollectorManager

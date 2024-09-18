@@ -26,7 +26,7 @@
 
 import pytest
 
-from smartsim._core.launcher.stepInfo import *
+from smartsim._core.launcher.step_info import *
 from smartsim.status import JobStatus
 
 # The tests in this file belong to the group_b group

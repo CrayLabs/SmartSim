@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-from smartsim._core.launcher.slurm.slurmCommands import *
+from smartsim._core.launcher.slurm.slurm_commands import *
 from smartsim.error.errors import LauncherError
 
 # retrieved from pytest fixtures

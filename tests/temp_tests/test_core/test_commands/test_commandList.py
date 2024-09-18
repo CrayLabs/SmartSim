@@ -27,8 +27,8 @@
 import pytest
 
 from smartsim._core.commands.command import Command
-from smartsim._core.commands.commandList import CommandList
-from smartsim.settings.launchCommand import LauncherType
+from smartsim._core.commands.command_list import CommandList
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 

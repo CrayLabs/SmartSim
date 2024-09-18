@@ -27,7 +27,7 @@
 import pytest
 
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
-from smartsim.settings.arguments import launchArguments as launch
+from smartsim.settings.arguments import launch_arguments as launch
 
 
 @pytest.fixture

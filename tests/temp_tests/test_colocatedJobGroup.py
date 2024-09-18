@@ -27,8 +27,8 @@
 import pytest
 
 from smartsim.entity.application import Application
-from smartsim.launchable.basejob import BaseJob
-from smartsim.launchable.colocatedJobGroup import ColocatedJobGroup
+from smartsim.launchable.base_job import BaseJob
+from smartsim.launchable.colocated_job_group import ColocatedJobGroup
 from smartsim.launchable.job import Job
 from smartsim.settings import LaunchSettings
 

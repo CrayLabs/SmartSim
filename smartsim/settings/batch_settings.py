@@ -36,8 +36,8 @@ from .arguments import BatchArguments
 from .arguments.batch.lsf import BsubBatchArguments
 from .arguments.batch.pbs import QsubBatchArguments
 from .arguments.batch.slurm import SlurmBatchArguments
-from .baseSettings import BaseSettings
-from .batchCommand import SchedulerType
+from .base_settings import BaseSettings
+from .batch_command import SchedulerType
 from .common import StringArgument
 
 logger = get_logger(__name__)
