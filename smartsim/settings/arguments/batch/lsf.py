@@ -30,9 +30,9 @@ import typing as t
 
 from smartsim.log import get_logger
 
-from ...batchCommand import SchedulerType
+from ...batch_command import SchedulerType
 from ...common import StringArgument
-from ..batchArguments import BatchArguments
+from ..batch_arguments import BatchArguments
 
 logger = get_logger(__name__)
 

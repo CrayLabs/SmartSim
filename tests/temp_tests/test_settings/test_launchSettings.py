@@ -29,7 +29,7 @@ import logging
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 
