@@ -33,12 +33,12 @@
         },
         {
             "name": "libtensorflow",
-            "version": "2.17",
+            "version": "2.15",
             "pip_index": "",
             "python_packages": [
-                "tensorflow==2.17"
+                "tensorflow==2.15"
             ],
-            "lib_source": "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.2/libtensorflow-2.17.0-linux-x64-cuda-12.5.0.tgz",
+            "lib_source": "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-gpu-linux-x86_64-2.15.0.tar.gz",
             "rai_patches": [
                 {
                     "description": "Patch RedisAI to point to correct tsl directory",
