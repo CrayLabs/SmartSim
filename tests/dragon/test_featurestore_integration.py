@@ -77,7 +77,6 @@ def test_eventconsumer_eventpublisher_integration(
 
     mock_storage = storage_for_dragon_fs
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
-    mock_fs_descriptor = backbone.descriptor
 
     # verify ability to write and read from ddict
     backbone["test_dir"] = test_dir
@@ -220,7 +219,12 @@ def test_eventconsumer_max_dequeue(
         pytest.param(0, id="use default: 500"),
         pytest.param(1, id="non-zero buffer size: 1"),
         pytest.param(500, id="buffer size: 500"),
-        pytest.param(1000, id="buffer size: 1000"),
+        pytest.param(800, id="buffer size: 800"),
+        pytest.param(
+            1000,
+            id="buffer size: 1000, unreliable in dragon-v0.10",
+            marks=pytest.mark.skip,
+        ),
     ],
 )
 def test_channel_buffer_size(

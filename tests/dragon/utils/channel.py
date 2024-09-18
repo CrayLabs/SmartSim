@@ -117,5 +117,5 @@ class FileSystemCommChannel(CommChannelBase):
             path = pathlib.Path(descriptor)
             return FileSystemCommChannel(path)
         except:
-            logger.warning(f"failed to create fs comm channel: {descriptor!r}")
+            logger.warning(f"failed to create fs comm channel: {descriptor}")
             raise

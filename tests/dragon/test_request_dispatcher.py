@@ -27,6 +27,7 @@
 import gc
 import io
 import logging
+import os
 import pathlib
 import socket
 import time
@@ -36,18 +37,16 @@ from queue import Empty
 import numpy as np
 import pytest
 
-torch = pytest.importorskip("torch")
-dragon = pytest.importorskip("dragon")
+pytest.importorskip("torch")
+pytest.importorskip("dragon")
 
-import base64
+
+# isort: off
+import dragon
 import multiprocessing as mp
+import torch
 
-try:
-    mp.set_start_method("dragon")
-except Exception:
-    pass
-
-import os
+# isort: on
 
 import dragon.channels as dch
 import dragon.infrastructure.policy as dragon_policy
@@ -55,14 +54,14 @@ import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
 import torch.nn as nn
 from dragon import fli
-from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
-from dragon.managed_memory import MemoryAlloc, MemoryPool
-from dragon.mpbridge.queues import DragonQueue
+from dragon.managed_memory import MemoryAlloc
 
 from smartsim._core.entrypoints.service import Service
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_channel import (
+    DragonCommChannel,
+    create_local,
+)
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestBatch,
@@ -70,6 +69,9 @@ from smartsim._core.mli.infrastructure.control.request_dispatcher import (
 )
 from smartsim._core.mli.infrastructure.control.worker_manager import (
     EnvironmentConfigLoader,
+)
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
@@ -79,12 +81,11 @@ from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .feature_store import FileSystemFeatureStore
-from .utils.channel import FileSystemCommChannel
-
 logger = get_logger(__name__)
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
+
+mp.set_start_method("dragon")
 
 
 class MiniModel(nn.Module):
@@ -136,14 +137,18 @@ def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
 def mock_messages(
     request_dispatcher_queue: DragonFLIChannel,
     feature_store: FeatureStore,
+    parent_iteration: int,
+    callback_descriptor: str,
 ) -> None:
     """Mock event producer for triggering the inference pipeline"""
     model_key = "mini-model"
+    # mock_message sends 2 messages, so we offset by 2 * (# of iterations in caller)
+    offset = 2 * parent_iteration
 
     for iteration_number in range(2):
+        logged_iteration = offset + iteration_number
+        logger.debug(f"Sending mock message {logged_iteration}")
 
-        channel = Channel.make_process_local()
-        callback_channel = DragonCommChannel(channel)
         output_key = f"output-{iteration_number}"
 
         feature_store[model_key] = load_model()
@@ -157,25 +162,35 @@ def mock_messages(
             "c", "float32", list(tensor.shape)
         )
 
-        message_tensor_output_key = MessageHandler.build_feature_store_key(
-            output_key, fsd
-        )
-        message_model_key = MessageHandler.build_feature_store_key(model_key, fsd)
+        message_tensor_output_key = MessageHandler.build_tensor_key(output_key, fsd)
+        message_model_key = MessageHandler.build_model_key(model_key, fsd)
 
         request = MessageHandler.build_request(
-            reply_channel=callback_channel.descriptor,
+            reply_channel=callback_descriptor,
             model=message_model_key,
             inputs=[tensor_desc],
             outputs=[message_tensor_output_key],
             output_descriptors=[],
             custom_attributes=None,
         )
+
+        logger.info(f"Sending request {iteration_number} to request_dispatcher_queue")
         request_bytes = MessageHandler.serialize_request(request)
         with request_dispatcher_queue._fli.sendh(
             timeout=None, stream_channel=request_dispatcher_queue._channel
         ) as sendh:
             sendh.send_bytes(request_bytes)
             sendh.send_bytes(tensor.tobytes())
+
+        logger.info(
+            f"Retrieving {iteration_number} from callback channel: {callback_descriptor}"
+        )
+        callback_channel = DragonCommChannel.from_descriptor(callback_descriptor)
+
+        # Results will be empty. The test pulls messages off the queue before they
+        # can be serviced by a worker. Just ensure the callback channel works.
+        results = callback_channel.recv(timeout=0.1)
+        logger.debug(f"Received mock message results on callback channel: {results}")
         time.sleep(1)
 
 
@@ -216,16 +231,17 @@ def test_request_dispatcher() -> None:
     longer referenced by the dispatcher.
     """
 
-    to_worker_channel = dch.Channel.make_process_local()
+    to_worker_channel = create_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
     to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli, sender_supplied=True)
 
+    ddict = DDict(1, 2, 4 * 1024**2)
+    backbone_fs = BackboneFeatureStore(ddict, allow_reserved_writes=True)
+
     # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
-    os.environ["_SMARTSIM_REQUEST_QUEUE"] = to_worker_fli_comm_ch.descriptor
-
-    ddict = DDict(1, 2, 4 * 1024**2)
-    dragon_fs = DragonFeatureStore(ddict)
+    os.environ[BackboneFeatureStore.MLI_WORKER_QUEUE] = to_worker_fli_comm_ch.descriptor
+    os.environ[BackboneFeatureStore.MLI_BACKBONE] = backbone_fs.descriptor
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -243,46 +259,49 @@ def test_request_dispatcher() -> None:
 
     worker_queue = config_loader.get_queue()
     if worker_queue is None:
-        logger.warn(
+        logger.warning(
             "FLI input queue not loaded correctly from config_loader: "
             f"{config_loader._queue_descriptor}"
         )
 
     request_dispatcher._on_start()
 
-    for _ in range(2):
+    for i in range(2):
         batch: t.Optional[RequestBatch] = None
         mem_allocs = []
         tensors = []
-        model_key = "mini-model"
+
+        # NOTE: creating callbacks in test to avoid a local channel being torn
+        # down when mock_messages terms but before the final response message is sent
+
+        callback_channel = DragonCommChannel.from_local()
 
         # create a mock client application to populate the request queue
         msg_pump = mp.Process(
             target=mock_messages,
-            args=(
-                worker_queue,
-                dragon_fs,
-            ),
+            args=(worker_queue, backbone_fs, i, callback_channel.descriptor),
         )
 
         msg_pump.start()
 
         time.sleep(1)
 
-        for _ in range(15):
+        for _ in range(200):
             try:
                 request_dispatcher._on_iteration()
-                batch = request_dispatcher.task_queue.get(timeout=1)
+                batch = request_dispatcher.task_queue.get(timeout=0.1)
                 break
             except Empty:
                 continue
             except Exception as exc:
                 raise exc
 
-        try:
-            assert batch is not None
-            assert batch.has_valid_requests
+        assert batch is not None
+        assert batch.has_valid_requests
 
+        model_key = batch.model_id.key
+
+        try:
             transform_result = batch.inputs
             for transformed, dims, dtype in zip(
                 transform_result.transformed,

@@ -245,9 +245,11 @@ class DragonConnector:
 
         with open(config.dragon_dotenv, encoding="utf-8") as dot_env:
             for kvp in dot_env.readlines():
-                split = kvp.strip().split("=", maxsplit=1)
-                key, value = split[0], split[-1]
-                self._env_vars[key] = value
+                # skip any commented lines
+                if not kvp.startswith("#"):
+                    split = kvp.strip().split("=", maxsplit=1)
+                    key, value = split[0], split[-1]
+                    self._env_vars[key] = value
 
         return self._env_vars
 

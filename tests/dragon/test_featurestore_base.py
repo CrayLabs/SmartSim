@@ -767,7 +767,9 @@ def test_backbone_wait_timeout(wait_timeout: float, exp_wait_max: float) -> None
     backbone = BackboneFeatureStore(storage)
 
     with pytest.raises(SmartSimError) as ex:
-        backbone.wait_for(["does-not-exist"])
+        backbone.wait_for(["does-not-exist"], wait_timeout)
+
+    assert "timeout" in str(ex.value.args[0]).lower()
 
     end_time = time.time()
     elapsed = end_time - start_time
