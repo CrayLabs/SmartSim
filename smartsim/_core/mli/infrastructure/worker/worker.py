@@ -332,6 +332,14 @@ class RequestBatch:
         return len(self.requests) > 0
 
     @property
+    def has_raw_model(self) -> bool:
+        """Returns whether the batch has a raw model.
+
+        :returns: True if the batch has a raw model
+        """
+        return self.raw_model is not None
+
+    @property
     def raw_model(self) -> t.Optional[t.Any]:
         """Returns the raw model to use to execute for this batch
         if it is available.
