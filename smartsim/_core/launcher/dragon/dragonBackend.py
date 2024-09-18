@@ -26,6 +26,7 @@
 import collections
 import functools
 import itertools
+import multiprocessing as mp
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -34,18 +35,27 @@ from threading import RLock
 
 from tabulate import tabulate
 
-# pylint: disable=import-error
+# pylint: disable=import-error,C0302,R0915,R6301
 # isort: off
 import dragon.data.ddict.ddict as dragon_ddict
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
-import dragon.native.group_state as dragon_group_state
+
+# import dragon.native.group_state as dragon_group_state
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
 from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
+    EventBase,
+    # EventBroadcaster,
+    EventCategory,
+    EventConsumer,
+)
 
 # pylint: enable=import-error
 # isort: on
@@ -72,8 +82,8 @@ logger = get_logger(__name__)
 
 
 class DragonStatus(str, Enum):
-    ERROR = str(dragon_group_state.Error())
-    RUNNING = str(dragon_group_state.Running())
+    ERROR = "Error"  # str(dragon_group_state.Error())
+    RUNNING = "Running"  # str(dragon_group_state.Running())
 
     def __str__(self) -> str:
         return self.value
@@ -187,8 +197,15 @@ class DragonBackend:
             else 5
         )
         """Time in seconds needed to server to complete shutdown"""
-        self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
+        self._backbone: t.Optional[BackboneFeatureStore] = None
+        """The backbone feature store"""
+        self._event_consumer: t.Optional[EventConsumer] = None
+        """A listener registered to listen for new consumers and update the shared
+        consumer registrations list"""
+        self._event_consumer_process: t.Optional[mp.Process] = None
+        """The process executing the event consumers `listen` method"""
 
+        """An event consumer for receiving events from MLI resources"""
         self._nodes: t.List["dragon_machine.Node"] = []
         """Node capability information for hosts in the allocation"""
         self._hosts: t.List[str] = []
@@ -539,21 +556,113 @@ class DragonBackend:
                 self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
                 self._group_infos[step_id].return_codes = [-9]
 
-    @property
-    def infra_ddict(self) -> str:
-        """Create a Dragon distributed dictionary and return its
-        serialized descriptor
+    def _create_backbone(self) -> BackboneFeatureStore:
         """
-        if self._infra_ddict is None:
-            logger.info("Creating DDict")
-            self._infra_ddict = dragon_ddict.DDict(
+        Create a BackboneFeatureStore if one does not exist.
+
+        :returns: The descriptor of the backbone feature store
+        """
+        if self._backbone is None:
+            logger.info("Creating backbone storage DDict")
+            backbone_storage = dragon_ddict.DDict(
                 n_nodes=len(self._hosts), total_mem=len(self._hosts) * 1024**3
             )  # todo: parametrize
-            logger.info("Created DDict")
-            self._infra_ddict["creation"] = str(time.time())
-            logger.info(self._infra_ddict["creation"])
+            logger.info("Created backbone storage DDict")
+            self._backbone = BackboneFeatureStore(
+                backbone_storage, allow_reserved_writes=True
+            )
+            logger.info(self._backbone.creation_date)
 
-        return str(self._infra_ddict.serialize())
+        return self._backbone
+
+    def _on_consumer_created(self, event: EventBase) -> None:
+        """Event handler for"""
+        logger.warning(f"Unhandled event received: {event}")
+
+    def _bootstrap_event_listeners(
+        self, backbone: BackboneFeatureStore, consumer: EventConsumer
+    ) -> None:
+        """Update the list of notification channels registered in the backbone.
+
+        :param backbone: The backbone feature store to update"""
+        # Copy the consumer list so a backend restart doesn't clear registrations
+        notify_descriptors = list(backbone.notification_channels)
+
+        # Update directly to avoid SEND/ACK pattern
+        notify_descriptors.append(consumer.descriptor)
+        # consumer.register() # this will loop infinitely waiting for itself
+
+        backbone.notification_channels = notify_descriptors
+
+    def _create_eventing(self, backbone: BackboneFeatureStore) -> EventConsumer:
+        """
+        Create an event publisher and event consumer for communicating with
+        other MLI resources.
+
+        :param backbone: The backbone feature store used by the MLI backend. NOTE:
+        passing backbone as a parameter to ensure the backbone is initialized before
+        attempting to connect any eventing clients.
+        :returns: The newly created EventConsumer instance
+        """
+        # if self._event_producer is None:
+        #     logger.info("Creating event publisher")
+        #     # todo: ensure DCC.from_descriptor and not DCC.from_local
+        #     self._event_producer =
+        # EventBroadcaster(backbone, DragonCommChannel.from_descriptor)
+        #     logger.info("Created event publisher")
+
+        if self._event_consumer is None:
+            logger.info("Creating event consumer")
+            event_channel = DragonCommChannel.from_local()
+            consumer = EventConsumer(
+                event_channel,
+                backbone,
+                [EventCategory.CONSUMER_CREATED],
+                name="BackendConsumerRegistrar",
+                event_handler=self._on_consumer_created,
+            )
+
+            # self._backbone.backend_channel =
+            # consumer.descriptor # i want to get rid of this extra channel
+            # self._bootstrap_event_listeners(backbone, consumer)
+            self._event_consumer = consumer
+
+            # options = dragon_process_desc.
+            # ProcessOptions(make_inf_channels=True) # what is this!?
+            # grp_consumer = dragon_process_group.ProcessGroup(
+            #     restart=False, pmi_enabled=False
+            # )
+            # self._event_consumer_process = dragon_process.ProcessTemplate(
+            #     target=self._event_consumer.listen,
+            #     # args=request.exe_args,
+            #     # cwd=request.path,
+            #     env={
+            #         # **request.current_env,
+            #         # **request.env,
+            #         **self._backbone.get_env(),
+            #     },
+            #     stdout=dragon_process.Popen.PIPE,
+            #     stderr=dragon_process.Popen.PIPE,
+            #     # policy=local_policy,
+            #     options=options,
+            # )
+            # grp_consumer.add(self._event_consumer_process)
+            # # self._event_consumer_process =
+            # mp.Process(target=self._event_consumer.listen)
+            # # self._event_consumer_process.start()
+            # grp_consumer.init()
+            # grp_consumer.start()
+
+            logger.info("Created event consumer")
+
+        return self._event_consumer
+
+    def _start_eventing_listeners(self) -> None:
+        if self._event_consumer:
+            self._event_consumer_process = mp.Process(
+                target=self._event_consumer.listen
+            )
+            self._event_consumer_process.start()
 
     @staticmethod
     def create_run_policy(
@@ -596,6 +705,9 @@ class DragonBackend:
 
     def _start_steps(self) -> None:
         self._heartbeat()
+        backbone = self._create_backbone()
+        self._create_eventing(backbone)
+
         with self._queue_lock:
             started = []
             for step_id, request in self._queued_steps.items():
@@ -622,7 +734,7 @@ class DragonBackend:
                         env={
                             **request.current_env,
                             **request.env,
-                            "_SMARTSIM_INFRA_BACKBONE": self.infra_ddict,
+                            **backbone.get_env(),
                         },
                         stdout=dragon_process.Popen.PIPE,
                         stderr=dragon_process.Popen.PIPE,
@@ -778,6 +890,9 @@ class DragonBackend:
 
     def _update(self) -> None:
         """Trigger all update queries and update local state database"""
+        backbone = self._create_backbone()
+        self._create_eventing(backbone)
+
         self._stop_steps()
         self._start_steps()
         self._refresh_statuses()

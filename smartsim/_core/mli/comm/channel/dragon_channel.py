@@ -130,15 +130,17 @@ class DragonCommChannel(cch.CommChannelBase):
         with self._channel.recvh(timeout=timeout) as recvh:
             messages: t.List[bytes] = []
 
+            # todo: consider that this could (under load) never exit. do we need
+            # to configure a maximum number to pull at once?
             try:
                 message_bytes = recvh.recv_bytes(timeout=timeout)
                 messages.append(message_bytes)
-                logger.debug(f"DragonCommChannel {self.descriptor!r} received message")
+                logger.debug(f"DragonCommChannel {self.descriptor} received message")
             except dch.ChannelEmpty:
                 # emptied the queue, ok to swallow this ex
-                logger.debug(f"DragonCommChannel exhausted: {self.descriptor!r}")
+                logger.debug(f"DragonCommChannel exhausted: {self.descriptor}")
             except dch.ChannelRecvTimeout as ex:
-                logger.debug(f"Timeout exceeded on channel.recv: {self.descriptor!r}")
+                logger.debug(f"Timeout exceeded on channel.recv: {self.descriptor}")
 
             return messages
 
@@ -169,8 +171,7 @@ class DragonCommChannel(cch.CommChannelBase):
         :param descriptor: The descriptor that uniquely identifies the resource. Output
         from `descriptor_string` is correctly encoded.
         :returns: An attached DragonCommChannel
-        :raises SmartSimError: If creation of comm channel fails
-        """
+        :raises SmartSimError: If creation of comm channel fails"""
         try:
             utf8_descriptor: t.Union[str, bytes] = descriptor
             if isinstance(descriptor, str):
@@ -186,3 +187,15 @@ class DragonCommChannel(cch.CommChannelBase):
             raise SmartSimError(
                 f"Failed to create dragon comm channel: {descriptor!r}"
             ) from ex
+
+    @classmethod
+    def from_local(cls, _descriptor: t.Optional[str] = None) -> "DragonCommChannel":
+        """A factory method that creates a local channel instance
+
+        :returns: An attached DragonCommChannel"""
+        try:
+            channel = dch.Channel.make_process_local()
+            return DragonCommChannel(channel)
+        except:
+            logger.error(f"Failed to create local dragon comm channel", exc_info=True)
+            raise

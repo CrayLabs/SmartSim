@@ -39,17 +39,14 @@ logger = get_logger(__name__)
 class FileSystemCommChannel(CommChannelBase):
     """Passes messages by writing to a file"""
 
-    def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
+    def __init__(self, key: pathlib.Path) -> None:
         """Initialize the FileSystemCommChannel instance
 
         :param key: a path to the root directory of the feature store"""
         self._lock = threading.RLock()
-        if isinstance(key, pathlib.Path):
-            super().__init__(key.as_posix().encode("utf-8"))
-            self._file_path = key
-        else:
-            super().__init__(key)
-            self._file_path = pathlib.Path(key.decode("utf-8"))
+
+        super().__init__(key.as_posix())
+        self._file_path = key
 
         if not self._file_path.parent.exists():
             self._file_path.parent.mkdir(parents=True)
@@ -110,17 +107,14 @@ class FileSystemCommChannel(CommChannelBase):
     @classmethod
     def from_descriptor(
         cls,
-        descriptor: t.Union[str, bytes],
+        descriptor: str,
     ) -> "FileSystemCommChannel":
         """A factory method that creates an instance from a descriptor string
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached FileSystemCommChannel"""
         try:
-            if isinstance(descriptor, str):
-                path = pathlib.Path(descriptor)
-            else:
-                path = pathlib.Path(descriptor.decode("utf-8"))
+            path = pathlib.Path(descriptor)
             return FileSystemCommChannel(path)
         except:
             logger.warning(f"failed to create fs comm channel: {descriptor}")

@@ -106,9 +106,9 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 
 #     output_key = f"demo-output"
 
-#     message_tensor_output_key = MessageHandler.build_tensor_key(output_key)
-#     message_tensor_input_key = MessageHandler.build_tensor_key(input_key)
-#     message_model_key = MessageHandler.build_model_key(model_key)
+#     message_tensor_output_key = MessageHandler.build_feature_store_key(output_key)
+#     message_tensor_input_key = MessageHandler.build_feature_store_key(input_key)
+#     message_model_key = MessageHandler.build_feature_store_key(model_key)
 
 #     request = MessageHandler.build_request(
 #         reply_channel=callback_channel.descriptor,
@@ -146,9 +146,9 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 
 #     output_key = f"demo-output"
 
-#     message_tensor_output_key = MessageHandler.build_tensor_key(output_key)
-#     message_tensor_input_key = MessageHandler.build_tensor_key(input_key)
-#     # message_model_key = MessageHandler.build_model_key(model_key)
+#     message_tensor_output_key = MessageHandler.build_feature_store_key(output_key)
+#     message_tensor_input_key = MessageHandler.build_feature_store_key(input_key)
+#     # message_model_key = MessageHandler.build_feature_store_key(model_key)
 
 #     request = MessageHandler.build_request(
 #         reply_channel=callback_channel.descriptor,
@@ -187,9 +187,9 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 
 #     output_key = f"demo-output"
 
-#     message_tensor_output_key = MessageHandler.build_tensor_key(output_key)
-#     # message_tensor_input_key = MessageHandler.build_tensor_key(input_key)
-#     # message_model_key = MessageHandler.build_model_key(model_key)
+#     message_tensor_output_key = MessageHandler.build_feature_store_key(output_key)
+#     # message_tensor_input_key = MessageHandler.build_feature_store_key(input_key)
+#     # message_model_key = MessageHandler.build_feature_store_key(model_key)
 #     message_tensor_input = MessageHandler.build_tensor(
 #         input_tensor, "c", "float32", [2]
 #     )
@@ -231,9 +231,9 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 
 #     output_key = f"demo-output"
 
-#     # message_tensor_output_key = MessageHandler.build_tensor_key(output_key)
-#     # message_tensor_input_key = MessageHandler.build_tensor_key(input_key)
-#     message_model_key = MessageHandler.build_model_key(model_key)
+#     # message_tensor_output_key = MessageHandler.build_feature_store_key(output_key)
+#     # message_tensor_input_key = MessageHandler.build_feature_store_key(input_key)
+#     message_model_key = MessageHandler.build_feature_store_key(model_key)
 #     message_tensor_input = MessageHandler.build_tensor(
 #         input_tensor, "c", "float32", [2]
 #     )

@@ -73,7 +73,7 @@ class MessageHandler:
         order, data type, and dimensions.
 
         :param order: Order of the tensor, such as row-major (c) or column-major (f)
-        :param keys: List of TensorKeys to apply transorm descriptor to
+        :param keys: List of TensorKey to apply transorm descriptor to
         :param data_type: Tranform data type of the tensor
         :param dimensions: Transform dimensions of the tensor
         :returns: The OutputDescriptor
@@ -92,14 +92,12 @@ class MessageHandler:
         return description
 
     @staticmethod
-    def build_tensor_key(
-        key: str, feature_store_descriptor: str
-    ) -> data_references_capnp.TensorKey:
+    def build_tensor_key(key: str, descriptor: str) -> data_references_capnp.TensorKey:
         """
         Builds a new TensorKey message with the provided key.
 
         :param key: String to set the TensorKey
-        :param feature_store_descriptor: A descriptor identifying the feature store
+        :param descriptor: A descriptor identifying the feature store
         containing the key
         :returns: The TensorKey
         :raises ValueError: If building fails
@@ -107,7 +105,7 @@ class MessageHandler:
         try:
             tensor_key = data_references_capnp.TensorKey.new_message()
             tensor_key.key = key
-            tensor_key.featureStoreDescriptor = feature_store_descriptor
+            tensor_key.descriptor = descriptor
         except Exception as e:
             raise ValueError("Error building tensor key.") from e
         return tensor_key
@@ -133,14 +131,12 @@ class MessageHandler:
         return model
 
     @staticmethod
-    def build_model_key(
-        key: str, feature_store_descriptor: str
-    ) -> data_references_capnp.ModelKey:
+    def build_model_key(key: str, descriptor: str) -> data_references_capnp.ModelKey:
         """
         Builds a new ModelKey message with the provided key.
 
         :param key: String to set the ModelKey
-        :param feature_store_descriptor: A descriptor identifying the feature store
+        :param descriptor: A descriptor identifying the feature store
         containing the key
         :returns: The ModelKey
         :raises ValueError: If building fails
@@ -148,9 +144,9 @@ class MessageHandler:
         try:
             model_key = data_references_capnp.ModelKey.new_message()
             model_key.key = key
-            model_key.featureStoreDescriptor = feature_store_descriptor
+            model_key.descriptor = descriptor
         except Exception as e:
-            raise ValueError("Error building model key.") from e
+            raise ValueError("Error building tensor key.") from e
         return model_key
 
     @staticmethod
@@ -242,7 +238,7 @@ class MessageHandler:
 
     @staticmethod
     def _assign_reply_channel(
-        request: request_capnp.Request, reply_channel: bytes
+        request: request_capnp.Request, reply_channel: str
     ) -> None:
         """
         Assigns a reply channel to the supplied request.
@@ -360,7 +356,7 @@ class MessageHandler:
 
     @staticmethod
     def build_request(
-        reply_channel: bytes,
+        reply_channel: str,
         model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey],

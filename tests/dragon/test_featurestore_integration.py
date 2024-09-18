@@ -35,7 +35,6 @@ from smartsim._core.mli.comm.channel.dragon_channel import (
     DragonCommChannel,
     create_local,
 )
-from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
@@ -131,7 +130,7 @@ def test_eventconsumer_eventpublisher_integration(
     ]
 
     # simulate worker manager sending a notification to backend that it's alive
-    event_1 = OnCreateConsumer(wmgr_consumer_descriptor)
+    event_1 = OnCreateConsumer(wmgr_consumer_descriptor, filters=[])
     mock_worker_mgr.send(event_1)
 
     # simulate the app updating a model a few times

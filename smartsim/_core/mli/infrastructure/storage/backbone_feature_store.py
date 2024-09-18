@@ -24,7 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import enum
+import itertools
 import pickle
 import time
 import typing as t
@@ -39,6 +41,7 @@ import dragon.data.ddict.ddict as dragon_ddict
 # isort: on
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
@@ -48,6 +51,14 @@ from smartsim.log import get_logger
 logger = get_logger(__name__)
 
 
+def byte_descriptor_to_string(descriptor: bytes) -> str:
+    return base64.b64encode(descriptor).decode("utf-8")
+
+
+def string_descriptor_to_byte(descriptor: str) -> bytes:
+    return base64.b64decode(descriptor.encode("utf-8"))
+
+
 # todo: did i create an arms race where a developer just grabs the backbone
 # and passes it wherever they need a FeatureStore?
 class BackboneFeatureStore(DragonFeatureStore):
@@ -55,9 +66,15 @@ class BackboneFeatureStore(DragonFeatureStore):
     information stored in the MLI backbone feature store."""
 
     MLI_NOTIFY_CONSUMERS = "_SMARTSIM_MLI_NOTIFY_CONSUMERS"
+    MLI_BACKEND_CONSUMER = "_SMARTIM_MLI_BACKEND_CONSUMER"
+    MLI_WORKER_QUEUE = "to_worker_fli"
+    MLI_BACKBONE = "_SMARTSIM_INFRA_BACKBONE"
+    _CREATED_ON = "creation"
 
     def __init__(
-        self, storage: "dragon_ddict.DDict", allow_reserved_writes: bool = False
+        self,
+        storage: "dragon_ddict.DDict",
+        allow_reserved_writes: bool = False,
     ) -> None:
         """Initialize the DragonFeatureStore instance.
 
@@ -67,6 +84,17 @@ class BackboneFeatureStore(DragonFeatureStore):
         """
         super().__init__(storage)
         self._enable_reserved_writes = allow_reserved_writes
+
+        if self._CREATED_ON not in self:
+            self._record_creation_date()
+
+    @property
+    def wait_timeout(self) -> float:
+        return self._wait_timeout
+
+    @wait_timeout.setter
+    def wait_timeout(self, value: float) -> None:
+        self._wait_timeout = value
 
     @property
     def notification_channels(self) -> t.Sequence[str]:
@@ -86,6 +114,135 @@ class BackboneFeatureStore(DragonFeatureStore):
         :param values: The list of channel descriptors to save
         """
         self[self.MLI_NOTIFY_CONSUMERS] = ",".join([str(value) for value in values])
+
+    @property
+    def backend_channel(self) -> t.Optional[str]:
+        """Retrieve the channel descriptor exposed by the MLI backend for events
+
+        :returns: a stringified channel descriptor"""
+        if self.MLI_NOTIFY_CONSUMERS in self:
+            return str(self[self.MLI_NOTIFY_CONSUMERS])
+        return None
+
+    @backend_channel.setter
+    def backend_channel(self, value: str) -> None:
+        """Set the channel exposed by the MLI backend for events
+
+        :param value: a stringified channel descriptor"""
+        self[self.MLI_NOTIFY_CONSUMERS] = value
+
+    @property
+    def worker_queue(self) -> t.Optional[str]:
+        """Retrieve the channel descriptor exposed by the MLI
+        backend to send work to an MLI worker manager instance
+
+        :returns: a stringified channel descriptor"""
+        if self.MLI_WORKER_QUEUE in self:
+            return str(self[self.MLI_WORKER_QUEUE])
+        return None
+
+    @worker_queue.setter
+    def worker_queue(self, value: str) -> None:
+        """Set the channel descriptor exposed by the MLI
+        backend to send work to an MLI worker manager instance
+
+        :param value: a stringified channel descriptor"""
+        self[self.MLI_WORKER_QUEUE] = value
+
+    @property
+    def creation_date(self) -> str:
+        """Return the creation date for the backbone feature store"""
+        return str(self[self._CREATED_ON])
+
+    def _record_creation_date(self) -> None:
+        """Write the creation timestamp to the feature store"""
+        if self._CREATED_ON not in self:
+            if not self._allow_reserved_writes:
+                logger.warning(
+                    "Recorded creation from a write-protected backbone instance"
+                )
+            self[self._CREATED_ON] = str(time.time())
+
+    @classmethod
+    def from_writable_descriptor(
+        cls,
+        descriptor: str,
+    ) -> "BackboneFeatureStore":
+        """A factory method that creates an instance from a descriptor string
+
+        :param descriptor: The descriptor that uniquely identifies the resource
+        :returns: An attached DragonFeatureStore
+        :raises SmartSimError: if attachment to DragonFeatureStore fails"""
+        try:
+            return BackboneFeatureStore(dragon_ddict.DDict.attach(descriptor), True)
+        except Exception as ex:
+            logger.error(f"Error creating dragon feature store: {descriptor}")
+            raise SmartSimError(
+                f"Error creating dragon feature store: {descriptor}"
+            ) from ex
+
+    @staticmethod
+    def _check_wait_timeout(
+        start_time: float, timeout: float, indicators: t.Dict[str, bool]
+    ) -> None:
+        """Perform timeout verification
+
+        :param start_time: the start time to use for elapsed calculation
+        :param timeout: the timeout (in seconds)
+        :param indicators: latest retrieval status for requested keys"""
+        elapsed = time.time() - start_time
+        if timeout and elapsed > timeout:
+            raise SmartSimError(
+                f"Timeout retrieving all keys from backbone: {indicators}"
+            )
+
+    def wait_for(
+        self, keys: t.List[str], timeout: float = 0
+    ) -> t.Dict[str, t.Union[str, bytes, None]]:
+        """Perform a blocking wait until all specified keys have been found
+        in the backbone
+
+        :param keys: The required collection of keys to retrieve
+        :param timeout: The maximum wait time in seconds. Overrides class level setting
+        """
+
+        to_check = list(keys)
+        was_found = [False for _ in to_check]  # add test ensuring dupes are handled..
+        values: t.List[t.Union[str, bytes, None]] = [None for _ in to_check]
+
+        backoff: t.List[float] = [0.1, 0.5, 1, 2, 4, 8]
+        backoff_iter = itertools.cycle(backoff)
+        start_time = time.time()
+
+        while not all(was_found):
+            delay = next(backoff_iter)
+
+            for index, key in enumerate(to_check):
+                if was_found[index]:
+                    continue
+
+                try:
+                    values[index] = self[key]
+                    was_found[index] = True
+                except KeyError:
+                    if delay == backoff[-1]:
+                        logger.debug(f"Re-attempting `{key}` retrieval in {delay}s")
+
+            if all(was_found):
+                continue
+
+            self._check_wait_timeout(
+                start_time, timeout, dict(zip(to_check, was_found))
+            )
+
+            time.sleep(delay)
+
+        return dict(zip(keys, values))
+
+    def get_env(self) -> t.Dict[str, str]:
+        """Returns a dictionary populated with environment variables necessary to
+        connect a process to the existing backbone instance."""
+        return {self.MLI_BACKBONE: self.descriptor}
 
 
 class EventCategory(str, enum.Enum):
@@ -126,21 +283,26 @@ class OnCreateConsumer(EventBase):
 
     descriptor: str
     """Descriptor of the comm channel exposed by the consumer"""
+    filters: t.List[EventCategory]
+    """The collection of filters indicating messages of interest to this consumer"""
 
-    def __init__(self, descriptor: str) -> None:
+    def __init__(self, descriptor: str, filters: t.Sequence[EventCategory]) -> None:
         """Initialize the OnCreateConsumer event.
 
         :param descriptor: Descriptor of the comm channel exposed by the consumer
+        :param descriptor: Collection of filters indicating messages of interest
         """
         super().__init__(EventCategory.CONSUMER_CREATED, str(uuid.uuid4()))
         self.descriptor = descriptor
+        self.filters = list(filters)
 
     def __str__(self) -> str:
         """Convert the event to a string.
 
         :returns: A string representation of this instance
         """
-        return f"{str(super())}|{self.descriptor}"
+        _filters = ",".join(self.filters)
+        return f"{str(super())}|{self.descriptor}|{_filters}"
 
 
 class OnWriteFeatureStore(EventBase):
@@ -179,6 +341,36 @@ class EventProducer(t.Protocol):
         :param event: The event to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
         """
+
+
+class EventSender:
+    """An event publisher that performs publishing of system events to a
+    single endpoint"""
+
+    def __init__(
+        self,
+        backbone: BackboneFeatureStore,
+        channel: t.Optional[CommChannelBase],
+    ) -> None:
+        """Initialize the instance"""
+        self._backbone = backbone
+        self._channel: t.Optional[CommChannelBase] = channel
+
+    def send(self, event: EventBase) -> int:
+        """The send operation"""
+        if self._channel is None:
+            # self._channel = self._channel_factory(event)
+            raise Exception("No channel to send on")
+        num_sent = 0
+
+        try:
+            event_bytes = bytes(event)
+            self._channel.send(event_bytes)
+            num_sent += 1
+        except Exception as ex:
+            raise SmartSimError(f"Failed broadcast to channel: {self._channel}") from ex
+
+        return num_sent
 
 
 class EventBroadcaster:
@@ -353,6 +545,8 @@ class EventConsumer:
         backbone: BackboneFeatureStore,
         filters: t.Optional[t.List[EventCategory]] = None,
         batch_timeout: t.Optional[float] = None,
+        name: t.Optional[str] = None,
+        event_handler: t.Optional[t.Callable[[EventBase], None]] = None,
     ) -> None:
         """Initialize the EventConsumer instance.
 
@@ -371,6 +565,15 @@ class EventConsumer:
         self._backbone = backbone
         self._global_filters = filters or []
         self._global_timeout = batch_timeout or 1.0
+        self._name = name
+        self._event_handler = event_handler
+
+    @property
+    def descriptor(self) -> str:
+        """The descriptor of the underlying comm channel where events are received
+
+        :returns: The comm channel descriptor"""
+        return self._comm_channel.descriptor
 
     def receive(
         self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0
@@ -417,3 +620,45 @@ class EventConsumer:
                 break
 
         return messages
+
+    def register(self) -> t.Generator[bool, None, None]:
+        """Send an event to register this consumer as a listener"""
+        awaiting_confirmation = True
+        descriptor = self._comm_channel.descriptor
+        backoffs = itertools.cycle((0.1, 0.5, 1.0, 2.0, 4.0, 8.0))
+        event = OnCreateConsumer(descriptor, self._global_filters)
+
+        # we're going to sit in this loop to wait for the backbone to get
+        # updated with the registration (to avoid SEND/ACK)
+        while awaiting_confirmation:
+            registered_channels = self._backbone.notification_channels
+            # todo: this should probably be descriptor_string? maybe i need to
+            # get rid of descriptor as bytes or just make desc_string required in ABC
+            if descriptor in registered_channels:
+                awaiting_confirmation = False
+
+            yield not awaiting_confirmation
+            time.sleep(next(backoffs))
+
+            # if backend_descriptor := self._backbone.backend_channel:
+            #     backend_channel = DragonCommChannel.
+            # from_descriptor(backend_descriptor)
+            #     backend = EventSender(self._backbone, backend_channel)
+            #     backend.send(event)
+
+            # broadcast that this consumer is now ready to mingle
+            publisher = EventBroadcaster(self._backbone, DragonCommChannel.from_local)
+            publisher.send(event, timeout=0.1)
+
+    # def register_callback(self, callback: t.Callable[[EventBase], None]) -> None: ...
+
+    def listen(self) -> None:
+        """Function to handle incoming events"""
+        print("starting listener...")
+
+        while True:
+            print("awaiting new message")
+            incoming_messages = self.receive()
+            for message in incoming_messages:
+                if self._event_handler:
+                    self._event_handler(message)

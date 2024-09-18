@@ -50,7 +50,7 @@ class DragonFLIChannel(cch.CommChannelBase):
 
     def __init__(
         self,
-        fli_desc: bytes,
+        fli_: fli.FLInterface,
         sender_supplied: bool = True,
         buffer_size: int = 0,
     ) -> None:
@@ -60,9 +60,11 @@ class DragonFLIChannel(cch.CommChannelBase):
         :param sender_supplied: Flag indicating if the FLI uses sender-supplied streams
         :param buffer_size: Maximum number of sent messages that can be buffered
         """
-        super().__init__(fli_desc)
-        self._fli: "fli" = fli.FLInterface.attach(fli_desc)
-        self._channel: t.Optional["dch"] = (
+        descriptor = base64.b64encode(fli_.serialize()).decode("utf-8")
+        super().__init__(descriptor)
+
+        self._fli = fli_
+        self._channel: t.Optional["dch.Channel"] = (
             create_local(buffer_size) if sender_supplied else None
         )
 
@@ -108,6 +110,33 @@ class DragonFLIChannel(cch.CommChannelBase):
         return messages
 
     @classmethod
+    def _string_descriptor_to_fli(cls, descriptor: str) -> "fli.FLInterface":
+        """Helper method to convert a string-safe, encoded descriptor back
+        into its original byte format"""
+        descriptor_ = base64.b64decode(descriptor.encode("utf-8"))
+        return fli.FLInterface.attach(descriptor_)
+
+    @classmethod
+    def from_sender_supplied_descriptor(
+        cls,
+        descriptor: str,
+    ) -> "DragonFLIChannel":
+        """A factory method that creates an instance from a descriptor string
+
+        :param descriptor: the descriptor of the main FLI channel to attach
+        :returns: An attached DragonFLIChannel"""
+        try:
+            return DragonFLIChannel(
+                fli_=cls._string_descriptor_to_fli(descriptor),
+                sender_supplied=True,
+            )
+        except:
+            logger.error(
+                f"Error while creating sender supplied DragonFLIChannel: {descriptor}"
+            )
+            raise
+
+    @classmethod
     def from_descriptor(
         cls,
         descriptor: str,
@@ -118,10 +147,13 @@ class DragonFLIChannel(cch.CommChannelBase):
         :returns: An attached DragonFLIChannel
         :raises SmartSimError: If creation of DragonFLIChanenel fails
         """
+        if not descriptor:
+            raise ValueError("Invalid descriptor provided")
+
         try:
             return DragonFLIChannel(
-                fli_desc=base64.b64decode(descriptor),
-                sender_supplied=True,
+                fli_=cls._string_descriptor_to_fli(descriptor),
+                sender_supplied=False,
             )
         except Exception as e:
             raise SmartSimError(

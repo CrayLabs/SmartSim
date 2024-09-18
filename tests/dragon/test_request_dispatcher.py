@@ -53,6 +53,7 @@ import dragon.channels as dch
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
+import torch.nn as nn
 from dragon import fli
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
@@ -86,6 +87,35 @@ logger = get_logger(__name__)
 pytestmark = pytest.mark.dragon
 
 
+class MiniModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self._name = "mini-model"
+        self._net = torch.nn.Linear(2, 1)
+
+    def forward(self, input):
+        return self._net(input)
+
+    @property
+    def bytes(self) -> bytes:
+        """Returns the model serialized to a byte stream"""
+        buffer = io.BytesIO()
+        scripted = torch.jit.trace(self._net, self.get_batch())
+        torch.jit.save(scripted, buffer)
+        return buffer.getvalue()
+
+    @classmethod
+    def get_batch(cls) -> "torch.Tensor":
+        return torch.randn((100, 2), dtype=torch.float32)
+
+
+def load_model() -> bytes:
+    """Create a simple torch model in memory for testing"""
+    mini_model = MiniModel()
+    return mini_model.bytes
+
+
 def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
     """Create a simple torch model and persist to disk for
     testing purposes.
@@ -106,29 +136,17 @@ def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
 def mock_messages(
     request_dispatcher_queue: DragonFLIChannel,
     feature_store: FeatureStore,
-    feature_store_root_dir: pathlib.Path,
-    comm_channel_root_dir: pathlib.Path,
 ) -> None:
     """Mock event producer for triggering the inference pipeline"""
-    feature_store_root_dir.mkdir(parents=True, exist_ok=True)
-    comm_channel_root_dir.mkdir(parents=True, exist_ok=True)
-
-    model_path = persist_model_file(feature_store_root_dir.parent / "model_original.pt")
-    model_bytes = model_path.read_bytes()
-    model_key = str(feature_store_root_dir / "model_fs.pt")
-
-    feature_store[model_key] = model_bytes
+    model_key = "mini-model"
 
     for iteration_number in range(2):
 
         channel = Channel.make_process_local()
         callback_channel = DragonCommChannel(channel)
+        output_key = f"output-{iteration_number}"
 
-        input_path = feature_store_root_dir / f"{iteration_number}/input.pt"
-        output_path = feature_store_root_dir / f"{iteration_number}/output.pt"
-
-        input_key = str(input_path)
-        output_key = str(output_path)
+        feature_store[model_key] = load_model()
 
         tensor = (
             (iteration_number + 1) * torch.ones((1, 2), dtype=torch.float32)
@@ -139,12 +157,13 @@ def mock_messages(
             "c", "float32", list(tensor.shape)
         )
 
-        message_tensor_output_key = MessageHandler.build_tensor_key(output_key, fsd)
-        message_tensor_input_key = MessageHandler.build_tensor_key(input_key, fsd)
-        message_model_key = MessageHandler.build_model_key(model_key, fsd)
+        message_tensor_output_key = MessageHandler.build_feature_store_key(
+            output_key, fsd
+        )
+        message_model_key = MessageHandler.build_feature_store_key(model_key, fsd)
 
         request = MessageHandler.build_request(
-            reply_channel=base64.b64encode(channel.serialize()).decode("utf-8"),
+            reply_channel=callback_channel.descriptor,
             model=message_model_key,
             inputs=[tensor_desc],
             outputs=[message_tensor_output_key],
@@ -190,25 +209,20 @@ def service_as_dragon_proc(
     )
 
 
-def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
+def test_request_dispatcher() -> None:
     """Test the request dispatcher batching and queueing system
 
     This also includes setting a queue to disposable, checking that it is no
     longer referenced by the dispatcher.
     """
 
-    test_path = prepare_environment
-    fs_path = test_path / "feature_store"
-    comm_path = test_path / "comm_store"
-
     to_worker_channel = dch.Channel.make_process_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
-    to_worker_fli_serialized = to_worker_fli.serialize()
+    to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli, sender_supplied=True)
 
     # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
-    descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
-    os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
+    os.environ["_SMARTSIM_REQUEST_QUEUE"] = to_worker_fli_comm_ch.descriptor
 
     ddict = DDict(1, 2, 4 * 1024**2)
     dragon_fs = DragonFeatureStore(ddict)
@@ -216,15 +230,14 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_descriptor,
+        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
     )
-    integrated_worker_type = TorchWorker
 
     request_dispatcher = RequestDispatcher(
         batch_timeout=0,
         batch_size=2,
         config_loader=config_loader,
-        worker_type=integrated_worker_type,
+        worker_type=TorchWorker,
         mem_pool_size=2 * 1024**2,
     )
 
@@ -241,9 +254,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
         batch: t.Optional[RequestBatch] = None
         mem_allocs = []
         tensors = []
-        fs_path = test_path / f"feature_store"
-        comm_path = test_path / f"comm_store"
-        model_key = str(fs_path / "model_fs.pt")
+        model_key = "mini-model"
 
         # create a mock client application to populate the request queue
         msg_pump = mp.Process(
@@ -251,8 +262,6 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
             args=(
                 worker_queue,
                 dragon_fs,
-                fs_path,
-                comm_path,
             ),
         )
 
@@ -260,7 +269,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
 
         time.sleep(1)
 
-        for attempts in range(15):
+        for _ in range(15):
             try:
                 request_dispatcher._on_iteration()
                 batch = request_dispatcher.task_queue.get(timeout=1)
