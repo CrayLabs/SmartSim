@@ -65,6 +65,7 @@ class WorkerDevice:
         """Remove the reference to a model loaded on this device.
 
         :param key: The key of the model to remove
+        :raises KeyError: If key does not exist for removal
         """
         try:
             self._models.pop(key)
@@ -77,6 +78,7 @@ class WorkerDevice:
 
         :param key: The model key
         :returns: The model for the given key
+        :raises KeyError: If key does not exist
         """
         try:
             return self._models[key]
