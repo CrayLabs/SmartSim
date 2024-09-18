@@ -27,7 +27,7 @@
 from enum import Enum
 
 
-class SchedulerType(Enum):
+class BatchSchedulerType(Enum):
     """Schedulers supported by SmartSim."""
 
     Slurm = "slurm"

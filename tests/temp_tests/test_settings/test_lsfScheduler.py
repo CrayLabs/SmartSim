@@ -26,15 +26,15 @@
 import pytest
 
 from smartsim.settings import BatchSettings
-from smartsim.settings.batchCommand import SchedulerType
+from smartsim.settings.batchCommand import BatchSchedulerType
 
 pytestmark = pytest.mark.group_a
 
 
 def test_scheduler_str():
     """Ensure scheduler_str returns appropriate value"""
-    bs = BatchSettings(scheduler=SchedulerType.Lsf)
-    assert bs.schedule_args.scheduler_str() == SchedulerType.Lsf.value
+    bs = BatchSettings(batch_scheduler=BatchSchedulerType.Lsf)
+    assert bs.batch_args.scheduler_str() == BatchSchedulerType.Lsf.value
 
 
 @pytest.mark.parametrize(
@@ -60,16 +60,16 @@ def test_scheduler_str():
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    lsfScheduler = BatchSettings(scheduler=SchedulerType.Lsf)
-    getattr(lsfScheduler.schedule_args, function)(*value)
-    assert lsfScheduler.schedule_args._schedule_args[flag] == result
+    lsfScheduler = BatchSettings(batch_scheduler=BatchSchedulerType.Lsf)
+    getattr(lsfScheduler.batch_args, function)(*value)
+    assert lsfScheduler.batch_args._batch_args[flag] == result
 
 
 def test_create_bsub():
     batch_args = {"core_isolation": None}
-    lsfScheduler = BatchSettings(scheduler=SchedulerType.Lsf, schedule_args=batch_args)
-    lsfScheduler.schedule_args.set_nodes(1)
-    lsfScheduler.schedule_args.set_walltime("10:10:10")
-    lsfScheduler.schedule_args.set_queue("default")
+    lsfScheduler = BatchSettings(batch_scheduler=BatchSchedulerType.Lsf, batch_args=batch_args)
+    lsfScheduler.batch_args.set_nodes(1)
+    lsfScheduler.batch_args.set_walltime("10:10:10")
+    lsfScheduler.batch_args.set_queue("default")
     args = lsfScheduler.format_batch_args()
     assert args == ["-core_isolation", "-nnodes", "1", "-W", "10:10", "-q", "default"]

@@ -30,7 +30,7 @@ import typing as t
 
 from smartsim.log import get_logger
 
-from ...batchCommand import SchedulerType
+from ...batchCommand import BatchSchedulerType
 from ...common import StringArgument
 from ..batchArguments import BatchArguments
 
@@ -47,7 +47,7 @@ class BsubBatchArguments(BatchArguments):
 
         :returns: The string representation of the scheduler
         """
-        return SchedulerType.Lsf.value
+        return BatchSchedulerType.Lsf.value
 
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime
@@ -141,7 +141,7 @@ class BsubBatchArguments(BatchArguments):
         """
         opts = []
 
-        for opt, value in self._schedule_args.items():
+        for opt, value in self._batch_args.items():
 
             prefix = "-"  # LSF only uses single dashses
 
@@ -160,4 +160,4 @@ class BsubBatchArguments(BatchArguments):
             argument (if applicable), otherwise `None`
         """
         # Store custom arguments in the launcher_args
-        self._schedule_args[key] = value
+        self._batch_args[key] = value

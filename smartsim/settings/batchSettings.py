@@ -37,7 +37,7 @@ from .arguments.batch.lsf import BsubBatchArguments
 from .arguments.batch.pbs import QsubBatchArguments
 from .arguments.batch.slurm import SlurmBatchArguments
 from .baseSettings import BaseSettings
-from .batchCommand import SchedulerType
+from .batchCommand import BatchSchedulerType
 from .common import StringArgument
 
 logger = get_logger(__name__)
@@ -64,8 +64,8 @@ class BatchSettings(BaseSettings):
 
     def __init__(
         self,
-        scheduler: t.Union[SchedulerType, str],
-        schedule_args: StringArgument | None = None,
+        batch_scheduler: t.Union[BatchSchedulerType, str],
+        batch_args: StringArgument | None = None,
         env_vars: StringArgument | None = None,
     ) -> None:
         """Initialize a BatchSettings instance.
@@ -103,8 +103,8 @@ class BatchSettings(BaseSettings):
         If the key already exists in the existing batch arguments, the value will
         be overwritten.
 
-        :param scheduler: The type of scheduler to initialize (e.g., Slurm, PBS, LSF)
-        :param schedule_args: A dictionary of arguments for the scheduler, where the keys
+        :param batch_scheduler: The type of scheduler to initialize (e.g., Slurm, PBS, LSF)
+        :param batch_args: A dictionary of arguments for the scheduler, where the keys
             are strings and the values can be either strings or None. This argument is optional
             and defaults to None.
         :param env_vars: Environment variables for the batch settings, where the keys
@@ -113,22 +113,22 @@ class BatchSettings(BaseSettings):
         :raises ValueError: Raises if the scheduler provided does not exist.
         """
         try:
-            self._scheduler = SchedulerType(scheduler)
+            self._batch_scheduler = BatchSchedulerType(batch_scheduler)
             """The scheduler type"""
         except ValueError:
-            raise ValueError(f"Invalid scheduler type: {scheduler}") from None
-        self._arguments = self._get_arguments(schedule_args)
+            raise ValueError(f"Invalid scheduler type: {batch_scheduler}") from None
+        self._arguments = self._get_arguments(batch_args)
         """The BatchSettings child class based on scheduler type"""
         self.env_vars = env_vars or {}
         """The environment configuration"""
 
     @property
-    def scheduler(self) -> str:
+    def batch_scheduler(self) -> str:
         """Return the scheduler type."""
-        return self._scheduler.value
+        return self._batch_scheduler.value
 
     @property
-    def schedule_args(self) -> BatchArguments:
+    def batch_args(self) -> BatchArguments:
         """Return the BatchArguments child class."""
         return self._arguments
 
@@ -142,7 +142,7 @@ class BatchSettings(BaseSettings):
         """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arguments(self, schedule_args: StringArgument | None) -> BatchArguments:
+    def _get_arguments(self, batch_args: StringArgument | None) -> BatchArguments:
         """Map the Scheduler to the BatchArguments. This method should only be
         called once during construction.
 
@@ -151,14 +151,14 @@ class BatchSettings(BaseSettings):
         :returns: The appropriate type for the settings instance.
         :raises ValueError: An invalid scheduler type was provided.
         """
-        if self._scheduler == SchedulerType.Slurm:
-            return SlurmBatchArguments(schedule_args)
-        elif self._scheduler == SchedulerType.Lsf:
-            return BsubBatchArguments(schedule_args)
-        elif self._scheduler == SchedulerType.Pbs:
-            return QsubBatchArguments(schedule_args)
+        if self._batch_scheduler == BatchSchedulerType.Slurm:
+            return SlurmBatchArguments(batch_args)
+        elif self._batch_scheduler == BatchSchedulerType.Lsf:
+            return BsubBatchArguments(batch_args)
+        elif self._batch_scheduler == BatchSchedulerType.Pbs:
+            return QsubBatchArguments(batch_args)
         else:
-            raise ValueError(f"Invalid scheduler type: {self._scheduler}")
+            raise ValueError(f"Invalid scheduler type: {self._batch_scheduler}")
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments to preview
@@ -168,7 +168,7 @@ class BatchSettings(BaseSettings):
         return self._arguments.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nScheduler: {self.scheduler}{self.schedule_args}"
+        string = f"\nBatch Scheduler: {self.batch_scheduler}{self.schedule_args}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

@@ -31,7 +31,7 @@ import typing as t
 
 from smartsim.log import get_logger
 
-from ...batchCommand import SchedulerType
+from ...batchCommand import BatchSchedulerType
 from ...common import StringArgument
 from ..batchArguments import BatchArguments
 
@@ -48,7 +48,7 @@ class SlurmBatchArguments(BatchArguments):
 
         :returns: The string representation of the scheduler
         """
-        return SchedulerType.Slurm.value
+        return BatchSchedulerType.Slurm.value
 
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
@@ -131,7 +131,7 @@ class SlurmBatchArguments(BatchArguments):
         """
         opts = []
         # TODO add restricted here
-        for opt, value in self._schedule_args.items():
+        for opt, value in self._batch_args.items():
             # attach "-" prefix if argument is 1 character otherwise "--"
             short_arg = len(opt) == 1
             prefix = "-" if short_arg else "--"
@@ -153,4 +153,4 @@ class SlurmBatchArguments(BatchArguments):
             argument (if applicable), otherwise `None`
         """
         # Store custom arguments in the launcher_args
-        self._schedule_args[key] = value
+        self._batch_args[key] = value

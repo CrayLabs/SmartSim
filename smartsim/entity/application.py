@@ -46,6 +46,8 @@ logger = get_logger(__name__)
 
 
 class Application(SmartSimEntity):
+    """The Application class 
+    """
     def __init__(
         self,
         name: str,

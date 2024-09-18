@@ -27,15 +27,15 @@ import pytest
 
 from smartsim.settings import BatchSettings
 from smartsim.settings.arguments.batch.slurm import SlurmBatchArguments
-from smartsim.settings.batchCommand import SchedulerType
+from smartsim.settings.batchCommand import BatchSchedulerType
 
 pytestmark = pytest.mark.group_a
 
 
-def test_scheduler_str():
+def test_batch_scheduler_str():
     """Ensure scheduler_str returns appropriate value"""
-    bs = BatchSettings(scheduler=SchedulerType.Slurm)
-    assert bs.schedule_args.scheduler_str() == SchedulerType.Slurm.value
+    bs = BatchSettings(batch_scheduler=BatchSchedulerType.Slurm)
+    assert bs.batch_args.scheduler_str() == BatchSchedulerType.Slurm.value
 
 
 @pytest.mark.parametrize(
@@ -74,15 +74,15 @@ def test_scheduler_str():
     ],
 )
 def test_sbatch_class_methods(function, value, flag, result):
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.Slurm)
-    getattr(slurmScheduler.schedule_args, function)(*value)
-    assert slurmScheduler.schedule_args._schedule_args[flag] == result
+    slurmScheduler = BatchSettings(batch_scheduler=BatchSchedulerType.Slurm)
+    getattr(slurmScheduler.batch_args, function)(*value)
+    assert slurmScheduler.batch_args._batch_args[flag] == result
 
 
 def test_create_sbatch():
     batch_args = {"exclusive": None, "oversubscribe": None}
     slurmScheduler = BatchSettings(
-        scheduler=SchedulerType.Slurm, schedule_args=batch_args
+        batch_scheduler=BatchSchedulerType.Slurm, batch_args=batch_args
     )
     assert isinstance(slurmScheduler._arguments, SlurmBatchArguments)
     args = slurmScheduler.format_batch_args()
@@ -94,32 +94,32 @@ def test_launch_args_input_mutation():
     key0, key1, key2 = "arg0", "arg1", "arg2"
     val0, val1, val2 = "val0", "val1", "val2"
 
-    default_schedule_args = {
+    default_batch_args = {
         key0: val0,
         key1: val1,
         key2: val2,
     }
     slurmScheduler = BatchSettings(
-        scheduler=SchedulerType.Slurm, schedule_args=default_schedule_args
+        batch_scheduler=BatchSchedulerType.Slurm, batch_args=default_batch_args
     )
 
     # Confirm initial values are set
-    assert slurmScheduler.schedule_args._schedule_args[key0] == val0
-    assert slurmScheduler.schedule_args._schedule_args[key1] == val1
-    assert slurmScheduler.schedule_args._schedule_args[key2] == val2
+    assert slurmScheduler.batch_args._batch_args[key0] == val0
+    assert slurmScheduler.batch_args._batch_args[key1] == val1
+    assert slurmScheduler.batch_args._batch_args[key2] == val2
 
     # Update our common run arguments
     val2_upd = f"not-{val2}"
-    default_schedule_args[key2] = val2_upd
+    default_batch_args[key2] = val2_upd
 
     # Confirm previously created run settings are not changed
-    assert slurmScheduler.schedule_args._schedule_args[key2] == val2
+    assert slurmScheduler.batch_args._batch_args[key2] == val2
 
 
 def test_sbatch_settings():
-    schedule_args = {"nodes": 1, "time": "10:00:00", "account": "A3123"}
+    batch_args = {"nodes": 1, "time": "10:00:00", "account": "A3123"}
     slurmScheduler = BatchSettings(
-        scheduler=SchedulerType.Slurm, schedule_args=schedule_args
+        batch_scheduler=BatchSchedulerType.Slurm, batch_args=batch_args
     )
     formatted = slurmScheduler.format_batch_args()
     result = ["--nodes=1", "--time=10:00:00", "--account=A3123"]
@@ -127,10 +127,10 @@ def test_sbatch_settings():
 
 
 def test_sbatch_manual():
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.Slurm)
-    slurmScheduler.schedule_args.set_nodes(5)
-    slurmScheduler.schedule_args.set_account("A3531")
-    slurmScheduler.schedule_args.set_walltime("10:00:00")
+    slurmScheduler = BatchSettings(batch_scheduler=BatchSchedulerType.Slurm)
+    slurmScheduler.batch_args.set_nodes(5)
+    slurmScheduler.batch_args.set_account("A3531")
+    slurmScheduler.batch_args.set_walltime("10:00:00")
     formatted = slurmScheduler.format_batch_args()
     result = ["--nodes=5", "--account=A3531", "--time=10:00:00"]
     assert formatted == result

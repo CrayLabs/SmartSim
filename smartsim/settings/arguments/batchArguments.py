@@ -44,8 +44,8 @@ class BatchArguments(ABC):
     the input parameter to a properly formatted launcher argument.
     """
 
-    def __init__(self, schedule_args: t.Dict[str, str | None] | None) -> None:
-        self._schedule_args = copy.deepcopy(schedule_args) or {}
+    def __init__(self, batch_args: t.Dict[str, str | None] | None) -> None:
+        self._batch_args = copy.deepcopy(batch_args) or {}
         """A dictionary of batch arguments"""
 
     @abstractmethod
