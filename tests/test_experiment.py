@@ -34,14 +34,16 @@ import re
 import time
 import typing as t
 import uuid
+from os import path as osp
 
 import pytest
 
 from smartsim._core import dispatch
-from smartsim._core.control.interval import SynchronousTimeInterval
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
 from smartsim.entity import entity
+from smartsim.entity.application import Application
+from smartsim.entity.ensemble import Ensemble
 from smartsim.error import errors
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
@@ -50,6 +52,17 @@ from smartsim.settings.arguments import launchArguments
 from smartsim.status import InvalidJobStatus, JobStatus
 
 pytestmark = pytest.mark.group_a
+
+_ID_GENERATOR = (str(i) for i in itertools.count())
+
+
+@pytest.fixture
+def get_gen_symlink_dir(fileutils):
+    yield fileutils.get_test_conf_path(osp.join("generator_files", "to_symlink_dir"))
+
+
+def random_id():
+    return next(_ID_GENERATOR)
 
 
 @pytest.fixture
@@ -611,3 +624,143 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
     assert stat == InvalidJobStatus.NEVER_STARTED
     after_cancel = exp.get_status(*all_known_ids)
     assert before_cancel == after_cancel
+
+
+def test_start_sequence_5(
+    test_dir,
+    wlmutils,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "smartsim._core.dispatch._LauncherAdapter.start",
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
+    )
+    """Test the unpacking of a tuple of tuples 
+            exp.start(job1, (job2, job3))
+    """
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+
+    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
+    job_list = ensemble.as_jobs(launch_settings)
+
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+
+    exp.start(job_list)
+
+
+def test_start_with_two_element_tuple(
+    test_dir,
+    wlmutils,
+    monkeypatch,
+):
+    """Test unpacking a tuple of two jobs"""
+
+    monkeypatch.setattr(
+        "smartsim._core.dispatch._LauncherAdapter.start",
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
+    )
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+
+    application = Application(
+        "test_name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+
+    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
+    job_list = ensemble.as_jobs(launch_settings)
+
+    job2 = job.Job(application, launch_settings)
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+
+    exp.start((job2, job_list))
+
+
+def test_start_with_nested_tuple(
+    test_dir,
+    wlmutils,
+    monkeypatch,
+):
+    """Test unpacking a nested tuple"""
+    monkeypatch.setattr(
+        "smartsim._core.dispatch._LauncherAdapter.start",
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
+    )
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+
+    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
+    job_list = ensemble.as_jobs(launch_settings)
+
+    application = Application(
+        "test_name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+
+    job2 = job.Job(application, launch_settings)
+
+    application_2 = Application(
+        "test_name_2",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    job_3 = job.Job(application_2, launch_settings)
+
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+
+    exp.start((job2, (job_list, job_3)))
+
+
+def test_start_with_one_element_tuple(
+    test_dir,
+    wlmutils,
+    monkeypatch,
+):
+    """Test unpacking a tuple of one job"""
+    monkeypatch.setattr(
+        "smartsim._core.dispatch._LauncherAdapter.start",
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
+    )
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+
+    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
+    job_list = ensemble.as_jobs(launch_settings)
+
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+
+    exp.start((job_list))
+
+
+def test_start_list_of_jobs(
+    test_dir,
+    wlmutils,
+    monkeypatch,
+):
+    """Test unpacking a list of tuples"""
+    monkeypatch.setattr(
+        "smartsim._core.dispatch._LauncherAdapter.start",
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
+    )
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+
+    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
+    job_list = ensemble.as_jobs(launch_settings)
+
+    application = Application(
+        "test_name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+
+    job2 = job.Job(application, launch_settings)
+
+    application_2 = Application(
+        "test_name_2",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    job_3 = job.Job(application_2, launch_settings)
+
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+
+    exp.start([job2, (job_list, job_3)])
