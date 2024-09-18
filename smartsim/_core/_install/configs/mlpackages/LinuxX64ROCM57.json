@@ -2,7 +2,7 @@
     "platform": {
         "operating_system":"linux",
         "architecture":"x86_64",
-        "device":"rocm-5.7"
+        "device":"rocm-5"
     },
     "ml_packages": [
         {
@@ -30,15 +30,6 @@
                     "replacement": "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)"
                 }
             ]
-        },
-        {
-            "name": "libtensorflow",
-            "version": "2.13",
-            "pip_index": "",
-            "python_packages": [
-                "tensorflow-rocm==2.13.0.570"
-            ],
-            "lib_source": "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.2/libtensorflow-2.16-linux-x64-rocm-5.7.0.tgz"
         },
         {
             "name": "onnxruntime",

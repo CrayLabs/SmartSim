@@ -2,7 +2,7 @@
     "platform": {
         "operating_system":"linux",
         "architecture":"x86_64",
-        "device":"cuda-12"
+        "device":"cuda-11"
     },
     "ml_packages": [
         {
@@ -14,14 +14,14 @@
         },
         {
             "name": "libtorch",
-            "version": "2.4.0",
-            "pip_index": "https://download.pytorch.org/whl/cu121",
+            "version": "2.3.1",
+            "pip_index": "https://download.pytorch.org/whl/cu118",
             "python_packages": [
-                "torch==2.3.1+cu121",
-                "torchvision==0.18.1+cu121",
-                "torchaudio==2.3.1+cu121"
+                "torch==2.3.1+cu118",
+                "torchvision==0.18.1+cu118",
+                "torchaudio==2.3.1+cu118"
             ],
-            "lib_source": "https://download.pytorch.org/libtorch/cu121/libtorch-cxx11-abi-shared-with-deps-2.3.1%2Bcu121.zip",
+            "lib_source": "https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.3.1%2Bcu118.zip",
             "rai_patches": [
                 {
                     "description": "Patch RedisAI module to require C++17 standard instead of C++14",
@@ -33,20 +33,12 @@
         },
         {
             "name": "libtensorflow",
-            "version": "2.17",
+            "version": "2.14.1",
             "pip_index": "",
             "python_packages": [
-                "tensorflow==2.17"
+                "tensorflow==2.14.1"
             ],
-            "lib_source": "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.2/libtensorflow-2.17.0-linux-x64-cuda-12.5.0.tgz",
-            "rai_patches": [
-                {
-                    "description": "Patch RedisAI to point to correct tsl directory",
-                    "source_file": "CMakeLists.txt",
-                    "regex": "INCLUDE_DIRECTORIES\\(\\$\\{depsAbs\\}/libtensorflow/include\\)",
-                    "replacement": "INCLUDE_DIRECTORIES(${depsAbs}/libtensorflow/include ${depsAbs}/libtensorflow/include/external/local_tsl)"
-                }
-            ]
+            "lib_source": "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.2/libtensorflow-2.14.1-linux-x64-cuda-11.8.0.tgz"
         },
         {
             "name": "onnxruntime",
@@ -58,7 +50,7 @@
                 "scikit-learn",
                 "onnxmltools"
             ],
-            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-linux-x64-gpu-cuda12-1.17.3.tgz"
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-linux-x64-gpu-1.17.3.tgz"
         }
     ]
 }

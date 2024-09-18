@@ -80,6 +80,7 @@ class Device(enum.Enum):
     CPU = "cpu"
     CUDA11 = "cuda-11"
     CUDA12 = "cuda-12"
+    ROCM5 = "rocm-5"
     ROCM6 = "rocm-6"
 
     @classmethod
