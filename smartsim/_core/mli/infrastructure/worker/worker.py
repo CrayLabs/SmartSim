@@ -146,14 +146,6 @@ class InferenceRequest:
         """
         return self.input_meta is not None and bool(self.input_meta)
 
-    @property
-    def has_callback(self) -> bool:
-        """Check if the InferenceRequest contains a callback.
-
-        :returns: True if callback is not None, False otherwise
-        """
-        return self.callback is not None
-
 
 class InferenceReply:
     """Internal representation of the reply to a client request for inference."""
@@ -340,30 +332,6 @@ class RequestBatch:
         return len(self.requests) > 0
 
     @property
-    def has_inputs(self) -> bool:
-        """Returns whether the batch has inputs.
-
-        :returns: True if the batch has inputs
-        """
-        return self.inputs is not None and bool(self.inputs)
-
-    @property
-    def has_raw_model(self) -> bool:
-        """Returns whether the batch has a raw model.
-
-        :returns: True if the batch has a raw model
-        """
-        return self.raw_model is not None
-
-    @property
-    def has_raw_model_data(self) -> bool:
-        """Returns whether the batch has raw model data.
-
-        :returns: True if the batch has raw model data
-        """
-        return self.has_raw_model and self.raw_model.data is not None
-
-    @property
     def raw_model(self) -> t.Optional[t.Any]:
         """Returns the raw model to use to execute for this batch
         if it is available.
@@ -497,7 +465,7 @@ class MachineLearningWorkerCore:
         model is not provided"""
 
         # All requests in the same batch share the model
-        if batch.has_raw_model:
+        if batch.raw_model:
             return FetchModelResult(batch.raw_model.data)
 
         if not feature_stores:

@@ -270,7 +270,7 @@ class RequestDispatcher(Service):
         """
         # collect all feature stores required by the request
         fs_model: t.Set[str] = set()
-        if request.has_model_key:
+        if request.model_key:
             fs_model = {request.model_key.descriptor}
         fs_inputs = {key.descriptor for key in request.input_keys}
         fs_outputs = {key.descriptor for key in request.output_keys}
@@ -326,7 +326,7 @@ class RequestDispatcher(Service):
         :param request: The request to validate
         :returns: False if callback validation fails for the request, True otherwise
         """
-        if request.has_callback:
+        if request.callback:
             return True
 
         logger.error("No callback channel provided in request")
@@ -467,7 +467,7 @@ class RequestDispatcher(Service):
             tmp_queue.make_disposable()
             return
 
-        if request.has_model_key:
+        if request.model_key:
             success = False
             while not success:
                 try:

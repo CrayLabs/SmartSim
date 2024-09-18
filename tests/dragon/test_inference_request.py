@@ -111,16 +111,3 @@ def test_has_input_meta(monkeypatch, inference_request, input_meta, expected):
     """Test the has_input_meta property with different values for input_meta."""
     monkeypatch.setattr(inference_request, "input_meta", input_meta)
     assert inference_request.has_input_meta == expected
-
-
-@pytest.mark.parametrize(
-    "callback, expected",
-    [
-        (handler.build_model(b"bytes", "Model Name", "V1"), True),
-        (None, False),
-    ],
-)
-def test_has_callback(monkeypatch, inference_request, callback, expected):
-    """Test the has_callback property with different values for callback."""
-    monkeypatch.setattr(inference_request, "callback", callback)
-    assert inference_request.has_callback == expected

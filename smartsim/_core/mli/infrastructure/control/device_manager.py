@@ -145,7 +145,7 @@ class DeviceManager:
         data needed by the request may be stored
         :returns: A generator yielding the device
         """
-        model_in_request = batch.has_raw_model
+        model_in_request = batch.raw_model
 
         # Load model if not already loaded, or
         # because it is sent with the request

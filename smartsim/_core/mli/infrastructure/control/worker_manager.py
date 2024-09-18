@@ -117,14 +117,6 @@ class WorkerManager(Service):
         """
         return self._featurestore_factory is not None
 
-    @property
-    def has_device_manager(self) -> bool:
-        """Check if the WorkerManager has a DeviceManager.
-
-        :returns: True if there is a DeviceManager, False otherwise
-        """
-        return self._device_manager is not None
-
     def _on_start(self) -> None:
         """Called on initial entry into Service `execute` event loop before
         `_on_iteration` is invoked."""
@@ -195,7 +187,7 @@ class WorkerManager(Service):
             )
             return
 
-        if not self.has_device_manager:
+        if not self._device_manager:
             for request in batch.requests:
                 msg = "No Device Manager found. WorkerManager._on_start() "
                 "must be called after initialization. If possible, "
@@ -241,7 +233,7 @@ class WorkerManager(Service):
                 return
             self._perf_timer.measure_time("load_model")
 
-            if not batch.has_inputs:
+            if not batch.inputs:
                 for request in batch.requests:
                     exception_handler(
                         ValueError("Error batching inputs"),
@@ -310,7 +302,7 @@ class WorkerManager(Service):
 
                 self._perf_timer.measure_time("serialize_resp")
 
-                if request.has_callback:
+                if request.callback:
                     request.callback.send(serialized_resp)
                     if reply.has_outputs:
                         # send tensor data after response
