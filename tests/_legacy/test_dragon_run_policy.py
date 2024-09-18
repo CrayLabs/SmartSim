@@ -36,7 +36,7 @@ try:
     from dragon.infrastructure.policy import Policy
 
     import smartsim._core.entrypoints.dragon as drg
-    from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
+    from smartsim._core.launcher.dragon.dragon_backend import DragonBackend
 
     dragon_loaded = True
 except:

@@ -39,11 +39,11 @@ import zmq
 import smartsim._core.config
 from smartsim._core._cli.scripts.dragon_install import create_dotenv
 from smartsim._core.config.config import get_config
-from smartsim._core.launcher.dragon.dragonLauncher import (
+from smartsim._core.launcher.dragon.dragon_launcher import (
     DragonConnector,
     DragonLauncher,
 )
-from smartsim._core.launcher.dragon.dragonSockets import (
+from smartsim._core.launcher.dragon.dragon_sockets import (
     get_authenticator,
     get_secure_socket,
 )

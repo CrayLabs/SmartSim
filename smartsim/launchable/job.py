@@ -30,7 +30,7 @@ import os
 import typing as t
 from copy import deepcopy
 
-from smartsim._core.commands.launchCommands import LaunchCommands
+from smartsim._core.commands.launch_commands import LaunchCommands
 from smartsim._core.utils.helpers import check_name
 from smartsim.launchable.basejob import BaseJob
 from smartsim.log import get_logger

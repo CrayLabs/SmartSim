@@ -34,7 +34,7 @@ from smartsim._core.schemas.dragonRequests import DragonRunPolicy
 from smartsim.error import errors
 from smartsim.types import LaunchedJobID
 
-from ...._core.launcher.stepMapping import StepMap
+from ..stepMapping import StepMap
 from ....error import LauncherError, SmartSimError
 from ....log import get_logger
 from ....settings import (
@@ -59,7 +59,7 @@ from ..pbs.pbsLauncher import PBSLauncher
 from ..slurm.slurmLauncher import SlurmLauncher
 from ..step import DragonBatchStep, DragonStep, LocalStep, Step
 from ..stepInfo import StepInfo
-from .dragonConnector import DragonConnector, _SchemaT
+from .dragon_connector import DragonConnector, _SchemaT
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self

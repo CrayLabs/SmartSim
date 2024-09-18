@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-from smartsim._core.launcher.dragon.dragonLauncher import (
+from smartsim._core.launcher.dragon.dragon_launcher import (
     _as_run_request_args_and_policy,
 )
 from smartsim._core.schemas.dragonRequests import DragonRunPolicy, DragonRunRequestView

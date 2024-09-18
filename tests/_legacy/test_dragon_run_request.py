@@ -50,7 +50,7 @@ from smartsim._core.utils.helpers import create_short_id_str
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
 if t.TYPE_CHECKING:
-    from smartsim._core.launcher.dragon.dragonBackend import (
+    from smartsim._core.launcher.dragon.dragon_backend import (
         DragonBackend,
         ProcessGroupInfo,
     )
@@ -149,7 +149,7 @@ def get_mock_backend(
             **{"System.return_value": system_mock, "Node.return_value": node_mock}
         ),
     )
-    from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
+    from smartsim._core.launcher.dragon.dragon_backend import DragonBackend
 
     dragon_backend = DragonBackend(pid=99999)
     monkeypatch.setattr(
@@ -167,7 +167,7 @@ def set_mock_group_infos(
     process_mock.configure_mock(**{"returncode": 0})
     dragon_mock.configure_mock(**{"native.process.Process.return_value": process_mock})
     monkeypatch.setitem(sys.modules, "dragon", dragon_mock)
-    from smartsim._core.launcher.dragon.dragonBackend import ProcessGroupInfo
+    from smartsim._core.launcher.dragon.dragon_backend import ProcessGroupInfo
 
     running_group = MagicMock(status="Running")
     error_group = MagicMock(status="Error")

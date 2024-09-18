@@ -36,7 +36,7 @@ from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings.launchSettings import LaunchSettings
 
 if t.TYPE_CHECKING:
-    from smartsim._core.commands.launchCommands import LaunchCommands
+    from smartsim._core.commands.launch_commands import LaunchCommands
     from smartsim.entity.entity import SmartSimEntity
 
 

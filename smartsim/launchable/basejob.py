@@ -30,7 +30,7 @@ from abc import ABC, abstractmethod
 from smartsim.launchable.launchable import Launchable
 
 if t.TYPE_CHECKING:
-    from smartsim._core.commands.launchCommands import LaunchCommands
+    from smartsim._core.commands.launch_commands import LaunchCommands
 
 
 class BaseJob(ABC, Launchable):
