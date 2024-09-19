@@ -94,6 +94,58 @@ class InferenceRequest:
         self.batch_size = batch_size
         """The batch size to apply when batching"""
 
+    @property
+    def has_raw_model(self) -> bool:
+        """Check if the InferenceRequest contains a raw_model.
+
+        :returns: True if raw_model is not None, False otherwise
+        """
+        return self.raw_model is not None
+
+    @property
+    def has_model_key(self) -> bool:
+        """Check if the InferenceRequest contains a model_key.
+
+        :returns: True if model_key is not None, False otherwise
+        """
+        return self.model_key is not None
+
+    @property
+    def has_raw_inputs(self) -> bool:
+        """Check if the InferenceRequest contains raw_outputs.
+
+        :returns: True if raw_outputs is not None and is not an empty list,
+        False otherwise
+        """
+        return self.raw_inputs is not None and bool(self.raw_inputs)
+
+    @property
+    def has_input_keys(self) -> bool:
+        """Check if the InferenceRequest contains input_keys.
+
+        :returns: True if input_keys is not None and is not an empty list,
+        False otherwise
+        """
+        return self.input_keys is not None and bool(self.input_keys)
+
+    @property
+    def has_output_keys(self) -> bool:
+        """Check if the InferenceRequest contains output_keys.
+
+        :returns: True if output_keys is not None and is not an empty list,
+        False otherwise
+        """
+        return self.output_keys is not None and bool(self.output_keys)
+
+    @property
+    def has_input_meta(self) -> bool:
+        """Check if the InferenceRequest contains input_meta.
+
+        :returns: True if input_meta is not None and is not an empty list,
+        False otherwise
+        """
+        return self.input_meta is not None and bool(self.input_meta)
+
 
 class InferenceReply:
     """Internal representation of the reply to a client request for inference."""
@@ -120,6 +172,24 @@ class InferenceReply:
         """Status of the reply"""
         self.message = message
         """Status message that corresponds with the status enum"""
+
+    @property
+    def has_outputs(self) -> bool:
+        """Check if the InferenceReply contains outputs.
+
+        :returns: True if outputs is not None and is not an empty list,
+        False otherwise
+        """
+        return self.outputs is not None and bool(self.outputs)
+
+    @property
+    def has_output_keys(self) -> bool:
+        """Check if the InferenceReply contains output_keys.
+
+        :returns: True if output_keys is not None and is not an empty list,
+        False otherwise
+        """
+        return self.output_keys is not None and bool(self.output_keys)
 
 
 class LoadModelResult:
@@ -372,13 +442,13 @@ class MachineLearningWorkerCore:
         information needed in the reply
         """
         prepared_outputs: t.List[t.Any] = []
-        if reply.output_keys:
+        if reply.has_output_keys:
             for value in reply.output_keys:
                 if not value:
                     continue
                 msg_key = MessageHandler.build_tensor_key(value.key, value.descriptor)
                 prepared_outputs.append(msg_key)
-        elif reply.outputs:
+        elif reply.has_outputs:
             for _ in reply.outputs:
                 msg_tensor_desc = MessageHandler.build_tensor_descriptor(
                     "c",
@@ -448,7 +518,7 @@ class MachineLearningWorkerCore:
             if not feature_stores:
                 raise ValueError("No input and no feature store provided")
 
-            if request.input_keys:
+            if request.has_input_keys:
                 data: t.List[bytes] = []
 
                 for fs_key in request.input_keys:
