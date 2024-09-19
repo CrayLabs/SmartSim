@@ -147,10 +147,8 @@ module = [
   # FIXME: DO NOT MERGE THIS INTO DEVELOP BRANCH UNLESS THESE ARE PASSING OR
   #        REMOVED!!
   "smartsim._core._cli.*",
-  "smartsim._core.control.controller",
   "smartsim._core.control.manifest",
   "smartsim._core.entrypoints.dragon_client",
-  "smartsim._core.launcher.colocated",
   "smartsim._core.launcher.launcher",
   "smartsim._core.launcher.local.*",
   "smartsim._core.launcher.lsf.*",
