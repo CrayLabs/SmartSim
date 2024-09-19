@@ -28,6 +28,18 @@
                     "source_file": "src/backends/libtorch_c/CMakeLists.txt",
                     "regex": "set_property\\(TARGET\\storch_c\\sPROPERTY\\sCXX_STANDARD\\s(98|11|14)\\)",
                     "replacement": "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)"
+                },
+                {
+                    "description": "Fix Regex, Load HIP",
+                    "source_file": "../package/libtorch/share/cmake/Caffe2/public/LoadHIP.cmake",
+                    "regex": ".*string.*",
+                    "replacement": ""
+                },
+                {
+                    "description": "Replace `/opt/rocm` with `$ENV{ROCM_PATH}`",
+                    "source_file": "../package/libtorch/share/cmake/Caffe2/Caffe2Targets.cmake",
+                    "regex": "/opt/rocm",
+                    "replacement": "$ENV{ROCM_PATH}"
                 }
             ]
         },
