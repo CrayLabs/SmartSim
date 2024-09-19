@@ -254,7 +254,7 @@ class Ensemble(entity.CompoundEntity):
             for i, permutation in enumerate(permutations_)
         )
 
-    def as_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
+    def build_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
         apps = self._create_applications()
         if not apps:
             raise ValueError("There are no members as part of this ensemble")

@@ -31,7 +31,7 @@ import pytest
 from smartsim._core.control.controller import Controller
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import FeatureStore
-from smartsim.entity.ensemble import Ensemble
+from smartsim._core.builders.ensemble import Ensemble
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
 controller = Controller()

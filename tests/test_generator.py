@@ -226,7 +226,7 @@ def test_exp_private_generate_method_ensemble(test_dir, wlmutils, generator_inst
     """Test that Job directory was created from Experiment."""
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     for i, job in enumerate(job_list):
         job_run_path, _, _ = exp._generate(generator_instance, job, i)
@@ -239,7 +239,7 @@ def test_exp_private_generate_method_ensemble(test_dir, wlmutils, generator_inst
 def test_generate_ensemble_directory(wlmutils, generator_instance):
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     for i, job in enumerate(job_list):
         # Call Generator.generate_job
         path, _, _ = generator_instance.generate_job(job, i)
@@ -263,7 +263,7 @@ def test_generate_ensemble_directory_start(test_dir, wlmutils, monkeypatch):
     )
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     exp.start(*job_list)
     run_dir = listdir(test_dir)
@@ -285,7 +285,7 @@ def test_generate_ensemble_copy(test_dir, wlmutils, monkeypatch, get_gen_copy_di
         "ensemble-name", "echo", replicas=2, files=EntityFiles(copy=get_gen_copy_dir)
     )
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     exp.start(*job_list)
     run_dir = listdir(test_dir)
@@ -310,7 +310,7 @@ def test_generate_ensemble_symlink(
         files=EntityFiles(symlink=get_gen_symlink_dir),
     )
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     exp.start(*job_list)
     run_dir = listdir(test_dir)
@@ -341,7 +341,7 @@ def test_generate_ensemble_configure(
         file_parameters=params,
     )
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     id = exp.start(*job_list)
     run_dir = listdir(test_dir)
