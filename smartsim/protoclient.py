@@ -68,6 +68,8 @@ CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
 
 
 class ProtoClient:
+    _DEFAULT_TIMEOUT = 30.0
+
     @staticmethod
     def _attach_to_backbone(wait_timeout: float = 0) -> BackboneFeatureStore:
         """Use the supplied environment variables to attach
@@ -92,7 +94,9 @@ class ProtoClient:
     def _attach_to_worker_queue(self) -> DragonFLIChannel:
         """Wait until the backbone contains the worker queue configuration,
         then attach an FLI to the given worker queue"""
-        configuration = self._backbone.wait_for([BackboneFeatureStore.MLI_WORKER_QUEUE])
+        configuration = self._backbone.wait_for(
+            [BackboneFeatureStore.MLI_WORKER_QUEUE], self._timeout
+        )
         # descriptor = configuration.get(BackboneFeatureStore.MLI_WORKER_QUEUE, None)
         # NOTE: without wait_for, this MUST be in the backbone....
         # descriptor = self._backbone.worker_queue
@@ -130,14 +134,14 @@ class ProtoClient:
 
         :param timing_on: Flag indicating if timing information should be
         written to file
-        :param wait_timeout: Maximum wait time allowed to attach to the
+        :param wait_timeout: Maximum wait time (in seconds) allowed to attach to the
         worker queue
 
         :raises: SmartSimError if unable to attach to a backbone featurestore"""
         # comm = MPI.COMM_WORLD
         # rank = comm.Get_rank()
         rank: int = 0
-        self._queue_timeout = wait_timeout
+        self._timeout = wait_timeout or self._DEFAULT_TIMEOUT
 
         connect_to_infrastructure()
         # ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]

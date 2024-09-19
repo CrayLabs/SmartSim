@@ -95,13 +95,14 @@ def get_auth_token(request: DragonInstallRequest) -> t.Optional[Token]:
 def create_dotenv(dragon_root_dir: pathlib.Path, dragon_version: str) -> None:
     """Create a .env file with required environment variables for the Dragon runtime"""
     dragon_root = str(dragon_root_dir)
-    dragon_inc_dir = str(dragon_root_dir / "include")
-    dragon_lib_dir = str(dragon_root_dir / "lib")
-    dragon_bin_dir = str(dragon_root_dir / "bin")
+    dragon_rut_dir = dragon_root
+    dragon_inc_dir = dragon_root + "/include"
+    dragon_lib_dir = dragon_root + "/lib"
+    dragon_bin_dir = dragon_root + "/bin"
 
     dragon_vars = {
         "DRAGON_BASE_DIR": dragon_root,
-        "DRAGON_ROOT_DIR": dragon_root,  # note: same as base_dir
+        "DRAGON_ROOT_DIR": dragon_rut_dir,
         "DRAGON_INCLUDE_DIR": dragon_inc_dir,
         "DRAGON_LIB_DIR": dragon_lib_dir,
         "DRAGON_VERSION": dragon_version,

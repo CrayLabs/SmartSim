@@ -40,15 +40,44 @@ from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-import dragon.channels as dch
-
 DEFAULT_CHANNEL_BUFFER_SIZE = 500
 """Maximum number of messages that can be buffered. DragonCommChannel will
 raise an exception if no clients consume messages before the buffer is filled."""
 
+LAST_OFFSET = 0
+"""The last offset used to create a local channel. This is used to avoid
+unnecessary retries when creating a local channel."""
+
+
+def _channel_to_descriptor(channel: dch.Channel) -> str:
+    """Utility method for converting a channel to a descriptor string.
+
+    :param channel: The dragon channel to convert
+    :returns: The descriptor string
+    """
+    if channel is None:
+        raise SmartSimError("Channel is not available to create a descriptor")
+
+    serialized_ch = channel.serialize()
+    return base64.b64encode(serialized_ch).decode("utf-8")
+
+
+def _pool_to_descriptor(pool: dm.MemoryPool) -> str:
+    """Utility method for converting a pool to a descriptor string.
+
+    :param pool: The memory pool to convert
+    :returns: The descriptor string"""
+    if pool is None:
+        raise SmartSimError("Memory pool is not available to create a descriptor")
+
+    serialized_pool = pool.serialize()
+    return base64.b64encode(serialized_pool).decode("utf-8")
+
 
 def create_local(capacity: int = 0) -> dch.Channel:
-    """Creates a Channel attached to the local memory pool.
+    """Creates a Channel attached to the local memory pool. Replacement for
+    direct calls to `dch.Channel.make_process_local()` to enable
+    supplying a channel capacity.
 
     :param capacity: The number of events the channel can buffer; uses the default
     buffer size `DEFAULT_CHANNEL_BUFFER_SIZE` when not supplied
@@ -56,8 +85,13 @@ def create_local(capacity: int = 0) -> dch.Channel:
     :raises SmartSimError: If unable to attach local channel
     """
     pool = dm.MemoryPool.attach(du.B64.str_to_bytes(dp.this_process.default_pd))
+    pool_descriptor = _pool_to_descriptor(pool)
     channel: t.Optional[dch.Channel] = None
     offset = 0
+
+    global LAST_OFFSET
+    if LAST_OFFSET:
+        offset = LAST_OFFSET
 
     capacity = capacity if capacity > 0 else DEFAULT_CHANNEL_BUFFER_SIZE
 
@@ -66,18 +100,18 @@ def create_local(capacity: int = 0) -> dch.Channel:
         offset += 1
         cid = df.BASE_USER_MANAGED_CUID + offset
         try:
-            channel = dch.Channel(
-                mem_pool=pool,
-                c_uid=cid,
-                capacity=capacity,
-            )
+            channel = dch.Channel(mem_pool=pool, c_uid=cid, capacity=capacity)
+            LAST_OFFSET = offset
+            descriptor = _channel_to_descriptor(channel)
             logger.debug(
-                f"Channel {cid} created in pool {pool.serialize()} w/capacity {capacity}"
+                "Local channel creatd: "
+                f"{cid=}, {pool_descriptor=}, {capacity=}, {descriptor=}"
             )
-        except Exception as e:
+        except dch.ChannelError as e:
             if offset < 100:
-                logger.warning(f"Unable to attach to channel id {cid}. Retrying...")
+                logger.warning(f"Channnel id {cid} is not open. Retrying...")
             else:
+                LAST_OFFSET = 0
                 logger.error(f"All attempts to attach local channel have failed")
                 raise SmartSimError("Failed to attach local channel") from e
 
@@ -92,8 +126,7 @@ class DragonCommChannel(cch.CommChannelBase):
 
         :param channel: A channel to use for communications
         """
-        serialized_ch = channel.serialize()
-        descriptor = base64.b64encode(serialized_ch).decode("utf-8")
+        descriptor = _channel_to_descriptor(channel)
         super().__init__(descriptor)
         self._channel = channel
 
@@ -115,7 +148,7 @@ class DragonCommChannel(cch.CommChannelBase):
         try:
             with self._channel.sendh(timeout=timeout) as sendh:
                 sendh.send_bytes(value)
-                logger.debug(f"DragonCommChannel {self.descriptor!r} sent message")
+                logger.debug(f"DragonCommChannel {self.descriptor} sent message")
         except Exception as e:
             raise SmartSimError(
                 f"Error sending message: DragonCommChannel {self.descriptor!r}"
@@ -130,8 +163,6 @@ class DragonCommChannel(cch.CommChannelBase):
         with self._channel.recvh(timeout=timeout) as recvh:
             messages: t.List[bytes] = []
 
-            # todo: consider that this could (under load) never exit. do we need
-            # to configure a maximum number to pull at once?
             try:
                 message_bytes = recvh.recv_bytes(timeout=timeout)
                 messages.append(message_bytes)
@@ -139,7 +170,7 @@ class DragonCommChannel(cch.CommChannelBase):
             except dch.ChannelEmpty:
                 # emptied the queue, ok to swallow this ex
                 logger.debug(f"DragonCommChannel exhausted: {self.descriptor}")
-            except dch.ChannelRecvTimeout as ex:
+            except dch.ChannelRecvTimeout:
                 logger.debug(f"Timeout exceeded on channel.recv: {self.descriptor}")
 
             return messages
@@ -164,7 +195,7 @@ class DragonCommChannel(cch.CommChannelBase):
     @classmethod
     def from_descriptor(
         cls,
-        descriptor: t.Union[bytes, str],
+        descriptor: str,
     ) -> "DragonCommChannel":
         """A factory method that creates an instance from a descriptor string.
 
@@ -173,6 +204,9 @@ class DragonCommChannel(cch.CommChannelBase):
         :returns: An attached DragonCommChannel
         :raises SmartSimError: If creation of comm channel fails"""
         try:
+            if isinstance(descriptor, bytes):
+                raise ValueError("Descriptor must be a string")
+
             utf8_descriptor: t.Union[str, bytes] = descriptor
             if isinstance(descriptor, str):
                 utf8_descriptor = descriptor.encode("utf-8")
@@ -183,10 +217,10 @@ class DragonCommChannel(cch.CommChannelBase):
             actual_descriptor = base64.b64decode(utf8_descriptor)
             channel = dch.Channel.attach(actual_descriptor)
             return DragonCommChannel(channel)
-        except Exception as ex:
+        except Exception as e:
             raise SmartSimError(
-                f"Failed to create dragon comm channel: {descriptor!r}"
-            ) from ex
+                f"Failed to create dragon comm channel: {descriptor}"
+            ) from e
 
     @classmethod
     def from_local(cls, _descriptor: t.Optional[str] = None) -> "DragonCommChannel":

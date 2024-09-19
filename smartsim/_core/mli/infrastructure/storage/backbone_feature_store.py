@@ -27,6 +27,7 @@
 import base64
 import enum
 import itertools
+import os
 import pickle
 import time
 import typing as t
@@ -67,9 +68,10 @@ class BackboneFeatureStore(DragonFeatureStore):
 
     MLI_NOTIFY_CONSUMERS = "_SMARTSIM_MLI_NOTIFY_CONSUMERS"
     MLI_BACKEND_CONSUMER = "_SMARTIM_MLI_BACKEND_CONSUMER"
-    MLI_WORKER_QUEUE = "to_worker_fli"
+    MLI_WORKER_QUEUE = "_SMARTSIM_REQUEST_QUEUE"
     MLI_BACKBONE = "_SMARTSIM_INFRA_BACKBONE"
     _CREATED_ON = "creation"
+    _DEFAULT_WAIT_TIMEOUT = 30.0
 
     def __init__(
         self,
@@ -86,7 +88,7 @@ class BackboneFeatureStore(DragonFeatureStore):
         self._enable_reserved_writes = allow_reserved_writes
 
         if self._CREATED_ON not in self:
-            self._record_creation_date()
+            self._record_creation_data()
 
     @property
     def wait_timeout(self) -> float:
@@ -154,7 +156,7 @@ class BackboneFeatureStore(DragonFeatureStore):
         """Return the creation date for the backbone feature store"""
         return str(self[self._CREATED_ON])
 
-    def _record_creation_date(self) -> None:
+    def _record_creation_data(self) -> None:
         """Write the creation timestamp to the feature store"""
         if self._CREATED_ON not in self:
             if not self._allow_reserved_writes:
@@ -162,6 +164,9 @@ class BackboneFeatureStore(DragonFeatureStore):
                     "Recorded creation from a write-protected backbone instance"
                 )
             self[self._CREATED_ON] = str(time.time())
+
+        if os.environ.get(BackboneFeatureStore.MLI_BACKBONE, None) is None:
+            os.environ.update(self.get_env())
 
     @classmethod
     def from_writable_descriptor(
@@ -181,9 +186,8 @@ class BackboneFeatureStore(DragonFeatureStore):
                 f"Error creating dragon feature store: {descriptor}"
             ) from ex
 
-    @staticmethod
     def _check_wait_timeout(
-        start_time: float, timeout: float, indicators: t.Dict[str, bool]
+        self, start_time: float, timeout: float, indicators: t.Dict[str, bool]
     ) -> None:
         """Perform timeout verification
 
@@ -193,11 +197,11 @@ class BackboneFeatureStore(DragonFeatureStore):
         elapsed = time.time() - start_time
         if timeout and elapsed > timeout:
             raise SmartSimError(
-                f"Timeout retrieving all keys from backbone: {indicators}"
+                f"Backbone {self.descriptor=} timeout retrieving all keys: {indicators}"
             )
 
     def wait_for(
-        self, keys: t.List[str], timeout: float = 0
+        self, keys: t.List[str], timeout: float = _DEFAULT_WAIT_TIMEOUT
     ) -> t.Dict[str, t.Union[str, bytes, None]]:
         """Perform a blocking wait until all specified keys have been found
         in the backbone
@@ -205,39 +209,39 @@ class BackboneFeatureStore(DragonFeatureStore):
         :param keys: The required collection of keys to retrieve
         :param timeout: The maximum wait time in seconds. Overrides class level setting
         """
+        if timeout < 0:
+            timeout = self._DEFAULT_WAIT_TIMEOUT
+            logger.info(f"Using default wait_for timeout: {timeout}s")
 
-        to_check = list(keys)
-        was_found = [False for _ in to_check]  # add test ensuring dupes are handled..
-        values: t.List[t.Union[str, bytes, None]] = [None for _ in to_check]
+        if not keys:
+            return {}
 
-        backoff: t.List[float] = [0.1, 0.5, 1, 2, 4, 8]
+        values: t.Dict[str, t.Union[str, bytes, None]] = {k: None for k in set(keys)}
+        is_found = {k: False for k in values.keys()}
+
+        backoff: t.List[float] = [0.1, 0.5, 1, 2, 4]
         backoff_iter = itertools.cycle(backoff)
         start_time = time.time()
 
-        while not all(was_found):
+        while not all(is_found.values()):
             delay = next(backoff_iter)
 
-            for index, key in enumerate(to_check):
-                if was_found[index]:
-                    continue
-
+            for key in [k for k, v in is_found.items() if not v]:
                 try:
-                    values[index] = self[key]
-                    was_found[index] = True
-                except KeyError:
+                    values[key] = self[key]
+                    is_found[key] = True
+                except Exception:
                     if delay == backoff[-1]:
                         logger.debug(f"Re-attempting `{key}` retrieval in {delay}s")
 
-            if all(was_found):
+            if all(is_found.values()):
+                logger.debug(f"wait_for({keys}) retrieved all keys")
                 continue
 
-            self._check_wait_timeout(
-                start_time, timeout, dict(zip(to_check, was_found))
-            )
-
+            self._check_wait_timeout(start_time, timeout, is_found)
             time.sleep(delay)
 
-        return dict(zip(keys, values))
+        return values
 
     def get_env(self) -> t.Dict[str, str]:
         """Returns a dictionary populated with environment variables necessary to

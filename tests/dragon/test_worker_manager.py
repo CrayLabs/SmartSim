@@ -146,7 +146,7 @@
 #     model_bytes = load_model()
 #     backbone[model_key] = model_bytes
 
-#     message_model_key = MessageHandler.build_feature_store_key(
+#     message_model_key = MessageHandler.build_model_key(
 #         model_key, backbone.descriptor
 #     )
 
@@ -183,10 +183,10 @@
 
 #         fsd = backbone.descriptor
 
-#         # message_tensor_output_key = MessageHandler.build_feature_store_key(
+#         # message_tensor_output_key = MessageHandler.build_tensor_key(
 #         #     output_key, fsd
 #         # )
-#         # message_tensor_input_key = MessageHandler.build_feature_store_key(
+#         # message_tensor_input_key = MessageHandler.build_tensor_key(
 #         #     input_key, fsd
 #         # )
 

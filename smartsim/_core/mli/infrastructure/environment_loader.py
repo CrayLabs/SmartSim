@@ -83,7 +83,9 @@ class EnvironmentConfigLoader:
             return None
 
         if self._featurestore_factory is None:
-            logger.warning("No feature store factory is configured")
+            logger.warning(
+                "No feature store factory is configured. Backbone not created."
+            )
             return None
 
         self.backbone = self._featurestore_factory(descriptor)

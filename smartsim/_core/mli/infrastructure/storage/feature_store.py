@@ -47,7 +47,7 @@ class ReservedKeys(str, enum.Enum):
     """Storage location for the channel used to send messages directly to
     the MLI backend"""
 
-    MLI_WORKER_QUEUE = "to_worker_fli"  # todo: ensure this adheres to standard
+    MLI_WORKER_QUEUE = "_SMARTSIM_REQUEST_QUEUE"
     """Storage location for the channel used to send work requests 
     to the available worker managers"""
 
