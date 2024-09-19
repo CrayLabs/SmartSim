@@ -172,6 +172,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         config_loader=config_loader,
         worker_type=arg_worker_type,
+        mem_pool_size=128*1024**3,
     )
 
     wms = []
@@ -215,9 +216,11 @@ if __name__ == "__main__":
     # TODO: use ProcessGroup and restart=True?
     all_procs = [dispatcher_proc, *worker_manager_procs]
 
-    print(f"Dispatcher proc: {dispatcher_proc}")
     for proc in all_procs:
         proc.start()
 
     while all(proc.is_alive for proc in all_procs):
         time.sleep(1)
+
+    for proc in all_procs:
+        logger.info(f"{proc} is alive: {proc.is_alive}")

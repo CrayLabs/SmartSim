@@ -68,13 +68,18 @@ class DragonFLIChannel(cch.CommChannelBase):
         :returns: the received message"""
         messages = []
         eot = False
+        parts = 0
         with self._fli.recvh(timeout=0.001) as recvh:
+            # print(">>>> FLI IS RECEIVING <<<<", flush=True)
             while not eot:
                 try:
                     message, _ = recvh.recv_bytes(timeout=None)
                     messages.append(message)
+                    # print(parts, flush=True)
+                    parts += 1
                 except fli.FLIEOT:
                     eot = True
+        # print(f"<<<< FLI IS DONE {parts} >>>>", flush=True)
         return messages
 
     @classmethod

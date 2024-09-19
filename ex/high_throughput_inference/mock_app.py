@@ -41,6 +41,9 @@ import numpy
 import os
 import time
 import torch
+import typing as t
+
+import warnings
 
 from mpi4py import MPI
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
@@ -54,14 +57,13 @@ torch.set_num_interop_threads(16)
 torch.set_num_threads(1)
 
 logger = get_logger("App")
-logger.info("Started app")
 
-CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
+warnings.filterwarnings("ignore", "\*The given NumPy array is not writable\*")
 
 class ProtoClient:
     def __init__(self, timing_on: bool):
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
+        self._comm = MPI.COMM_WORLD
+        self._rank = self._comm.Get_rank()
         connect_to_infrastructure()
         ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]
         self._ddict = DDict.attach(ddict_str)
@@ -77,9 +79,10 @@ class ProtoClient:
         self._from_worker_ch_serialized = self._from_worker_ch.serialize()
         self._to_worker_ch = Channel.make_process_local()
 
-        self.perf_timer: PerfTimer = PerfTimer(debug=False, timing_on=timing_on, prefix=f"a{rank}_")
+        self.perf_timer: PerfTimer = PerfTimer(debug=False, timing_on=timing_on, prefix=f"a{self._rank}_")
+        self._num_its: int = 0
 
-    def run_model(self, model: bytes | str, batch: torch.Tensor):
+    def run_model(self, model: t.Union[bytes, str], batch: torch.Tensor):
         tensors = [batch.numpy()]
         self.perf_timer.start_timings("batch_size", batch.shape[0])
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
@@ -106,6 +109,7 @@ class ProtoClient:
             self.perf_timer.measure_time("send_request")
             for tensor in tensors:
                 to_sendh.send_bytes(tensor.tobytes()) #TODO NOT FAST ENOUGH!!!
+                # logger.info(f"{self._rank} sent tensors")
         self.perf_timer.measure_time("send_tensors")
         with self._from_worker_ch.recvh(timeout=None) as from_recvh:
             resp = from_recvh.recv_bytes(timeout=None)
@@ -124,20 +128,26 @@ class ProtoClient:
             self.perf_timer.measure_time("deserialize_tensor")
 
         self.perf_timer.end_timings()
+        self._num_its += 1
+        # logger.info(f"{self._rank} got to the barrier {self._num_its}")
+        self._comm.Barrier()
+        # time.sleep(0.01)
+        # logger.info(f"{self._rank} made it past the barrier {self._num_its}")
         return result
 
     def set_model(self, key: str, model: bytes):
         self._ddict[key] = model
 
 
-
 class ResNetWrapper:
     def __init__(self, name: str, model: str):
-        self._model = torch.jit.load(model)
+        self._model = None  # torch.jit.load(model)
         self._name = name
-        buffer = io.BytesIO()
-        scripted = torch.jit.trace(self._model, self.get_batch())
-        torch.jit.save(scripted, buffer)
+
+        # scripted = torch.jit.trace(self._model, self.get_batch())
+        # torch.jit.save(scripted, buffer)
+        with open(model, "rb") as model_file:
+            buffer = io.BytesIO(model_file.read())
         self._serialized_model = buffer.getvalue()
 
     def get_batch(self, batch_size: int = 32):
@@ -151,6 +161,10 @@ class ResNetWrapper:
     def name(self):
         return self._name
 
+def log(msg: str, rank: int) -> None:
+    if rank == 0:
+        logger.info(msg)
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Mock application")
@@ -161,29 +175,20 @@ if __name__ == "__main__":
     resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
 
     client = ProtoClient(timing_on=True)
-    client.set_model(resnet.name, resnet.model)
+    if client._rank == 0:
+        client.set_model(resnet.name, resnet.model)
 
-    if CHECK_RESULTS_AND_MAKE_ALL_SLOWER:
-        # TODO: adapt to non-Nvidia devices
-        torch_device = args.device.replace("gpu", "cuda")
-        pt_model = torch.jit.load(io.BytesIO(initial_bytes=(resnet.model))).to(torch_device)
+    MPI.COMM_WORLD.Barrier()
 
-    TOTAL_ITERATIONS = 100
+    TOTAL_ITERATIONS = 10
 
-    for log2_bsize in range(args.log_max_batchsize+1):
+    for log2_bsize in range(args.log_max_batchsize, args.log_max_batchsize+1):
         b_size: int = 2**log2_bsize
-        logger.info(f"Batch size: {b_size}")
-        for iteration_number in range(TOTAL_ITERATIONS + int(b_size==1)):
-            logger.info(f"Iteration: {iteration_number}")
+        log(f"Batch size: {b_size}", client._rank)
+        for iteration_number in range(TOTAL_ITERATIONS):
+            # log(f"Iteration: {iteration_number}", client._rank)
             sample_batch = resnet.get_batch(b_size)
             remote_result = client.run_model(resnet.name, sample_batch)
-            logger.info(client.perf_timer.get_last("total_time"))
-            if CHECK_RESULTS_AND_MAKE_ALL_SLOWER:
-                local_res = pt_model(sample_batch.to(torch_device))
-                err_norm = torch.linalg.vector_norm(torch.flatten(remote_result).to(torch_device)-torch.flatten(local_res), ord=1).cpu()
-                res_norm = torch.linalg.vector_norm(remote_result, ord=1).item()
-                local_res_norm = torch.linalg.vector_norm(local_res, ord=1).item()
-                logger.info(f"Avg norm of error {err_norm.item()/b_size} compared to result norm of {res_norm/b_size}:{local_res_norm/b_size}")
-                torch.cuda.synchronize()
+            log(f"Completed iteration: {iteration_number} in {client.perf_timer.get_last('total_time')} seconds", client._rank)
 
-    client.perf_timer.print_timings(to_file=True)
+    client.perf_timer.print_timings(to_file=True, to_stdout=client._rank==0)

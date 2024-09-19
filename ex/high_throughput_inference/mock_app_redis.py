@@ -38,11 +38,10 @@ logger = get_logger("App")
 
 class ResNetWrapper():
     def __init__(self, name: str, model: str):
-        self._model = torch.jit.load(model)
+        self._model = None
         self._name = name
-        buffer = io.BytesIO()
-        scripted = torch.jit.trace(self._model, self.get_batch())
-        torch.jit.save(scripted, buffer)
+        with open(model, "rb") as model_file:
+            buffer = io.BytesIO(model_file.read())
         self._serialized_model = buffer.getvalue()
 
     def get_batch(self, batch_size: int=32):
@@ -56,6 +55,11 @@ class ResNetWrapper():
     def name(self):
         return self._name
 
+
+def log(msg: str, rank: int) -> None:
+    if rank == 0:
+        logger.info(msg)
+
 if __name__ == "__main__":
 
     comm = MPI.COMM_WORLD
@@ -63,28 +67,38 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Mock application")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
-    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device.upper()}.pt")
+    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
 
     client = Client(cluster=False, address=None)
-    client.set_model(resnet.name, resnet.model, backend='TORCH', device=args.device.upper())
 
-    perf_timer: PerfTimer = PerfTimer(debug=False, timing_on=timing_on, prefix=f"redis{rank}_")
+    if rank == 0:
+        client.set_model(resnet.name, resnet.model, backend='TORCH', device=args.device.upper())
+
+    comm.Barrier()
+
+    perf_timer: PerfTimer = PerfTimer(debug=False, timing_on=True, prefix=f"redis{rank}_")
 
     total_iterations = 100
     timings=[]
-    for batch_size in [1, 2, 4, 8, 16, 32, 64, 128]:
-        logger.info(f"Batch size: {batch_size}")
-        for iteration_number in range(total_iterations + int(batch_size==1)):
+    for log2_bsize in range(args.log_max_batchsize, args.log_max_batchsize+1):
+        batch_size: int = 2**log2_bsize
+        log(f"Batch size: {batch_size}", rank)
+        for iteration_number in range(total_iterations):
             perf_timer.start_timings("batch_size", batch_size)
-            logger.info(f"Iteration: {iteration_number}")
             input_name = f"batch_{rank}"
             output_name = f"result_{rank}"
             client.put_tensor(name=input_name, data=resnet.get_batch(batch_size).numpy())
+            perf_timer.measure_time("send_request")
             client.run_model(name=resnet.name, inputs=[input_name], outputs=[output_name])
+            perf_timer.measure_time("run_model")
             result = client.get_tensor(name=output_name)
+            perf_timer.measure_time("receive_response")
             perf_timer.end_timings()
+            comm.Barrier()
+            log(f"Completed iteration: {iteration_number} in {perf_timer.get_last('total_time')} seconds", rank)
 
 
-    perf_timer.print_timings(True)
+    perf_timer.print_timings(True, to_stdout=rank==0)

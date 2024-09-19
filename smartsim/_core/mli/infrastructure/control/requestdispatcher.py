@@ -131,9 +131,9 @@ class BatchQueue(Queue[InferenceRequest]):
             return False
 
         timed_out = (
-            self._batch_timeout > 0 and self._elapsed_time >= self._batch_timeout
+            self._elapsed_time >= self._batch_timeout
         )
-        logger.debug(f"Is full: {self.full()} or has timed out: {timed_out}")
+        # logger.info(f"Is full: {self.full()} or has timed out: {timed_out}")
         return self.full() or timed_out
 
     def make_disposable(self) -> None:
@@ -225,6 +225,10 @@ class RequestDispatcher(Service):
         """Memory pool used to share batched input tensors with the Worker Managers"""
         self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
         """Performance timer"""
+        self._processed_requests: int = 0
+        """Number of requests processed by this dispatcher"""
+        self._sent_batches: int = 0
+        """Number of batches sent to Worker Managers"""
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
         """Ensures that all feature stores required by the request are available
@@ -317,20 +321,23 @@ class RequestDispatcher(Service):
         """
         try:
             self._perf_timer.set_active(True)
+            pre_receive = time.perf_counter()
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
         except Exception:
             self._perf_timer.set_active(False)
         else:
+            self._processed_requests += 1
+            # print(f">>>> PROCESSING REQUEST {self._processed_requests} (free memory: {self._mem_pool.free_space})<<<<")
             if not bytes_list:
                 exception_handler(
                     ValueError("No request data found"),
                     None,
                     "No request data found.",
                 )
-
+            post_receive = time.perf_counter()
             request_bytes = bytes_list[0]
             tensor_bytes_list = bytes_list[1:]
-            self._perf_timer.start_timings()
+            self._perf_timer.start_timings(first_label="receive", first_value=post_receive-pre_receive)
 
             request = self._worker.deserialize_message(
                 request_bytes, self._callback_factory
@@ -351,14 +358,15 @@ class RequestDispatcher(Service):
                 self._perf_timer.measure_time("validate_request")
                 self.dispatch(request)
                 self._perf_timer.measure_time("dispatch")
+            # print(f"<<<< PROCESSED {self._processed_requests} REQUESTS >>>>")
         finally:
             self.flush_requests()
             self.remove_queues()
 
             self._perf_timer.end_timings()
 
-        if self._perf_timer.max_length == 801 and self._perf_timer.is_active:
-            self._perf_timer.print_timings(True)
+        # if self._perf_timer.max_length == 1600 and self._perf_timer.is_active:
+        #     self._perf_timer.print_timings(True)
 
     def remove_queues(self) -> None:
         """Remove references to queues that can be removed
@@ -444,6 +452,8 @@ class RequestDispatcher(Service):
         for queue_list in self._queues.values():
             for queue in queue_list:
                 if queue.ready:
+                    self._sent_batches += 1
+                    # print(f">>>> SENDING {self._sent_batches} BATCH <<<<")
                     self._perf_timer.measure_time("find_queue")
                     try:
                         batch = RequestBatch(
@@ -495,6 +505,7 @@ class RequestDispatcher(Service):
                         )
                         continue
                     self._perf_timer.measure_time("put")
+                    # print(f">>>> SENT {self._sent_batches} BATCHES <<<<")
 
     def _can_shutdown(self) -> bool:
         """Whether the Service can be shut down"""

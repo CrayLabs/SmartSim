@@ -522,10 +522,10 @@ class DragonBackend:
                         and proc_group.status == DragonStatus.RUNNING
                     ):
                         try:
-                            proc_group.kill()
+                            proc_group.stop()
                         except dragon_process_group.DragonProcessGroupError:
                             try:
-                                proc_group.stop()
+                                proc_group.kill()
                             except dragon_process_group.DragonProcessGroupError:
                                 logger.error("Process group already stopped")
                     redir_group = self._group_infos[step_id].redir_workers
@@ -862,6 +862,12 @@ class DragonBackend:
             self._kill_all_running_jobs()
         self._frontend_shutdown = request.frontend_shutdown
         return DragonShutdownResponse()
+
+    def __del__(self) -> None:
+        try:
+            self._ddict.destroy()
+        except Exception:
+            logger.error("Could not destroy Backbone dictionary")
 
 
 class DragonBackendView:

@@ -108,6 +108,10 @@ class WorkerManager(Service):
         """Object responsible for model caching and device access"""
         self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
         """Performance timer"""
+        self._processed_batches: int = 0
+        """Number of processed request batches"""
+        self._sent_responses: int = 0
+        """Number of sent responses"""
 
     def _on_start(self) -> None:
         """Called on initial entry into Service `execute` event loop before
@@ -165,9 +169,20 @@ class WorkerManager(Service):
 
         pre_batch_time = time.perf_counter()
         try:
-            batch: RequestBatch = self._dispatcher_queue.get(timeout=0.0001)
+            batch: RequestBatch = self._dispatcher_queue.get(timeout=None)
         except Empty:
             return
+        except Exception as exc:
+            exception_handler(
+                exc,
+                None,
+                "Error receiving batch.",
+            )
+            return
+
+
+        self._processed_batches += 1
+        # print(f"**** PROCESSING BATCH {self._processed_batches} ****", flush=True)
 
         self._perf_timer.start_timings(
             "flush_requests", time.perf_counter() - pre_batch_time
@@ -259,6 +274,7 @@ class WorkerManager(Service):
                 return
 
             for request, transformed_output in zip(batch.requests, transformed_outputs):
+                self._sent_responses += 1
                 reply = InferenceReply()
                 if request.output_keys:
                     try:
@@ -305,9 +321,10 @@ class WorkerManager(Service):
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()
+        # print(f"**** PROCESSED {self._processed_batches} BATCHES AND {self._sent_responses} REPLIES ****", flush=True)
 
-        if self._perf_timer.max_length == 801:
-            self._perf_timer.print_timings(True)
+        # if self._perf_timer.max_length == 1600:
+        #     self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""

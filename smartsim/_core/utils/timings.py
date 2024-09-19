@@ -68,7 +68,7 @@ class PerfTimer:
             if first_label is not None and first_value is not None:
                 mod_label = self._make_label(first_label)
                 value = self._format_number(first_value)
-                self._log(f"Started timing: {first_label}: {value}")
+                self._log(f"Started timing: {mod_label}: {value}")
                 self._add_label_to_timings(mod_label)
                 self._timings[mod_label].append(value)
             self._start = time.perf_counter()
@@ -119,15 +119,16 @@ class PerfTimer:
             return 0
         return max(len(value) for value in self._timings.values())
 
-    def print_timings(self, to_file: bool = False) -> None:
-        print(" ".join(self._timings.keys()))
+    def print_timings(self, to_file: bool = False, to_stdout: bool = True) -> None:
+        if to_stdout:
+            print(" ".join(self._timings.keys()))
         try:
             value_array = np.array(list(self._timings.values()), dtype=float)
         except Exception as e:
             logger.exception(e)
             return
         value_array = np.transpose(value_array)
-        if self._debug:
+        if self._debug and to_stdout:
             for i in range(value_array.shape[0]):
                 print(" ".join(self._format_number(value) for value in value_array[i]))
         if to_file:
