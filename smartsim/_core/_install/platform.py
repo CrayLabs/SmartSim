@@ -107,8 +107,8 @@ class Device(enum.Enum):
             cuda_path = pathlib.Path(cuda_home)
             with open(cuda_path / "version.json", "r", encoding="utf-8") as file_handle:
                 cuda_versions = json.load(file_handle)
-            major, minor = cuda_versions["cuda"]["version"].split(".")[0:2]
-            return cls.from_str(f"cuda-{major}.{minor}")
+            major = cuda_versions["cuda"]["version"].split(".")[0]
+            return cls.from_str(f"cuda-{major}")
         return None
 
     @classmethod
@@ -121,8 +121,8 @@ class Device(enum.Enum):
             rocm_path = pathlib.Path(rocm_home)
             fname = rocm_path / ".info" / "version"
             with open(fname, "r", encoding="utf-8") as file_handle:
-                major, minor = file_handle.readline().split("-")[0].split(".")
-            return cls.from_str(f"rocm-{major}.{minor}")
+                major = file_handle.readline().split("-")[0].split(".")[0]
+            return cls.from_str(f"rocm-{major}")
         return None
 
     def is_gpu(self) -> bool:

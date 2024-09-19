@@ -46,10 +46,11 @@ def test_device_cpu():
 @pytest.mark.parametrize("cuda_device", Device.cuda_enums())
 def test_cuda(monkeypatch, test_dir, cuda_device):
     version = cuda_device.value.split("-")[1]
-    fake_full_version = version + ".9999"
+    fake_full_version = version + ".8888" ".9999"
     monkeypatch.setenv("CUDA_HOME", test_dir)
 
     mock_version = dict(cuda=dict(version=fake_full_version))
+    print(mock_version)
     with open(f"{test_dir}/version.json", "w") as outfile:
         json.dump(mock_version, outfile)
 
@@ -62,7 +63,7 @@ def test_cuda(monkeypatch, test_dir, cuda_device):
 @pytest.mark.parametrize("rocm_device", Device.rocm_enums())
 def test_rocm(monkeypatch, test_dir, rocm_device):
     version = rocm_device.value.split("-")[1]
-    fake_full_version = version + "-9999"
+    fake_full_version = version + ".8888" + "-9999"
     monkeypatch.setenv("ROCM_HOME", test_dir)
     info_dir = f"{test_dir}/.info"
     os.mkdir(info_dir)
