@@ -30,7 +30,7 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.infrastructure.control.workermanager import build_failure_reply
+from smartsim._core.mli.infrastructure.control.worker_manager import build_failure_reply
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 
 if t.TYPE_CHECKING:
@@ -50,6 +50,9 @@ pytestmark = pytest.mark.dragon
 def test_build_failure_reply(status: "Status", message: str):
     "Ensures failure replies can be built successfully"
     response = build_failure_reply(status, message)
+    display_name = response.schema.node.displayName  # type: ignore
+    class_name = display_name.split(":")[-1]
+    assert class_name == "Response"
     assert response.status == status
     assert response.message == message
 

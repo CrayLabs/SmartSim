@@ -25,7 +25,7 @@ NUM_WORKERS = 1
 BATCH_SIZE = 2
 BATCH_TIMEOUT = 0.0
 filedir = os.path.dirname(__file__)
-worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
+worker_manager_script_name = os.path.join(filedir, "standalone_worker_manager.py")
 app_script_name = os.path.join(filedir, "mock_app.py")
 model_name = os.path.join(filedir, f"resnet50.{DEVICE}.pt")
 

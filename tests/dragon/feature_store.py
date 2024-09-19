@@ -28,7 +28,7 @@ import pathlib
 import typing as t
 
 import smartsim.error as sse
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -37,75 +37,81 @@ logger = get_logger(__name__)
 class MemoryFeatureStore(FeatureStore):
     """A feature store with values persisted only in local memory"""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, storage: t.Optional[t.Dict[str, t.Union[str, bytes]]] = None
+    ) -> None:
         """Initialize the MemoryFeatureStore instance"""
-        self._storage: t.Dict[str, bytes] = {}
+        super().__init__("in-memory-fs")
+        if storage is None:
+            storage = {"_": "abc"}
+        self._storage = storage
 
-    def __getitem__(self, key: str) -> bytes:
-        """Retrieve an item using key
+    def _get(self, key: str) -> t.Union[str, bytes]:
+        """Retrieve a value from the underlying storage mechanism
 
-        :param key: Unique key of an item to retrieve from the feature store"""
-        if key not in self._storage:
-            raise sse.SmartSimError(f"{key} not found in feature store")
+        :param key: The unique key that identifies the resource
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
         return self._storage[key]
 
-    def __setitem__(self, key: str, value: bytes) -> None:
-        """Membership operator to test for a key existing within the feature store.
+    def _set(self, key: str, value: t.Union[str, bytes]) -> None:
+        """Store a value into the underlying storage mechanism
 
-        :param key: Unique key of an item to retrieve from the feature store
-        :returns: `True` if the key is found, `False` otherwise"""
+        :param key: The unique key that identifies the resource
+        :param value: The value to store
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
         self._storage[key] = value
 
-    def __contains__(self, key: str) -> bool:
-        """Membership operator to test for a key existing within the feature store.
-        Return `True` if the key is found, `False` otherwise
-        :param key: Unique key of an item to retrieve from the feature store"""
+    def _contains(self, key: str) -> bool:
+        """Determine if the storage mechanism contains a given key
+
+        :param key: The unique key that identifies the resource
+        :returns: True if the key is defined, False otherwise"""
         return key in self._storage
-
-    @property
-    def descriptor(self) -> str:
-        """Unique identifier enabling a client to connect to the feature store
-
-        :returns: A descriptor encoded as a string"""
-        return "in-memory-fs"
 
 
 class FileSystemFeatureStore(FeatureStore):
     """Alternative feature store implementation for testing. Stores all
     data on the file system"""
 
-    def __init__(
-        self, storage_dir: t.Optional[t.Union[pathlib.Path, str]] = None
-    ) -> None:
+    def __init__(self, storage_dir: t.Union[pathlib.Path, str]) -> None:
         """Initialize the FileSystemFeatureStore instance
 
         :param storage_dir: (optional) root directory to store all data relative to"""
         if isinstance(storage_dir, str):
             storage_dir = pathlib.Path(storage_dir)
         self._storage_dir = storage_dir
+        super().__init__(storage_dir.as_posix())
 
-    def __getitem__(self, key: str) -> bytes:
-        """Retrieve an item using key
+    def _get(self, key: str) -> t.Union[str, bytes]:
+        """Retrieve a value from the underlying storage mechanism
 
-        :param key: Unique key of an item to retrieve from the feature store"""
+        :param key: The unique key that identifies the resource
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
         path = self._key_path(key)
         if not path.exists():
             raise sse.SmartSimError(f"{path} not found in feature store")
         return path.read_bytes()
 
-    def __setitem__(self, key: str, value: bytes) -> None:
-        """Assign a value using key
+    def _set(self, key: str, value: t.Union[str, bytes]) -> None:
+        """Store a value into the underlying storage mechanism
 
-        :param key: Unique key of an item to set in the feature store
-        :param value: Value to persist in the feature store"""
+        :param key: The unique key that identifies the resource
+        :param value: The value to store
+        :returns: the value identified by the key
+        :raises KeyError: if the key has not been used to store a value"""
         path = self._key_path(key, create=True)
+        if isinstance(value, str):
+            value = value.encode("utf-8")
         path.write_bytes(value)
 
-    def __contains__(self, key: str) -> bool:
-        """Membership operator to test for a key existing within the feature store.
+    def _contains(self, key: str) -> bool:
+        """Determine if the storage mechanism contains a given key
 
-        :param key: Unique key of an item to retrieve from the feature store
-        :returns: `True` if the key is found, `False` otherwise"""
+        :param key: The unique key that identifies the resource
+        :returns: True if the key is defined, False otherwise"""
         path = self._key_path(key)
         return path.exists()
 
@@ -116,22 +122,13 @@ class FileSystemFeatureStore(FeatureStore):
         :param key: Unique key of an item to retrieve from the feature store"""
         value = pathlib.Path(key)
 
-        if self._storage_dir:
+        if self._storage_dir is not None:
             value = self._storage_dir / key
 
         if create:
             value.parent.mkdir(parents=True, exist_ok=True)
 
         return value
-
-    @property
-    def descriptor(self) -> str:
-        """Unique identifier enabling a client to connect to the feature store
-
-        :returns: A descriptor encoded as a string"""
-        if not self._storage_dir:
-            raise ValueError("No storage path configured")
-        return self._storage_dir.as_posix()
 
     @classmethod
     def from_descriptor(

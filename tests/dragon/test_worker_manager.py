@@ -49,20 +49,20 @@ from dragon import fli
 from dragon.mpbridge.queues import DragonQueue
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.control.workermanager import (
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.control.worker_manager import (
     EnvironmentConfigLoader,
     WorkerManager,
 )
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .featurestore import FileSystemFeatureStore
+from .feature_store import FileSystemFeatureStore
 from .utils.channel import FileSystemCommChannel
 
 logger = get_logger(__name__)

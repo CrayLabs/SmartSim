@@ -57,6 +57,7 @@ class PerfTimer:
 
     @staticmethod
     def _format_number(number: t.Union[float, int]) -> str:
+        """Formats the input value with a fixed precision appropriate for logging"""
         return f"{number:0.4e}"
 
     def start_timings(
@@ -64,6 +65,12 @@ class PerfTimer:
         first_label: t.Optional[str] = None,
         first_value: t.Optional[t.Union[float, int]] = None,
     ) -> None:
+        """Start a recording session by recording
+
+        :param first_label: a label for an event that will be manually prepended
+        to the timing information before starting timers
+        :param first_label: a value for an event that will be manually prepended
+        to the timing information before starting timers"""
         if self._timing_on:
             if first_label is not None and first_value is not None:
                 mod_label = self._make_label(first_label)
@@ -75,6 +82,7 @@ class PerfTimer:
             self._interm = time.perf_counter()
 
     def end_timings(self) -> None:
+        """Record a timing event and clear the last checkpoint"""
         if self._timing_on and self._start is not None:
             mod_label = self._make_label("total_time")
             self._add_label_to_timings(mod_label)
@@ -84,14 +92,24 @@ class PerfTimer:
             self._interm = None
 
     def _make_label(self, label: str) -> str:
+        """Return a label formatted with the current label prefix
+
+        :param label: the original label
+        :returns: the adjusted label value"""
         return self._prefix + label
 
-    def _get_delta(self) -> t.Union[float, int]:
+    def _get_delta(self) -> float:
+        """Calculates the offset from the last intermediate checkpoint time
+
+        :returns: the number of seconds elapsed"""
         if self._interm is None:
             return 0
         return time.perf_counter() - self._interm
 
     def get_last(self, label: str) -> str:
+        """Return the last timing value collected for the given label in
+        the format `{label}: {value}`. If no timing value has been collected
+        with the label, returns `Not measured yet`"""
         mod_label = self._make_label(label)
         if mod_label in self._timings:
             value = self._timings[mod_label][-1]
@@ -101,6 +119,9 @@ class PerfTimer:
         return "Not measured yet"
 
     def measure_time(self, label: str) -> None:
+        """Record a new time event if timing is enabled
+
+        :param label: the label to record a timing event for"""
         if self._timing_on and self._interm is not None:
             mod_label = self._make_label(label)
             self._add_label_to_timings(mod_label)
@@ -110,16 +131,24 @@ class PerfTimer:
             self._interm = time.perf_counter()
 
     def _log(self, msg: str) -> None:
+        """Conditionally logs a message when the debug flag is enabled
+
+        :param msg: the message to be logged"""
         if self._debug:
             logger.info(msg)
 
     @property
     def max_length(self) -> int:
+        """Returns the number of records contained in the largest timing set"""
         if len(self._timings) == 0:
             return 0
         return max(len(value) for value in self._timings.values())
 
     def print_timings(self, to_file: bool = False, to_stdout: bool = True) -> None:
+        """Print all timing information
+
+        :param to_file: flag indicating if timing should be written to the timing file
+        :param to_stdout: flag indicating if timing should be written to stdout"""
         if to_stdout:
             print(" ".join(self._timings.keys()))
         try:
@@ -134,11 +163,12 @@ class PerfTimer:
         if to_file:
             np.save(self._prefix + self._filename + ".npy", value_array)
 
-    def set_active(self, active: bool = True) -> None:
-        """Set whether the timer will record time"""
-        self._timing_on = active
-
     @property
     def is_active(self) -> bool:
-        """Returns true if the timer will record time"""
+        """Return `True` if timer is recording, `False` otherwise"""
         return self._timing_on
+
+    @is_active.setter
+    def is_active(self, active: bool) -> None:
+        """Set to `True` to record timing information, `False` otherwise"""
+        self._timing_on = active

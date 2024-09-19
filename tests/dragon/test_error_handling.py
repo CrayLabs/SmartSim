@@ -38,20 +38,20 @@ from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 from dragon.mpbridge.queues import DragonQueue
 
-from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.control.devicemanager import WorkerDevice
-from smartsim._core.mli.infrastructure.control.requestdispatcher import (
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.infrastructure.control.device_manager import WorkerDevice
+from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
-from smartsim._core.mli.infrastructure.control.workermanager import (
+from smartsim._core.mli.infrastructure.control.worker_manager import (
     WorkerManager,
     exception_handler,
 )
-from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import (
+from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
     FeatureStoreKey,
 )
@@ -302,16 +302,28 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
 
     monkeypatch.setattr(integrated_worker, stage, mock_stage)
     mock_reply_fn = MagicMock()
+    mock_response = MagicMock()
+    mock_response.schema.node.displayName = "Response"
+    mock_reply_fn.return_value = mock_response
+
     monkeypatch.setattr(
         "smartsim._core.mli.infrastructure.control.error_handling.build_failure_reply",
         mock_reply_fn,
     )
 
+    mock_reply_channel = MagicMock()
+    mock_reply_channel.send = MagicMock()
+
     def mock_exception_handler(exc, reply_channel, failure_message):
-        return exception_handler(exc, None, failure_message)
+        return exception_handler(exc, mock_reply_channel, failure_message)
 
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        "smartsim._core.mli.infrastructure.control.worker_manager.exception_handler",
+        mock_exception_handler,
+    )
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.request_dispatcher.exception_handler",
         mock_exception_handler,
     )
 
@@ -338,14 +350,14 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
             "Error loading model on device or getting device.",
             id="load model",
         ),
-        pytest.param("execute", "Failed while executing.", id="execute"),
+        pytest.param("execute", "Error while executing.", id="execute"),
         pytest.param(
             "transform_output",
-            "Failed while transforming the output.",
+            "Error while transforming the output.",
             id="transform output",
         ),
         pytest.param(
-            "place_output", "Failed while placing the output.", id="place output"
+            "place_output", "Error while placing the output.", id="place output"
         ),
     ],
 )
@@ -428,7 +440,7 @@ def test_wm_pipeline_stage_errors_handled(
         ),
         pytest.param(
             "transform_input",
-            "Error Transforming input.",
+            "Error transforming input.",
             id="transform input",
         ),
     ],
@@ -464,16 +476,25 @@ def test_dispatcher_pipeline_stage_errors_handled(
 def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     """Ensures that the worker manager does not crash after a failure in the
     execute pipeline stage"""
-    reply = InferenceReply()
+
+    mock_reply_channel = MagicMock()
+    mock_reply_channel.send = MagicMock()
 
     mock_reply_fn = MagicMock()
+
+    mock_response = MagicMock()
+    mock_response.schema.node.displayName = "Response"
+    mock_reply_fn.return_value = mock_response
+
     monkeypatch.setattr(
         "smartsim._core.mli.infrastructure.control.error_handling.build_failure_reply",
         mock_reply_fn,
     )
 
     test_exception = ValueError("Test ValueError")
-    exception_handler(test_exception, None, "Failure while fetching the model.")
+    exception_handler(
+        test_exception, mock_reply_channel, "Failure while fetching the model."
+    )
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")
