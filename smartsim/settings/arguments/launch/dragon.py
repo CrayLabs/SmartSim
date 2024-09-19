@@ -33,8 +33,8 @@ from typing_extensions import override
 from smartsim.log import get_logger
 
 from ...common import set_check_input
-from ...launchCommand import LauncherType
-from ..launchArguments import LaunchArguments
+from ...launch_command import LauncherType
+from ..launch_arguments import LaunchArguments
 
 logger = get_logger(__name__)
 

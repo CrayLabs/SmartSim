@@ -44,9 +44,9 @@ from .arguments.launch.mpi import (
 )
 from .arguments.launch.pals import PalsMpiexecLaunchArguments
 from .arguments.launch.slurm import SlurmLaunchArguments
-from .baseSettings import BaseSettings
+from .base_settings import BaseSettings
 from .common import StringArgument
-from .launchCommand import LauncherType
+from .launch_command import LauncherType
 
 logger = get_logger(__name__)
 

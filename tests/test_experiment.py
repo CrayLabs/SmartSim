@@ -45,8 +45,8 @@ from smartsim.entity import entity
 from smartsim.error import errors
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
-from smartsim.settings import launchSettings
-from smartsim.settings.arguments import launchArguments
+from smartsim.settings import launch_settings
+from smartsim.settings.arguments import launch_arguments
 from smartsim.status import InvalidJobStatus, JobStatus
 
 pytestmark = pytest.mark.group_a
@@ -91,7 +91,7 @@ def job_maker(monkeypatch):
 
     def iter_jobs():
         for i in itertools.count():
-            settings = launchSettings.LaunchSettings("local")
+            settings = launch_settings.LaunchSettings("local")
             monkeypatch.setattr(settings, "_arguments", MockLaunchArgs(i))
             yield job.Job(EchoHelloWorldEntity(), settings)
 
@@ -152,7 +152,7 @@ class NoOpRecordLauncher(LauncherProtocol):
 
 @dataclasses.dataclass(frozen=True)
 class LaunchRecord:
-    launch_args: launchArguments.LaunchArguments
+    launch_args: launch_arguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
     path: str
@@ -178,7 +178,7 @@ class LaunchRecord:
         return cls(args, entity, env, path, out, err)
 
 
-class MockLaunchArgs(launchArguments.LaunchArguments):
+class MockLaunchArgs(launch_arguments.LaunchArguments):
     """A `LaunchArguments` subclass that will evaluate as true with another if
     and only if they were initialized with the same id. In practice this class
     has no arguments to set.

@@ -24,11 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .basejob import BaseJob
-from .baseJobGroup import BaseJobGroup
-from .colocatedJobGroup import ColocatedJobGroup
+from .base_job import BaseJob
+from .base_job_group import BaseJobGroup
+from .colocated_job_group import ColocatedJobGroup
 from .job import Job
-from .jobGroup import JobGroup
+from .job_group import JobGroup
 from .launchable import Launchable
-from .mpmdjob import MPMDJob
-from .mpmdpair import MPMDPair
+from .mpmd_job import MPMDJob
+from .mpmd_pair import MPMDPair

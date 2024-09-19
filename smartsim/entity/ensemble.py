@@ -39,7 +39,7 @@ from smartsim.entity.strategies import ParamSet
 from smartsim.launchable.job import Job
 
 if t.TYPE_CHECKING:
-    from smartsim.settings.launchSettings import LaunchSettings
+    from smartsim.settings.launch_settings import LaunchSettings
 
 
 class Ensemble(entity.CompoundEntity):

@@ -27,7 +27,7 @@ import pytest
 
 from smartsim.settings import BatchSettings
 from smartsim.settings.arguments.batch.pbs import QsubBatchArguments
-from smartsim.settings.batchCommand import SchedulerType
+from smartsim.settings.batch_command import SchedulerType
 
 pytestmark = pytest.mark.group_a
 

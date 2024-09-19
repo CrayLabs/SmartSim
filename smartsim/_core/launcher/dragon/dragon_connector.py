@@ -42,7 +42,6 @@ import psutil
 import zmq
 import zmq.auth.thread
 
-from ...._core.launcher.dragon import dragonSockets
 from ....error.errors import SmartSimError
 from ....log import get_logger
 from ...config import get_config
@@ -56,6 +55,7 @@ from ...schemas import (
     DragonShutdownRequest,
 )
 from ...utils.network import find_free_port, get_best_interface_and_address
+from . import dragon_sockets
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
@@ -113,7 +113,7 @@ class DragonConnector:
         return self._dragon_head_pid is not None
 
     def _handshake(self, address: str) -> None:
-        self._dragon_head_socket = dragonSockets.get_secure_socket(
+        self._dragon_head_socket = dragon_sockets.get_secure_socket(
             self._context, zmq.REQ, False
         )
         self._dragon_head_socket.connect(address)
@@ -176,7 +176,7 @@ class DragonConnector:
             except zmq.Again:
                 logger.debug("Could not stop authenticator")
         try:
-            self._authenticator = dragonSockets.get_authenticator(
+            self._authenticator = dragon_sockets.get_authenticator(
                 self._context, timeout
             )
             return
@@ -224,7 +224,9 @@ class DragonConnector:
         connector_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._reset_timeout(config.dragon_server_startup_timeout)
         self._get_new_authenticator(-1)
-        connector_socket = dragonSockets.get_secure_socket(self._context, zmq.REP, True)
+        connector_socket = dragon_sockets.get_secure_socket(
+            self._context, zmq.REP, True
+        )
         logger.debug(f"Binding connector to {socket_addr}")
         connector_socket.bind(socket_addr)
         if connector_socket is None:
@@ -353,7 +355,7 @@ class DragonConnector:
                     start_new_session=True,
                 )
 
-            server = dragonSockets.as_server(connector_socket)
+            server = dragon_sockets.as_server(connector_socket)
             logger.debug(f"Listening to {socket_addr}")
             request = _assert_schema_type(server.recv(), DragonBootstrapRequest)
             server.send(
@@ -460,7 +462,7 @@ class DragonConnector:
         send_flags: int = 0,
         recv_flags: int = 0,
     ) -> DragonResponse:
-        client = dragonSockets.as_client(socket)
+        client = dragon_sockets.as_client(socket)
         with DRG_LOCK:
             logger.debug(f"Sending {type(request).__name__}: {request}")
             client.send(request, send_flags)
