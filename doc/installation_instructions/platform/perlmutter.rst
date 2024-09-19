@@ -4,9 +4,9 @@ NERSC Perlmutter
 One-time Setup
 --------------
 
-To install SmartSim on Perlmutter please follow the following instructions.
+To install SmartSim on Perlmutter, follow these steps:
 
-First create and activate a conda environment for SmartSim
+**Step 1:** Create and activate a conda environment for SmartSim:
 
 .. code:: bash
 
@@ -14,30 +14,40 @@ First create and activate a conda environment for SmartSim
     conda create -n smartsim python=3.11
     conda activate smartsim
 
-Next we will install SmartSim in this environment
+**Step 2:** Install SmartSim in the conda environment:
 
 .. code:: bash
 
     pip install git+https://github.com/ashao/SmartSim.git@refactor_rai_builder
 
-Next build Redis, RedisAI, the backends, and all the python packages
+**Step 3:** Build Redis, RedisAI, the backends, and all the Python packages:
 
 .. code:: bash
 
     module load cudatoolkit/12.2 cudnn/8.9.3_cuda12
     smart build --device=cuda-12
 
-To double check that SmartSim has been installed and built correctly, run
+**Step 4:** Check that SmartSim has been installed and built correctly:
 
 .. code:: bash
 
     smart validate --device gpu
 
+The following output indicates a successful install:
+
+.. code:: bash
+
+    [SmartSim] INFO Verifying Tensor Transfer
+    [SmartSim] INFO Verifying Torch Backend
+    [SmartSim] INFO Verifying ONNX Backend
+    [SmartSim] INFO Verifying TensorFlow Backend
+    16:26:35 login15 SmartSim[557020:MainThread] INFO Success!
+
 Post-installation
 -----------------
 
-After following the above steps when first installing SmartSim, subsequently
-you can use load the SmartSim environment using
+After completing the above steps to install SmartSim in a conda environment, you
+can reload the conda environment by running the following commands:
 
 .. code:: bash
 
