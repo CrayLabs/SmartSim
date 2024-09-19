@@ -159,7 +159,6 @@ class FeatureStore(ABC):
 
         :param key: The unique key that identifies the resource
         :param value: The value to store
-        :raises KeyError: If the key has not been used to store a value
         """
 
     @abstractmethod

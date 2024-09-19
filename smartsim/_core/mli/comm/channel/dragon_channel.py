@@ -53,6 +53,7 @@ def create_local(capacity: int = 0) -> dch.Channel:
     :param capacity: The number of events the channel can buffer; uses the default
     buffer size `DEFAULT_CHANNEL_BUFFER_SIZE` when not supplied
     :returns: The instantiated channel
+    :raises SmartSimError: If unable to attach local channel
     """
     pool = dm.MemoryPool.attach(du.B64.str_to_bytes(dp.this_process.default_pd))
     channel: t.Optional[dch.Channel] = None
@@ -73,12 +74,12 @@ def create_local(capacity: int = 0) -> dch.Channel:
             logger.debug(
                 f"Channel {cid} created in pool {pool.serialize()} w/capacity {capacity}"
             )
-        except Exception:
+        except Exception as e:
             if offset < 100:
-                logger.warning(f"Unable to attach to channnel id {cid}. Retrying...")
+                logger.warning(f"Unable to attach to channel id {cid}. Retrying...")
             else:
                 logger.error(f"All attempts to attach local channel have failed")
-                raise
+                raise SmartSimError("Failed to attach local channel") from e
 
     return channel
 
@@ -109,10 +110,16 @@ class DragonCommChannel(cch.CommChannelBase):
 
         :param value: The value to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
+        :raises SmartSimError: If sending message fails
         """
-        with self._channel.sendh(timeout=timeout) as sendh:
-            sendh.send_bytes(value)
-            logger.debug(f"DragonCommChannel {self.descriptor!r} sent message")
+        try:
+            with self._channel.sendh(timeout=timeout) as sendh:
+                sendh.send_bytes(value)
+                logger.debug(f"DragonCommChannel {self.descriptor!r} sent message")
+        except Exception as e:
+            raise SmartSimError(
+                f"Error sending message: DragonCommChannel {self.descriptor!r}"
+            ) from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.

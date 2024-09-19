@@ -54,7 +54,9 @@ def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
 
 
 def exception_handler(
-    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
+    exc: Exception,
+    reply_channel: t.Optional[CommChannelBase],
+    failure_message: t.Optional[str],
 ) -> None:
     """
     Logs exceptions and sends a failure response.
@@ -63,12 +65,11 @@ def exception_handler(
     :param reply_channel: The channel used to send replies
     :param failure_message: Failure message to log and send back
     """
-    logger.exception(
-        f"{failure_message}\n"
-        f"Exception type: {type(exc).__name__}\n"
-        f"Exception message: {str(exc)}"
-    )
+    logger.exception(exc)
     if reply_channel:
+        if failure_message is None:
+            failure_message = str(exc)
+
         serialized_resp = MessageHandler.serialize_response(
             build_failure_reply("fail", failure_message)
         )

@@ -61,6 +61,15 @@ class TorchWorker(MachineLearningWorkerBase):
     def load_model(
         batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
+        """Given a loaded MachineLearningModel, ensure it is loaded into
+        device memory.
+
+        :param request: The request that triggered the pipeline
+        :param device: The device on which the model must be placed
+        :returns: LoadModelResult wrapping the model loaded for the request
+        :raises ValueError: If model reference object is not found
+        :raises RuntimeError: If loading and evaluating the model failed
+        """
         if fetch_result.model_bytes:
             model_bytes = fetch_result.model_bytes
         elif batch.raw_model and batch.raw_model.data:
@@ -73,9 +82,15 @@ class TorchWorker(MachineLearningWorkerBase):
             device = device.replace(old, new)
 
         buffer = io.BytesIO(initial_bytes=model_bytes)
-        with torch.no_grad():
-            model = torch.jit.load(buffer, map_location=device)  # type: ignore
-            model.eval()
+        try:
+            with torch.no_grad():
+                model = torch.jit.load(buffer, map_location=device)  # type: ignore
+                model.eval()
+        except Exception as e:
+            raise RuntimeError(
+                "Failed to load and evaluate the model: "
+                f"Model key {batch.model_id.key}, Device {device}"
+            ) from e
         result = LoadModelResult(model)
         return result
 
@@ -85,6 +100,16 @@ class TorchWorker(MachineLearningWorkerBase):
         fetch_results: list[FetchInputResult],
         mem_pool: MemoryPool,
     ) -> TransformInputResult:
+        """Given a collection of data, perform a transformation on the data and put
+        the raw tensor data on a MemoryPool allocation.
+
+        :param request: The request that triggered the pipeline
+        :param fetch_result: Raw outputs from fetching inputs out of a feature store
+        :param mem_pool: The memory pool used to access batched input tensors
+        :returns: The transformed inputs wrapped in a TransformInputResult
+        :raises ValueError: If tensors cannot be reconstructed
+        :raises IndexError: If index out of range
+        """
         results: list[torch.Tensor] = []
         total_samples = 0
         slices: list[slice] = []
@@ -123,12 +148,18 @@ class TorchWorker(MachineLearningWorkerBase):
             alloc_size = int(np.prod(dims) * itemsize)
             mem_alloc = mem_pool.alloc(alloc_size)
             mem_view = mem_alloc.get_memview()
-            mem_view[:alloc_size] = b"".join(
-                [
-                    fetch_result.inputs[result_tensor_idx]
-                    for fetch_result in fetch_results
-                ]
-            )
+            try:
+                mem_view[:alloc_size] = b"".join(
+                    [
+                        fetch_result.inputs[result_tensor_idx]
+                        for fetch_result in fetch_results
+                    ]
+                )
+            except IndexError as e:
+                raise IndexError(
+                    "Error accessing elements in fetch_result.inputs "
+                    f"with index {result_tensor_idx}"
+                ) from e
 
             results.append(mem_alloc.serialize())
 
@@ -142,6 +173,17 @@ class TorchWorker(MachineLearningWorkerBase):
         transform_result: TransformInputResult,
         device: str,
     ) -> ExecuteResult:
+        """Execute an ML model on inputs transformed for use by the model.
+
+        :param batch: The batch of requests that triggered the pipeline
+        :param load_result: The result of loading the model onto device memory
+        :param transform_result: The result of transforming inputs for model consumption
+        :param device: The device on which the model will be executed
+        :returns: The result of inference wrapped in an ExecuteResult
+        :raises SmartSimError: If model is not loaded
+        :raises IndexError: If memory slicing is out of range
+        :raises ValueError: If tensor creation fails or is unable to evaluate the model
+        """
         if not load_result.model:
             raise SmartSimError("Model must be loaded to execute")
         device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
@@ -156,26 +198,36 @@ class TorchWorker(MachineLearningWorkerBase):
             mem_alloc = MemoryAlloc.attach(transformed)
             mem_allocs.append(mem_alloc)
             itemsize = np.empty((1), dtype=dtype).itemsize
-            tensors.append(
-                torch.from_numpy(
-                    np.frombuffer(
-                        mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
-                        dtype=dtype,
-                    ).reshape(dims)
+            try:
+                tensors.append(
+                    torch.from_numpy(
+                        np.frombuffer(
+                            mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
+                            dtype=dtype,
+                        ).reshape(dims)
+                    )
                 )
-            )
+            except IndexError as e:
+                raise IndexError("Error during memory slicing") from e
+            except Exception as e:
+                raise ValueError("Error during tensor creation") from e
 
         model: torch.nn.Module = load_result.model
-        with torch.no_grad():
-            model.eval()
-            results = [
-                model(
-                    *[
-                        tensor.to(device, non_blocking=True).detach()
-                        for tensor in tensors
-                    ]
-                )
-            ]
+        try:
+            with torch.no_grad():
+                model.eval()
+                results = [
+                    model(
+                        *[
+                            tensor.to(device, non_blocking=True).detach()
+                            for tensor in tensors
+                        ]
+                    )
+                ]
+        except Exception as e:
+            raise ValueError(
+                f"Error while evaluating the model: Model {batch.model_id.key}"
+            ) from e
 
         transform_result.transformed = []
 
@@ -189,6 +241,15 @@ class TorchWorker(MachineLearningWorkerBase):
         batch: RequestBatch,
         execute_result: ExecuteResult,
     ) -> list[TransformOutputResult]:
+        """Given inference results, perform transformations required to
+        transmit results to the requestor.
+
+        :param batch: The batch of requests that triggered the pipeline
+        :param execute_result: The result of inference wrapped in an ExecuteResult
+        :returns: A list of transformed outputs
+        :raises IndexError: If indexing is out of range
+        :raises ValueError: If transforming output fails
+        """
         transformed_list: list[TransformOutputResult] = []
         cpu_predictions = [
             prediction.cpu() for prediction in execute_result.predictions
@@ -196,12 +257,19 @@ class TorchWorker(MachineLearningWorkerBase):
         for result_slice in execute_result.slices:
             transformed = []
             for cpu_item in cpu_predictions:
-                transformed.append(cpu_item[result_slice].numpy().tobytes())
+                try:
+                    transformed.append(cpu_item[result_slice].numpy().tobytes())
 
-                # todo: need the shape from latest schemas added here.
-                transformed_list.append(
-                    TransformOutputResult(transformed, None, "c", "float32")
-                )  # fixme
+                    # todo: need the shape from latest schemas added here.
+                    transformed_list.append(
+                        TransformOutputResult(transformed, None, "c", "float32")
+                    )  # fixme
+                except IndexError as e:
+                    raise IndexError(
+                        f"Error accessing elements: result_slice {result_slice}"
+                    ) from e
+                except Exception as e:
+                    raise ValueError("Error transforming output") from e
 
         execute_result.predictions = []
 

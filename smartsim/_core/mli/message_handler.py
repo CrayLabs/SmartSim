@@ -401,8 +401,19 @@ class MessageHandler:
 
         :param request: Request to be serialized
         :returns: Serialized request bytes
+        :raises ValueError: If serialization fails
         """
-        return request.to_bytes()
+        display_name = request.schema.node.displayName  # type: ignore
+        class_name = display_name.split(":")[-1]
+        if class_name != "Request":
+            raise ValueError(
+                "Error serializing the request. Value passed in is not "
+                f"a request: {class_name}"
+            )
+        try:
+            return request.to_bytes()
+        except Exception as e:
+            raise ValueError("Error serializing the request") from e
 
     @staticmethod
     def deserialize_request(request_bytes: bytes) -> request_capnp.Request:
@@ -411,13 +422,17 @@ class MessageHandler:
 
         :param request_bytes: Bytes to be deserialized into a request
         :returns: Deserialized request
+        :raises ValueError: If deserialization fails
         """
-        bytes_message = request_capnp.Request.from_bytes(
-            request_bytes, traversal_limit_in_words=2**63
-        )
+        try:
+            bytes_message = request_capnp.Request.from_bytes(
+                request_bytes, traversal_limit_in_words=2**63
+            )
 
-        with bytes_message as message:
-            return message
+            with bytes_message as message:
+                return message
+        except Exception as e:
+            raise ValueError("Error deserializing the request") from e
 
     @staticmethod
     def _assign_status(
@@ -552,8 +567,19 @@ class MessageHandler:
 
         :param response: Response to be serialized
         :returns: Serialized response bytes
+        :raises ValueError: If serialization fails
         """
-        return response.to_bytes()
+        display_name = response.schema.node.displayName  # type: ignore
+        class_name = display_name.split(":")[-1]
+        if class_name != "Response":
+            raise ValueError(
+                "Error serializing the response. Value passed in is not "
+                f"a response: {class_name}"
+            )
+        try:
+            return response.to_bytes()
+        except Exception as e:
+            raise ValueError("Error serializing the response") from e
 
     @staticmethod
     def deserialize_response(response_bytes: bytes) -> response_capnp.Response:
@@ -562,10 +588,15 @@ class MessageHandler:
 
         :param response_bytes: Bytes to be deserialized into a response
         :returns: Deserialized response
+        :raises ValueError: If deserialization fails
         """
-        bytes_message = response_capnp.Response.from_bytes(
-            response_bytes, traversal_limit_in_words=2**63
-        )
+        try:
+            bytes_message = response_capnp.Response.from_bytes(
+                response_bytes, traversal_limit_in_words=2**63
+            )
 
-        with bytes_message as message:
-            return message
+            with bytes_message as message:
+                return message
+
+        except Exception as e:
+            raise ValueError("Error deserializing the response") from e

@@ -360,7 +360,7 @@ class RequestDispatcher(Service):
                 exception_handler(
                     ValueError("No request data found"),
                     None,
-                    "No request data found.",
+                    None,
                 )
 
             request_bytes = bytes_list[0]
@@ -379,7 +379,7 @@ class RequestDispatcher(Service):
                 exception_handler(
                     ValueError("Error validating the request"),
                     request.callback,
-                    "Error validating the request.",
+                    None,
                 )
                 self._perf_timer.measure_time("validate_request")
             else:
@@ -513,7 +513,7 @@ class RequestDispatcher(Service):
                         exception_handler(
                             exc,
                             None,
-                            "Error Transforming input.",
+                            "Error transforming input.",
                         )
                         continue
 

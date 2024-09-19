@@ -470,8 +470,8 @@ class MachineLearningWorkerCore:
         :raises SmartSimError: If neither a key or a model are provided or the
         model cannot be retrieved from the feature store
         :raises ValueError: If a feature store is not available and a raw
-        model is not provided"""
-
+        model is not provided
+        """
         # All requests in the same batch share the model
         if batch.raw_model:
             return FetchModelResult(batch.raw_model.data)
@@ -505,7 +505,8 @@ class MachineLearningWorkerCore:
         :param feature_stores: Available feature stores used for persistence
         :returns: The fetched input
         :raises ValueError: If neither an input key or an input tensor are provided
-        :raises SmartSimError: If a tensor for a given key cannot be retrieved"""
+        :raises SmartSimError: If a tensor for a given key cannot be retrieved
+        """
         fetch_results = []
         for request in batch.requests:
             if request.raw_inputs:
@@ -584,7 +585,10 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
 
         :param request: The request that triggered the pipeline
         :param device: The device on which the model must be placed
-        :returns: LoadModelResult wrapping the model loaded for the request"""
+        :returns: LoadModelResult wrapping the model loaded for the request
+        :raises ValueError: If model reference object is not found
+        :raises RuntimeError: If loading and evaluating the model failed
+        """
 
     @staticmethod
     @abstractmethod
@@ -599,7 +603,10 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
         :param mem_pool: The memory pool used to access batched input tensors
-        :returns: The transformed inputs wrapped in a TransformInputResult"""
+        :returns: The transformed inputs wrapped in a TransformInputResult
+        :raises ValueError: If tensors cannot be reconstructed
+        :raises IndexError: If index out of range
+        """
 
     @staticmethod
     @abstractmethod
@@ -615,7 +622,11 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param load_result: The result of loading the model onto device memory
         :param transform_result: The result of transforming inputs for model consumption
         :param device: The device on which the model will be executed
-        :returns: The result of inference wrapped in an ExecuteResult"""
+        :returns: The result of inference wrapped in an ExecuteResult
+        :raises SmartSimError: If model is not loaded
+        :raises IndexError: If memory slicing is out of range
+        :raises ValueError: If tensor creation fails or is unable to evaluate the model
+        """
 
     @staticmethod
     @abstractmethod
@@ -627,4 +638,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
 
         :param batch: The batch of requests that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
-        :returns: A list of transformed outputs"""
+        :returns: A list of transformed outputs
+        :raises IndexError: If indexing is out of range
+        :raises ValueError: If transforming output fails
+        """

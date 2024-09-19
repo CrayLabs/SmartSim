@@ -413,7 +413,7 @@ class EventConsumer:
             elapsed = (time.time_ns() - start_at) / 1000000000
             remaining = elapsed - self._global_timeout
             if remaining > 0:
-                logger.debug(f"consumer batch timeout exceeded by: {abs(remaining)}")
+                logger.debug(f"Consumer batch timeout exceeded by: {abs(remaining)}")
                 break
 
         return messages

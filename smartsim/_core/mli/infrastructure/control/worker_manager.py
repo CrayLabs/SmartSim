@@ -183,7 +183,7 @@ class WorkerManager(Service):
             exception_handler(
                 ValueError("An invalid batch was received"),
                 None,
-                "Error batching inputs, the batch was invalid.",
+                None,
             )
             return
 
@@ -238,7 +238,7 @@ class WorkerManager(Service):
                     exception_handler(
                         ValueError("Error batching inputs"),
                         request.callback,
-                        "Error batching inputs.",
+                        None,
                     )
                 return
             transformed_input = batch.inputs
@@ -249,7 +249,7 @@ class WorkerManager(Service):
                 )
             except Exception as e:
                 for request in batch.requests:
-                    exception_handler(e, request.callback, "Failed while executing.")
+                    exception_handler(e, request.callback, "Error while executing.")
                 return
             self._perf_timer.measure_time("execute")
 
@@ -260,7 +260,7 @@ class WorkerManager(Service):
             except Exception as e:
                 for request in batch.requests:
                     exception_handler(
-                        e, request.callback, "Failed while transforming the output."
+                        e, request.callback, "Error while transforming the output."
                     )
                 return
 
@@ -275,7 +275,7 @@ class WorkerManager(Service):
                         )
                     except Exception as e:
                         exception_handler(
-                            e, request.callback, "Failed while placing the output."
+                            e, request.callback, "Error while placing the output."
                         )
                         continue
                 else:
