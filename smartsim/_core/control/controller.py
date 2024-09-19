@@ -72,7 +72,7 @@ from ..launcher.launcher import Launcher
 from ..utils import serialize
 from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
 from .job import Job
-from .jobmanager import JobManager
+from .job_manager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 
 if t.TYPE_CHECKING:

@@ -30,7 +30,7 @@ import os
 import pathlib
 import typing as t
 
-from smartsim._core.launcher.stepInfo import StepInfo
+from smartsim._core.launcher.step_info import StepInfo
 from smartsim.status import TERMINAL_STATUSES, JobStatus
 
 _EventClass = t.Literal["start", "stop", "timestep"]

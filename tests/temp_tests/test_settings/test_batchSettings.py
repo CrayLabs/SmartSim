@@ -26,7 +26,7 @@
 import pytest
 
 from smartsim.settings import BatchSettings
-from smartsim.settings.batchCommand import SchedulerType
+from smartsim.settings.batch_command import BatchSchedulerType
 
 pytestmark = pytest.mark.group_a
 
@@ -34,41 +34,47 @@ pytestmark = pytest.mark.group_a
 @pytest.mark.parametrize(
     "scheduler_enum,formatted_batch_args",
     [
-        pytest.param(SchedulerType.Slurm, ["--launch=var", "--nodes=1"], id="slurm"),
-        pytest.param(SchedulerType.Pbs, ["-l", "nodes=1", "-launch", "var"], id="pbs"),
-        pytest.param(SchedulerType.Lsf, ["-launch", "var", "-nnodes", "1"], id="lsf"),
+        pytest.param(
+            BatchSchedulerType.Slurm, ["--launch=var", "--nodes=1"], id="slurm"
+        ),
+        pytest.param(
+            BatchSchedulerType.Pbs, ["-l", "nodes=1", "-launch", "var"], id="pbs"
+        ),
+        pytest.param(
+            BatchSchedulerType.Lsf, ["-launch", "var", "-nnodes", "1"], id="lsf"
+        ),
     ],
 )
 def test_create_scheduler_settings(scheduler_enum, formatted_batch_args):
     bs_str = BatchSettings(
-        scheduler=scheduler_enum.value,
-        schedule_args={"launch": "var"},
+        batch_scheduler=scheduler_enum.value,
+        batch_args={"launch": "var"},
         env_vars={"ENV": "VAR"},
     )
-    bs_str.schedule_args.set_nodes(1)
-    assert bs_str._scheduler == scheduler_enum
+    bs_str.batch_args.set_nodes(1)
+    assert bs_str._batch_scheduler == scheduler_enum
     assert bs_str._env_vars == {"ENV": "VAR"}
     print(bs_str.format_batch_args())
     assert bs_str.format_batch_args() == formatted_batch_args
 
     bs_enum = BatchSettings(
-        scheduler=scheduler_enum,
-        schedule_args={"launch": "var"},
+        batch_scheduler=scheduler_enum,
+        batch_args={"launch": "var"},
         env_vars={"ENV": "VAR"},
     )
-    bs_enum.schedule_args.set_nodes(1)
-    assert bs_enum._scheduler == scheduler_enum
+    bs_enum.batch_args.set_nodes(1)
+    assert bs_enum._batch_scheduler == scheduler_enum
     assert bs_enum._env_vars == {"ENV": "VAR"}
     assert bs_enum.format_batch_args() == formatted_batch_args
 
 
 def test_launcher_property():
-    bs = BatchSettings(scheduler="slurm")
-    assert bs.scheduler == "slurm"
+    bs = BatchSettings(batch_scheduler="slurm")
+    assert bs.batch_scheduler == "slurm"
 
 
 def test_env_vars_property():
-    bs = BatchSettings(scheduler="slurm", env_vars={"ENV": "VAR"})
+    bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
     assert bs.env_vars == {"ENV": "VAR"}
     ref = bs.env_vars
     assert ref is bs.env_vars

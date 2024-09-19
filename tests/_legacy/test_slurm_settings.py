@@ -100,7 +100,7 @@ def test_mpmd_compound_env_exports():
     srun_2.env_vars = {"cmp2": "222,333", "norm2": "pqr"}
     srun.make_mpmd(srun_2)
 
-    from smartsim._core.launcher.step.slurmStep import SbatchStep, SrunStep
+    from smartsim._core.launcher.step.slurm_step import SbatchStep, SrunStep
     from smartsim.settings.slurmSettings import SbatchSettings
 
     step = SrunStep("teststep", "./", srun)
@@ -160,7 +160,7 @@ def test_mpmd_non_compound_env_exports():
     srun_2.env_vars = {"cmp2": "222", "norm2": "pqr"}
     srun.make_mpmd(srun_2)
 
-    from smartsim._core.launcher.step.slurmStep import SbatchStep, SrunStep
+    from smartsim._core.launcher.step.slurm_step import SbatchStep, SrunStep
     from smartsim.settings.slurmSettings import SbatchSettings
 
     step = SrunStep("teststep", "./", srun)
@@ -220,7 +220,7 @@ def test_mpmd_non_compound_no_exports():
     srun_2.env_vars = {}
     srun.make_mpmd(srun_2)
 
-    from smartsim._core.launcher.step.slurmStep import SbatchStep, SrunStep
+    from smartsim._core.launcher.step.slurm_step import SbatchStep, SrunStep
     from smartsim.settings.slurmSettings import SbatchSettings
 
     step = SrunStep("teststep", "./", srun)

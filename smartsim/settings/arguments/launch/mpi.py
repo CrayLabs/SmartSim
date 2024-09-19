@@ -30,11 +30,11 @@ import typing as t
 
 from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import dispatch
-from smartsim._core.shell.shellLauncher import ShellLauncher, make_shell_format_fn
+from smartsim._core.shell.shell_launcher import ShellLauncher, make_shell_format_fn
 from smartsim.log import get_logger
 
 from ...common import set_check_input
-from ...launchCommand import LauncherType
+from ...launch_command import LauncherType
 
 logger = get_logger(__name__)
 _as_mpirun_command = make_shell_format_fn("mpirun")

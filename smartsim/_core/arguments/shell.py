@@ -30,7 +30,7 @@ import typing as t
 from abc import abstractmethod
 
 from smartsim.log import get_logger
-from smartsim.settings.arguments.launchArguments import LaunchArguments
+from smartsim.settings.arguments.launch_arguments import LaunchArguments
 
 logger = get_logger(__name__)
 

@@ -24,20 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import annotations
-
-import copy
 import typing as t
+from abc import ABC, abstractmethod
 
-from smartsim.settings.launchSettings import LaunchSettings
+from smartsim.launchable.launchable import Launchable
 
 if t.TYPE_CHECKING:
-    from smartsim.entity.entity import SmartSimEntity
+    from smartsim._core.commands.launch_commands import LaunchCommands
 
 
-class MPMDPair:
-    """Class to store MPMD Pairs"""
+class BaseJob(ABC, Launchable):
+    """The highest level abstract base class for a single job that can be launched"""
 
-    def __init__(self, entity: SmartSimEntity, launch_settings: LaunchSettings):
-        self.entity = copy.deepcopy(entity)
-        self.launch_settings = copy.deepcopy(launch_settings)
+    @abstractmethod
+    def get_launch_steps(self) -> "LaunchCommands":
+        """Return the launch steps corresponding to the
+        internal data.
+        """

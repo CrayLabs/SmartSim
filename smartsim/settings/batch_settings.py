@@ -36,8 +36,8 @@ from .arguments import BatchArguments
 from .arguments.batch.lsf import BsubBatchArguments
 from .arguments.batch.pbs import QsubBatchArguments
 from .arguments.batch.slurm import SlurmBatchArguments
-from .baseSettings import BaseSettings
-from .batchCommand import BatchSchedulerType
+from .base_settings import BaseSettings
+from .batch_command import BatchSchedulerType
 from .common import StringArgument
 
 logger = get_logger(__name__)
@@ -57,7 +57,7 @@ class BatchSettings(BaseSettings):
     - Update environment variables.
     - Retrieve information associated with the ``BatchSettings`` object.
         - The scheduler value (BatchSettings.scheduler).
-        - The derived BatchArguments child class (BatchSettings.schedule_args).
+        - The derived BatchArguments child class (BatchSettings.batch_args).
         - The set environment variables (BatchSettings.env_vars).
         - A formatted output of set batch arguments (BatchSettings.format_batch_args).
     """
@@ -70,27 +70,27 @@ class BatchSettings(BaseSettings):
     ) -> None:
         """Initialize a BatchSettings instance.
 
-        The "scheduler" of SmartSim BatchSettings will determine the
-        child type assigned to the BatchSettings.schedule_args attribute.
-        To configure a job for SLURM batch jobs, assign BatchSettings.scheduler
-        to "slurm" or SchedulerType.Slurm:
+        The "batch_scheduler" of SmartSim BatchSettings will determine the
+        child type assigned to the BatchSettings.batch_args attribute.
+        To configure a job for SLURM batch jobs, assign BatchSettings.batch_scheduler
+        to "slurm" or BatchSchedulerType.Slurm:
 
         .. highlight:: python
         .. code-block:: python
 
-            sbatch_settings = BatchSettings(scheduler="slurm")
+            sbatch_settings = BatchSettings(batch_scheduler="slurm")
             # OR
-            sbatch_settings = BatchSettings(scheduler=SchedulerType.Slurm)
+            sbatch_settings = BatchSettings(batch_scheduler=BatchSchedulerType.Slurm)
 
-        This will assign a SlurmBatchArguments object to ``sbatch_settings.schedule_args``.
+        This will assign a SlurmBatchArguments object to ``sbatch_settings.batch_args``.
         Using the object, users may access the child class functions to set
         batch configurations. For example:
 
         .. highlight:: python
         .. code-block:: python
 
-            sbatch_settings.schedule_args.set_nodes(5)
-            sbatch_settings.schedule_args.set_cpus_per_task(2)
+            sbatch_settings.batch_args.set_nodes(5)
+            sbatch_settings.batch_args.set_cpus_per_task(2)
 
         To set customized batch arguments, use the `set()` function provided by
         the BatchSettings child class. For example:
@@ -98,7 +98,7 @@ class BatchSettings(BaseSettings):
         .. highlight:: python
         .. code-block:: python
 
-            sbatch_settings.schedule_args.set(key="nodes", value="6")
+            sbatch_settings.batch_args.set(key="nodes", value="6")
 
         If the key already exists in the existing batch arguments, the value will
         be overwritten.
@@ -168,7 +168,7 @@ class BatchSettings(BaseSettings):
         return self._arguments.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nBatch Scheduler: {self.batch_scheduler}{self.schedule_args}"
+        string = f"\nBatch Scheduler: {self.batch_scheduler}{self.batch_args}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

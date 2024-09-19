@@ -105,5 +105,5 @@ class BatchArguments(ABC):
         pass
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nScheduler Arguments:\n{fmt_dict(self._schedule_args)}"
+        string = f"\nScheduler Arguments:\n{fmt_dict(self._batch_args)}"
         return string

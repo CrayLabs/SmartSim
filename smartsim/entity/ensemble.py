@@ -39,7 +39,7 @@ from smartsim.entity.strategies import ParamSet
 from smartsim.launchable.job import Job
 
 if t.TYPE_CHECKING:
-    from smartsim.settings.launchSettings import LaunchSettings
+    from smartsim.settings.launch_settings import LaunchSettings
 
 
 class Ensemble(entity.CompoundEntity):
@@ -83,7 +83,7 @@ class Ensemble(entity.CompoundEntity):
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         )
         """The parameters and values to be used when configuring entities"""
-        self._files = copy.deepcopy(files) if files else EntityFiles()
+        self._files = copy.deepcopy(files) if files else None
         """The files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
@@ -147,7 +147,7 @@ class Ensemble(entity.CompoundEntity):
         self._exe_arg_parameters = copy.deepcopy(value)
 
     @property
-    def files(self) -> EntityFiles:
+    def files(self) -> t.Union[EntityFiles, None]:
         """Return attached EntityFiles object.
 
         :return: the EntityFiles object of files to be copied, symlinked,
@@ -287,7 +287,7 @@ class Ensemble(entity.CompoundEntity):
         three replicas were specified. Each Job will have the provided LaunchSettings.
 
         :param settings: LaunchSettings to apply to each Job
-        :return: List of Jobs with the provided LaunchSettings
+        :return: Sequence of Jobs with the provided LaunchSettings
         """
         apps = self._create_applications()
         if not apps:

@@ -30,8 +30,8 @@ import zmq
 import zmq.auth.thread
 
 from smartsim._core.config.config import get_config
-from smartsim._core.schemas import dragonRequests as _dragonRequests
-from smartsim._core.schemas import dragonResponses as _dragonResponses
+from smartsim._core.schemas import dragon_requests as _dragonRequests
+from smartsim._core.schemas import dragon_responses as _dragonResponses
 from smartsim._core.schemas import utils as _utils
 from smartsim._core.utils.security import KeyManager
 from smartsim.log import get_logger

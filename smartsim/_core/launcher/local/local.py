@@ -30,9 +30,9 @@ from ....entity import SmartSimEntity
 from ....settings import RunSettings, SettingsBase
 from ..launcher import Launcher
 from ..step import LocalStep, Step
-from ..stepInfo import StepInfo, UnmanagedStepInfo
-from ..stepMapping import StepMapping
-from ..taskManager import TaskManager
+from ..step_info import StepInfo, UnmanagedStepInfo
+from ..step_mapping import StepMapping
+from ..task_manager import TaskManager
 
 
 class LocalLauncher(Launcher):

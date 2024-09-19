@@ -140,7 +140,7 @@ class Application(SmartSimEntity):
         self._exe_args.extend(args)
 
     @property
-    def files(self) -> EntityFiles:
+    def files(self) -> t.Union[EntityFiles, None]:
         """Return attached EntityFiles object.
 
         :return: the EntityFiles object of files to be copied, symlinked,

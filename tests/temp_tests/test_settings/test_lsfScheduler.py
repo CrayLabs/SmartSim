@@ -26,7 +26,7 @@
 import pytest
 
 from smartsim.settings import BatchSettings
-from smartsim.settings.batchCommand import BatchSchedulerType
+from smartsim.settings.batch_command import BatchSchedulerType
 
 pytestmark = pytest.mark.group_a
 

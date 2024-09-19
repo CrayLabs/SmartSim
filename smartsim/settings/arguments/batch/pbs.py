@@ -32,9 +32,9 @@ from copy import deepcopy
 from smartsim.log import get_logger
 
 from ....error import SSConfigError
-from ...batchCommand import BatchSchedulerType
+from ...batch_command import BatchSchedulerType
 from ...common import StringArgument
-from ..batchArguments import BatchArguments
+from ..batch_arguments import BatchArguments
 
 logger = get_logger(__name__)
 

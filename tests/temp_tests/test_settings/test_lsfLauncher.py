@@ -32,7 +32,7 @@ from smartsim.settings.arguments.launch.lsf import (
     JsrunLaunchArguments,
     _as_jsrun_command,
 )
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 

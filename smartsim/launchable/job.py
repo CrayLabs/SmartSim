@@ -29,9 +29,9 @@ from __future__ import annotations
 import typing as t
 from copy import deepcopy
 
-from smartsim._core.commands.launchCommands import LaunchCommands
+from smartsim._core.commands.launch_commands import LaunchCommands
 from smartsim._core.utils.helpers import check_name
-from smartsim.launchable.basejob import BaseJob
+from smartsim.launchable.base_job import BaseJob
 from smartsim.log import get_logger
 from smartsim.settings import LaunchSettings
 
@@ -81,9 +81,9 @@ class Job(BaseJob):
         """Deepcopy of the SmartSimEntity object"""
         self._launch_settings = deepcopy(launch_settings)
         """Deepcopy of the LaunchSettings object"""
-        check_name(name)
         self._name = name if name else entity.name
         """Name of the Job"""
+        check_name(self._name)
 
     @property
     def name(self) -> str:
