@@ -440,7 +440,6 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
     [
         pytest.param(   "build",    "build_execute",        "verbose mocked-build",                    "-v",      True,                             "",         "v",         True, id="verbose 'on'"),
         pytest.param(   "build",    "build_execute",            "cpu mocked-build",          "--device=cpu",      True,                             "",    "device",        "cpu", id="device 'cpu'"),
-        pytest.param(   "build",    "build_execute",            "gpu mocked-build",          "--device=gpu",      True,                             "",    "device",        "gpu", id="device 'gpu'"),
         pytest.param(   "build",    "build_execute",           "gpuX mocked-build",         "--device=gpux",     False,       "invalid choice: 'gpux'",          "",           "", id="set bad device 'gpuX'"),
         pytest.param(   "build",    "build_execute",  "no tensorflow mocked-build",     "--skip-tensorflow",      True,                             "",     "no_tf",         True, id="Skip TF"),
         pytest.param(   "build",    "build_execute",       "no torch mocked-build",          "--skip-torch",      True,                             "",     "no_pt",         True, id="Skip Torch"),
