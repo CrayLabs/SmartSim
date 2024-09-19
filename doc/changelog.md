@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Update error handling for consistency
 - Parameterize installation of dragon package with `smart build`
 - Update docstrings
 - Implement asynchronous notifications for shared data

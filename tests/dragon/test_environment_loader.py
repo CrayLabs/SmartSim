@@ -39,6 +39,7 @@ from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConf
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
+from smartsim.error.errors import SmartSimError
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -100,7 +101,7 @@ def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
         queue_factory=DragonFLIChannel.from_descriptor,
     )
 
-    with pytest.raises(DragonFLIError):
+    with pytest.raises(SmartSimError):
         config.get_queue()
 
 
