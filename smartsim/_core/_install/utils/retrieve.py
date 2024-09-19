@@ -34,7 +34,7 @@ from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 import git
-import tqdm
+from tqdm import tqdm
 
 from smartsim._core._install.platform import Architecture, OperatingSystem
 from smartsim._core._install.types import PathLike
@@ -44,24 +44,26 @@ class UnsupportedArchive(Exception):
     pass
 
 
-class _TqdmUpTo(tqdm.tqdm):
-    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`.
+class _TqdmUpTo(tqdm):  # type: ignore[type-arg]
+    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`
 
     From tqdm doumentation for progress bar when downloading
     """
 
-    def update_to(self, b=1, bsize=1, tsize=None):
+    def update_to(
+        self, num_blocks: int = 1, bsize: int = 1, tsize: t.Optional[int] = None
+    ) -> t.Optional[bool]:
+        """Update progress in tqdm-like way
+
+        :param b: number of blocks transferred so far, defaults to 1
+        :param bsize: size of each block (in tqdm units), defaults to 1
+        :param tsize: total size (in tqdm units), defaults to None
+        :return: Update
         """
-        b  : int, optional
-            Number of blocks transferred so far [default: 1].
-        bsize  : int, optional
-            Size of each block (in tqdm units) [default: 1].
-        tsize  : int, optional
-            Total size (in tqdm units). If [default: None] remains unchanged.
-        """
+
         if tsize is not None:
             self.total = tsize
-        return self.update(b * bsize - self.n)  # also sets self.n = b * bsize
+        return self.update(num_blocks * bsize - self.n)  # also sets self.n = b * bsize
 
 
 def _from_local_archive(
@@ -111,9 +113,9 @@ def _from_http(
         unit_divisor=1024,
         miniters=1,
         desc=source.split("/")[-1],
-    ) as t:  # all optional kwargs
-        local_file, _ = urlretrieve(source, reporthook=t.update_to, **kwargs)
-        t.total = t.n
+    ) as _t:  # all optional kwargs
+        local_file, _ = urlretrieve(source, reporthook=_t.update_to, **kwargs)
+        _t.total = _t.n
 
     _from_local_archive(local_file, destination)
     os.remove(local_file)

@@ -94,7 +94,7 @@ class Device(enum.Enum):
         if str_ == "gpu":
             # TODO: auto detect which device to use
             #       currently hard coded to `cuda11`
-            return cls.CUDA118
+            return cls.CUDA11
         return cls(str_)
 
     @classmethod
