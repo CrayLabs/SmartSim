@@ -155,17 +155,17 @@ class RedisAIBuilder:
         cmake_command = self._rai_cmake_cmd()
         build_command = self._rai_build_cmd
 
-        if self.platform.device.is_rocm():
+        if self.platform.device.is_rocm() and "libtorch" in self.mlpackages:
             pytorch_rocm_arch = os.environ.get("PYTORCH_ROCM_ARCH")
-            if pytorch_rocm_arch is not None:
+            if not pytorch_rocm_arch:
                 logger.info(
                     f"PYTORCH_ROCM_ARCH not set. Defaulting to '{_SUPPORTED_ROCM_ARCH}'"
                 )
                 os.environ["PYTORCH_ROCM_ARCH"] = _SUPPORTED_ROCM_ARCH
-            if pytorch_rocm_arch != _SUPPORTED_ROCM_ARCH:
+            elif pytorch_rocm_arch != _SUPPORTED_ROCM_ARCH:
                 logger.warning(
-                    f"PYTORCH_ROCM_ARCH is not {_SUPPORTED_ROCM_ARCH} which is the\n"
-                    "only officially supported architecture. This may work\n"
+                    f"PYTORCH_ROCM_ARCH is not {_SUPPORTED_ROCM_ARCH} which is the "
+                    "only officially supported architecture. This may still work "
                     "if you are supplying your own version of libtensorflow."
                 )
 
