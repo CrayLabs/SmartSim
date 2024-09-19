@@ -41,7 +41,7 @@ The following output indicates a successful install:
     [SmartSim] INFO Verifying Torch Backend
     [SmartSim] INFO Verifying ONNX Backend
     [SmartSim] INFO Verifying TensorFlow Backend
-    16:26:35 login15 SmartSim[557020:MainThread] INFO Success!
+    16:26:35 login SmartSim[557020:MainThread] INFO Success!
 
 Post-installation
 -----------------
