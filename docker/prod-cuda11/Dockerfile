@@ -24,13 +24,38 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .helpers import (
-    check_for_utility,
-    colorize,
-    delete_elements,
-    execute_platform_cmd,
-    expand_exe_path,
-    installed_redisai_backends,
-    is_crayex_platform,
-)
-from .redis import check_cluster_status, create_cluster, db_is_active
+FROM ubuntu:22.04
+
+LABEL maintainer="Cray Labs"
+LABEL org.opencontainers.image.source https://github.com/CrayLabs/SmartSim
+
+ARG DEBIAN_FRONTEND="noninteractive"
+ENV TZ=US/Seattle
+
+# Make basic dependencies
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential \
+    git gcc make git-lfs wget libopenmpi-dev openmpi-bin unzip \
+    python3-pip python3 python3-dev cmake wget apt-utils
+
+# # Install Cudatoolkit 11.8
+ENV TERM="xterm"
+RUN wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run && \
+    chmod +x ./cuda_11.8.0_520.61.05_linux.run && \
+    ./cuda_11.8.0_520.61.05_linux.run --silent --toolkit && \
+    rm ./cuda_11.8.0_520.61.05_linux.run
+
+# Install cuDNN 8.9.7
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcudnn8_8.9.7.29-1+cuda11.8_amd64.deb && \
+    dpkg -i libcudnn8_8.9.7.29-1+cuda11.8_amd64.deb && \
+    rm ./libcudnn8_8.9.7.29-1+cuda11.8_amd64.deb
+
+ # Install SmartSim and SmartRedis
+ RUN pip install git+https://github.com/CrayLabs/SmartRedis.git && \
+     pip install "smartsim[ml] @ git+https://github.com/CrayLabs/SmartSim.git"
+
+ ENV CUDA_HOME="/usr/local/cuda/"
+ ENV PATH="${PATH}:${CUDA_HOME}/bin"
+
+ # Build ML Backends
+ RUN smart build --device=gpu --onnx

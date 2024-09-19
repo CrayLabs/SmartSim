@@ -101,5 +101,5 @@ def test_run_request_with_negative_affinity(
             ),
         )
 
-    assert f"{device}_affinity" in str(ex.value.args[0])
-    assert "NumberNotGeError" in str(ex.value.args[0])
+    assert f"{device}_affinity" in str(ex.value)
+    assert "greater than or equal to 0" in str(ex.value)

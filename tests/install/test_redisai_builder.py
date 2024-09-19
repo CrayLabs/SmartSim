@@ -24,13 +24,37 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .helpers import (
-    check_for_utility,
-    colorize,
-    delete_elements,
-    execute_platform_cmd,
-    expand_exe_path,
-    installed_redisai_backends,
-    is_crayex_platform,
+from pathlib import Path
+
+import pytest
+
+from smartsim._core._install.buildenv import BuildEnv
+from smartsim._core._install.mlpackages import (
+    DEFAULT_MLPACKAGE_PATH,
+    MLPackage,
+    load_platform_configs,
 )
-from .redis import check_cluster_status, create_cluster, db_is_active
+from smartsim._core._install.platform import Platform
+from smartsim._core._install.redisaiBuilder import RedisAIBuilder
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
+DEFAULT_MLPACKAGES = load_platform_configs(DEFAULT_MLPACKAGE_PATH)
+
+
+@pytest.mark.parametrize(
+    "platform",
+    [platform for platform in DEFAULT_MLPACKAGES],
+    ids=[str(platform) for platform in DEFAULT_MLPACKAGES],
+)
+def test_backends_to_be_installed(monkeypatch, test_dir, platform):
+    mlpackages = DEFAULT_MLPACKAGES[platform]
+    monkeypatch.setattr(MLPackage, "retrieve", lambda *args, **kwargs: None)
+    builder = RedisAIBuilder(platform, mlpackages, BuildEnv(), Path(test_dir))
+
+    BACKENDS = ["libtorch", "libtensorflow", "onnxruntime"]
+    TOGGLES = ["build_torch", "build_tensorflow", "build_onnxruntime"]
+
+    for backend, toggle in zip(BACKENDS, TOGGLES):
+        assert getattr(builder, toggle) == (backend in mlpackages)

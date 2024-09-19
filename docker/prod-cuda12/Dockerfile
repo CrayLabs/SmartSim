@@ -24,13 +24,41 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .helpers import (
-    check_for_utility,
-    colorize,
-    delete_elements,
-    execute_platform_cmd,
-    expand_exe_path,
-    installed_redisai_backends,
-    is_crayex_platform,
-)
-from .redis import check_cluster_status, create_cluster, db_is_active
+FROM ubuntu:22.04
+
+LABEL maintainer="Cray Labs"
+LABEL org.opencontainers.image.source https://github.com/CrayLabs/SmartSim
+
+ARG DEBIAN_FRONTEND="noninteractive"
+ENV TZ=US/Seattle
+
+# Make basic dependencies
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential \
+    git gcc make git-lfs wget libopenmpi-dev openmpi-bin unzip \
+    python3-pip python3 python3-dev cmake wget
+
+# Install Cudatoolkit 12.5
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
+    dpkg -i cuda-keyring_1.1-1_all.deb && \
+    apt-get update -y && \
+    apt-get install -y cuda-toolkit-12-5
+
+# Install cuDNN 8.9.7
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcudnn8_8.9.7.29-1+cuda12.2_amd64.deb && \
+    dpkg -i libcudnn8_8.9.7.29-1+cuda12.2_amd64.deb
+
+# Install SmartSim and SmartRedis
+RUN pip install git+https://github.com/CrayLabs/SmartRedis.git && \
+    pip install git+https://github.com/CrayLabs/SmartSim.git@cuda-12-support
+
+ENV CUDA_HOME="/usr/local/cuda/"
+ENV PATH="${PATH}:${CUDA_HOME}/bin"
+
+# Install machine-learning python packages consistent with RedisAI
+# Note: pytorch gets installed in the smart build step
+# This step will be deprecated in a future update
+RUN pip install tensorflow==2.15.0
+
+# Build ML Backends
+RUN smart build --device=cuda121

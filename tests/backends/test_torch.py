@@ -65,9 +65,11 @@ def test_torch_model_and_script(
     db = prepare_db(single_db).orchestrator
     wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
     test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
     run_settings = wlm_experiment.create_run_settings(
-        "python", f"run_torch.py --device={test_device}"
+        "python",
+        ["run_torch.py", f"--device={test_device}", f"--num-devices={test_num_gpus}"],
     )
     if wlmutils.get_test_launcher() != "local":
         run_settings.set_tasks(1)

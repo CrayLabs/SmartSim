@@ -32,6 +32,7 @@ import smartredis
 
 import smartsim._core._cli.validate
 import smartsim._core._install.builder as build
+from smartsim._core._install.platform import Device
 from smartsim._core.utils.helpers import installed_redisai_backends
 
 sklearn_available = True
@@ -79,7 +80,7 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         location=test_dir,
         port=db_port,
         # Always test on CPU, heads don't always have GPU
-        device=build.Device.CPU,
+        device=Device.CPU,
         # Test the backends the dev has installed
         with_tf="tensorflow" in backends,
         with_pt="torch" in backends,

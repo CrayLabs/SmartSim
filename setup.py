@@ -137,7 +137,7 @@ extras_require = {
         "types-redis",
         "types-tabulate",
         "types-tqdm",
-        "types-tensorflow==2.12.0.9",
+        "types-tensorflow",
         "types-setuptools",
         "typing_extensions>=4.1.0",
     ],
@@ -151,7 +151,7 @@ extras_require = {
         "nbsphinx==0.9.3",
         "docutils==0.18.1",
         "torch==2.0.1",
-        "tensorflow==2.13.1",
+        "tensorflow>=2.14,<3.0",
         "ipython",
         "jinja2==3.1.2",
         "sphinx-design",
@@ -159,8 +159,6 @@ extras_require = {
         "sphinx-autodoc-typehints",
         "myst_parser",
     ],
-    # see smartsim/_core/_install/buildenv.py for more details
-    **versions.ml_extras_required(),
 }
 
 
@@ -175,10 +173,11 @@ setup(
         "redis>=4.5",
         "tqdm>=4.50.2",
         "filelock>=3.4.2",
-        "protobuf~=3.20",
+        "GitPython<=3.1.43",
+        "protobuf<=3.20.3",
         "jinja2>=3.1.2",
         "watchdog>4,<5",
-        "pydantic==1.10.14",
+        "pydantic>2",
         "pyzmq>=25.1.2",
         "pygithub>=2.3.0",
         "numpy<2",
