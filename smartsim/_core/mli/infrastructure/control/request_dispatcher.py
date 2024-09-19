@@ -516,7 +516,7 @@ class RequestDispatcher(Service):
                         request.input_meta = []
 
                     try:
-                        self._outgoing_queue.put(batch)
+                        self._outgoing_queue.put(batch.serialize())
                     except Exception as exc:
                         exception_handler(
                             exc,

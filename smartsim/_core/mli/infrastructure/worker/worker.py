@@ -31,6 +31,7 @@ from dragon.managed_memory import MemoryPool
 # isort: on
 
 import typing as t
+import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -300,6 +301,14 @@ class RequestBatch:
             keys.extend(request.output_keys)
 
         return keys
+
+
+    def serialize(self):
+        return pickle.dumps(self)
+
+    @classmethod
+    def deserialize(cls, serialized_str):
+        return pickle.loads(serialized_str)
 
 
 class MachineLearningWorkerCore:
