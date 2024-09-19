@@ -18,7 +18,7 @@ To install SmartSim on Perlmutter, follow these steps:
 
 .. code:: bash
 
-    pip install git+https://github.com/ashao/SmartSim.git@refactor_rai_builder
+    pip install git+https://github.com/CrayLabs/SmartSim.git
 
 **Step 3:** Build Redis, RedisAI, the backends, and all the Python packages:
 

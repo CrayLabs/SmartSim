@@ -103,9 +103,9 @@ Linux
            - 2.17
            - 1.17.3
 
-    .. group-tab:: ROCm 5.7.0
+    .. group-tab:: ROCm 6
 
-      .. list-table:: AMD ROCm 5.7.0
+      .. list-table:: AMD ROCm 6.1
          :widths: 50 50 50 50
          :header-rows: 1
          :align: center
@@ -115,9 +115,9 @@ Linux
            - Tensorflow
            - ONNX Runtime
          * - 3.9-3.11
-           - 2.2.2
-           - 2.16 (2.13 python package)
-           - 1.17.3
+           - 2.4.1
+           - N/A
+           - N/A
 
     .. group-tab:: CPU
 

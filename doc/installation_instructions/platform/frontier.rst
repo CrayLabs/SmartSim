@@ -57,7 +57,7 @@ these instructions, being sure to set the following variables
 
    # Download SmartSim and site-specific files
    cd $SCRATCH
-   pip install git+https://github.com/ashao/SmartSim.git@refactor_rai_builder
+   pip install git+https://github.com/CrayLabs/SmartSim.git
 
 **Step 3:** Build Redis, RedisAI, the backends, and all the Python packages:
 
@@ -77,8 +77,6 @@ The following output indicates a successful install:
 
    [SmartSim] INFO Verifying Tensor Transfer
    [SmartSim] INFO Verifying Torch Backend
-   [SmartSim] INFO Verifying ONNX Backend
-   [SmartSim] INFO Verifying TensorFlow Backend
    16:26:35 login SmartSim[557020:MainThread] INFO Success!
 
 Post-installation
