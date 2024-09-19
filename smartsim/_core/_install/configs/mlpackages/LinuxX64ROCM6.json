@@ -15,11 +15,11 @@
         {
             "name": "libtorch",
             "version": "2.4.0",
-            "pip_index": " https://download.pytorch.org/whl/rocm6.1",
+            "pip_index": "https://download.pytorch.org/whl/rocm6.1",
             "python_packages": [
-                "torch==2.4.1",
-                "torchvision",
-                "torchaudio"
+                "torch==2.4.0+rocm6.1",
+                "torchvision==0.19.0+rocm6.1",
+                "torchaudio==2.4.0+rocm6.1"
             ],
             "lib_source": "https://download.pytorch.org/libtorch/rocm6.1/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Brocm6.1.zip",
             "rai_patches": [
@@ -42,18 +42,6 @@
                     "replacement": "$ENV{ROCM_PATH}"
                 }
             ]
-        },
-        {
-            "name": "onnxruntime",
-            "version": "1.17.3",
-            "pip_index": "",
-            "python_packages": [
-                "onnx==1.15",
-                "skl2onnx",
-                "scikit-learn",
-                "onnxmltools"
-            ],
-            "lib_source": "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.2/onnxruntime-1.17.3-linux-x64-rocm-6.1.2.tgz"
         }
     ]
 }
