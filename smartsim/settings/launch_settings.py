@@ -80,7 +80,7 @@ class LaunchSettings(BaseSettings):
 
         The "launcher" of SmartSim LaunchSettings will determine the
         child type assigned to the LaunchSettings.launch_args attribute.
-        To configure a job for SLURM, assign LaunchSettings.launcher
+        For example, to configure a job for SLURM, assign LaunchSettings.launcher
         to "slurm" or LauncherType.Slurm:
 
         .. highlight:: python

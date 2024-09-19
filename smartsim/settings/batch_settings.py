@@ -72,7 +72,7 @@ class BatchSettings(BaseSettings):
 
         The "batch_scheduler" of SmartSim BatchSettings will determine the
         child type assigned to the BatchSettings.batch_args attribute.
-        To configure a job for SLURM batch jobs, assign BatchSettings.batch_scheduler
+        For example, to configure a job for SLURM batch jobs, assign BatchSettings.batch_scheduler
         to "slurm" or BatchSchedulerType.Slurm:
 
         .. highlight:: python
