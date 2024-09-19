@@ -37,7 +37,7 @@ these instructions, being sure to set the following variables
 .. code:: bash
 
    module load PrgEnv-gnu cray-python
-   module load rocm/6.2.1
+   module load rocm/6.1.3
 
    export SCRATCH=/lustre/orion/$PROJECT_NAME/scratch/$USER/
    export VENV_HOME=$SCRATCH/$VENV_NAME/
@@ -57,15 +57,13 @@ these instructions, being sure to set the following variables
 
    # Download SmartSim and site-specific files
    cd $SCRATCH
-   git clone https://github.com/CrayLabs/SmartSim.git
-   cd SmartSim
-   pip install .
+   pip install git+https://github.com/ashao/SmartSim.git@refactor_rai_builder
 
 **Step 3:** Build Redis, RedisAI, the backends, and all the Python packages:
 
 .. code:: bash
 
-   smart build --device=rocm-6 
+   smart build --device=rocm-6
 
 **Step 4:** Check that SmartSim has been installed and built correctly:
 
@@ -98,7 +96,7 @@ build, and some variables should be set to optimize performance:
 .. code:: bash
 
    module load PrgEnv-gnu
-   module load rocm/6.2.1
+   module load rocm/6.1.3
 
    # Optimizations for inference
    export SCRATCH=/lustre/orion/$PROJECT_NAME/scratch/$USER/
