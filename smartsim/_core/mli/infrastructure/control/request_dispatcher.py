@@ -280,7 +280,7 @@ class RequestDispatcher(Service):
         fs_actual = {item.descriptor for item in self._feature_stores.values()}
         fs_missing = fs_desired - fs_actual
 
-        if self.has_featurestore_factory:
+        if not self.has_featurestore_factory:
             logger.error("No feature store factory configured")
             return False
 

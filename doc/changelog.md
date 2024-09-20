@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Quick bug fix in _validate
 - Add helper methods to MLI classes
 - Update error handling for consistency
 - Parameterize installation of dragon package with `smart build`
