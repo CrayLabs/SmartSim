@@ -24,9 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from ..builders.ensemble import Ensemble
 from .application import Application
 from .dbnode import FSNode
 from .dbobject import *
-from ..builders.ensemble import Ensemble
 from .entity import SmartSimEntity, TelemetryConfiguration
 from .files import TaggedFilesHierarchy
