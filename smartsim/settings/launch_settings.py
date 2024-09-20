@@ -52,18 +52,84 @@ logger = get_logger(__name__)
 
 
 class LaunchSettings(BaseSettings):
+    """The LaunchSettings class stores launcher configuration settings and is
+    used to inject launcher-specific behavior into a job.
+
+    LaunchSettings is designed to be extended by a LaunchArguments child class that
+    corresponds to the launcher provided during initialization. The supported launchers
+    are Dragon, Slurm, PALS, ALPS, Local, Mpiexec, Mpirun, Orterun, and LSF. Using the
+    LaunchSettings class, users can:
+
+    - Set the launcher type of a job.
+    - Configure launch arguments and environment variables.
+    - Access and modify custom launch arguments.
+    - Update environment variables.
+    - Retrieve information associated with the ``LaunchSettings`` object.
+        - The launcher value (LaunchSettings.launcher).
+        - The derived LaunchSettings child class (LaunchSettings.launch_args).
+        - The set environment variables (LaunchSettings.env_vars).
+    """
+
     def __init__(
         self,
         launcher: t.Union[LauncherType, str],
         launch_args: StringArgument | None = None,
         env_vars: StringArgument | None = None,
     ) -> None:
+        """Initialize a LaunchSettings instance.
+
+        The "launcher" of SmartSim LaunchSettings will determine the
+        child type assigned to the LaunchSettings.launch_args attribute.
+        For example, to configure a job for SLURM, assign LaunchSettings.launcher
+        to "slurm" or LauncherType.Slurm:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            srun_settings = LaunchSettings(launcher="slurm")
+            # OR
+            srun_settings = LaunchSettings(launcher=LauncherType.Slurm)
+
+        This will assign a SlurmLaunchArguments object to ``srun_settings.launch_args``.
+        Using the object, users may access the child class functions to set
+        batch configurations. For example:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            srun_settings.launch_args.set_nodes(5)
+            srun_settings.launch_args.set_cpus_per_task(2)
+
+        To set customized launch arguments, use the  `set()`function provided by
+        the LaunchSettings child class. For example:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            srun_settings.launch_args.set(key="nodes", value="6")
+
+        If the key already exists in the existing launch arguments, the value will
+        be overwritten.
+
+        :param launcher: The type of launcher to initialize (e.g., Dragon, Slurm,
+            PALS, ALPS, Local, Mpiexec, Mpirun, Orterun, LSF)
+        :param launch_args: A dictionary of arguments for the launcher, where the keys
+            are strings and the values can be either strings or None. This argument is optional
+            and defaults to None.
+        :param env_vars: Environment variables for the launch settings, where the keys
+            are strings and the values can be either strings or None. This argument is
+            also optional and defaults to None.
+        :raises ValueError: Raises if the launcher provided does not exist.
+        """
         try:
             self._launcher = LauncherType(launcher)
+            """The launcher type"""
         except ValueError:
             raise ValueError(f"Invalid launcher type: {launcher}")
         self._arguments = self._get_arguments(launch_args)
+        """The LaunchSettings child class based on launcher type"""
         self.env_vars = env_vars or {}
+        """The environment configuration"""
 
     @property
     def launcher(self) -> str:
@@ -89,7 +155,7 @@ class LaunchSettings(BaseSettings):
 
         :returns: An environment mapping
         """
-        return copy.deepcopy(self._env_vars)
+        return self._env_vars
 
     @env_vars.setter
     def env_vars(self, value: dict[str, str | None]) -> None:
@@ -108,6 +174,7 @@ class LaunchSettings(BaseSettings):
         :param launch_args: A mapping of arguments names to values to be used
             to initialize the arguments
         :returns: The appropriate type for the settings instance.
+        :raises ValueError: An invalid launcher type was provided.
         """
         if self._launcher == LauncherType.Slurm:
             return SlurmLaunchArguments(launch_args)

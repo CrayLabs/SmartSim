@@ -27,7 +27,6 @@
 from .application import Application
 from .dbnode import FSNode
 from .dbobject import *
-from .._core.builders.ensemble import Ensemble
+from ..builders.ensemble import Ensemble
 from .entity import SmartSimEntity, TelemetryConfiguration
-from .entityList import EntityList, EntitySequence
 from .files import TaggedFilesHierarchy

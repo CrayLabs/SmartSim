@@ -35,7 +35,7 @@ from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import FeatureStore
 from smartsim.entity.application import Application
-from smartsim._core.builders.ensemble import Ensemble
+from smartsim.builders.ensemble import Ensemble
 from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 

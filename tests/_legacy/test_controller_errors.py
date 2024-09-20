@@ -32,7 +32,7 @@ from smartsim._core.launcher.step import Step
 from smartsim._core.launcher.step.dragon_step import DragonStep
 from smartsim.database import FeatureStore
 from smartsim.entity import Application
-from smartsim._core.builders.ensemble import Ensemble
+from smartsim.builders.ensemble import Ensemble
 from smartsim.error import SmartSimError, SSUnsupportedError
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings, SrunSettings

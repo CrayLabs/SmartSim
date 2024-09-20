@@ -32,7 +32,7 @@ from copy import deepcopy
 from smartsim.log import get_logger
 
 from ....error import SSConfigError
-from ...batch_command import SchedulerType
+from ...batch_command import BatchSchedulerType
 from ...common import StringArgument
 from ..batch_arguments import BatchArguments
 
@@ -40,12 +40,16 @@ logger = get_logger(__name__)
 
 
 class QsubBatchArguments(BatchArguments):
+    """A class to represent the arguments required for submitting batch
+    jobs using the qsub command.
+    """
+
     def scheduler_str(self) -> str:
         """Get the string representation of the scheduler
 
         :returns: The string representation of the scheduler
         """
-        return SchedulerType.Pbs.value
+        return BatchSchedulerType.Pbs.value
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
@@ -119,7 +123,7 @@ class QsubBatchArguments(BatchArguments):
         :return: batch arguments for `qsub`
         :raises ValueError: if options are supplied without values
         """
-        opts, batch_arg_copy = self._create_resource_list(self._scheduler_args)
+        opts, batch_arg_copy = self._create_resource_list(self._batch_args)
         for opt, value in batch_arg_copy.items():
             prefix = "-"
             if not value:
@@ -179,4 +183,4 @@ class QsubBatchArguments(BatchArguments):
         :param value: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
-        self._scheduler_args[key] = value
+        self._batch_args[key] = value
