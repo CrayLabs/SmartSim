@@ -44,9 +44,7 @@ if t.TYPE_CHECKING:
 
 class Ensemble(entity.CompoundEntity):
     """An Ensemble is a builder class that parameterizes the creation of multiple
-    Applications. Ensembles can be customized by using specific combinations of the
-    input settings to align with one of the following creation strategies: parameter
-    expansion and replica creation.
+    Applications.
     """
 
     def __init__(
@@ -62,22 +60,24 @@ class Ensemble(entity.CompoundEntity):
         replicas: int = 1,
     ) -> None:
         """Initialize an ``Ensemble`` of Application instances
-
+        
         An Ensemble can be tailored to align with one of the following
         creation strategies: parameter expansion or replicas.
-
+        
         **Parameter Expansion**
-
+        
         Parameter expansion allows users to assign different parameter values to
-        multiple applications. This is done by specifying input to `Ensemble.file_parameters`,
+        multiple Applications. This is done by specifying input to `Ensemble.file_parameters`,
         `Ensemble.exe_arg_parameters` and `Ensemble.permutation_strategy`. The `permutation_strategy`
-        accepts three options:
+        argument accepts three options:
+
         1. "all_perm": Generates all possible parameter permutations for exhaustive exploration.
         2. "step": Collects identically indexed values across parameter lists to create parameter sets.
         3. "random": Enables random selection from predefined parameter spaces.
 
         The example below demonstrates creating an Ensemble via parameter expansion, resulting in
         the creation of two Applications:
+
         .. highlight:: python
         .. code-block:: python
 
@@ -87,22 +87,22 @@ class Ensemble(entity.CompoundEntity):
                         file_parameters=file_params,permutation_strategy="step")
 
         This configuration will yield the following permutations:
-
+        
         .. highlight:: python
         .. code-block:: python
             [ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
              ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']})]
-
+        
         Each ParamSet contains the parameters assigned from file_params and the corresponding executable
         arguments from exe_arg_parameters.
-
-        **Replication**
+        
+        **Replication**         
         The replication strategy involves creating identical Applications within an Ensemble.
         This is achieved by specifying the `replicas` argument in the Ensemble.
-
+        
         For example, by applying the `replicas` argument to the previous parameter expansion
         example, we can double our Application output:
-
+        
         .. highlight:: python
         .. code-block:: python
 
@@ -112,8 +112,8 @@ class Ensemble(entity.CompoundEntity):
                         file_parameters=file_params,permutation_strategy="step", replicas=2)
 
         This configuration will result in each ParamSet being replicated, effectively doubling
-        the number of applications created.
-
+        the number of Applications created.
+        
         :param name: name of the ensemble
         :param exe: executable to run
         :param exe_args: executable arguments
