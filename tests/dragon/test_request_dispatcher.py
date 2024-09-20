@@ -85,7 +85,10 @@ logger = get_logger(__name__)
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
 
-mp.set_start_method("dragon")
+try:
+    mp.set_start_method("dragon")
+except Exception:
+    pass
 
 
 class MiniModel(nn.Module):
