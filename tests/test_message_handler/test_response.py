@@ -176,3 +176,16 @@ def test_serialize_response(response):
 
     deserialized = MessageHandler.deserialize_response(serialized)
     assert deserialized.to_dict() == response.to_dict()
+
+
+def test_serialization_fails():
+    with pytest.raises(ValueError):
+        bad_response = MessageHandler.serialize_response(result_key1)
+
+
+def test_deserialization_fails():
+    with pytest.raises(ValueError):
+        new_resp = torch_direct_response.copy()
+        resp_bytes = MessageHandler.serialize_response(new_resp)
+        resp_bytes = resp_bytes + b"extra bytes"
+        deser = MessageHandler.deserialize_response(resp_bytes)

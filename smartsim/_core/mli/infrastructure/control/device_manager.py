@@ -65,16 +65,26 @@ class WorkerDevice:
         """Remove the reference to a model loaded on this device.
 
         :param key: The key of the model to remove
+        :raises KeyError: If key does not exist for removal
         """
-        self._models.pop(key)
+        try:
+            self._models.pop(key)
+        except KeyError:
+            logger.warning(f"An unknown key was requested for removal: {key}")
+            raise
 
     def get_model(self, key: str) -> t.Any:
         """Get the model corresponding to a given key.
 
         :param key: The model key
         :returns: The model for the given key
+        :raises KeyError: If key does not exist
         """
-        return self._models[key]
+        try:
+            return self._models[key]
+        except KeyError:
+            logger.warning(f"An unknown key was requested: {key}")
+            raise
 
     def __contains__(self, key: str) -> bool:
         """Check if model with a given key is available on the device.

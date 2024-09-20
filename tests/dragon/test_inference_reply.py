@@ -24,42 +24,53 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
-
 import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.infrastructure.control.worker_manager import build_failure_reply
+from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
-
-if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
+from smartsim._core.mli.message_handler import MessageHandler
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
 
+handler = MessageHandler()
+
+
+@pytest.fixture
+def inference_reply() -> InferenceReply:
+    return InferenceReply()
+
+
+@pytest.fixture
+def fs_key() -> FeatureStoreKey:
+    return FeatureStoreKey("key", "descriptor")
+
 
 @pytest.mark.parametrize(
-    "status, message",
+    "outputs, expected",
     [
-        pytest.param("timeout", "Worker timed out", id="timeout"),
-        pytest.param("fail", "Failed while executing", id="fail"),
+        ([b"output bytes"], True),
+        (None, False),
+        ([], False),
     ],
 )
-def test_build_failure_reply(status: "Status", message: str):
-    "Ensures failure replies can be built successfully"
-    response = build_failure_reply(status, message)
-    display_name = response.schema.node.displayName  # type: ignore
-    class_name = display_name.split(":")[-1]
-    assert class_name == "Response"
-    assert response.status == status
-    assert response.message == message
+def test_has_outputs(monkeypatch, inference_reply, outputs, expected):
+    """Test the has_outputs property with different values for outputs."""
+    monkeypatch.setattr(inference_reply, "outputs", outputs)
+    assert inference_reply.has_outputs == expected
 
 
-def test_build_failure_reply_fails():
-    "Ensures ValueError is raised if a Status Enum is not used"
-    with pytest.raises(ValueError) as ex:
-        response = build_failure_reply("not a status enum", "message")
-
-    assert "Error assigning status to response" in ex.value.args[0]
+@pytest.mark.parametrize(
+    "output_keys, expected",
+    [
+        ([fs_key], True),
+        (None, False),
+        ([], False),
+    ],
+)
+def test_has_output_keys(monkeypatch, inference_reply, output_keys, expected):
+    """Test the has_output_keys property with different values for output_keys."""
+    monkeypatch.setattr(inference_reply, "output_keys", output_keys)
+    assert inference_reply.has_output_keys == expected

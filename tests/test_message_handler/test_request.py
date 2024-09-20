@@ -434,3 +434,16 @@ def test_serialize_request_successful(req):
 
     deserialized = MessageHandler.deserialize_request(serialized)
     assert deserialized.to_dict() == req.to_dict()
+
+
+def test_serialization_fails():
+    with pytest.raises(ValueError):
+        bad_request = MessageHandler.serialize_request(tensor_1)
+
+
+def test_deserialization_fails():
+    with pytest.raises(ValueError):
+        new_req = torch_direct_request.copy()
+        req_bytes = MessageHandler.serialize_request(new_req)
+        req_bytes = req_bytes + b"extra bytes"
+        deser = MessageHandler.deserialize_request(req_bytes)

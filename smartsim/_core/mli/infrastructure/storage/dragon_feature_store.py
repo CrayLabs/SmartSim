@@ -63,7 +63,10 @@ class DragonFeatureStore(FeatureStore):
         :returns: The value identified by the key
         :raises KeyError: If the key has not been used to store a value
         """
-        return self._storage[key]
+        try:
+            return self._storage[key]
+        except KeyError as e:
+            raise KeyError(f"Key not found in FeatureStore: {key}") from e
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
         """Store a value into the underlying storage mechanism.
@@ -71,7 +74,6 @@ class DragonFeatureStore(FeatureStore):
         :param key: The unique key that identifies the resource
         :param value: The value to store
         :returns: The value identified by the key
-        :raises KeyError: If the key has not been used to store a value
         """
         self._storage[key] = value
 

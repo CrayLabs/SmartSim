@@ -49,6 +49,7 @@ class CommChannelBase(ABC):
 
         :param timeout: Maximum time to wait (in seconds) for messages to send
         :param value: The value to send
+        :raises SmartSimError: If sending message fails
         """
 
     @abstractmethod
