@@ -374,7 +374,11 @@ class RequestBatch:
 
 
     def serialize(self):
-        return pickle.dumps(self)
+        try:
+            return pickle.dumps(self)
+        except Exception:
+            logger.exception("Failed to serialize the request batch")
+            raise
 
     @classmethod
     def deserialize(cls, serialized_str):
