@@ -83,7 +83,7 @@ class Ensemble(entity.CompoundEntity):
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         )
         """The parameters and values to be used when configuring entities"""
-        self._files = copy.deepcopy(files) if files else EntityFiles()
+        self._files = copy.deepcopy(files) if files else None
         """The files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
@@ -98,25 +98,25 @@ class Ensemble(entity.CompoundEntity):
 
     @property
     def exe(self) -> str:
-        """Return executable to run.
+        """Return the attached executable.
 
-        :returns: application executable to run
+        :return: the executable
         """
         return self._exe
 
     @exe.setter
     def exe(self, value: str | os.PathLike[str]) -> None:
-        """Set executable to run.
+        """Set the executable.
 
-        :param value: executable to run
+        :param value: the executable
         """
         self._exe = os.fspath(value)
 
     @property
     def exe_args(self) -> t.List[str]:
-        """Return a list of attached executable arguments.
+        """Return attached list of executable arguments.
 
-        :returns: application executable arguments
+        :return: the executable arguments
         """
         return self._exe_args
 
@@ -124,15 +124,15 @@ class Ensemble(entity.CompoundEntity):
     def exe_args(self, value: t.Sequence[str]) -> None:
         """Set the executable arguments.
 
-        :param value: executable arguments
+        :param value: the executable arguments
         """
         self._exe_args = list(value)
 
     @property
     def exe_arg_parameters(self) -> t.Mapping[str, t.Sequence[t.Sequence[str]]]:
-        """Return the executable argument parameters
+        """Return attached executable argument parameters.
 
-        :returns: executable arguments parameters
+        :return: the executable argument parameters
         """
         return self._exe_arg_parameters
 
@@ -140,35 +140,35 @@ class Ensemble(entity.CompoundEntity):
     def exe_arg_parameters(
         self, value: t.Mapping[str, t.Sequence[t.Sequence[str]]]
     ) -> None:
-        """Set the executable arguments.
+        """Set the executable argument parameters.
 
-        :param value: executable arguments
+        :param value: the executable argument parameters
         """
         self._exe_arg_parameters = copy.deepcopy(value)
 
     @property
-    def files(self) -> EntityFiles:
-        """Return files to be copied, symlinked, and/or configured prior to
-        execution.
+    def files(self) -> t.Union[EntityFiles, None]:
+        """Return attached EntityFiles object.
 
-        :returns: files
+        :return: the EntityFiles object of files to be copied, symlinked,
+            and/or configured prior to execution
         """
         return self._files
 
     @files.setter
-    def files(self, value: EntityFiles) -> None:
-        """Set files to be copied, symlinked, and/or configured prior to
-        execution.
+    def files(self, value: t.Optional[EntityFiles]) -> None:
+        """Set the EntityFiles object.
 
-        :param value: files
+        :param value: the EntityFiles object of files to be copied, symlinked,
+            and/or configured prior to execution
         """
         self._files = copy.deepcopy(value)
 
     @property
     def file_parameters(self) -> t.Mapping[str, t.Sequence[str]]:
-        """Return file parameters.
+        """Return the attached file parameters.
 
-        :returns: application file parameters
+        :return: the file parameters
         """
         return self._file_parameters
 
@@ -176,7 +176,7 @@ class Ensemble(entity.CompoundEntity):
     def file_parameters(self, value: t.Mapping[str, t.Sequence[str]]) -> None:
         """Set the file parameters.
 
-        :param value: file parameters
+        :param value: the file parameters
         """
         self._file_parameters = dict(value)
 
@@ -184,7 +184,7 @@ class Ensemble(entity.CompoundEntity):
     def permutation_strategy(self) -> str | strategies.PermutationStrategyType:
         """Return the permutation strategy
 
-        :return: permutation strategy
+        :return: the permutation strategy
         """
         return self._permutation_strategy
 
@@ -194,7 +194,7 @@ class Ensemble(entity.CompoundEntity):
     ) -> None:
         """Set the permutation strategy
 
-        :param value: permutation strategy
+        :param value: the permutation strategy
         """
         self._permutation_strategy = value
 
@@ -202,7 +202,7 @@ class Ensemble(entity.CompoundEntity):
     def max_permutations(self) -> int:
         """Return the maximum permutations
 
-        :return: max permutations
+        :return: the max permutations
         """
         return self._max_permutations
 
@@ -210,29 +210,34 @@ class Ensemble(entity.CompoundEntity):
     def max_permutations(self, value: int) -> None:
         """Set the maximum permutations
 
-        :param value: the maxpermutations
+        :param value: the max permutations
         """
         self._max_permutations = value
 
     @property
     def replicas(self) -> int:
-        """Return the number of replicas
+        """Return the number of replicas.
 
-        :return: number of replicas
+        :return: the number of replicas
         """
         return self._replicas
 
     @replicas.setter
     def replicas(self, value: int) -> None:
-        """Set the number of replicas
+        """Set the number of replicas.
 
         :return: the number of replicas
         """
         self._replicas = value
 
     def _create_applications(self) -> tuple[Application, ...]:
-        """Concretize the ensemble attributes into a collection of
-        application instances.
+        """Generate a collection of Application instances based on the Ensembles attributes.
+
+        This method uses a permutation strategy to create various combinations of file
+        parameters and executable arguments. Each combination is then replicated according
+        to the specified number of replicas, resulting in a set of Application instances.
+
+        :return: A tuple of Application instances
         """
         permutation_strategy = strategies.resolve(self.permutation_strategy)
 
@@ -255,6 +260,35 @@ class Ensemble(entity.CompoundEntity):
         )
 
     def as_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
+        """Expand an Ensemble into a list of deployable Jobs and apply
+        identical LaunchSettings to each Job.
+
+        The number of Jobs returned is controlled by the Ensemble attributes:
+            - Ensemble.exe_arg_parameters
+            - Ensemble.file_parameters
+            - Ensemble.permutation_strategy
+            - Ensemble.max_permutations
+            - Ensemble.replicas
+
+        Consider the example below:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            # Create LaunchSettings
+            my_launch_settings = LaunchSettings(...)
+
+            # Initialize the Ensemble
+            ensemble = Ensemble("my_name", "echo", "hello world", replicas=3)
+            # Expand Ensemble into Jobs
+            ensemble_as_jobs = ensemble.as_jobs(my_launch_settings)
+
+        By calling `as_jobs` on `ensemble`, three Jobs are returned because
+        three replicas were specified. Each Job will have the provided LaunchSettings.
+
+        :param settings: LaunchSettings to apply to each Job
+        :return: Sequence of Jobs with the provided LaunchSettings
+        """
         apps = self._create_applications()
         if not apps:
             raise ValueError("There are no members as part of this ensemble")
