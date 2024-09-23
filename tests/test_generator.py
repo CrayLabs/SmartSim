@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import filecmp
 import itertools
 import os
 import pathlib
@@ -202,7 +201,6 @@ def test_build_err_file_path(
 def test_generate_job(
     mock_job: unittest.mock.MagicMock,
     generator_instance: Generator,
-    monkeypatch: pytest.MonkeyPatch,
 ):
     """Test Generator.generate_job returns correct paths"""
     mock_index = 1

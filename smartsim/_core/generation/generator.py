@@ -45,23 +45,19 @@ logger.propagate = False
 
 @t.runtime_checkable
 class _GenerableProtocol(t.Protocol):
-    """A protocol that defines a generatable entity with a method to retrieve
-    a list of file names and params. This protocol is used to ensure that functions
-    using job.entity continue if attrs file and params are supported.
-    """
+    """Ensures functions using job.entity continue if attrs file and params are supported."""
 
     files: t.Union[EntityFiles, None]
     file_parameters: t.Mapping[str, str]
 
 
 Job_Path = namedtuple("Job_Path", ["run_path", "out_path", "err_path"])
+"""Paths related to the Jobs execution."""
 
 
 class Generator:
-    """The primary job of the Generator is to create the directory and file structure
-    for a SmartSim Job. The Generator is also responsible for writing and configuring
-    files into the Job directory.
-    """
+    """The primary responsibility of the Generator class is to create the directory structure
+    for a SmartSim Job and to build and execute file operation commands."""
 
     run = "run"
     """The name of the directory where run-related files are stored."""
@@ -71,10 +67,16 @@ class Generator:
     def __init__(self, root: pathlib.Path) -> None:
         """Initialize a Generator object
 
-        The class handles symlinking, copying, and configuration of files
-        associated with a Jobs entity. Additionally, it writes entity parameters
-        used for the specific run into the "smartsim_params.txt" settings file within
-        the Jobs log folder.
+        The Generator class constructs a Jobs directory structure, including:
+
+        - The run and log directories
+        - Output and error files
+        - The "smartsim_params.txt" settings file
+
+        Additionally, it manages symlinking, copying, and configuring files associated
+        with a Jobs entity.
+
+        :param root: The Jobs base path
         """
         self.root = root
         """The root path under which to generate files"""
@@ -115,9 +117,7 @@ class Generator:
         :param job_index: The index of the Job
         :returns: The built file path for the Job run folder
         """
-        path = (
-            self._build_job_base_path(job, job_index) / self.log
-        )
+        path = self._build_job_base_path(job, job_index) / self.log
         path.mkdir(exist_ok=False, parents=True)
         return pathlib.Path(path)
 
@@ -157,7 +157,7 @@ class Generator:
 
     def generate_job(self, job: Job, job_index: int) -> Job_Path:
         """Build and return the Job's run directory, error file and out file.
-        
+
         This method creates the Job's run and log directories, generates the
         `smartsim_params.txt` file to log parameters used for the Job, and sets
         up the output and error files for Job execution information. If files are
@@ -172,7 +172,9 @@ class Generator:
         job_path = self._build_job_run_path(job, job_index)
         log_path = self._build_job_log_path(job, job_index)
 
-        with open(self._build_log_file_path(log_path), mode="w", encoding="utf-8") as log_file:
+        with open(
+            self._build_log_file_path(log_path), mode="w", encoding="utf-8"
+        ) as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
@@ -186,13 +188,15 @@ class Generator:
         return Job_Path(job_path, out_file, err_file)
 
     @classmethod
-    def _build_commands(cls, job: Job, job_path: pathlib.Path) -> t.Optional[CommandList]:
+    def _build_commands(
+        cls, job: Job, job_path: pathlib.Path
+    ) -> t.Optional[CommandList]:
         """Build file operation commands for all files attached to a Job's entity.
 
         This method constructs commands for copying, symlinking, and writing tagged files
         associated with the Job's entity. It aggregates these commands into a CommandList
         to return.
-    
+
         :param job: The job object
         :param job_path: The file path for the Job run folder
         :return: A CommandList containing the file operation commands, or None if the entity
@@ -203,7 +207,9 @@ class Generator:
             helpers = [
                 cls._copy_files,
                 cls._symlink_files,
-                lambda files, path: cls._write_tagged_files(files, job.entity.file_parameters, path)
+                lambda files, path: cls._write_tagged_files(
+                    files, job.entity.file_parameters, path
+                ),
             ]
 
             for method in helpers:
@@ -213,7 +219,7 @@ class Generator:
 
             return cmd_list
         return None
-        
+
     @classmethod
     def _execute_commands(cls, cmd_list: CommandList) -> None:
         """Execute a list of commands using subprocess.
@@ -227,13 +233,15 @@ class Generator:
             subprocess.run(cmd.command)
 
     @staticmethod
-    def _copy_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> t.Optional[CommandList]:
+    def _copy_files(
+        files: t.Union[EntityFiles, None], dest: pathlib.Path
+    ) -> t.Optional[CommandList]:
         """Build command to copy files/directories from specified paths to a destination directory.
 
         This method creates commands to copy files/directories from the source paths provided in the
         `files` parameter to the specified destination directory. If the source is a directory,
         it copies the directory while allowing existing directories to remain intact.
-    
+
         :param files: An EntityFiles object containing the paths to copy, or None.
         :param dest: The destination path to the Job's run directory.
         :return: A CommandList containing the copy commands, or None if no files are provided.
@@ -242,13 +250,15 @@ class Generator:
             return None
         cmd_list = CommandList()
         for src in files.copy:
-            cmd = Command([
-                sys.executable,
-                "-m",
-                "smartsim._core.entrypoints.file_operations",
-                "copy",
-                src,
-            ])
+            cmd = Command(
+                [
+                    sys.executable,
+                    "-m",
+                    "smartsim._core.entrypoints.file_operations",
+                    "copy",
+                    src,
+                ]
+            )
             destination = str(dest)
             if os.path.isdir(src):
                 base_source_name = os.path.basename(src)
@@ -261,9 +271,11 @@ class Generator:
         return cmd_list
 
     @staticmethod
-    def _symlink_files(files: t.Union[EntityFiles, None], dest: pathlib.Path) -> t.Optional[CommandList]:
+    def _symlink_files(
+        files: t.Union[EntityFiles, None], dest: pathlib.Path
+    ) -> t.Optional[CommandList]:
         """Build command to symlink files/directories from specified paths to a destination directory.
-        
+
         This method creates commands to symlink files/directories from the source paths provided in the
         `files` parameter to the specified destination directory. If the source is a directory,
         it copies the directory while allowing existing directories to remain intact.
@@ -281,14 +293,16 @@ class Generator:
             # Get the parent directory (last folder)
             parent_dir = os.path.basename(normalized_path)
             new_dest = os.path.join(str(dest), parent_dir)
-            cmd=Command([
-                sys.executable,
-                "-m",
-                "smartsim._core.entrypoints.file_operations",
-                "symlink",
-                src,
-                new_dest,
-            ])
+            cmd = Command(
+                [
+                    sys.executable,
+                    "-m",
+                    "smartsim._core.entrypoints.file_operations",
+                    "symlink",
+                    src,
+                    new_dest,
+                ]
+            )
             cmd_list.append(cmd)
         return cmd_list
 
@@ -299,9 +313,9 @@ class Generator:
         dest: pathlib.Path,
     ) -> t.Optional[CommandList]:
         """Build command to configure files/directories from specified paths to a destination directory.
-           
-        This method processes tagged files by reading their configurations, 
-        serializing the provided parameters, and generating commands to 
+
+        This method processes tagged files by reading their configurations,
+        serializing the provided parameters, and generating commands to
         write these configurations to the destination directory.
 
         :param files: An EntityFiles object containing the paths to configure, or None.
@@ -317,21 +331,23 @@ class Generator:
             pickled_dict = pickle.dumps(params)
             encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
             for path in files.tagged:
-                cmd=Command([
-                    sys.executable,
-                    "-m",
-                    "smartsim._core.entrypoints.file_operations",
-                    "configure",
-                    path,
-                    str(dest),
-                    tag_delimiter,
-                    encoded_dict,
-                ])
+                cmd = Command(
+                    [
+                        sys.executable,
+                        "-m",
+                        "smartsim._core.entrypoints.file_operations",
+                        "configure",
+                        path,
+                        str(dest),
+                        tag_delimiter,
+                        encoded_dict,
+                    ]
+                )
                 cmd_list.commands.append(cmd)
         return cmd_list
 
-            # TODO address in ticket 723
-            # self._log_params(entity, files_to_params)
+        # TODO address in ticket 723
+        # self._log_params(entity, files_to_params)
 
     # TODO to be refactored in ticket 723
     # def _log_params(
