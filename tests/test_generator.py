@@ -11,7 +11,8 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.generation.generator import Generator
-from smartsim.entity import Application, Ensemble
+from smartsim.builders import Ensemble
+from smartsim.entity import Application
 from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
 from smartsim.settings import LaunchSettings

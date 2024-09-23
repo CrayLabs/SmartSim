@@ -32,10 +32,11 @@ import os
 import os.path
 import typing as t
 
-from smartsim.entity import entity, strategies
+from smartsim.builders.utils import strategies
+from smartsim.builders.utils.strategies import ParamSet
+from smartsim.entity import entity
 from smartsim.entity.application import Application
 from smartsim.entity.files import EntityFiles
-from smartsim.entity.strategies import ParamSet
 from smartsim.launchable.job import Job
 
 if t.TYPE_CHECKING:

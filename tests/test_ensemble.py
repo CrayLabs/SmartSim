@@ -32,8 +32,8 @@ from os import path as osp
 import pytest
 
 from smartsim.builders.ensemble import Ensemble
+from smartsim.builders.utils.strategies import ParamSet
 from smartsim.entity.files import EntityFiles
-from smartsim.entity.strategies import ParamSet
 from smartsim.settings.launch_settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
