@@ -22,6 +22,7 @@ To install SmartSim on Perlmutter, follow these steps:
     cd SmartRedis
     make lib-with-fortran
     pip install .
+    cd ..
 
 **Step 3:** Install SmartSim in the conda environment:
 

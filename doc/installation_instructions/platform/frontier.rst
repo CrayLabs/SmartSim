@@ -7,8 +7,8 @@ Known limitations
 We are continually working on getting all the features of SmartSim working on
 Frontier, however we do have some known limitations:
 
-* For now, only Torch and ONNX runtime models are supported. If you need
-  Tensorflow support please contact us
+* For now, only Torch models are supported. If you need Tensorflow or ONNX
+  support please contact us
 * All SmartSim experiments must be run from Lustre, _not_ your home directory
 * The colocated database will fail without specifying ``custom_pinning``. This
   is because the default pinning assumes that processor 0 is available, but the
