@@ -9,9 +9,9 @@ Jump to:
 
 ## SmartSim
 
-###  Cuda 12 and ROCm support branch
+### Development branch
 
-To be merged into `develop` at some future point in time
+To be released at some future point in time
 
 Description
 
@@ -21,34 +21,7 @@ Description
 - Fine grain build support for GPUs
 - Update Torch to 2.1.0, Tensorflow to 2.15.0
 - Better error messages in build process
-
-Detailed Notes
-
-- The RedisAIBuilder class was completely overhauled to allow users to
-  express a wider range of support for hardware/software stacks. This 
-  will be extended to support ROCm, CUDA-11, and CUDA-12.
-- Versions for each of these packages are no longer specified in an
-  internal class. Instead a default set of JSON files specifies the
-  sources and versions. Users can specify their own custom specifications
-  at smart build time
-- Two new Dockerfiles are now provided (one each for 11.8 and 12.1) that
-  can be used to build a container to run the tutorials. No HPC support
-  should be expected at this time
-- SmartSim can now be built using Cuda version 11.8 or Cuda 12.1 by specify
-  `smart build --device=cuda118` or `smart build --device=cuda121`. The
-  original `smart build --device=gpu` will default to using Cuda 11.8.
-- As a result of the previous change, SmartSim now requires C++17 and a
-  minimum Cuda version of 11.8 in order to build Torch 2.1.0.
-- Error messages were not being interpolated correctly. This has been
-  addressed to provide more context when exposing error messages to users.
-
-### Development branch
-
-To be released at some future point in time
-
-Description
-
-- Allow specifying Model and Ensemble parameters with 
+- Allow specifying Model and Ensemble parameters with
   number-like types (e.g. numpy types)
 - Pin watchdog to 4.x
 - Update codecov to 4.5.0
@@ -66,9 +39,28 @@ Description
 
 Detailed Notes
 
-- The serializer would fail if a parameter for a Model or Ensemble 
-  was specified as a numpy dtype. The constructors for these 
-  methods now validate that the input is number-like and convert 
+- The RedisAIBuilder class was completely overhauled to allow users to
+  express a wider range of support for hardware/software stacks. This
+  will be extended to support ROCm, CUDA-11, and CUDA-12.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Versions for each of these packages are no longer specified in an
+  internal class. Instead a default set of JSON files specifies the
+  sources and versions. Users can specify their own custom specifications
+  at smart build time
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Two new Dockerfiles are now provided (one each for 11.8 and 12.1) that
+  can be used to build a container to run the tutorials. No HPC support
+  should be expected at this time
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- As a result of the previous change, SmartSim now requires C++17 and a
+  minimum Cuda version of 11.8 in order to build Torch 2.1.0.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Error messages were not being interpolated correctly. This has been
+  addressed to provide more context when exposing error messages to users.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- The serializer would fail if a parameter for a Model or Ensemble
+  was specified as a numpy dtype. The constructors for these
+  methods now validate that the input is number-like and convert
   them to strings
   ([SmartSim-PR676](https://github.com/CrayLabs/SmartSim/pull/676))
 - Pin watchdog to 4.x because v5 introduces new types and requires
