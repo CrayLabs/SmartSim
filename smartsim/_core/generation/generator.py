@@ -202,18 +202,21 @@ class Generator:
         :return: A CommandList containing the file operation commands, or None if the entity
             does not support file operations.
         """
-        if isinstance(job.entity, _GenerableProtocol):
+        entity = job.entity
+        if isinstance(entity, _GenerableProtocol):
             cmd_list = CommandList()
-            helpers = [
+            helpers: t.List[
+                t.Callable[[EntityFiles | None, pathlib.Path], CommandList | None]
+            ] = [
                 cls._copy_files,
                 cls._symlink_files,
                 lambda files, path: cls._write_tagged_files(
-                    files, job.entity.file_parameters, path
+                    files, entity.file_parameters, path
                 ),
             ]
 
             for method in helpers:
-                return_cmd_list = method(job.entity.files, job_path)
+                return_cmd_list = method(entity.files, job_path)
                 if return_cmd_list:
                     cmd_list.commands.extend(return_cmd_list.commands)
 
