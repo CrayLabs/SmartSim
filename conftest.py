@@ -227,7 +227,6 @@ def kill_all_test_spawned_processes() -> None:
         print("Not all processes were killed after test")
 
 
-
 def get_hostlist() -> t.Optional[t.List[str]]:
     global test_hostlist
     if not test_hostlist:
@@ -1022,3 +1021,76 @@ def prepare_db(
 
         return PrepareDatabaseOutput(db, new_db)
     return _prepare_db
+
+
+class MsgPumpRequest(t.NamedTuple):
+    """Fields required for starting a simulated inference request producer."""
+
+    backbone_descriptor: str
+    """The descriptor to use when connecting the message pump to a 
+    backbone featurestore.
+    
+    Passed to the message pump as `--fs-descriptor`
+    """
+    work_queue_descriptor: str
+    """The descriptor to use for sending work from the pump to the worker manager.
+    
+    Passed to the message pump as `--dispatch-fli-descriptor`
+    """
+    callback_descriptor: str
+    """The descriptor the worker should use to returning results.
+    
+    Passed to the message pump as `--callback-descriptor`
+    """
+    iteration_index: int = 1
+    """If calling the message pump repeatedly, supply an iteration index to ensure
+    that logged messages appear unique instead of apparing to be duplicated logs.
+    
+    Passed to the message pump as `--parent-iteration`
+    """
+
+    def as_command(self) -> t.List[str]:
+        """Produce CLI arguments suitable for calling subprocess.Popen that
+        to execute the msg pump.
+
+        NOTE: does NOT include the `[sys.executable, msg_pump_path, ...]`
+        portion of the necessary parameters to Popen.
+
+        :returns: A list of strings containing the arguments of the request
+        formatted for inclusion in a call to subprocess.Popen"""
+        return [
+            "--dispatch-fli-descriptor",
+            self.work_queue_descriptor,
+            "--fs-descriptor",
+            self.backbone_descriptor,
+            "--parent-iteration",
+            str(self.iteration_index),
+            "--callback-descriptor",
+            self.callback_descriptor,
+        ]
+
+
+@pytest.fixture(scope="session")
+def msg_pump_factory() -> t.Callable[[MsgPumpRequest], subprocess.Popen]:
+    """A pytest fixture used to create a mock event producer capable of
+    feeding asynchronous inference requests to tests requiring them.
+
+    :returns: A function that can be passed appropriate descriptors
+    for starting a message pump."""
+
+    def run_message_pump(request: MsgPumpRequest) -> subprocess.Popen:
+        """Invokes the message pump entry-point"""
+        # <smartsim_dir>/tests/dragon/utils/msg_pump.py
+        msg_pump_script = "tests/dragon/utils/msg_pump.py"
+        msg_pump_path = pathlib.Path(__file__).parent / msg_pump_script
+
+        cmd = [sys.executable, str(msg_pump_path.absolute()), *request.as_command()]
+
+        popen = subprocess.Popen(
+            args=cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return popen
+
+    return run_message_pump

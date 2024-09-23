@@ -37,12 +37,15 @@ from queue import Empty
 import numpy as np
 import pytest
 
+import conftest
+
 pytest.importorskip("dragon")
 
 
 # isort: off
 import dragon
 import multiprocessing as mp
+
 import torch
 
 # isort: on
@@ -73,8 +76,12 @@ from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
+mock_msg_pump_path = pathlib.Path(__file__).parent / "utils" / "msg_pump.py"
+_MsgPumpFactory = t.Callable[[conftest.MsgPumpRequest], sp.Popen]
+
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
+
 
 try:
     mp.set_start_method("dragon")
@@ -82,7 +89,10 @@ except Exception:
     pass
 
 
-def test_request_dispatcher() -> None:
+@pytest.mark.parametrize("num_iterations", [4])
+def test_request_dispatcher(
+    msg_pump_factory: _MsgPumpFactory, num_iterations: int
+) -> None:
     """Test the request dispatcher batching and queueing system
 
     This also includes setting a queue to disposable, checking that it is no
@@ -123,8 +133,9 @@ def test_request_dispatcher() -> None:
         )
 
     request_dispatcher._on_start()
+    pump_processes: t.List[sp.Popen] = []
 
-    for i in range(2):
+    for i in range(num_iterations):
         batch: t.Optional[RequestBatch] = None
         mem_allocs = []
         tensors = []
@@ -134,27 +145,17 @@ def test_request_dispatcher() -> None:
 
         callback_channel = DragonCommChannel.from_local()
 
-        fp = pathlib.Path(__file__).parent / "utils" / "msg_pump.py"
-        cmd = [
-            sys.executable,
-            str(fp.absolute()),
-            "--dispatch-fli-descriptor",
-            worker_queue.descriptor,
-            "--fs-descriptor",
+        request = conftest.MsgPumpRequest(
             backbone_fs.descriptor,
-            "--parent-iteration",
-            str(i),
-            "--callback-descriptor",
+            worker_queue.descriptor,
             callback_channel.descriptor,
-        ]
-
-        popen = sp.Popen(
-            args=cmd,
-            stdout=sp.PIPE,
-            stderr=sp.PIPE,
+            i,
         )
 
-        time.sleep(2)
+        msg_pump = msg_pump_factory(request)
+        pump_processes.append(msg_pump)
+
+        time.sleep(1)
 
         for _ in range(200):
             try:
@@ -222,7 +223,12 @@ def test_request_dispatcher() -> None:
         assert model_key not in request_dispatcher._active_queues
         assert model_key not in request_dispatcher._queues
 
-    popen.wait()
+        msg_pump.wait()
+
+    for msg_pump in pump_processes:
+        if msg_pump.returncode is not None:
+            continue
+        msg_pump.terminate()
 
     # Try to remove the dispatcher and free the memory
     del request_dispatcher
