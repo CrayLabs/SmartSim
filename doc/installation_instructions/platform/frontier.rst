@@ -7,8 +7,9 @@ Known limitations
 We are continually working on getting all the features of SmartSim working on
 Frontier, however we do have some known limitations:
 
-* For now, only Torch and ONNX runtime models are supported. If you need
-  Tensorflow support please contact us
+* For now, only Torch models are supported. If you need Tensorflow or ONNX
+  support please contact us
+* All SmartSim experiments must be run from Lustre, _not_ your home directory
 * The colocated database will fail without specifying ``custom_pinning``. This
   is because the default pinning assumes that processor 0 is available, but the
   'low-noise' default on Frontier reserves the processor on each NUMA node.
@@ -30,22 +31,28 @@ these instructions, being sure to set the following variables
 .. code:: bash
 
    export PROJECT_NAME=CHANGE_ME
-   export VENV_NAME=CHANGE_ME
 
 **Step 1:** Create and activate a virtual environment for SmartSim:
 
 .. code:: bash
 
-   module load PrgEnv-gnu cray-python
-   module load rocm/6.1.3
+   module load PrgEnv-gnu miniforge3 rocm/6.1.3
 
    export SCRATCH=/lustre/orion/$PROJECT_NAME/scratch/$USER/
-   export VENV_HOME=$SCRATCH/$VENV_NAME/
+   conda create -n smartsim python=3.11
+   conda activate smartsim
 
-   python3 -m venv $VENV_HOME
-   source $VENV_HOME/bin/activate
+**Step 1 (Optional):** If this is your first time using miniforge on
+Frontier you may also have to execute the following before being able
+to activate the ``smartsim`` environment
 
-**Step 2:** Install SmartSim in the conda environment:
+.. code:: bash
+
+   conda init
+   source ~/.bashrc
+   conda activate smartsim
+
+**Step 2:** Build the SmartRedis C++ and Fortran libraries:
 
 .. code:: bash
 
@@ -55,17 +62,20 @@ these instructions, being sure to set the following variables
    make lib-with-fortran
    pip install .
 
-   # Download SmartSim and site-specific files
+**Step 3:** Install SmartSim in the conda environment:
+
+.. code:: bash
+
    cd $SCRATCH
    pip install git+https://github.com/CrayLabs/SmartSim.git
 
-**Step 3:** Build Redis, RedisAI, the backends, and all the Python packages:
+**Step 4:** Build Redis, RedisAI, the backends, and all the Python packages:
 
 .. code:: bash
 
    smart build --device=rocm-6
 
-**Step 4:** Check that SmartSim has been installed and built correctly:
+**Step 5:** Check that SmartSim has been installed and built correctly:
 
 .. code:: bash
 
@@ -89,12 +99,11 @@ build, and some variables should be set to optimize performance:
 
    # Set these to the same values that were used for install
    export PROJECT_NAME=CHANGE_ME
-   export VENV_NAME=CHANGE_ME
 
 .. code:: bash
 
-   module load PrgEnv-gnu
-   module load rocm/6.1.3
+   module load PrgEnv-gnu miniforge3 rocm/6.1.3
+   conda activate smartsim
 
    # Optimizations for inference
    export SCRATCH=/lustre/orion/$PROJECT_NAME/scratch/$USER/
@@ -102,8 +111,6 @@ build, and some variables should be set to optimize performance:
    export MIOPEN_SYSTEM_DB_PATH=$MIOPEN_USER_DB_PATH
    mkdir -p $MIOPEN_USER_DB_PATH
    export MIOPEN_DISABLE_CACHE=1
-   export VENV_HOME=$SCRATCH/$VENV_NAME/
-   source $VENV_HOME/bin/activate
 
 Binding DBs to Slingshot
 ------------------------

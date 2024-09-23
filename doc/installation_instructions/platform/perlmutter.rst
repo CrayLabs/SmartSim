@@ -10,24 +10,33 @@ To install SmartSim on Perlmutter, follow these steps:
 
 .. code:: bash
 
-    module load conda
+    module load conda cudatoolkit/12.2 cudnn/8.9.3_cuda12 PrgEnv-gnu
     conda create -n smartsim python=3.11
     conda activate smartsim
 
-**Step 2:** Install SmartSim in the conda environment:
+**Step 2:** Build the SmartRedis C++ and Fortran libraries:
+
+.. code:: bash
+
+    git clone https://github.com/CrayLabs/SmartRedis.git
+    cd SmartRedis
+    make lib-with-fortran
+    pip install .
+    cd ..
+
+**Step 3:** Install SmartSim in the conda environment:
 
 .. code:: bash
 
     pip install git+https://github.com/CrayLabs/SmartSim.git
 
-**Step 3:** Build Redis, RedisAI, the backends, and all the Python packages:
+**Step 4:** Build Redis, RedisAI, the backends, and all the Python packages:
 
 .. code:: bash
 
-    module load cudatoolkit/12.2 cudnn/8.9.3_cuda12
     smart build --device=cuda-12
 
-**Step 4:** Check that SmartSim has been installed and built correctly:
+**Step 5:** Check that SmartSim has been installed and built correctly:
 
 .. code:: bash
 
@@ -51,5 +60,5 @@ can reload the conda environment by running the following commands:
 
 .. code:: bash
 
-    module load conda cudatoolkit/12.2 cudnn/8.9.3_cuda12
+    module load conda cudatoolkit/12.2 cudnn/8.9.3_cuda12 PrgEnv-gnu
     conda activate smartsim
