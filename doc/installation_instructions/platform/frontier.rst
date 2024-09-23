@@ -42,6 +42,16 @@ these instructions, being sure to set the following variables
    conda create -n smartsim python=3.11
    conda activate smartsim
 
+**Step 1 (Optional):** If this is your first time using miniforge on
+Frontier you may also have to execute the following before being able
+to activate the ``smartsim`` environment
+
+.. code:: bash
+
+   conda init
+   source ~/.bashrc
+   conda activate smartsim
+
 **Step 2:** Build the SmartRedis C++ and Fortran libraries:
 
 .. code:: bash
@@ -54,7 +64,8 @@ these instructions, being sure to set the following variables
 
 **Step 3:** Install SmartSim in the conda environment:
 
-   # Download SmartSim and site-specific files
+.. code:: bash
+
    cd $SCRATCH
    pip install git+https://github.com/CrayLabs/SmartSim.git
 
