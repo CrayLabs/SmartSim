@@ -32,10 +32,11 @@ import os
 import os.path
 import typing as t
 
-from smartsim.entity import entity, strategies
+from smartsim.builders.utils import strategies
+from smartsim.builders.utils.strategies import ParamSet
+from smartsim.entity import entity
 from smartsim.entity.application import Application
 from smartsim.entity.files import EntityFiles
-from smartsim.entity.strategies import ParamSet
 from smartsim.launchable.job import Job
 
 if t.TYPE_CHECKING:
@@ -43,8 +44,8 @@ if t.TYPE_CHECKING:
 
 
 class Ensemble(entity.CompoundEntity):
-    """Entity to help parameterize the creation multiple application
-    instances.
+    """An Ensemble is a builder class that parameterizes the creation of multiple
+    Applications.
     """
 
     def __init__(
@@ -59,7 +60,60 @@ class Ensemble(entity.CompoundEntity):
         max_permutations: int = -1,
         replicas: int = 1,
     ) -> None:
-        """Initialize an ``Ensemble`` of application instances
+        """Initialize an ``Ensemble`` of Application instances
+
+        An Ensemble can be tailored to align with one of the following
+        creation strategies: parameter expansion or replicas.
+
+        **Parameter Expansion**
+
+        Parameter expansion allows users to assign different parameter values to
+        multiple Applications. This is done by specifying input to `Ensemble.file_parameters`,
+        `Ensemble.exe_arg_parameters` and `Ensemble.permutation_strategy`. The `permutation_strategy`
+        argument accepts three options:
+
+        1. "all_perm": Generates all possible parameter permutations for exhaustive exploration.
+        2. "step": Collects identically indexed values across parameter lists to create parameter sets.
+        3. "random": Enables random selection from predefined parameter spaces.
+
+        The example below demonstrates creating an Ensemble via parameter expansion, resulting in
+        the creation of two Applications:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            file_params={"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
+            exe_arg_parameters = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
+            ensemble = Ensemble(name="name",exe="python",exe_arg_parameters=exe_arg_parameters,
+                        file_parameters=file_params,permutation_strategy="step")
+
+        This configuration will yield the following permutations:
+
+        .. highlight:: python
+        .. code-block:: python
+            [ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
+             ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']})]
+
+        Each ParamSet contains the parameters assigned from file_params and the corresponding executable
+        arguments from exe_arg_parameters.
+
+        **Replication**
+        The replication strategy involves creating identical Applications within an Ensemble.
+        This is achieved by specifying the `replicas` argument in the Ensemble.
+
+        For example, by applying the `replicas` argument to the previous parameter expansion
+        example, we can double our Application output:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            file_params={"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
+            exe_arg_parameters = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
+            ensemble = Ensemble(name="name",exe="python",exe_arg_parameters=exe_arg_parameters,
+                        file_parameters=file_params,permutation_strategy="step", replicas=2)
+
+        This configuration will result in each ParamSet being replicated, effectively doubling
+        the number of Applications created.
 
         :param name: name of the ensemble
         :param exe: executable to run
@@ -259,7 +313,7 @@ class Ensemble(entity.CompoundEntity):
             for i, permutation in enumerate(permutations_)
         )
 
-    def as_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
+    def build_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
         """Expand an Ensemble into a list of deployable Jobs and apply
         identical LaunchSettings to each Job.
 
@@ -281,9 +335,9 @@ class Ensemble(entity.CompoundEntity):
             # Initialize the Ensemble
             ensemble = Ensemble("my_name", "echo", "hello world", replicas=3)
             # Expand Ensemble into Jobs
-            ensemble_as_jobs = ensemble.as_jobs(my_launch_settings)
+            ensemble_as_jobs = ensemble.build_jobs(my_launch_settings)
 
-        By calling `as_jobs` on `ensemble`, three Jobs are returned because
+        By calling `build_jobs` on `ensemble`, three Jobs are returned because
         three replicas were specified. Each Job will have the provided LaunchSettings.
 
         :param settings: LaunchSettings to apply to each Job

@@ -29,7 +29,8 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
-from ....entity import Application, Ensemble, FSNode
+from ....builders import Ensemble
+from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings

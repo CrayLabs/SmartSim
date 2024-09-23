@@ -31,8 +31,9 @@ from dataclasses import dataclass, field
 
 from smartsim.entity._mock import Mock
 
+from ...builders import Ensemble
 from ...database import FeatureStore
-from ...entity import Application, Ensemble, FSNode, SmartSimEntity
+from ...entity import Application, FSNode, SmartSimEntity
 from ...error import SmartSimError
 from ..config import CONFIG
 from ..utils import helpers as _helpers

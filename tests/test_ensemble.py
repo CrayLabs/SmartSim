@@ -31,9 +31,9 @@ from os import path as osp
 
 import pytest
 
-from smartsim.entity.ensemble import Ensemble
+from smartsim.builders.ensemble import Ensemble
+from smartsim.builders.utils.strategies import ParamSet
 from smartsim.entity.files import EntityFiles
-from smartsim.entity.strategies import ParamSet
 from smartsim.settings.launch_settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
@@ -109,7 +109,7 @@ def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
         "echo",
         ("hello", "world"),
         permutation_strategy=user_created_function,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == 1
 
 
@@ -125,7 +125,7 @@ def test_ensemble_without_any_members_raises_when_cast_to_jobs(
             permutation_strategy="random",
             max_permutations=30,
             replicas=0,
-        ).as_jobs(mock_launcher_settings)
+        ).build_jobs(mock_launcher_settings)
 
 
 def test_strategy_error_raised_if_a_strategy_that_dne_is_requested(test_dir):
@@ -208,7 +208,7 @@ def test_all_perm_strategy(
         permutation_strategy="all_perm",
         max_permutations=max_perms,
         replicas=replicas,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
 
 
@@ -222,7 +222,7 @@ def test_all_perm_strategy_contents():
         permutation_strategy="all_perm",
         max_permutations=16,
         replicas=1,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == 16
 
 
@@ -262,7 +262,7 @@ def test_step_strategy(
         permutation_strategy="step",
         max_permutations=max_perms,
         replicas=replicas,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
 
 
@@ -301,5 +301,5 @@ def test_random_strategy(
         permutation_strategy="random",
         max_permutations=max_perms,
         replicas=replicas,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs

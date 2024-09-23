@@ -135,6 +135,6 @@ class CompoundEntity(abc.ABC):
     """
 
     @abc.abstractmethod
-    def as_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
+    def build_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
     def as_job_group(self, settings: LaunchSettings) -> JobGroup:
-        return JobGroup(list(self.as_jobs(settings)))
+        return JobGroup(list(self.build_jobs(settings)))
