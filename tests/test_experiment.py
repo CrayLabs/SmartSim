@@ -48,6 +48,7 @@ from smartsim.launchable import job
 from smartsim.settings import launchSettings
 from smartsim.settings.arguments import launchArguments
 from smartsim.status import InvalidJobStatus, JobStatus
+from smartsim.types import LaunchedJobID
 
 pytestmark = pytest.mark.group_a
 
@@ -610,7 +611,7 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
 
 def test_start_raises_if_no_args_supplied(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(ValueError, match="No job ids provided to start"):
+    with pytest.raises(ValueError, match="No jobs provided to start"):
         exp.start()
 
 
@@ -638,3 +639,32 @@ def test_wait_raises_if_no_args_supplied(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
     with pytest.raises(ValueError, match="No job ids to wait on provided"):
         exp.wait()
+
+
+def test_type_experiment_name_parameter(test_dir):
+    with pytest.raises(TypeError, match="name argument was not of type str"):
+        Experiment(name=1, exp_path=test_dir)
+
+
+def test_type_start_parameters(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="jobs argument was not of type Job"):
+        exp.start("invalid")
+
+
+def test_type_get_status_parameters(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+        exp.get_status(2)
+
+
+def test_type_wait_parameter(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+        exp.wait(2)
+
+
+def test_type_stop_parameter(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+        exp.stop(2)

@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import collections
 import copy
 import itertools
 import os
@@ -37,6 +38,7 @@ from smartsim.entity.application import Application
 from smartsim.entity.files import EntityFiles
 from smartsim.entity.strategies import ParamSet
 from smartsim.launchable.job import Job
+from smartsim.settings.launchSettings import LaunchSettings
 
 if t.TYPE_CHECKING:
     from smartsim.settings.launchSettings import LaunchSettings
@@ -109,7 +111,12 @@ class Ensemble(entity.CompoundEntity):
         """Set executable to run.
 
         :param value: executable to run
+        :raises TypeError: if exe is not str or PathLike str
         """
+        if value:
+            if not isinstance(value, (str, os.PathLike)):
+                raise TypeError("exe argument was not of type str or PathLike str")
+
         self._exe = os.fspath(value)
 
     @property
@@ -125,7 +132,15 @@ class Ensemble(entity.CompoundEntity):
         """Set the executable arguments.
 
         :param value: executable arguments
+        :raises TypeError: if exe_args is not sequence of str
         """
+        if value:
+            if not (
+                isinstance(value, collections.abc.Sequence)
+                and (all(isinstance(x, str) for x in value))
+            ):
+                raise TypeError("exe_args argument was not of type sequence of str")
+
         self._exe_args = list(value)
 
     @property
@@ -143,7 +158,32 @@ class Ensemble(entity.CompoundEntity):
         """Set the executable arguments.
 
         :param value: executable arguments
+        :raises TypeError: if exe_arg_parameters is not mapping
+        of str and sequences of sequences of strings
         """
+        if value:
+            if not (
+                isinstance(value, collections.abc.Mapping)
+                and (
+                    all(
+                        isinstance(key, str)
+                        and isinstance(val, collections.abc.Sequence)
+                        and all(
+                            isinstance(subval, collections.abc.Sequence)
+                            for subval in val
+                        )
+                        and all(
+                            isinstance(item, str)
+                            for item in itertools.chain.from_iterable(val)
+                        )
+                        for key, val in value.items()
+                    )
+                )
+            ):
+                raise TypeError(
+                    "exe_arg_parameters argument was not of type mapping of str and sequences of sequences of strings"
+                )
+
         self._exe_arg_parameters = copy.deepcopy(value)
 
     @property
@@ -161,7 +201,11 @@ class Ensemble(entity.CompoundEntity):
         execution.
 
         :param value: files
+        :raises TypeError: if files is not of type EntityFiles
         """
+        if value:
+            if not isinstance(value, EntityFiles):
+                raise TypeError("files argument was not of type EntityFiles")
         self._files = copy.deepcopy(value)
 
     @property
@@ -177,7 +221,24 @@ class Ensemble(entity.CompoundEntity):
         """Set the file parameters.
 
         :param value: file parameters
+        :raises TypeError: if file_parameters is not a mapping of str and sequence of str
         """
+        if value:
+            if not (
+                isinstance(value, t.Mapping)
+                and (
+                    all(
+                        isinstance(key, str)
+                        and isinstance(val, collections.abc.Sequence)
+                        and all(isinstance(subval, str) for subval in val)
+                        for key, val in value.items()
+                    )
+                )
+            ):
+                raise TypeError(
+                    "file_parameters argument was not of type mapping of str and sequence of str"
+                )
+
         self._file_parameters = dict(value)
 
     @property
@@ -195,7 +256,13 @@ class Ensemble(entity.CompoundEntity):
         """Set the permutation strategy
 
         :param value: permutation strategy
+        :raises TypeError: if permutation_strategy is not str or PermutationStrategyType
         """
+        if value:
+            if not isinstance(value, t.Callable):
+                raise TypeError(
+                    "permutation_strategy argument was not of type str or PermutationStrategyType"
+                )
         self._permutation_strategy = value
 
     @property
@@ -210,8 +277,13 @@ class Ensemble(entity.CompoundEntity):
     def max_permutations(self, value: int) -> None:
         """Set the maximum permutations
 
-        :param value: the maxpermutations
+        :param value: the max permutations
+        :raises TypeError: max_permutations argument was not of type int
         """
+        if value:
+            if not isinstance(value, int):
+                raise TypeError("max_permutations argument was not of type int")
+
         self._max_permutations = value
 
     @property
@@ -227,7 +299,12 @@ class Ensemble(entity.CompoundEntity):
         """Set the number of replicas
 
         :return: the number of replicas
+        :raises TypeError: replicas argument was not of type int
         """
+        if value:
+            if not isinstance(value, int):
+                raise TypeError("replicas argument was not of type int")
+
         self._replicas = value
 
     def _create_applications(self) -> tuple[Application, ...]:
@@ -255,7 +332,11 @@ class Ensemble(entity.CompoundEntity):
         )
 
     def as_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
-        if not settings is None:
+
+        if settings:
+            if not isinstance(settings, LaunchSettings):
+                raise TypeError("ids argument was not of type LaunchSettings")
+
             apps = self._create_applications()
             if not apps:
                 raise ValueError("There are no members as part of this ensemble")

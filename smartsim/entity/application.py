@@ -70,7 +70,7 @@ class Application(SmartSimEntity):
         """The executable to run"""
         self._exe_args = self._build_exe_args(exe_args) or []
         """The executable arguments"""
-        self._files = copy.deepcopy(files) if files else None
+        self._files = copy.deepcopy(files) if files else EntityFiles()
         """Files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
@@ -94,7 +94,12 @@ class Application(SmartSimEntity):
         """Set executable to run.
 
         :param value: executable to run
+        :raises TypeError: exe argument is not int
         """
+        if value:
+            if not isinstance(value, str):
+                raise TypeError("exe argument was not of type str")
+
         self._exe = copy.deepcopy(value)
 
     @property
@@ -136,7 +141,12 @@ class Application(SmartSimEntity):
         execution.
 
         :param value: files
+        :raises TypeError: files argument was not of type int
         """
+        if value:
+            if not isinstance(value, EntityFiles):
+                raise TypeError("files argument was not of type EntityFiles")
+
         self._files = copy.deepcopy(value)
 
     @property
@@ -152,7 +162,21 @@ class Application(SmartSimEntity):
         """Set the file parameters.
 
         :param value: file parameters
+        :raises TypeError: file_parameters argument is not a mapping of str and str
         """
+        if value:
+            if not (
+                isinstance(value, t.Mapping)
+                and (
+                    all(
+                        isinstance(key, str) and isinstance(val, str)
+                        for key, val in value.items()
+                    )
+                )
+            ):
+                raise TypeError(
+                    "file_parameters argument was not of type mapping of str and str"
+                )
         self._file_parameters = copy.deepcopy(value)
 
     @property
@@ -168,7 +192,16 @@ class Application(SmartSimEntity):
         """Set the incoming entities.
 
         :param value: incoming entities
+        :raises TypeError: incoming_entities argument is not a list of SmartSimEntity
         """
+        if value:
+            if not isinstance(value, list) or not all(
+                isinstance(x, SmartSimEntity) for x in value
+            ):
+                raise TypeError(
+                    "incoming_entities argument was not of type list of SmartSimEntity"
+                )
+
         self._incoming_entities = copy.copy(value)
 
     @property
@@ -184,7 +217,12 @@ class Application(SmartSimEntity):
         """Set whether key prefixing is enabled for the application.
 
         :param value: key prefixing enabled
+        :raises TypeError: key prefixings enabled argument was not of type bool
         """
+        if value:
+            if not isinstance(value, bool):
+                raise TypeError("key_prefixing_enabled argument was not of type bool")
+
         self.key_prefixing_enabled = copy.deepcopy(value)
 
     def as_executable_sequence(self) -> t.Sequence[str]:
@@ -246,8 +284,6 @@ class Application(SmartSimEntity):
 
         :returns: String version of table
         """
-        if not self.files:
-            raise ValueError("No file attached to this application.")
         return str(self.files)
 
     @staticmethod

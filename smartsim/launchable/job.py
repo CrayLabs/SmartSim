@@ -59,8 +59,8 @@ class Job(BaseJob):
         name: str | None = None,
     ):
         super().__init__()
-        self._entity = deepcopy(entity)
-        self._launch_settings = deepcopy(launch_settings)
+        self.entity = entity
+        self.launch_settings = launch_settings
         self._name = name if name else entity.name
         check_name(self._name)
 
@@ -83,7 +83,16 @@ class Job(BaseJob):
 
     @entity.setter
     def entity(self, value: SmartSimEntity) -> None:
-        """Sets the Job entity."""
+        """Sets the Job entity.
+
+        :param value: entity
+        :raises Type Error: if entity is not SmartSimEntity
+        """
+        from smartsim.entity.entity import SmartSimEntity
+
+        if not isinstance(value, SmartSimEntity):
+            raise TypeError("entity argument was not of type SmartSimEntity")
+
         self._entity = deepcopy(value)
 
     @property
@@ -93,7 +102,14 @@ class Job(BaseJob):
 
     @launch_settings.setter
     def launch_settings(self, value: LaunchSettings) -> None:
-        """Sets the Job LaunchSettings."""
+        """Sets the Job LaunchSettings.
+
+        :param value: launch settings
+        :raises Type Error: if launch_settings is not a LaunchSettings
+        """
+        if not isinstance(value, LaunchSettings):
+            raise TypeError("launch_settings argument was not of type LaunchSettings")
+
         self._launch_settings = deepcopy(value)
 
     def get_launch_steps(self) -> LaunchCommands:

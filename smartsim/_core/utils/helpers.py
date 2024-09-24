@@ -136,6 +136,7 @@ def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
 
     :param exe: executable or file
+    :raises ValueError: if no executable is provided
     :raises TypeError: if file is not an executable
     :raises FileNotFoundError: if executable cannot be found
     """
