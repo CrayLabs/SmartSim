@@ -60,18 +60,18 @@ WORK_QUEUE_KEY = "_SMARTSIM_REQUEST_QUEUE"
 logger = get_logger(__name__)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
     # return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
     return dragon_ddict.DDict(1, 2, 4 * 1024**2)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def the_backbone(storage_for_dragon_fs) -> BackboneFeatureStore:
     return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
     """a stand-in for the worker manager so a worker queue exists"""
 
@@ -82,12 +82,11 @@ def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
 
     # store the descriptor in the backbone
     the_backbone.worker_queue = comm_channel.descriptor
-    # the_backbone[BackboneFeatureStore.MLI_WORKER_QUEUE] = comm_channel.descriptor
 
     try:
         comm_channel.send(b"foo")
     except Exception as ex:
-        print(f"ohnooooo: {ex}")
+        logger.exception(f"Test send from worker channel failed", exc_info=True)
 
     return comm_channel
 
@@ -132,7 +131,7 @@ def test_protoclient_timeout(
     :param the_backbone: a pre-initialized backbone featurestore for setting up
     the environment variable required by the client"""
 
-    # NOTE: exp_wait_time maps to the cycled backoff of [.1, .5, 1, 2, 4, 8]
+    # NOTE: exp_wait_time maps to the cycled backoff of [0.1, 0.2, 0.4, 0.8]
     # with leeway added (by allowing 1s each for the 0.1 and 0.5 steps)
     start_time = time.time()
     with monkeypatch.context() as ctx, pytest.raises(SmartSimError) as ex:
@@ -240,12 +239,16 @@ def test_protoclient_write_model(
         assert client._backbone[model_key] == model_bytes
 
 
-@pytest.mark.parametrize("num_listeners", [1, 2, 4])
+@pytest.mark.parametrize(
+    "num_listeners, num_model_updates",
+    [(1, 1), (1, 4), (2, 4), (16, 4), (64, 8)],
+)
 def test_protoclient_write_model_notification_sent(
     the_backbone: BackboneFeatureStore,
     the_worker_queue: DragonFLIChannel,
     monkeypatch: pytest.MonkeyPatch,
     num_listeners: int,
+    num_model_updates: int,
 ):
     """Verify that writing a model sends a key-written event
 
@@ -258,7 +261,11 @@ def test_protoclient_write_model_notification_sent(
 
     # we won't actually send here, but it won't try without registered listeners
     listeners = [f"mock-ch-desc-{i}" for i in range(num_listeners)]
+
+    the_backbone[BackboneFeatureStore.MLI_BACKBONE] = the_backbone.descriptor
+    the_backbone[BackboneFeatureStore.MLI_WORKER_QUEUE] = the_worker_queue.descriptor
     the_backbone[BackboneFeatureStore.MLI_NOTIFY_CONSUMERS] = ",".join(listeners)
+    the_backbone[BackboneFeatureStore.MLI_BACKEND_CONSUMER] = None
 
     with monkeypatch.context() as ctx:
         ctx.setenv(BackboneFeatureStore.MLI_BACKBONE, the_backbone.descriptor)
@@ -277,15 +284,16 @@ def test_protoclient_write_model_notification_sent(
         model_key = "my-model"
         model_bytes = b"12345"
 
-        client.set_model(model_key, model_bytes)
+        for i in range(num_model_updates):
+            client.set_model(model_key, model_bytes)
 
         # confirm that a listener channel was attached
         # once for each registered listener in backbone
-        assert mock_get_comm_channel.call_count == num_listeners
+        assert mock_get_comm_channel.call_count == num_listeners * num_model_updates
 
         # confirm the client raised the key-written event
         assert (
-            mock_send.call_count == num_listeners
+            mock_send.call_count == num_listeners * num_model_updates
         ), f"Expected {num_listeners} sends with {num_listeners} registrations"
 
         # with at least 1 consumer registered, we can verify the message is sent

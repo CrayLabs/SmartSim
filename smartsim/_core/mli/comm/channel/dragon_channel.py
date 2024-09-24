@@ -151,7 +151,7 @@ class DragonCommChannel(cch.CommChannelBase):
                 logger.debug(f"DragonCommChannel {self.descriptor} sent message")
         except Exception as e:
             raise SmartSimError(
-                f"Error sending message: DragonCommChannel {self.descriptor!r}"
+                f"Error sending via DragonCommChannel {self.descriptor}"
             ) from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:

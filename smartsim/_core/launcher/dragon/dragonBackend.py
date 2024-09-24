@@ -622,9 +622,8 @@ class DragonBackend:
                 name="BackendConsumerRegistrar",
                 event_handler=self._on_consumer_created,
             )
-            while consumer.register():
-                # wait for the consumer to complete registration
-                ...
+            consumer.register()
+            logger.info(f"Consumer `{consumer.name}` registration completed.")
 
             # self._backbone.backend_channel =
             # consumer.descriptor # i want to get rid of this extra channel

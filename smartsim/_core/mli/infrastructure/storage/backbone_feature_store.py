@@ -71,7 +71,7 @@ class BackboneFeatureStore(DragonFeatureStore):
     MLI_WORKER_QUEUE = "_SMARTSIM_REQUEST_QUEUE"
     MLI_BACKBONE = "_SMARTSIM_INFRA_BACKBONE"
     _CREATED_ON = "creation"
-    _DEFAULT_WAIT_TIMEOUT = 30.0
+    _DEFAULT_WAIT_TIMEOUT = 1.0
 
     def __init__(
         self,
@@ -219,7 +219,7 @@ class BackboneFeatureStore(DragonFeatureStore):
         values: t.Dict[str, t.Union[str, bytes, None]] = {k: None for k in set(keys)}
         is_found = {k: False for k in values.keys()}
 
-        backoff: t.List[float] = [0.1, 0.5, 1, 2, 4]
+        backoff = (0.1, 0.2, 0.4, 0.8)
         backoff_iter = itertools.cycle(backoff)
         start_time = time.time()
 
@@ -360,7 +360,7 @@ class EventSender:
         self._backbone = backbone
         self._channel: t.Optional[CommChannelBase] = channel
 
-    def send(self, event: EventBase) -> int:
+    def send(self, event: EventBase, timeout: float = 0.001) -> int:
         """The send operation"""
         if self._channel is None:
             # self._channel = self._channel_factory(event)
@@ -371,7 +371,7 @@ class EventSender:
 
         try:
             event_bytes = bytes(event)
-            self._channel.send(event_bytes)
+            self._channel.send(event_bytes, timeout)
             num_sent += 1
         except Exception as ex:
             raise SmartSimError(f"Failed broadcast to channel: {self._channel}") from ex
@@ -589,6 +589,17 @@ class EventConsumer:
         :returns: The comm channel descriptor"""
         return self._comm_channel.descriptor
 
+    @property
+    def name(self) -> str:
+        """The friendly name assigned to the consumer.
+
+        :returns: The consumer name if one is assigned, othewise a unique
+        id assigned by the system.
+        """
+        if self._name is None:
+            self._name = str(uuid.uuid4())
+        return self._name
+
     def receive(
         self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0
     ) -> t.List[EventBase]:
@@ -635,11 +646,11 @@ class EventConsumer:
 
         return messages
 
-    def register(self) -> t.Generator[bool, None, None]:
+    def register(self) -> None:
         """Send an event to register this consumer as a listener"""
         awaiting_confirmation = True
         descriptor = self._comm_channel.descriptor
-        backoffs = itertools.cycle((0.1, 0.5, 1.0, 2.0, 4.0))
+        backoffs = itertools.cycle((0.1, 0.2, 0.4, 0.8))
         event = OnCreateConsumer(descriptor, self._global_filters)
 
         # create a temporary publisher to broadcast my own existence.
@@ -654,7 +665,6 @@ class EventConsumer:
             if descriptor in registered_channels:
                 awaiting_confirmation = False
 
-            yield not awaiting_confirmation
             time.sleep(next(backoffs))
 
             # if backend_descriptor := self._backbone.backend_channel:
@@ -665,7 +675,7 @@ class EventConsumer:
 
             # broadcast that this consumer is now ready to mingle
             publisher = EventBroadcaster(self._backbone, DragonCommChannel.from_local)
-            publisher.send(event, timeout=0.1)
+            publisher.send(event, timeout=0.01)
 
     # def register_callback(self, callback: t.Callable[[EventBase], None]) -> None: ...
 

@@ -68,20 +68,23 @@ class DragonFLIChannel(cch.CommChannelBase):
             create_local(buffer_size) if sender_supplied else None
         )
 
-    def send(self, value: bytes, timeout: float = 0.001) -> None:
+    def send(
+        self, value: bytes, timeout: float = 0.001, blocking: bool = False
+    ) -> None:
         """Send a message through the underlying communication channel.
 
-        :param timeout: Maximum time to wait (in seconds) for messages to send
         :param value: The value to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param blocking: Block returning until the message has been received
         :raises SmartSimError: If sending message fails
         """
         try:
             with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
                 sendh.send_bytes(value, timeout=timeout)
-                logger.debug(f"DragonFLIChannel {self.descriptor!r} sent message")
+                logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
             raise SmartSimError(
-                f"Error sending message: DragonFLIChannel {self.descriptor!r}"
+                f"Error sending message: DragonFLIChannel {self.descriptor}"
             ) from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
@@ -98,14 +101,12 @@ class DragonFLIChannel(cch.CommChannelBase):
                 try:
                     message, _ = recvh.recv_bytes(timeout=timeout)
                     messages.append(message)
-                    logger.debug(
-                        f"DragonFLIChannel {self.descriptor!r} received message"
-                    )
+                    logger.debug(f"DragonFLIChannel {self.descriptor} received message")
                 except fli.FLIEOT:
                     eot = True
                 except Exception as e:
                     raise SmartSimError(
-                        f"Error receiving messages: DragonFLIChannel {self.descriptor!r}"
+                        f"Error receiving messages: DragonFLIChannel {self.descriptor}"
                     ) from e
         return messages
 

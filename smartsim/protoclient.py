@@ -31,6 +31,12 @@ from dragon import fli
 import dragon.channels
 from dragon.globalservices.api_setup import connect_to_infrastructure
 
+try:
+    from mpi4py import MPI  # type: ignore[import-not-found]
+except Exception:
+    MPI = None
+    print("Unable to import `mpi4py` package")
+
 # isort: on
 # pylint: enable=unused-import,import-error
 
@@ -44,8 +50,8 @@ import numpy
 import torch
 
 from smartsim._core.mli.comm.channel.dragon_channel import (
-    create_local,
     DragonCommChannel,
+    create_local,
 )
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
@@ -58,13 +64,6 @@ from smartsim._core.mli.message_handler import MessageHandler
 from smartsim._core.utils.timings import PerfTimer
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
-
-
-try:
-    from mpi4py import MPI
-except Exception:
-    MPI = None
-    print("Unable to import `mpi4py` package")
 
 _TimingDict = OrderedDict[str, list[str]]
 
@@ -134,7 +133,8 @@ class ProtoClient:
     ) -> t.Tuple[dragon.channels.Channel, dragon.channels.Channel]:
         """Create channels to be used for communication to and from the worker queue.
 
-        :returns: A tuple containing the native from and to Channels as (from_channel, to_channel).
+        :returns: A tuple containing the native from and to
+        Channels as (from_channel, to_channel).
         """
 
         _from_worker_ch_raw = create_local(cls._DEFAULT_WORK_QUEUE_SIZE)
@@ -165,9 +165,9 @@ class ProtoClient:
         #  - consider catching the import exception and defaulting rank to 0
         if MPI is not None:
             comm = MPI.COMM_WORLD
-            rank = comm.Get_rank()
+            rank: int = comm.Get_rank()
         else:
-            rank: int = 0
+            rank = 0
 
         self._backbone_timeout = wait_timeout
 
@@ -192,7 +192,8 @@ class ProtoClient:
 
     @property
     def backbone_timeout(self) -> float:
-        """The timeout (in seconds) applied to retrievals from the backbone feature store.
+        """The timeout (in seconds) applied to retrievals
+        from the backbone feature store.
 
         :returns: A float indicating the number of seconds to allow"""
         return self._backbone_timeout or self._DEFAULT_BACKBONE_TIMEOUT

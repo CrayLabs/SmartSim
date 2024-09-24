@@ -759,7 +759,7 @@ def test_backbone_wait_timeout(wait_timeout: float, exp_wait_max: float) -> None
     :param storage_for_dragon_fs: the dragon storage engine to use
     """
 
-    # NOTE: exp_wait_time maps to the cycled backoff of [.1, .5, 1, 2, 4, 8]
+    # NOTE: exp_wait_time maps to the cycled backoff of [0.1, 0.2, 0.4, 0.8]
     # with leeway added (by allowing 1s each for the 0.1 and 0.5 steps)
     start_time = time.time()
 

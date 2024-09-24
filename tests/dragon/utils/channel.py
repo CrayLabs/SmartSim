@@ -40,7 +40,7 @@ class FileSystemCommChannel(CommChannelBase):
     """Passes messages by writing to a file"""
 
     def __init__(self, key: pathlib.Path) -> None:
-        """Initialize the FileSystemCommChannel instance
+        """Initialize the FileSystemCommChannel instance.
 
         :param key: a path to the root directory of the feature store"""
         self._lock = threading.RLock()
@@ -54,10 +54,11 @@ class FileSystemCommChannel(CommChannelBase):
         self._file_path.touch()
 
     def send(self, value: bytes, timeout: float = 0) -> None:
-        """Send a message throuh the underlying communication channel
+        """Send a message throuh the underlying communication channel.
 
-        :param timeout: maximum time to wait (in seconds) for messages to send
-        :param value: The value to send"""
+        :param value: The value to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        """
         with self._lock:
             # write as text so we can add newlines as delimiters
             with open(self._file_path, "a") as fp:

@@ -56,8 +56,9 @@ class FileSystemCommChannel(CommChannelBase):
     def send(self, value: bytes, timeout: float = 0) -> None:
         """Send a message throuh the underlying communication channel
 
+        :param value: The value to send
         :param timeout: maximum time to wait (in seconds) for messages to send
-        :param value: The value to send"""
+        """
         with self._lock:
             # write as text so we can add newlines as delimiters
             with open(self._file_path, "a") as fp:

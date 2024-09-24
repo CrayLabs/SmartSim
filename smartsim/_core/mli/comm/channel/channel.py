@@ -55,8 +55,8 @@ class CommChannelBase(ABC):
     def send(self, value: bytes, timeout: float = 0) -> None:
         """Send a message through the underlying communication channel.
 
-        :param timeout: Maximum time to wait (in seconds) for messages to send
         :param value: The value to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
         :raises SmartSimError: If sending message fails
         """
 
