@@ -104,7 +104,7 @@ class BackboneFeatureStore(DragonFeatureStore):
 
         :returns: The list of descriptors
         """
-        if "_SMARTSIM_MLI_NOTIFY_CONSUMERS" in self:
+        if self.MLI_NOTIFY_CONSUMERS in self:
             stored_consumers = self[self.MLI_NOTIFY_CONSUMERS]
             return str(stored_consumers).split(",")
         return []
@@ -367,6 +367,8 @@ class EventSender:
             raise Exception("No channel to send on")
         num_sent = 0
 
+        logger.debug(f"Sending {event} to {self._channel.descriptor}")
+
         try:
             event_bytes = bytes(event)
             self._channel.send(event_bytes)
@@ -399,7 +401,7 @@ class EventBroadcaster:
         )
         """A mapping of instantiated channels that can be re-used. Automatically 
         calls the channel factory if a descriptor is not already in the collection"""
-        self._event_buffer: t.Deque[bytes] = deque()
+        self._event_buffer: t.Deque[EventBase] = deque()
         """A buffer for storing events when a consumer list is not found"""
         self._descriptors: t.Set[str]
         """Stores the most recent list of broadcast consumers. Updated automatically
@@ -416,15 +418,15 @@ class EventBroadcaster:
         return len(self._event_buffer)
 
     def _save_to_buffer(self, event: EventBase) -> None:
-        """Places a serialized event in the buffer to be sent once a consumer
+        """Places the event in the buffer to be sent once a consumer
         list is available.
 
         :param event: The event to serialize and buffer
         :raises ValueError: If the event cannot be serialized
         """
         try:
-            event_bytes = bytes(event)
-            self._event_buffer.append(event_bytes)
+            self._event_buffer.append(event)
+            logger.debug(f"Buffered event {event=}")
         except Exception as ex:
             raise ValueError(f"Unable to serialize event from {self._uid}") from ex
 
@@ -459,7 +461,7 @@ class EventBroadcaster:
 
         :param descriptor: The descriptor to pass to the channel factory
         :returns: The instantiated channel
-        :raises SmartSimError: If the channel fails to build
+        :raises SmartSimError: If the channel fails to attach
         """
         comm_channel = self._channel_cache[descriptor]
         if comm_channel is not None:
@@ -477,11 +479,24 @@ class EventBroadcaster:
             logger.error(msg, exc_info=True)
             raise SmartSimError(msg) from ex
 
+    def _get_next_event_event(self) -> t.Optional[EventBase]:
+        """Pop the next event to be sent from the queue.
+
+        :returns: The next event to send if any events are enqueued, otherwise `None`.
+        """
+        try:
+            return self._event_buffer.popleft()
+        except IndexError:
+            logger.debug(f"Broadcast buffer exhausted for {self._uid}")
+
+        return None
+
     def _broadcast(self, timeout: float = 0.001) -> int:
         """Broadcasts all buffered events to registered event consumers.
 
         :param timeout: Maximum time to wait (in seconds) for messages to send
         :returns: The number of events broadcasted to consumers
+        :raises SmartSimError: If the channel fails to attach
         :raises SmartSimError: If broadcasting fails
         """
         # allow descriptors to be empty since events are buffered
@@ -493,30 +508,25 @@ class EventBroadcaster:
         self._prune_unused_consumers()
         self._log_broadcast_start()
 
-        num_sent: int = 0
-        next_event: t.Optional[bytes] = self._event_buffer.popleft()
+        num_sent = 0
+        num_listeners = len(self._descriptors)
 
         # send each event to every consumer
-        while next_event is not None:
-            for descriptor in map(str, self._descriptors):
+        while event := self._get_next_event_event():
+            logger.debug(f"Broadcasting {event=} to {num_listeners} listeners")
+            event_bytes = bytes(event)
+
+            for i, descriptor in enumerate(self._descriptors):
                 comm_channel = self._get_comm_channel(descriptor)
 
                 try:
-                    # todo: given a failure, the message is not sent to any other
-                    # recipients. consider retrying, adding a dead letter queue, or
-                    # logging the message details more intentionally
-                    comm_channel.send(next_event, timeout)
+                    comm_channel.send(event_bytes, timeout)
                     num_sent += 1
                 except Exception as ex:
                     raise SmartSimError(
-                        f"Failed broadcast to channel {descriptor} from {self._uid}"
+                        f"Broadcast {i}/{num_listeners} for event {event.uid} to "
+                        f"channel  {descriptor} from {self._uid} failed."
                     ) from ex
-
-            try:
-                next_event = self._event_buffer.popleft()
-            except IndexError:
-                next_event = None
-                logger.debug(f"Broadcast buffer exhausted for {self._uid}")
 
         return num_sent
 
@@ -629,8 +639,11 @@ class EventConsumer:
         """Send an event to register this consumer as a listener"""
         awaiting_confirmation = True
         descriptor = self._comm_channel.descriptor
-        backoffs = itertools.cycle((0.1, 0.5, 1.0, 2.0, 4.0, 8.0))
+        backoffs = itertools.cycle((0.1, 0.5, 1.0, 2.0, 4.0))
         event = OnCreateConsumer(descriptor, self._global_filters)
+
+        # create a temporary publisher to broadcast my own existence.
+        publisher = EventBroadcaster(self._backbone, DragonCommChannel.from_local)
 
         # we're going to sit in this loop to wait for the backbone to get
         # updated with the registration (to avoid SEND/ACK)

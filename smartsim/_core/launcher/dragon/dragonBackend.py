@@ -277,6 +277,7 @@ class DragonBackend:
         )
 
     def _heartbeat(self) -> None:
+        """Update the value of the last heartbeat to the current time."""
         self._last_beat = self.current_time
 
     @property
@@ -621,37 +622,14 @@ class DragonBackend:
                 name="BackendConsumerRegistrar",
                 event_handler=self._on_consumer_created,
             )
+            while consumer.register():
+                # wait for the consumer to complete registration
+                ...
 
             # self._backbone.backend_channel =
             # consumer.descriptor # i want to get rid of this extra channel
             # self._bootstrap_event_listeners(backbone, consumer)
             self._event_consumer = consumer
-
-            # options = dragon_process_desc.
-            # ProcessOptions(make_inf_channels=True) # what is this!?
-            # grp_consumer = dragon_process_group.ProcessGroup(
-            #     restart=False, pmi_enabled=False
-            # )
-            # self._event_consumer_process = dragon_process.ProcessTemplate(
-            #     target=self._event_consumer.listen,
-            #     # args=request.exe_args,
-            #     # cwd=request.path,
-            #     env={
-            #         # **request.current_env,
-            #         # **request.env,
-            #         **self._backbone.get_env(),
-            #     },
-            #     stdout=dragon_process.Popen.PIPE,
-            #     stderr=dragon_process.Popen.PIPE,
-            #     # policy=local_policy,
-            #     options=options,
-            # )
-            # grp_consumer.add(self._event_consumer_process)
-            # # self._event_consumer_process =
-            # mp.Process(target=self._event_consumer.listen)
-            # # self._event_consumer_process.start()
-            # grp_consumer.init()
-            # grp_consumer.start()
 
             logger.info("Created event consumer")
 
