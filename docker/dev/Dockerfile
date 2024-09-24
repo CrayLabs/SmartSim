@@ -50,7 +50,7 @@ COPY . /home/craylabs/SmartSim
 RUN chown craylabs:root -R SmartSim
 USER craylabs
 
-RUN cd SmartSim && SMARTSIM_SUFFIX=dev python -m pip install .[ml]
+RUN cd SmartSim && SMARTSIM_SUFFIX=dev python -m pip install .
 
 RUN export PATH=/home/craylabs/.local/bin:$PATH && \
     echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \

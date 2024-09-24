@@ -181,7 +181,7 @@ setup(
         "pyzmq>=25.1.2",
         "pygithub>=2.3.0",
         "numpy<2",
-        "smartredis>=0.5,<0.6",
+        "smartredis>=0.6,<0.7",
     ],
     zip_safe=False,
     extras_require=extras_require,

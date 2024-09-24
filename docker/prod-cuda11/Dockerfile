@@ -52,7 +52,7 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86
 
  # Install SmartSim and SmartRedis
  RUN pip install git+https://github.com/CrayLabs/SmartRedis.git && \
-     pip install "smartsim[ml] @ git+https://github.com/CrayLabs/SmartSim.git"
+     pip install "smartsim @ git+https://github.com/CrayLabs/SmartSim.git"
 
  ENV CUDA_HOME="/usr/local/cuda/"
  ENV PATH="${PATH}:${CUDA_HOME}/bin"
