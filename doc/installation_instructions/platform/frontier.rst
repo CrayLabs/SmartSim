@@ -40,17 +40,7 @@ these instructions, being sure to set the following variables
 
    export SCRATCH=/lustre/orion/$PROJECT_NAME/scratch/$USER/
    conda create -n smartsim python=3.11
-   conda activate smartsim
-
-**Step 1 (Optional):** If this is your first time using miniforge on
-Frontier you may also have to execute the following before being able
-to activate the ``smartsim`` environment
-
-.. code:: bash
-
-   conda init
-   source ~/.bashrc
-   conda activate smartsim
+   source activate smartsim
 
 **Step 2:** Build the SmartRedis C++ and Fortran libraries:
 
@@ -103,7 +93,7 @@ build, and some variables should be set to optimize performance:
 .. code:: bash
 
    module load PrgEnv-gnu miniforge3 rocm/6.1.3
-   conda activate smartsim
+   source activate smartsim
 
    # Optimizations for inference
    export SCRATCH=/lustre/orion/$PROJECT_NAME/scratch/$USER/
