@@ -163,7 +163,7 @@ class BatchQueue(Queue[InferenceRequest]):
         """
         return self.empty() and self._disposable
 
-    def flush(self) -> list[t.Any]:
+    def flush(self) -> list[InferenceRequest]:
         """Get all requests from queue.
 
         :returns: Requests waiting to be executed
@@ -484,8 +484,32 @@ class RequestDispatcher(Service):
                 if queue.ready:
                     self._perf_timer.measure_time("find_queue")
                     try:
+                        flushed_requests = queue.flush()
                         batch = RequestBatch(
-                            requests=queue.flush(),
+                            raw_model=flushed_requests[0].raw_model,
+                            callbacks=[
+                                request.callback for request in flushed_requests
+                            ],
+                            raw_inputs=[
+                                key
+                                for request in flushed_requests
+                                for key in request.raw_inputs
+                            ],
+                            input_meta=[
+                                key
+                                for request in flushed_requests
+                                for key in request.input_meta
+                            ],
+                            input_keys=[
+                                key
+                                for request in flushed_requests
+                                for key in request.input_keys
+                            ],
+                            output_keys=[
+                                key
+                                for request in flushed_requests
+                                for key in request.output_keys
+                            ],
                             inputs=None,
                             model_id=queue.model_id,
                         )
@@ -496,6 +520,7 @@ class RequestDispatcher(Service):
                             batch=batch, feature_stores=self._feature_stores
                         )
                     except Exception as exc:
+                        print("INFO rd flush req")
                         exception_handler(
                             exc,
                             None,
@@ -510,6 +535,7 @@ class RequestDispatcher(Service):
                             mem_pool=self._mem_pool,
                         )
                     except Exception as exc:
+                        print("INFO rd transform input")
                         exception_handler(
                             exc,
                             None,
@@ -519,13 +545,14 @@ class RequestDispatcher(Service):
 
                     self._perf_timer.measure_time("transform_input")
                     batch.inputs = transformed_inputs
-                    for request in batch.requests:
-                        request.raw_inputs = []
-                        request.input_meta = []
+                    # for request in batch.requests:
+                    #     request.raw_inputs = []
+                    #     request.input_meta = []
 
                     try:
-                        self._outgoing_queue.put(batch.serialize())
+                        self._outgoing_queue.put(batch)
                     except Exception as exc:
+                        print("INFO rd outgoing queue put")
                         exception_handler(
                             exc,
                             None,

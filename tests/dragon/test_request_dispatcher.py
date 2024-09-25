@@ -67,20 +67,26 @@ from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestBatch,
     RequestDispatcher,
 )
-from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest, TransformInputResult
 from smartsim._core.mli.infrastructure.control.worker_manager import (
     EnvironmentConfigLoader,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore, FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.feature_store import (
+    FeatureStore,
+    FeatureStoreKey,
+)
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
+from smartsim._core.mli.infrastructure.worker.worker import (
+    InferenceRequest,
+    TransformInputResult,
+)
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .feature_store import FileSystemFeatureStore
-from .utils.channel import FileSystemCommChannel
+from tests.dragon.feature_store import FileSystemFeatureStore
+from tests.dragon.utils.channel import FileSystemCommChannel
 
 logger = get_logger(__name__)
 # The tests in this file belong to the dragon group
@@ -191,7 +197,14 @@ def service_as_dragon_proc(
     )
 
 
-def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
+@pytest.mark.parametrize(
+    "comm_channel",
+    [
+        pytest.param(DragonCommChannel.from_descriptor, id="DragonCommChannel"),
+        pytest.param(FileSystemCommChannel.from_descriptor, id="FileSystemCommChannel"),
+    ],
+)
+def test_request_dispatcher(prepare_environment: pathlib.Path, comm_channel) -> None:
     """Test the request dispatcher batching and queueing system
 
     This also includes setting a queue to disposable, checking that it is no
@@ -216,7 +229,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel.from_descriptor,
+        callback_factory=comm_channel,
         queue_factory=DragonFLIChannel.from_descriptor,
     )
     integrated_worker_type = TorchWorker
@@ -293,7 +306,7 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
                     )
                 )
 
-            assert len(batch.requests) == 2
+            assert len(batch.callbacks) == 2
             assert batch.model_id.key == model_key
             assert model_key in request_dispatcher._queues
             assert model_key in request_dispatcher._active_queues
@@ -330,26 +343,3 @@ def test_request_dispatcher(prepare_environment: pathlib.Path) -> None:
     # Try to remove the dispatcher and free the memory
     del request_dispatcher
     gc.collect()
-
-
-def test_serialize_request_batch():
-    fs_key = FeatureStoreKey('key', 'descriptor')
-    tensor_descriptor = MessageHandler.build_tensor_descriptor('c', 'float32', [1])
-    request = InferenceRequest(model_key=fs_key, callback=FileSystemCommChannel.from_descriptor, raw_inputs=[b'raw input'], input_meta=[tensor_descriptor])
-
-    req_batch = RequestBatch(requests=[request], inputs=TransformInputResult(result=b'result bytes', slices=[], dims=[[1]], dtypes=['float']), model_id=fs_key)
-
-    serialized = req_batch.serialize()
-
-    deserialized = RequestBatch.deserialize(serialized)
-
-    assert isinstance(deserialized, RequestBatch)
-    assert isinstance(deserialized.model_id, FeatureStoreKey)
-    assert isinstance(deserialized.requests, list)
-    assert isinstance(deserialized.requests[0], InferenceRequest)
-    assert isinstance(deserialized.inputs, TransformInputResult)
-    assert req_batch.model_id.key == deserialized.model_id.key
-    assert req_batch.model_id.descriptor == deserialized.model_id.descriptor
-    assert req_batch.requests[0].model_key == deserialized.requests[0].model_key
-    # assert req_batch.inputs == deserialized.inputs
-

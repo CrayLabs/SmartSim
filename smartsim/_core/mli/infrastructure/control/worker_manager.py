@@ -180,6 +180,7 @@ class WorkerManager(Service):
         )
 
         if not self._validate_batch(batch):
+            print("INFO wm validate")
             exception_handler(
                 ValueError("An invalid batch was received"),
                 None,
@@ -188,7 +189,7 @@ class WorkerManager(Service):
             return
 
         if not self._device_manager:
-            for request in batch.requests:
+            for callback in batch.callbacks:
                 msg = "No Device Manager found. WorkerManager._on_start() "
                 "must be called after initialization. If possible, "
                 "you should use `WorkerManager.execute()` instead of "
@@ -198,9 +199,10 @@ class WorkerManager(Service):
                 except Exception:
                     msg += "\nThe batch could not be put back in the queue "
                     "and will not be processed."
+                    print("INFO wm device manager")
                 exception_handler(
                     RuntimeError(msg),
-                    request.callback,
+                    callback,
                     "Error acquiring device manager",
                 )
             return
@@ -212,10 +214,11 @@ class WorkerManager(Service):
                 feature_stores=self._feature_stores,
             )
         except Exception as exc:
-            for request in batch.requests:
+            for callback in batch.callbacks:
+                print("INFO wm get device")
                 exception_handler(
                     exc,
-                    request.callback,
+                    callback,
                     "Error loading model on device or getting device.",
                 )
             return
@@ -226,18 +229,18 @@ class WorkerManager(Service):
             try:
                 model_result = LoadModelResult(device.get_model(batch.model_id.key))
             except Exception as exc:
-                for request in batch.requests:
-                    exception_handler(
-                        exc, request.callback, "Error getting model from device."
-                    )
+                for callback in batch.callbacks:
+                    print("INFO wm getmodel")
+                    exception_handler(exc, callback, "Error getting model from device.")
                 return
             self._perf_timer.measure_time("load_model")
 
             if not batch.inputs:
-                for request in batch.requests:
+                for callback in batch.callbacks:
+                    print("INFO wm batch inputs")
                     exception_handler(
                         ValueError("Error batching inputs"),
-                        request.callback,
+                        callback,
                         None,
                     )
                 return
@@ -248,8 +251,9 @@ class WorkerManager(Service):
                     batch, model_result, transformed_input, device.name
                 )
             except Exception as e:
-                for request in batch.requests:
-                    exception_handler(e, request.callback, "Error while executing.")
+                for callback in batch.callbacks:
+                    print("INFO wm execute")
+                    exception_handler(e, callback, "Error while executing.")
                 return
             self._perf_timer.measure_time("execute")
 
@@ -258,25 +262,28 @@ class WorkerManager(Service):
                     batch, execute_result
                 )
             except Exception as e:
-                for request in batch.requests:
+                for callback in batch.callbacks:
+                    print("INFO wm transform output")
                     exception_handler(
-                        e, request.callback, "Error while transforming the output."
+                        e, callback, "Error while transforming the output."
                     )
                 return
 
-            for request, transformed_output in zip(batch.requests, transformed_outputs):
+            for transformed_output in transformed_outputs:
                 reply = InferenceReply()
-                if request.has_output_keys:
+                if batch.output_keys:
                     try:
                         reply.output_keys = self._worker.place_output(
-                            request,
+                            batch,
                             transformed_output,
                             self._feature_stores,
                         )
                     except Exception as e:
-                        exception_handler(
-                            e, request.callback, "Error while placing the output."
-                        )
+                        for callback in batch.callbacks:
+                            print("INFO wm place output")
+                            exception_handler(
+                                e, callback, "Error while placing the output."
+                            )
                         continue
                 else:
                     reply.outputs = transformed_output.outputs
@@ -302,12 +309,12 @@ class WorkerManager(Service):
 
                 self._perf_timer.measure_time("serialize_resp")
 
-                if request.callback:
-                    request.callback.send(serialized_resp)
+                for callback in batch.callbacks:
+                    callback.send(serialized_resp)
                     if reply.has_outputs:
                         # send tensor data after response
                         for output in reply.outputs:
-                            request.callback.send(output)
+                            callback.send(output)
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()

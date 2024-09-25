@@ -132,7 +132,12 @@ def test_device_manager_model_in_request():
     )
 
     request_batch = RequestBatch(
-        [request],
+        request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys,
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_id=model_key,
     )
@@ -170,7 +175,12 @@ def test_device_manager_model_key():
     )
 
     request_batch = RequestBatch(
-        [request],
+        request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys,
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_id=model_key,
     )

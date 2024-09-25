@@ -140,7 +140,12 @@ def setup_worker_manager_model_bytes(
     model_id = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
 
     request_batch = RequestBatch(
-        [request],
+        request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys,
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_id=model_id,
     )
@@ -197,7 +202,12 @@ def setup_worker_manager_model_key(
         batch_size=0,
     )
     request_batch = RequestBatch(
-        [request],
+        request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys,
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_id=model_id,
     )

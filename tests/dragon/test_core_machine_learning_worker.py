@@ -100,7 +100,12 @@ def test_fetch_model_disk(persist_torch_model: pathlib.Path, test_dir: str) -> N
 
     model_key = FeatureStoreKey(key=key, descriptor=fsd)
     request = InferenceRequest(model_key=model_key)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     fetch_result = worker.fetch_model(batch, {fsd: feature_store})
     assert fetch_result.model_bytes
@@ -118,7 +123,12 @@ def test_fetch_model_disk_missing() -> None:
 
     model_key = FeatureStoreKey(key=key, descriptor=fsd)
     request = InferenceRequest(model_key=model_key)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     with pytest.raises(sse.SmartSimError) as ex:
         worker.fetch_model(batch, {fsd: feature_store})
@@ -143,7 +153,12 @@ def test_fetch_model_feature_store(persist_torch_model: pathlib.Path) -> None:
 
     model_key = FeatureStoreKey(key=key, descriptor=feature_store.descriptor)
     request = InferenceRequest(model_key=model_key)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     fetch_result = worker.fetch_model(batch, {fsd: feature_store})
     assert fetch_result.model_bytes
@@ -161,7 +176,12 @@ def test_fetch_model_feature_store_missing() -> None:
 
     model_key = FeatureStoreKey(key=key, descriptor=feature_store.descriptor)
     request = InferenceRequest(model_key=model_key)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     # todo: consider that raising this exception shows impl. replace...
     with pytest.raises(sse.SmartSimError) as ex:
@@ -184,7 +204,12 @@ def test_fetch_model_memory(persist_torch_model: pathlib.Path) -> None:
 
     model_key = FeatureStoreKey(key=key, descriptor=feature_store.descriptor)
     request = InferenceRequest(model_key=model_key)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     fetch_result = worker.fetch_model(batch, {fsd: feature_store})
     assert fetch_result.model_bytes
@@ -204,7 +229,12 @@ def test_fetch_input_disk(persist_torch_tensor: pathlib.Path) -> None:
     )
 
     model_key = FeatureStoreKey(key="test-model", descriptor=fsd)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     worker = MachineLearningWorkerCore
 
@@ -226,7 +256,12 @@ def test_fetch_input_disk_missing() -> None:
     request = InferenceRequest(input_keys=[FeatureStoreKey(key=key, descriptor=fsd)])
 
     model_key = FeatureStoreKey(key="test-model", descriptor=fsd)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     with pytest.raises(sse.SmartSimError) as ex:
         worker.fetch_inputs(batch, {fsd: feature_store})
@@ -253,7 +288,12 @@ def test_fetch_input_feature_store(persist_torch_tensor: pathlib.Path) -> None:
     feature_store[tensor_name] = persist_torch_tensor.read_bytes()
 
     model_key = FeatureStoreKey(key="test-model", descriptor=fsd)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     fetch_result = worker.fetch_inputs(batch, {fsd: feature_store})
     assert fetch_result[0].inputs
@@ -291,7 +331,12 @@ def test_fetch_multi_input_feature_store(persist_torch_tensor: pathlib.Path) -> 
     )
 
     model_key = FeatureStoreKey(key="test-model", descriptor=fsd)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     fetch_result = worker.fetch_inputs(batch, {fsd: feature_store})
 
@@ -313,7 +358,12 @@ def test_fetch_input_feature_store_missing() -> None:
     request = InferenceRequest(input_keys=[FeatureStoreKey(key=key, descriptor=fsd)])
 
     model_key = FeatureStoreKey(key="test-model", descriptor=fsd)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     with pytest.raises(sse.SmartSimError) as ex:
         worker.fetch_inputs(batch, {fsd: feature_store})
@@ -335,7 +385,12 @@ def test_fetch_input_memory(persist_torch_tensor: pathlib.Path) -> None:
     request = InferenceRequest(input_keys=[FeatureStoreKey(key=key, descriptor=fsd)])
 
     model_key = FeatureStoreKey(key="test-model", descriptor=fsd)
-    batch = RequestBatch([request], None, model_key)
+    batch = RequestBatch(request.raw_model,
+        [request.callback],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys, None, model_key)
 
     fetch_result = worker.fetch_inputs(batch, {fsd: feature_store})
     assert fetch_result[0].inputs is not None
