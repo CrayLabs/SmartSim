@@ -56,11 +56,6 @@ pytestmark = pytest.mark.group_a
 _ID_GENERATOR = (str(i) for i in itertools.count())
 
 
-@pytest.fixture
-def get_gen_symlink_dir(fileutils):
-    yield fileutils.get_test_conf_path(osp.join("generator_files", "to_symlink_dir"))
-
-
 def random_id():
     return next(_ID_GENERATOR)
 
@@ -626,18 +621,15 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
     assert before_cancel == after_cancel
 
 
-def test_start_sequence_5(
-    test_dir,
-    wlmutils,
-    monkeypatch,
-):
+def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list):
+    """Test the unpacking of a tuple of tuples
+    exp.start(job1, (job2, job3))
+    """
     monkeypatch.setattr(
         "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
-    """Test the unpacking of a tuple of tuples 
-            exp.start(job1, (job2, job3))
-    """
+
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
 
     launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
@@ -648,119 +640,107 @@ def test_start_sequence_5(
     exp.start(job_list)
 
 
-def test_start_with_two_element_tuple(
-    test_dir,
-    wlmutils,
-    monkeypatch,
-):
-    """Test unpacking a tuple of two jobs"""
+@pytest.mark.parametrize(
+    "job_list",
+    (
+        pytest.param(
+            [
+                (
+                    job.Job(
+                        Application(
+                            "test_name",
+                            exe="echo",
+                            exe_args=["spam", "eggs"],
+                        ),
+                        launchSettings.LaunchSettings("local"),
+                    ),
+                    Ensemble("ensemble-name", "echo", replicas=2).as_jobs(
+                        launchSettings.LaunchSettings("local")
+                    ),
+                )
+            ],
+            id="(job1, job2)",
+        ),
+        pytest.param(
+            [
+                (
+                    Ensemble("ensemble-name", "echo", replicas=2).as_jobs(
+                        launchSettings.LaunchSettings("local")
+                    ),
+                    (
+                        job.Job(
+                            Application(
+                                "test_name",
+                                exe="echo",
+                                exe_args=["spam", "eggs"],
+                            ),
+                            launchSettings.LaunchSettings("local"),
+                        ),
+                        job.Job(
+                            Application(
+                                "test_name_2",
+                                exe="echo",
+                                exe_args=["spam", "eggs"],
+                            ),
+                            launchSettings.LaunchSettings("local"),
+                        ),
+                    ),
+                )
+            ],
+            id="(job1, (job2, job3))",
+        ),
+        pytest.param(
+            [
+                (
+                    job.Job(
+                        Application(
+                            "test_name",
+                            exe="echo",
+                            exe_args=["spam", "eggs"],
+                        ),
+                        launchSettings.LaunchSettings("local"),
+                    ),
+                )
+            ],
+            id="(job,)",
+        ),
+        pytest.param(
+            [
+                [
+                    job.Job(
+                        Application(
+                            "test_name",
+                            exe="echo",
+                            exe_args=["spam", "eggs"],
+                        ),
+                        launchSettings.LaunchSettings("local"),
+                    ),
+                    (
+                        Ensemble("ensemble-name", "echo", replicas=2).as_jobs(
+                            launchSettings.LaunchSettings("local")
+                        ),
+                        job.Job(
+                            Application(
+                                "test_name_2",
+                                exe="echo",
+                                exe_args=["spam", "eggs"],
+                            ),
+                            launchSettings.LaunchSettings("local"),
+                        ),
+                    ),
+                ]
+            ],
+            id="[job_1, (job_2, job_3)]",
+        ),
+    ),
+)
+def test_start_unpack(test_dir, wlmutils, monkeypatch, job_list):
+    """Test unpacking a sequences of jobs"""
 
     monkeypatch.setattr(
         "smartsim._core.dispatch._LauncherAdapter.start",
         lambda launch, exe, job_execution_path, env, out, err: random_id(),
     )
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-
-    application = Application(
-        "test_name",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
-
-    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
-
-    job2 = job.Job(application, launch_settings)
-    exp = Experiment(name="exp_name", exp_path=test_dir)
-
-    exp.start((job2, job_list))
-
-
-def test_start_with_nested_tuple(
-    test_dir,
-    wlmutils,
-    monkeypatch,
-):
-    """Test unpacking a nested tuple"""
-    monkeypatch.setattr(
-        "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env, out, err: random_id(),
-    )
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-
-    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
-
-    application = Application(
-        "test_name",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
-
-    job2 = job.Job(application, launch_settings)
-
-    application_2 = Application(
-        "test_name_2",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
-    job_3 = job.Job(application_2, launch_settings)
 
     exp = Experiment(name="exp_name", exp_path=test_dir)
-
-    exp.start((job2, (job_list, job_3)))
-
-
-def test_start_with_one_element_tuple(
-    test_dir,
-    wlmutils,
-    monkeypatch,
-):
-    """Test unpacking a tuple of one job"""
-    monkeypatch.setattr(
-        "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env, out, err: random_id(),
-    )
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-
-    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
-
-    exp = Experiment(name="exp_name", exp_path=test_dir)
-
-    exp.start((job_list))
-
-
-def test_start_list_of_jobs(
-    test_dir,
-    wlmutils,
-    monkeypatch,
-):
-    """Test unpacking a list of tuples"""
-    monkeypatch.setattr(
-        "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env, out, err: random_id(),
-    )
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-
-    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
-
-    application = Application(
-        "test_name",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
-
-    job2 = job.Job(application, launch_settings)
-
-    application_2 = Application(
-        "test_name_2",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
-    job_3 = job.Job(application_2, launch_settings)
-
-    exp = Experiment(name="exp_name", exp_path=test_dir)
-
-    exp.start([job2, (job_list, job_3)])
+    exp.start(*job_list)

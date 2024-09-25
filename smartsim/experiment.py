@@ -55,17 +55,6 @@ if t.TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def _unpack(jobs: t.Sequence[t.Tuple[Job]] | t.Sequence[str]) -> t.Iterator[str]:
-    """Unpack any iterable input into exp.start in order to obtain a
-    single sequence of jobs that can be launched"""
-    for item in jobs:
-
-        if isinstance(item, t.Iterable):
-            yield from _unpack(item)
-        else:
-            yield item
-
-
 def _exp_path_map(exp: "Experiment") -> str:
     """Mapping function for use by method contextualizer to place the path of
     the currently-executing experiment into context for log enrichment"""
@@ -162,9 +151,7 @@ class Experiment:
         experiment
         """
 
-    def start(
-        self, *jobs: Job | t.Sequence[t.Tuple[Job]] | t.Sequence[Job]
-    ) -> tuple[LaunchedJobID, ...]:
+    def start(self, *jobs: Job | t.Sequence[Job]) -> tuple[LaunchedJobID, ...]:
         """Execute a collection of `Job` instances.
 
         :param jobs: A collection of other job instances to start
@@ -173,20 +160,21 @@ class Experiment:
             particular execution of the job.
         """
         # If item is instance iterable then unpack and extend the list
-        if isinstance(jobs, t.Iterable):
-            jobs = list(tuple(_unpack(jobs)))
+
+        jobs_ = list(tuple(_helpers.unpack(jobs)))
+        # jobs = list(tuple(_helpers.unpack(jobs)))
         # Create the run id
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
         # Generate the root path
         root = pathlib.Path(self.exp_path, run_id)
-        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs_)
 
     def _dispatch(
         self,
         generator: Generator,
         dispatcher: dispatch.Dispatcher,
         job: Job,
-        *jobs: Job | t.Sequence[t.Tuple[Job]],
+        *jobs: Job,
     ) -> tuple[LaunchedJobID, ...]:
         """Dispatch a series of jobs with a particular dispatcher
 

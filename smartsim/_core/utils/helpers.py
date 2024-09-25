@@ -43,10 +43,14 @@ import warnings
 from datetime import datetime
 from shutil import which
 
+from typing_extensions import TypeAlias
+
 if t.TYPE_CHECKING:
     from types import FrameType
 
     from typing_extensions import TypeVarTuple, Unpack
+
+    from smartsim.launchable.job import Job
 
     _Ts = TypeVarTuple("_Ts")
 
@@ -54,6 +58,19 @@ if t.TYPE_CHECKING:
 _T = t.TypeVar("_T")
 _HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
+
+_nested_seq: TypeAlias = "t.Sequence[Job | _nested_seq]"
+
+
+def unpack(value: _nested_seq) -> t.Generator[Job, None, None]:
+    """Unpack any iterable input in order to obtain a
+    single sequence of values"""
+
+    for item in value:
+        if isinstance(item, t.Iterable):
+            yield from unpack(item)
+        else:
+            yield item
 
 
 def check_name(name: str) -> None:
