@@ -58,9 +58,21 @@ if t.TYPE_CHECKING:
 pytestmark = pytest.mark.dragon
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
     return dragon_ddict.DDict()
+
+
+@pytest.fixture(scope="session")
+def the_worker_channel() -> DragonCommChannel:
+    wmgr_channel_ = create_local()
+    wmgr_channel = DragonCommChannel(wmgr_channel_)
+    return wmgr_channel
+
+
+@pytest.fixture(scope="session")
+def the_backbone(storage_for_dragon_fs: t.Any) -> BackboneFeatureStore:
+    return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
 
 def test_eventconsumer_eventpublisher_integration(
@@ -147,19 +159,21 @@ def test_eventconsumer_eventpublisher_integration(
 
 
 @pytest.mark.parametrize(
-    "num_events, batch_timeout",
+    "num_events, batch_timeout, max_batches_expected",
     [
-        pytest.param(1, 1.0, id="under 1s timeout"),
-        pytest.param(20, 1.0, id="test 1s timeout w/20"),
-        pytest.param(50, 1.0, id="test 1s timeout w/50"),
-        pytest.param(60, 0.1, id="small batches"),
-        pytest.param(100, 0.1, id="many small batches"),
+        pytest.param(1, 1.0, 2, id="under 1s timeout"),
+        pytest.param(20, 1.0, 3, id="test 1s timeout 20x"),
+        pytest.param(30, 0.2, 5, id="test 0.2s timeout 30x"),
+        pytest.param(60, 0.4, 4, id="small batches"),
+        pytest.param(100, 0.1, 10, id="many small batches"),
     ],
 )
 def test_eventconsumer_max_dequeue(
     num_events: int,
     batch_timeout: float,
-    storage_for_dragon_fs: t.Any,
+    max_batches_expected: int,
+    the_worker_channel: DragonCommChannel,
+    the_backbone: BackboneFeatureStore,
 ) -> None:
     """Verify that a consumer does not sit and collect messages indefinitely
     by checking that a consumer returns after a maximum timeout is exceeded.
@@ -170,57 +184,56 @@ def test_eventconsumer_max_dequeue(
     :param storage_for_dragon_fs: Dragon storage engine to use
     """
 
-    mock_storage = storage_for_dragon_fs
-    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
-
-    wmgr_channel_ = Channel.make_process_local()
-    wmgr_channel = DragonCommChannel(wmgr_channel_)
-    wmgr_consumer_descriptor = wmgr_channel.descriptor
-
     # create some consumers to receive messages
     wmgr_consumer = EventConsumer(
-        wmgr_channel,
-        backbone,
+        the_worker_channel,
+        the_backbone,
         filters=[EventCategory.FEATURE_STORE_WRITTEN],
-        batch_timeout=batch_timeout,
     )
 
     # create a broadcaster to publish messages
     mock_client_app = EventBroadcaster(
-        backbone,
+        the_backbone,
         channel_factory=DragonCommChannel.from_descriptor,
     )
 
     # register all of the consumers even though the OnCreateConsumer really should
     # trigger its registration. event processing is tested elsewhere.
-    backbone.notification_channels = [wmgr_consumer_descriptor]
+    the_backbone.notification_channels = [the_worker_channel.descriptor]
 
     # simulate the app updating a model a lot of times
     for key in (f"key-{i}" for i in range(num_events)):
-        event = OnWriteFeatureStore(backbone.descriptor, key)
-        mock_client_app.send(event, timeout=0.1)
+        event = OnWriteFeatureStore(the_backbone.descriptor, key)
+        mock_client_app.send(event, timeout=0.01)
 
     num_dequeued = 0
+    num_batches = 0
 
-    while wmgr_messages := wmgr_consumer.recv(timeout=0.01):
+    while wmgr_messages := wmgr_consumer.recv(
+        timeout=0.1,
+        batch_timeout=batch_timeout,
+    ):
         # worker manager should not get more than `max_num_msgs` events
         num_dequeued += len(wmgr_messages)
+        num_batches += 1
 
     # make sure we made all the expected dequeue calls and got everything
     assert num_dequeued == num_events
+    assert num_batches > 0
+    assert num_batches < max_batches_expected, "too many recv calls were made"
 
 
 @pytest.mark.parametrize(
     "buffer_size",
     [
-        pytest.param(-1, id="use default: 500"),
-        pytest.param(0, id="use default: 500"),
+        pytest.param(-1, id="replace negative, default to 500"),
+        pytest.param(0, id="replace zero, default to 500"),
         pytest.param(1, id="non-zero buffer size: 1"),
-        pytest.param(500, id="buffer size: 500"),
-        pytest.param(800, id="buffer size: 800"),
+        pytest.param(550, id="larger than default: 550"),
+        pytest.param(800, id="much larger then default: 800"),
         pytest.param(
             1000,
-            id="buffer size: 1000, unreliable in dragon-v0.10",
+            id="very large buffer: 1000, unreliable in dragon-v0.10",
             marks=pytest.mark.skip,
         ),
     ],
@@ -261,8 +274,8 @@ def test_channel_buffer_size(
     # simulate the app updating a model a lot of times
     for key in (f"key-{i}" for i in range(buffer_size)):
         event = OnWriteFeatureStore(backbone.descriptor, key)
-        mock_client_app.send(event, timeout=0.1)
+        mock_client_app.send(event, timeout=0.01)
 
     # adding 1 more over the configured buffer size should report the error
     with pytest.raises(Exception) as ex:
-        mock_client_app.send(event, timeout=0.1)
+        mock_client_app.send(event, timeout=0.01)

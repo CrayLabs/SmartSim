@@ -569,7 +569,6 @@ class EventConsumer:
         comm_channel: CommChannelBase,
         backbone: BackboneFeatureStore,
         filters: t.Optional[t.List[EventCategory]] = None,
-        batch_timeout: t.Optional[float] = None,
         name: t.Optional[str] = None,
         event_handler: t.Optional[t.Callable[[EventBase], None]] = None,
     ) -> None:
@@ -583,13 +582,9 @@ class EventConsumer:
         auto-generated GUID will be used
         :raises ValueError: If batch_timeout <= 0
         """
-        if batch_timeout is not None and batch_timeout <= 0:
-            raise ValueError("batch_timeout must be a non-zero, positive value")
-
         self._comm_channel = comm_channel
         self._backbone = backbone
         self._global_filters = filters or []
-        self._global_timeout = batch_timeout or 1.0
         self._name = name
         self._event_handler = event_handler
 
@@ -612,50 +607,67 @@ class EventConsumer:
         return self._name
 
     def recv(
-        self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0.001
+        self,
+        filters: t.Optional[t.List[EventCategory]] = None,
+        timeout: float = 0.001,
+        batch_timeout: float = 1.0,
     ) -> t.List[EventBase]:
         """Receives available published event(s).
 
         :param filters: Additional filters to add to the global filters configured
         on the EventConsumer instance
-        :param timeout: Maximum time to wait for messages to arrive
+        :param timeout: Maximum time to wait for a single message to arrive
+        :param batch_timeout: Maximum time to wait for messages to arrive; allows
+        multiple batches to be retrieved in one call to `send`
         :returns: A list of events that pass any configured filters
         """
         if filters is None:
             filters = []
 
+        if batch_timeout is not None and batch_timeout <= 0:
+            raise ValueError("batch_timeout must be a non-zero, positive value")
+
         filter_set = {*self._global_filters, *filters}
-        messages: t.List[t.Any] = []
+        all_message_bytes: t.List[bytes] = []
 
-        # use the local timeout to override a global setting
-        start_at = time.time_ns()
+        # firehose as many messages as possible within the batch_timeout
+        start_at = time.time()
+        remaining = batch_timeout
 
-        while msg_bytes_list := self._comm_channel.recv(timeout=timeout):
+        batch_message_bytes = self._comm_channel.recv(timeout=timeout)
+        while batch_message_bytes:
             # remove any empty messages that will fail to decode
-            msg_bytes_list = [msg for msg in msg_bytes_list if msg]
-
-            msg: t.Optional[EventBase] = None
-            if msg_bytes_list:
-                for message in msg_bytes_list:
-                    msg = pickle.loads(message)
-
-                    if not msg:
-                        logger.warning("Unable to unpickle message")
-                        continue
-
-                    # ignore anything that doesn't match a filter (if one is
-                    # supplied), otherwise return everything
-                    if not filter_set or msg.category in filter_set:
-                        messages.append(msg)
+            all_message_bytes.extend(batch_message_bytes)
+            batch_message_bytes = []
 
             # avoid getting stuck indefinitely waiting for the channel
-            elapsed = (time.time_ns() - start_at) / 1000000000
-            remaining = elapsed - self._global_timeout
-            if remaining > 0:
-                logger.debug(f"Consumer batch timeout exceeded by: {abs(remaining)}")
-                break
+            elapsed = time.time() - start_at
+            remaining = batch_timeout - elapsed
 
-        return messages
+            if remaining > 0:
+                batch_message_bytes = self._comm_channel.recv(timeout=timeout)
+
+        events_received: t.List[EventBase] = []
+
+        # Timeout elapsed or no messages received - return the empty list
+        if not all_message_bytes:
+            return events_received
+
+        for message in all_message_bytes:
+            if not message or message is None:
+                continue
+
+            event = pickle.loads(message)
+            if not event:
+                logger.warning("Unable to unpickle message")
+
+            # skip events that don't pass a filter
+            if filter_set and event.category not in filter_set:
+                continue
+
+            events_received.append(event)
+
+        return events_received
 
     def register(self) -> None:
         """Send an event to register this consumer as a listener"""
