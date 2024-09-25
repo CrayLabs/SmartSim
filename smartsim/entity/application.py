@@ -337,8 +337,7 @@ class Application(SmartSimEntity):
     def __str__(self) -> str:  # pragma: no cover
         exe_args_str = "\n".join(self.exe_args)
         entities_str = "\n".join(str(entity) for entity in self.incoming_entities)
-        return textwrap.dedent(
-            f"""\
+        return textwrap.dedent(f"""\
             Name: {self.name}
             Type: {self.type}
             Executable:
@@ -350,5 +349,4 @@ class Application(SmartSimEntity):
             Incoming Entities:
             {entities_str}
             Key Prefixing Enabled: {self.key_prefixing_enabled}
-            """
-        )
+            """)
