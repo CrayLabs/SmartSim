@@ -127,7 +127,8 @@ class TensorFlowWorker(MachineLearningWorkerBase):
                 "Failed to load and evaluate the model: "
                 f"Model key {batch.model_id.key}, Device {device}"
             ) from e
-        result = LoadModelResult(graph, input_layers, list(output_tensors))
+        with tf.device(device):
+            result = LoadModelResult(tf.compat.v1.Session(graph=graph), input_layers, list(output_tensors))
         return result
 
     @staticmethod
@@ -247,9 +248,9 @@ class TensorFlowWorker(MachineLearningWorkerBase):
             except Exception as e:
                 raise ValueError("Error during tensor creation") from e
 
-        model_graph: tf.Graph = load_result.model
+        sess = load_result.model
         try:
-            with tf.compat.v1.Session(graph=model_graph) as sess, tf.device(device):
+            with tf.device(device):
                 results = sess.run(
                     load_result.outputs,
                     feed_dict={
