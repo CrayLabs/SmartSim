@@ -28,9 +28,9 @@ import base64
 import os
 import pathlib
 import pickle
-import time
 import subprocess
 import sys
+import time
 import typing as t
 from collections import namedtuple
 from datetime import datetime
@@ -175,9 +175,9 @@ class Generator:
         err_file = self._build_err_file_path(log_path, job.entity.name)
 
         cmd_list = self._build_commands(job, job_path, log_path)
-        
+
         self._execute_commands(cmd_list)
-        
+
         with open(
             self._build_log_file_path(log_path), mode="w", encoding="utf-8"
         ) as log_file:
@@ -234,7 +234,7 @@ class Generator:
         """
         for cmd in cmd_list:
             subprocess.run(cmd.command)
-    
+
     @staticmethod
     def _mkdir_file(file_path: pathlib.Path) -> Command:
         cmd = Command(["mkdir", "-p", str(file_path)])

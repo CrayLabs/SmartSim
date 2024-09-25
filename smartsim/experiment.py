@@ -38,12 +38,13 @@ from tabulate import tabulate
 from smartsim._core import dispatch
 from smartsim._core.config import CONFIG
 from smartsim._core.control import interval as _interval
+from smartsim._core.control import preview_renderer
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
-from ._core import Generator, Manifest, previewrenderer
+from ._core import Generator, Manifest
 from ._core.generation.generator import Job_Path
 from .entity import TelemetryConfiguration
 from .error import SmartSimError

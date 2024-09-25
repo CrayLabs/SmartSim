@@ -38,7 +38,7 @@ from smartsim import Experiment
 from smartsim._core.commands import Command, CommandList
 from smartsim._core.generation.generator import Generator
 from smartsim.builders import Ensemble
-from smartsim.entity import Application
+from smartsim.entity import entity
 from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
 from smartsim.settings import LaunchSettings
@@ -47,7 +47,7 @@ from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
-_ID_GENERATOR = (str(i) for i in itertools.count())
+ids = set()
 
 
 _ID_GENERATOR = (str(i) for i in itertools.count())
@@ -92,7 +92,7 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
         self.files = None
         self.file_parameters = None
 
-    def as_program_arguments(self):
+    def as_executable_sequence(self):
         return ("echo", "Hello", "World!")
 
     def files():
@@ -226,7 +226,11 @@ def test_build_commands(
             "smartsim._core.generation.Generator._write_tagged_files"
         ) as mock_write_tagged_files,
     ):
-        generator_instance._build_commands(mock_job, pathlib.Path(test_dir) / generator_instance.run_directory, pathlib.Path(test_dir) / generator_instance.log_directory)
+        generator_instance._build_commands(
+            mock_job,
+            pathlib.Path(test_dir) / generator_instance.run_directory,
+            pathlib.Path(test_dir) / generator_instance.log_directory,
+        )
         mock_copy_files.assert_called_once()
         mock_symlink_files.assert_called_once()
         mock_write_tagged_files.assert_called_once()
@@ -242,6 +246,7 @@ def test_execute_commands(generator_instance: Generator):
         cmd_list = CommandList(Command(["test", "command"]))
         generator_instance._execute_commands(cmd_list)
         run_process.assert_called_once()
+
 
 def test_mkdir_file(generator_instance: Generator, test_dir: str):
     """Test Generator._mkdir_file returns correct type and value"""
@@ -385,7 +390,9 @@ def test_generate_ensemble_copy(
     jobs_dir = pathlib.Path(test_dir) / run_dir[0] / "jobs"
     job_dir = jobs_dir.iterdir()
     for ensemble_dir in job_dir:
-        copy_folder_path = jobs_dir / ensemble_dir / Generator.run_directory / "to_copy_dir"
+        copy_folder_path = (
+            jobs_dir / ensemble_dir / Generator.run_directory / "to_copy_dir"
+        )
         assert copy_folder_path.is_dir()
     ids.clear()
 
@@ -415,6 +422,7 @@ def test_generate_ensemble_symlink(
         assert sym_file_path.is_dir()
         assert sym_file_path.is_symlink()
         assert os.fspath(sym_file_path.resolve()) == osp.realpath(get_gen_symlink_dir)
+    ids.clear()
 
 
 def test_generate_ensemble_configure(
