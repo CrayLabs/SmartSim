@@ -113,6 +113,14 @@ class WorkerManager(Service):
         self._sent_responses: int = 0
         """Number of sent responses"""
 
+    @property
+    def has_featurestore_factory(self) -> bool:
+        """Check if the WorkerManager has a FeatureStore factory.
+
+        :returns: True if there is a FeatureStore factory, False otherwise
+        """
+        return self._featurestore_factory is not None
+
     def _on_start(self) -> None:
         """Called on initial entry into Service `execute` event loop before
         `_on_iteration` is invoked."""
@@ -136,7 +144,7 @@ class WorkerManager(Service):
         fs_actual = {item.descriptor for item in self._feature_stores.values()}
         fs_missing = fs_desired - fs_actual
 
-        if self._featurestore_factory is None:
+        if not self.has_featurestore_factory:
             logger.error("No feature store factory configured")
             return False
 
@@ -155,7 +163,7 @@ class WorkerManager(Service):
         :param batch: The batch of requests to validate
         :returns: False if the request fails any validation checks, True otherwise
         """
-        if batch is None or len(batch.requests) == 0:
+        if batch is None or not batch.has_valid_requests:
             return False
 
         return self._check_feature_stores(batch)
@@ -193,7 +201,7 @@ class WorkerManager(Service):
             )
             return
 
-        if self._device_manager is None:
+        if not self._device_manager:
             for request in batch.requests:
                 msg = "No Device Manager found. WorkerManager._on_start() "
                 "must be called after initialization. If possible, "
@@ -239,7 +247,7 @@ class WorkerManager(Service):
                 return
             self._perf_timer.measure_time("load_model")
 
-            if batch.inputs is None:
+            if not batch.inputs:
                 for request in batch.requests:
                     exception_handler(
                         ValueError("Error batching inputs"),
@@ -273,7 +281,7 @@ class WorkerManager(Service):
             for request, transformed_output in zip(batch.requests, transformed_outputs):
                 self._sent_responses += 1
                 reply = InferenceReply()
-                if request.output_keys:
+                if request.has_output_keys:
                     try:
                         reply.output_keys = self._worker.place_output(
                             request,
@@ -289,7 +297,7 @@ class WorkerManager(Service):
                     reply.outputs = transformed_output.outputs
                 self._perf_timer.measure_time("assign_output")
 
-                if reply.outputs is None or not reply.outputs:
+                if not reply.has_outputs:
                     response = build_failure_reply("fail", "Outputs not found.")
                 else:
                     reply.status_enum = "complete"
@@ -311,7 +319,7 @@ class WorkerManager(Service):
 
                 if request.callback:
                     request.callback.send(serialized_resp)
-                    if reply.outputs:
+                    if reply.has_outputs:
                         # send tensor data after response
                         for output in reply.outputs:
                             request.callback.send(output)

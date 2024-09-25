@@ -253,6 +253,14 @@ class RequestDispatcher(Service):
         self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
         """Performance timer"""
 
+    @property
+    def has_featurestore_factory(self) -> bool:
+        """Check if the RequestDispatcher has a FeatureStore factory.
+
+        :returns: True if there is a FeatureStore factory, False otherwise
+        """
+        return self._featurestore_factory is not None
+
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
         """Ensures that all feature stores required by the request are available.
 
@@ -272,7 +280,7 @@ class RequestDispatcher(Service):
         fs_actual = {item.descriptor for item in self._feature_stores.values()}
         fs_missing = fs_desired - fs_actual
 
-        if self._featurestore_factory is None:
+        if not self.has_featurestore_factory:
             logger.error("No feature store factory configured")
             return False
 
@@ -292,7 +300,7 @@ class RequestDispatcher(Service):
         :param request: The request to validate
         :returns: False if model validation fails for the request, True otherwise
         """
-        if request.model_key or request.raw_model:
+        if request.has_model_key or request.has_raw_model:
             return True
 
         logger.error("Unable to continue without model bytes or feature store key")
@@ -305,7 +313,7 @@ class RequestDispatcher(Service):
         :param request: The request to validate
         :returns: False if input validation fails for the request, True otherwise
         """
-        if request.input_keys or request.raw_inputs:
+        if request.has_input_keys or request.has_raw_inputs:
             return True
 
         logger.error("Unable to continue without input bytes or feature store keys")
@@ -318,7 +326,7 @@ class RequestDispatcher(Service):
         :param request: The request to validate
         :returns: False if callback validation fails for the request, True otherwise
         """
-        if request.callback is not None:
+        if request.callback:
             return True
 
         logger.error("No callback channel provided in request")
@@ -457,7 +465,7 @@ class RequestDispatcher(Service):
 
         :param request: The request to place
         """
-        if request.raw_model is not None:
+        if request.has_raw_model:
             logger.debug("Direct inference requested, creating tmp queue")
             tmp_id = f"_tmp_{str(uuid.uuid4())}"
             tmp_queue: BatchQueue = BatchQueue(
