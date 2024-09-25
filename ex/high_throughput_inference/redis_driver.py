@@ -64,7 +64,14 @@ exp = Experiment("redis_ai_multi", launcher="slurm", exp_path=exp_path)
 db = exp.create_database(interface="hsn0", hosts=["pinoak0036"])
 
 app_rs = exp.create_run_settings(
-    sys.executable, exe_args=[app_script_name, "--device", DEVICE, "--log_max_batchsize", str(args.log_max_batchsize)]
+    sys.executable,
+    exe_args=[
+        app_script_name,
+        "--device",
+        DEVICE,
+        "--log_max_batchsize",
+        str(args.log_max_batchsize),
+    ],
 )
 app_rs.set_nodes(NUM_NODES)
 app_rs.set_tasks(NUM_NODES * NUM_TASKS_PER_NODE)

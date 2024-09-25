@@ -145,7 +145,7 @@ class BatchQueue(Queue[InferenceRequest]):
             return False
 
         timed_out = (
-            self._batch_timeout > 0 and self._elapsed_time >= self._batch_timeout
+            self._batch_timeout >= 0 and self._elapsed_time >= self._batch_timeout
         )
         logger.debug(f"Is full: {self.full()} or has timed out: {timed_out}")
         return self.full() or timed_out
@@ -250,7 +250,7 @@ class RequestDispatcher(Service):
         """The worker used to batch inputs"""
         self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(mem_pool_size).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
-        self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
         """Performance timer"""
 
     @property
@@ -351,7 +351,6 @@ class RequestDispatcher(Service):
         """This method is executed repeatedly until ``Service`` shutdown
         conditions are satisfied and cooldown is elapsed."""
         try:
-            logger.debug("Receiving message")
             self._perf_timer.is_active = True
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
             logger.debug("Received data")

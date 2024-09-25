@@ -81,6 +81,7 @@ def create_local(capacity: int = 0) -> dch.Channel:
                 logger.error(f"All attempts to attach local channel have failed")
                 raise SmartSimError("Failed to attach local channel") from e
 
+    logger.debug(f"Attached to channel id {cid}")
     return channel
 
 
@@ -131,7 +132,7 @@ class DragonCommChannel(cch.CommChannelBase):
             messages: t.List[bytes] = []
 
             try:
-                message_bytes = recvh.recv_bytes(timeout=timeout)
+                message_bytes = recvh.recv_bytes(timeout=None)
                 messages.append(message_bytes)
                 logger.debug(f"DragonCommChannel {self.descriptor!r} received message")
             except dch.ChannelEmpty:
@@ -178,11 +179,11 @@ class DragonCommChannel(cch.CommChannelBase):
 
             # todo: ensure the bytes argument and condition are removed
             # after refactoring the RPC models
-
             actual_descriptor = base64.b64decode(utf8_descriptor)
             channel = dch.Channel.attach(actual_descriptor)
             return DragonCommChannel(channel)
         except Exception as ex:
+            logger.debug(f"Failed to create dragon comm channel: {descriptor!r}, {ex}")
             raise SmartSimError(
                 f"Failed to create dragon comm channel: {descriptor!r}"
             ) from ex

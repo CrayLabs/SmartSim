@@ -43,8 +43,11 @@ import typing as t
 import warnings
 
 import numpy
-import torch
+import tensorflow as tf
 from mpi4py import MPI
+from tensorflow.python.framework.convert_to_constants import (
+    convert_variables_to_constants_v2_as_graph,
+)
 
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
@@ -54,12 +57,7 @@ from smartsim._core.mli.message_handler import MessageHandler
 from smartsim._core.utils.timings import PerfTimer
 from smartsim.log import get_logger
 
-torch.set_num_interop_threads(16)
-torch.set_num_threads(1)
-
 logger = get_logger("App")
-
-warnings.filterwarnings("ignore", "\*The given NumPy array is not writable\*")
 
 
 class ProtoClient:
@@ -82,12 +80,12 @@ class ProtoClient:
         self._to_worker_ch = Channel.make_process_local()
 
         self.perf_timer: PerfTimer = PerfTimer(
-            debug=True, timing_on=timing_on, prefix=f"a{self._rank}_"
+            debug=False, timing_on=timing_on, prefix=f"a{self._rank}_"
         )
         self._num_its: int = 0
 
-    def run_model(self, model: t.Union[bytes, str], batch: torch.Tensor):
-        tensors = [batch.numpy()]
+    def run_model(self, model: t.Union[bytes, str], batch: numpy.typing.ArrayLike):
+        tensors = [batch]
         self.perf_timer.start_timings("batch_size", batch.shape[0])
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
             "c", "float32", list(batch.shape)
@@ -114,10 +112,8 @@ class ProtoClient:
             to_sendh.send_bytes(request_bytes)
             self.perf_timer.measure_time("send_request")
             for tensor in tensors:
-                to_sendh.send_bytes(tensor.tobytes())  # TODO NOT FAST ENOUGH!!!
-                # logger.info(f"{self._rank} sent tensors")
+                to_sendh.send_bytes(tensor.tobytes())
         self.perf_timer.measure_time("send_tensors")
-
         resp = self._from_worker_ch.recv(timeout=None)
         self.perf_timer.measure_time("receive_response")
         response = MessageHandler.deserialize_response(resp[0])
@@ -128,20 +124,16 @@ class ProtoClient:
         else:
             data_blob: bytes = self._from_worker_ch.recv(timeout=None)[0]
         self.perf_timer.measure_time("receive_tensor")
-        result = torch.from_numpy(
-            numpy.frombuffer(
-                data_blob,
-                dtype=str(response.result.descriptors[0].dataType),
-            )
+        result = numpy.frombuffer(
+            data_blob,
+            dtype=str(response.result.descriptors[0].dataType),
         )
+
         self.perf_timer.measure_time("deserialize_tensor")
 
         self.perf_timer.end_timings()
         self._num_its += 1
-        # logger.info(f"{self._rank} got to the barrier {self._num_its}")
         self._comm.Barrier()
-        # time.sleep(0.01)
-        # logger.info(f"{self._rank} made it past the barrier {self._num_its}")
         return result
 
     def set_model(self, key: str, model: bytes):
@@ -149,18 +141,23 @@ class ProtoClient:
 
 
 class ResNetWrapper:
-    def __init__(self, name: str, model: str):
-        self._model = None  # torch.jit.load(model)
+    def __init__(
+        self,
+        name: str,
+        model: tf.keras.Model,
+    ):
+        self._get_tf_model(model)
         self._name = name
 
-        # scripted = torch.jit.trace(self._model, self.get_batch())
-        # torch.jit.save(scripted, buffer)
-        with open(model, "rb") as model_file:
-            buffer = io.BytesIO(model_file.read())
-        self._serialized_model = buffer.getvalue()
+    def _get_tf_model(self, model: tf.keras.Model):
+        real_model = tf.function(model).get_concrete_function(
+            tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
+        )
+        _, graph_def = convert_variables_to_constants_v2_as_graph(real_model)
+        self._serialized_model = graph_def.SerializeToString()
 
     def get_batch(self, batch_size: int = 32):
-        return torch.randn((batch_size, 3, 224, 224), dtype=torch.float32)
+        return numpy.random.randn(batch_size, 224, 224, 3).astype(numpy.float32)
 
     @property
     def model(self):
@@ -183,9 +180,10 @@ if __name__ == "__main__":
     parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
-    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
+    resnet = ResNetWrapper("resnet50", tf.keras.applications.ResNet50())
 
     client = ProtoClient(timing_on=True)
+
     if client._rank == 0:
         client.set_model(resnet.name, resnet.model)
 
@@ -197,8 +195,8 @@ if __name__ == "__main__":
         b_size: int = 2**log2_bsize
         log(f"Batch size: {b_size}", client._rank)
         for iteration_number in range(TOTAL_ITERATIONS):
-            # log(f"Iteration: {iteration_number}", client._rank)
             sample_batch = resnet.get_batch(b_size)
+            log(f"Batch size {sample_batch.shape}", client._rank)
             remote_result = client.run_model(resnet.name, sample_batch)
             log(
                 f"Completed iteration: {iteration_number} in {client.perf_timer.get_last('total_time')} seconds",

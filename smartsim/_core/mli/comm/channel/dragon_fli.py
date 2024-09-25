@@ -94,7 +94,7 @@ class DragonFLIChannel(cch.CommChannelBase):
         with self._fli.recvh(timeout=timeout) as recvh:
             while not eot:
                 try:
-                    message, _ = recvh.recv_bytes(timeout=timeout)
+                    message, _ = recvh.recv_bytes(timeout=None)
                     messages.append(message)
                     logger.debug(
                         f"DragonFLIChannel {self.descriptor!r} received message"
