@@ -15,6 +15,7 @@ To be released at some future point in time
 
 Description
 
+- Refine Frontier documentation for proper use of miniforge3
 - Refactor to the RedisAI build to allow more flexibility in versions
   and sources of ML backends
 - Add Dockerfiles with GPU support
@@ -39,6 +40,11 @@ Description
 
 Detailed Notes
 
+- On Frontier, the recommended way to activate conda environments is
+  to go through source activate. This also means that ``conda init``
+  is not needed. The instructions for Frontier have been updated to
+  reflect this.
+  ([SmartSim-PR719](https://github.com/CrayLabs/SmartSim/pull/719))
 - The RedisAIBuilder class was completely overhauled to allow users to
   express a wider range of support for hardware/software stacks. This
   will be extended to support ROCm, CUDA-11, and CUDA-12.
