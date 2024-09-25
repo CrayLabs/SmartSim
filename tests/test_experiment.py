@@ -41,15 +41,16 @@ import pytest
 from smartsim._core import dispatch
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
+from smartsim.builders.ensemble import Ensemble
 from smartsim.entity import entity
 from smartsim.entity.application import Application
-from smartsim.entity.ensemble import Ensemble
 from smartsim.error import errors
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import launch_settings
 from smartsim.settings.arguments import launch_arguments
 from smartsim.status import InvalidJobStatus, JobStatus
+from smartsim.types import LaunchedJobID
 
 pytestmark = pytest.mark.group_a
 
@@ -632,8 +633,8 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
 
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
 
-    launch_settings = launchSettings.LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    launch_settings = launch_settings.LaunchSettings(wlmutils.get_test_launcher())
+    job_list = ensemble.build_jobs(launch_settings)
 
     exp = Experiment(name="exp_name", exp_path=test_dir)
 
@@ -652,10 +653,10 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
                             exe="echo",
                             exe_args=["spam", "eggs"],
                         ),
-                        launchSettings.LaunchSettings("local"),
+                        launch_settings.LaunchSettings("local"),
                     ),
-                    Ensemble("ensemble-name", "echo", replicas=2).as_jobs(
-                        launchSettings.LaunchSettings("local")
+                    Ensemble("ensemble-name", "echo", replicas=2).build_jobs(
+                        launch_settings.LaunchSettings("local")
                     ),
                 )
             ],
@@ -664,8 +665,8 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
         pytest.param(
             [
                 (
-                    Ensemble("ensemble-name", "echo", replicas=2).as_jobs(
-                        launchSettings.LaunchSettings("local")
+                    Ensemble("ensemble-name", "echo", replicas=2).build_jobs(
+                        launch_settings.LaunchSettings("local")
                     ),
                     (
                         job.Job(
@@ -674,7 +675,7 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
                                 exe="echo",
                                 exe_args=["spam", "eggs"],
                             ),
-                            launchSettings.LaunchSettings("local"),
+                            launch_settings.LaunchSettings("local"),
                         ),
                         job.Job(
                             Application(
@@ -682,7 +683,7 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
                                 exe="echo",
                                 exe_args=["spam", "eggs"],
                             ),
-                            launchSettings.LaunchSettings("local"),
+                            launch_settings.LaunchSettings("local"),
                         ),
                     ),
                 )
@@ -698,7 +699,7 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
                             exe="echo",
                             exe_args=["spam", "eggs"],
                         ),
-                        launchSettings.LaunchSettings("local"),
+                        launch_settings.LaunchSettings("local"),
                     ),
                 )
             ],
@@ -713,11 +714,11 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
                             exe="echo",
                             exe_args=["spam", "eggs"],
                         ),
-                        launchSettings.LaunchSettings("local"),
+                        launch_settings.LaunchSettings("local"),
                     ),
                     (
-                        Ensemble("ensemble-name", "echo", replicas=2).as_jobs(
-                            launchSettings.LaunchSettings("local")
+                        Ensemble("ensemble-name", "echo", replicas=2).build_jobs(
+                            launch_settings.LaunchSettings("local")
                         ),
                         job.Job(
                             Application(
@@ -725,7 +726,7 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
                                 exe="echo",
                                 exe_args=["spam", "eggs"],
                             ),
-                            launchSettings.LaunchSettings("local"),
+                            launch_settings.LaunchSettings("local"),
                         ),
                     ),
                 ]
