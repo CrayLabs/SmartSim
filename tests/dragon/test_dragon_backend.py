@@ -30,30 +30,22 @@ import unittest.mock as mock
 
 import pytest
 
-from smartsim._core.launcher.dragon.dragonBackend import DragonBackend, NodePrioritizer
+dragon = pytest.importorskip("dragon")
+
+from dragon.channels import Channel
+from dragon.data.ddict.ddict import DDict
+from dragon.fli import DragonFLIError, FLInterface
+
+from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBase,
     EventBroadcaster,
     EventConsumer,
-    EventSender,
     OnCreateConsumer,
 )
 from smartsim.log import get_logger
-
-dragon = pytest.importorskip("dragon")
-
-import dragon.utils as du
-from dragon.channels import Channel
-from dragon.data.ddict.ddict import DDict
-from dragon.fli import DragonFLIError, FLInterface
-
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
-from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
-from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
-    DragonFeatureStore,
-)
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon

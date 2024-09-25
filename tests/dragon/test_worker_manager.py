@@ -31,8 +31,6 @@ import time
 
 import pytest
 
-from smartsim._core.mli.comm.channel.dragon_util import create_local
-
 torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
@@ -56,6 +54,7 @@ from dragon import fli
 from dragon.data.ddict.ddict import DDict
 
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.control.worker_manager import (
     EnvironmentConfigLoader,
     WorkerManager,
