@@ -205,7 +205,7 @@ def test_generate_job(
     """Test Generator.generate_job returns correct paths"""
     mock_index = 1
     job_paths = generator_instance.generate_job(mock_job, mock_index)
-    assert job_paths.run_path.name == Generator.run
+    assert job_paths.run_path.name == Generator.run_directory
     assert job_paths.out_path.name == f"{mock_job.entity.name}.out"
     assert job_paths.err_path.name == f"{mock_job.entity.name}.err"
 
@@ -225,7 +225,7 @@ def test_build_commands(
             "smartsim._core.generation.Generator._write_tagged_files"
         ) as mock_write_tagged_files,
     ):
-        generator_instance._build_commands(mock_job, pathlib.Path(test_dir))
+        generator_instance._build_commands(mock_job, pathlib.Path(test_dir) / generator_instance.run_directory, pathlib.Path(test_dir) / generator_instance.log_directory)
         mock_copy_files.assert_called_once()
         mock_symlink_files.assert_called_once()
         mock_write_tagged_files.assert_called_once()
@@ -241,6 +241,12 @@ def test_execute_commands(generator_instance: Generator):
         cmd_list = CommandList(Command(["test", "command"]))
         generator_instance._execute_commands(cmd_list)
         run_process.assert_called_once()
+
+def test_mkdir_file(generator_instance: Generator, test_dir: str):
+    """Test Generator._mkdir_file returns correct type and value"""
+    cmd = generator_instance._mkdir_file(pathlib.Path(test_dir))
+    assert isinstance(cmd, Command)
+    assert cmd.command == ["mkdir", "-p", test_dir]
 
 
 def test_copy_file(generator_instance: Generator, fileutils):
@@ -353,9 +359,9 @@ def test_generate_ensemble_directory_start(
     jobs_dir_path = pathlib.Path(test_dir) / run_dir[0] / "jobs"
     list_of_job_dirs = jobs_dir_path.iterdir()
     for job in list_of_job_dirs:
-        run_path = jobs_dir_path / job / Generator.run
+        run_path = jobs_dir_path / job / Generator.run_directory
         assert run_path.is_dir()
-        log_path = jobs_dir_path / job / Generator.log
+        log_path = jobs_dir_path / job / Generator.log_directory
         assert log_path.is_dir()
     ids.clear()
 
@@ -378,7 +384,7 @@ def test_generate_ensemble_copy(
     jobs_dir = pathlib.Path(test_dir) / run_dir[0] / "jobs"
     job_dir = jobs_dir.iterdir()
     for ensemble_dir in job_dir:
-        copy_folder_path = jobs_dir / ensemble_dir / Generator.run / "to_copy_dir"
+        copy_folder_path = jobs_dir / ensemble_dir / Generator.run_directory / "to_copy_dir"
         assert copy_folder_path.is_dir()
     ids.clear()
 
@@ -449,8 +455,8 @@ def test_generate_ensemble_configure(
             line = f.readline()
             assert line.strip() == f'echo "Hello with parameter 1 = {param_1}"'
 
-    _check_generated(0, 3, jobs_dir / "ensemble-name-1-1" / Generator.run)
-    _check_generated(1, 2, jobs_dir / "ensemble-name-2-2" / Generator.run)
-    _check_generated(1, 3, jobs_dir / "ensemble-name-3-3" / Generator.run)
-    _check_generated(0, 2, jobs_dir / "ensemble-name-0-0" / Generator.run)
+    _check_generated(0, 3, jobs_dir / "ensemble-name-1-1" / Generator.run_directory)
+    _check_generated(1, 2, jobs_dir / "ensemble-name-2-2" / Generator.run_directory)
+    _check_generated(1, 3, jobs_dir / "ensemble-name-3-3" / Generator.run_directory)
+    _check_generated(0, 2, jobs_dir / "ensemble-name-0-0" / Generator.run_directory)
     ids.clear()

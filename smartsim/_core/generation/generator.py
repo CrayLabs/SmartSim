@@ -28,6 +28,7 @@ import base64
 import os
 import pathlib
 import pickle
+import time
 import subprocess
 import sys
 import typing as t
@@ -52,37 +53,37 @@ class _GenerableProtocol(t.Protocol):
 
 
 Job_Path = namedtuple("Job_Path", ["run_path", "out_path", "err_path"])
-"""Paths related to the Jobs execution."""
+"""Paths related to the Job's execution."""
 
 
 class Generator:
     """The primary responsibility of the Generator class is to create the directory structure
     for a SmartSim Job and to build and execute file operation commands."""
 
-    run = "run"
+    run_directory = "run"
     """The name of the directory where run-related files are stored."""
-    log = "log"
+    log_directory = "log"
     """The name of the directory where log files are stored."""
 
     def __init__(self, root: pathlib.Path) -> None:
         """Initialize a Generator object
 
-        The Generator class constructs a Jobs directory structure, including:
+        The Generator class constructs a Job's directory structure, including:
 
         - The run and log directories
         - Output and error files
         - The "smartsim_params.txt" settings file
 
         Additionally, it manages symlinking, copying, and configuring files associated
-        with a Jobs entity.
+        with a Job's entity.
 
-        :param root: The Jobs base path
+        :param root: The Job's base path
         """
         self.root = root
         """The root path under which to generate files"""
 
     def _build_job_base_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """Build and return a Jobs base directory. The path is created by combining the
+        """Build and return a Job's base directory. The path is created by combining the
         root directory with the Job type (derived from the class name),
         the name attribute of the Job, and an index to differentiate between multiple
         Job runs.
@@ -96,7 +97,7 @@ class Generator:
         return pathlib.Path(job_path)
 
     def _build_job_run_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """Build and return a Jobs run directory. The path is formed by combining
+        """Build and return a Job's run directory. The path is formed by combining
         the base directory with the `run` class-level variable, where run specifies
         the name of the job's run folder.
 
@@ -104,12 +105,11 @@ class Generator:
         :param job_index: The index of the Job
         :returns: The built file path for the Job run folder
         """
-        path = self._build_job_base_path(job, job_index) / self.run
-        path.mkdir(exist_ok=False, parents=True)
+        path = self._build_job_base_path(job, job_index) / self.run_directory
         return pathlib.Path(path)
 
     def _build_job_log_path(self, job: Job, job_index: int) -> pathlib.Path:
-        """Build and return a Jobs log directory. The path is formed by combining
+        """Build and return a Job's log directory. The path is formed by combining
         the base directory with the `log` class-level variable, where log specifies
         the name of the job's log folder.
 
@@ -117,8 +117,7 @@ class Generator:
         :param job_index: The index of the Job
         :returns: The built file path for the Job run folder
         """
-        path = self._build_job_base_path(job, job_index) / self.log
-        path.mkdir(exist_ok=False, parents=True)
+        path = self._build_job_base_path(job, job_index) / self.log_directory
         return pathlib.Path(path)
 
     @staticmethod
@@ -134,7 +133,7 @@ class Generator:
     @staticmethod
     def _build_out_file_path(log_path: pathlib.Path, job_name: str) -> pathlib.Path:
         """Build and return the path to the output file. The path is created by combining
-        the Jobs log directory with the job name and appending the `.out` extension.
+        the Job's log directory with the job name and appending the `.out` extension.
 
         :param log_path: Path to log directory
         :param job_name: Name of the Job
@@ -146,7 +145,7 @@ class Generator:
     @staticmethod
     def _build_err_file_path(log_path: pathlib.Path, job_name: str) -> pathlib.Path:
         """Build and return the path to the error file. The path is created by combining
-        the Jobs log directory with the job name and appending the `.err` extension.
+        the Job's log directory with the job name and appending the `.err` extension.
 
         :param log_path: Path to log directory
         :param job_name: Name of the Job
@@ -172,39 +171,41 @@ class Generator:
         job_path = self._build_job_run_path(job, job_index)
         log_path = self._build_job_log_path(job, job_index)
 
+        out_file = self._build_out_file_path(log_path, job.entity.name)
+        err_file = self._build_err_file_path(log_path, job.entity.name)
+
+        cmd_list = self._build_commands(job, job_path, log_path)
+        
+        self._execute_commands(cmd_list)
+        
         with open(
             self._build_log_file_path(log_path), mode="w", encoding="utf-8"
         ) as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        out_file = self._build_out_file_path(log_path, job.entity.name)
-        err_file = self._build_err_file_path(log_path, job.entity.name)
-
-        cmd_list = self._build_commands(job, job_path)
-        if cmd_list:
-            self._execute_commands(cmd_list)
-
         return Job_Path(job_path, out_file, err_file)
 
     @classmethod
     def _build_commands(
-        cls, job: Job, job_path: pathlib.Path
-    ) -> t.Optional[CommandList]:
-        """Build file operation commands for all files attached to a Job's entity.
+        cls, job: Job, job_path: pathlib.Path, log_path: pathlib.Path
+    ) -> CommandList:
+        """Build file operation commands for a Job's entity.
 
         This method constructs commands for copying, symlinking, and writing tagged files
-        associated with the Job's entity. It aggregates these commands into a CommandList
+        associated with the Job's entity. This method builds the constructs the commands to
+        generate the Job's run and log directory. It aggregates these commands into a CommandList
         to return.
 
         :param job: The job object
         :param job_path: The file path for the Job run folder
-        :return: A CommandList containing the file operation commands, or None if the entity
-            does not support file operations.
+        :return: A CommandList containing the file operation commands
         """
+        cmd_list = CommandList()
+        cmd_list.commands.append(cls._mkdir_file(job_path))
+        cmd_list.commands.append(cls._mkdir_file(log_path))
         entity = job.entity
         if isinstance(entity, _GenerableProtocol):
-            cmd_list = CommandList()
             helpers: t.List[
                 t.Callable[[EntityFiles | None, pathlib.Path], CommandList | None]
             ] = [
@@ -220,8 +221,7 @@ class Generator:
                 if return_cmd_list:
                     cmd_list.commands.extend(return_cmd_list.commands)
 
-            return cmd_list
-        return None
+        return cmd_list
 
     @classmethod
     def _execute_commands(cls, cmd_list: CommandList) -> None:
@@ -234,6 +234,11 @@ class Generator:
         """
         for cmd in cmd_list:
             subprocess.run(cmd.command)
+    
+    @staticmethod
+    def _mkdir_file(file_path: pathlib.Path) -> Command:
+        cmd = Command(["mkdir", "-p", str(file_path)])
+        return cmd
 
     @staticmethod
     def _copy_files(
