@@ -37,7 +37,8 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.commands import Command, CommandList
 from smartsim._core.generation.generator import Generator
-from smartsim.entity import Ensemble, entity
+from smartsim.builders import Ensemble
+from smartsim.entity import Application
 from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
 from smartsim.settings import LaunchSettings
@@ -46,7 +47,7 @@ from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
-ids = set()
+_ID_GENERATOR = (str(i) for i in itertools.count())
 
 
 _ID_GENERATOR = (str(i) for i in itertools.count())
@@ -352,7 +353,7 @@ def test_generate_ensemble_directory_start(
     )
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     exp.start(*job_list)
     run_dir = listdir(test_dir)
@@ -377,7 +378,7 @@ def test_generate_ensemble_copy(
         "ensemble-name", "echo", replicas=2, files=EntityFiles(copy=get_gen_copy_dir)
     )
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     exp.start(*job_list)
     run_dir = listdir(test_dir)
@@ -403,7 +404,7 @@ def test_generate_ensemble_symlink(
         files=EntityFiles(symlink=get_gen_symlink_dir),
     )
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     _ = exp.start(*job_list)
     run_dir = listdir(test_dir)
@@ -414,7 +415,6 @@ def test_generate_ensemble_symlink(
         assert sym_file_path.is_dir()
         assert sym_file_path.is_symlink()
         assert os.fspath(sym_file_path.resolve()) == osp.realpath(get_gen_symlink_dir)
-    ids.clear()
 
 
 def test_generate_ensemble_configure(
@@ -434,7 +434,7 @@ def test_generate_ensemble_configure(
         file_parameters=param_set,
     )
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.as_jobs(launch_settings)
+    job_list = ensemble.build_jobs(launch_settings)
     exp = Experiment(name="exp_name", exp_path=test_dir)
     _ = exp.start(*job_list)
     run_dir = listdir(test_dir)

@@ -26,7 +26,7 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
+from smartsim._core.launcher.dragon.dragon_launcher import DragonLauncher
 from smartsim.status import JobStatus
 
 # retrieved from pytest fixtures

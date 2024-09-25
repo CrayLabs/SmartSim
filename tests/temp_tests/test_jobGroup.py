@@ -27,10 +27,10 @@
 import pytest
 
 from smartsim.entity.application import Application
-from smartsim.launchable.basejob import BaseJob
+from smartsim.launchable.base_job import BaseJob
 from smartsim.launchable.job import Job
-from smartsim.launchable.jobGroup import JobGroup
-from smartsim.settings.launchSettings import LaunchSettings
+from smartsim.launchable.job_group import JobGroup
+from smartsim.settings.launch_settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 

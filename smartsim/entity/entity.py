@@ -29,14 +29,11 @@ from __future__ import annotations
 import abc
 import typing as t
 
-from smartsim.launchable.jobGroup import JobGroup
+from smartsim.launchable.job_group import JobGroup
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.launchSettings import LaunchSettings
-    from smartsim.types import TODO
-
-    RunSettings = TODO
+    from smartsim.settings.launch_settings import LaunchSettings
 
 
 class TelemetryConfiguration:
@@ -97,8 +94,11 @@ class TelemetryConfiguration:
         to perform actions when attempts to change configuration are made"""
 
 
-class SmartSimEntity:
-    def __init__(self, name: str) -> None:
+class SmartSimEntity(abc.ABC):
+    def __init__(
+        self,
+        name: str,
+    ) -> None:
         """Initialize a SmartSim entity.
 
         Each entity must have a name and path. All entities within SmartSim
@@ -107,16 +107,19 @@ class SmartSimEntity:
         :param name: Name of the entity
         """
         self.name = name
+        """The name of the application"""
+
+    @abc.abstractmethod
+    def as_executable_sequence(self) -> t.Sequence[str]:
+        """Converts the executable and its arguments into a sequence of program arguments.
+
+        :return: a sequence of strings representing the executable and its arguments
+        """
 
     @property
     def type(self) -> str:
         """Return the name of the class"""
         return type(self).__name__
-
-    def set_path(self, path: str) -> None:
-        if not isinstance(path, str):
-            raise TypeError("path argument must be a string")
-        self.path = path
 
     def __repr__(self) -> str:
         return self.name
@@ -132,6 +135,6 @@ class CompoundEntity(abc.ABC):
     """
 
     @abc.abstractmethod
-    def as_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
+    def build_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
     def as_job_group(self, settings: LaunchSettings) -> JobGroup:
-        return JobGroup(list(self.as_jobs(settings)))
+        return JobGroup(list(self.build_jobs(settings)))

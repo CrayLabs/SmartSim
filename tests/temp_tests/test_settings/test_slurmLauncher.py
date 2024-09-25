@@ -27,13 +27,13 @@ import subprocess
 
 import pytest
 
-from smartsim._core.shell.shellLauncher import ShellLauncherCommand
+from smartsim._core.shell.shell_launcher import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,
     _as_srun_command,
 )
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 
@@ -381,10 +381,10 @@ def test_set_het_groups(monkeypatch):
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+def test_formatting_launch_args(args, expected, test_dir):
     shell_launch_cmd = _as_srun_command(
         args=SlurmLaunchArguments(args),
-        exe=mock_echo_executable,
+        exe=("echo", "hello", "world"),
         path=test_dir,
         env={},
         stdout_path="output.txt",

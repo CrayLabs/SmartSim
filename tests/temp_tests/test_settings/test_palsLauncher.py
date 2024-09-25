@@ -30,13 +30,13 @@ import pathlib
 
 import pytest
 
-from smartsim._core.shell.shellLauncher import ShellLauncherCommand
+from smartsim._core.shell.shell_launcher import ShellLauncherCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.pals import (
     PalsMpiexecLaunchArguments,
     _as_pals_command,
 )
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 
@@ -136,13 +136,13 @@ def test_invalid_hostlist_format():
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+def test_formatting_launch_args(args, expected, test_dir):
     out = os.path.join(test_dir, "out.txt")
     err = os.path.join(test_dir, "err.txt")
     open(out, "w"), open(err, "w")
     shell_launch_cmd = _as_pals_command(
         PalsMpiexecLaunchArguments(args),
-        mock_echo_executable,
+        ("echo", "hello", "world"),
         test_dir,
         {},
         out,

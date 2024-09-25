@@ -27,22 +27,27 @@
 from __future__ import annotations
 
 import dataclasses
+import io
 import itertools
 import random
+import re
+import time
 import typing as t
 import uuid
 
 import pytest
 
 from smartsim._core import dispatch
+from smartsim._core.control.interval import SynchronousTimeInterval
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim._core.generation.generator import Job_Path
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
 from smartsim.entity import entity
+from smartsim.error import errors
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
-from smartsim.settings import launchSettings
-from smartsim.settings.arguments import launchArguments
+from smartsim.settings import launch_settings
+from smartsim.settings.arguments import launch_arguments
 from smartsim.status import InvalidJobStatus, JobStatus
 
 pytestmark = pytest.mark.group_a
@@ -89,7 +94,7 @@ def job_maker(monkeypatch):
 
     def iter_jobs():
         for i in itertools.count():
-            settings = launchSettings.LaunchSettings("local")
+            settings = launch_settings.LaunchSettings("local")
             monkeypatch.setattr(settings, "_arguments", MockLaunchArgs(i))
             yield job.Job(EchoHelloWorldEntity(), settings)
 
@@ -144,10 +149,13 @@ class NoOpRecordLauncher(LauncherProtocol):
     def get_status(self, *ids):
         raise NotImplementedError
 
+    def stop_jobs(self, *ids):
+        raise NotImplementedError
+
 
 @dataclasses.dataclass(frozen=True)
 class LaunchRecord:
-    launch_args: launchArguments.LaunchArguments
+    launch_args: launch_arguments.LaunchArguments
     entity: entity.SmartSimEntity
     env: t.Mapping[str, str | None]
     path: str
@@ -165,7 +173,7 @@ class LaunchRecord:
             that of the one stored in the `NoOpRecordLauncher`
         """
         args = job._launch_settings.launch_args
-        entity = job._entity
+        entity = job._entity.as_executable_sequence()
         env = job._launch_settings.env_vars
         path = "/tmp/job"
         out = "/tmp/job/out.txt"
@@ -173,7 +181,7 @@ class LaunchRecord:
         return cls(args, entity, env, path, out, err)
 
 
-class MockLaunchArgs(launchArguments.LaunchArguments):
+class MockLaunchArgs(launch_arguments.LaunchArguments):
     """A `LaunchArguments` subclass that will evaluate as true with another if
     and only if they were initialized with the same id. In practice this class
     has no arguments to set.
@@ -195,7 +203,7 @@ class MockLaunchArgs(launchArguments.LaunchArguments):
 
 
 class EchoHelloWorldEntity(entity.SmartSimEntity):
-    """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
+    """A simple smartsim entity"""
 
     def __init__(self):
         super().__init__("test-entity")
@@ -203,9 +211,9 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
     def __eq__(self, other):
         if type(self) is not type(other):
             return NotImplemented
-        return self.as_program_arguments() == other.as_program_arguments()
+        return self.as_executable_sequence() == other.as_executable_sequence()
 
-    def as_program_arguments(self):
+    def as_executable_sequence(self):
         return ("echo", "Hello", "World!")
 
 
@@ -314,12 +322,23 @@ class GetStatusLauncher(LauncherProtocol):
     def start(self, _):
         raise NotImplementedError("{type(self).__name__} should not start anything")
 
+    def _assert_ids(self, ids: LaunchedJobID):
+        if any(id_ not in self.id_to_status for id_ in ids):
+            raise errors.LauncherJobNotFound
+
     def get_status(self, *ids: LaunchedJobID):
+        self._assert_ids(ids)
         return {id_: self.id_to_status[id_] for id_ in ids}
+
+    def stop_jobs(self, *ids: LaunchedJobID):
+        self._assert_ids(ids)
+        stopped = {id_: JobStatus.CANCELLED for id_ in ids}
+        self.id_to_status |= stopped
+        return stopped
 
 
 @pytest.fixture
-def make_populated_experment(monkeypatch, experiment):
+def make_populated_experiment(monkeypatch, experiment):
     def impl(num_active_launchers):
         new_launchers = (GetStatusLauncher() for _ in range(num_active_launchers))
         id_to_launcher = {
@@ -333,8 +352,8 @@ def make_populated_experment(monkeypatch, experiment):
     yield impl
 
 
-def test_experiment_can_get_statuses(make_populated_experment):
-    exp = make_populated_experment(num_active_launchers=1)
+def test_experiment_can_get_statuses(make_populated_experiment):
+    exp = make_populated_experiment(num_active_launchers=1)
     (launcher,) = exp._launch_history.iter_past_launchers()
     ids = tuple(launcher.known_ids)
     recieved_stats = exp.get_status(*ids)
@@ -349,9 +368,9 @@ def test_experiment_can_get_statuses(make_populated_experment):
     [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
 )
 def test_experiment_can_get_statuses_from_many_launchers(
-    make_populated_experment, num_launchers
+    make_populated_experiment, num_launchers
 ):
-    exp = make_populated_experment(num_active_launchers=num_launchers)
+    exp = make_populated_experiment(num_active_launchers=num_launchers)
     launcher_and_rand_ids = (
         (launcher, random.choice(tuple(launcher.id_to_status)))
         for launcher in exp._launch_history.iter_past_launchers()
@@ -366,9 +385,9 @@ def test_experiment_can_get_statuses_from_many_launchers(
 
 
 def test_get_status_returns_not_started_for_unrecognized_ids(
-    monkeypatch, make_populated_experment
+    monkeypatch, make_populated_experiment
 ):
-    exp = make_populated_experment(num_active_launchers=1)
+    exp = make_populated_experiment(num_active_launchers=1)
     brand_new_id = create_job_id()
     ((launcher, (id_not_known_by_exp, *rest)),) = (
         exp._launch_history.group_by_launcher().items()
@@ -381,7 +400,7 @@ def test_get_status_returns_not_started_for_unrecognized_ids(
 
 
 def test_get_status_de_dups_ids_passed_to_launchers(
-    monkeypatch, make_populated_experment
+    monkeypatch, make_populated_experiment
 ):
     def track_calls(fn):
         calls = []
@@ -392,7 +411,7 @@ def test_get_status_de_dups_ids_passed_to_launchers(
 
         return calls, impl
 
-    exp = make_populated_experment(num_active_launchers=1)
+    exp = make_populated_experiment(num_active_launchers=1)
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     calls, tracked_get_status = track_calls(launcher.get_status)
     monkeypatch.setattr(launcher, "get_status", tracked_get_status)
@@ -402,3 +421,196 @@ def test_get_status_de_dups_ids_passed_to_launchers(
     assert len(calls) == 1, "Launcher's `get_status` was called more than once"
     (call,) = calls
     assert call == ((id_,), {}), "IDs were not de-duplicated"
+
+
+def test_wait_handles_empty_call_args(experiment):
+    """An exception is raised when there are no jobs to complete"""
+    with pytest.raises(ValueError, match="No job ids"):
+        experiment.wait()
+
+
+def test_wait_does_not_block_unknown_id(experiment):
+    """If an experiment does not recognize a job id, it should not wait for its
+    completion
+    """
+    now = time.perf_counter()
+    experiment.wait(create_job_id())
+    assert time.perf_counter() - now < 1
+
+
+def test_wait_calls_prefered_impl(make_populated_experiment, monkeypatch):
+    """Make wait is calling the expected method for checking job statuses.
+    Right now we only have the "polling" impl, but in future this might change
+    to an event based system.
+    """
+    exp = make_populated_experiment(1)
+    ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    was_called = False
+
+    def mocked_impl(*args, **kwargs):
+        nonlocal was_called
+        was_called = True
+
+    monkeypatch.setattr(exp, "_poll_for_statuses", mocked_impl)
+    exp.wait(id_)
+    assert was_called
+
+
+@pytest.mark.parametrize(
+    "num_polls",
+    [
+        pytest.param(i, id=f"Poll for status {i} times")
+        for i in (1, 5, 10, 20, 100, 1_000)
+    ],
+)
+@pytest.mark.parametrize("verbose", [True, False])
+def test_poll_status_blocks_until_job_is_completed(
+    monkeypatch, make_populated_experiment, num_polls, verbose
+):
+    """Make sure that the polling based implementation blocks the calling
+    thread. Use varying number of polls to simulate varying lengths of job time
+    for a job to complete.
+
+    Additionally check to make sure that the expected log messages are present
+    """
+    exp = make_populated_experiment(1)
+    ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    (current_status,) = launcher.get_status(id_).values()
+    different_statuses = set(JobStatus) - {current_status}
+    (new_status, *_) = different_statuses
+    mock_log = io.StringIO()
+
+    @dataclasses.dataclass
+    class ChangeStatusAfterNPolls:
+        n: int
+        from_: JobStatus
+        to: JobStatus
+        num_calls: int = dataclasses.field(default=0, init=False)
+
+        def __call__(self, *args, **kwargs):
+            self.num_calls += 1
+            ret_status = self.to if self.num_calls >= self.n else self.from_
+            return (ret_status,)
+
+    mock_get_status = ChangeStatusAfterNPolls(num_polls, current_status, new_status)
+    monkeypatch.setattr(exp, "get_status", mock_get_status)
+    monkeypatch.setattr(
+        "smartsim.experiment.logger.info", lambda s: mock_log.write(f"{s}\n")
+    )
+    final_statuses = exp._poll_for_statuses(
+        [id_], different_statuses, timeout=10, interval=0, verbose=verbose
+    )
+    assert final_statuses == {id_: new_status}
+
+    expected_log = io.StringIO()
+    expected_log.writelines(
+        f"Job({id_}): Running with status '{current_status.value}'\n"
+        for _ in range(num_polls - 1)
+    )
+    expected_log.write(f"Job({id_}): Finished with status '{new_status.value}'\n")
+    assert mock_get_status.num_calls == num_polls
+    assert mock_log.getvalue() == (expected_log.getvalue() if verbose else "")
+
+
+def test_poll_status_raises_when_called_with_infinite_iter_wait(
+    make_populated_experiment,
+):
+    """Cannot wait forever between polls. That will just block the thread after
+    the first poll
+    """
+    exp = make_populated_experiment(1)
+    ((_, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    with pytest.raises(ValueError, match="Polling interval cannot be infinite"):
+        exp._poll_for_statuses(
+            [id_],
+            [],
+            timeout=10,
+            interval=float("inf"),
+        )
+
+
+def test_poll_for_status_raises_if_ids_not_found_within_timeout(
+    make_populated_experiment,
+):
+    """If there is a timeout, a timeout error should be raised when it is exceeded"""
+    exp = make_populated_experiment(1)
+    ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
+    (current_status,) = launcher.get_status(id_).values()
+    different_statuses = set(JobStatus) - {current_status}
+    with pytest.raises(
+        TimeoutError,
+        match=re.escape(
+            f"Job ID(s) {id_} failed to reach terminal status before timeout"
+        ),
+    ):
+        exp._poll_for_statuses(
+            [id_],
+            different_statuses,
+            timeout=1,
+            interval=0,
+        )
+
+
+@pytest.mark.parametrize(
+    "num_launchers",
+    [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
+)
+@pytest.mark.parametrize(
+    "select_ids",
+    [
+        pytest.param(
+            lambda history: history._id_to_issuer.keys(), id="All launched jobs"
+        ),
+        pytest.param(
+            lambda history: next(iter(history.group_by_launcher().values())),
+            id="All from one launcher",
+        ),
+        pytest.param(
+            lambda history: itertools.chain.from_iterable(
+                random.sample(tuple(ids), len(JobStatus) // 2)
+                for ids in history.group_by_launcher().values()
+            ),
+            id="Subset per launcher",
+        ),
+        pytest.param(
+            lambda history: random.sample(
+                tuple(history._id_to_issuer), len(history._id_to_issuer) // 3
+            ),
+            id=f"Random subset across all launchers",
+        ),
+    ],
+)
+def test_experiment_can_stop_jobs(make_populated_experiment, num_launchers, select_ids):
+    exp = make_populated_experiment(num_launchers)
+    ids = (launcher.known_ids for launcher in exp._launch_history.iter_past_launchers())
+    ids = tuple(itertools.chain.from_iterable(ids))
+    before_stop_stats = exp.get_status(*ids)
+    to_cancel = tuple(select_ids(exp._launch_history))
+    stats = exp.stop(*to_cancel)
+    after_stop_stats = exp.get_status(*ids)
+    assert stats == (JobStatus.CANCELLED,) * len(to_cancel)
+    assert dict(zip(ids, before_stop_stats)) | dict(zip(to_cancel, stats)) == dict(
+        zip(ids, after_stop_stats)
+    )
+
+
+def test_experiment_raises_if_asked_to_stop_no_jobs(experiment):
+    with pytest.raises(ValueError, match="No job ids provided"):
+        experiment.stop()
+
+
+@pytest.mark.parametrize(
+    "num_launchers",
+    [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
+)
+def test_experiment_stop_does_not_raise_on_unknown_job_id(
+    make_populated_experiment, num_launchers
+):
+    exp = make_populated_experiment(num_launchers)
+    new_id = create_job_id()
+    all_known_ids = tuple(exp._launch_history._id_to_issuer)
+    before_cancel = exp.get_status(*all_known_ids)
+    (stat,) = exp.stop(new_id)
+    assert stat == InvalidJobStatus.NEVER_STARTED
+    after_cancel = exp.get_status(*all_known_ids)
+    assert before_cancel == after_cancel

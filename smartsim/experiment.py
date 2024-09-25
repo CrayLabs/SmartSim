@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=too-many-lines
-
 from __future__ import annotations
 
 import datetime
@@ -39,9 +37,11 @@ from tabulate import tabulate
 
 from smartsim._core import dispatch
 from smartsim._core.config import CONFIG
+from smartsim._core.control import interval as _interval
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
+from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
-from smartsim.status import InvalidJobStatus, JobStatus
+from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
 from ._core import Generator, Manifest, previewrenderer
 from ._core.generation.generator import Job_Path
@@ -50,7 +50,6 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim._core.utils.launcher import ExecutableProtocol
     from smartsim.launchable.job import Job
     from smartsim.types import LaunchedJobID
 
@@ -190,12 +189,7 @@ class Experiment:
         def execute_dispatch(generator: Generator, job: Job, idx: int) -> LaunchedJobID:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
-            # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            # FIXME: Remove this cast after `SmartSimEntity` conforms to
-            #        protocol. For now, live with the "dangerous" type cast
-            # ---------------------------------------------------------------------
-            exe = t.cast("ExecutableProtocol", job.entity)
-            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            exe = job.entity.as_executable_sequence()
             dispatch = dispatcher.get_dispatch(args)
             try:
                 # Check to see if one of the existing launchers can be
@@ -257,6 +251,84 @@ class Experiment:
         stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
         return tuple(stats)
 
+    def wait(
+        self, *ids: LaunchedJobID, timeout: float | None = None, verbose: bool = True
+    ) -> None:
+        """Block execution until all of the provided launched jobs, represented
+        by an ID, have entered a terminal status.
+
+        :param ids: The ids of the launched jobs to wait for.
+        :param timeout: The max time to wait for all of the launched jobs to end.
+        :param verbose: Whether found statuses should be displayed in the console.
+        :raises ValueError: No IDs were provided.
+        """
+        if not ids:
+            raise ValueError("No job ids to wait on provided")
+        self._poll_for_statuses(
+            ids, TERMINAL_STATUSES, timeout=timeout, verbose=verbose
+        )
+
+    def _poll_for_statuses(
+        self,
+        ids: t.Sequence[LaunchedJobID],
+        statuses: t.Collection[JobStatus],
+        timeout: float | None = None,
+        interval: float = 5.0,
+        verbose: bool = True,
+    ) -> dict[LaunchedJobID, JobStatus | InvalidJobStatus]:
+        """Poll the experiment's launchers for the statuses of the launched
+        jobs with the provided ids, until the status of the changes to one of
+        the provided statuses.
+
+        :param ids: The ids of the launched jobs to wait for.
+        :param statuses: A collection of statuses to poll for.
+        :param timeout: The minimum amount of time to spend polling all jobs to
+            reach one of the supplied statuses. If not supplied or `None`, the
+            experiment will poll indefinitely.
+        :param interval: The minimum time between polling launchers.
+        :param verbose: Whether or not to log polled states to the console.
+        :raises ValueError: The interval between polling launchers is infinite
+        :raises TimeoutError: The polling interval was exceeded.
+        :returns: A mapping of ids to the status they entered that ended
+            polling.
+        """
+        terminal = frozenset(itertools.chain(statuses, InvalidJobStatus))
+        log = logger.info if verbose else lambda *_, **__: None
+        method_timeout = _interval.SynchronousTimeInterval(timeout)
+        iter_timeout = _interval.SynchronousTimeInterval(interval)
+        final: dict[LaunchedJobID, JobStatus | InvalidJobStatus] = {}
+
+        def is_finished(
+            id_: LaunchedJobID, status: JobStatus | InvalidJobStatus
+        ) -> bool:
+            job_title = f"Job({id_}): "
+            if done := status in terminal:
+                log(f"{job_title}Finished with status '{status.value}'")
+            else:
+                log(f"{job_title}Running with status '{status.value}'")
+            return done
+
+        if iter_timeout.infinite:
+            raise ValueError("Polling interval cannot be infinite")
+        while ids and not method_timeout.expired:
+            iter_timeout = iter_timeout.new_interval()
+            stats = zip(ids, self.get_status(*ids))
+            is_done = _helpers.group_by(_helpers.pack_params(is_finished), stats)
+            final |= dict(is_done.get(True, ()))
+            ids = tuple(id_ for id_, _ in is_done.get(False, ()))
+            if ids:
+                (
+                    iter_timeout
+                    if iter_timeout.remaining < method_timeout.remaining
+                    else method_timeout
+                ).block()
+        if ids:
+            raise TimeoutError(
+                f"Job ID(s) {', '.join(map(str, ids))} failed to reach "
+                "terminal status before timeout"
+            )
+        return final
+
     @_contextualize
     def _generate(self, generator: Generator, job: Job, job_index: int) -> Job_Path:
         """Generate the directory structure and files for a ``Job``
@@ -283,8 +355,8 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
-        output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
+        verbosity_level: preview_renderer.Verbosity = preview_renderer.Verbosity.INFO,
+        output_format: preview_renderer.Format = preview_renderer.Format.PLAINTEXT,
         output_filename: t.Optional[str] = None,
     ) -> None:
         """Preview entity information prior to launch. This method
@@ -311,7 +383,7 @@ class Experiment:
 
         preview_manifest = Manifest(*args)
 
-        previewrenderer.render(
+        preview_renderer.render(
             self,
             preview_manifest,
             verbosity_level,
@@ -348,6 +420,25 @@ class Experiment:
             missingval="None",
             disable_numparse=True,
         )
+
+    def stop(self, *ids: LaunchedJobID) -> tuple[JobStatus | InvalidJobStatus, ...]:
+        """Cancel the execution of a previously launched job.
+
+        :param ids: The ids of the launched jobs to stop.
+        :raises ValueError: No job ids were provided.
+        :returns: A tuple of job statuses upon cancellation with order
+            respective of the order of the calling arguments.
+        """
+        if not ids:
+            raise ValueError("No job ids provided")
+        by_launcher = self._launch_history.group_by_launcher(set(ids), unknown_ok=True)
+        id_to_stop_stat = (
+            launcher.stop_jobs(*launched).items()
+            for launcher, launched in by_launcher.items()
+        )
+        stats_map = dict(itertools.chain.from_iterable(id_to_stop_stat))
+        stats = (stats_map.get(id_, InvalidJobStatus.NEVER_STARTED) for id_ in ids)
+        return tuple(stats)
 
     @property
     def telemetry(self) -> TelemetryConfiguration:

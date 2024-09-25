@@ -29,8 +29,9 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
+from smartsim.builders import Ensemble
 from smartsim.database import FeatureStore
-from smartsim.entity import Application, Ensemble
+from smartsim.entity import Application
 from smartsim.status import JobStatus
 
 # The tests in this file belong to the group_b group

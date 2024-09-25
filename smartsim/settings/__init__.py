@@ -26,9 +26,9 @@
 
 import typing as t
 
-from .baseSettings import BaseSettings
-from .batchSettings import BatchSettings
-from .launchSettings import LaunchSettings
+from .base_settings import BaseSettings
+from .batch_settings import BatchSettings
+from .launch_settings import LaunchSettings
 
 __all__ = ["LaunchSettings", "BaseSettings", "BatchSettings"]
 

@@ -24,20 +24,5 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import annotations
-
-import copy
-import typing as t
-
-from smartsim.settings.launchSettings import LaunchSettings
-
-if t.TYPE_CHECKING:
-    from smartsim.entity.entity import SmartSimEntity
-
-
-class MPMDPair:
-    """Class to store MPMD Pairs"""
-
-    def __init__(self, entity: SmartSimEntity, launch_settings: LaunchSettings):
-        self.entity = copy.deepcopy(entity)
-        self.launch_settings = copy.deepcopy(launch_settings)
+from .ensemble import Ensemble
+from .utils.strategies import ParamSet

@@ -29,7 +29,9 @@ import time
 import typing as t
 from dataclasses import dataclass
 
-from ...entity import EntitySequence, SmartSimEntity
+from smartsim.entity._mock import Mock
+
+from ...entity import SmartSimEntity
 from ...status import JobStatus
 
 
@@ -47,8 +49,7 @@ class _JobKey:
 
 class JobEntity:
     """An entity containing run-time SmartSimEntity metadata. The run-time metadata
-    is required to perform telemetry collection. The `JobEntity` satisfies the core
-    API necessary to use a `JobManager` to manage retrieval of managed step updates.
+    is required to perform telemetry collection.
     """
 
     def __init__(self) -> None:
@@ -190,27 +191,23 @@ class JobEntity:
 
 
 class Job:
-    """Keep track of various information for the controller.
-    In doing so, continuously add various fields of information
-    that is queryable by the user through interface methods in
-    the controller class.
+    """Keep track of various information.
+    In doing so, continuously add various fields of information.
     """
 
     def __init__(
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
+        entity: t.Union[SmartSimEntity, JobEntity],
         launcher: str,
-        is_task: bool,
     ) -> None:
         """Initialize a Job.
 
         :param job_name: Name of the job step
         :param job_id: The id associated with the job
-        :param entity: The SmartSim entity(list) associated with the job
+        :param entity: The SmartSim entity associated with the job
         :param launcher: Launcher job was started with
-        :param is_task: process monitored by TaskManager (True) or the WLM (True)
         """
         self.name = job_name
         self.jid = job_id
@@ -224,7 +221,6 @@ class Job:
         self.error: t.Optional[str] = None  # same as output
         self.hosts: t.List[str] = []  # currently only used for FS jobs
         self.launched_with = launcher
-        self.is_task = is_task
         self.start_time = time.time()
         self.history = History()
 
@@ -263,14 +259,11 @@ class Job:
         """Record the launching history of a job."""
         self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
-    def reset(
-        self, new_job_name: str, new_job_id: t.Optional[str], is_task: bool
-    ) -> None:
+    def reset(self, new_job_name: str, new_job_id: t.Optional[str]) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
         :param new_job_id: new job id to launch under
-        :param is_task: process monitored by TaskManager (True) or the WLM (True)
         """
         self.name = new_job_name
         self.jid = new_job_id
@@ -279,7 +272,6 @@ class Job:
         self.output = None
         self.error = None
         self.hosts = []
-        self.is_task = is_task
         self.start_time = time.time()
         self.history.new_run()
 
@@ -299,7 +291,7 @@ class Job:
         warning += f"Job status at failure: {self.status} \n"
         warning += f"Launcher status at failure: {self.raw_status} \n"
         warning += f"Job returncode: {self.returncode} \n"
-        warning += f"Error and output file located at: {self.entity.path}"
+        # warning += f"Error and output file located at: {self.entity.path}"
         return warning
 
     def __str__(self) -> str:

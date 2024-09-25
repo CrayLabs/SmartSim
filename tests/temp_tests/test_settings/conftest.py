@@ -26,21 +26,8 @@
 
 import pytest
 
-from smartsim._core.utils.launcher import (
-    ExecutableProtocol,
-    LauncherProtocol,
-    create_job_id,
-)
-from smartsim.settings.arguments import launchArguments as launch
-
-
-@pytest.fixture
-def mock_echo_executable():
-    class _MockExe(ExecutableProtocol):
-        def as_program_arguments(self):
-            return ("echo", "hello", "world")
-
-    yield _MockExe()
+from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
+from smartsim.settings.arguments import launch_arguments as launch
 
 
 @pytest.fixture
@@ -66,6 +53,9 @@ def mock_launcher():
             return cls()
 
         def get_status(self, *ids):
+            raise NotImplementedError
+
+        def stop_jobs(self, *ids):
             raise NotImplementedError
 
     yield _MockLauncher()

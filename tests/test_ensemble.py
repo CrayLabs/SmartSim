@@ -26,18 +26,68 @@
 
 import itertools
 import typing as t
+from glob import glob
+from os import path as osp
 
 import pytest
 
-from smartsim.entity import _mock
-from smartsim.entity.ensemble import Ensemble
-from smartsim.entity.strategies import ParamSet
-from smartsim.settings.launchSettings import LaunchSettings
+from smartsim.builders.ensemble import Ensemble
+from smartsim.builders.utils.strategies import ParamSet
+from smartsim.entity.files import EntityFiles
+from smartsim.settings.launch_settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
 _2x2_PARAMS = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
 _2x2_EXE_ARG = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
+
+
+@pytest.fixture
+def get_gen_configure_dir(fileutils):
+    yield fileutils.get_test_conf_path(osp.join("generator_files", "tag_dir_template"))
+
+
+def test_exe_property():
+    e = Ensemble(name="test", exe="path/to/example_simulation_program")
+    exe = e.exe
+    assert exe == e.exe
+
+
+def test_exe_args_property():
+    e = Ensemble("test", exe="path/to/example_simulation_program", exe_args="sleepy.py")
+    exe_args = e.exe_args
+    assert exe_args == e.exe_args
+
+
+def test_exe_arg_parameters_property():
+    exe_arg_parameters = {"-N": 2}
+    e = Ensemble(
+        "test",
+        exe="path/to/example_simulation_program",
+        exe_arg_parameters=exe_arg_parameters,
+    )
+    exe_arg_parameters = e.exe_arg_parameters
+    assert exe_arg_parameters == e.exe_arg_parameters
+
+
+def test_files_property(get_gen_configure_dir):
+    tagged_files = sorted(glob(get_gen_configure_dir + "/*"))
+    files = EntityFiles(tagged=tagged_files)
+    e = Ensemble("test", exe="path/to/example_simulation_program", files=files)
+    files = e.files
+    assert files == e.files
+
+
+def test_file_parameters_property():
+    file_parameters = {"h": [5, 6, 7, 8]}
+    e = Ensemble(
+        "test",
+        exe="path/to/example_simulation_program",
+        file_parameters=file_parameters,
+    )
+    file_parameters = e.file_parameters
+
+    assert file_parameters == e.file_parameters
 
 
 def user_created_function(
@@ -59,7 +109,7 @@ def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
         "echo",
         ("hello", "world"),
         permutation_strategy=user_created_function,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == 1
 
 
@@ -75,7 +125,7 @@ def test_ensemble_without_any_members_raises_when_cast_to_jobs(
             permutation_strategy="random",
             max_permutations=30,
             replicas=0,
-        ).as_jobs(mock_launcher_settings)
+        ).build_jobs(mock_launcher_settings)
 
 
 def test_strategy_error_raised_if_a_strategy_that_dne_is_requested(test_dir):
@@ -158,7 +208,7 @@ def test_all_perm_strategy(
         permutation_strategy="all_perm",
         max_permutations=max_perms,
         replicas=replicas,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
 
 
@@ -172,7 +222,7 @@ def test_all_perm_strategy_contents():
         permutation_strategy="all_perm",
         max_permutations=16,
         replicas=1,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == 16
 
 
@@ -212,7 +262,7 @@ def test_step_strategy(
         permutation_strategy="step",
         max_permutations=max_perms,
         replicas=replicas,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
 
 
@@ -251,5 +301,5 @@ def test_random_strategy(
         permutation_strategy="random",
         max_permutations=max_perms,
         replicas=replicas,
-    ).as_jobs(mock_launcher_settings)
+    ).build_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs

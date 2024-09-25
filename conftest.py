@@ -51,8 +51,8 @@ import smartsim
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
-from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
+from smartsim._core.launcher.dragon.dragon_connector import DragonConnector
+from smartsim._core.launcher.dragon.dragon_launcher import DragonLauncher
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import FeatureStore
 from smartsim.entity import Application

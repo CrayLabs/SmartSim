@@ -32,7 +32,7 @@ from smartsim.settings.arguments.launch.lsf import (
     JsrunLaunchArguments,
     _as_jsrun_command,
 )
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 
@@ -181,11 +181,16 @@ def test_launch_args():
         ),
     ),
 )
-def test_formatting_launch_args(mock_echo_executable, args, expected, test_dir):
+def test_formatting_launch_args(args, expected, test_dir):
     outfile = "output.txt"
     errfile = "error.txt"
     env, path, stdin, stdout, args = _as_jsrun_command(
-        JsrunLaunchArguments(args), mock_echo_executable, test_dir, {}, outfile, errfile
+        JsrunLaunchArguments(args),
+        ("echo", "hello", "world"),
+        test_dir,
+        {},
+        outfile,
+        errfile,
     )
     assert tuple(args) == expected
     assert path == test_dir

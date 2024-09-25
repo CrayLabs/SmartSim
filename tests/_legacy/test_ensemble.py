@@ -30,7 +30,8 @@ from copy import deepcopy
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Application, Ensemble
+from smartsim.builders import Ensemble
+from smartsim.entity import Application
 from smartsim.error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from smartsim.settings import RunSettings
 

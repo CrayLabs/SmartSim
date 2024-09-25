@@ -46,10 +46,6 @@ def create_job_id() -> LaunchedJobID:
     return LaunchedJobID(str(uuid.uuid4()))
 
 
-class ExecutableProtocol(t.Protocol):
-    def as_program_arguments(self) -> t.Sequence[str]: ...
-
-
 class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
     """The protocol defining a launcher that can be used by a SmartSim
     experiment
@@ -88,4 +84,16 @@ class LauncherProtocol(collections.abc.Hashable, t.Protocol[_T_contra]):
         :raises smartsim.error.errors.LauncherJobNotFound: If at least one of
             the ids of the `launched_ids` collection is not recognized.
         :returns: A mapping of launched id to current status
+        """
+
+    @abc.abstractmethod
+    def stop_jobs(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Given a collection of launched job ids, cancel the launched jobs
+
+        :param launched_ids: The ids of the jobs to stop
+        :raises smartsim.error.errors.LauncherJobNotFound: If at least one of
+            the ids of the `launched_ids` collection is not recognized.
+        :returns: A mapping of launched id to status upon cancellation
         """

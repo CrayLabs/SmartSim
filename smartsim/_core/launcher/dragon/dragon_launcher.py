@@ -30,11 +30,10 @@ import os
 import pathlib
 import typing as t
 
-from smartsim._core.schemas.dragonRequests import DragonRunPolicy
+from smartsim._core.schemas.dragon_requests import DragonRunPolicy
 from smartsim.error import errors
 from smartsim.types import LaunchedJobID
 
-from ...._core.launcher.stepMapping import StepMap
 from ....error import LauncherError, SmartSimError
 from ....log import get_logger
 from ....settings import (
@@ -55,16 +54,16 @@ from ...schemas import (
     DragonUpdateStatusResponse,
 )
 from ..launcher import WLMLauncher
-from ..pbs.pbsLauncher import PBSLauncher
-from ..slurm.slurmLauncher import SlurmLauncher
+from ..pbs.pbs_launcher import PBSLauncher
+from ..slurm.slurm_launcher import SlurmLauncher
 from ..step import DragonBatchStep, DragonStep, LocalStep, Step
-from ..stepInfo import StepInfo
-from .dragonConnector import DragonConnector, _SchemaT
+from ..step_info import StepInfo
+from ..step_mapping import StepMap
+from .dragon_connector import DragonConnector, _SchemaT
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
 
-    from smartsim._core.utils.launcher import ExecutableProtocol
     from smartsim.experiment import Experiment
 
 
@@ -264,6 +263,18 @@ class DragonLauncher(WLMLauncher):
         step_info.launcher_status = str(JobStatus.CANCELLED)
         return step_info
 
+    def stop_jobs(
+        self, *launched_ids: LaunchedJobID
+    ) -> t.Mapping[LaunchedJobID, JobStatus]:
+        """Take a collection of job ids and issue stop requests to the dragon
+        backend for each.
+
+        :param launched_ids: The ids of the launched jobs to stop.
+        :returns: A mapping of ids for jobs to stop to their reported status
+            after attempting to stop them.
+        """
+        return {id_: self.stop(id_).status for id_ in launched_ids}
+
     @staticmethod
     def _unprefix_step_id(step_id: str) -> str:
         return step_id.split("-", maxsplit=1)[1]
@@ -369,7 +380,7 @@ from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 
 def _as_run_request_args_and_policy(
     run_req_args: DragonLaunchArguments,
-    exe: ExecutableProtocol,
+    exe: t.Sequence[str],
     path: str | os.PathLike[str],
     env: t.Mapping[str, str | None],
     stdout_path: pathlib.Path,
@@ -379,7 +390,7 @@ def _as_run_request_args_and_policy(
     # FIXME: This type is 100% unacceptable, but I don't want to spend too much
     #        time on fixing the dragon launcher API. Something that we need to
     #        revisit in the future though.
-    exe_, *args = exe.as_program_arguments()
+    exe_, *args = exe
     run_args = dict[str, "int | str | float | None"](run_req_args._launch_args)
     policy = DragonRunPolicy.from_run_args(run_args)
     return (

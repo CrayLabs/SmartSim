@@ -25,13 +25,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-from smartsim._core.launcher.dragon.dragonLauncher import (
+from smartsim._core.launcher.dragon.dragon_launcher import (
     _as_run_request_args_and_policy,
 )
-from smartsim._core.schemas.dragonRequests import DragonRunPolicy, DragonRunRequestView
+from smartsim._core.schemas.dragon_requests import DragonRunPolicy, DragonRunRequestView
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
-from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launch_command import LauncherType
 
 pytestmark = pytest.mark.group_a
 
@@ -66,7 +66,7 @@ NOT_SET = object()
 @pytest.mark.parametrize("cpu_affinity", (NOT_SET, [1], [1, 2, 3]))
 @pytest.mark.parametrize("gpu_affinity", (NOT_SET, [1], [1, 2, 3]))
 def test_formatting_launch_args_into_request(
-    mock_echo_executable, nodes, tasks_per_node, cpu_affinity, gpu_affinity, test_dir
+    nodes, tasks_per_node, cpu_affinity, gpu_affinity, test_dir
 ):
     launch_args = DragonLaunchArguments({})
     if nodes is not NOT_SET:
@@ -78,7 +78,7 @@ def test_formatting_launch_args_into_request(
     if gpu_affinity is not NOT_SET:
         launch_args.set_gpu_affinity(gpu_affinity)
     req, policy = _as_run_request_args_and_policy(
-        launch_args, mock_echo_executable, test_dir, {}, "output.txt", "error.txt"
+        launch_args, ("echo", "hello", "world"), test_dir, {}, "output.txt", "error.txt"
     )
 
     expected_args = {

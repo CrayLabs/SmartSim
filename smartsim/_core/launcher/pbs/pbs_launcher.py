@@ -30,38 +30,45 @@ import typing as t
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
+    AprunSettings,
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
+    PalsMpiexecSettings,
+    QsubBatchSettings,
     RunSettings,
     SettingsBase,
-    SgeQsubBatchSettings,
 )
 from ....status import JobStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
+    AprunStep,
     LocalStep,
     MpiexecStep,
     MpirunStep,
     OrterunStep,
-    SgeQsubBatchStep,
+    QsubBatchStep,
     Step,
 )
-from ..stepInfo import SGEStepInfo, StepInfo
-from .sgeCommands import qacct, qdel, qstat
-from .sgeParser import parse_qacct_job_output, parse_qstat_jobid_xml
+from ..step_info import PBSStepInfo, StepInfo
+from .pbs_commands import qdel, qstat
+from .pbs_parser import (
+    parse_qstat_jobid,
+    parse_qstat_jobid_json,
+    parse_step_id_from_qstat,
+)
 
 logger = get_logger(__name__)
 
 
-class SGELauncher(WLMLauncher):
+class PBSLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
-    to launch jobs on systems that use SGE as a workload manager.
+    to launch jobs on systems that use PBS as a workload manager.
 
     All WLM launchers are capable of launching managed and unmanaged
     jobs. Managed jobs are queried through interaction with with WLM,
-    in this case SGE. Unmanaged jobs are held in the TaskManager
+    in this case PBS. Unmanaged jobs are held in the TaskManager
     and are managed through references to their launching process ID
     i.e. a psutil.Popen object
     """
@@ -72,15 +79,17 @@ class SGELauncher(WLMLauncher):
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
         return {
-            SgeQsubBatchSettings: SgeQsubBatchStep,
+            AprunSettings: AprunStep,
+            QsubBatchSettings: QsubBatchStep,
             MpiexecSettings: MpiexecStep,
             MpirunSettings: MpirunStep,
             OrterunSettings: OrterunStep,
             RunSettings: LocalStep,
+            PalsMpiexecSettings: MpiexecStep,
         }
 
     def run(self, step: Step) -> t.Optional[str]:
-        """Run a job step through SGE
+        """Run a job step through PBSPro
 
         :param step: a job step instance
         :raises LauncherError: if launch fails
@@ -92,13 +101,13 @@ class SGELauncher(WLMLauncher):
         cmd_list = step.get_launch_cmd()
         step_id: t.Optional[str] = None
         task_id: t.Optional[str] = None
-        if isinstance(step, SgeQsubBatchStep):
+        if isinstance(step, QsubBatchStep):
             # wait for batch step to submit successfully
             return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if return_code != 0:
                 raise LauncherError(f"Qsub batch submission failed\n {out}\n {err}")
             if out:
-                step_id = out.split(" ")[2]
+                step_id = out.strip()
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
         else:
             # aprun/local doesn't direct output for us.
@@ -111,6 +120,10 @@ class SGELauncher(WLMLauncher):
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, step.env, out=output.fileno(), err=error.fileno()
             )
+
+        # if batch submission did not successfully retrieve job ID
+        if not step_id and step.managed:
+            step_id = self._get_pbs_step_id(step)
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
@@ -141,6 +154,28 @@ class SGELauncher(WLMLauncher):
         )  # set status to cancelled instead of failed
         return step_info
 
+    @staticmethod
+    def _get_pbs_step_id(step: Step, interval: int = 2) -> str:
+        """Get the step_id of a step from qstat (rarely used)
+
+        Parses qstat JSON output by looking for the step name
+        TODO: change this to use ``qstat -a -u user``
+        """
+        time.sleep(interval)
+        step_id: t.Optional[str] = None
+        trials = CONFIG.wlm_trials
+        while trials > 0:
+            output, _ = qstat(["-f", "-F", "json"])
+            step_id = parse_step_id_from_qstat(output, step.name)
+            if step_id:
+                break
+            else:
+                time.sleep(interval)
+                trials -= 1
+        if not step_id:
+            raise LauncherError("Could not find id of launched job step")
+        return step_id
+
     def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
@@ -149,36 +184,29 @@ class SGELauncher(WLMLauncher):
         """
         updates: t.List[StepInfo] = []
 
-        qstat_out, _ = qstat(["-xml"])
-        stats = [parse_qstat_jobid_xml(qstat_out, str(step_id)) for step_id in step_ids]
+        qstat_out, _ = qstat(step_ids)
+        stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
 
-        for stat, step_id in zip(stats, step_ids):
-            if stat is None:
-                info = SGEStepInfo("NOTFOUND")
-                # Attempt to retrieve the historical record
-                return_code, qacct_output, _ = qacct([f"-j {step_id}"])
-                num_trials = 0
-                while return_code != 0 and num_trials < CONFIG.wlm_trials:
-                    num_trials += 1
-                    time.sleep(CONFIG.jm_interval)
-                    return_code, qacct_output, _ = qacct([f"-j {step_id}"])
+        # Fallback: if all jobs result as NOTFOUND, it might be an issue
+        # with truncated names, we resort to json format which does not truncate
+        # information
+        if all(stat is None for stat in stats):
+            qstat_out_json, _ = qstat(["-f", "-F", "json"] + step_ids)
+            stats = [
+                parse_qstat_jobid_json(qstat_out_json, str(step_id))
+                for step_id in step_ids
+            ]
 
-                if qacct_output:
-                    failed = bool(int(parse_qacct_job_output(qacct_output, "failed")))
-                    if failed:
-                        info.status = JobStatus.FAILED
-                        info.returncode = 0
-                    else:
-                        info.status = JobStatus.COMPLETED
-                        info.returncode = 0
-                else:  # Assume if qacct did not find it, that the job completed
-                    info.status = JobStatus.COMPLETED
-                    info.returncode = 0
-            else:
-                info = SGEStepInfo(stat)
+        # create PBSStepInfo objects to return
+
+        for stat, _ in zip(stats, step_ids):
+            info = PBSStepInfo(stat or "NOTFOUND", None)
+            # account for case where job history is not logged by PBS
+            if info.status == JobStatus.COMPLETED:
+                info.returncode = 0
 
             updates.append(info)
         return updates
 
     def __str__(self) -> str:
-        return "SGE"
+        return "PBS"
