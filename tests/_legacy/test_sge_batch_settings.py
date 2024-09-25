@@ -29,7 +29,7 @@ import os.path as osp
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.launcher.sge.sgeParser import parse_qstat_jobid_xml
+from smartsim._core.launcher.sge.sge_parser import parse_qstat_jobid_xml
 from smartsim.error import SSConfigError
 from smartsim.settings import SgeQsubBatchSettings
 from smartsim.settings.mpiSettings import _BaseMPISettings

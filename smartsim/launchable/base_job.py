@@ -24,20 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from enum import Enum
+import typing as t
+from abc import ABC, abstractmethod
+
+from smartsim.launchable.launchable import Launchable
+
+if t.TYPE_CHECKING:
+    from smartsim._core.commands.launch_commands import LaunchCommands
 
 
-class LauncherType(Enum):
-    """Launchers that are supported by
-    SmartSim.
-    """
+class BaseJob(ABC, Launchable):
+    """The highest level abstract base class for a single job that can be launched"""
 
-    Dragon = "dragon"
-    Slurm = "slurm"
-    Pals = "pals"
-    Alps = "alps"
-    Local = "local"
-    Mpiexec = "mpiexec"
-    Mpirun = "mpirun"
-    Orterun = "orterun"
-    Lsf = "lsf"
+    @abstractmethod
+    def get_launch_steps(self) -> "LaunchCommands":
+        """Return the launch steps corresponding to the
+        internal data.
+        """

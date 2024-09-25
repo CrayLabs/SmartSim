@@ -31,12 +31,12 @@ import typing as t
 from copy import deepcopy
 
 from smartsim.error.errors import SSUnsupportedError
-from smartsim.launchable.basejob import BaseJob
-from smartsim.launchable.mpmdpair import MPMDPair
-from smartsim.settings.launchSettings import LaunchSettings
+from smartsim.launchable.base_job import BaseJob
+from smartsim.launchable.mpmd_pair import MPMDPair
+from smartsim.settings.launch_settings import LaunchSettings
 
 if t.TYPE_CHECKING:
-    from smartsim._core.commands.launchCommands import LaunchCommands
+    from smartsim._core.commands.launch_commands import LaunchCommands
     from smartsim.entity.entity import SmartSimEntity
 
 

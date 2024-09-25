@@ -40,7 +40,7 @@ from smartsim._core.utils import helpers
 from smartsim._core.utils.launcher import create_job_id
 from smartsim.error import errors
 from smartsim.log import get_logger
-from smartsim.settings.arguments.launchArguments import LaunchArguments
+from smartsim.settings.arguments.launch_arguments import LaunchArguments
 from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
 

@@ -36,7 +36,7 @@ import pytest
 import smartsim
 import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
-from smartsim._core import Manifest, previewrenderer
+from smartsim._core import Manifest, preview_renderer
 from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller
 from smartsim._core.control.job import Job
@@ -130,7 +130,7 @@ def test_get_ifname_filter():
 
     loader = jinja2.DictLoader(template_dict)
     env = jinja2.Environment(loader=loader, autoescape=True)
-    env.filters["get_ifname"] = previewrenderer.get_ifname
+    env.filters["get_ifname"] = preview_renderer.get_ifname
 
     t = env.get_template("ts")
 
@@ -147,7 +147,7 @@ def test_get_fstype_filter():
     template_dict = {"ts": template_str}
     loader = jinja2.DictLoader(template_dict)
     env = jinja2.Environment(loader=loader, autoescape=True)
-    env.filters["get_fstype"] = previewrenderer.get_fstype
+    env.filters["get_fstype"] = preview_renderer.get_fstype
 
     t = env.get_template("ts")
     output = t.render(config=CONFIG.database_cli)
@@ -183,7 +183,7 @@ def test_experiment_preview(test_dir, wlmutils):
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, verbosity_level="debug")
+    output = preview_renderer.render(exp, verbosity_level="debug")
 
     # Evaluate output
     summary_lines = output.split("\n")
@@ -203,7 +203,7 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, verbosity_level="debug")
+    output = preview_renderer.render(exp, verbosity_level="debug")
 
     # Evaluate output
     summary_lines = output.split("\n")
@@ -232,7 +232,7 @@ def test_feature_store_preview_render(test_dir, wlmutils, choose_host):
     preview_manifest = Manifest(feature_store)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Feature Store Identifier" in output
@@ -268,7 +268,7 @@ def test_preview_to_file(test_dir, wlmutils):
     path = pathlib.Path(test_dir) / filename
     # Execute preview method
     exp.preview(
-        output_format=previewrenderer.Format.PLAINTEXT,
+        output_format=preview_renderer.Format.PLAINTEXT,
         output_filename=str(path),
         verbosity_level="debug",
     )
@@ -299,7 +299,7 @@ def test_model_preview(test_dir, wlmutils):
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
     # Execute preview method
-    rendered_preview = previewrenderer.render(
+    rendered_preview = preview_renderer.render(
         exp, preview_manifest, verbosity_level="debug"
     )
 
@@ -341,7 +341,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
     # Execute preview method
-    rendered_preview = previewrenderer.render(
+    rendered_preview = preview_renderer.render(
         exp, preview_manifest, verbosity_level="debug"
     )
 
@@ -400,7 +400,7 @@ def test_preview_model_tagged_files(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(hello_world_model)
 
     # Execute preview method
-    rendered_preview = previewrenderer.render(
+    rendered_preview = preview_renderer.render(
         exp, preview_manifest, verbosity_level="debug"
     )
 
@@ -431,7 +431,7 @@ def test_model_key_prefixing(test_dir, wlmutils):
     preview_manifest = Manifest(fs, model)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Key Prefix" in output
@@ -469,7 +469,7 @@ def test_ensembles_preview(test_dir, wlmutils):
     )
 
     preview_manifest = Manifest(ensemble)
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Ensemble Name" in output
@@ -500,7 +500,7 @@ def test_preview_models_and_ensembles(test_dir, wlmutils):
     exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Models" in output
@@ -541,7 +541,7 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
     preview_manifest = Manifest(fs, ml_model, ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Client Configuration" in output
@@ -584,7 +584,7 @@ def test_ensemble_preview_client_configuration_multifs(test_dir, wlmutils):
     preview_manifest = Manifest(fs1, fs2, ml_model, ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Client Configuration" in output
@@ -630,7 +630,7 @@ def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Tagged Files for Model Configuration" in output
@@ -745,7 +745,7 @@ def test_preview_colocated_fs_model_ensemble(fileutils, test_dir, wlmutils, mlut
     preview_manifest = Manifest(colo_ensemble)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Models" in output
@@ -859,7 +859,7 @@ def test_preview_colocated_fs_script_ensemble(fileutils, test_dir, wlmutils, mlu
     preview_manifest = Manifest(colo_ensemble)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Torch Scripts" in output
@@ -882,7 +882,7 @@ def test_preview_active_infrastructure(wlmutils, test_dir, preview_object):
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
-    output = previewrenderer.render(
+    output = preview_renderer.render(
         exp, active_fsjobs=preview_object, verbosity_level="debug"
     )
 
@@ -925,7 +925,7 @@ def test_preview_orch_active_infrastructure(
     preview_manifest = Manifest(feature_store2, feature_store3)
 
     # Execute method for template rendering
-    output = previewrenderer.render(
+    output = preview_renderer.render(
         exp, preview_manifest, active_fsjobs=preview_object, verbosity_level="debug"
     )
 
@@ -955,7 +955,7 @@ def test_preview_multifs_active_infrastructure(
     )
 
     # Execute method for template rendering
-    output = previewrenderer.render(
+    output = preview_renderer.render(
         exp, active_fsjobs=preview_object_multifs, verbosity_level="debug"
     )
 
@@ -999,7 +999,7 @@ def test_preview_active_infrastructure_feature_store_error(
     preview_manifest = Manifest(orc)
 
     # Execute method for template rendering
-    output = previewrenderer.render(
+    output = preview_renderer.render(
         exp, preview_manifest, active_fsjobs=active_fsjobs, verbosity_level="debug"
     )
 
@@ -1059,7 +1059,7 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
     exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="info")
 
     assert "Executable" not in output
     assert "Executable Arguments" not in output
@@ -1163,7 +1163,7 @@ def test_verbosity_info_colocated_fs_model_ensemble(
     preview_manifest = Manifest(colo_ensemble)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="info")
 
     assert "Outgoing Key Collision Prevention (Key Prefixing)" not in output
     assert "Devices Per Node" not in output
@@ -1186,7 +1186,7 @@ def test_verbosity_info_feature_store(test_dir, wlmutils, choose_host):
     preview_manifest = Manifest(feature_store)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="info")
 
     # Evaluate output
     assert "Executable" not in output
@@ -1220,7 +1220,7 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
     preview_manifest = Manifest(fs, ml_model, ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="info")
 
     # Evaluate output
     assert "Outgoing Key Collision Prevention (Key Prefixing)" in output
@@ -1289,7 +1289,7 @@ def test_preview_colocated_fs_singular_model(wlmutils, test_dir):
     preview_manifest = Manifest(model_1, model_2)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     assert "model_1" in output
     assert "model_2" in output
@@ -1326,7 +1326,7 @@ def test_preview_fs_script(wlmutils, test_dir):
     preview_manifest = Manifest(model_instance)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+    output = preview_renderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Torch Script" in output

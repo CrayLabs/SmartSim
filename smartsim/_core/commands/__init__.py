@@ -25,5 +25,5 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .command import Command
-from .commandList import CommandList
-from .launchCommands import LaunchCommands
+from .command_list import CommandList
+from .launch_commands import LaunchCommands

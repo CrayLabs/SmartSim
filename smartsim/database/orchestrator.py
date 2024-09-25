@@ -41,7 +41,7 @@ from smartsim.entity._mock import Mock
 from .._core.utils.helpers import is_valid_cmd, unpack_fs_identifier
 from .._core.utils.network import get_ip_from_host
 from .._core.utils.shell import execute_cmd
-from ..entity import EntityList, FSNode, TelemetryConfiguration
+from ..entity import FSNode, TelemetryConfiguration
 from ..error import SmartSimError, SSDBFilesNotParseable, SSUnsupportedError
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
@@ -165,7 +165,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
 
 
 # pylint: disable-next=too-many-public-methods
-class FeatureStore(EntityList[FSNode]):
+class FeatureStore:
     """The FeatureStore is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
     entities by using one of the Python, C, C++ or Fortran clients

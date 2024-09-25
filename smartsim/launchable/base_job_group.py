@@ -33,7 +33,7 @@ from copy import deepcopy
 
 from smartsim.launchable.launchable import Launchable
 
-from .basejob import BaseJob
+from .base_job import BaseJob
 
 
 class BaseJobGroup(Launchable, MutableSequence[BaseJob], ABC):

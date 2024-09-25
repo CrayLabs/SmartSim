@@ -147,10 +147,8 @@ module = [
   # FIXME: DO NOT MERGE THIS INTO DEVELOP BRANCH UNLESS THESE ARE PASSING OR
   #        REMOVED!!
   "smartsim._core._cli.*",
-  "smartsim._core.control.controller",
   "smartsim._core.control.manifest",
   "smartsim._core.entrypoints.dragon_client",
-  "smartsim._core.launcher.colocated",
   "smartsim._core.launcher.launcher",
   "smartsim._core.launcher.local.*",
   "smartsim._core.launcher.lsf.*",
@@ -158,13 +156,13 @@ module = [
   "smartsim._core.launcher.sge.*",
   "smartsim._core.launcher.slurm.*",
   "smartsim._core.launcher.step.*",
-  "smartsim._core.launcher.stepInfo",
-  "smartsim._core.launcher.stepMapping",
-  "smartsim._core.launcher.taskManager",
+  "smartsim._core.launcher.step_info",
+  "smartsim._core.launcher.step_mapping",
+  "smartsim._core.launcher.task_manager",
   "smartsim._core.utils.serialize",
   "smartsim._core.utils.telemetry.*",
   "smartsim.database.*",
-  "smartsim.settings.sgeSettings",
+  "smartsim.settings.sge_settings",
   "smartsim._core.control.controller_utils",
   "smartsim.entity.dbnode",
 ]

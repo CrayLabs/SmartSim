@@ -38,7 +38,8 @@ from os import makedirs
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import SmartSimError, UnproxyableStepError
 
-from ....entity import Application, Ensemble, FSNode
+from ....builders import Ensemble
+from ....entity import Application, FSNode
 from ....log import get_logger
 from ....settings import RunSettings, SettingsBase
 from ...utils.helpers import encode_cmd, get_base_36_repr

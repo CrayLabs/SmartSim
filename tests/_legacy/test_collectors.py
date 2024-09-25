@@ -29,7 +29,7 @@ import typing as t
 
 import pytest
 
-import smartsim._core.entrypoints.telemetrymonitor
+import smartsim._core.entrypoints.telemetry_monitor
 import smartsim._core.utils.telemetry.collector
 from conftest import MockCollectorEntityFunc, MockSink
 from smartsim._core.utils.telemetry.collector import (
