@@ -35,14 +35,14 @@ import pytest
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
-from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel, create_local
+from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
     OnWriteFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import dragon_ddict
-from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
@@ -56,24 +56,40 @@ from smartsim.protoclient import ProtoClient
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
-WORK_QUEUE_KEY = "_SMARTSIM_REQUEST_QUEUE"
+WORK_QUEUE_KEY = BackboneFeatureStore.MLI_WORKER_QUEUE
 logger = get_logger(__name__)
 
 
 @pytest.fixture(scope="session")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
-    # return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
+    """Fixture that creates a dragon distributed dictionary.
+
+    :returns: The attached distributed dictionary
+    """
     return dragon_ddict.DDict(1, 2, 4 * 1024**2)
 
 
 @pytest.fixture(scope="session")
 def the_backbone(storage_for_dragon_fs) -> BackboneFeatureStore:
+    """Fixture that creates a dragon backbone feature store.
+
+    :param storage_for_dragon_fs:
+    :returns: The backbone feature store
+    :returns: The attached `BackboneFeatureStore`
+    """
+
     return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
 
 @pytest.fixture(scope="session")
 def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
-    """a stand-in for the worker manager so a worker queue exists"""
+    """Fixture that creates a dragon FLI channel as a stand-in for the
+    worker queue created by the worker.
+
+    :param the_backbone: The backbone feature store to update
+    with the worker queue descriptor.
+    :returns: The attached `DragonFLIChannel`
+    """
 
     # create the FLI
     to_worker_channel = create_local()
@@ -91,28 +107,13 @@ def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
     return comm_channel
 
 
-@pytest.fixture
-def storage_for_dragon_fs_with_req_queue(
-    storage_for_dragon_fs: t.Dict[str, str]
-) -> t.Dict[str, str]:
-    # create a valid FLI so any call to attach does not fail
-    channel_ = Channel.make_process_local()
-    fli_ = fli.FLInterface(main_ch=channel_, manager_ch=None)
-    comm_channel = DragonFLIChannel(fli_, True)
-
-    storage_for_dragon_fs[WORK_QUEUE_KEY] = comm_channel.descriptor
-    return storage_for_dragon_fs
-
-
 @pytest.mark.parametrize(
     "wait_timeout, exp_wait_max",
     [
         # aggregate the 1+1+1 into 3 on remaining parameters
-        pytest.param(
-            0.5, 1 + 1 + 1, id="0.5s wait, 3 cycle steps", marks=pytest.mark.skip
-        ),
-        pytest.param(2, 3 + 2, id="2s wait, 4 cycle steps", marks=pytest.mark.skip),
-        pytest.param(4, 3 + 2 + 4, id="4s wait, 5 cycle steps", marks=pytest.mark.skip),
+        pytest.param(0.5, 1 + 1 + 1, id="0.5s wait, 3 cycle steps"),
+        pytest.param(2, 3 + 2, id="2s wait, 4 cycle steps"),
+        pytest.param(4, 3 + 2 + 4, id="4s wait, 5 cycle steps"),
     ],
 )
 def test_protoclient_timeout(
@@ -150,11 +151,20 @@ def test_protoclient_timeout(
     assert elapsed < exp_wait_max, f"above expected max wait {exp_wait_max}"
 
 
-def test_protoclient_initialization_no_backbone():
+def test_protoclient_initialization_no_backbone(
+    monkeypatch: pytest.MonkeyPatch, the_worker_queue: DragonFLIChannel
+):
     """Verify that attempting to start the client without required environment variables
-    results in an exception. NOTE: Backbone env var is not set"""
+    results in an exception.
 
-    with pytest.raises(SmartSimError) as ex:
+    :param the_worker_queue: Passing the worker queue fixture to ensure
+    the worker queue environment is correctly configured.
+
+    NOTE: os.environ[BackboneFeatureStore.MLI_BACKBONE] is not set"""
+
+    with monkeypatch.context() as patch, pytest.raises(SmartSimError) as ex:
+        patch.setenv(BackboneFeatureStore.MLI_BACKBONE, "")
+
         ProtoClient(timing_on=False)
 
     # confirm the missing value error has been raised

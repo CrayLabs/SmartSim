@@ -27,7 +27,6 @@
 # isort: off
 # pylint: disable=unused-import,import-error
 import dragon
-from dragon import fli
 import dragon.channels
 from dragon.globalservices.api_setup import connect_to_infrastructure
 
@@ -49,11 +48,9 @@ from collections import OrderedDict
 import numpy
 import torch
 
-from smartsim._core.mli.comm.channel.dragon_channel import (
-    DragonCommChannel,
-    create_local,
-)
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
@@ -86,16 +83,17 @@ class ProtoClient:
     triggering QueueFull exceptions."""
 
     @staticmethod
-    def _attach_to_backbone(wait_timeout: float = 0) -> BackboneFeatureStore:
+    def _attach_to_backbone() -> BackboneFeatureStore:
         """Use the supplied environment variables to attach
         to a pre-existing backbone featurestore. Requires the
         environment to contain `_SMARTSIM_INFRA_BACKBONE`
-        environment variable
+        environment variable.
 
-        :returns: the attached backbone featurestore"""
+        :returns: The attached backbone featurestore
+        """
         # todo: ensure this env var from config loader or constant
         descriptor = os.environ.get(BackboneFeatureStore.MLI_BACKBONE, None)
-        if descriptor is None:
+        if descriptor is None or not descriptor:
             raise SmartSimError(
                 "Missing required backbone configuration in environment: "
                 f"{BackboneFeatureStore.MLI_BACKBONE}"
@@ -104,12 +102,16 @@ class ProtoClient:
         backbone = t.cast(
             BackboneFeatureStore, BackboneFeatureStore.from_descriptor(descriptor)
         )
-        backbone.wait_timeout = wait_timeout
         return backbone
 
     def _attach_to_worker_queue(self) -> DragonFLIChannel:
         """Wait until the backbone contains the worker queue configuration,
-        then attach an FLI to the given worker queue"""
+        then attach an FLI to the given worker queue.
+
+        :returns: The attached FLI channel
+        :raises: SmartSimError if the required configuration is not found in the
+        backbone feature store
+        """
 
         descriptor = ""
         try:
@@ -120,50 +122,36 @@ class ProtoClient:
             descriptor = str(config[BackboneFeatureStore.MLI_WORKER_QUEUE])
         except Exception as ex:
             logger.info(
-                f"Unable to rerieve {BackboneFeatureStore.MLI_WORKER_QUEUE} "
+                f"Unable to retrieve {BackboneFeatureStore.MLI_WORKER_QUEUE} "
                 "to attach to the worker queue."
             )
-            raise ValueError("Unable to locate worker queue using backbone") from ex
+            raise SmartSimError("Unable to locate worker queue using backbone") from ex
 
         return DragonFLIChannel.from_descriptor(descriptor)
-
-    @classmethod
-    def _create_worker_channels(
-        cls,
-    ) -> t.Tuple[dragon.channels.Channel, dragon.channels.Channel]:
-        """Create channels to be used for communication to and from the worker queue.
-
-        :returns: A tuple containing the native from and to
-        Channels as (from_channel, to_channel).
-        """
-
-        _from_worker_ch_raw = create_local(cls._DEFAULT_WORK_QUEUE_SIZE)
-        _to_worker_ch_raw = create_local(cls._DEFAULT_WORK_QUEUE_SIZE)
-
-        return _from_worker_ch_raw, _to_worker_ch_raw
 
     def _create_broadcaster(self) -> EventProducer:
         """Create an event publisher that will broadcast updates to
         other MLI components. This publisher
 
-        :returns: the event publisher instance"""
+        :returns: the event publisher instance
+        """
         broadcaster = EventBroadcaster(
             self._backbone, DragonCommChannel.from_descriptor
         )
         return broadcaster
 
     def __init__(self, timing_on: bool, wait_timeout: float = 0) -> None:
-        """Initialize the client instance
+        """Initialize the client instance.
 
         :param timing_on: Flag indicating if timing information should be
         written to file
         :param wait_timeout: Maximum wait time (in seconds) allowed to attach to the
         worker queue
-
-        :raises: SmartSimError if unable to attach to a backbone featurestore"""
-        # todo: determine a way to make this work in tests.
-        #  - consider catching the import exception and defaulting rank to 0
+        :raises: SmartSimError if unable to attach to a backbone featurestore
+        """
         if MPI is not None:
+            # todo: determine a way to make MPI work in the test environment
+            #  - consider catching the import exception and defaulting rank to 0
             comm = MPI.COMM_WORLD
             rank: int = comm.Get_rank()
         else:
@@ -173,12 +161,12 @@ class ProtoClient:
 
         connect_to_infrastructure()
 
-        self._backbone = self._attach_to_backbone(wait_timeout=self.backbone_timeout)
+        self._backbone = self._attach_to_backbone()
+        self._backbone.wait_timeout = self.backbone_timeout
         self._to_worker_fli = self._attach_to_worker_queue()
 
-        channels = self._create_worker_channels()
-        self._from_worker_ch = channels[0]
-        self._to_worker_ch = channels[1]
+        self._from_worker_ch = create_local(self._DEFAULT_WORK_QUEUE_SIZE)
+        self._to_worker_ch = create_local(self._DEFAULT_WORK_QUEUE_SIZE)
 
         self._publisher = self._create_broadcaster()
 
@@ -199,14 +187,29 @@ class ProtoClient:
         return self._backbone_timeout or self._DEFAULT_BACKBONE_TIMEOUT
 
     def _add_label_to_timings(self, label: str) -> None:
+        """Adds a new label into the timing dictionary to prepare for
+        receiving timing events.
+
+        :param label: The label to create storage for
+        """
         if label not in self._timings:
             self._timings[label] = []
 
     @staticmethod
     def _format_number(number: t.Union[numbers.Number, float]) -> str:
+        """Utility function for formatting numbers consistently for logs.
+
+        :param number: The number to convert to a formatted string
+        :returns: The formatted string containing the number
+        """
         return f"{number:0.4e}"
 
     def start_timings(self, batch_size: numbers.Number) -> None:
+        """Configure the client to begin storing timing information.
+
+        :param bach_size: The size of batches to generate as inputs
+        to the model
+        """
         if self._timing_on:
             self._add_label_to_timings("batch_size")
             self._timings["batch_size"].append(self._format_number(batch_size))
@@ -214,6 +217,7 @@ class ProtoClient:
             self._interm = time.perf_counter()
 
     def end_timings(self) -> None:
+        """Configure the client to stop storing timing information."""
         if self._timing_on and self._start is not None:
             self._add_label_to_timings("total_time")
             self._timings["total_time"].append(
@@ -221,6 +225,10 @@ class ProtoClient:
             )
 
     def measure_time(self, label: str) -> None:
+        """Measures elapsed time since the last recorded signal.
+
+        :param label: The label to measure time for
+        """
         if self._timing_on and self._interm is not None:
             self._add_label_to_timings(label)
             self._timings[label].append(
@@ -229,6 +237,11 @@ class ProtoClient:
             self._interm = time.perf_counter()
 
     def print_timings(self, to_file: bool = False) -> None:
+        """Print timing information to standard output.
+
+        :param to_file: If `True`, also saves timing information
+        to the files `timings.npy` and `timings.txt`
+        """
         print(" ".join(self._timings.keys()))
 
         value_array = numpy.array(self._timings.values(), dtype=float)
@@ -240,6 +253,14 @@ class ProtoClient:
             numpy.savetxt("timings.txt", value_array)
 
     def run_model(self, model: t.Union[bytes, str], batch: torch.Tensor) -> t.Any:
+        """Execute a bach of inference requests with the supplied ML model.
+
+        :param model: The raw bytes or path to a pytorch model
+        :param batch: The tensor batch to perform inference on
+        :returns: The inference results
+        :raises: ValueError if the worker queue is not configured properly
+        in the environment variables
+        """
         tensors = [batch.numpy()]
         self.perf_timer.start_timings("batch_size", batch.shape[0])
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
@@ -301,9 +322,11 @@ class ProtoClient:
         return result
 
     def set_model(self, key: str, model: bytes) -> None:
-        # todo: incorrect usage of backbone here to store
-        # user models? are we using the backbone if they do NOT
-        # have a feature store of their own?
+        """Write the supplied model to the feature store.
+
+        :param key: The unique key used to identify the model
+        :param model: The raw bytes of the model to execute
+        """
         self._backbone[key] = model
 
         # notify components of a change in the data at this key

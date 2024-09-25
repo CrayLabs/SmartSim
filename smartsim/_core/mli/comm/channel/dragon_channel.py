@@ -24,17 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
-import sys
 import typing as t
 
 import dragon.channels as dch
-import dragon.infrastructure.facts as df
-import dragon.infrastructure.parameters as dp
-import dragon.managed_memory as dm
-import dragon.utils as du
 
 import smartsim._core.mli.comm.channel.channel as cch
+import smartsim._core.mli.comm.channel.dragon_util as drg_util
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
@@ -49,75 +44,6 @@ LAST_OFFSET = 0
 unnecessary retries when creating a local channel."""
 
 
-def _channel_to_descriptor(channel: dch.Channel) -> str:
-    """Utility method for converting a channel to a descriptor string.
-
-    :param channel: The dragon channel to convert
-    :returns: The descriptor string
-    """
-    if channel is None:
-        raise SmartSimError("Channel is not available to create a descriptor")
-
-    serialized_ch = channel.serialize()
-    return base64.b64encode(serialized_ch).decode("utf-8")
-
-
-def _pool_to_descriptor(pool: dm.MemoryPool) -> str:
-    """Utility method for converting a pool to a descriptor string.
-
-    :param pool: The memory pool to convert
-    :returns: The descriptor string"""
-    if pool is None:
-        raise SmartSimError("Memory pool is not available to create a descriptor")
-
-    serialized_pool = pool.serialize()
-    return base64.b64encode(serialized_pool).decode("utf-8")
-
-
-def create_local(capacity: int = 0) -> dch.Channel:
-    """Creates a Channel attached to the local memory pool. Replacement for
-    direct calls to `dch.Channel.make_process_local()` to enable
-    supplying a channel capacity.
-
-    :param capacity: The number of events the channel can buffer; uses the default
-    buffer size `DEFAULT_CHANNEL_BUFFER_SIZE` when not supplied
-    :returns: The instantiated channel
-    :raises SmartSimError: If unable to attach local channel
-    """
-    pool = dm.MemoryPool.attach(du.B64.str_to_bytes(dp.this_process.default_pd))
-    pool_descriptor = _pool_to_descriptor(pool)
-    channel: t.Optional[dch.Channel] = None
-    offset = 0
-
-    global LAST_OFFSET
-    if LAST_OFFSET:
-        offset = LAST_OFFSET
-
-    capacity = capacity if capacity > 0 else DEFAULT_CHANNEL_BUFFER_SIZE
-
-    while not channel:
-        # search for an open channel ID
-        offset += 1
-        cid = df.BASE_USER_MANAGED_CUID + offset
-        try:
-            channel = dch.Channel(mem_pool=pool, c_uid=cid, capacity=capacity)
-            LAST_OFFSET = offset
-            descriptor = _channel_to_descriptor(channel)
-            logger.debug(
-                "Local channel creatd: "
-                f"{cid=}, {pool_descriptor=}, {capacity=}, {descriptor=}"
-            )
-        except dch.ChannelError as e:
-            if offset < 100:
-                logger.warning(f"Channnel id {cid} is not open. Retrying...")
-            else:
-                LAST_OFFSET = 0
-                logger.error(f"All attempts to attach local channel have failed")
-                raise SmartSimError("Failed to attach local channel") from e
-
-    return channel
-
-
 class DragonCommChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon channel."""
 
@@ -126,7 +52,7 @@ class DragonCommChannel(cch.CommChannelBase):
 
         :param channel: A channel to use for communications
         """
-        descriptor = _channel_to_descriptor(channel)
+        descriptor = drg_util.channel_to_descriptor(channel)
         super().__init__(descriptor)
         self._channel = channel
 
@@ -175,23 +101,6 @@ class DragonCommChannel(cch.CommChannelBase):
 
             return messages
 
-    @property
-    def descriptor_string(self) -> str:
-        """Return the channel descriptor for the underlying dragon channel
-        as a string. Automatically performs base64 encoding to ensure the
-        string can be used in a call to `from_descriptor`.
-
-        :returns: String representation of channel descriptor
-        :raises ValueError: If unable to convert descriptor to a string
-        """
-        if isinstance(self._descriptor, str):
-            return self._descriptor
-
-        if isinstance(self._descriptor, bytes):
-            return base64.b64encode(self._descriptor).decode("utf-8")
-
-        raise ValueError(f"Unable to convert channel descriptor: {self._descriptor}")
-
     @classmethod
     def from_descriptor(
         cls,
@@ -199,36 +108,29 @@ class DragonCommChannel(cch.CommChannelBase):
     ) -> "DragonCommChannel":
         """A factory method that creates an instance from a descriptor string.
 
-        :param descriptor: The descriptor that uniquely identifies the resource. Output
-        from `descriptor_string` is correctly encoded.
+        :param descriptor: The descriptor that uniquely identifies the resource.
         :returns: An attached DragonCommChannel
-        :raises SmartSimError: If creation of comm channel fails"""
+        :raises SmartSimError: If creation of comm channel fails
+        """
         try:
             if isinstance(descriptor, bytes):
                 raise ValueError("Descriptor must be a string")
 
-            utf8_descriptor: t.Union[str, bytes] = descriptor
-            if isinstance(descriptor, str):
-                utf8_descriptor = descriptor.encode("utf-8")
-
-            # todo: ensure the bytes argument and condition are removed
-            # after refactoring the RPC models
-
-            actual_descriptor = base64.b64decode(utf8_descriptor)
-            channel = dch.Channel.attach(actual_descriptor)
+            channel = drg_util.descriptor_to_channel(descriptor)
             return DragonCommChannel(channel)
-        except Exception as e:
+        except Exception as ex:
             raise SmartSimError(
                 f"Failed to create dragon comm channel: {descriptor}"
-            ) from e
+            ) from ex
 
     @classmethod
     def from_local(cls, _descriptor: t.Optional[str] = None) -> "DragonCommChannel":
-        """A factory method that creates a local channel instance
+        """A factory method that creates a local channel instance.
 
+        :param _descriptor: Unused placeholder
         :returns: An attached DragonCommChannel"""
         try:
-            channel = dch.Channel.make_process_local()
+            channel = drg_util.create_local()
             return DragonCommChannel(channel)
         except:
             logger.error(f"Failed to create local dragon comm channel", exc_info=True)

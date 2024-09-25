@@ -101,7 +101,6 @@ class DragonFeatureStore(FeatureStore):
             logger.debug(f"Attaching to FeatureStore with descriptor: {descriptor}")
             return cls(dragon_ddict.DDict.attach(descriptor))
         except Exception as ex:
-            logger.error(f"Error creating dragon feature store: {descriptor}")
             raise SmartSimError(
-                f"Error creating dragon feature store: {descriptor}"
+                f"Error creating dragon feature store from descriptor: {descriptor}"
             ) from ex

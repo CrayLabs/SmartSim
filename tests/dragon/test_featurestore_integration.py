@@ -33,8 +33,8 @@ dragon = pytest.importorskip("dragon")
 from smartsim._core.mli.comm.channel.dragon_channel import (
     DEFAULT_CHANNEL_BUFFER_SIZE,
     DragonCommChannel,
-    create_local,
 )
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
@@ -82,17 +82,13 @@ def test_eventconsumer_eventpublisher_integration(
     backbone["test_dir"] = test_dir
     assert backbone["test_dir"] == test_dir
 
-    wmgr_channel_ = Channel.make_process_local()
-    capp_channel_ = Channel.make_process_local()
-    back_channel_ = Channel.make_process_local()
+    wmgr_channel = DragonCommChannel(create_local())
+    capp_channel = DragonCommChannel(create_local())
+    back_channel = DragonCommChannel(create_local())
 
-    wmgr_channel = DragonCommChannel(wmgr_channel_)
-    capp_channel = DragonCommChannel(capp_channel_)
-    back_channel = DragonCommChannel(back_channel_)
-
-    wmgr_consumer_descriptor = wmgr_channel.descriptor_string
-    capp_consumer_descriptor = capp_channel.descriptor_string
-    back_consumer_descriptor = back_channel.descriptor_string
+    wmgr_consumer_descriptor = wmgr_channel.descriptor
+    capp_consumer_descriptor = capp_channel.descriptor
+    back_consumer_descriptor = back_channel.descriptor
 
     # create some consumers to receive messages
     wmgr_consumer = EventConsumer(
@@ -166,18 +162,20 @@ def test_eventconsumer_max_dequeue(
     storage_for_dragon_fs: t.Any,
 ) -> None:
     """Verify that a consumer does not sit and collect messages indefinitely
-    by checking that a consumer returns after a maximum timeout is exceeded
+    by checking that a consumer returns after a maximum timeout is exceeded.
 
-    :param num_events: the total number of events to raise in the test
-    :param batch_timeout: the maximum wait time for a message to be sent.
-    :param storage_for_dragon_fs: the dragon storage engine to use"""
+    :param num_events: Total number of events to raise in the test
+    :param batch_timeout: Maximum wait time (in seconds) for a message to be sent
+    :param max_batches_expected: Maximum number of receives that should occur
+    :param storage_for_dragon_fs: Dragon storage engine to use
+    """
 
     mock_storage = storage_for_dragon_fs
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
 
     wmgr_channel_ = Channel.make_process_local()
     wmgr_channel = DragonCommChannel(wmgr_channel_)
-    wmgr_consumer_descriptor = wmgr_channel.descriptor_string
+    wmgr_consumer_descriptor = wmgr_channel.descriptor
 
     # create some consumers to receive messages
     wmgr_consumer = EventConsumer(
@@ -242,7 +240,7 @@ def test_channel_buffer_size(
 
     wmgr_channel_ = create_local(buffer_size)  # <--- vary buffer size
     wmgr_channel = DragonCommChannel(wmgr_channel_)
-    wmgr_consumer_descriptor = wmgr_channel.descriptor_string
+    wmgr_consumer_descriptor = wmgr_channel.descriptor
 
     # create a broadcaster to publish messages. create no consumers to
     # push the number of sent messages past the allotted buffer size

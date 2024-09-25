@@ -40,9 +40,10 @@ class FileSystemCommChannel(CommChannelBase):
     """Passes messages by writing to a file"""
 
     def __init__(self, key: pathlib.Path) -> None:
-        """Initialize the FileSystemCommChannel instance
+        """Initialize the FileSystemCommChannel instance.
 
-        :param key: a path to the root directory of the feature store"""
+        :param key: a path to the root directory of the feature store
+        """
         self._lock = threading.RLock()
 
         super().__init__(key.as_posix())
@@ -57,7 +58,7 @@ class FileSystemCommChannel(CommChannelBase):
         """Send a message throuh the underlying communication channel.
 
         :param value: The value to send
-        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param timeout: maximum time to wait (in seconds) for messages to send
         """
         with self._lock:
             # write as text so we can add newlines as delimiters
@@ -67,11 +68,12 @@ class FileSystemCommChannel(CommChannelBase):
                 logger.debug(f"FileSystemCommChannel {self._file_path} sent message")
 
     def recv(self, timeout: float = 0) -> t.List[bytes]:
-        """Receives message(s) through the underlying communication channel
+        """Receives message(s) through the underlying communication channel.
 
         :param timeout: maximum time to wait (in seconds) for messages to arrive
         :returns: the received message
-        :raises SmartSimError: if the descriptor points to a missing file"""
+        :raises SmartSimError: if the descriptor points to a missing file
+        """
         with self._lock:
             messages: t.List[bytes] = []
             if not self._file_path.exists():
@@ -100,7 +102,7 @@ class FileSystemCommChannel(CommChannelBase):
             return messages
 
     def clear(self) -> None:
-        """Create an empty file for events"""
+        """Create an empty file for events."""
         if self._file_path.exists():
             self._file_path.unlink()
         self._file_path.touch()
@@ -110,10 +112,11 @@ class FileSystemCommChannel(CommChannelBase):
         cls,
         descriptor: str,
     ) -> "FileSystemCommChannel":
-        """A factory method that creates an instance from a descriptor string
+        """A factory method that creates an instance from a descriptor string.
 
         :param descriptor: The descriptor that uniquely identifies the resource
-        :returns: An attached FileSystemCommChannel"""
+        :returns: An attached FileSystemCommChannel
+        """
         try:
             path = pathlib.Path(descriptor)
             return FileSystemCommChannel(path)

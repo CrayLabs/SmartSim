@@ -129,9 +129,9 @@ def test_eventconsumer_eventpublisher_integration(
     capp_channel = DragonCommChannel(capp_channel_)
     back_channel = DragonCommChannel(back_channel_)
 
-    wmgr_consumer_descriptor = wmgr_channel.descriptor_string
-    capp_consumer_descriptor = capp_channel.descriptor_string
-    back_consumer_descriptor = back_channel.descriptor_string
+    wmgr_consumer_descriptor = wmgr_channel.descriptor
+    capp_consumer_descriptor = capp_channel.descriptor
+    back_consumer_descriptor = back_channel.descriptor
 
     # create some consumers to receive messages
     wmgr_consumer = EventConsumer(

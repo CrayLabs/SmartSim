@@ -60,7 +60,12 @@ CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
 
 
 class ResNetWrapper:
+    """Wrapper around a pre-rained ResNet model."""
     def __init__(self, name: str, model: str):
+        """Initialize the instance.
+
+        :param name: The name to use for the model
+        :param model: The path to the pre-trained PyTorch model"""
         self._model = torch.jit.load(model)
         self._name = name
         buffer = io.BytesIO()
@@ -69,14 +74,25 @@ class ResNetWrapper:
         self._serialized_model = buffer.getvalue()
 
     def get_batch(self, batch_size: int = 32):
+        """Create a random batch of data with the correct dimensions to
+        invoke a ResNet model.
+
+        :param batch_size: The desired number of samples to produce
+        :returns: A PyTorch tensor"""
         return torch.randn((batch_size, 3, 224, 224), dtype=torch.float32)
 
     @property
-    def model(self):
+    def model(self) -> bytes:
+        """The content of a model file.
+
+        :returns: The model bytes"""
         return self._serialized_model
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """The name applied to the model.
+
+        :returns: The name"""
         return self._name
 
 
@@ -90,7 +106,7 @@ if __name__ == "__main__":
     resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
 
     client = ProtoClient(timing_on=True, wait_timeout=0)
-    # client.set_model(resnet.name, resnet.model)
+    client.set_model(resnet.name, resnet.model)
 
     if CHECK_RESULTS_AND_MAKE_ALL_SLOWER:
         # TODO: adapt to non-Nvidia devices

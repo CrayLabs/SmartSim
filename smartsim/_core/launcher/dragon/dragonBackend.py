@@ -26,7 +26,6 @@
 import collections
 import functools
 import itertools
-import multiprocessing as mp
 import os
 import time
 import typing as t
@@ -36,27 +35,23 @@ from threading import RLock
 
 from tabulate import tabulate
 
-# pylint: disable=import-error,C0302,R0915,R6301
+# pylint: disable=import-error,C0302,R0915
 # isort: off
 import dragon.data.ddict.ddict as dragon_ddict
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 
-# import dragon.native.group_state as dragon_group_state
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
 from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
-from smartsim._core.mli.comm.channel.dragon_channel import (
-    DragonCommChannel,
-    create_local,
-)
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBase,
-    # EventBroadcaster,
     EventCategory,
     EventConsumer,
     OnCreateConsumer,
@@ -86,9 +81,11 @@ from ....status import TERMINAL_STATUSES, SmartSimStatus
 logger = get_logger(__name__)
 
 
+# TODO: create ticket for follow-up task to replace defunct
+# dragon_group_state.Running() & .Error()
 class DragonStatus(str, Enum):
-    ERROR = "Error"  # str(dragon_group_state.Error())
-    RUNNING = "Running"  # str(dragon_group_state.Running())
+    ERROR = "Error"
+    RUNNING = "Running"
 
     def __str__(self) -> str:
         return self.value
@@ -195,20 +192,13 @@ class DragonBackend:
         """Whether the server frontend should shut down when the backend does"""
         self._shutdown_initiation_time: t.Optional[float] = None
         """The time at which the server initiated shutdown"""
-        smartsim_config = get_config()
-        self._cooldown_period = (
-            smartsim_config.telemetry_frequency * 2 + 5
-            if smartsim_config.telemetry_enabled
-            else 5
-        )
-        """Time in seconds needed to server to complete shutdown"""
+        self._cooldown_period = self._initialize_cooldown()
+        """Time in seconds needed by the server to complete shutdown"""
         self._backbone: t.Optional[BackboneFeatureStore] = None
         """The backbone feature store"""
         self._event_consumer: t.Optional[EventConsumer] = None
-        """A listener registered to listen for new consumers and update the shared
+        """A consumer registered to listen for new consumers and update the shared
         consumer registrations list"""
-        self._event_consumer_process: t.Optional[mp.Process] = None
-        """The process executing the event consumers `listen` method"""
 
         """An event consumer for receiving events from MLI resources"""
         self._nodes: t.List["dragon_machine.Node"] = []
@@ -223,8 +213,6 @@ class DragonBackend:
         """Mapping with hostnames as keys and a set of running step IDs as the value"""
 
         self._initialize_hosts()
-        self._view = DragonBackendView(self)
-        logger.debug(self._view.host_desc)
         self._prioritizer = NodePrioritizer(self._nodes, self._queue_lock)
 
     @property
@@ -276,10 +264,8 @@ class DragonBackend:
 
         :returns: a status message
         """
-        return (
-            "Dragon server backend update\n"
-            f"{self._view.host_table}\n{self._view.step_table}"
-        )
+        view = DragonBackendView(self)
+        return "Dragon server backend update\n" f"{view.host_table}\n{view.step_table}"
 
     def _heartbeat(self) -> None:
         """Update the value of the last heartbeat to the current time."""
@@ -580,12 +566,15 @@ class DragonBackend:
 
             # put the backbone descriptor in the env vars
             os.environ.update(self._backbone.get_env())
-            logger.info(self._backbone.creation_date)
 
         return self._backbone
 
     def _on_consumer_created(self, event: EventBase) -> None:
-        """Event handler for"""
+        """Event handler for updating the backbone when new event consumers
+        are registered.
+
+        :param event: The event that was received
+        """
         if isinstance(event, OnCreateConsumer) and self._backbone is not None:
             notify_list = set(self._backbone.notification_channels)
             notify_list.add(event.descriptor)
@@ -594,29 +583,29 @@ class DragonBackend:
 
         logger.warning(f"Unhandled event received: {event}")
 
-    def _bootstrap_event_listeners(
-        self, backbone: BackboneFeatureStore, consumer: EventConsumer
-    ) -> None:
-        """Update the list of notification channels registered in the backbone.
+    @staticmethod
+    def _initialize_cooldown() -> int:
+        """Load environment configuration and determine the correct cooldown
+        period to apply to the backend process.
 
-        :param backbone: The backbone feature store to update"""
-        # Copy the consumer list so a backend restart doesn't clear registrations
-        notify_descriptors = list(backbone.notification_channels)
-
-        # Update directly to avoid SEND/ACK pattern
-        notify_descriptors.append(consumer.descriptor)
-        notify_descriptors = list(set(notify_descriptors))
-
-        backbone.notification_channels = notify_descriptors
+        :returns: The calculated cooldown (in seconds)
+        """
+        smartsim_config = get_config()
+        return (
+            smartsim_config.telemetry_frequency * 2 + 5
+            if smartsim_config.telemetry_enabled
+            else 5
+        )
 
     def _create_eventing(self, backbone: BackboneFeatureStore) -> EventConsumer:
         """
         Create an event publisher and event consumer for communicating with
         other MLI resources.
 
-        :param backbone: The backbone feature store used by the MLI backend. NOTE:
-        passing backbone as a parameter to ensure the backbone is initialized before
-        attempting to connect any eventing clients.
+        :param backbone: The backbone feature store used by the MLI backend.
+
+        NOTE: the backbone must be initialized before connecting to eventing clients.
+
         :returns: The newly created EventConsumer instance
         """
 
@@ -639,10 +628,14 @@ class DragonBackend:
         return self._event_consumer
 
     def listen_to_registrations(self, timeout: float = 0.001) -> None:
+        """Execute the listener for registration events.
+
+        :param timeout: Maximum time to wait (in seconds) for a new event"""
         if self._event_consumer is not None:
             self._event_consumer.listen_once(timeout)
 
-    def _start_eventing_listeners(self) -> None:
+    @staticmethod
+    def _start_eventing_listeners() -> None:
         # todo: start external listener entrypoint
         ...
 
@@ -968,6 +961,8 @@ class DragonBackendView:
         :param backend: A dragon backend used to produce the view"""
         self._backend = backend
         """A dragon backend used to produce the view"""
+
+        logger.debug(self.host_desc)
 
     @property
     def host_desc(self) -> str:

@@ -94,7 +94,9 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
 
 def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
     """An incorrect serialized descriptor will fails to attach"""
+
     monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", "randomstring")
+
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=None,
@@ -123,13 +125,17 @@ def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
     assert backbone is not None
 
 
-def test_environment_variables_not_set():
+def test_environment_variables_not_set(monkeypatch: pytest.MonkeyPatch):
     """EnvironmentConfigLoader getters return None when environment
     variables are not set"""
-    config = EnvironmentConfigLoader(
-        featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonCommChannel.from_descriptor,
-    )
-    assert config.get_backbone() is None
-    assert config.get_queue() is None
+    with monkeypatch.context() as patch:
+        patch.setenv("_SMARTSIM_INFRA_BACKBONE", "")
+        patch.setenv("_SMARTSIM_REQUEST_QUEUE", "")
+
+        config = EnvironmentConfigLoader(
+            featurestore_factory=DragonFeatureStore.from_descriptor,
+            callback_factory=DragonCommChannel.from_descriptor,
+            queue_factory=DragonCommChannel.from_descriptor,
+        )
+        assert config.get_backbone() is None
+        assert config.get_queue() is None

@@ -76,12 +76,7 @@ class CommChannelBase(ABC):
         """
         return self._descriptor
 
-    @property
-    def decoded_descriptor(self) -> bytes:
-        """Return the descriptor decoded from a string into bytes"""
-        return base64.b64decode(self._descriptor.encode("utf-8"))
-
     def __str__(self) -> str:
-        """Build a string representation of the channel useful for printing"""
+        """Build a string representation of the channel useful for printing."""
         classname = type(self).__class__.__name__
         return f"{classname}('{self._name}', '{self._descriptor}')"

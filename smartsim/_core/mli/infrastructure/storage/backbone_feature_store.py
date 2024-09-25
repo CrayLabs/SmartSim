@@ -92,17 +92,27 @@ class BackboneFeatureStore(DragonFeatureStore):
 
     @property
     def wait_timeout(self) -> float:
+        """Retrieve the wait timeout for this feature store. The wait timeout is
+        applied to all calls to `wait_for`.
+
+        :returns: The wait timeout (in seconds).
+        """
         return self._wait_timeout
 
     @wait_timeout.setter
     def wait_timeout(self, value: float) -> None:
+        """Set the wait timeout (in seconds) for this feature store. The wait
+        timeout is applied to all calls to `wait_for`.
+
+        :param value: The new value to set
+        """
         self._wait_timeout = value
 
     @property
     def notification_channels(self) -> t.Sequence[str]:
         """Retrieve descriptors for all registered MLI notification channels.
 
-        :returns: The list of descriptors
+        :returns: The list of channel descriptors
         """
         if self.MLI_NOTIFY_CONSUMERS in self:
             stored_consumers = self[self.MLI_NOTIFY_CONSUMERS]
@@ -119,26 +129,26 @@ class BackboneFeatureStore(DragonFeatureStore):
 
     @property
     def backend_channel(self) -> t.Optional[str]:
-        """Retrieve the channel descriptor exposed by the MLI backend for events
+        """Retrieve the channel descriptor exposed by the MLI backend for events.
 
-        :returns: a stringified channel descriptor"""
+        :returns: The channel descriptor"""
         if self.MLI_BACKEND_CONSUMER in self:
             return str(self[self.MLI_BACKEND_CONSUMER])
         return None
 
     @backend_channel.setter
     def backend_channel(self, value: str) -> None:
-        """Set the channel exposed by the MLI backend for events
+        """Set the channel exposed by the MLI backend for events.
 
-        :param value: a stringified channel descriptor"""
+        :param value: The stringified channel descriptor"""
         self[self.MLI_BACKEND_CONSUMER] = value
 
     @property
     def worker_queue(self) -> t.Optional[str]:
         """Retrieve the channel descriptor exposed by the MLI
-        backend to send work to an MLI worker manager instance
+        backend to send work to an MLI worker manager instance.
 
-        :returns: a stringified channel descriptor"""
+        :returns: The channel descriptor, if found. Otherwise, `None`"""
         if self.MLI_WORKER_QUEUE in self:
             return str(self[self.MLI_WORKER_QUEUE])
         return None
@@ -146,18 +156,20 @@ class BackboneFeatureStore(DragonFeatureStore):
     @worker_queue.setter
     def worker_queue(self, value: str) -> None:
         """Set the channel descriptor exposed by the MLI
-        backend to send work to an MLI worker manager instance
+        backend to send work to an MLI worker manager instance.
 
-        :param value: a stringified channel descriptor"""
+        :param value: The channel descriptor"""
         self[self.MLI_WORKER_QUEUE] = value
 
     @property
     def creation_date(self) -> str:
-        """Return the creation date for the backbone feature store"""
+        """Return the creation date for the backbone feature store.
+
+        :returns: The string-formatted date when feature store was created"""
         return str(self[self._CREATED_ON])
 
     def _record_creation_data(self) -> None:
-        """Write the creation timestamp to the feature store"""
+        """Write the creation timestamp to the feature store."""
         if self._CREATED_ON not in self:
             if not self._allow_reserved_writes:
                 logger.warning(
@@ -180,9 +192,8 @@ class BackboneFeatureStore(DragonFeatureStore):
         try:
             return BackboneFeatureStore(dragon_ddict.DDict.attach(descriptor), True)
         except Exception as ex:
-            logger.error(f"Error creating dragon feature store: {descriptor}")
             raise SmartSimError(
-                f"Error creating dragon feature store: {descriptor}"
+                f"Error creating backbone feature store: {descriptor}"
             ) from ex
 
     def _check_wait_timeout(
@@ -568,8 +579,8 @@ class EventConsumer:
         :param backbone: The MLI backbone feature store
         :param filters: A list of event types to deliver. when empty, all
         events will be delivered
-        :param timeout: Maximum time to wait for messages to arrive; may be overridden
-        on individual calls to `receive`
+        :param name: A user-friendly name for logging. If not provided, an
+        auto-generated GUID will be used
         :raises ValueError: If batch_timeout <= 0
         """
         if batch_timeout is not None and batch_timeout <= 0:

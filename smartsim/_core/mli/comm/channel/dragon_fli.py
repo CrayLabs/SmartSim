@@ -27,18 +27,13 @@
 # isort: off
 from dragon import fli
 import dragon.channels as dch
-import dragon.infrastructure.facts as df
-import dragon.infrastructure.parameters as dp
-import dragon.managed_memory as dm
-import dragon.utils as du
 
 # isort: on
 
-import base64
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
-from smartsim._core.mli.comm.channel.dragon_channel import create_local
+import smartsim._core.mli.comm.channel.dragon_util as drg_util
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
@@ -60,22 +55,19 @@ class DragonFLIChannel(cch.CommChannelBase):
         :param sender_supplied: Flag indicating if the FLI uses sender-supplied streams
         :param buffer_size: Maximum number of sent messages that can be buffered
         """
-        descriptor = base64.b64encode(fli_.serialize()).decode("utf-8")
+        descriptor = drg_util.channel_to_descriptor(fli_)
         super().__init__(descriptor)
 
         self._fli = fli_
         self._channel: t.Optional["dch.Channel"] = (
-            create_local(buffer_size) if sender_supplied else None
+            drg_util.create_local(buffer_size) if sender_supplied else None
         )
 
-    def send(
-        self, value: bytes, timeout: float = 0.001, blocking: bool = False
-    ) -> None:
+    def send(self, value: bytes, timeout: float = 0.001) -> None:
         """Send a message through the underlying communication channel.
 
         :param value: The value to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
-        :param blocking: Block returning until the message has been received
         :raises SmartSimError: If sending message fails
         """
         try:
@@ -111,13 +103,6 @@ class DragonFLIChannel(cch.CommChannelBase):
         return messages
 
     @classmethod
-    def _string_descriptor_to_fli(cls, descriptor: str) -> "fli.FLInterface":
-        """Helper method to convert a string-safe, encoded descriptor back
-        into its original byte format"""
-        descriptor_ = base64.b64decode(descriptor.encode("utf-8"))
-        return fli.FLInterface.attach(descriptor_)
-
-    @classmethod
     def from_sender_supplied_descriptor(
         cls,
         descriptor: str,
@@ -128,7 +113,7 @@ class DragonFLIChannel(cch.CommChannelBase):
         :returns: An attached DragonFLIChannel"""
         try:
             return DragonFLIChannel(
-                fli_=cls._string_descriptor_to_fli(descriptor),
+                fli_=drg_util.descriptor_to_fli(descriptor),
                 sender_supplied=True,
             )
         except:
@@ -153,7 +138,7 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         try:
             return DragonFLIChannel(
-                fli_=cls._string_descriptor_to_fli(descriptor),
+                fli_=drg_util.descriptor_to_fli(descriptor),
                 sender_supplied=False,
             )
         except Exception as e:

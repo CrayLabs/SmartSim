@@ -25,11 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import gc
-import logging
 import os
 import pathlib
 import subprocess as sp
-import sys
 import time
 import typing as t
 from queue import Empty
@@ -54,11 +52,9 @@ from dragon import fli
 from dragon.data.ddict.ddict import DDict
 from dragon.managed_memory import MemoryAlloc
 
-from smartsim._core.mli.comm.channel.dragon_channel import (
-    DragonCommChannel,
-    create_local,
-)
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestBatch,
     RequestDispatcher,
