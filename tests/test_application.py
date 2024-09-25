@@ -46,6 +46,42 @@ def mock_launcher_settings(wlmutils):
     return LaunchSettings(wlmutils.get_test_launcher(), {}, {})
 
 
+def test_application_exe_property():
+    a = Application(
+        "test_name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    exe = a.exe
+    assert exe is a.exe
+
+
+def test_application_exe_args_property():
+    a = Application("test_name", exe="echo", exe_args=["spam", "eggs"])
+    exe_args = a.exe_args
+    assert exe_args is a.exe_args
+
+
+def test_application_files_property(get_gen_configure_dir):
+    tagged_files = sorted(glob(get_gen_configure_dir + "/*"))
+    files = EntityFiles(tagged=tagged_files)
+    a = Application("test_name", exe="echo", exe_args=["spam", "eggs"], files=files)
+    files = a.files
+    assert files is a.files
+
+
+def test_application_file_parameters_property():
+    file_parameters = {"h": [5, 6, 7, 8]}
+    a = Application(
+        "test_name",
+        exe="echo",
+        file_parameters=file_parameters,
+    )
+    file_parameters = a.file_parameters
+
+    assert file_parameters is a.file_parameters
+
+
 def test_application_key_prefixing_property():
     key_prefixing_enabled = True
     a = Application("test_name", exe="echo", exe_args=["spam", "eggs"])
