@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-from smartsim._core.launcher.pbs import pbsParser
+from smartsim._core.launcher.pbs import pbs_parser
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -39,14 +39,14 @@ pytestmark = pytest.mark.group_b
 
 def test_parse_qsub():
     output = "12345.sdb"
-    step_id = pbsParser.parse_qsub(output)
+    step_id = pbs_parser.parse_qsub(output)
     assert step_id == "12345.sdb"
 
 
 def test_parse_qsub_error():
     output = "qsub: Unknown queue"
     error = "Unknown queue"
-    parsed_error = pbsParser.parse_qsub_error(output)
+    parsed_error = pbs_parser.parse_qsub_error(output)
     assert error == parsed_error
 
 
@@ -58,7 +58,7 @@ def test_parse_qstat_nodes(fileutils):
     file_path = fileutils.get_test_conf_path("qstat.json")
     output = Path(file_path).read_text()
     nodes = ["server_1", "server_2"]
-    parsed_nodes = pbsParser.parse_qstat_nodes(output)
+    parsed_nodes = pbs_parser.parse_qstat_nodes(output)
     assert nodes == parsed_nodes
 
 
@@ -70,7 +70,7 @@ def test_parse_qstat_status():
         "1289903.sdb       jobname          username          00:00:00 R queue\n"
     )
     status = "R"
-    parsed_status = pbsParser.parse_qstat_jobid(output, "1289903.sdb")
+    parsed_status = pbs_parser.parse_qstat_jobid(output, "1289903.sdb")
     assert status == parsed_status
 
 
@@ -80,7 +80,7 @@ def test_parse_qstat_status_not_found():
         "----------------  ---------------- ----------------  -------- - -----\n"
         "1289903.sdb       jobname          username          00:00:00 R queue\n"
     )
-    parsed_status = pbsParser.parse_qstat_jobid(output, "9999999.sdb")
+    parsed_status = pbs_parser.parse_qstat_jobid(output, "9999999.sdb")
 
     assert parsed_status is None
 
@@ -90,5 +90,5 @@ def test_parse_qstat_status_json(fileutils):
     file_path = fileutils.get_test_conf_path("qstat.json")
     output = Path(file_path).read_text()
     status = "R"
-    parsed_status = pbsParser.parse_qstat_jobid_json(output, "16705.sdb")
+    parsed_status = pbs_parser.parse_qstat_jobid_json(output, "16705.sdb")
     assert status == parsed_status

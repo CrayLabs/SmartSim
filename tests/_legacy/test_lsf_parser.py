@@ -26,7 +26,7 @@
 
 import pytest
 
-from smartsim._core.launcher.lsf import lsfParser
+from smartsim._core.launcher.lsf import lsf_parser
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -37,7 +37,7 @@ pytestmark = pytest.mark.group_b
 
 def test_parse_bsub():
     output = "Job <12345> is submitted to queue <debug>."
-    step_id = lsfParser.parse_bsub(output)
+    step_id = lsf_parser.parse_bsub(output)
     assert step_id == "12345"
 
 
@@ -57,15 +57,15 @@ def test_parse_bsub_error():
         "Not a member of the specified project: .  You are currently a member of the following projects:\n"
         "ABC123"
     )
-    parsed_error = lsfParser.parse_bsub_error(output)
+    parsed_error = lsf_parser.parse_bsub_error(output)
     assert error == parsed_error
 
     output = "NOT A PARSABLE ERROR\nBUT STILL AN ERROR MESSAGE"
-    parsed_error = lsfParser.parse_bsub_error(output)
+    parsed_error = lsf_parser.parse_bsub_error(output)
     assert output == parsed_error
 
     output = "     \n"
-    parsed_error = lsfParser.parse_bsub_error(output)
+    parsed_error = lsf_parser.parse_bsub_error(output)
     assert parsed_error == "LSF run error"
 
 
@@ -79,7 +79,7 @@ def test_parse_bsub_nodes(fileutils):
         "1234567 smartsim RUN   batch	  login1      batch3:a01n02:a01n02:a01n02:a01n02:a01n02:a01n06:a01n06:a01n06:a01n06:a01n06 SmartSim Jul 24 12:53\n"
     )
     nodes = ["batch3", "a01n02", "a01n06"]
-    parsed_nodes = lsfParser.parse_bjobs_nodes(output)
+    parsed_nodes = lsf_parser.parse_bjobs_nodes(output)
     assert nodes == parsed_nodes
 
 
@@ -98,7 +98,7 @@ def test_parse_max_step_id():
         "    4    0         1   various   various       137         Killed\n"
         "    5    0         3   various   various       137         Killed\n"
     )
-    parsed_id = lsfParser.parse_max_step_id_from_jslist(output)
+    parsed_id = lsf_parser.parse_max_step_id_from_jslist(output)
     assert parsed_id == "9"
 
 
@@ -121,6 +121,6 @@ def test_parse_jslist():
         "    1    1         4   various   various         0        Running\n"
         "   11    1         1         1         1         1        Running\n"
     )
-    parsed_result = lsfParser.parse_jslist_stepid(output, "1")
+    parsed_result = lsf_parser.parse_jslist_stepid(output, "1")
     result = ("Running", "0")
     assert parsed_result == result

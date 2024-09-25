@@ -50,6 +50,7 @@ class LaunchArguments(ABC):
         :param launch_args: A mapping of arguments to (optional) values
         """
         self._launch_args = copy.deepcopy(launch_args) or {}
+        """A dictionary of launch arguments"""
 
     @abstractmethod
     def launcher_str(self) -> str:

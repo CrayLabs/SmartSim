@@ -30,8 +30,8 @@ from pydantic import ValidationError
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
-from smartsim._core.schemas.dragonRequests import *
-from smartsim._core.schemas.dragonResponses import *
+from smartsim._core.schemas.dragon_requests import *
+from smartsim._core.schemas.dragon_responses import *
 
 
 def test_run_request_with_null_policy(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -29,9 +29,9 @@ import os
 import typing as t
 from shutil import which
 
-from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
-from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
-from .._core.launcher.util.launcherUtil import ComputeNode, Partition
+from .._core.launcher.slurm.slurm_commands import salloc, scancel, scontrol, sinfo
+from .._core.launcher.slurm.slurm_parser import parse_salloc, parse_salloc_error
+from .._core.launcher.util.launcher_util import ComputeNode, Partition
 from ..error import (
     AllocationError,
     LauncherError,

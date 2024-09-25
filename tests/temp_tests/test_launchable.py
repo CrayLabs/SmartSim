@@ -33,8 +33,8 @@ from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable import Job, Launchable
 from smartsim.launchable.launchable import SmartSimObject
-from smartsim.launchable.mpmdjob import MPMDJob
-from smartsim.launchable.mpmdpair import MPMDPair
+from smartsim.launchable.mpmd_job import MPMDJob
+from smartsim.launchable.mpmd_pair import MPMDPair
 from smartsim.settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a

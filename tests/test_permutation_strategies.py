@@ -28,8 +28,8 @@ import dataclasses
 
 import pytest
 
-from smartsim.entity import strategies
-from smartsim.entity.strategies import ParamSet
+from smartsim.builders.utils import strategies
+from smartsim.builders.utils.strategies import ParamSet
 from smartsim.error import errors
 
 pytestmark = pytest.mark.group_a

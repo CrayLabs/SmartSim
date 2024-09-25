@@ -30,11 +30,10 @@ import os
 import pathlib
 import typing as t
 
-from smartsim._core.schemas.dragonRequests import DragonRunPolicy
+from smartsim._core.schemas.dragon_requests import DragonRunPolicy
 from smartsim.error import errors
 from smartsim.types import LaunchedJobID
 
-from ...._core.launcher.stepMapping import StepMap
 from ....error import LauncherError, SmartSimError
 from ....log import get_logger
 from ....settings import (
@@ -55,11 +54,12 @@ from ...schemas import (
     DragonUpdateStatusResponse,
 )
 from ..launcher import WLMLauncher
-from ..pbs.pbsLauncher import PBSLauncher
-from ..slurm.slurmLauncher import SlurmLauncher
+from ..pbs.pbs_launcher import PBSLauncher
+from ..slurm.slurm_launcher import SlurmLauncher
 from ..step import DragonBatchStep, DragonStep, LocalStep, Step
-from ..stepInfo import StepInfo
-from .dragonConnector import DragonConnector, _SchemaT
+from ..step_info import StepInfo
+from ..step_mapping import StepMap
+from .dragon_connector import DragonConnector, _SchemaT
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
