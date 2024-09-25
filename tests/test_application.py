@@ -31,7 +31,7 @@ import pytest
 
 from smartsim.entity.application import Application
 from smartsim.entity.files import EntityFiles
-from smartsim.settings.launchSettings import LaunchSettings
+from smartsim.settings.launch_settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
