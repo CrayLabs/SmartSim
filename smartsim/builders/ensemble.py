@@ -315,7 +315,7 @@ class Ensemble(entity.CompoundEntity):
         PermutationStrategyType
         """
         if value:
-            if not isinstance(value, t.Callable):
+            if not callable(value):
                 raise TypeError(
                     "permutation_strategy argument was not of type str or PermutationStrategyType"
                 )
@@ -424,12 +424,9 @@ class Ensemble(entity.CompoundEntity):
         :raises TypeError: if the ids argument is not type LaunchSettings
         :raises ValueError: if the LaunchSettings provided are empty
         """
-        if settings:
-            if not isinstance(settings, LaunchSettings):
-                raise TypeError("ids argument was not of type LaunchSettings")
-            apps = self._create_applications()
-            if not apps:
-                raise ValueError("There are no members as part of this ensemble")
-            return tuple(Job(app, settings, app.name) for app in apps)
-        else:
-            raise ValueError("The Launch Settings provided are empty")
+        if not isinstance(settings, LaunchSettings):
+            raise TypeError("ids argument was not of type LaunchSettings")
+        apps = self._create_applications()
+        if not apps:
+            raise ValueError("There are no members as part of this ensemble")
+        return tuple(Job(app, settings, app.name) for app in apps)

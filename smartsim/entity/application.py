@@ -163,9 +163,9 @@ class Application(SmartSimEntity):
         :raises TypeError: files argument was not of type int
 
         """
-        if value:
-            if not isinstance(value, EntityFiles):
-                raise TypeError("files argument was not of type EntityFiles")
+
+        if not isinstance(value, EntityFiles):
+            raise TypeError("files argument was not of type EntityFiles")
 
         self._files = copy.deepcopy(value)
 
