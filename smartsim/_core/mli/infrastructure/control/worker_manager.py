@@ -106,7 +106,7 @@ class WorkerManager(Service):
         information among MLI components"""
         self._device_manager: t.Optional[DeviceManager] = None
         """Object responsible for model caching and device access"""
-        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="w_", debug=True, timing_on=True)
         """Performance timer"""
         self._processed_batches: int = 0
         """Number of processed request batches"""
@@ -177,7 +177,6 @@ class WorkerManager(Service):
                 "Error receiving batch.",
             )
             return
-
 
         self._processed_batches += 1
         # print(f"**** PROCESSING BATCH {self._processed_batches} ****", flush=True)

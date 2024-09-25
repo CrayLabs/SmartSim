@@ -125,12 +125,22 @@ class InferenceReply:
 class LoadModelResult:
     """A wrapper around a loaded model."""
 
-    def __init__(self, model: t.Any) -> None:
+    def __init__(
+        self,
+        model: t.Any,
+        inputs: t.Optional[t.List[str]] = None,
+        outputs: t.Optional[t.List[str]] = None,
+    ) -> None:
         """Initialize the LoadModelResult.
 
         :param model: The loaded model
         """
         self.model = model
+        """The model as bytes"""
+        self.inputs = inputs
+        """List of input layer names, only used in TensorFlow"""
+        self.outputs = outputs
+        """List of output tensor names, only used in TensorFlow"""
 
 
 class TransformInputResult:
@@ -321,6 +331,7 @@ class MachineLearningWorkerCore:
         model_key: t.Optional[FeatureStoreKey] = None
         model_bytes: t.Optional[Model] = None
 
+        logger.debug("Getting key")
         if request.model.which() == "key":
             model_key = FeatureStoreKey(
                 key=request.model.key.key,
@@ -329,27 +340,34 @@ class MachineLearningWorkerCore:
         elif request.model.which() == "data":
             model_bytes = request.model.data
 
+        logger.debug("Getting descriptor")
         callback_key = request.replyChannel.descriptor
+        logger.debug(f"Callback factory {callback_factory}({callback_key})")
         comm_channel = callback_factory(callback_key)
         input_keys: t.Optional[t.List[FeatureStoreKey]] = None
         input_bytes: t.Optional[t.List[bytes]] = None
         output_keys: t.Optional[t.List[FeatureStoreKey]] = None
         input_meta: t.Optional[t.List[TensorDescriptor]] = None
 
+        logger.debug("Does it have a key?")
         if request.input.which() == "keys":
+            logger.debug("Yeah")
             input_keys = [
                 FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
                 for value in request.input.keys
             ]
         elif request.input.which() == "descriptors":
+            logger.debug("Not, but it has descriptors")
             input_meta = request.input.descriptors  # type: ignore
 
+        logger.debug("Does it have an output?")
         if request.output:
             output_keys = [
                 FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
                 for value in request.output
             ]
 
+        logger.debug("Going to build the request, then")
         inference_request = InferenceRequest(
             model_key=model_key,
             callback=comm_channel,

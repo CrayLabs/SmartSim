@@ -250,7 +250,7 @@ class RequestDispatcher(Service):
         """The worker used to batch inputs"""
         self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(mem_pool_size).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
-        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
         """Performance timer"""
 
     def _check_feature_stores(self, request: InferenceRequest) -> bool:
@@ -343,8 +343,10 @@ class RequestDispatcher(Service):
         """This method is executed repeatedly until ``Service`` shutdown
         conditions are satisfied and cooldown is elapsed."""
         try:
+            logger.debug("Receiving message")
             self._perf_timer.is_active = True
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
+            logger.debug("Received data")
         except Exception:
             self._perf_timer.is_active = False
         else:
@@ -359,11 +361,21 @@ class RequestDispatcher(Service):
             tensor_bytes_list = bytes_list[1:]
             self._perf_timer.start_timings()
 
-            request = self._worker.deserialize_message(
-                request_bytes, self._callback_factory
-            )
+            logger.debug("Deserialzing message")
+
+            try:
+                request = self._worker.deserialize_message(
+                    request_bytes, self._callback_factory
+                )
+            except Exception as exc:
+                exception_handler(exc, request.callback, "Error deserializing request")
+                self._perf_timer.end_timings()
+                return
+            logger.debug("Deserialized message")
             if request.input_meta and tensor_bytes_list:
                 request.raw_inputs = tensor_bytes_list
+
+            logger.debug("Assigned data")
 
             self._perf_timer.measure_time("deserialize_message")
 
@@ -384,8 +396,8 @@ class RequestDispatcher(Service):
 
             self._perf_timer.end_timings()
 
-        if self._perf_timer.max_length == 801 and self._perf_timer.is_active:
-            self._perf_timer.print_timings(True)
+        # if self._perf_timer.max_length == 801 and self._perf_timer.is_active:
+        #     self._perf_timer.print_timings(True)
 
     def remove_queues(self) -> None:
         """Remove references to queues that can be removed
