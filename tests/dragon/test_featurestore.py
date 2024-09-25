@@ -181,15 +181,15 @@ def test_eventconsumer_eventpublisher_integration(
     mock_client_app.send(event_4)
 
     # worker manager should only get updates about feature update
-    wmgr_messages = wmgr_consumer.receive()
+    wmgr_messages = wmgr_consumer.recv()
     assert len(wmgr_messages) == 3
 
     # the backend should only receive messages about consumer creation
-    back_messages = back_consumer.receive()
+    back_messages = back_consumer.recv()
     assert len(back_messages) == 1
 
     # hypothetical app has no filters and will get all events
-    app_messages = capp_consumer.receive()
+    app_messages = capp_consumer.recv()
     assert len(app_messages) == 4
 
 

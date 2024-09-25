@@ -27,6 +27,7 @@ import collections
 import functools
 import itertools
 import multiprocessing as mp
+import os
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -48,13 +49,17 @@ import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
 from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_channel import (
+    DragonCommChannel,
+    create_local,
+)
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBase,
     # EventBroadcaster,
     EventCategory,
     EventConsumer,
+    OnCreateConsumer,
 )
 
 # pylint: enable=import-error
@@ -572,12 +577,21 @@ class DragonBackend:
             self._backbone = BackboneFeatureStore(
                 backbone_storage, allow_reserved_writes=True
             )
+
+            # put the backbone descriptor in the env vars
+            os.environ.update(self._backbone.get_env())
             logger.info(self._backbone.creation_date)
 
         return self._backbone
 
     def _on_consumer_created(self, event: EventBase) -> None:
         """Event handler for"""
+        if isinstance(event, OnCreateConsumer) and self._backbone is not None:
+            notify_list = set(self._backbone.notification_channels)
+            notify_list.add(event.descriptor)
+            self._backbone.notification_channels = list(notify_list)
+            return
+
         logger.warning(f"Unhandled event received: {event}")
 
     def _bootstrap_event_listeners(
@@ -591,7 +605,7 @@ class DragonBackend:
 
         # Update directly to avoid SEND/ACK pattern
         notify_descriptors.append(consumer.descriptor)
-        # consumer.register() # this will loop infinitely waiting for itself
+        notify_descriptors = list(set(notify_descriptors))
 
         backbone.notification_channels = notify_descriptors
 
@@ -605,16 +619,11 @@ class DragonBackend:
         attempting to connect any eventing clients.
         :returns: The newly created EventConsumer instance
         """
-        # if self._event_producer is None:
-        #     logger.info("Creating event publisher")
-        #     # todo: ensure DCC.from_descriptor and not DCC.from_local
-        #     self._event_producer =
-        # EventBroadcaster(backbone, DragonCommChannel.from_descriptor)
-        #     logger.info("Created event publisher")
 
         if self._event_consumer is None:
             logger.info("Creating event consumer")
-            event_channel = DragonCommChannel.from_local()
+            dragon_channel = create_local(500)
+            event_channel = DragonCommChannel(dragon_channel)
             consumer = EventConsumer(
                 event_channel,
                 backbone,
@@ -622,24 +631,20 @@ class DragonBackend:
                 name="BackendConsumerRegistrar",
                 event_handler=self._on_consumer_created,
             )
-            consumer.register()
-            logger.info(f"Consumer `{consumer.name}` registration completed.")
 
-            # self._backbone.backend_channel =
-            # consumer.descriptor # i want to get rid of this extra channel
-            # self._bootstrap_event_listeners(backbone, consumer)
             self._event_consumer = consumer
-
-            logger.info("Created event consumer")
+            backbone[BackboneFeatureStore.MLI_BACKEND_CONSUMER] = consumer.descriptor
+            logger.info(f"Backend consumer `{consumer.name}` created.")
 
         return self._event_consumer
 
+    def listen_to_registrations(self, timeout: float = 0.001) -> None:
+        if self._event_consumer is not None:
+            self._event_consumer.listen_once(timeout)
+
     def _start_eventing_listeners(self) -> None:
-        if self._event_consumer:
-            self._event_consumer_process = mp.Process(
-                target=self._event_consumer.listen
-            )
-            self._event_consumer_process.start()
+        # todo: start external listener entrypoint
+        ...
 
     @staticmethod
     def create_run_policy(

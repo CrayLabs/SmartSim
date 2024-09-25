@@ -138,15 +138,15 @@ def test_eventconsumer_eventpublisher_integration(
         mock_client_app.send(event, timeout=0.1)
 
     # worker manager should only get updates about feature update
-    wmgr_messages = wmgr_consumer.receive()
+    wmgr_messages = wmgr_consumer.recv()
     assert len(wmgr_messages) == 3
 
     # the backend should only receive messages about consumer creation
-    back_messages = back_consumer.receive()
+    back_messages = back_consumer.recv()
     assert len(back_messages) == 1
 
     # hypothetical app has no filters and will get all events
-    app_messages = capp_consumer.receive()
+    app_messages = capp_consumer.recv()
     assert len(app_messages) == 4
 
 
@@ -204,7 +204,7 @@ def test_eventconsumer_max_dequeue(
 
     num_dequeued = 0
 
-    while wmgr_messages := wmgr_consumer.receive(timeout=0.01):
+    while wmgr_messages := wmgr_consumer.recv(timeout=0.01):
         # worker manager should not get more than `max_num_msgs` events
         num_dequeued += len(wmgr_messages)
 

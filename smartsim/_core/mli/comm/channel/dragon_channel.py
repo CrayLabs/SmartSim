@@ -147,7 +147,7 @@ class DragonCommChannel(cch.CommChannelBase):
         """
         try:
             with self._channel.sendh(timeout=timeout) as sendh:
-                sendh.send_bytes(value)
+                sendh.send_bytes(value, blocking=False)
                 logger.debug(f"DragonCommChannel {self.descriptor} sent message")
         except Exception as e:
             raise SmartSimError(

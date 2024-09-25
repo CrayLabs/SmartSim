@@ -122,8 +122,8 @@ class BackboneFeatureStore(DragonFeatureStore):
         """Retrieve the channel descriptor exposed by the MLI backend for events
 
         :returns: a stringified channel descriptor"""
-        if self.MLI_NOTIFY_CONSUMERS in self:
-            return str(self[self.MLI_NOTIFY_CONSUMERS])
+        if self.MLI_BACKEND_CONSUMER in self:
+            return str(self[self.MLI_BACKEND_CONSUMER])
         return None
 
     @backend_channel.setter
@@ -131,7 +131,7 @@ class BackboneFeatureStore(DragonFeatureStore):
         """Set the channel exposed by the MLI backend for events
 
         :param value: a stringified channel descriptor"""
-        self[self.MLI_NOTIFY_CONSUMERS] = value
+        self[self.MLI_BACKEND_CONSUMER] = value
 
     @property
     def worker_queue(self) -> t.Optional[str]:
@@ -165,8 +165,7 @@ class BackboneFeatureStore(DragonFeatureStore):
                 )
             self[self._CREATED_ON] = str(time.time())
 
-        if os.environ.get(BackboneFeatureStore.MLI_BACKBONE, None) is None:
-            os.environ.update(self.get_env())
+        os.environ[self.MLI_BACKBONE] = self.descriptor
 
     @classmethod
     def from_writable_descriptor(
@@ -479,7 +478,7 @@ class EventBroadcaster:
             logger.error(msg, exc_info=True)
             raise SmartSimError(msg) from ex
 
-    def _get_next_event_event(self) -> t.Optional[EventBase]:
+    def _get_next_event(self) -> t.Optional[EventBase]:
         """Pop the next event to be sent from the queue.
 
         :returns: The next event to send if any events are enqueued, otherwise `None`.
@@ -512,7 +511,7 @@ class EventBroadcaster:
         num_listeners = len(self._descriptors)
 
         # send each event to every consumer
-        while event := self._get_next_event_event():
+        while event := self._get_next_event():
             logger.debug(f"Broadcasting {event=} to {num_listeners} listeners")
             event_bytes = bytes(event)
 
@@ -524,7 +523,7 @@ class EventBroadcaster:
                     num_sent += 1
                 except Exception as ex:
                     raise SmartSimError(
-                        f"Broadcast {i}/{num_listeners} for event {event.uid} to "
+                        f"Broadcast {i+1}/{num_listeners} for event {event.uid} to "
                         f"channel  {descriptor} from {self._uid} failed."
                     ) from ex
 
@@ -547,6 +546,7 @@ class EventBroadcaster:
         except (KeyError, ValueError, SmartSimError):
             raise
         except Exception as ex:
+            logger.exception("An unexpected exception occurred while sending")
             raise SmartSimError("An unexpected failure occurred while sending") from ex
 
 
@@ -600,8 +600,8 @@ class EventConsumer:
             self._name = str(uuid.uuid4())
         return self._name
 
-    def receive(
-        self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0
+    def recv(
+        self, filters: t.Optional[t.List[EventCategory]] = None, timeout: float = 0.001
     ) -> t.List[EventBase]:
         """Receives available published event(s).
 
@@ -648,44 +648,35 @@ class EventConsumer:
 
     def register(self) -> None:
         """Send an event to register this consumer as a listener"""
-        awaiting_confirmation = True
         descriptor = self._comm_channel.descriptor
-        backoffs = itertools.cycle((0.1, 0.2, 0.4, 0.8))
         event = OnCreateConsumer(descriptor, self._global_filters)
 
-        # create a temporary publisher to broadcast my own existence.
-        publisher = EventBroadcaster(self._backbone, DragonCommChannel.from_local)
+        registrar_key = BackboneFeatureStore.MLI_BACKEND_CONSUMER
+        config = self._backbone.wait_for([registrar_key], 2.0)
 
-        # we're going to sit in this loop to wait for the backbone to get
-        # updated with the registration (to avoid SEND/ACK)
-        while awaiting_confirmation:
-            registered_channels = self._backbone.notification_channels
-            # todo: this should probably be descriptor_string? maybe i need to
-            # get rid of descriptor as bytes or just make desc_string required in ABC
-            if descriptor in registered_channels:
-                awaiting_confirmation = False
+        registrar_descriptor = str(config.get(registrar_key, None))
 
-            time.sleep(next(backoffs))
+        if registrar_descriptor:
+            logger.debug(f"Sending registration for {self.name}")
 
-            # if backend_descriptor := self._backbone.backend_channel:
-            #     backend_channel = DragonCommChannel.
-            # from_descriptor(backend_descriptor)
-            #     backend = EventSender(self._backbone, backend_channel)
-            #     backend.send(event)
+            registrar_channel = DragonCommChannel.from_descriptor(registrar_descriptor)
+            registrar_channel.send(bytes(event), timeout=1.0)
 
-            # broadcast that this consumer is now ready to mingle
-            publisher = EventBroadcaster(self._backbone, DragonCommChannel.from_local)
-            publisher.send(event, timeout=0.01)
+            logger.debug(f"Registration for {self.name} sent")
+        else:
+            logger.warning("Unable to register. No registrar channel found.")
 
-    # def register_callback(self, callback: t.Callable[[EventBase], None]) -> None: ...
-
-    def listen(self) -> None:
+    def listen_once(self, timeout: float = 0.001) -> None:
         """Function to handle incoming events"""
-        print("starting listener...")
+        logger.debug(f"Starting event listener with {timeout} second timeout")
+        logger.debug("Awaiting new messages")
 
-        while True:
-            print("awaiting new message")
-            incoming_messages = self.receive()
-            for message in incoming_messages:
-                if self._event_handler:
-                    self._event_handler(message)
+        incoming_messages = self.recv(timeout=timeout)
+
+        if not incoming_messages:
+            logger.debug("Consumer received empty message list.")
+
+        for message in incoming_messages:
+            logger.debug(f"Sending event {message=} to handler.")
+            if self._event_handler:
+                self._event_handler(message)

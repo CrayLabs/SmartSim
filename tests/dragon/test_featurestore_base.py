@@ -561,7 +561,7 @@ def test_eventconsumer_receive(test_dir: str) -> None:
 
     consumer = EventConsumer(comm_channel, backbone)
 
-    all_received: t.List[OnCreateConsumer] = consumer.receive()
+    all_received: t.List[OnCreateConsumer] = consumer.recv()
     assert len(all_received) == 1
 
     # verify we received the same event that was raised
@@ -595,7 +595,7 @@ def test_eventconsumer_receive_multi(test_dir: str, num_sent: int) -> None:
 
     consumer = EventConsumer(comm_channel, backbone)
 
-    all_received: t.List[OnCreateConsumer] = consumer.receive()
+    all_received: t.List[OnCreateConsumer] = consumer.recv()
     assert len(all_received) == num_sent
 
 
@@ -621,7 +621,7 @@ def test_eventconsumer_receive_empty(test_dir: str) -> None:
 
     consumer = EventConsumer(comm_channel, backbone)
 
-    messages = consumer.receive()
+    messages = consumer.recv()
 
     # the messages array should be empty
     assert not messages
@@ -696,15 +696,15 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     mock_client_app.send(event_4)
 
     # worker manager should only get updates about feature update
-    wmgr_messages = wmgr_consumer.receive()
+    wmgr_messages = wmgr_consumer.recv()
     assert len(wmgr_messages) == 3
 
     # the backend should only receive messages about consumer creation
-    back_messages = back_consumer.receive()
+    back_messages = back_consumer.recv()
     assert len(back_messages) == 1
 
     # hypothetical app has no filters and will get all events
-    app_messages = capp_consumer.receive()
+    app_messages = capp_consumer.recv()
     assert len(app_messages) == 4
 
 

@@ -52,7 +52,7 @@ class CommChannelBase(ABC):
         """A user-friendly identifier for channel-related logging"""
 
     @abstractmethod
-    def send(self, value: bytes, timeout: float = 0) -> None:
+    def send(self, value: bytes, timeout: float = 0.001) -> None:
         """Send a message through the underlying communication channel.
 
         :param value: The value to send
@@ -61,7 +61,7 @@ class CommChannelBase(ABC):
         """
 
     @abstractmethod
-    def recv(self, timeout: float = 0) -> t.List[bytes]:
+    def recv(self, timeout: float = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
