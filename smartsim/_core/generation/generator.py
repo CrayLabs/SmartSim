@@ -77,7 +77,7 @@ class Generator:
         Additionally, it manages symlinking, copying, and configuring files associated
         with a Job's entity.
 
-        :param root: The Job's base path
+        :param root: Job base path
         """
         self.root = root
         """The root path under which to generate files"""
@@ -88,8 +88,8 @@ class Generator:
         the name attribute of the Job, and an index to differentiate between multiple
         Job runs.
 
-        :param job: The job object
-        :param job_index: The index of the Job
+        :param job: Job object
+        :param job_index: Job index
         :returns: The built file path for the Job
         """
         job_type = f"{job.__class__.__name__.lower()}s"
@@ -101,8 +101,8 @@ class Generator:
         the base directory with the `run` class-level variable, where run specifies
         the name of the job's run folder.
 
-        :param job: The job object
-        :param job_index: The index of the Job
+        :param job: Job object
+        :param job_index: Job index
         :returns: The built file path for the Job run folder
         """
         path = self._build_job_base_path(job, job_index) / self.run_directory
@@ -113,8 +113,8 @@ class Generator:
         the base directory with the `log` class-level variable, where log specifies
         the name of the job's log folder.
 
-        :param job: The job object
-        :param job_index: The index of the Job
+        :param job: Job object
+        :param job_index: Job index
         :returns: The built file path for the Job run folder
         """
         path = self._build_job_base_path(job, job_index) / self.log_directory
@@ -163,8 +163,8 @@ class Generator:
         attached to the Job's entity, it builds file operation commands and executes
         them.
 
-        :param job: The job object
-        :param job_index: The index of the Job
+        :param job: Job object
+        :param job_index: Job index
         :return: Job's run directory, error file and out file.
         """
 
@@ -197,7 +197,7 @@ class Generator:
         generate the Job's run and log directory. It aggregates these commands into a CommandList
         to return.
 
-        :param job: The job object
+        :param job: Job object
         :param job_path: The file path for the Job run folder
         :return: A CommandList containing the file operation commands
         """
@@ -207,7 +207,10 @@ class Generator:
         entity = job.entity
         if isinstance(entity, _GenerableProtocol):
             helpers: t.List[
-                t.Callable[[EntityFiles | None, pathlib.Path], CommandList | None]
+                t.Callable[
+                    [t.Union[EntityFiles, None], pathlib.Path],
+                    t.Union[CommandList, None],
+                ]
             ] = [
                 cls._copy_files,
                 cls._symlink_files,
