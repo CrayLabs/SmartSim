@@ -131,15 +131,10 @@ def test_device_manager_model_in_request():
         batch_size=0,
     )
 
-    request_batch = RequestBatch(
-        request.raw_model,
-        [request.callback],
-        request.raw_inputs,
-        request.input_meta,
-        request.input_keys,
-        request.output_keys,
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_key,
+    request_batch = RequestBatch.from_requests(
+        [request],
+        [TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"])],
+        model_key,
     )
 
     with device_manager.get_device(
@@ -174,15 +169,10 @@ def test_device_manager_model_key():
         batch_size=0,
     )
 
-    request_batch = RequestBatch(
-        request.raw_model,
-        [request.callback],
-        request.raw_inputs,
-        request.input_meta,
-        request.input_keys,
-        request.output_keys,
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_key,
+    request_batch = RequestBatch.from_requests(
+        [request],
+        [TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"])],
+        model_key,
     )
 
     with device_manager.get_device(

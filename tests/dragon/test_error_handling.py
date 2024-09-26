@@ -128,7 +128,7 @@ def setup_worker_manager_model_bytes(
 
     request = InferenceRequest(
         model_key=None,
-        callback=None,
+        callback=FileSystemCommChannel.from_descriptor,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -139,15 +139,10 @@ def setup_worker_manager_model_bytes(
 
     model_id = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
 
-    request_batch = RequestBatch(
-        request.raw_model,
-        [request.callback],
-        request.raw_inputs,
-        request.input_meta,
-        request.input_keys,
-        request.output_keys,
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_id,
+    request_batch = RequestBatch.from_requests(
+        [request],
+        [TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"])],
+        model_id,
     )
 
     dispatcher_task_queue.put(request_batch)
@@ -193,7 +188,7 @@ def setup_worker_manager_model_key(
 
     request = InferenceRequest(
         model_key=model_id,
-        callback=None,
+        callback=FileSystemCommChannel.from_descriptor,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -201,15 +196,10 @@ def setup_worker_manager_model_key(
         raw_model=b"model",
         batch_size=0,
     )
-    request_batch = RequestBatch(
-        request.raw_model,
-        [request.callback],
-        request.raw_inputs,
-        request.input_meta,
-        request.input_keys,
-        request.output_keys,
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_id,
+    request_batch = RequestBatch.from_requests(
+        [request],
+        [TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"])],
+        model_id,
     )
 
     dispatcher_task_queue.put(request_batch)

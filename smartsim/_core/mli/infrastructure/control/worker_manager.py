@@ -269,24 +269,23 @@ class WorkerManager(Service):
                     )
                 return
 
-            for transformed_output in transformed_outputs:
+            for callback in batch.callbacks:
                 reply = InferenceReply()
                 if batch.output_keys:
                     try:
                         reply.output_keys = self._worker.place_output(
                             batch,
-                            transformed_output,
+                            transformed_outputs,
                             self._feature_stores,
                         )
                     except Exception as e:
-                        for callback in batch.callbacks:
-                            print("INFO wm place output")
-                            exception_handler(
-                                e, callback, "Error while placing the output."
-                            )
-                        continue
+                        print("INFO wm place output")
+                        exception_handler(
+                            e, callback, "Error while placing the output."
+                        )
+                    continue
                 else:
-                    reply.outputs = transformed_output.outputs
+                    reply.outputs = [output for result in transformed_outputs for output in result.outputs]
                 self._perf_timer.measure_time("assign_output")
 
                 if not reply.has_outputs:
@@ -309,12 +308,11 @@ class WorkerManager(Service):
 
                 self._perf_timer.measure_time("serialize_resp")
 
-                for callback in batch.callbacks:
-                    callback.send(serialized_resp)
-                    if reply.has_outputs:
-                        # send tensor data after response
-                        for output in reply.outputs:
-                            callback.send(output)
+                callback.send(serialized_resp)
+                if reply.has_outputs:
+                    # send tensor data after response
+                    for output in reply.outputs:
+                        callback.send(output)
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()

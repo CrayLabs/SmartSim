@@ -84,7 +84,6 @@ from smartsim._core.mli.infrastructure.worker.worker import (
 )
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
-
 from tests.dragon.feature_store import FileSystemFeatureStore
 from tests.dragon.utils.channel import FileSystemCommChannel
 
@@ -343,3 +342,47 @@ def test_request_dispatcher(prepare_environment: pathlib.Path, comm_channel) -> 
     # Try to remove the dispatcher and free the memory
     del request_dispatcher
     gc.collect()
+
+def test_request_batch():
+    tensor_key = FeatureStoreKey(key="key", descriptor='desc1')
+    tensor_key2 = FeatureStoreKey(key="key2", descriptor='desc1')
+    output_key = FeatureStoreKey(key="key", descriptor='desc2')
+    model_id1 = FeatureStoreKey(key="model key", descriptor='model desc')
+    model_id2 = FeatureStoreKey(key="model key2", descriptor='model desc')
+    tensor_desc = MessageHandler.build_tensor_descriptor("c", "float32", [1, 2])
+    req_batch_model_id = FeatureStoreKey(key="req key", descriptor='desc')
+
+    request1 = InferenceRequest(
+        model_key=model_id1,
+        callback=FileSystemCommChannel.from_descriptor,
+        raw_inputs=[b'input data'],
+        input_keys=[tensor_key],
+        input_meta=[tensor_desc],
+        output_keys=None,
+        raw_model=b"model",
+        batch_size=0,
+    )
+
+    request2 = InferenceRequest(
+        model_key=model_id2,
+        callback=FileSystemCommChannel.from_descriptor,
+        raw_inputs=None,
+        input_keys=[tensor_key, tensor_key2],
+        input_meta=None,
+        output_keys=[output_key],
+        raw_model=b"model",
+        batch_size=0,
+    )
+
+    request_batch = RequestBatch.from_requests([request1, request2], None, req_batch_model_id)
+
+    print(request_batch.__dict__)
+    assert request_batch.has_valid_requests
+    assert request_batch.model_id == req_batch_model_id
+    assert request_batch.inputs == None
+    assert request_batch.raw_model == b"model"
+    assert request_batch.callbacks == [FileSystemCommChannel.from_descriptor, FileSystemCommChannel.from_descriptor]
+    assert request_batch.raw_inputs == [b'input data']
+    assert request_batch.input_meta == [tensor_desc]
+    assert request_batch.input_keys == [tensor_key, tensor_key, tensor_key2]
+    assert request_batch.output_keys == [output_key]

@@ -30,7 +30,6 @@ from dragon.managed_memory import MemoryPool
 # isort: off
 # isort: on
 
-import pickle
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -336,7 +335,8 @@ class RequestBatch:
 
     @property
     def has_valid_requests(self) -> bool:
-        """Returns whether the batch contains at least one request.
+        """Returns whether the batch contains at least one callback,
+        which indicates there is at least one request in the batch.
 
         :returns: True if at least one request is available
         """
@@ -350,48 +350,30 @@ class RequestBatch:
         """
         return self.raw_model is not None
 
-    # @property
-    # def raw_model(self) -> t.Optional[t.Any]:
-    #     """Returns the raw model to use to execute for this batch
-    #     if it is available.
+    @classmethod
+    def from_requests(
+        cls,
+        requests: t.List[InferenceRequest],
+        inputs: t.Optional[TransformInputResult],
+        model_id: ModelIdentifier,
+    ) -> "RequestBatch":
+        """Create a RequestBatch from a list of requests.
 
-    #     :returns: A model if available, otherwise None"""
-    #     if self.has_valid_requests:
-    #         return self.requests[0].raw_model
-    #     return None
-
-    # @property
-    # def input_keys(self) -> t.List[FeatureStoreKey]:
-    #     """All input keys available in this batch's requests.
-
-    #     :returns: All input keys belonging to requests in this batch"""
-    #     keys = []
-    #     for request in self.requests:
-    #         keys.extend(request.input_keys)
-
-    #     return keys
-
-    # @property
-    # def output_keys(self) -> t.List[FeatureStoreKey]:
-    #     """All output keys available in this batch's requests.
-
-    #     :returns: All output keys belonging to requests in this batch"""
-    #     keys = []
-    #     for request in self.requests:
-    #         keys.extend(request.output_keys)
-
-    #     return keys
-
-    # def serialize(self):
-    #     try:
-    #         return pickle.dumps(self)
-    #     except Exception:
-    #         logger.exception("Failed to serialize the request batch")
-    #         raise
-
-    # @classmethod
-    # def deserialize(cls, serialized_str):
-    #     return pickle.loads(serialized_str)
+        :param requests: The requests to batch
+        :param inputs: The transformed batch of input tensors
+        :param model_id: The model identifier
+        :returns: A RequestBatch instance
+        """
+        return cls(
+            raw_model=requests[0].raw_model,
+            callbacks=[request.callback for request in requests if request.callback],
+            raw_inputs=[key for request in requests for key in request.raw_inputs],
+            input_meta=[key for request in requests for key in request.input_meta],
+            input_keys=[key for request in requests for key in request.input_keys],
+            output_keys=[key for request in requests for key in request.output_keys],
+            inputs=inputs,
+            model_id=model_id,
+        )
 
 
 class MachineLearningWorkerCore:
@@ -562,7 +544,7 @@ class MachineLearningWorkerCore:
     @staticmethod
     def place_output(
         batch: RequestBatch,
-        transform_result: TransformOutputResult,
+        transform_result: t.List[TransformOutputResult],
         feature_stores: t.Dict[str, FeatureStore],
     ) -> t.Collection[t.Optional[FeatureStoreKey]]:
         """Given a collection of data, make it available as a shared resource in the
@@ -581,8 +563,9 @@ class MachineLearningWorkerCore:
         # need to decide how to get back to original sub-batch inputs so they can be
         # accurately placed, datum might need to include this.
 
+        all_result_outputs = [output for result in transform_result for output in result.outputs]
         # Consider parallelizing all PUT feature_store operations
-        for fs_key, v in zip(batch.output_keys, transform_result.outputs):
+        for fs_key, v in zip(batch.output_keys, all_result_outputs):
             feature_store = feature_stores[fs_key.descriptor]
             feature_store[fs_key.key] = v
             keys.append(fs_key)

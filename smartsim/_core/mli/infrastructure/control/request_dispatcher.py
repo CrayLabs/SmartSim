@@ -485,33 +485,8 @@ class RequestDispatcher(Service):
                     self._perf_timer.measure_time("find_queue")
                     try:
                         flushed_requests = queue.flush()
-                        batch = RequestBatch(
-                            raw_model=flushed_requests[0].raw_model,
-                            callbacks=[
-                                request.callback for request in flushed_requests
-                            ],
-                            raw_inputs=[
-                                key
-                                for request in flushed_requests
-                                for key in request.raw_inputs
-                            ],
-                            input_meta=[
-                                key
-                                for request in flushed_requests
-                                for key in request.input_meta
-                            ],
-                            input_keys=[
-                                key
-                                for request in flushed_requests
-                                for key in request.input_keys
-                            ],
-                            output_keys=[
-                                key
-                                for request in flushed_requests
-                                for key in request.output_keys
-                            ],
-                            inputs=None,
-                            model_id=queue.model_id,
+                        batch = RequestBatch.from_requests(
+                            flushed_requests, None, queue.model_id
                         )
                     finally:
                         self._perf_timer.measure_time("flush_requests")

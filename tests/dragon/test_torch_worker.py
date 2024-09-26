@@ -127,10 +127,10 @@ def get_request_batch_from_request(
     return RequestBatch(
         request.raw_model,
         [request.callback],
-        [request.raw_inputs],
-        [request.input_meta],
-        [request.input_keys],
-        [request.output_keys],
+        request.raw_inputs,
+        request.input_meta,
+        request.input_keys,
+        request.output_keys,
         inputs,
         request.model_key,
     )
