@@ -29,14 +29,16 @@ import typing as t
 
 import numpy as np
 import pytest
+
 tf = pytest.importorskip("tensorflow")
 from tensorflow import keras
-from tensorflow.python.framework.convert_to_constants import convert_var_to_const_function_in_v1
+from tensorflow.python.framework.convert_to_constants import (
+    convert_var_to_const_function_in_v1,
+)
 
 dragon = pytest.importorskip("dragon")
 import dragon.globalservices.pool as dragon_gs_pool
 from dragon.managed_memory import MemoryAlloc, MemoryPool
-
 
 from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.tensorflow_worker import TensorFlowWorker
@@ -57,9 +59,9 @@ logger = get_logger(__name__)
 pytestmark = pytest.mark.dragon
 
 
-
 def get_batch() -> np.typing.ArrayLike:
     return np.random.randn(20, 28, 28).astype(np.float32)
+
 
 def create_tf_model():
     model = keras.Sequential(
@@ -77,7 +79,6 @@ def create_tf_model():
         optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
 
-
     real_model = tf.function(model).get_concrete_function(
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
@@ -90,6 +91,7 @@ def create_tf_model():
     names = lambda l: [x.name for x in l]
 
     return graph_def_str, names(ffunc.inputs), names(ffunc.outputs)
+
 
 tensorflow_device = {"cpu": "/CPU", "gpu": "/GPU"}
 
@@ -138,7 +140,7 @@ def test_load_model(mlutils) -> None:
             feed_dict=dict(zip(load_model_result.inputs, [get_batch()])),
         )
 
-    assert results[0].shape == (20,10)
+    assert results[0].shape == (20, 10)
 
 
 def test_transform_input(mlutils) -> None:
@@ -203,9 +205,7 @@ def test_execute(mlutils) -> None:
         mlutils.get_test_device().lower(),
     )
 
-    assert all(
-        result.shape == (20, 10) for result in execute_result.predictions
-    )
+    assert all(result.shape == (20, 10) for result in execute_result.predictions)
 
     mem_pool.destroy()
 

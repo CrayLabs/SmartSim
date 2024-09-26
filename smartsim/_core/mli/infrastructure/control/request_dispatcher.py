@@ -405,8 +405,6 @@ class RequestDispatcher(Service):
 
             self._perf_timer.end_timings()
 
-        # if self._perf_timer.max_length == 801 and self._perf_timer.is_active:
-        #     self._perf_timer.print_timings(True)
 
     def remove_queues(self) -> None:
         """Remove references to queues that can be removed

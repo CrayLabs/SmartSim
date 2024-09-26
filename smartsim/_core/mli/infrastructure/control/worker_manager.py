@@ -182,7 +182,6 @@ class WorkerManager(Service):
             return
 
         self._processed_batches += 1
-        # print(f"**** PROCESSING BATCH {self._processed_batches} ****", flush=True)
 
         self._perf_timer.start_timings(
             "flush_requests", time.perf_counter() - pre_batch_time
