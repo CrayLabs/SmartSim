@@ -250,7 +250,7 @@ class RequestDispatcher(Service):
         """The worker used to batch inputs"""
         self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(mem_pool_size).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
-        self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
         """Performance timer"""
 
     @property
@@ -353,7 +353,6 @@ class RequestDispatcher(Service):
         try:
             self._perf_timer.is_active = True
             bytes_list: t.List[bytes] = self._incoming_channel.recv()
-            logger.debug("Received data")
         except Exception:
             self._perf_timer.is_active = False
         else:

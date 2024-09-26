@@ -182,7 +182,6 @@ class DragonCommChannel(cch.CommChannelBase):
             channel = dch.Channel.attach(actual_descriptor)
             return DragonCommChannel(channel)
         except Exception as ex:
-            logger.debug(f"Failed to create dragon comm channel: {descriptor!r}, {ex}")
             raise SmartSimError(
                 f"Failed to create dragon comm channel: {descriptor!r}"
             ) from ex
