@@ -196,7 +196,6 @@ if __name__ == "__main__":
         log(f"Batch size: {b_size}", client._rank)
         for iteration_number in range(TOTAL_ITERATIONS):
             sample_batch = resnet.get_batch(b_size)
-            log(f"Batch size {sample_batch.shape}", client._rank)
             remote_result = client.run_model(resnet.name, sample_batch)
             log(
                 f"Completed iteration: {iteration_number} in {client.perf_timer.get_last('total_time')} seconds",

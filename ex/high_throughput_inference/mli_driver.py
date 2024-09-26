@@ -21,7 +21,7 @@ parser.add_argument("--toolkit", default="torch", choices=["torch","tensorflow"]
 args = parser.parse_args()
 
 DEVICE = "gpu"
-NUM_RANKS_PER_NODE = 1
+NUM_RANKS_PER_NODE = 16
 NUM_NODES_APP = args.num_nodes_app
 NUM_WORKERS = 1
 BATCH_SIZE = 2
