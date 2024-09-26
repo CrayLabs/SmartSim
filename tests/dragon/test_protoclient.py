@@ -108,7 +108,7 @@ def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
 
 
 @pytest.mark.parametrize(
-    "wait_timeout, exp_wait_max",
+    "backbone_timeout, exp_wait_max",
     [
         # aggregate the 1+1+1 into 3 on remaining parameters
         pytest.param(0.5, 1 + 1 + 1, id="0.5s wait, 3 cycle steps"),
@@ -117,7 +117,7 @@ def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
     ],
 )
 def test_protoclient_timeout(
-    wait_timeout: float,
+    backbone_timeout: float,
     exp_wait_max: float,
     the_backbone: BackboneFeatureStore,
     monkeypatch: pytest.MonkeyPatch,
@@ -134,21 +134,23 @@ def test_protoclient_timeout(
 
     # NOTE: exp_wait_time maps to the cycled backoff of [0.1, 0.2, 0.4, 0.8]
     # with leeway added (by allowing 1s each for the 0.1 and 0.5 steps)
-    start_time = time.time()
+
     with monkeypatch.context() as ctx, pytest.raises(SmartSimError) as ex:
+        start_time = time.time()
         ctx.setenv(BackboneFeatureStore.MLI_BACKBONE, the_backbone.descriptor)
 
-        ProtoClient(False, wait_timeout=wait_timeout)
+        ProtoClient(timing_on=False, backbone_timeout=backbone_timeout)
+        elapsed = time.time() - start_time
+        logger.info(f"ProtoClient timeout occurred in {elapsed} seconds")
 
-    end_time = time.time()
-    elapsed = end_time - start_time
+        # todo: should this trigger any wait if the backbone is set above?
+        # confirm that we met our timeout
+        assert (
+            elapsed >= backbone_timeout
+        ), f"below configured timeout {backbone_timeout}"
 
-    # todo: revisit. should this trigger any wait if the backbone is set above?
-    # confirm that we met our timeout
-    # assert elapsed > wait_timeout, f"below configured timeout {wait_timeout}"
-
-    # confirm that the total wait time is aligned with the sleep cycle
-    assert elapsed < exp_wait_max, f"above expected max wait {exp_wait_max}"
+        # confirm that the total wait time is aligned with the sleep cycle
+        assert elapsed < exp_wait_max, f"above expected max wait {exp_wait_max}"
 
 
 def test_protoclient_initialization_no_backbone(

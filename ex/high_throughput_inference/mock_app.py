@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
 
-    client = ProtoClient(timing_on=True, wait_timeout=0)
+    client = ProtoClient(timing_on=True)
     client.set_model(resnet.name, resnet.model)
 
     if CHECK_RESULTS_AND_MAKE_ALL_SLOWER:

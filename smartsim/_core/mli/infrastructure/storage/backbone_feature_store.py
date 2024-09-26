@@ -695,19 +695,20 @@ class EventConsumer:
         else:
             logger.warning("Unable to register. No registrar channel found.")
 
-    def listen_once(self, timeout: float = 0.001) -> None:
+    def listen_once(self, timeout: float = 0.001, batch_timeout: float = 1.0) -> None:
         """Receives messages for the consumer a single time.
 
         NOTE: Executes a single batch-retrieval to receive the maximum
         number of messages available under batch timeout. To continually
         listen, use `listen` in a non-blocking thread/process
 
-        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param timeout: Maximum time to wait (in seconds) for a message to arrive
+        :param timeout: Maximum time to wait (in seconds) for a batch to arrive
         """
         logger.debug(f"Starting event listener with {timeout} second timeout")
         logger.debug("Awaiting new messages")
 
-        incoming_messages = self.recv(timeout=timeout)
+        incoming_messages = self.recv(timeout=timeout, batch_timeout=batch_timeout)
 
         if not incoming_messages:
             logger.debug("Consumer received empty message list.")

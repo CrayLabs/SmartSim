@@ -74,7 +74,7 @@ class ProtoClient:
     """Proof of concept implementation of a client enabling user applications
     to interact with MLI resources."""
 
-    _DEFAULT_BACKBONE_TIMEOUT = 30.0
+    _DEFAULT_BACKBONE_TIMEOUT = 1.0
     """A default timeout period applied to connection attempts with the
     backbone feature store."""
 
@@ -140,7 +140,11 @@ class ProtoClient:
         )
         return broadcaster
 
-    def __init__(self, timing_on: bool, wait_timeout: float = 0) -> None:
+    def __init__(
+        self,
+        timing_on: bool,
+        backbone_timeout: float = _DEFAULT_BACKBONE_TIMEOUT,
+    ) -> None:
         """Initialize the client instance.
 
         :param timing_on: Flag indicating if timing information should be
@@ -157,7 +161,12 @@ class ProtoClient:
         else:
             rank = 0
 
-        self._backbone_timeout = wait_timeout
+        if backbone_timeout <= 0:
+            raise ValueError(
+                f"Invalid backbone timeout provided: {backbone_timeout}. "
+                "The value must be greater than zero."
+            )
+        self._backbone_timeout = max(backbone_timeout, 0.1)
 
         connect_to_infrastructure()
 
@@ -184,7 +193,7 @@ class ProtoClient:
         from the backbone feature store.
 
         :returns: A float indicating the number of seconds to allow"""
-        return self._backbone_timeout or self._DEFAULT_BACKBONE_TIMEOUT
+        return self._backbone_timeout
 
     def _add_label_to_timings(self, label: str) -> None:
         """Adds a new label into the timing dictionary to prepare for
