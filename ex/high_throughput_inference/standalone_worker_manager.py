@@ -25,9 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import dragon
-
-# pylint disable=import-error
+# pylint: disable=import-error
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
@@ -35,10 +33,8 @@ from dragon import fli
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.globalservices.api_setup import connect_to_infrastructure
-from dragon.managed_memory import MemoryPool
-from dragon.utils import b64decode, b64encode
 
-# pylint enable=import-error
+# pylint: enable=import-error
 
 # isort: off
 # isort: on
@@ -46,18 +42,13 @@ from dragon.utils import b64decode, b64encode
 import argparse
 import base64
 import multiprocessing as mp
-import optparse
 import os
-import pickle
 import socket
-import sys
 import time
-import typing as t
 
 import cloudpickle
 
 from smartsim._core.entrypoints.service import Service
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
@@ -68,7 +59,6 @@ from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConf
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.worker.worker import MachineLearningWorkerBase
 from smartsim.log import get_logger
 
 logger = get_logger("Worker Manager Entry Point")
@@ -125,13 +115,15 @@ if __name__ == "__main__":
         "--batch_size",
         type=int,
         default=1,
-        help="How many requests the workers will try to aggregate before processing them",
+        help="How many requests the workers will try "
+        "to aggregate before processing them",
     )
     parser.add_argument(
         "--batch_timeout",
         type=float,
         default=0.001,
-        help="How much time (in seconds) should be waited before processing an incomplete aggregated request",
+        help="How much time (in seconds) should be waited "
+        "before processing an incomplete aggregated request",
     )
     args = parser.parse_args()
 
