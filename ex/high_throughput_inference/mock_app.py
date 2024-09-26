@@ -77,12 +77,12 @@ class ProtoClient:
                 self._to_worker_fli = fli.FLInterface.attach(to_worker_fli_str)
             except KeyError:
                 time.sleep(1)
-        self._from_worker_ch = DragonCommChannel(create_local())
+        self._from_worker_ch = DragonCommChannel(Channel.make_process_local())
         self._from_worker_ch_serialized = self._from_worker_ch.descriptor_string
         self._to_worker_ch = Channel.make_process_local()
 
         self.perf_timer: PerfTimer = PerfTimer(
-            debug=True, timing_on=timing_on, prefix=f"a{self._rank}_"
+            debug=False, timing_on=timing_on, prefix=f"a{self._rank}_"
         )
         self._num_its: int = 0
 
@@ -191,13 +191,12 @@ if __name__ == "__main__":
 
     MPI.COMM_WORLD.Barrier()
 
-    TOTAL_ITERATIONS = 10
+    TOTAL_ITERATIONS = 100
 
     for log2_bsize in range(args.log_max_batchsize, args.log_max_batchsize + 1):
         b_size: int = 2**log2_bsize
         log(f"Batch size: {b_size}", client._rank)
         for iteration_number in range(TOTAL_ITERATIONS):
-            # log(f"Iteration: {iteration_number}", client._rank)
             sample_batch = resnet.get_batch(b_size)
             remote_result = client.run_model(resnet.name, sample_batch)
             log(

@@ -75,7 +75,7 @@ class ProtoClient:
                 self._to_worker_fli = fli.FLInterface.attach(to_worker_fli_str)
             except KeyError:
                 time.sleep(1)
-        self._from_worker_ch = DragonCommChannel(create_local())
+        self._from_worker_ch = DragonCommChannel(Channel.make_process_local())
         self._from_worker_ch_serialized = self._from_worker_ch.descriptor_string
         self._to_worker_ch = Channel.make_process_local()
 
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     MPI.COMM_WORLD.Barrier()
 
-    TOTAL_ITERATIONS = 10
+    TOTAL_ITERATIONS = 100
 
     for log2_bsize in range(args.log_max_batchsize, args.log_max_batchsize + 1):
         b_size: int = 2**log2_bsize
