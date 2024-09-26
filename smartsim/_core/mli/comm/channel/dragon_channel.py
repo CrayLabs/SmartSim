@@ -81,7 +81,6 @@ def create_local(capacity: int = 0) -> dch.Channel:
                 logger.error(f"All attempts to attach local channel have failed")
                 raise SmartSimError("Failed to attach local channel") from e
 
-    logger.debug(f"Attached to channel id {cid}")
     return channel
 
 

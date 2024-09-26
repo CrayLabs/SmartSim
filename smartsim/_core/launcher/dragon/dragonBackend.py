@@ -865,7 +865,8 @@ class DragonBackend:
 
     def __del__(self) -> None:
         try:
-            self._ddict.destroy()
+            if self._infra_ddict is not None:
+                self._infra_ddict.destroy()
         except Exception:
             logger.error("Could not destroy Backbone dictionary")
 

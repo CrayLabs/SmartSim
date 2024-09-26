@@ -45,12 +45,7 @@ from ....entrypoints.service import Service
 from ....utils.timings import PerfTimer
 from ...message_handler import MessageHandler
 from ..environment_loader import EnvironmentConfigLoader
-from ..worker.worker import (
-    InferenceReply,
-    LoadModelResult,
-    MachineLearningWorkerBase,
-    RequestBatch,
-)
+from ..worker.worker import InferenceReply, MachineLearningWorkerBase, RequestBatch
 from .device_manager import DeviceManager, WorkerDevice
 from .error_handling import build_failure_reply, exception_handler
 
@@ -326,7 +321,6 @@ class WorkerManager(Service):
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()
-        # print(f"**** PROCESSED {self._processed_batches} BATCHES AND {self._sent_responses} REPLIES ****", flush=True)
 
         # if self._perf_timer.max_length == 1600:
         #     self._perf_timer.print_timings(True)

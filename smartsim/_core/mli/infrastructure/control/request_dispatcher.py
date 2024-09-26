@@ -368,21 +368,23 @@ class RequestDispatcher(Service):
             tensor_bytes_list = bytes_list[1:]
             self._perf_timer.start_timings()
 
-            logger.debug("Deserialzing message")
-
+            request = None
             try:
                 request = self._worker.deserialize_message(
                     request_bytes, self._callback_factory
                 )
             except Exception as exc:
-                exception_handler(exc, request.callback, "Error deserializing request")
+                exception_handler(exc, None, "Error deserializing request")
                 self._perf_timer.end_timings()
                 return
-            logger.debug("Deserialized message")
+
+            if request is None:
+                exception_handler(exc, None, "Error deserializing request")
+                self._perf_timer.end_timings()
+                return
+
             if request.input_meta and tensor_bytes_list:
                 request.raw_inputs = tensor_bytes_list
-
-            logger.debug("Assigned data")
 
             self._perf_timer.measure_time("deserialize_message")
 

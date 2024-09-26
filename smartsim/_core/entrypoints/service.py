@@ -90,8 +90,7 @@ class Service(ABC):
         """Log the remaining cooldown time, if any"""
         remaining = self._cooldown - elapsed
         if remaining > 0:
-            pass
-            # logger.debug(f"{abs(remaining):.2f}s remains of {self._cooldown}s cooldown")
+            logger.debug(f"{abs(remaining):.2f}s remains of {self._cooldown}s cooldown")
         else:
             logger.info(f"exceeded cooldown {self._cooldown}s by {abs(remaining):.2f}s")
 

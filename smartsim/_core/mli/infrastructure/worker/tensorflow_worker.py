@@ -24,24 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import io
-
 import logging
-import numpy as np
-import numpy.typing as npt
 import os
+
+import numpy as np
 import tensorflow as tf
+
+# pylint: disable-next=no-name-in-module
+from tensorflow.python.framework.ops import disable_eager_execution
+
+# isort: off
+# isort: on
 
 # pylint: disable=import-error
 from dragon.managed_memory import MemoryAlloc, MemoryPool
-from tensorflow.python.framework.convert_to_constants import (
-    convert_var_to_const_function_in_v1,
-)
-from tensorflow.python.framework.ops import disable_eager_execution
-
-tf.get_logger().setLevel(logging.ERROR)
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from .....error import SmartSimError
 from .....log import get_logger
@@ -59,6 +55,9 @@ from .worker import (
 
 # pylint: enable=import-error
 
+
+tf.get_logger().setLevel(logging.ERROR)
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 logger = get_logger(__name__)
 
 disable_eager_execution()
@@ -91,44 +90,48 @@ class TensorFlowWorker(MachineLearningWorkerBase):
             graph_def = tf.compat.v1.GraphDef()
             graph_def.ParseFromString(model_bytes)
 
+            # pylint: disable-next=not-context-manager
             with tf.Graph().as_default() as graph, tf.device(device):
                 tf.import_graph_def(graph_def, name="")
-
             ops = graph.get_operations()
-            input_layers = []
-            for op in ops:
-                if op.type == "Placeholder":
-                    logger.debug(
-                        "Input op name: {}, output shape : {}".format(
-                            op.name, op.outputs[0].get_shape()
-                        )
-                    )
-                    input_layers.append(f"{op.name}:0")
-
-            output_tensors = set()
-            input_tensors = set()
-            for op in ops:
-                for x in op.inputs:
-                    if x.name not in input_tensors:
-                        input_tensors.add(x.name)
-            for op in ops:
-                if len(op.outputs) > 0:
-                    x = op.outputs[0]
-                    if x.name not in input_tensors:
-                        logger.debug(
-                            "Output tensor name: {}, tensor shape : {}, parent op type: {}".format(
-                                x.name, x.get_shape(), op.type
-                            )
-                        )
-                        output_tensors.add(x.name)
-
         except Exception as e:
             raise RuntimeError(
                 "Failed to load and evaluate the model: "
                 f"Model key {batch.model_id.key}, Device {device}"
             ) from e
+
+        input_layers = set()
+        for operation in ops:
+            if operation.type == "Placeholder":
+                logger.debug(
+                    f"Input op name: {operation.name}, "
+                    f"output shape : {operation.outputs[0].get_shape()}"
+                )
+                input_layers.add(f"{operation.name}:0")
+
+        output_tensors = set()
+        input_tensors = set()
+        for operation in ops:
+            for x in operation.inputs:
+                if x.name not in input_tensors:
+                    input_tensors.add(x.name)
+        for operation in ops:
+            if len(operation.outputs) > 0:
+                x = operation.outputs[0]
+                if x.name not in input_tensors:
+                    logger.debug(
+                        f"Output tensor name: {x.name}, "
+                        f"tensor shape : {x.get_shape()}, "
+                        f"parent op type: {operation.type}"
+                    )
+                    output_tensors.add(x.name)
+
         with tf.device(device):
-            result = LoadModelResult(tf.compat.v1.Session(graph=graph), input_layers, list(output_tensors))
+            result = LoadModelResult(
+                tf.compat.v1.Session(graph=graph),
+                list(input_layers),
+                list(output_tensors),
+            )
         return result
 
     @staticmethod
@@ -249,14 +252,13 @@ class TensorFlowWorker(MachineLearningWorkerBase):
                 raise ValueError("Error during tensor creation") from e
 
         sess = load_result.model
+        if load_result.inputs is None:
+            raise ValueError("Model was stored without inputs")
         try:
             with tf.device(device):
                 results = sess.run(
                     load_result.outputs,
-                    feed_dict={
-                        input_layer: tensor
-                        for input_layer, tensor in zip(load_result.inputs, tensors)
-                    },
+                    feed_dict=dict(zip(load_result.inputs, tensors)),
                 )
         except Exception as e:
             raise ValueError(
