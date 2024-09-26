@@ -58,19 +58,19 @@ if t.TYPE_CHECKING:
 pytestmark = pytest.mark.dragon
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
     return dragon_ddict.DDict()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def the_worker_channel() -> DragonCommChannel:
     wmgr_channel_ = create_local()
     wmgr_channel = DragonCommChannel(wmgr_channel_)
     return wmgr_channel
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def the_backbone(storage_for_dragon_fs: t.Any) -> BackboneFeatureStore:
     return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 

@@ -60,7 +60,7 @@ WORK_QUEUE_KEY = BackboneFeatureStore.MLI_WORKER_QUEUE
 logger = get_logger(__name__)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
     """Fixture that creates a dragon distributed dictionary.
 
@@ -69,7 +69,7 @@ def storage_for_dragon_fs() -> t.Dict[str, str]:
     return dragon_ddict.DDict(1, 2, 4 * 1024**2)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def the_backbone(storage_for_dragon_fs) -> BackboneFeatureStore:
     """Fixture that creates a dragon backbone feature store.
 
@@ -81,7 +81,7 @@ def the_backbone(storage_for_dragon_fs) -> BackboneFeatureStore:
     return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
     """Fixture that creates a dragon FLI channel as a stand-in for the
     worker queue created by the worker.
