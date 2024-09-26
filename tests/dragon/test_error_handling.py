@@ -49,6 +49,9 @@ from smartsim._core.mli.infrastructure.control.worker_manager import (
     exception_handler,
 )
 from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
+)
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
@@ -115,9 +118,11 @@ def setup_worker_manager_model_bytes(
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
+    monkeypatch.setenv(
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -171,9 +176,11 @@ def setup_worker_manager_model_key(
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
+    monkeypatch.setenv(
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -225,9 +232,11 @@ def setup_request_dispatcher_model_bytes(
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
+    monkeypatch.setenv(
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -266,9 +275,11 @@ def setup_request_dispatcher_model_key(
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
+    monkeypatch.setenv(
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
+    )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,

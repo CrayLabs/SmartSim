@@ -73,7 +73,8 @@ pytestmark = pytest.mark.dragon
 def storage_for_dragon_fs() -> t.Dict[str, str]:
     """Fixture to instantiate a dragon distributed dictionary.
 
-    NOTE: using module scoped fixtures drastically improves test run-time"""
+    NOTE: using module scoped fixtures drastically improves test run-time
+    """
     return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
 
 
@@ -82,10 +83,8 @@ def the_worker_channel() -> DragonFLIChannel:
     """Fixture to create a valid descriptor for a worker channel
     that can be attached to.
 
-    NOTE: using module scoped fixtures drastically improves test run-time"""
-    # wmgr_channel_ = create_local()
-    # wmgr_channel = DragonCommChannel(wmgr_channel_)
-    # return wmgr_channel
+    NOTE: using module scoped fixtures drastically improves test run-time
+    """
     channel_ = create_local()
     fli_ = fli.FLInterface(main_ch=channel_, manager_ch=None)
     comm_channel = DragonFLIChannel(fli_, True)
@@ -99,7 +98,8 @@ def the_backbone(
     """Fixture to create a distributed dragon dictionary and wrap it
     in a BackboneFeatureStore.
 
-    NOTE: using module scoped fixtures drastically improves test run-time"""
+    NOTE: using module scoped fixtures drastically improves test run-time
+    """
 
     backbone = BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
     backbone[BackboneFeatureStore.MLI_WORKER_QUEUE] = the_worker_channel.descriptor
@@ -117,7 +117,8 @@ def test_eventconsumer_eventpublisher_integration(
 
     :param storage_for_dragon_fs: the dragon storage engine to use
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
 
     # verify ability to write and read from ddict
     the_backbone["test_dir"] = test_dir
@@ -276,7 +277,8 @@ def set_value_after_delay(
 
     :param descriptor: the backbone feature store descriptor to attach to
     :param key: the key to write to
-    :param value: a value to write to the key"""
+    :param value: a value to write to the key
+    """
     time.sleep(delay)
 
     backbone = BackboneFeatureStore.from_descriptor(descriptor)
