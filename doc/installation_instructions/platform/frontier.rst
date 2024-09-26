@@ -69,6 +69,13 @@ these instructions, being sure to set the following variables
 
 .. code:: bash
 
+   # Optimizations for inference
+   export MIOPEN_USER_DB_PATH="/tmp/${USER}/my-miopen-cache"
+   export MIOPEN_CUSTOM_CACHE_DIR=$MIOPEN_USER_DB_PATH
+   rm -rf $MIOPEN_USER_DB_PATH
+   mkdir -p $MIOPEN_USER_DB_PATH
+
+   # Run the install validation utility
    smart validate --device gpu
 
 The following output indicates a successful install:
@@ -96,11 +103,10 @@ build, and some variables should be set to optimize performance:
    source activate smartsim
 
    # Optimizations for inference
-   export SCRATCH=/lustre/orion/$PROJECT_NAME/scratch/$USER/
-   export MIOPEN_USER_DB_PATH=/tmp/miopendb/
-   export MIOPEN_SYSTEM_DB_PATH=$MIOPEN_USER_DB_PATH
-   mkdir -p $MIOPEN_USER_DB_PATH
-   export MIOPEN_DISABLE_CACHE=1
+   export MIOPEN_USER_DB_PATH="/tmp/${USER}/my-miopen-cache"
+   export MIOPEN_CUSTOM_CACHE_DIR=${MIOPEN_USER_DB_PATH}
+   rm -rf ${MIOPEN_USER_DB_PATH}
+   mkdir -p ${MIOPEN_USER_DB_PATH}
 
 Binding DBs to Slingshot
 ------------------------

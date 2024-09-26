@@ -15,6 +15,7 @@ Released on 25 September, 2024
 
 Description
 
+- Add instructions for Frontier to set the MIOPEN cache
 - Refine Frontier documentation for proper use of miniforge3
 - Refactor to the RedisAI build to allow more flexibility in versions
   and sources of ML backends
@@ -40,6 +41,10 @@ Description
 
 Detailed Notes
 
+- On Frontier, the MIOPEN cache may need to be set prior to using
+  RedisAI in the ``smart validate``. The instructions for Frontier
+  have been updated accordingly.
+  ([SmartSim-PR727](https://github.com/CrayLabs/SmartSim/pull/727))
 - On Frontier, the recommended way to activate conda environments is
   to go through source activate. This also means that ``conda init``
   is not needed. The instructions for Frontier have been updated to
