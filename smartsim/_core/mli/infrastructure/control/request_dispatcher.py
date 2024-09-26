@@ -405,7 +405,6 @@ class RequestDispatcher(Service):
 
             self._perf_timer.end_timings()
 
-
     def remove_queues(self) -> None:
         """Remove references to queues that can be removed
         and allow them to be garbage collected."""
