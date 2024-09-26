@@ -38,6 +38,7 @@ dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBroadcaster,
@@ -68,42 +69,46 @@ if t.TYPE_CHECKING:
 pytestmark = pytest.mark.dragon
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
+    """Fixture to instantiate a dragon distributed dictionary.
+
+    NOTE: using module scoped fixtures drastically improves test run-time"""
     return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
 
 
-@pytest.fixture
-def storage_for_dragon_fs_with_req_queue(
-    storage_for_dragon_fs: t.Dict[str, str]
-) -> t.Dict[str, str]:
-    # create a valid FLI so any call to attach does not fail
-    channel_ = Channel.make_process_local()
+@pytest.fixture(scope="module")
+def the_worker_channel() -> DragonFLIChannel:
+    """Fixture to create a valid descriptor for a worker channel
+    that can be attached to.
+
+    NOTE: using module scoped fixtures drastically improves test run-time"""
+    # wmgr_channel_ = create_local()
+    # wmgr_channel = DragonCommChannel(wmgr_channel_)
+    # return wmgr_channel
+    channel_ = create_local()
     fli_ = fli.FLInterface(main_ch=channel_, manager_ch=None)
     comm_channel = DragonFLIChannel(fli_, True)
-
-    storage_for_dragon_fs[BackboneFeatureStore.MLI_WORKER_QUEUE] = (
-        comm_channel.descriptor
-    )
-    return storage_for_dragon_fs
+    return comm_channel
 
 
-@pytest.fixture
-def storage_for_dragon_fs_with_mock_req_queue(
-    storage_for_dragon_fs: t.Dict[str, str]
-) -> t.Dict[str, str]:
-    # # create a valid FLI so any call to attach does not fail
-    # channel_ = Channel.make_process_local()
-    # fli_ = fli.FLInterface(main_ch=channel_, manager_ch=None)
-    # comm_channel = DragonFLIChannel(fli_, True)
+@pytest.fixture(scope="module")
+def the_backbone(
+    storage_for_dragon_fs: t.Any, the_worker_channel: DragonFLIChannel
+) -> BackboneFeatureStore:
+    """Fixture to create a distributed dragon dictionary and wrap it
+    in a BackboneFeatureStore.
 
-    mock_descriptor = "12345"
-    storage_for_dragon_fs[BackboneFeatureStore.MLI_WORKER_QUEUE] = mock_descriptor
-    return storage_for_dragon_fs
+    NOTE: using module scoped fixtures drastically improves test run-time"""
+
+    backbone = BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
+    backbone[BackboneFeatureStore.MLI_WORKER_QUEUE] = the_worker_channel.descriptor
+
+    return backbone
 
 
 def test_eventconsumer_eventpublisher_integration(
-    storage_for_dragon_fs: t.Any, test_dir: str
+    the_backbone: BackboneFeatureStore, test_dir: str
 ) -> None:
     """Verify that the publisher and consumer integrate as expected when
     multiple publishers and consumers are sending simultaneously. This
@@ -114,20 +119,13 @@ def test_eventconsumer_eventpublisher_integration(
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs"""
 
-    mock_storage = storage_for_dragon_fs
-    backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
-
     # verify ability to write and read from ddict
-    backbone["test_dir"] = test_dir
-    assert backbone["test_dir"] == test_dir
+    the_backbone["test_dir"] = test_dir
+    assert the_backbone["test_dir"] == test_dir
 
-    wmgr_channel_ = Channel.make_process_local()
-    capp_channel_ = Channel.make_process_local()
-    back_channel_ = Channel.make_process_local()
-
-    wmgr_channel = DragonCommChannel(wmgr_channel_)
-    capp_channel = DragonCommChannel(capp_channel_)
-    back_channel = DragonCommChannel(back_channel_)
+    wmgr_channel = DragonCommChannel(create_local())
+    capp_channel = DragonCommChannel(create_local())
+    back_channel = DragonCommChannel(create_local())
 
     wmgr_consumer_descriptor = wmgr_channel.descriptor
     capp_consumer_descriptor = capp_channel.descriptor
@@ -136,32 +134,32 @@ def test_eventconsumer_eventpublisher_integration(
     # create some consumers to receive messages
     wmgr_consumer = EventConsumer(
         wmgr_channel,
-        backbone,
+        the_backbone,
         filters=[EventCategory.FEATURE_STORE_WRITTEN],
     )
     capp_consumer = EventConsumer(
         capp_channel,
-        backbone,
+        the_backbone,
     )
     back_consumer = EventConsumer(
         back_channel,
-        backbone,
+        the_backbone,
         filters=[EventCategory.CONSUMER_CREATED],
     )
 
     # create some broadcasters to publish messages
     mock_worker_mgr = EventBroadcaster(
-        backbone,
+        the_backbone,
         channel_factory=DragonCommChannel.from_descriptor,
     )
     mock_client_app = EventBroadcaster(
-        backbone,
+        the_backbone,
         channel_factory=DragonCommChannel.from_descriptor,
     )
 
     # register all of the consumers even though the OnCreateConsumer really should
     # trigger its registration. event processing is tested elsewhere.
-    backbone.notification_channels = [
+    the_backbone.notification_channels = [
         wmgr_consumer_descriptor,
         capp_consumer_descriptor,
         back_consumer_descriptor,
@@ -172,9 +170,9 @@ def test_eventconsumer_eventpublisher_integration(
     mock_worker_mgr.send(event_1)
 
     # simulate the app updating a model a few times
-    event_2 = OnWriteFeatureStore(backbone.descriptor, "key-1")
-    event_3 = OnWriteFeatureStore(backbone.descriptor, "key-2")
-    event_4 = OnWriteFeatureStore(backbone.descriptor, "key-1")
+    event_2 = OnWriteFeatureStore(the_backbone.descriptor, "key-1")
+    event_3 = OnWriteFeatureStore(the_backbone.descriptor, "key-2")
+    event_4 = OnWriteFeatureStore(the_backbone.descriptor, "key-1")
 
     mock_client_app.send(event_2)
     mock_client_app.send(event_3)
@@ -194,7 +192,7 @@ def test_eventconsumer_eventpublisher_integration(
 
 
 def test_backbone_wait_for_no_keys(
-    storage_for_dragon_fs_with_req_queue: t.Any, monkeypatch: pytest.MonkeyPatch
+    the_backbone: BackboneFeatureStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Verify that asking the backbone to wait for a value succeeds
     immediately and does not cause a wait to occur if the supplied key
@@ -203,15 +201,12 @@ def test_backbone_wait_for_no_keys(
     :param storage_for_dragon_fs: the storage engine to use, prepopulated with
     """
     # set a very low timeout to confirm that it does not wait
-    storage = storage_for_dragon_fs_with_req_queue
-
-    backbone = BackboneFeatureStore(storage)
 
     with monkeypatch.context() as ctx:
         # all keys should be found and the timeout should never be checked.
         ctx.setattr(bbtime, "sleep", mock.MagicMock())
 
-        values = backbone.wait_for([])
+        values = the_backbone.wait_for([])
         assert len(values) == 0
 
         # confirm that no wait occurred
@@ -219,7 +214,7 @@ def test_backbone_wait_for_no_keys(
 
 
 def test_backbone_wait_for_prepopulated(
-    storage_for_dragon_fs_with_req_queue: t.Any, monkeypatch: pytest.MonkeyPatch
+    the_backbone: BackboneFeatureStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Verify that asking the backbone to wait for a value succeed
     immediately and do not cause a wait to occur if the data exists
@@ -227,15 +222,12 @@ def test_backbone_wait_for_prepopulated(
     :param storage_for_dragon_fs: the storage engine to use, prepopulated with
     """
     # set a very low timeout to confirm that it does not wait
-    storage = storage_for_dragon_fs_with_req_queue
-
-    backbone = BackboneFeatureStore(storage)
 
     with monkeypatch.context() as ctx:
         # all keys should be found and the timeout should never be checked.
         ctx.setattr(bbtime, "sleep", mock.MagicMock())
 
-        values = backbone.wait_for([BackboneFeatureStore.MLI_WORKER_QUEUE])
+        values = the_backbone.wait_for([BackboneFeatureStore.MLI_WORKER_QUEUE], 0.1)
 
         # confirm that wait_for with one key returns one value
         assert len(values) == 1
@@ -248,7 +240,7 @@ def test_backbone_wait_for_prepopulated(
 
 
 def test_backbone_wait_for_prepopulated_dupe(
-    storage_for_dragon_fs_with_req_queue: t.Any, monkeypatch: pytest.MonkeyPatch
+    the_backbone: BackboneFeatureStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Verify that asking the backbone to wait for keys that are duplicated
     results in a single value being returned for each key
@@ -256,19 +248,17 @@ def test_backbone_wait_for_prepopulated_dupe(
     :param storage_for_dragon_fs: the storage engine to use, prepopulated with
     """
     # set a very low timeout to confirm that it does not wait
-    storage = storage_for_dragon_fs_with_req_queue
 
-    backbone = BackboneFeatureStore(storage)
     key1, key2 = "key-1", "key-2"
     value1, value2 = "i-am-value-1", "i-am-value-2"
-    backbone[key1] = value1
-    backbone[key2] = value2
+    the_backbone[key1] = value1
+    the_backbone[key2] = value2
 
     with monkeypatch.context() as ctx:
         # all keys should be found and the timeout should never be checked.
         ctx.setattr(bbtime, "sleep", mock.MagicMock())
 
-        values = backbone.wait_for([key1, key2, key1])  # key1 is duplicated
+        values = the_backbone.wait_for([key1, key2, key1])  # key1 is duplicated
 
         # confirm that wait_for with one key returns one value
         assert len(values) == 2
@@ -294,10 +284,43 @@ def set_value_after_delay(
     logger.debug(f"set_value_after_delay wrote `{value} to backbone[`{key}`]")
 
 
-@pytest.mark.skip(reason="Using mp on build agent is not working correctly")
-@pytest.mark.parametrize("delay", [0, 1, 2, 4, 8])
+@pytest.mark.parametrize(
+    "delay",
+    [
+        pytest.param(
+            0,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            1,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            2,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            4,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            8,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+    ],
+)
 def test_backbone_wait_for_partial_prepopulated(
-    storage_for_dragon_fs_with_mock_req_queue: t.Any, delay: float
+    the_backbone: BackboneFeatureStore, delay: float
 ) -> None:
     """Verify that when data is not all in the backbone, the `wait_for` operation
     continues to poll until it finds everything it needs
@@ -308,19 +331,17 @@ def test_backbone_wait_for_partial_prepopulated(
     """
     # set a very low timeout to confirm that it does not wait
     wait_timeout = 10
-    storage = storage_for_dragon_fs_with_mock_req_queue
-    backbone = BackboneFeatureStore(storage)
 
     key, value = str(uuid.uuid4()), str(random.random() * 10)
 
     logger.debug(f"Starting process to write {key} after {delay}s")
     p = mp.Process(
-        target=set_value_after_delay, args=(backbone.descriptor, key, value, delay)
+        target=set_value_after_delay, args=(the_backbone.descriptor, key, value, delay)
     )
     p.start()
 
     p2 = mp.Process(
-        target=backbone.wait_for,
+        target=the_backbone.wait_for,
         args=([BackboneFeatureStore.MLI_WORKER_QUEUE, key],),
         kwargs={"timeout": wait_timeout},
     )
@@ -330,7 +351,9 @@ def test_backbone_wait_for_partial_prepopulated(
     p2.join()
 
     # both values should be written at this time
-    ret_vals = backbone.wait_for([key, BackboneFeatureStore.MLI_WORKER_QUEUE, key], 0.1)
+    ret_vals = the_backbone.wait_for(
+        [key, BackboneFeatureStore.MLI_WORKER_QUEUE, key], 0.1
+    )
     # confirm that wait_for with two keys returns two values
     assert len(ret_vals) == 2, "values should contain values for both awaited keys"
 
@@ -343,10 +366,43 @@ def test_backbone_wait_for_partial_prepopulated(
     assert ret_vals[key] == value, "verify order of values "
 
 
-@pytest.mark.skip(reason="Using mp on build agent is not working correctly")
-@pytest.mark.parametrize("num_keys", [0, 1, 3, 7, 11])
+@pytest.mark.parametrize(
+    "num_keys",
+    [
+        pytest.param(
+            0,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            1,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            3,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            7,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+        pytest.param(
+            11,
+            marks=pytest.mark.skip(
+                "Must use entrypoint instead of mp.Process to run on build agent"
+            ),
+        ),
+    ],
+)
 def test_backbone_wait_for_multikey(
-    storage_for_dragon_fs_with_req_queue: t.Any,
+    the_backbone: BackboneFeatureStore,
     num_keys: int,
     test_dir: str,
 ) -> None:
@@ -358,8 +414,6 @@ def test_backbone_wait_for_multikey(
     """
     # maximum delay allowed for setter processes
     max_delay = 5
-    storage = storage_for_dragon_fs_with_req_queue
-    backbone = BackboneFeatureStore(storage)
 
     extra_keys = [str(uuid.uuid4()) for _ in range(num_keys)]
     extra_values = [str(uuid.uuid4()) for _ in range(num_keys)]
@@ -371,13 +425,14 @@ def test_backbone_wait_for_multikey(
         assert delay < max_delay, "write delay exceeds test timeout"
         logger.debug(f"Delaying {key} write by {delay} seconds")
         p = mp.Process(
-            target=set_value_after_delay, args=(backbone.descriptor, key, value, delay)
+            target=set_value_after_delay,
+            args=(the_backbone.descriptor, key, value, delay),
         )
         p.start()
         processes.append(p)
 
     p2 = mp.Process(
-        target=backbone.wait_for,
+        target=the_backbone.wait_for,
         args=(extra_keys,),
         kwargs={"timeout": max_delay * 2},
     )
@@ -390,7 +445,7 @@ def test_backbone_wait_for_multikey(
 
     # use without a wait to verify all values are written
     num_keys = len(extra_keys)
-    actual_values = backbone.wait_for(extra_keys, timeout=0.01)
+    actual_values = the_backbone.wait_for(extra_keys, timeout=0.01)
     assert len(extra_keys) == num_keys
 
     # confirm that wait_for returns all the expected values

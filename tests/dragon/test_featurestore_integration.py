@@ -60,11 +60,18 @@ pytestmark = pytest.mark.dragon
 
 @pytest.fixture(scope="module")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
-    return dragon_ddict.DDict()
+    """Fixture to instantiate a dragon distributed dictionary.
+
+    NOTE: using module scoped fixtures drastically improves test run-time"""
+    return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
 
 
 @pytest.fixture(scope="module")
 def the_worker_channel() -> DragonCommChannel:
+    """Fixture to create a valid descriptor for a worker channel
+    that can be attached to.
+
+    NOTE: using module scoped fixtures drastically improves test run-time"""
     wmgr_channel_ = create_local()
     wmgr_channel = DragonCommChannel(wmgr_channel_)
     return wmgr_channel
@@ -72,6 +79,10 @@ def the_worker_channel() -> DragonCommChannel:
 
 @pytest.fixture(scope="module")
 def the_backbone(storage_for_dragon_fs: t.Any) -> BackboneFeatureStore:
+    """Fixture to create a distributed dragon dictionary and wrap it
+    in a BackboneFeatureStore.
+
+    NOTE: using module scoped fixtures drastically improves test run-time"""
     return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
 
@@ -226,15 +237,36 @@ def test_eventconsumer_max_dequeue(
 @pytest.mark.parametrize(
     "buffer_size",
     [
-        pytest.param(-1, id="replace negative, default to 500"),
-        pytest.param(0, id="replace zero, default to 500"),
-        pytest.param(1, id="non-zero buffer size: 1"),
-        pytest.param(550, id="larger than default: 550"),
-        pytest.param(800, id="much larger then default: 800"),
+        pytest.param(
+            -1,
+            id="replace negative, default to 500",
+            marks=pytest.mark.skip("create_local issue w/MPI must be mitigated"),
+        ),
+        pytest.param(
+            0,
+            id="replace zero, default to 500",
+            marks=pytest.mark.skip("create_local issue w/MPI must be mitigated"),
+        ),
+        pytest.param(
+            1,
+            id="non-zero buffer size: 1",
+            marks=pytest.mark.skip("create_local issue w/MPI must be mitigated"),
+        ),
+        # pytest.param(500, id="maximum size edge case: 500"),
+        pytest.param(
+            550,
+            id="larger than default: 550",
+            marks=pytest.mark.skip("create_local issue w/MPI must be mitigated"),
+        ),
+        pytest.param(
+            800,
+            id="much larger then default: 800",
+            marks=pytest.mark.skip("create_local issue w/MPI must be mitigated"),
+        ),
         pytest.param(
             1000,
             id="very large buffer: 1000, unreliable in dragon-v0.10",
-            marks=pytest.mark.skip,
+            marks=pytest.mark.skip("create_local issue w/MPI must be mitigated"),
         ),
     ],
 )

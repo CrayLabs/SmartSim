@@ -548,16 +548,16 @@ class EventBroadcaster:
         :param timeout: Maximum time to wait (in seconds) for messages to send
         :returns: The number of events successfully published
         :raises ValueError: If event serialization fails
+        :raises AttributeError: If event cannot be serialized
         :raises KeyError: If channel fails to attach using registered descriptors
         :raises SmartSimError: If any unexpected error occurs during send
         """
         try:
             self._save_to_buffer(event)
             return self._broadcast(timeout)
-        except (KeyError, ValueError, SmartSimError):
+        except (KeyError, ValueError, AttributeError, SmartSimError):
             raise
         except Exception as ex:
-            logger.exception("An unexpected exception occurred while sending")
             raise SmartSimError("An unexpected failure occurred while sending") from ex
 
 

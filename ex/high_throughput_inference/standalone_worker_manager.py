@@ -46,20 +46,17 @@ from dragon.utils import b64decode, b64encode
 import argparse
 import base64
 import multiprocessing as mp
-import optparse
 import os
-import pickle
 import socket
-import sys
 import time
 import typing as t
 
 import cloudpickle
 
 from smartsim._core.entrypoints.service import Service
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
@@ -71,8 +68,6 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.feature_store import ReservedKeys
-from smartsim._core.mli.infrastructure.worker.worker import MachineLearningWorkerBase
 from smartsim.log import get_logger
 
 logger = get_logger("Worker Manager Entry Point")
@@ -144,7 +139,7 @@ if __name__ == "__main__":
 
     backbone = BackboneFeatureStore.from_descriptor(ddict_str)
 
-    to_worker_channel = Channel.make_process_local()
+    to_worker_channel = create_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
     to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli, True)
 

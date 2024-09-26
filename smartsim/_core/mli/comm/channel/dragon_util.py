@@ -49,7 +49,7 @@ unnecessary retries when creating a local channel."""
 
 
 def channel_to_descriptor(channel: t.Union[dch.Channel, fli.FLInterface]) -> str:
-    """Utility method for converting a channel to a descriptor string.
+    """Convert a dragon channel to a descriptor string.
 
     :param channel: The dragon channel to convert
     :returns: The descriptor string
@@ -62,7 +62,7 @@ def channel_to_descriptor(channel: t.Union[dch.Channel, fli.FLInterface]) -> str
 
 
 def pool_to_descriptor(pool: dm.MemoryPool) -> str:
-    """Utility method for converting a pool to a descriptor string.
+    """Convert a dragon memory pool to a descriptor string.
 
     :param pool: The memory pool to convert
     :returns: The descriptor string"""
@@ -74,7 +74,7 @@ def pool_to_descriptor(pool: dm.MemoryPool) -> str:
 
 
 def descriptor_to_fli(descriptor: str) -> "fli.FLInterface":
-    """Helper method to attach a new FLI instance given
+    """Create and attach a new FLI instance given
     the string-encoded descriptor.
 
     :param descriptor: The descriptor of an FLI to attach to
@@ -84,7 +84,7 @@ def descriptor_to_fli(descriptor: str) -> "fli.FLInterface":
 
 
 def descriptor_to_channel(descriptor: str) -> dch.Channel:
-    """Helper method to attach a new Channel instance given
+    """Create and attach a new Channel instance given
     the string-encoded descriptor.
 
     :param descriptor: The descriptor of a channel to attach to
@@ -93,7 +93,7 @@ def descriptor_to_channel(descriptor: str) -> dch.Channel:
     return dch.Channel.attach(descriptor_)
 
 
-def create_local(capacity: int = 0) -> dch.Channel:
+def create_local(_capacity: int = 0) -> dch.Channel:
     """Creates a Channel attached to the local memory pool. Replacement for
     direct calls to `dch.Channel.make_process_local()` to enable
     supplying a channel capacity.
@@ -103,35 +103,38 @@ def create_local(capacity: int = 0) -> dch.Channel:
     :returns: The instantiated channel
     :raises SmartSimError: If unable to attach local channel
     """
-    pool = dm.MemoryPool.attach(du.B64.str_to_bytes(dp.this_process.default_pd))
-    pool_descriptor = pool_to_descriptor(pool)
-    channel: t.Optional[dch.Channel] = None
-    offset = 0
+    # current implementation has a bug wrt MPI that must be fixed.
+    # falling back to `make_process_local` and disabling buffer size tests
 
-    global LAST_OFFSET
-    if LAST_OFFSET:
-        offset = LAST_OFFSET
+    # pool = dm.MemoryPool.attach(du.B64.str_to_bytes(dp.this_process.default_pd))
+    # pool_descriptor = pool_to_descriptor(pool)
+    # channel: t.Optional[dch.Channel] = None
+    # offset = 0
 
-    capacity = capacity if capacity > 0 else DEFAULT_CHANNEL_BUFFER_SIZE
+    # global LAST_OFFSET
+    # if LAST_OFFSET:
+    #     offset = LAST_OFFSET
 
-    while not channel:
-        # search for an open channel ID
-        offset += 1
-        channel_id = df.BASE_USER_MANAGED_CUID + offset
-        try:
-            channel = dch.Channel(mem_pool=pool, c_uid=channel_id, capacity=capacity)
-            LAST_OFFSET = offset
-            descriptor = channel_to_descriptor(channel)
-            logger.debug(
-                "Local channel created: "
-                f"{channel_id=}, {pool_descriptor=}, {capacity=}, {descriptor=}"
-            )
-        except dch.ChannelError as e:
-            if offset < 100:
-                logger.warning(f"Channnel id `{channel_id}` is not open. Retrying...")
-            else:
-                LAST_OFFSET = 0
-                logger.error(f"All attempts to attach local channel have failed")
-                raise SmartSimError("Failed to attach local channel") from e
+    # capacity = capacity if capacity > 0 else DEFAULT_CHANNEL_BUFFER_SIZE
 
+    # while not channel:
+    #     # search for an open channel ID
+    #     offset += 1
+    #     channel_id = df.BASE_USER_MANAGED_CUID + offset
+    #     try:
+    #         channel = dch.Channel(mem_pool=pool, c_uid=channel_id, capacity=capacity)
+    #         LAST_OFFSET = offset
+    #         descriptor = channel_to_descriptor(channel)
+    #         logger.debug(
+    #             "Local channel created: "
+    #             f"{channel_id=}, {pool_descriptor=}, {capacity=}, {descriptor=}"
+    #         )
+    #     except dch.ChannelError as e:
+    #         if offset < 100:
+    #             logger.warning(f"Channnel id `{channel_id}` is not open. Retrying...")
+    #         else:
+    #             LAST_OFFSET = 0
+    #             logger.error(f"All attempts to attach local channel have failed")
+    #             raise SmartSimError("Failed to attach local channel") from e
+    channel = dch.Channel.make_process_local()
     return channel

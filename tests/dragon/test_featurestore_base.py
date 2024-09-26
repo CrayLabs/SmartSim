@@ -452,12 +452,16 @@ def test_eventpublisher_serialize_failure(
         event = OnCreateConsumer(target_descriptor, filters=[])
 
         # patch the __bytes__ implementation to cause pickling to fail during send
-        patch.setattr(event, "__bytes__", lambda x: b"abc")
+        def bad_bytes(self) -> bytes:
+            return b"abc"
+
+        # this patch causes an attribute error when event pickling is attempted
+        patch.setattr(event, "__bytes__", bad_bytes)
 
         backbone.notification_channels = (target_descriptor,)
 
         # send a message into the channel
-        with pytest.raises(ValueError) as ex:
+        with pytest.raises(AttributeError) as ex:
             publisher.send(event)
 
         assert "serialize" in ex.value.args[0]
@@ -729,12 +733,12 @@ def test_eventconsumer_batch_timeout(
 
     with pytest.raises(ValueError) as ex:
         # try to create a consumer w/a max recv size of 0
-        EventConsumer(
+        consumer = EventConsumer(
             channel,
             backbone,
             filters=[EventCategory.FEATURE_STORE_WRITTEN],
-            batch_timeout=invalid_timeout,
         )
+        consumer.recv(batch_timeout=invalid_timeout)
 
     assert "positive" in ex.value.args[0]
 

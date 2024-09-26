@@ -33,7 +33,6 @@ dragon = pytest.importorskip("dragon")
 
 import multiprocessing as mp
 
-import dragon.utils as du
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
@@ -41,7 +40,7 @@ from dragon.mpbridge.queues import DragonQueue
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.control.device_manager import WorkerDevice
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
@@ -62,7 +61,6 @@ from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
     FetchInputResult,
     FetchModelResult,
-    InferenceReply,
     InferenceRequest,
     LoadModelResult,
     MachineLearningWorkerBase,
@@ -80,14 +78,26 @@ from .utils.worker import IntegratedTorchWorker
 pytestmark = pytest.mark.dragon
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
+def the_worker_channel() -> DragonFLIChannel:
+    """Fixture to create a valid descriptor for a worker channel
+    that can be attached to.
+
+    NOTE: using module scoped fixtures drastically improves test run-time"""
+    channel_ = create_local()
+    fli_ = FLInterface(main_ch=channel_, manager_ch=None)
+    comm_channel = DragonFLIChannel(fli_, True)
+    return comm_channel
+
+
+@pytest.fixture(scope="module")
 def backbone_descriptor() -> str:
     # create a shared backbone featurestore
     feature_store = DragonFeatureStore(DDict())
     return feature_store.descriptor
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def app_feature_store() -> FeatureStore:
     # create a standalone feature store to mimic a user application putting
     # data into an application-owned resource (app should not access backbone)
@@ -101,14 +111,11 @@ def setup_worker_manager_model_bytes(
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
-    )
+    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
     monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
@@ -160,14 +167,11 @@ def setup_worker_manager_model_key(
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
-    )
+    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
     monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
@@ -217,14 +221,11 @@ def setup_request_dispatcher_model_bytes(
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
-    )
+    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
     monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 
@@ -261,14 +262,11 @@ def setup_request_dispatcher_model_key(
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
-    )
+    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", the_worker_channel.descriptor)
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
     monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
 

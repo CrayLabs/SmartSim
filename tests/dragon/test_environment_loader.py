@@ -29,12 +29,12 @@ import pytest
 dragon = pytest.importorskip("dragon")
 
 import dragon.utils as du
-from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
-from dragon.fli import DragonFLIError, FLInterface
+from dragon.fli import FLInterface
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
@@ -54,7 +54,7 @@ pytestmark = pytest.mark.dragon
 )
 def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.MonkeyPatch):
     """A descriptor can be stored, loaded, and reattached"""
-    chan = Channel.make_process_local()
+    chan = create_local()
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
         "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
@@ -77,7 +77,7 @@ def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.Monke
 def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
     """The serialized descriptors of a loaded and unloaded
     queue are the same"""
-    chan = Channel.make_process_local()
+    chan = create_local()
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
         "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
