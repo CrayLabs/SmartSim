@@ -26,7 +26,7 @@
 
 
 [build-system]
-requires = ["setuptools", "wheel", "cmake>=3.13"]
+requires = ["packaging>=24.0", "setuptools>=70.0", "wheel", "cmake>=3.13"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]

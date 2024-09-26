@@ -28,6 +28,7 @@
 
 import itertools
 import os.path as osp
+import shutil
 import sys
 import typing as t
 from os import environ, getcwd, getenv
@@ -41,6 +42,7 @@ from .._core.config import CONFIG
 from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
+from .._core.utils.shell import execute_cmd
 from ..entity import DBNode, EntityList, TelemetryConfiguration
 from ..error import (
     SmartSimError,
@@ -75,6 +77,7 @@ by_launcher: t.Dict[str, t.List[str]] = {
     "pals": ["mpiexec"],
     "lsf": ["jsrun"],
     "local": [""],
+    "sge": ["mpirun", "mpiexec", "orterun"],
 }
 
 
@@ -186,8 +189,6 @@ class Orchestrator(EntityList[DBNode]):
 
         Extra configurations for RedisAI
 
-        See https://oss.redis.com/redisai/configuration/
-
         :param path: path to location of ``Orchestrator`` directory
         :param port: TCP/IP port
         :param interface: network interface(s)
@@ -280,13 +281,34 @@ class Orchestrator(EntityList[DBNode]):
             )
             if hosts:
                 self.set_hosts(hosts)
-            elif not hosts and self.run_command == "mpirun":
-                raise SmartSimError(
-                    "hosts argument is required when launching Orchestrator with mpirun"
-                )
+            elif not hosts:
+                mpilike = run_command in ["mpirun", "mpiexec", "orterun"]
+                if mpilike and not self._mpi_has_sge_support():
+                    raise SmartSimError(
+                        (
+                            "hosts argument required when launching ",
+                            "Orchestrator with mpirun",
+                        )
+                    )
             self._reserved_run_args: t.Dict[t.Type[RunSettings], t.List[str]] = {}
             self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
             self._fill_reserved()
+
+    def _mpi_has_sge_support(self) -> bool:
+        """Check if MPI command supports SGE
+
+        If the run command is mpirun, mpiexec, or orterun, there is a possibility
+        that the user is using OpenMPI with SGE grid support. In this case, hosts
+        do not need to be set.
+
+        :returns: bool
+        """
+
+        if self.run_command in ["mpirun", "orterun", "mpiexec"]:
+            if shutil.which("ompi_info"):
+                _, output, _ = execute_cmd(["ompi_info"])
+                return "gridengine" in output
+        return False
 
     @property
     def db_identifier(self) -> str:

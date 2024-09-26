@@ -45,10 +45,11 @@ env:
   HOMEBREW_NO_GITHUB_API: "ON"
   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
   DEBIAN_FRONTEND: "noninteractive" # Disable interactive apt install sessions
+  GIT_CLONE_PROTECTION_ACTIVE: false
 
 jobs:
   run_tests:
-    name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}, RedisAI ${{ matrix.rai }}
+    name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -61,9 +62,6 @@ jobs:
         exclude:
           - os: macos-14
             py_v: "3.9"
-
-    env:
-      SMARTSIM_REDISAI: ${{ matrix.rai }}
 
     steps:
       - uses: actions/checkout@v4
@@ -108,19 +106,13 @@ jobs:
       - name: Install SmartSim (with ML backends)
         run: |
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
-          python -m pip install .[dev,ml]
+          python -m pip install .[dev,mypy]
 
-      - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')
-        run: smart build --device cpu --onnx -v
-
-      - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
-        if: contains( matrix.os, 'macos-14' )
-        run: smart build --device cpu --no_tf -v
+      - name: Install ML Runtimes
+        run: smart build --device cpu -v
 
       - name: Run mypy
         run: |
-          python -m pip install .[mypy]
           make check-mypy
 
       - name: Run Pylint
@@ -164,7 +156,7 @@ jobs:
           retention-days: 5
 
       - name: Upload Pytest coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v4.5.0
         with:
           fail_ci_if_error: false
           files: ./coverage.xml

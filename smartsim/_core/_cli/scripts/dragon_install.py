@@ -7,7 +7,7 @@ from github import Github
 from github.GitReleaseAsset import GitReleaseAsset
 
 from smartsim._core._cli.utils import pip
-from smartsim._core._install.builder import WebTGZ
+from smartsim._core._install.utils import retrieve
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import check_platform, is_crayex_platform
 from smartsim.error.errors import SmartSimCLIActionCancelled
@@ -159,8 +159,7 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
     if working_dir.exists() and list(working_dir.rglob("*.whl")):
         return working_dir
 
-    archive = WebTGZ(asset.browser_download_url)
-    archive.extract(working_dir)
+    retrieve(asset.browser_download_url, working_dir)
 
     logger.debug(f"Retrieved {asset.browser_download_url} to {working_dir}")
     return working_dir
@@ -182,7 +181,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
         logger.info(f"Installing package: {wheel_path.absolute()}")
 
         try:
-            pip("install", "--force-reinstall", str(wheel_path))
+            pip("install", "--force-reinstall", str(wheel_path), "numpy<2")
             wheel_path = next(wheels, None)
         except Exception:
             logger.error(f"Unable to install from {asset_dir}")
