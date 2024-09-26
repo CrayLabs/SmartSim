@@ -115,7 +115,6 @@ class ProtoClient:
             self.perf_timer.measure_time("send_request")
             for tensor in tensors:
                 to_sendh.send_bytes(tensor.tobytes())  # TODO NOT FAST ENOUGH!!!
-                # logger.info(f"{self._rank} sent tensors")
         self.perf_timer.measure_time("send_tensors")
 
         resp = self._from_worker_ch.recv(timeout=None)
@@ -138,10 +137,7 @@ class ProtoClient:
 
         self.perf_timer.end_timings()
         self._num_its += 1
-        # logger.info(f"{self._rank} got to the barrier {self._num_its}")
         self._comm.Barrier()
-        # time.sleep(0.01)
-        # logger.info(f"{self._rank} made it past the barrier {self._num_its}")
         return result
 
     def set_model(self, key: str, model: bytes):
@@ -153,8 +149,6 @@ class ResNetWrapper:
         self._model = None  # torch.jit.load(model)
         self._name = name
 
-        # scripted = torch.jit.trace(self._model, self.get_batch())
-        # torch.jit.save(scripted, buffer)
         with open(model, "rb") as model_file:
             buffer = io.BytesIO(model_file.read())
         self._serialized_model = buffer.getvalue()
