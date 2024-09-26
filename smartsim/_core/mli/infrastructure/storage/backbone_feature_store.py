@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
 import enum
 import itertools
 import os
@@ -52,16 +51,6 @@ from smartsim.log import get_logger
 logger = get_logger(__name__)
 
 
-def byte_descriptor_to_string(descriptor: bytes) -> str:
-    return base64.b64encode(descriptor).decode("utf-8")
-
-
-def string_descriptor_to_byte(descriptor: str) -> bytes:
-    return base64.b64decode(descriptor.encode("utf-8"))
-
-
-# todo: did i create an arms race where a developer just grabs the backbone
-# and passes it wherever they need a FeatureStore?
 class BackboneFeatureStore(DragonFeatureStore):
     """A DragonFeatureStore wrapper with utility methods for accessing shared
     information stored in the MLI backbone feature store."""
@@ -184,11 +173,12 @@ class BackboneFeatureStore(DragonFeatureStore):
         cls,
         descriptor: str,
     ) -> "BackboneFeatureStore":
-        """A factory method that creates an instance from a descriptor string
+        """A factory method that creates an instance from a descriptor string.
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFeatureStore
-        :raises SmartSimError: if attachment to DragonFeatureStore fails"""
+        :raises SmartSimError: if attachment to DragonFeatureStore fails
+        """
         try:
             return BackboneFeatureStore(dragon_ddict.DDict.attach(descriptor), True)
         except Exception as ex:
@@ -199,11 +189,12 @@ class BackboneFeatureStore(DragonFeatureStore):
     def _check_wait_timeout(
         self, start_time: float, timeout: float, indicators: t.Dict[str, bool]
     ) -> None:
-        """Perform timeout verification
+        """Perform timeout verification.
 
         :param start_time: the start time to use for elapsed calculation
         :param timeout: the timeout (in seconds)
-        :param indicators: latest retrieval status for requested keys"""
+        :param indicators: latest retrieval status for requested keys
+        """
         elapsed = time.time() - start_time
         if timeout and elapsed > timeout:
             raise SmartSimError(
@@ -214,10 +205,10 @@ class BackboneFeatureStore(DragonFeatureStore):
         self, keys: t.List[str], timeout: float = _DEFAULT_WAIT_TIMEOUT
     ) -> t.Dict[str, t.Union[str, bytes, None]]:
         """Perform a blocking wait until all specified keys have been found
-        in the backbone
+        in the backbone.
 
         :param keys: The required collection of keys to retrieve
-        :param timeout: The maximum wait time in seconds. Overrides class level setting
+        :param timeout: The maximum wait time in seconds
         """
         if timeout < 0:
             timeout = self._DEFAULT_WAIT_TIMEOUT
@@ -255,7 +246,10 @@ class BackboneFeatureStore(DragonFeatureStore):
 
     def get_env(self) -> t.Dict[str, str]:
         """Returns a dictionary populated with environment variables necessary to
-        connect a process to the existing backbone instance."""
+        connect a process to the existing backbone instance.
+
+        :returns: The dictionary populated with env vars
+        """
         return {self.MLI_BACKBONE: self.descriptor}
 
 
@@ -263,7 +257,9 @@ class EventCategory(str, enum.Enum):
     """Predefined event types raised by SmartSim backend."""
 
     CONSUMER_CREATED: str = "consumer-created"
+    """Event category for an event raised when a new consumer is created"""
     FEATURE_STORE_WRITTEN: str = "feature-store-written"
+    """Event category for an event raised when a feature store key is written"""
 
 
 @dataclass
@@ -350,10 +346,11 @@ class EventProducer(t.Protocol):
     """Core API of a class that publishes events."""
 
     def send(self, event: EventBase, timeout: float = 0.001) -> int:
-        """The send operation.
+        """Send an event using the configured comm channel.
 
         :param event: The event to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
+        :returns: The number of messages that were sent
         """
 
 
@@ -366,15 +363,24 @@ class EventSender:
         backbone: BackboneFeatureStore,
         channel: t.Optional[CommChannelBase],
     ) -> None:
-        """Initialize the instance"""
+        """Initialize the instance.
+
+        :param backbone: The backbone feature store to use
+        :param channel: The comm channel to send events on
+        """
         self._backbone = backbone
         self._channel: t.Optional[CommChannelBase] = channel
 
     def send(self, event: EventBase, timeout: float = 0.001) -> int:
-        """The send operation"""
+        """Send an event using the configured comm channel.
+
+        :param event: The event to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :returns: The number of message copies that were sent
+        :raises: SmartSimError if the comm channel is not configured
+        """
         if self._channel is None:
-            # self._channel = self._channel_factory(event)
-            raise Exception("No channel to send on")
+            raise SmartSimError("No channel to send on")
         num_sent = 0
 
         logger.debug(f"Sending {event} to {self._channel.descriptor}")
@@ -431,8 +437,8 @@ class EventBroadcaster:
         """Places the event in the buffer to be sent once a consumer
         list is available.
 
-        :param event: The event to serialize and buffer
-        :raises ValueError: If the event cannot be serialized
+        :param event: The event to buffer
+        :raises ValueError: If the event cannot be buffered
         """
         try:
             self._event_buffer.append(event)
@@ -590,7 +596,7 @@ class EventConsumer:
 
     @property
     def descriptor(self) -> str:
-        """The descriptor of the underlying comm channel where events are received
+        """The descriptor of the underlying comm channel.
 
         :returns: The comm channel descriptor"""
         return self._comm_channel.descriptor
@@ -670,7 +676,7 @@ class EventConsumer:
         return events_received
 
     def register(self) -> None:
-        """Send an event to register this consumer as a listener"""
+        """Send an event to register this consumer as a listener."""
         descriptor = self._comm_channel.descriptor
         event = OnCreateConsumer(descriptor, self._global_filters)
 
@@ -690,7 +696,14 @@ class EventConsumer:
             logger.warning("Unable to register. No registrar channel found.")
 
     def listen_once(self, timeout: float = 0.001) -> None:
-        """Function to handle incoming events"""
+        """Receives messages for the consumer a single time.
+
+        NOTE: Executes a single batch-retrieval to receive the maximum
+        number of messages available under batch timeout. To continually
+        listen, use `listen` in a non-blocking thread/process
+
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        """
         logger.debug(f"Starting event listener with {timeout} second timeout")
         logger.debug("Awaiting new messages")
 
