@@ -101,7 +101,7 @@ class WorkerManager(Service):
         information among MLI components"""
         self._device_manager: t.Optional[DeviceManager] = None
         """Object responsible for model caching and device access"""
-        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="w_", debug=True, timing_on=True)
         """Performance timer"""
         self._processed_batches: int = 0
         """Number of processed request batches"""
@@ -312,17 +312,20 @@ class WorkerManager(Service):
                 self._perf_timer.measure_time("serialize_resp")
 
                 if request.callback:
-                    request.callback.send(serialized_resp)
-                    if reply.has_outputs:
-                        # send tensor data after response
-                        for output in reply.outputs:
-                            request.callback.send(output)
+                    try:
+                        request.callback.send(serialized_resp)
+                        if reply.has_outputs:
+                            # send tensor data after response
+                            for output in reply.outputs:
+                                request.callback.send(output, timeout=None)
+                    except Exception as e:
+                        exception_handler(
+                            e, request.callback, "Error while sending response."
+                        )
+                        continue
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()
-
-        # if self._perf_timer.max_length == 1600:
-        #     self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
         """Determine if the service can be shutdown.

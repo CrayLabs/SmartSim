@@ -235,7 +235,7 @@ class RequestDispatcher(Service):
             raise SmartSimError("No incoming channel for dispatcher")
         self._incoming_channel = incoming_channel
         """The channel the dispatcher monitors for new tasks"""
-        self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
+        self._outgoing_queue: DragonQueue = mp.Queue(maxsize=10000)
         """The queue on which batched inference requests are placed"""
         self._feature_stores: t.Dict[str, FeatureStore] = {}
         """A collection of attached feature stores"""
@@ -250,7 +250,7 @@ class RequestDispatcher(Service):
         """The worker used to batch inputs"""
         self._mem_pool = MemoryPool.attach(dragon_gs_pool.create(mem_pool_size).sdesc)
         """Memory pool used to share batched input tensors with the Worker Managers"""
-        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=True, timing_on=True)
         """Performance timer"""
 
     @property
