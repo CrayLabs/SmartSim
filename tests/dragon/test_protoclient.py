@@ -144,7 +144,6 @@ def test_protoclient_timeout(
         elapsed = time.time() - start_time
         logger.info(f"ProtoClient timeout occurred in {elapsed} seconds")
 
-        # todo: should this trigger any wait if the backbone is set above?
         # confirm that we met our timeout
         assert (
             elapsed >= backbone_timeout

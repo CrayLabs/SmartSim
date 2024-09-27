@@ -56,8 +56,6 @@ class DragonFeatureStore(FeatureStore):
         else:
             descriptor = "not-set"
 
-        # todo: follow up and ensure this descriptor is also encoded/decoded
-        # in a string-safe way here & in `from_descriptor`
         super().__init__(descriptor)
         self._storage: t.Dict[str, t.Union[str, bytes]] = storage
 

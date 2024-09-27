@@ -43,7 +43,7 @@ logger = get_logger(__name__)
 
 @pytest.fixture(scope="module")
 def the_storage() -> dragon_ddict.DDict:
-    """Verify that a descriptor is created."""
+    """Fixture to instantiate a dragon distributed dictionary."""
     return dragon_util.create_ddict(1, 2, 3 * 1024**2)
 
 
