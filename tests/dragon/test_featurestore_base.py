@@ -133,10 +133,7 @@ def test_mli_reserved_keys_writes() -> None:
 
 def test_mli_consumers_read_by_key() -> None:
     """Verify that the value returned from the mli consumers method is written
-    to the correct key and reads are allowed via standard dragon feature store.
-    
-    NOTE: should reserved reads also be blocked
-    """
+    to the correct key and reads are allowed via standard dragon feature store."""
 
     mock_storage = {}
     dfs = DragonFeatureStore(mock_storage)

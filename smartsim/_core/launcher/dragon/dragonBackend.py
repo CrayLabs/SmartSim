@@ -81,8 +81,6 @@ from ....status import TERMINAL_STATUSES, SmartSimStatus
 logger = get_logger(__name__)
 
 
-# TODO: create ticket for follow-up task to replace defunct
-# dragon_group_state.Running() & .Error()
 class DragonStatus(str, Enum):
     ERROR = "Error"
     RUNNING = "Running"

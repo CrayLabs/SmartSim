@@ -71,20 +71,14 @@ pytestmark = pytest.mark.dragon
 
 @pytest.fixture(scope="module")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
-    """Fixture to instantiate a dragon distributed dictionary.
-
-    NOTE: using module scoped fixtures drastically improves test run-time
-    """
+    """Fixture to instantiate a dragon distributed dictionary."""
     return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
 
 
 @pytest.fixture(scope="module")
 def the_worker_channel() -> DragonFLIChannel:
     """Fixture to create a valid descriptor for a worker channel
-    that can be attached to. Does not modify environment vars.
-
-    NOTE: using module scoped fixtures drastically improves test run-time
-    """
+    that can be attached to. Does not modify environment vars."""
     channel_ = create_local()
     fli_ = fli.FLInterface(main_ch=channel_, manager_ch=None)
     comm_channel = DragonFLIChannel(fli_, True)
@@ -100,7 +94,6 @@ def the_backbone(
 
     :param storage_for_dragon_fs: the dragon storage engine to use
     :param the_worker_channel: a pre-configured worker channel
-    NOTE: using module scoped fixtures drastically improves test run-time
     """
 
     backbone = BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)

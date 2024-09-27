@@ -84,10 +84,7 @@ pytestmark = pytest.mark.dragon
 @pytest.fixture(scope="module")
 def the_worker_channel() -> DragonFLIChannel:
     """Fixture to create a valid descriptor for a worker channel
-    that can be attached to.
-
-    NOTE: using module scoped fixtures drastically improves test run-time
-    """
+    that can be attached to."""
     channel_ = create_local()
     fli_ = FLInterface(main_ch=channel_, manager_ch=None)
     comm_channel = DragonFLIChannel(fli_, True)

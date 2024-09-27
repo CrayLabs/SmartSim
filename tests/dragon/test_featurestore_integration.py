@@ -60,20 +60,14 @@ pytestmark = pytest.mark.dragon
 
 @pytest.fixture(scope="module")
 def storage_for_dragon_fs() -> t.Dict[str, str]:
-    """Fixture to instantiate a dragon distributed dictionary.
-
-    NOTE: using module scoped fixtures drastically improves test run-time
-    """
+    """Fixture to instantiate a dragon distributed dictionary."""
     return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
 
 
 @pytest.fixture(scope="module")
 def the_worker_channel() -> DragonCommChannel:
     """Fixture to create a valid descriptor for a worker channel
-    that can be attached to.
-
-    NOTE: using module scoped fixtures drastically improves test run-time
-    """
+    that can be attached to."""
     wmgr_channel_ = create_local()
     wmgr_channel = DragonCommChannel(wmgr_channel_)
     return wmgr_channel
@@ -84,7 +78,7 @@ def the_backbone(storage_for_dragon_fs: t.Any) -> BackboneFeatureStore:
     """Fixture to create a distributed dragon dictionary and wrap it
     in a BackboneFeatureStore.
 
-    NOTE: using module scoped fixtures drastically improves test run-time
+    :param storage_for_dragon_fs: The dragon storage engine to use
     """
     return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
@@ -95,10 +89,10 @@ def test_eventconsumer_eventpublisher_integration(
     """Verify that the publisher and consumer integrate as expected when
     multiple publishers and consumers are sending simultaneously. This
     test closely tracks the test in tests/test_featurestore.py also named
-    test_eventconsumer_eventpublisher_integration but requires dragon entities
+    test_eventconsumer_eventpublisher_integration but requires dragon entities.
 
-    :param storage_for_dragon_fs: the dragon storage engine to use
-    :param test_dir: pytest fixture automatically generating unique working
+    :param storage_for_dragon_fs: The dragon storage engine to use
+    :param test_dir: Automatically generated unique working
     directories for individual test outputs
     """
 

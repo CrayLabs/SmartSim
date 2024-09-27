@@ -91,7 +91,6 @@ class ProtoClient:
 
         :returns: The attached backbone featurestore
         """
-        # todo: ensure this env var from config loader or constant
         descriptor = os.environ.get(BackboneFeatureStore.MLI_BACKBONE, None)
         if descriptor is None or not descriptor:
             raise SmartSimError(
@@ -154,7 +153,7 @@ class ProtoClient:
         :raises: SmartSimError if unable to attach to a backbone featurestore
         """
         if MPI is not None:
-            # todo: determine a way to make MPI work in the test environment
+            # TODO: determine a way to make MPI work in the test environment
             #  - consider catching the import exception and defaulting rank to 0
             comm = MPI.COMM_WORLD
             rank: int = comm.Get_rank()
