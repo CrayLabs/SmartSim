@@ -31,7 +31,6 @@ import pytest
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.infrastructure.control.worker_manager import build_failure_reply
-from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status

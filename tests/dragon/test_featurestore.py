@@ -34,6 +34,8 @@ import uuid
 
 import pytest
 
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
+
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
@@ -50,7 +52,6 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     time as bbtime,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_feature_store import dragon_ddict
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -70,9 +71,9 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture(scope="module")
-def storage_for_dragon_fs() -> t.Dict[str, str]:
+def the_storage() -> t.Dict[str, str]:
     """Fixture to instantiate a dragon distributed dictionary."""
-    return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
+    return create_ddict(1, 2, 4 * 1024**2)
 
 
 @pytest.fixture(scope="module")
@@ -87,16 +88,16 @@ def the_worker_channel() -> DragonFLIChannel:
 
 @pytest.fixture(scope="module")
 def the_backbone(
-    storage_for_dragon_fs: t.Any, the_worker_channel: DragonFLIChannel
+    the_storage: t.Any, the_worker_channel: DragonFLIChannel
 ) -> BackboneFeatureStore:
     """Fixture to create a distributed dragon dictionary and wrap it
     in a BackboneFeatureStore.
 
-    :param storage_for_dragon_fs: the dragon storage engine to use
-    :param the_worker_channel: a pre-configured worker channel
+    :param the_storage: The dragon storage engine to use
+    :param the_worker_channel: Pre-configured worker channel
     """
 
-    backbone = BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
+    backbone = BackboneFeatureStore(the_storage, allow_reserved_writes=True)
     backbone[BackboneFeatureStore.MLI_WORKER_QUEUE] = the_worker_channel.descriptor
 
     return backbone

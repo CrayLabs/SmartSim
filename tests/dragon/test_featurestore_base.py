@@ -59,12 +59,6 @@ WORK_QUEUE_KEY = "_SMARTSIM_REQUEST_QUEUE"
 RANDOMLY_SET_KEY = "_SOMETHING_ELSE"
 
 
-@pytest.fixture
-def storage_for_dragon_fs_with_req_queue() -> t.Dict[str, str]:
-    storage = {WORK_QUEUE_KEY: "12345", RANDOMLY_SET_KEY: "67890"}
-    return storage
-
-
 def boom(*args, **kwargs) -> None:
     """Helper function that blows up when used to mock up
     some other function."""

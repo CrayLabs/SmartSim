@@ -25,16 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import typing as t
-import unittest.mock as mock
 
 import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from dragon.channels import Channel
-from dragon.data.ddict.ddict import DDict
-from dragon.fli import DragonFLIError, FLInterface
 
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel

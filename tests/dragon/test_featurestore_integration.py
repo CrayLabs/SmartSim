@@ -43,7 +43,10 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     OnCreateConsumer,
     OnWriteFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_feature_store import dragon_ddict
+from smartsim._core.mli.infrastructure.storage.dragon_util import (
+    create_ddict,
+    dragon_ddict,
+)
 
 # isort: off
 from dragon.channels import Channel
@@ -59,9 +62,9 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture(scope="module")
-def storage_for_dragon_fs() -> t.Dict[str, str]:
+def the_storage() -> dragon_ddict.DDict:
     """Fixture to instantiate a dragon distributed dictionary."""
-    return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
+    return create_ddict(1, 2, 32 * 1024**2)
 
 
 @pytest.fixture(scope="module")
@@ -74,29 +77,29 @@ def the_worker_channel() -> DragonCommChannel:
 
 
 @pytest.fixture(scope="module")
-def the_backbone(storage_for_dragon_fs: t.Any) -> BackboneFeatureStore:
+def the_backbone(the_storage: t.Any) -> BackboneFeatureStore:
     """Fixture to create a distributed dragon dictionary and wrap it
     in a BackboneFeatureStore.
 
-    :param storage_for_dragon_fs: The dragon storage engine to use
+    :param the_storage: The dragon storage engine to use
     """
-    return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
+    return BackboneFeatureStore(the_storage, allow_reserved_writes=True)
 
 
 def test_eventconsumer_eventpublisher_integration(
-    storage_for_dragon_fs: t.Any, test_dir: str
+    the_storage: t.Any, test_dir: str
 ) -> None:
     """Verify that the publisher and consumer integrate as expected when
     multiple publishers and consumers are sending simultaneously. This
     test closely tracks the test in tests/test_featurestore.py also named
     test_eventconsumer_eventpublisher_integration but requires dragon entities.
 
-    :param storage_for_dragon_fs: The dragon storage engine to use
+    :param the_storage: The dragon storage engine to use
     :param test_dir: Automatically generated unique working
     directories for individual test outputs
     """
 
-    mock_storage = storage_for_dragon_fs
+    mock_storage = the_storage
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
 
     # verify ability to write and read from ddict
@@ -190,7 +193,7 @@ def test_eventconsumer_max_dequeue(
     :param num_events: Total number of events to raise in the test
     :param batch_timeout: Maximum wait time (in seconds) for a message to be sent
     :param max_batches_expected: Maximum number of receives that should occur
-    :param storage_for_dragon_fs: Dragon storage engine to use
+    :param the_storage: Dragon storage engine to use
     """
 
     # create some consumers to receive messages
@@ -270,16 +273,16 @@ def test_eventconsumer_max_dequeue(
 )
 def test_channel_buffer_size(
     buffer_size: int,
-    storage_for_dragon_fs: t.Any,
+    the_storage: t.Any,
 ) -> None:
     """Verify that a channel used by an EventBroadcaster can buffer messages
     until a configured maximum value is exceeded.
 
-    :param buffer_size: the maximum number of messages allowed in a channel buffer
-    :param storage_for_dragon_fs: the dragon storage engine to use
+    :param buffer_size: Maximum number of messages allowed in a channel buffer
+    :param the_storage: The dragon storage engine to use
     """
 
-    mock_storage = storage_for_dragon_fs
+    mock_storage = the_storage
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
 
     wmgr_channel_ = create_local(buffer_size)  # <--- vary buffer size

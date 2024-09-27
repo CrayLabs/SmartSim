@@ -32,6 +32,10 @@ import dragon.data.ddict.ddict as dragon_ddict
 
 # isort: on
 
+from smartsim._core.mli.infrastructure.storage.dragon_util import (
+    ddict_to_descriptor,
+    descriptor_to_ddict,
+)
 from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim.error import SmartSimError
 from smartsim.log import get_logger
@@ -48,7 +52,7 @@ class DragonFeatureStore(FeatureStore):
         :param storage: A distributed dictionary to be used as the underlying
         storage mechanism of the feature store"""
         if isinstance(storage, dragon_ddict.DDict):
-            descriptor = str(storage.serialize())
+            descriptor = ddict_to_descriptor(storage)
         else:
             descriptor = "not-set"
 
@@ -99,7 +103,8 @@ class DragonFeatureStore(FeatureStore):
         """
         try:
             logger.debug(f"Attaching to FeatureStore with descriptor: {descriptor}")
-            return cls(dragon_ddict.DDict.attach(descriptor))
+            storage = descriptor_to_ddict(descriptor)
+            return cls(storage)
         except Exception as ex:
             raise SmartSimError(
                 f"Error creating dragon feature store from descriptor: {descriptor}"

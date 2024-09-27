@@ -37,7 +37,7 @@ from tabulate import tabulate
 
 # pylint: disable=import-error,C0302,R0915
 # isort: off
-import dragon.data.ddict.ddict as dragon_ddict
+
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
@@ -56,6 +56,7 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     EventConsumer,
     OnCreateConsumer,
 )
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 
 # pylint: enable=import-error
 # isort: on
@@ -156,6 +157,10 @@ class DragonBackend:
     and will only be called by the Dragon entry-point script or
     by threads spawned by it.
     """
+
+    _DEFAULT_NUM_MGR_PER_NODE = 2
+    _DEFAULT_MEM_PER_NODE = 256 * 1024**2
+    """The default memory capacity to allocate for a feaure store node (in megabytes)"""
 
     def __init__(self, pid: int) -> None:
         self._pid = pid
@@ -553,11 +558,12 @@ class DragonBackend:
         :returns: The descriptor of the backbone feature store
         """
         if self._backbone is None:
-            logger.info("Creating backbone storage DDict")
-            backbone_storage = dragon_ddict.DDict(
-                n_nodes=len(self._hosts), total_mem=len(self._hosts) * 1024**3
-            )  # todo: parametrize
-            logger.info("Created backbone storage DDict")
+            backbone_storage = create_ddict(
+                len(self._hosts),
+                self._DEFAULT_NUM_MGR_PER_NODE,
+                self._DEFAULT_MEM_PER_NODE,
+            )
+
             self._backbone = BackboneFeatureStore(
                 backbone_storage, allow_reserved_writes=True
             )

@@ -31,6 +31,8 @@ import time
 
 import pytest
 
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
+
 torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
@@ -39,7 +41,6 @@ import multiprocessing as mp
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
 )
-from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import OutputDescriptor
 
 try:
     mp.set_start_method("dragon")
@@ -48,10 +49,8 @@ except Exception:
 
 import os
 
-import dragon.channels as dch
 import torch.nn as nn
 from dragon import fli
-from dragon.data.ddict.ddict import DDict
 
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
@@ -256,14 +255,9 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
 
     mgr_per_node = 1
     num_nodes = 2
-    mem_per_node = 1024**3
-    total_mem = num_nodes * mem_per_node
+    mem_per_node = 128 * 1024**2
 
-    storage = DDict(
-        managers_per_node=mgr_per_node,
-        n_nodes=num_nodes,
-        total_mem=total_mem,
-    )
+    storage = create_ddict(num_nodes, mgr_per_node, mem_per_node)
     backbone = BackboneFeatureStore(storage, allow_reserved_writes=True)
 
     to_worker_channel = create_local()

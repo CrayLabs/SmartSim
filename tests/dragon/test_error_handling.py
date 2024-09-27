@@ -29,6 +29,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
+
 dragon = pytest.importorskip("dragon")
 
 import multiprocessing as mp
@@ -82,6 +84,12 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture(scope="module")
+def the_storage() -> DDict:
+    """Fixture to instantiate a dragon distributed dictionary."""
+    return create_ddict(1, 2, 4 * 1024**2)
+
+
+@pytest.fixture(scope="module")
 def the_worker_channel() -> DragonFLIChannel:
     """Fixture to create a valid descriptor for a worker channel
     that can be attached to."""
@@ -92,17 +100,17 @@ def the_worker_channel() -> DragonFLIChannel:
 
 
 @pytest.fixture(scope="module")
-def backbone_descriptor() -> str:
+def backbone_descriptor(the_storage) -> str:
     # create a shared backbone featurestore
-    feature_store = DragonFeatureStore(DDict())
+    feature_store = DragonFeatureStore(the_storage)
     return feature_store.descriptor
 
 
 @pytest.fixture(scope="module")
-def app_feature_store() -> FeatureStore:
+def app_feature_store(the_storage) -> FeatureStore:
     # create a standalone feature store to mimic a user application putting
     # data into an application-owned resource (app should not access backbone)
-    app_fs = DragonFeatureStore(DDict())
+    app_fs = DragonFeatureStore(the_storage)
     return app_fs
 
 

@@ -68,6 +68,7 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim.log import get_logger
 
@@ -85,9 +86,15 @@ except Exception:
     pass
 
 
+@pytest.fixture(scope="module")
+def the_storage() -> DDict:
+    """Fixture to instantiate a dragon distributed dictionary."""
+    return create_ddict(1, 2, 4 * 1024**2)
+
+
 @pytest.mark.parametrize("num_iterations", [4])
 def test_request_dispatcher(
-    msg_pump_factory: _MsgPumpFactory, num_iterations: int
+    msg_pump_factory: _MsgPumpFactory, num_iterations: int, the_storage: DDict
 ) -> None:
     """Test the request dispatcher batching and queueing system
 
@@ -99,8 +106,7 @@ def test_request_dispatcher(
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
     to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli, sender_supplied=True)
 
-    ddict = DDict(1, 2, 4 * 1024**2)
-    backbone_fs = BackboneFeatureStore(ddict, allow_reserved_writes=True)
+    backbone_fs = BackboneFeatureStore(the_storage, allow_reserved_writes=True)
 
     # NOTE: env vars should be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue

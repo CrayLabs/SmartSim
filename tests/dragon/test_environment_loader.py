@@ -28,8 +28,8 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
+import dragon.data.ddict.ddict as dragon_ddict
 import dragon.utils as du
-from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
@@ -39,10 +39,17 @@ from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConf
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim.error.errors import SmartSimError
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
+
+
+@pytest.fixture(scope="module")
+def the_storage() -> dragon_ddict.DDict:
+    """Fixture to instantiate a dragon distributed dictionary."""
+    return create_ddict(1, 2, 4 * 1024**2)
 
 
 @pytest.mark.parametrize(
@@ -107,10 +114,12 @@ def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
         config.get_queue()
 
 
-def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
+def test_environment_loader_backbone_load_dfs(
+    monkeypatch: pytest.MonkeyPatch, the_storage: dragon_ddict.DDict
+):
     """Verify the dragon feature store is loaded correctly by the
     EnvironmentConfigLoader to demonstrate featurestore_factory correctness."""
-    feature_store = DragonFeatureStore(DDict())
+    feature_store = DragonFeatureStore(the_storage)
     monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", feature_store.descriptor)
 
     config = EnvironmentConfigLoader(
