@@ -11,7 +11,7 @@ Jump to:
 
 ### 0.8.0
 
-Released on 25 September, 2024
+Released on 27 September, 2024
 
 Description
 
@@ -57,8 +57,12 @@ Detailed Notes
 - Versions for each of these packages are no longer specified in an
   internal class. Instead a default set of JSON files specifies the
   sources and versions. Users can specify their own custom specifications
-  at smart build time
+  at smart build time.
   ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Because all build configuration has been moved to static files and all
+  backends are compiled during `smart build`, SmartSim can now be shipped as a
+  pure python wheel.
+  ([SmartSim-PR728](https://github.com/CrayLabs/SmartSim/pull/728))
 - Two new Dockerfiles are now provided (one each for 11.8 and 12.1) that
   can be used to build a container to run the tutorials. No HPC support
   should be expected at this time
