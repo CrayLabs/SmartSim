@@ -28,4 +28,3 @@ from .application import Application
 from .dbnode import FSNode
 from .dbobject import *
 from .entity import SmartSimEntity, TelemetryConfiguration
-from .files import TaggedFilesHierarchy
