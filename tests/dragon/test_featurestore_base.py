@@ -67,12 +67,12 @@ def storage_for_dragon_fs_with_req_queue() -> t.Dict[str, str]:
 
 def boom(*args, **kwargs) -> None:
     """Helper function that blows up when used to mock up
-    some other function"""
+    some other function."""
     raise Exception(f"you shall not pass! {args}, {kwargs}")
 
 
 def test_event_uid() -> None:
-    """Verify that all events include a unique identifier"""
+    """Verify that all events include a unique identifier."""
     uids: t.Set[str] = set()
     num_iters = 1000
 
@@ -90,7 +90,7 @@ def test_event_uid() -> None:
 
 def test_mli_reserved_keys_conversion() -> None:
     """Verify that conversion from a string to an enum member
-    works as expected"""
+    works as expected."""
 
     for reserved_key in ReservedKeys:
         # iterate through all keys and verify `from_string` works
@@ -103,7 +103,7 @@ def test_mli_reserved_keys_conversion() -> None:
 
 def test_mli_reserved_keys_writes() -> None:
     """Verify that attempts to write to reserved keys are blocked from a
-    standard DragonFeatureStore but enabled with the BackboneFeatureStore"""
+    standard DragonFeatureStore but enabled with the BackboneFeatureStore."""
 
     mock_storage = {}
     dfs = DragonFeatureStore(mock_storage)
@@ -132,10 +132,11 @@ def test_mli_reserved_keys_writes() -> None:
 
 
 def test_mli_consumers_read_by_key() -> None:
-    """Verify that the value returned from the mli consumers
-    method is written to the correct key and reads are
-    allowed via standard dragon feature store.
-    NOTE: should reserved reads also be blocked"""
+    """Verify that the value returned from the mli consumers method is written
+    to the correct key and reads are allowed via standard dragon feature store.
+    
+    NOTE: should reserved reads also be blocked
+    """
 
     mock_storage = {}
     dfs = DragonFeatureStore(mock_storage)
@@ -154,7 +155,7 @@ def test_mli_consumers_read_by_key() -> None:
 
 def test_mli_consumers_read_by_backbone() -> None:
     """Verify that the backbone reads the correct location
-    when using the backbone feature store API instead of mapping API"""
+    when using the backbone feature store API instead of mapping API."""
 
     mock_storage = {}
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
@@ -168,7 +169,7 @@ def test_mli_consumers_read_by_backbone() -> None:
 
 def test_mli_consumers_write_by_backbone() -> None:
     """Verify that the backbone writes the correct location
-    when using the backbone feature store API instead of mapping API"""
+    when using the backbone feature store API instead of mapping API."""
 
     mock_storage = {}
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
@@ -182,10 +183,11 @@ def test_mli_consumers_write_by_backbone() -> None:
 
 def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
     """Verify that a broadcast operation without any registered subscribers
-    succeeds without raising Exceptions
+    succeeds without raising Exceptions.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
     consumer_descriptor = storage_path / "test-consumer"
@@ -217,10 +219,11 @@ def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
 
 def test_eventpublisher_broadcast_to_empty_consumer_list(test_dir: str) -> None:
     """Verify that a broadcast operation without any registered subscribers
-    succeeds without raising Exceptions
+    succeeds without raising Exceptions.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -249,10 +252,11 @@ def test_eventpublisher_broadcast_to_empty_consumer_list(test_dir: str) -> None:
 
 def test_eventpublisher_broadcast_without_channel_factory(test_dir: str) -> None:
     """Verify that a broadcast operation reports an error if no channel
-    factory was supplied for constructing the consumer channels
+    factory was supplied for constructing the consumer channels.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -277,10 +281,11 @@ def test_eventpublisher_broadcast_without_channel_factory(test_dir: str) -> None
 
 def test_eventpublisher_broadcast_empties_buffer(test_dir: str) -> None:
     """Verify that a successful broadcast clears messages from the event
-    buffer when a new message is sent and consumers are registered
+    buffer when a new message is sent and consumers are registered.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -363,10 +368,11 @@ def test_eventpublisher_broadcast_returns_total_sent(
 
 
 def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
-    """Verify that any unused consumers are pruned each time a new event is sent
+    """Verify that any unused consumers are pruned each time a new event is sent.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -429,12 +435,13 @@ def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
 def test_eventpublisher_serialize_failure(
     test_dir: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Verify that errors during message serialization are raised to the caller
+    """Verify that errors during message serialization are raised to the caller.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param monkeypatch: pytest fixture for modifying behavior of existing code
-    with mock implementations"""
+    with mock implementations
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -470,12 +477,13 @@ def test_eventpublisher_serialize_failure(
 def test_eventpublisher_factory_failure(
     test_dir: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Verify that errors during channel construction are raised to the caller
+    """Verify that errors during channel construction are raised to the caller.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param monkeypatch: pytest fixture for modifying behavior of existing code
-    with mock implementations"""
+    with mock implementations
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -504,12 +512,13 @@ def test_eventpublisher_factory_failure(
 
 def test_eventpublisher_failure(test_dir: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that unexpected errors during message send are caught and wrapped in a
-    SmartSimError so they are not propagated directly to the caller
+    SmartSimError so they are not propagated directly to the caller.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param monkeypatch: pytest fixture for modifying behavior of existing code
-    with mock implementations"""
+    with mock implementations
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -544,10 +553,11 @@ def test_eventpublisher_failure(test_dir: str, monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_eventconsumer_receive(test_dir: str) -> None:
-    """Verify that a consumer retrieves a message from the given channel
+    """Verify that a consumer retrieves a message from the given channel.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -575,12 +585,13 @@ def test_eventconsumer_receive(test_dir: str) -> None:
 
 @pytest.mark.parametrize("num_sent", [0, 1, 2, 4, 8, 16])
 def test_eventconsumer_receive_multi(test_dir: str, num_sent: int) -> None:
-    """Verify that a consumer retrieves multiple message from the given channel
+    """Verify that a consumer retrieves multiple message from the given channel.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param num_sent: parameterized value used to vary the number of events
-    that are enqueued and validations are checked at multiple queue sizes"""
+    that are enqueued and validations are checked at multiple queue sizes
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -605,10 +616,11 @@ def test_eventconsumer_receive_multi(test_dir: str, num_sent: int) -> None:
 
 def test_eventconsumer_receive_empty(test_dir: str) -> None:
     """Verify that a consumer receiving an empty message ignores the
-    message and continues processing
+    message and continues processing.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -636,7 +648,8 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     multiple publishers and consumers are sending simultaneously.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -722,7 +735,8 @@ def test_eventconsumer_batch_timeout(
 
     :param invalid_timeout: any invalid timeout that should fail validation
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -758,8 +772,12 @@ def test_eventconsumer_batch_timeout(
 def test_backbone_wait_timeout(wait_timeout: float, exp_wait_max: float) -> None:
     """Verify that attempts to attach to the worker queue from the protoclient
     timeout in an appropriate amount of time. Note: due to the backoff, we verify
-    the elapsed time is less than the 15s of a cycle of waits
+    the elapsed time is less than the 15s of a cycle of waits.
 
+    :param wait_timeout: Maximum amount of time (in seconds) to allow the backbone
+    to wait for the requested value to exist
+    :param exp_wait_max: Maximum amount of time (in seconds) to set as the upper
+    bound to allow the delays with backoff to occur
     :param storage_for_dragon_fs: the dragon storage engine to use
     """
 

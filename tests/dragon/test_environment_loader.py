@@ -53,7 +53,7 @@ pytestmark = pytest.mark.dragon
     ],
 )
 def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.MonkeyPatch):
-    """A descriptor can be stored, loaded, and reattached"""
+    """A descriptor can be stored, loaded, and reattached."""
     chan = create_local()
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
@@ -76,7 +76,7 @@ def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.Monke
 
 def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
     """The serialized descriptors of a loaded and unloaded
-    queue are the same"""
+    queue are the same."""
     chan = create_local()
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
@@ -93,7 +93,7 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
-    """An incorrect serialized descriptor will fails to attach"""
+    """An incorrect serialized descriptor will fails to attach."""
 
     monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", "randomstring")
 
@@ -109,7 +109,7 @@ def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
 
 def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
     """Verify the dragon feature store is loaded correctly by the
-    EnvironmentConfigLoader to demonstrate featurestore_factory correctness"""
+    EnvironmentConfigLoader to demonstrate featurestore_factory correctness."""
     feature_store = DragonFeatureStore(DDict())
     monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", feature_store.descriptor)
 
@@ -127,7 +127,7 @@ def test_environment_loader_backbone_load_dfs(monkeypatch: pytest.MonkeyPatch):
 
 def test_environment_variables_not_set(monkeypatch: pytest.MonkeyPatch):
     """EnvironmentConfigLoader getters return None when environment
-    variables are not set"""
+    variables are not set."""
     with monkeypatch.context() as patch:
         patch.setenv("_SMARTSIM_INFRA_BACKBONE", "")
         patch.setenv("_SMARTSIM_REQUEST_QUEUE", "")

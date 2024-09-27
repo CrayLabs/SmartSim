@@ -81,7 +81,7 @@ def storage_for_dragon_fs() -> t.Dict[str, str]:
 @pytest.fixture(scope="module")
 def the_worker_channel() -> DragonFLIChannel:
     """Fixture to create a valid descriptor for a worker channel
-    that can be attached to.
+    that can be attached to. Does not modify environment vars.
 
     NOTE: using module scoped fixtures drastically improves test run-time
     """
@@ -98,6 +98,8 @@ def the_backbone(
     """Fixture to create a distributed dragon dictionary and wrap it
     in a BackboneFeatureStore.
 
+    :param storage_for_dragon_fs: the dragon storage engine to use
+    :param the_worker_channel: a pre-configured worker channel
     NOTE: using module scoped fixtures drastically improves test run-time
     """
 
@@ -113,9 +115,9 @@ def test_eventconsumer_eventpublisher_integration(
     """Verify that the publisher and consumer integrate as expected when
     multiple publishers and consumers are sending simultaneously. This
     test closely tracks the test in tests/test_featurestore.py also named
-    test_eventconsumer_eventpublisher_integration but requires dragon entities
+    test_eventconsumer_eventpublisher_integration but requires dragon entities.
 
-    :param storage_for_dragon_fs: the dragon storage engine to use
+    :param the_backbone: the dragon storage engine to use
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     """
@@ -197,9 +199,9 @@ def test_backbone_wait_for_no_keys(
 ) -> None:
     """Verify that asking the backbone to wait for a value succeeds
     immediately and does not cause a wait to occur if the supplied key
-    list is empty
+    list is empty.
 
-    :param storage_for_dragon_fs: the storage engine to use, prepopulated with
+    :param the_backbone: the storage engine to use, prepopulated with
     """
     # set a very low timeout to confirm that it does not wait
 
@@ -218,9 +220,9 @@ def test_backbone_wait_for_prepopulated(
     the_backbone: BackboneFeatureStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Verify that asking the backbone to wait for a value succeed
-    immediately and do not cause a wait to occur if the data exists
+    immediately and do not cause a wait to occur if the data exists.
 
-    :param storage_for_dragon_fs: the storage engine to use, prepopulated with
+    :param the_backbone: the storage engine to use, prepopulated with
     """
     # set a very low timeout to confirm that it does not wait
 
@@ -244,9 +246,9 @@ def test_backbone_wait_for_prepopulated_dupe(
     the_backbone: BackboneFeatureStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Verify that asking the backbone to wait for keys that are duplicated
-    results in a single value being returned for each key
+    results in a single value being returned for each key.
 
-    :param storage_for_dragon_fs: the storage engine to use, prepopulated with
+    :param the_backbone: the storage engine to use, prepopulated with
     """
     # set a very low timeout to confirm that it does not wait
 
@@ -278,6 +280,7 @@ def set_value_after_delay(
     :param descriptor: the backbone feature store descriptor to attach to
     :param key: the key to write to
     :param value: a value to write to the key
+    :param delay: amount of delay to apply before writing the key
     """
     time.sleep(delay)
 
@@ -325,9 +328,9 @@ def test_backbone_wait_for_partial_prepopulated(
     the_backbone: BackboneFeatureStore, delay: float
 ) -> None:
     """Verify that when data is not all in the backbone, the `wait_for` operation
-    continues to poll until it finds everything it needs
+    continues to poll until it finds everything it needs.
 
-    :param storage_for_dragon_fs: the storage engine to use, prepopulated with
+    :param the_backbone: the storage engine to use, prepopulated with
     :param delay: the number of seconds the second process will wait before
     setting the target value in the backbone featurestore
     """
@@ -409,9 +412,9 @@ def test_backbone_wait_for_multikey(
     test_dir: str,
 ) -> None:
     """Verify that asking the backbone to wait for multiple keys results
-    in that number of values being returned
+    in that number of values being returned.
 
-    :param storage_for_dragon_fs: the storage engine to use, prepopulated with
+    :param the_backbone: the storage engine to use, prepopulated with
     :param num_keys: the number of extra keys to set & request in the backbone
     """
     # maximum delay allowed for setter processes

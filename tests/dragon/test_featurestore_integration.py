@@ -62,7 +62,8 @@ pytestmark = pytest.mark.dragon
 def storage_for_dragon_fs() -> t.Dict[str, str]:
     """Fixture to instantiate a dragon distributed dictionary.
 
-    NOTE: using module scoped fixtures drastically improves test run-time"""
+    NOTE: using module scoped fixtures drastically improves test run-time
+    """
     return dragon_ddict.DDict(1, 2, total_mem=2 * 1024**3)
 
 
@@ -71,7 +72,8 @@ def the_worker_channel() -> DragonCommChannel:
     """Fixture to create a valid descriptor for a worker channel
     that can be attached to.
 
-    NOTE: using module scoped fixtures drastically improves test run-time"""
+    NOTE: using module scoped fixtures drastically improves test run-time
+    """
     wmgr_channel_ = create_local()
     wmgr_channel = DragonCommChannel(wmgr_channel_)
     return wmgr_channel
@@ -82,7 +84,8 @@ def the_backbone(storage_for_dragon_fs: t.Any) -> BackboneFeatureStore:
     """Fixture to create a distributed dragon dictionary and wrap it
     in a BackboneFeatureStore.
 
-    NOTE: using module scoped fixtures drastically improves test run-time"""
+    NOTE: using module scoped fixtures drastically improves test run-time
+    """
     return BackboneFeatureStore(storage_for_dragon_fs, allow_reserved_writes=True)
 
 
@@ -96,7 +99,8 @@ def test_eventconsumer_eventpublisher_integration(
 
     :param storage_for_dragon_fs: the dragon storage engine to use
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
 
     mock_storage = storage_for_dragon_fs
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
@@ -278,7 +282,8 @@ def test_channel_buffer_size(
     until a configured maximum value is exceeded.
 
     :param buffer_size: the maximum number of messages allowed in a channel buffer
-    :param storage_for_dragon_fs: the dragon storage engine to use"""
+    :param storage_for_dragon_fs: the dragon storage engine to use
+    """
 
     mock_storage = storage_for_dragon_fs
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)

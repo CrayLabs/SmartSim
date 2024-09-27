@@ -136,7 +136,14 @@ def mock_messages(
     comm_channel_root_dir: pathlib.Path,
     kill_queue: mp.Queue,
 ) -> None:
-    """Mock event producer for triggering the inference pipeline"""
+    """Mock event producer for triggering the inference pipeline.
+
+    :param feature_store_root_dir: Path to a directory where a
+    FileSystemFeatureStore can read & write results
+    :param comm_channel_root_dir: Path to a directory where a
+    FileSystemCommChannel can read & write messages
+    :param kill_queue: Queue used by unit test to stop mock_message process
+    """
     feature_store_root_dir.mkdir(parents=True, exist_ok=True)
     comm_channel_root_dir.mkdir(parents=True, exist_ok=True)
 
@@ -203,7 +210,7 @@ def mock_messages(
 
 def mock_mli_infrastructure_mgr() -> None:
     """Create resources normally instanatiated by the infrastructure
-    management portion of the DragonBackend
+    management portion of the DragonBackend.
     """
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -228,8 +235,9 @@ def mock_mli_infrastructure_mgr() -> None:
 def prepare_environment(test_dir: str) -> pathlib.Path:
     """Cleanup prior outputs to run demo repeatedly.
 
-    :param tes_dir: the directory to prepare
-    :returns: The path to the log file"""
+    :param test_dir: the directory to prepare
+    :returns: The path to the log file
+    """
     path = pathlib.Path(f"{test_dir}/workermanager.log")
     logging.basicConfig(filename=path.absolute(), level=logging.DEBUG)
     return path

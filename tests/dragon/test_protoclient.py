@@ -73,7 +73,7 @@ def storage_for_dragon_fs() -> t.Dict[str, str]:
 def the_backbone(storage_for_dragon_fs) -> BackboneFeatureStore:
     """Fixture that creates a dragon backbone feature store.
 
-    :param storage_for_dragon_fs:
+    :param storage_for_dragon_fs: the distributed dictionary to use in backbone
     :returns: The backbone feature store
     :returns: The attached `BackboneFeatureStore`
     """
@@ -124,13 +124,14 @@ def test_protoclient_timeout(
 ):
     """Verify that attempts to attach to the worker queue from the protoclient
     timeout in an appropriate amount of time. Note: due to the backoff, we verify
-    the elapsed time is less than the 15s of a cycle of waits
+    the elapsed time is less than the 15s of a cycle of waits.
 
-    :param wait_timeout: a timeout for use when configuring a proto client
+    :param backbone_timeout: a timeout for use when configuring a proto client
     :param exp_wait_max: a ceiling for the expected time spent waiting for
     the timeout
     :param the_backbone: a pre-initialized backbone featurestore for setting up
-    the environment variable required by the client"""
+    the environment variable required by the client
+    """
 
     # NOTE: exp_wait_time maps to the cycled backoff of [0.1, 0.2, 0.4, 0.8]
     # with leeway added (by allowing 1s each for the 0.1 and 0.5 steps)
@@ -179,7 +180,7 @@ def test_protoclient_initialization(
     monkeypatch: pytest.MonkeyPatch,
 ):
     """Verify that attempting to start the client with required env vars results
-    in a fully initialized client
+    in a fully initialized client.
 
     :param the_backbone: a pre-initialized backbone featurestore
     :param the_worker_queue: an FLI channel the client will retrieve
@@ -227,11 +228,13 @@ def test_protoclient_write_model(
     monkeypatch: pytest.MonkeyPatch,
 ):
     """Verify that writing a model using the client causes the model data to be
-    written to a feature store
+    written to a feature store.
 
     :param the_backbone: a pre-initialized backbone featurestore
-    :param the_worker_queue: an FLI channel the client will retrieve
-    from the backbone"""
+    :param the_worker_queue: Passing the worker queue fixture to ensure
+    the worker queue environment is correctly configured.
+    from the backbone
+    """
 
     with monkeypatch.context() as ctx:
         # we won't actually send here
@@ -262,13 +265,15 @@ def test_protoclient_write_model_notification_sent(
     num_listeners: int,
     num_model_updates: int,
 ):
-    """Verify that writing a model sends a key-written event
+    """Verify that writing a model sends a key-written event.
 
     :param the_backbone: a pre-initialized backbone featurestore
     :param the_worker_queue: an FLI channel the client will retrieve
     from the backbone
     :param num_listeners: vary the number of registered listeners
     to verify that the event is broadcast to everyone
+    :param num_listeners: vary the number of listeners to register
+    to verify the broadcast counts messages sent correctly
     """
 
     # we won't actually send here, but it won't try without registered listeners

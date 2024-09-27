@@ -55,7 +55,7 @@ logger = get_logger(__name__)
 def test_dragonbackend_listener_boostrapping(monkeypatch: pytest.MonkeyPatch):
     """Verify that the dragon backend registration channel correctly
     registers new consumers in the backbone and begins sending events
-    to the new consumers"""
+    to the new consumers."""
 
     backend = DragonBackend(pid=9999)
 
