@@ -105,23 +105,28 @@ class TensorFlowWorker(MachineLearningWorkerBase):
             if operation.type == "Placeholder":
                 logger.debug(
                     f"Input op name: {operation.name}, "
-                    f"output shape : {operation.outputs[0].get_shape()}"
+                    f"output shape: {operation.outputs[0].get_shape()}"
                 )
                 input_layers.add(f"{operation.name}:0")
 
+
+        # Code initially taken from
+        # apple.github.io/coremltools/docs-guides/source/tensorflow-1-workflow.html
         output_tensors = set()
         input_tensors = set()
         for operation in ops:
             for x in operation.inputs:
-                if x.name not in input_tensors:
-                    input_tensors.add(x.name)
+                input_tensors.add(x.name)
         for operation in ops:
             if len(operation.outputs) > 0:
                 x = operation.outputs[0]
-                if x.name not in input_tensors:
+                potential_names = [x.name]
+                name_split = x.name.split(":")
+                potential_names.append(":".join((name_split[0]+"/resource", name_split[-1])))
+                if all(name not in input_tensors for name in potential_names):
                     logger.debug(
                         f"Output tensor name: {x.name}, "
-                        f"tensor shape : {x.get_shape()}, "
+                        f"tensor shape: {x.get_shape()}, "
                         f"parent op type: {operation.type}"
                     )
                     output_tensors.add(x.name)
