@@ -12,6 +12,8 @@ that SmartSim may be used on.
 
 .. include:: platform/frontier.rst
 
+.. include:: platform/perlmutter.rst
+
 .. include:: platform/cray.rst
 
 .. include:: platform/ncar-cheyenne.rst

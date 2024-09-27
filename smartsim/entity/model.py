@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import itertools
+import numbers
 import re
 import sys
 import typing as t
@@ -34,7 +35,8 @@ import warnings
 from os import getcwd
 from os import path as osp
 
-from .._core._install.builder import Device
+from smartsim._core.types import Device
+
 from .._core.utils.helpers import cat_arg_and_value
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
@@ -44,6 +46,25 @@ from .entity import SmartSimEntity
 from .files import EntityFiles
 
 logger = get_logger(__name__)
+
+
+def _parse_model_parameters(params_dict: t.Dict[str, t.Any]) -> t.Dict[str, str]:
+    """Convert the values in a params dict to strings
+    :raises TypeError: if params are of the wrong type
+    :return: param dictionary with values and keys cast as strings
+    """
+    param_names: t.List[str] = []
+    parameters: t.List[str] = []
+    for name, val in params_dict.items():
+        param_names.append(name)
+        if isinstance(val, (str, numbers.Number)):
+            parameters.append(str(val))
+        else:
+            raise TypeError(
+                "Incorrect type for model parameters\n"
+                + "Must be numeric value or string."
+            )
+    return dict(zip(param_names, parameters))
 
 
 class Model(SmartSimEntity):
@@ -70,7 +91,7 @@ class Model(SmartSimEntity):
                                model as a batch job
         """
         super().__init__(name, str(path), run_settings)
-        self.params = params
+        self.params = _parse_model_parameters(params)
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False

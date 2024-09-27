@@ -1,7 +1,8 @@
 {
     "version_names":[
         "develop (unstable)",
-        "0.7.0 (stable)",
+        "0.8.0 (stable)",
+        "0.7.0",
         "0.6.2",
         "0.6.1",
         "0.6.0",
@@ -15,6 +16,7 @@
     "version_urls": [
         "https://www.craylabs.org/develop/overview.html",
         "https://www.craylabs.org/docs/overview.html",
+        "https://www.craylabs.org/docs/versions/0.7.0/overview.html",
         "https://www.craylabs.org/docs/versions/0.6.2/overview.html",
         "https://www.craylabs.org/docs/versions/0.6.1/overview.html",
         "https://www.craylabs.org/docs/versions/0.6.0/overview.html",

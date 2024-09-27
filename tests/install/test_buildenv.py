@@ -25,8 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import packaging
 import pytest
-from pkg_resources import packaging  # type: ignore
 
 from smartsim._core._install.buildenv import Version_
 
@@ -71,19 +71,32 @@ def test_version_equality_ne():
 
     assert v1 != v2
 
-
-def test_version_bad_input():
+    # def test_version_bad_input():
     """Test behavior when passing an invalid version string"""
-    v1 = Version_("abcdefg")
+    version = Version_("1")
+    assert version.major == 1
+    with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
+        version.minor
 
-    # todo: fix behavior to ensure versions are valid.
-    assert v1
+    version = Version_("2.")
+    with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
+        version.major
+
+    version = Version_("3.0.")
+
+    with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
+        version.major
+
+    version = Version_("3.1.a")
+    assert version.major == 3
+    assert version.minor == 1
+    with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
+        version.patch
 
 
 def test_version_bad_parse_fail():
     """Test behavior when trying to parse with an invalid input string"""
-    v1 = Version_("abcdefg")
-
     # todo: ensure we can't take invalid input and have this IndexError occur.
+    version = Version_("abcdefg")
     with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
-        _ = v1.minor
+        version.major

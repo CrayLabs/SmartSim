@@ -9,12 +9,128 @@ Jump to:
 
 ## SmartSim
 
+### 0.8.0
+
+Released on 27 September, 2024
+
+Description
+
+- Add instructions for Frontier to set the MIOPEN cache
+- Refine Frontier documentation for proper use of miniforge3
+- Refactor to the RedisAI build to allow more flexibility in versions
+  and sources of ML backends
+- Add Dockerfiles with GPU support
+- Fine grain build support for GPUs
+- Update Torch to 2.1.0, Tensorflow to 2.15.0
+- Better error messages in build process
+- Allow specifying Model and Ensemble parameters with
+  number-like types (e.g. numpy types)
+- Pin watchdog to 4.x
+- Update codecov to 4.5.0
+- Remove build of Redis from setup.py
+- Mitigate dependency installation issues
+- Fix internal host name representation for Dragon backend
+- Make dependencies more discoverable in setup.py
+- Add hardware pinning capability when using dragon
+- Pin NumPy version to 1.x
+- New launcher support for SGE (and similar derivatives)
+- Fix test outputs being created in incorrect directory
+- Improve support for building SmartSim without ML backends
+- Update packaging dependency
+- Remove broken oss.redis.com URI blocking documentation generation
+
+Detailed Notes
+
+- On Frontier, the MIOPEN cache may need to be set prior to using
+  RedisAI in the ``smart validate``. The instructions for Frontier
+  have been updated accordingly.
+  ([SmartSim-PR727](https://github.com/CrayLabs/SmartSim/pull/727))
+- On Frontier, the recommended way to activate conda environments is
+  to go through source activate. This also means that ``conda init``
+  is not needed. The instructions for Frontier have been updated to
+  reflect this.
+  ([SmartSim-PR719](https://github.com/CrayLabs/SmartSim/pull/719))
+- The RedisAIBuilder class was completely overhauled to allow users to
+  express a wider range of support for hardware/software stacks. This
+  will be extended to support ROCm, CUDA-11, and CUDA-12.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Versions for each of these packages are no longer specified in an
+  internal class. Instead a default set of JSON files specifies the
+  sources and versions. Users can specify their own custom specifications
+  at smart build time.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Because all build configuration has been moved to static files and all
+  backends are compiled during `smart build`, SmartSim can now be shipped as a
+  pure python wheel.
+  ([SmartSim-PR728](https://github.com/CrayLabs/SmartSim/pull/728))
+- Two new Dockerfiles are now provided (one each for 11.8 and 12.1) that
+  can be used to build a container to run the tutorials. No HPC support
+  should be expected at this time
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- As a result of the previous change, SmartSim now requires C++17 and a
+  minimum Cuda version of 11.8 in order to build Torch 2.1.0.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Error messages were not being interpolated correctly. This has been
+  addressed to provide more context when exposing error messages to users.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- The serializer would fail if a parameter for a Model or Ensemble
+  was specified as a numpy dtype. The constructors for these
+  methods now validate that the input is number-like and convert
+  them to strings
+  ([SmartSim-PR676](https://github.com/CrayLabs/SmartSim/pull/676))
+- Pin watchdog to 4.x because v5 introduces new types and requires
+  updates to the type-checking
+  ([SmartSim-PR690](https://github.com/CrayLabs/SmartSim/pull/690))
+- Update codecov to 4.5.0 to mitigate GitHub action failure
+  ([SmartSim-PR657](https://github.com/CrayLabs/SmartSim/pull/657))
+- The builder module was included in setup.py to allow us to ship the
+  main Redis binaries (not RedisAI) with installs from PyPI. To
+  allow easier maintenance of this file and enable future complexity
+  this has been removed. The Redis binaries will thus be built
+  by users during the `smart build` step
+- Installation of mypy or dragon in separate build actions caused
+  some dependencies (typing_extensions, numpy) to be upgraded and
+  caused runtime failures. The build actions were tweaked to include
+  all optional dependencies to be considered by pip during resolution.
+  Additionally, the numpy version was capped on dragon installations.
+  ([SmartSim-PR653](https://github.com/CrayLabs/SmartSim/pull/653))
+- setup.py used to define dependencies in a way that was not amenable
+  to code scanning tools. Direct dependencies now appear directly
+  in the setup call and the definition of the SmartRedis version
+  has been removed
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+- The separate definition of dependencies for the docs in
+  requirements-doc.txt is now defined as an extra.
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+- The new major version release of Numpy is incompatible with modules
+  compiled against Numpy 1.x. For both SmartSim and SmartRedis we
+  request a 1.x version of numpy. This is needed in SmartSim because
+  some of the downstream dependencies request NumPy
+  ([SmartSim-PR623](https://github.com/CrayLabs/SmartSim/pull/623))
+- SGE is now a supported launcher for SmartSim. Users can now define
+  BatchSettings which will be monitored by the TaskManager. Additionally,
+  if the MPI implementation was built with SGE support, Orchestrators can
+  use `mpirun` without needing to specify the hosts
+  ([SmartSim-PR610](https://github.com/CrayLabs/SmartSim/pull/610))
+- Ensure outputs from tests are written to temporary `tests/test_output` directory
+- Fix an error that would prevent ``smart build`` from moving a successfully
+  compiled RedisAI shared object to the install location expected by SmartSim
+  if no ML backend installations were found. Previously, this would effectively
+  require users to build and install an ML backend to use the SmartSim
+  orchestrator even if it was not necessary for their workflow. Users can
+  install SmartSim without ML backends by running
+  ``smart build --no_tf --no_pt`` and the RedisAI shared object will now be
+  placed in the expected location.
+  ([SmartSim-PR601](https://github.com/CrayLabs/SmartSim/pull/601))
+- Fix packaging failures due to deprecated `pkg_resources`. ([SmartSim-PR598](https://github.com/CrayLabs/SmartSim/pull/598))
+
 ### 0.7.0
 
 Released on 14 May, 2024
 
 Description
 
+-   Update tutorials and tutorial containers
 -   Improve Dragon server shutdown
 -   Add dragon runtime installer
 -   Add launcher based on Dragon
@@ -64,6 +180,8 @@ Description
 
 Detailed Notes
 
+-   The tutorials are up-to date with SmartSim and SmartRedis APIs. Additionally,
+    the tutorial containers' Docker files are updated. ([SmartSim-PR589](https://github.com/CrayLabs/SmartSim/pull/589))
 -   The Dragon server will now terminate any process which is still running
     when a request of an immediate shutdown is sent. ([SmartSim-PR582](https://github.com/CrayLabs/SmartSim/pull/582))
 -   Add `--dragon` option to `smart build`. Install appropriate Dragon

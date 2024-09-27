@@ -210,10 +210,13 @@ class DragonBackend:
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
-            self._hosts: t.List[str] = sorted(
-                dragon_machine.Node(node).hostname
-                for node in dragon_machine.System().nodes
-            )
+            self._nodes = [
+                dragon_machine.Node(node) for node in dragon_machine.System().nodes
+            ]
+            self._hosts: t.List[str] = sorted(node.hostname for node in self._nodes)
+            self._cpus = [node.num_cpus for node in self._nodes]
+            self._gpus = [node.num_gpus for node in self._nodes]
+
             """List of hosts available in allocation"""
             self._free_hosts: t.Deque[str] = collections.deque(self._hosts)
             """List of hosts on which steps can be launched"""
@@ -285,6 +288,34 @@ class DragonBackend:
         """Current time for DragonBackend object, in seconds since the Epoch"""
         return time.time()
 
+    def _can_honor_policy(
+        self, request: DragonRunRequest
+    ) -> t.Tuple[bool, t.Optional[str]]:
+        """Check if the policy can be honored with resources available
+        in the allocation.
+        :param request: DragonRunRequest containing policy information
+        :returns: Tuple indicating if the policy can be honored and
+        an optional error message"""
+        # ensure the policy can be honored
+        if request.policy:
+            if request.policy.cpu_affinity:
+                # make sure some node has enough CPUs
+                available = max(self._cpus)
+                requested = max(request.policy.cpu_affinity)
+
+                if requested >= available:
+                    return False, "Cannot satisfy request, not enough CPUs available"
+
+            if request.policy.gpu_affinity:
+                # make sure some node has enough GPUs
+                available = max(self._gpus)
+                requested = max(request.policy.gpu_affinity)
+
+                if requested >= available:
+                    return False, "Cannot satisfy request, not enough GPUs available"
+
+        return True, None
+
     def _can_honor(self, request: DragonRunRequest) -> t.Tuple[bool, t.Optional[str]]:
         """Check if request can be honored with resources available in the allocation.
 
@@ -299,6 +330,11 @@ class DragonBackend:
         if self._shutdown_requested:
             message = "Cannot satisfy request, server is shutting down."
             return False, message
+
+        honorable, err = self._can_honor_policy(request)
+        if not honorable:
+            return False, err
+
         return True, None
 
     def _allocate_step(
@@ -391,6 +427,50 @@ class DragonBackend:
                 self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
                 self._group_infos[step_id].return_codes = [-9]
 
+    @staticmethod
+    def create_run_policy(
+        request: DragonRequest, node_name: str
+    ) -> "dragon_policy.Policy":
+        """Create a dragon Policy from the request and node name
+        :param request: DragonRunRequest containing policy information
+        :param node_name: Name of the node on which the process will run
+        :returns: dragon_policy.Policy object mapped from request properties"""
+        if isinstance(request, DragonRunRequest):
+            run_request: DragonRunRequest = request
+
+            affinity = dragon_policy.Policy.Affinity.DEFAULT
+            cpu_affinity: t.List[int] = []
+            gpu_affinity: t.List[int] = []
+
+            # Customize policy only if the client requested it, otherwise use default
+            if run_request.policy is not None:
+                # Affinities are not mutually exclusive. If specified, both are used
+                if run_request.policy.cpu_affinity:
+                    affinity = dragon_policy.Policy.Affinity.SPECIFIC
+                    cpu_affinity = run_request.policy.cpu_affinity
+
+                if run_request.policy.gpu_affinity:
+                    affinity = dragon_policy.Policy.Affinity.SPECIFIC
+                    gpu_affinity = run_request.policy.gpu_affinity
+            logger.debug(
+                f"Affinity strategy: {affinity}, "
+                f"CPU affinity mask: {cpu_affinity}, "
+                f"GPU affinity mask: {gpu_affinity}"
+            )
+            if affinity != dragon_policy.Policy.Affinity.DEFAULT:
+                return dragon_policy.Policy(
+                    placement=dragon_policy.Policy.Placement.HOST_NAME,
+                    host_name=node_name,
+                    affinity=affinity,
+                    cpu_affinity=cpu_affinity,
+                    gpu_affinity=gpu_affinity,
+                )
+
+        return dragon_policy.Policy(
+            placement=dragon_policy.Policy.Placement.HOST_NAME,
+            host_name=node_name,
+        )
+
     def _start_steps(self) -> None:
         self._heartbeat()
         with self._queue_lock:
@@ -412,10 +492,7 @@ class DragonBackend:
 
                 policies = []
                 for node_name in hosts:
-                    local_policy = dragon_policy.Policy(
-                        placement=dragon_policy.Policy.Placement.HOST_NAME,
-                        host_name=node_name,
-                    )
+                    local_policy = self.create_run_policy(request, node_name)
                     policies.extend([local_policy] * request.tasks_per_node)
                     tmp_proc = dragon_process.ProcessTemplate(
                         target=request.exe,
