@@ -13,7 +13,9 @@ symlink_cmd = "symlink"
 configure_cmd = "configure"
 
 
-def create_final_dest(job_root_path: pathlib.Path, dest: t.Union[pathlib.Path, None]) -> str:
+def create_final_dest(
+    job_root_path: pathlib.Path, dest: t.Union[pathlib.Path, None]
+) -> str:
     """Combine the job root path and destination path. Return as a string for
     entry point consumption.
 
@@ -24,7 +26,12 @@ def create_final_dest(job_root_path: pathlib.Path, dest: t.Union[pathlib.Path, N
     """
     if dest is None:
         dest = pathlib.Path("")
-    if job_root_path is None or job_root_path == pathlib.Path("") or job_root_path.suffix:
+    if (
+        job_root_path is None
+        or job_root_path == pathlib.Path("")
+        or ""
+        or job_root_path.suffix
+    ):
         raise ValueError(f"Job root path '{job_root_path}' is not a directory.")
     try:
         combined_path = job_root_path / dest
@@ -59,7 +66,14 @@ class CopyOperation(GenerationProtocol):
         """Create Command to invoke copy fs entry point"""
         final_dest = create_final_dest(context.job_root_path, self.dest)
         return Command(
-            [sys.executable, "-m", entry_point_path, copy_cmd, str(self.src), final_dest]
+            [
+                sys.executable,
+                "-m",
+                entry_point_path,
+                copy_cmd,
+                str(self.src),
+                final_dest,
+            ]
         )
 
 
@@ -74,7 +88,14 @@ class SymlinkOperation(GenerationProtocol):
         """Create Command to invoke symlink fs entry point"""
         final_dest = create_final_dest(context.job_root_path, self.dest)
         return Command(
-            [sys.executable, "-m", entry_point_path, symlink_cmd, str(self.src), final_dest]
+            [
+                sys.executable,
+                "-m",
+                entry_point_path,
+                symlink_cmd,
+                str(self.src),
+                final_dest,
+            ]
         )
 
 
@@ -108,7 +129,9 @@ class ConfigureOperation(GenerationProtocol):
             ]
         )
 
-T = t.TypeVar('T', bound=GenerationProtocol)
+
+T = t.TypeVar("T", bound=GenerationProtocol)
+
 
 @dataclass
 class FileSysOperationSet:
@@ -142,17 +165,17 @@ class FileSysOperationSet:
     @property
     def copy_operations(self) -> t.List[CopyOperation]:
         """Property to get the list of copy files."""
-        return t.cast(t.List[CopyOperation], self._filter(CopyOperation))
+        return self._filter(CopyOperation)
 
     @property
     def symlink_operations(self) -> t.List[SymlinkOperation]:
         """Property to get the list of symlink files."""
-        return t.cast(t.List[SymlinkOperation], self._filter(SymlinkOperation))
+        return self._filter(SymlinkOperation)
 
     @property
     def configure_operations(self) -> t.List[ConfigureOperation]:
         """Property to get the list of configure files."""
-        return t.cast(t.List[ConfigureOperation], self._filter(ConfigureOperation))
+        return self._filter(ConfigureOperation)
 
     def _filter(self, type: t.Type[T]) -> t.List[T]:
         return [x for x in self.operations if isinstance(x, type)]
