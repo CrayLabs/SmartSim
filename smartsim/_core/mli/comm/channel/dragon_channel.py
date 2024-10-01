@@ -55,6 +55,7 @@ class DragonCommChannel(cch.CommChannelBase):
         descriptor = drg_util.channel_to_descriptor(channel)
         super().__init__(descriptor)
         self._channel = channel
+        """The underlying dragon channel used by this CommChannel for communications"""
 
     @property
     def channel(self) -> "dch.Channel":
@@ -113,9 +114,6 @@ class DragonCommChannel(cch.CommChannelBase):
         :raises SmartSimError: If creation of comm channel fails
         """
         try:
-            if isinstance(descriptor, bytes):
-                raise ValueError("Descriptor must be a string")
-
             channel = drg_util.descriptor_to_channel(descriptor)
             return DragonCommChannel(channel)
         except Exception as ex:

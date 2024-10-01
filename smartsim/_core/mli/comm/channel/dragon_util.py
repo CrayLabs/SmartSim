@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import base64
+import binascii
 import typing as t
 
 import dragon.channels as dch
@@ -53,6 +54,7 @@ def channel_to_descriptor(channel: t.Union[dch.Channel, fli.FLInterface]) -> str
 
     :param channel: The dragon channel to convert
     :returns: The descriptor string
+    :raises: SmartSimError if a dragon channel is not provided
     """
     if channel is None:
         raise SmartSimError("Channel is not available to create a descriptor")
@@ -78,9 +80,20 @@ def descriptor_to_fli(descriptor: str) -> "fli.FLInterface":
     the string-encoded descriptor.
 
     :param descriptor: The descriptor of an FLI to attach to
-    :returns: The attached dragon FLI"""
-    descriptor_ = base64.b64decode(descriptor.encode("utf-8"))
-    return fli.FLInterface.attach(descriptor_)
+    :returns: The attached dragon FLI
+    :raises ValueError: If the descriptor is empty or incorrectly formatted
+    """
+    if len(descriptor) < 1:
+        raise ValueError("Descriptors may not be empty")
+
+    try:
+        encoded = descriptor.encode("utf-8")
+        descriptor_ = base64.b64decode(encoded)
+        return fli.FLInterface.attach(descriptor_)
+    except binascii.Error:
+        raise ValueError("The descriptor was not properly base64 encoded")
+    except fli.DragonFLIError:
+        raise SmartSimError("The descriptor did not address an available FLI")
 
 
 def descriptor_to_channel(descriptor: str) -> dch.Channel:
@@ -88,9 +101,20 @@ def descriptor_to_channel(descriptor: str) -> dch.Channel:
     the string-encoded descriptor.
 
     :param descriptor: The descriptor of a channel to attach to
-    :returns: The attached dragon Channel"""
-    descriptor_ = base64.b64decode(descriptor.encode("utf-8"))
-    return dch.Channel.attach(descriptor_)
+    :returns: The attached dragon Channel
+    :raises ValueError: If the descriptor is empty or incorrectly formatted
+    :raises SmartSimError: If the descriptor does not attach to a channel"""
+    if len(descriptor) < 1:
+        raise ValueError("Descriptors may not be empty")
+
+    try:
+        encoded = descriptor.encode("utf-8")
+        descriptor_ = base64.b64decode(encoded)
+        return dch.Channel.attach(descriptor_)
+    except binascii.Error:
+        raise ValueError("The descriptor was not properly base64 encoded")
+    except dch.ChannelError:
+        raise SmartSimError("The descriptor did not address an available channel")
 
 
 def create_local(_capacity: int = 0) -> dch.Channel:

@@ -53,7 +53,6 @@ from smartsim._core.mli.infrastructure.control.event_listener import (
 )
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
-    EventCategory,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim.error.errors import SmartSimError
@@ -592,7 +591,7 @@ class DragonBackend:
             raise SmartSimError("Backbone feature store is not available")
 
         service = ConsumerRegistrationListener(
-            self._backbone, 1.0, 2.0, [EventCategory.CONSUMER_CREATED], True
+            self._backbone, 1.0, 2.0, as_service=True, health_check_frequency=90
         )
 
         options = dragon_process_desc.ProcessOptions(make_inf_channels=True)

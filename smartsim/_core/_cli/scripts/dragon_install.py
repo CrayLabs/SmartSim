@@ -57,7 +57,7 @@ class DragonInstallRequest:
     def _check(self) -> None:
         """Perform validation of this instance
 
-        :raises: ValueError if any value fails validation"""
+        :raises ValueError: if any value fails validation"""
         if not self.repo_name or len(self.repo_name.split("/")) != 2:
             raise ValueError(
                 f"Invalid dragon repository name. Example: `dragonhpc/dragon`"
@@ -287,7 +287,7 @@ def retrieve_asset(
     :param request: details of a request for the installation of the dragon package
     :param asset: GitHub release asset to retrieve
     :returns: path to the directory containing the extracted release asset
-    :raises: SmartSimCLIActionCancelled if the asset cannot be downloaded or extracted
+    :raises SmartSimCLIActionCancelled: if the asset cannot be downloaded or extracted
     """
     download_dir = request.working_dir / str(asset.id)
 

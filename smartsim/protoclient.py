@@ -108,7 +108,7 @@ class ProtoClient:
         then attach an FLI to the given worker queue.
 
         :returns: The attached FLI channel
-        :raises: SmartSimError if the required configuration is not found in the
+        :raises SmartSimError: if the required configuration is not found in the
         backbone feature store
         """
 
@@ -150,7 +150,7 @@ class ProtoClient:
         written to file
         :param wait_timeout: Maximum wait time (in seconds) allowed to attach to the
         worker queue
-        :raises: SmartSimError if unable to attach to a backbone featurestore
+        :raises SmartSimError: If unable to attach to a backbone featurestore
         """
         if MPI is not None:
             # TODO: determine a way to make MPI work in the test environment
@@ -266,7 +266,7 @@ class ProtoClient:
         :param model: The raw bytes or path to a pytorch model
         :param batch: The tensor batch to perform inference on
         :returns: The inference results
-        :raises: ValueError if the worker queue is not configured properly
+        :raises ValueError: if the worker queue is not configured properly
         in the environment variables
         """
         tensors = [batch.numpy()]

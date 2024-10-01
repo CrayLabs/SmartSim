@@ -260,6 +260,8 @@ class EventCategory(str, enum.Enum):
 
     CONSUMER_CREATED: str = "consumer-created"
     """Event category for an event raised when a new consumer is created"""
+    CONSUMER_REMOVED: str = "consumer-removed"
+    """Event category for an event raised when a new consumer is created"""
     FEATURE_STORE_WRITTEN: str = "feature-store-written"
     """Event category for an event raised when a feature store key is written"""
     SHUTDOWN: str = "shutdown"
@@ -325,6 +327,29 @@ class OnCreateConsumer(EventBase):
         """
         _filters = ",".join(self.filters)
         return f"{str(super())}|{self.descriptor}|{_filters}"
+
+
+class OnRemoveConsumer(EventBase):
+    """Publish this event when a consumer is shutting down and
+    should be removed from notification lists."""
+
+    descriptor: str
+    """Descriptor of the comm channel exposed by the consumer"""
+
+    def __init__(self, descriptor: str) -> None:
+        """Initialize the OnRemoveConsumer event.
+
+        :param descriptor: Descriptor of the comm channel exposed by the consumer
+        """
+        super().__init__(EventCategory.CONSUMER_REMOVED, str(uuid.uuid4()))
+        self.descriptor = descriptor
+
+    def __str__(self) -> str:
+        """Convert the event to a string.
+
+        :returns: A string representation of this instance
+        """
+        return f"{str(super())}|{self.descriptor}"
 
 
 class OnWriteFeatureStore(EventBase):
@@ -582,9 +607,13 @@ class EventBroadcaster:
 class EventConsumer:
     """Reads system events published to a communications channel."""
 
+    _BACKBONE_WAIT_TIMEOUT = 10.0
+    """Maximum time (in seconds) to wait for the backbone to register the consumer"""
+
     def __init__(
         self,
         comm_channel: CommChannelBase,
+        # channel_factory: ...,
         backbone: BackboneFeatureStore,
         filters: t.Optional[t.List[EventCategory]] = None,
         name: t.Optional[str] = None,
@@ -601,11 +630,24 @@ class EventConsumer:
         :raises ValueError: If batch_timeout <= 0
         """
         self._comm_channel = comm_channel
+        """The comm channel used by the consumer to receive messages. The channel
+        descriptor will be published for senders to discover."""
         self._backbone = backbone
+        """The backbone instance used to bootstrap the instance. The EventConsumer
+        uses the backbone to discover where it can publish its descriptor."""
         self._global_filters = filters or []
+        """A set of global filters to apply to incoming events. Global filters are
+        combined with per-call filters. Filters act as an allow-list."""
         self._name = name
+        """User-friendly name assigned to a consumer for logging. Automatically
+        assigned if not provided."""
         self._event_handler = event_handler
+        """The function that should be executed when an event
+        passed by the filters is received."""
         self.listening = True
+        """Flag indicating that the consumer is currently listening for new
+        events. Setting this flag to `False` will cause any active calls to
+        `listen` to terminate."""
 
     @property
     def descriptor(self) -> str:
@@ -639,9 +681,14 @@ class EventConsumer:
         :param batch_timeout: Maximum time to wait for messages to arrive; allows
         multiple batches to be retrieved in one call to `send`
         :returns: A list of events that pass any configured filters
+        :raises ValueError: If a positive, non-zero value is not provided for the
+        timeout or batch_timeout.
         """
         if filters is None:
             filters = []
+
+        if timeout is not None and timeout <= 0:
+            raise ValueError("request timeout must be a non-zero, positive value")
 
         if batch_timeout is not None and batch_timeout <= 0:
             raise ValueError("batch_timeout must be a non-zero, positive value")
@@ -688,25 +735,45 @@ class EventConsumer:
 
         return events_received
 
+    def _send_to_registrar(self, event: EventBase) -> None:
+        """Send an event direct to the registrar listener."""
+        registrar_key = BackboneFeatureStore.MLI_BACKEND_CONSUMER
+        config = self._backbone.wait_for([registrar_key], self._BACKBONE_WAIT_TIMEOUT)
+        registrar_descriptor = str(config.get(registrar_key, None))
+
+        if not registrar_descriptor:
+            logger.warning(f"Unable to {event.category}. No registrar channel found.")
+            return
+
+        logger.debug(f"Sending {event.category} for {self.name}")
+
+        registrar_channel = DragonCommChannel.from_descriptor(registrar_descriptor)
+        registrar_channel.send(bytes(event), timeout=1.0)
+
+        logger.debug(f"{event.category} for {self.name} sent")
+
     def register(self) -> None:
         """Send an event to register this consumer as a listener."""
         descriptor = self._comm_channel.descriptor
         event = OnCreateConsumer(descriptor, self._global_filters)
 
-        registrar_key = BackboneFeatureStore.MLI_BACKEND_CONSUMER
-        config = self._backbone.wait_for([registrar_key], 2.0)
+        self._send_to_registrar(event)
 
-        registrar_descriptor = str(config.get(registrar_key, None))
+    def unregister(self) -> None:
+        """Send an event to un-register this consumer as a listener."""
+        descriptor = self._comm_channel.descriptor
+        event = OnRemoveConsumer(descriptor)
 
-        if registrar_descriptor:
-            logger.debug(f"Sending registration for {self.name}")
+        self._send_to_registrar(event)
 
-            registrar_channel = DragonCommChannel.from_descriptor(registrar_descriptor)
-            registrar_channel.send(bytes(event), timeout=1.0)
+    @staticmethod
+    def _on_handler_missing(event: EventBase) -> None:
+        """A "dead letter" event handler that is called to perform
+        processing on events before they're discarded.
 
-            logger.debug(f"Registration for {self.name} sent")
-        else:
-            logger.warning("Unable to register. No registrar channel found.")
+        :param event: The event to handle
+        """
+        logger.warning(f"No event handler is registered. Discarding {event=}")
 
     def listen_once(self, timeout: float = 0.001, batch_timeout: float = 1.0) -> None:
         """Receives messages for the consumer a single time. Delivers
@@ -724,30 +791,41 @@ class EventConsumer:
         logger.debug(f"Starting event listener with {timeout} second timeout")
         logger.debug("Awaiting new messages")
 
+        if not self._event_handler:
+            logger.debug("Unable to handle messages. No event handler is registered.")
+
         incoming_messages = self.recv(timeout=timeout, batch_timeout=batch_timeout)
 
         if not incoming_messages:
-            logger.debug("Consumer received empty message list.")
+            logger.debug(f"Consumer {self.name} received empty message list.")
 
         for message in incoming_messages:
             logger.debug(f"Sending event {message=} to handler.")
             self._handle_shutdown(message)
+
             if self._event_handler:
                 self._event_handler(message)
+            else:
+                self._on_handler_missing(message)
 
-    def _handle_shutdown(self, event: EventBase) -> None:
+    def _handle_shutdown(self, event: EventBase) -> bool:
         """Handles shutdown requests sent to the consumer by setting the
-        `self.listener` property to `False`."""
+        `self.listener` property to `False`.
+
+        :param event: The event to handle
+        :returns: A bool indicating if the event was a shutdown request
+        """
         if isinstance(event, OnShutdownRequested):
             self.listening = False
+            return True
+        return False
 
     def listen(self, timeout: float = 0.001, batch_timeout: float = 1.0) -> None:
-        """Receives messages for the consumer until a shutdown request is received
+        """Receives messages for the consumer until a shutdown request is received.
 
         :param timeout: Maximum time to wait (in seconds) for a message to arrive
-        :param timeout: Maximum time to wait (in seconds) for a batch to arrive
+        :param batch_timeout: Maximum time to wait (in seconds) for a batch to arrive
         """
-        self.listening = True
 
         while self.listening:
             self.listen_once(timeout, batch_timeout)

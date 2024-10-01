@@ -51,6 +51,7 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     EventCategory,
     EventConsumer,
     OnCreateConsumer,
+    OnRemoveConsumer,
 )
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
@@ -67,7 +68,6 @@ class ConsumerRegistrationListener(Service):
         backbone: BackboneFeatureStore,
         timeout: float,
         batch_timeout: float,
-        event_filters: t.List[EventCategory],
         as_service: bool = False,
         cooldown: int = 0,
         health_check_frequency: float = 60.0,
@@ -94,9 +94,6 @@ class ConsumerRegistrationListener(Service):
         """Maximum time (in seconds) to allow a batch of receives to
          continue to build"""
 
-        self._filters = event_filters
-        """Filters specifying the message types to handle"""
-
         self._consumer: t.Optional[EventConsumer] = None
         """The event consumer that handles receiving events"""
 
@@ -117,6 +114,9 @@ class ConsumerRegistrationListener(Service):
 
         # unregister this listener in the backbone
         self._backbone.pop(BackboneFeatureStore.MLI_BACKEND_CONSUMER)
+
+        # TODO: need the channel to be cleaned up
+        # self._consumer._comm_channel._channel.destroy()
 
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
@@ -148,6 +148,33 @@ class ConsumerRegistrationListener(Service):
 
         return False
 
+    def _on_unregister(self, event: OnRemoveConsumer) -> None:
+        """Event handler for updating the backbone when new event consumers
+        are registered.
+
+        :param event: The event that was received
+        """
+        notify_list = set(self._backbone.notification_channels)
+
+        # remove the descriptor specified in the event
+        if event.descriptor in notify_list:
+            logger.debug(f"Removing notify consumer: {event.descriptor}")
+            notify_list.remove(event.descriptor)
+
+        # push the updated list back into the backbone
+        self._backbone.notification_channels = list(notify_list)
+
+    def _on_register(self, event: OnCreateConsumer) -> None:
+        """Event handler for updating the backbone when new event consumers
+        are registered.
+
+        :param event: The event that was received
+        """
+        notify_list = set(self._backbone.notification_channels)
+        logger.debug(f"Adding notify consumer: {event.descriptor}")
+        notify_list.add(event.descriptor)
+        self._backbone.notification_channels = list(notify_list)
+
     def _on_event_received(self, event: EventBase) -> None:
         """Event handler for updating the backbone when new event consumers
         are registered.
@@ -157,16 +184,15 @@ class ConsumerRegistrationListener(Service):
         if self._backbone is None:
             logger.info("Unable to handle event. Backbone is missing.")
 
-        if not isinstance(event, OnCreateConsumer):
+        if isinstance(event, OnCreateConsumer):
+            self._on_register(event)
+        elif isinstance(event, OnRemoveConsumer):
+            self._on_unregister(event)
+        else:
             logger.info(
                 "Consumer registration listener received an "
                 f"unexpected event: {event=}"
             )
-            return
-
-        notify_list = set(self._backbone.notification_channels)
-        notify_list.add(event.descriptor)
-        self._backbone.notification_channels = list(notify_list)
 
     def _on_health_check(self) -> None:
         """Check if this consumer has been replaced by a new listener
@@ -190,9 +216,9 @@ class ConsumerRegistrationListener(Service):
             self._consumer.listening = False
 
     def _publish_consumer(self) -> None:
-        """Publish the consumer descriptor to the backbone."""
+        """Publish the registrar consumer descriptor to the backbone."""
         if self._consumer is None:
-            logger.warning("No consumer descriptor available to publisher")
+            logger.warning("No registrar consumer descriptor available to publisher")
             return
 
         self._backbone[BackboneFeatureStore.MLI_BACKEND_CONSUMER] = (
@@ -227,8 +253,8 @@ class ConsumerRegistrationListener(Service):
         self._consumer = EventConsumer(
             event_channel,
             self._backbone,
-            self._filters,
-            name="BackendConsumerRegistrar",
+            [EventCategory.CONSUMER_CREATED, EventCategory.CONSUMER_REMOVED],
+            name="ConsumerRegistrar",
             event_handler=self._on_event_received,
         )
         self._publish_consumer()
@@ -248,17 +274,13 @@ def _create_parser() -> argparse.ArgumentParser:
 
       --timeout
       --batch_timeout
-      --categories
 
     :returns: A configured parser
     """
     arg_parser = argparse.ArgumentParser(prog="ConsumerRegistrarEventListener")
 
-    category_default = EventCategory.CONSUMER_CREATED
-
     arg_parser.add_argument("--timeout", type=float, default=1.0)
     arg_parser.add_argument("--batch_timeout", type=float, default=1.0)
-    arg_parser.add_argument("--categories", type=str, default=category_default)
 
     return arg_parser
 
@@ -285,9 +307,7 @@ if __name__ == "__main__":
     mp.set_start_method("dragon")
 
     parser = _create_parser()
-
     args = parser.parse_args()
-    user_filters: t.List[EventCategory] = list(args.categories.split(","))
 
     backbone_fs = _connect_backbone()
 
@@ -304,7 +324,6 @@ if __name__ == "__main__":
         backbone_fs,
         float(args.timeout),
         float(args.batch_timeout),
-        user_filters,
         as_service=True,
     )
 

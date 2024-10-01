@@ -59,9 +59,12 @@ class DragonFLIChannel(cch.CommChannelBase):
         super().__init__(descriptor)
 
         self._fli = fli_
+        """The underlying dragon FLInterface used by this CommChannel for communications"""
         self._channel: t.Optional["dch.Channel"] = (
             drg_util.create_local(buffer_size) if sender_supplied else None
         )
+        """The underlying dragon Channel used by a sender-side DragonFLIChannel
+        to attach to the main FLI channel"""
 
     def send(self, value: bytes, timeout: float = 0.001) -> None:
         """Send a message through the underlying communication channel.
