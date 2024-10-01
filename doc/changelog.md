@@ -9,6 +9,21 @@ Jump to:
 
 ## SmartSim
 
+### Develop
+
+To be released at some point in the future
+
+Description
+
+- Add instructions for installing SmartSim on PML's Scylla
+
+Detailed Notes
+- PML's Scylla is still under development. The usual SmartSim
+  build instructions do not apply because the GPU dependencies
+  have yet to be installed at a system-wide level. Scylla has
+  its own entry in the documentations.
+  ([SmartSim-PR733](https://github.com/CrayLabs/SmartSim/pull/733))
+
 ### 0.8.0
 
 Released on 27 September, 2024
