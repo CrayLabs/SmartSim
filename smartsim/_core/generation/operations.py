@@ -1,6 +1,7 @@
 import pathlib
 import sys
 import typing as t
+import os
 from dataclasses import dataclass, field
 
 from ..commands import Command
@@ -88,12 +89,12 @@ class SymlinkOperation(GenerationProtocol):
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke symlink fs entry point"""
-
-        # USE CASES
-
-        # if dest is None: src is copied into run
-        # if dest has val: append dest onto run and do things!
+        normalized_path = os.path.normpath(self.src)
+        # # Get the parent directory (last folder)
+        parent_dir = os.path.basename(normalized_path)
         final_dest = create_final_dest(context.job_root_path, self.dest)
+        new_dest = os.path.join(final_dest, parent_dir)
+        print(f"here: {new_dest}")
         return Command(
             [
                 sys.executable,
@@ -101,7 +102,7 @@ class SymlinkOperation(GenerationProtocol):
                 entry_point_path,
                 symlink_cmd,
                 str(self.src),
-                final_dest,
+                new_dest,
             ]
         )
 

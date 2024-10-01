@@ -39,7 +39,7 @@ from .operations import FileSysOperationSet
 from ...launchable import Job
 from ...log import get_logger
 from ..commands import Command, CommandList
-from .operations import GenerationContext, GenerationProtocol, CopyOperation
+from .operations import GenerationContext, GenerationProtocol, CopyOperation, SymlinkOperation
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -210,6 +210,8 @@ class Generator:
         if isinstance(entity, _GenerableProtocol):
             ret = cls._copy_files(entity.files.copy_operations, context, job_path)
             cmd_list.commands.extend(ret.commands)
+            ret = cls._symlink_files(entity.files.symlink_operations, context, job_path)
+            cmd_list.commands.extend(ret.commands)
         return cmd_list
             # helpers: t.List[
             #     t.Callable[
@@ -289,7 +291,7 @@ class Generator:
 
     @staticmethod
     def _symlink_files(
-        files: t.Union[EntityFiles, None], dest: pathlib.Path
+        files: t.List[CopyOperation], context: GenerationContext, run_path: pathlib.Path
     ) -> t.Optional[CommandList]:
         """Build command to symlink files/directories from specified paths to a destination directory.
 
@@ -301,26 +303,9 @@ class Generator:
         :param dest: The destination path to the Job's run directory.
         :return: A CommandList containing the symlink commands, or None if no files are provided.
         """
-        if files is None:
-            return None
         cmd_list = CommandList()
-        for src in files.link:
-            # Normalize the path to remove trailing slashes
-            normalized_path = os.path.normpath(src)
-            # Get the parent directory (last folder)
-            parent_dir = os.path.basename(normalized_path)
-            new_dest = os.path.join(str(dest), parent_dir)
-            cmd = Command(
-                [
-                    sys.executable,
-                    "-m",
-                    "smartsim._core.entrypoints.file_operations",
-                    "symlink",
-                    src,
-                    new_dest,
-                ]
-            )
-            cmd_list.append(cmd)
+        for src in files:
+            cmd_list.append(src.format(context))
         return cmd_list
 
     @staticmethod
