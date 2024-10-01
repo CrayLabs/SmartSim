@@ -26,10 +26,11 @@ def create_final_dest(
     """
     if dest is None:
         dest = pathlib.Path("")
+    # these need to be more descriptive
     if (
         job_root_path is None
         or job_root_path == pathlib.Path("")
-        or ""
+        or isinstance(job_root_path, str)
         or job_root_path.suffix
     ):
         raise ValueError(f"Job root path '{job_root_path}' is not a directory.")
@@ -73,6 +74,7 @@ class CopyOperation(GenerationProtocol):
                 copy_cmd,
                 str(self.src),
                 final_dest,
+                "--dirs_exist_ok",
             ]
         )
 
@@ -86,6 +88,11 @@ class SymlinkOperation(GenerationProtocol):
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke symlink fs entry point"""
+
+        # USE CASES
+
+        # if dest is None: src is copied into run
+        # if dest has val: append dest onto run and do things!
         final_dest = create_final_dest(context.job_root_path, self.dest)
         return Command(
             [

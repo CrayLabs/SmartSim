@@ -159,6 +159,7 @@ def copy(parsed_args: argparse.Namespace) -> None:
         not includedm and the destination file already exists, a
         FileExistsError will be raised
     """
+    print(parsed_args.source)
     if os.path.isdir(parsed_args.source):
         shutil.copytree(
             parsed_args.source,

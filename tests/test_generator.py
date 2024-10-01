@@ -43,6 +43,18 @@ from smartsim.entity.files import EntityFiles
 from smartsim.launchable import Job
 from smartsim.settings import LaunchSettings
 
+from smartsim._core.generation.operations import (
+    ConfigureOperation,
+    CopyOperation,
+    FileSysOperationSet,
+    GenerationContext,
+    SymlinkOperation,
+    configure_cmd,
+    copy_cmd,
+    create_final_dest,
+    symlink_cmd,
+)
+
 # TODO Add JobGroup tests when JobGroup becomes a Launchable
 
 pytestmark = pytest.mark.group_a
@@ -83,20 +95,50 @@ def generator_instance(test_dir: str) -> Generator:
 def get_gen_file(fileutils, filename: str):
     return fileutils.get_test_conf_path(osp.join("generator_files", filename))
 
+@pytest.fixture
+def mock_src(test_dir: str):
+    """Fixture to create a mock source path."""
+    return pathlib.Path(test_dir) / pathlib.Path("mock_src")
+
+
+@pytest.fixture
+def mock_dest(test_dir: str):
+    """Fixture to create a mock destination path."""
+    return pathlib.Path(test_dir) / pathlib.Path("mock_dest")
+
+@pytest.fixture
+def copy_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
+    """Fixture to create a CopyOperation object."""
+    return CopyOperation(src=mock_src, dest=mock_dest)
+
+
+@pytest.fixture
+def symlink_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
+    """Fixture to create a CopyOperation object."""
+    return SymlinkOperation(src=mock_src, dest=mock_dest)
+
+
+@pytest.fixture
+def configure_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
+    """Fixture to create a CopyOperation object."""
+    return ConfigureOperation(
+        src=mock_src,
+        dest=mock_dest,
+    )
 
 class EchoHelloWorldEntity(entity.SmartSimEntity):
     """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
     def __init__(self):
         self.name = "entity_name"
-        self.files = None
+        self.files = FileSysOperationSet([])
         self.file_parameters = None
 
     def as_executable_sequence(self):
         return ("echo", "Hello", "World!")
 
-    def files():
-        return ["file_path"]
+    # def files():
+    #     return FileSysOperationSet([CopyOperation(src="mock_path", dest="mock_src")])
 
 
 @pytest.fixture
@@ -468,3 +510,80 @@ def test_generate_ensemble_configure(
     _check_generated(1, 3, jobs_dir / "ensemble-name-3-3" / Generator.run_directory)
     _check_generated(0, 2, jobs_dir / "ensemble-name-0-0" / Generator.run_directory)
     ids.clear()
+
+
+
+
+
+# REDO
+
+# COPY
+
+# test making file copies without a dest
+def test_1_copy_files(test_dir, fileutils, generator_instance, mock_job: Job, copy_operation, symlink_operation, configure_operation):
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    correct_files = sorted(glob(correct_path + "/*"))
+    for file in correct_files:
+        mock_job.entity.files.add_copy(src=pathlib.Path(file))
+    ret = generator_instance._build_commands(mock_job,pathlib.Path(test_dir), "log_path")
+
+# test making directory
+def test_2_copy_directory(test_dir, fileutils, generator_instance, mock_job: Job, copy_operation, symlink_operation, configure_operation):
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    mock_job.entity.files.add_copy(src=pathlib.Path(correct_path))
+    ret = generator_instance._build_commands(mock_job,pathlib.Path(test_dir), "log_path")
+    print(ret)
+
+# test making file copies without a dest
+def test_3_copy_files(test_dir, fileutils, generator_instance, mock_job: Job, copy_operation, symlink_operation, configure_operation):
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    correct_files = sorted(glob(correct_path + "/*"))
+    for file in correct_files:
+        mock_job.entity.files.add_copy(src=pathlib.Path(file), dest="mock")
+    ret = generator_instance._build_commands(mock_job,pathlib.Path(test_dir), "log_path")
+    print(ret)
+
+# test making file copies without a dest
+def test_4_copy_directory(test_dir, fileutils, generator_instance, mock_job: Job, copy_operation, symlink_operation, configure_operation):
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    mock_job.entity.files.add_copy(src=pathlib.Path(correct_path), dest="mock")
+    ret = generator_instance._build_commands(mock_job,pathlib.Path(test_dir), "log_path")
+    print(ret)
+
+def test_1_execute_the_copy(test_dir, fileutils, mock_job,generator_instance):
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    correct_files = sorted(glob(correct_path + "/*"))
+    for file in correct_files:
+        mock_job.entity.files.add_copy(src=pathlib.Path(file))
+    ret = generator_instance._build_commands(mock_job,pathlib.Path(test_dir), "log_path")
+    generator_instance._execute_commands(ret)
+    print(listdir(test_dir))
+    assert pathlib.Path(test_dir).is_dir()
+    for file in correct_files:
+        assert pathlib.Path(file).name in listdir(test_dir)
+
+def test_2_execute_the_copy(test_dir, fileutils, mock_job,generator_instance):
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    mock_job.entity.files.add_copy(src=pathlib.Path(correct_path), dest=pathlib.Path("mock"))
+    ret = generator_instance._build_commands(mock_job,pathlib.Path(test_dir), "log_path")
+    generator_instance._execute_commands(ret)
+    path = pathlib.Path(test_dir) / pathlib.Path("mock")
+    pathlib.Path(path).is_dir()
+    correct_files = sorted(glob(correct_path + "/*"))
+    for file in correct_files:
+        assert pathlib.Path(file).name in listdir(pathlib.Path(test_dir) / pathlib.Path("mock"))
+
+
+# SYMLINK

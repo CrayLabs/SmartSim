@@ -36,6 +36,7 @@ from .._core.utils.helpers import expand_exe_path
 from ..log import get_logger
 from .entity import SmartSimEntity
 from .files import EntityFiles
+from .._core.generation.operations import FileSysOperationSet
 
 logger = get_logger(__name__)
 
@@ -88,7 +89,7 @@ class Application(SmartSimEntity):
         """The executable to run"""
         self._exe_args = self._build_exe_args(exe_args) or []
         """The executable arguments"""
-        self._files = copy.deepcopy(files) if files else None
+        self.files = FileSysOperationSet([])
         """Files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
@@ -139,23 +140,23 @@ class Application(SmartSimEntity):
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
-    @property
-    def files(self) -> t.Union[EntityFiles, None]:
-        """Return attached EntityFiles object.
+    # @property
+    # def files(self) -> t.Union[EntityFiles, None]:
+    #     """Return attached EntityFiles object.
 
-        :return: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        """
-        return self._files
+    #     :return: the EntityFiles object of files to be copied, symlinked,
+    #         and/or configured prior to execution
+    #     """
+    #     return self._files
 
-    @files.setter
-    def files(self, value: t.Optional[EntityFiles]) -> None:
-        """Set the EntityFiles object.
+    # @files.setter
+    # def files(self, value: t.Optional[EntityFiles]) -> None:
+    #     """Set the EntityFiles object.
 
-        :param value: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        """
-        self._files = copy.deepcopy(value)
+    #     :param value: the EntityFiles object of files to be copied, symlinked,
+    #         and/or configured prior to execution
+    #     """
+    #     self._files = copy.deepcopy(value)
 
     @property
     def file_parameters(self) -> t.Mapping[str, str]:

@@ -30,15 +30,16 @@ import pathlib
 import pickle
 import subprocess
 import sys
-import time
 import typing as t
 from collections import namedtuple
 from datetime import datetime
 
 from ...entity.files import EntityFiles
+from .operations import FileSysOperationSet
 from ...launchable import Job
 from ...log import get_logger
 from ..commands import Command, CommandList
+from .operations import GenerationContext, GenerationProtocol, CopyOperation
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -48,7 +49,7 @@ logger.propagate = False
 class _GenerableProtocol(t.Protocol):
     """Ensures functions using job.entity continue if attrs file and params are supported."""
 
-    files: t.Union[EntityFiles, None]
+    files: FileSysOperationSet
     file_parameters: t.Mapping[str, str]
 
 
@@ -201,30 +202,32 @@ class Generator:
         :param job_path: The file path for the Job run folder
         :return: A CommandList containing the file operation commands
         """
+        context = GenerationContext(job_path)
         cmd_list = CommandList()
         cmd_list.commands.append(cls._mkdir_file(job_path))
         cmd_list.commands.append(cls._mkdir_file(log_path))
         entity = job.entity
         if isinstance(entity, _GenerableProtocol):
-            helpers: t.List[
-                t.Callable[
-                    [t.Union[EntityFiles, None], pathlib.Path],
-                    t.Union[CommandList, None],
-                ]
-            ] = [
-                cls._copy_files,
-                cls._symlink_files,
-                lambda files, path: cls._write_tagged_files(
-                    files, entity.file_parameters, path
-                ),
-            ]
-
-            for method in helpers:
-                return_cmd_list = method(entity.files, job_path)
-                if return_cmd_list:
-                    cmd_list.commands.extend(return_cmd_list.commands)
-
+            ret = cls._copy_files(entity.files.copy_operations, context, job_path)
+            cmd_list.commands.extend(ret.commands)
         return cmd_list
+            # helpers: t.List[
+            #     t.Callable[
+            #         [t.Union[EntityFiles, None], pathlib.Path],
+            #         t.Union[CommandList, None],
+            #     ]
+            # ] = [
+            #     cls._copy_files,
+            #     cls._symlink_files,
+            #     lambda files, path: cls._write_tagged_files(
+            #         files, entity.file_parameters, path
+            #     ),
+            # ]
+
+            # for method in helpers:
+            #     return_cmd_list = method(entity.files, job_path)
+            #     if return_cmd_list:
+            #         cmd_list.commands.extend(return_cmd_list.commands)
 
     @classmethod
     def _execute_commands(cls, cmd_list: CommandList) -> None:
@@ -245,7 +248,7 @@ class Generator:
 
     @staticmethod
     def _copy_files(
-        files: t.Union[EntityFiles, None], dest: pathlib.Path
+        files: t.List[CopyOperation], context: GenerationContext, run_path: pathlib.Path
     ) -> t.Optional[CommandList]:
         """Build command to copy files/directories from specified paths to a destination directory.
 
@@ -257,29 +260,32 @@ class Generator:
         :param dest: The destination path to the Job's run directory.
         :return: A CommandList containing the copy commands, or None if no files are provided.
         """
-        if files is None:
-            return None
         cmd_list = CommandList()
-        for src in files.copy:
-            cmd = Command(
-                [
-                    sys.executable,
-                    "-m",
-                    "smartsim._core.entrypoints.file_operations",
-                    "copy",
-                    src,
-                ]
-            )
-            destination = str(dest)
-            if os.path.isdir(src):
-                base_source_name = os.path.basename(src)
-                destination = os.path.join(dest, base_source_name)
-                cmd.append(str(destination))
-                cmd.append("--dirs_exist_ok")
-            else:
-                cmd.append(str(dest))
-            cmd_list.commands.append(cmd)
+        for file in files:
+            cmd_list.append(file.format(context))
+            print(cmd_list)
         return cmd_list
+        # cmd_list = CommandList()
+        # for src in files.copy:
+        #     cmd = Command(
+        #         [
+        #             sys.executable,
+        #             "-m",
+        #             "smartsim._core.entrypoints.file_operations",
+        #             "copy",
+        #             src,
+        #         ]
+        #     )
+        #     destination = str(dest)
+        #     if os.path.isdir(src):
+        #         base_source_name = os.path.basename(src)
+        #         destination = os.path.join(dest, base_source_name)
+        #         cmd.append(str(destination))
+        #         cmd.append("--dirs_exist_ok")
+        #     else:
+        #         cmd.append(str(dest))
+        #     cmd_list.commands.append(cmd)
+        # return cmd_list
 
     @staticmethod
     def _symlink_files(
