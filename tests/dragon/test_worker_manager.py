@@ -31,16 +31,10 @@ import time
 
 import pytest
 
-from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
-
 torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
 import multiprocessing as mp
-
-from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
-    BackboneFeatureStore,
-)
 
 try:
     mp.set_start_method("dragon")
@@ -58,9 +52,13 @@ from smartsim._core.mli.infrastructure.control.worker_manager import (
     EnvironmentConfigLoader,
     WorkerManager,
 )
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
+)
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger

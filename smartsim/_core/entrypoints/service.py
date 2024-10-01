@@ -40,14 +40,22 @@ class Service(ABC):
     hooks for status changes"""
 
     def __init__(
-        self, as_service: bool = False, cooldown: int = 0, loop_delay: int = 0
+        self,
+        as_service: bool = False,
+        cooldown: int = 0,
+        loop_delay: int = 0,
+        health_check_frequency: float = 0,
     ) -> None:
         """Initialize the ServiceHost
+
         :param as_service: Determines if the host will run until shutdown criteria
         are met or as a run-once instance
         :param cooldown: Period of time to allow service to run before automatic
         shutdown, in seconds. A non-zero, positive integer.
-        :param loop_delay: delay between iterations of the event loop"""
+        :param loop_delay: Delay between iterations of the event loop (in seconds)
+        :param health_check_frequency: Delay between calls to a
+        health check handler (in seconds)
+        """
         self._as_service = as_service
         """If the service should run until shutdown function returns True"""
         self._cooldown = abs(cooldown)
@@ -55,6 +63,11 @@ class Service(ABC):
         before shutdown"""
         self._loop_delay = abs(loop_delay)
         """Forced delay between iterations of the event loop"""
+        self._health_check_frequency = health_check_frequency
+        """The time (in seconds) between desired health checks. A health check
+        frequency of zero will never trigger the health check."""
+        self._last_health_check = time.time()
+        """The timestamp of the latest health check"""
 
     @abstractmethod
     def _on_iteration(self) -> None:
@@ -75,6 +88,11 @@ class Service(ABC):
         """Empty hook method for use by subclasses. Called immediately after exiting
         the main event loop during automatic shutdown."""
         logger.debug(f"Shutting down {self.__class__.__name__}")
+
+    def _on_health_check(self) -> None:
+        """Empty hook method for use by subclasses. Invoked based on the
+        value of `self._health_check_frequency`."""
+        logger.debug(f"Performing health check for {self.__class__.__name__}")
 
     def _on_cooldown_elapsed(self) -> None:
         """Empty hook method for use by subclasses. Called on every event loop
@@ -98,13 +116,30 @@ class Service(ABC):
         """The main event loop of a service host. Evaluates shutdown criteria and
         combines with a cooldown period to allow automatic service termination.
         Responsible for executing calls to subclass implementation of `_on_iteration`"""
-        self._on_start()
+
+        try:
+            self._on_start()
+        except Exception:
+            logger.exception("Unable to start service.")
+            return
 
         running = True
         cooldown_start: t.Optional[datetime.datetime] = None
 
         while running:
-            self._on_iteration()
+            try:
+                self._on_iteration()
+            except Exception:
+                running = False
+                logger.exception(
+                    "Failure in event loop resulted in service termination"
+                )
+
+            if self._health_check_frequency > 0:
+                hc_elapsed = time.time() - self._last_health_check
+                if hc_elapsed >= self._health_check_frequency:
+                    self._on_health_check()
+                    self._last_health_check = time.time()
 
             # allow immediate shutdown if not set to run as a service
             if not self._as_service:
@@ -133,4 +168,7 @@ class Service(ABC):
                 self._on_delay()
                 time.sleep(self._loop_delay)
 
-        self._on_shutdown()
+        try:
+            self._on_shutdown()
+        except Exception:
+            logger.exception("Service shutdown may not have completed.")

@@ -27,6 +27,7 @@ import collections
 import functools
 import itertools
 import os
+import socket
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -47,16 +48,15 @@ import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
 from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
-from smartsim._core.mli.comm.channel.dragon_util import create_local
+from smartsim._core.mli.infrastructure.control.event_listener import (
+    ConsumerRegistrationListener,
+)
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
-    EventBase,
     EventCategory,
-    EventConsumer,
-    OnCreateConsumer,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
+from smartsim.error.errors import SmartSimError
 
 # pylint: enable=import-error
 # isort: on
@@ -199,11 +199,9 @@ class DragonBackend:
         """Time in seconds needed by the server to complete shutdown"""
         self._backbone: t.Optional[BackboneFeatureStore] = None
         """The backbone feature store"""
-        self._event_consumer: t.Optional[EventConsumer] = None
-        """A consumer registered to listen for new consumers and update the shared
-        consumer registrations list"""
+        self._listener: t.Optional[dragon_process.Process] = None
+        """The standalone process executing the event consumer"""
 
-        """An event consumer for receiving events from MLI resources"""
         self._nodes: t.List["dragon_machine.Node"] = []
         """Node capability information for hosts in the allocation"""
         self._hosts: t.List[str] = []
@@ -573,20 +571,6 @@ class DragonBackend:
 
         return self._backbone
 
-    def _on_consumer_created(self, event: EventBase) -> None:
-        """Event handler for updating the backbone when new event consumers
-        are registered.
-
-        :param event: The event that was received
-        """
-        if isinstance(event, OnCreateConsumer) and self._backbone is not None:
-            notify_list = set(self._backbone.notification_channels)
-            notify_list.add(event.descriptor)
-            self._backbone.notification_channels = list(notify_list)
-            return
-
-        logger.warning(f"Unhandled event received: {event}")
-
     @staticmethod
     def _initialize_cooldown() -> int:
         """Load environment configuration and determine the correct cooldown
@@ -601,47 +585,38 @@ class DragonBackend:
             else 5
         )
 
-    def _create_eventing(self, backbone: BackboneFeatureStore) -> EventConsumer:
-        """
-        Create an event publisher and event consumer for communicating with
-        other MLI resources.
+    def start_event_listener(
+        self, cpu_affinity: list[int], gpu_affinity: list[int]
+    ) -> dragon_process.Process:
+        if self._backbone is None:
+            raise SmartSimError("Backbone feature store is not available")
 
-        :param backbone: The backbone feature store used by the MLI backend.
+        service = ConsumerRegistrationListener(
+            self._backbone, 1.0, 2.0, [EventCategory.CONSUMER_CREATED], True
+        )
 
-        NOTE: the backbone must be initialized before connecting to eventing clients.
-
-        :returns: The newly created EventConsumer instance
-        """
-
-        if self._event_consumer is None:
-            logger.info("Creating event consumer")
-            dragon_channel = create_local(500)
-            event_channel = DragonCommChannel(dragon_channel)
-            consumer = EventConsumer(
-                event_channel,
-                backbone,
-                [EventCategory.CONSUMER_CREATED],
-                name="BackendConsumerRegistrar",
-                event_handler=self._on_consumer_created,
-            )
-
-            self._event_consumer = consumer
-            backbone[BackboneFeatureStore.MLI_BACKEND_CONSUMER] = consumer.descriptor
-            logger.info(f"Backend consumer `{consumer.name}` created.")
-
-        return self._event_consumer
-
-    def listen_to_registrations(self, timeout: float = 0.001) -> None:
-        """Execute the listener for registration events.
-
-        :param timeout: Maximum time to wait (in seconds) for a new event"""
-        if self._event_consumer is not None:
-            self._event_consumer.listen_once(timeout)
-
-    @staticmethod
-    def _start_eventing_listeners() -> None:
-        # todo: start external listener entrypoint
-        ...
+        options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
+        local_policy = dragon_policy.Policy(
+            placement=dragon_policy.Policy.Placement.HOST_NAME,
+            host_name=socket.gethostname(),
+            cpu_affinity=cpu_affinity,
+            gpu_affinity=gpu_affinity,
+        )
+        process = dragon_process.Process(
+            target=service.execute,
+            args=[],
+            cwd=os.getcwd(),
+            env={
+                **os.environ,
+                **(self._backbone.get_env() if self._backbone is not None else {}),
+            },
+            policy=local_policy,
+            options=options,
+            stderr=dragon_process.Popen.STDOUT,
+            stdout=dragon_process.Popen.STDOUT,
+        )
+        process.start()
+        return process
 
     @staticmethod
     def create_run_policy(
@@ -684,8 +659,6 @@ class DragonBackend:
 
     def _start_steps(self) -> None:
         self._heartbeat()
-        backbone = self._create_backbone()
-        self._create_eventing(backbone)
 
         with self._queue_lock:
             started = []
@@ -713,7 +686,7 @@ class DragonBackend:
                         env={
                             **request.current_env,
                             **request.env,
-                            **backbone.get_env(),
+                            **(self._backbone.get_env() if self._backbone else {}),
                         },
                         stdout=dragon_process.Popen.PIPE,
                         stderr=dragon_process.Popen.PIPE,
@@ -869,8 +842,7 @@ class DragonBackend:
 
     def _update(self) -> None:
         """Trigger all update queries and update local state database"""
-        backbone = self._create_backbone()
-        self._create_eventing(backbone)
+        self._create_backbone()
 
         self._stop_steps()
         self._start_steps()
@@ -879,6 +851,9 @@ class DragonBackend:
 
     def _kill_all_running_jobs(self) -> None:
         with self._queue_lock:
+            if self._listener and self._listener.is_alive:
+                self._listener.kill()
+
             for step_id, group_info in self._group_infos.items():
                 if group_info.status not in TERMINAL_STATUSES:
                     self._stop_requests.append(DragonStopRequest(step_id=step_id))

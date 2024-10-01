@@ -34,8 +34,6 @@ import uuid
 
 import pytest
 
-from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
-
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
@@ -52,6 +50,7 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     time as bbtime,
 )
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)

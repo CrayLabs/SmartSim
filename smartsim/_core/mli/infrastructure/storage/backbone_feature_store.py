@@ -76,8 +76,7 @@ class BackboneFeatureStore(DragonFeatureStore):
         super().__init__(storage)
         self._enable_reserved_writes = allow_reserved_writes
 
-        if self._CREATED_ON not in self:
-            self._record_creation_data()
+        self._record_creation_data()
 
     @property
     def wait_timeout(self) -> float:
@@ -114,7 +113,9 @@ class BackboneFeatureStore(DragonFeatureStore):
 
         :param values: The list of channel descriptors to save
         """
-        self[self.MLI_NOTIFY_CONSUMERS] = ",".join([str(value) for value in values])
+        self[self.MLI_NOTIFY_CONSUMERS] = ",".join(
+            [str(value) for value in values if value]
+        )
 
     @property
     def backend_channel(self) -> t.Optional[str]:
@@ -198,7 +199,8 @@ class BackboneFeatureStore(DragonFeatureStore):
         elapsed = time.time() - start_time
         if timeout and elapsed > timeout:
             raise SmartSimError(
-                f"Backbone {self.descriptor=} timeout retrieving all keys: {indicators}"
+                f"Backbone {self.descriptor=} timeout after {elapsed} "
+                f"seconds retrieving keys: {indicators}"
             )
 
     def wait_for(
@@ -260,6 +262,8 @@ class EventCategory(str, enum.Enum):
     """Event category for an event raised when a new consumer is created"""
     FEATURE_STORE_WRITTEN: str = "feature-store-written"
     """Event category for an event raised when a feature store key is written"""
+    SHUTDOWN: str = "shutdown"
+    """Event category for an event that should trigger the listener to shutdown"""
 
 
 @dataclass
@@ -286,6 +290,14 @@ class EventBase:
 
         :returns: A string representation of this instance"""
         return f"{self.uid}|{self.category}"
+
+
+class OnShutdownRequested(EventBase):
+    """Publish this event to trigger the listener to shutdown."""
+
+    def __init__(self) -> None:
+        """Initialize the OnShutdownRequest event."""
+        super().__init__(EventCategory.SHUTDOWN, str(uuid.uuid4()))
 
 
 class OnCreateConsumer(EventBase):
@@ -593,6 +605,7 @@ class EventConsumer:
         self._global_filters = filters or []
         self._name = name
         self._event_handler = event_handler
+        self.listening = True
 
     @property
     def descriptor(self) -> str:
@@ -696,7 +709,10 @@ class EventConsumer:
             logger.warning("Unable to register. No registrar channel found.")
 
     def listen_once(self, timeout: float = 0.001, batch_timeout: float = 1.0) -> None:
-        """Receives messages for the consumer a single time.
+        """Receives messages for the consumer a single time. Delivers
+        all messages that pass the consumer filters. Shutdown requests
+        are handled by a default event handler.
+
 
         NOTE: Executes a single batch-retrieval to receive the maximum
         number of messages available under batch timeout. To continually
@@ -715,5 +731,23 @@ class EventConsumer:
 
         for message in incoming_messages:
             logger.debug(f"Sending event {message=} to handler.")
+            self._handle_shutdown(message)
             if self._event_handler:
                 self._event_handler(message)
+
+    def _handle_shutdown(self, event: EventBase) -> None:
+        """Handles shutdown requests sent to the consumer by setting the
+        `self.listener` property to `False`."""
+        if isinstance(event, OnShutdownRequested):
+            self.listening = False
+
+    def listen(self, timeout: float = 0.001, batch_timeout: float = 1.0) -> None:
+        """Receives messages for the consumer until a shutdown request is received
+
+        :param timeout: Maximum time to wait (in seconds) for a message to arrive
+        :param timeout: Maximum time to wait (in seconds) for a batch to arrive
+        """
+        self.listening = True
+
+        while self.listening:
+            self.listen_once(timeout, batch_timeout)

@@ -68,7 +68,7 @@ class DragonFeatureStore(FeatureStore):
         """
         try:
             return self._storage[key]
-        except KeyError as e:
+        except dragon_ddict.DDictKeyError as e:
             raise KeyError(f"Key not found in FeatureStore: {key}") from e
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
@@ -87,6 +87,17 @@ class DragonFeatureStore(FeatureStore):
         :returns: True if the key is defined, False otherwise
         """
         return key in self._storage
+
+    def pop(self, key: str) -> t.Union[str, bytes, None]:
+        """Remove the value from the dictionary and return the value.
+
+        :param key: Dictionary key to retrieve
+        :returns: The value held at the key if it exists, otherwise `None
+        `"""
+        try:
+            return self._storage.pop(key)
+        except dragon_ddict.DDictKeyError:
+            return None
 
     @classmethod
     def from_descriptor(

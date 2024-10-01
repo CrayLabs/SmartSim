@@ -147,8 +147,8 @@ class FeatureStore(ABC):
         """
         try:
             return self._get(key)
-        except KeyError as ex:
-            raise SmartSimError(f"An unknown key was requested: {key}") from ex
+        except KeyError:
+            raise
         except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence
             raise SmartSimError(

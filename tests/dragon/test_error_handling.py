@@ -29,8 +29,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
-
 dragon = pytest.importorskip("dragon")
 
 import multiprocessing as mp
@@ -57,6 +55,7 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
     ModelKey,
