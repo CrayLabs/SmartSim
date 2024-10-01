@@ -68,7 +68,7 @@ class DragonFeatureStore(FeatureStore):
         """
         try:
             return self._storage[key]
-        except dragon_ddict.DDictKeyError as e:
+        except dragon_ddict.DDictError as e:
             raise KeyError(f"Key not found in FeatureStore: {key}") from e
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
@@ -96,7 +96,7 @@ class DragonFeatureStore(FeatureStore):
         `"""
         try:
             return self._storage.pop(key)
-        except dragon_ddict.DDictKeyError:
+        except dragon_ddict.DDictError:
             return None
 
     @classmethod
