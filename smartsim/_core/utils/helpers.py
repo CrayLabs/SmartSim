@@ -59,12 +59,16 @@ _T = t.TypeVar("_T")
 _HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
-_nested_seq: TypeAlias = "t.Sequence[Job | _nested_seq]"
+_NestedJobSequenceType: TypeAlias = "t.Sequence[Job | _NestedJobSequenceType]"
 
 
-def unpack(value: _nested_seq) -> t.Generator[Job, None, None]:
+def unpack(value: _NestedJobSequenceType) -> t.Generator[Job, None, None]:
     """Unpack any iterable input in order to obtain a
-    single sequence of values"""
+    single sequence of values
+
+    :param: Sequence containing elements of type Job or other
+    sequences that are also of type _NestedJobSequenceType
+    :return: flattened list of Jobs"""
 
     for item in value:
         if isinstance(item, t.Iterable):

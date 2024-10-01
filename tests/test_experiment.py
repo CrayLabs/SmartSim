@@ -622,25 +622,6 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
     assert before_cancel == after_cancel
 
 
-def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list):
-    """Test the unpacking of a tuple of tuples
-    exp.start(job1, (job2, job3))
-    """
-    monkeypatch.setattr(
-        "smartsim._core.dispatch._LauncherAdapter.start",
-        lambda launch, exe, job_execution_path, env, out, err: random_id(),
-    )
-
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-
-    launch_settings = launch_settings.LaunchSettings(wlmutils.get_test_launcher())
-    job_list = ensemble.build_jobs(launch_settings)
-
-    exp = Experiment(name="exp_name", exp_path=test_dir)
-
-    exp.start(job_list)
-
-
 @pytest.mark.parametrize(
     "job_list",
     (
@@ -735,7 +716,9 @@ def test_start_sequences_of_jobs_good(test_dir, wlmutils, monkeypatch, job_list)
         ),
     ),
 )
-def test_start_unpack(test_dir, wlmutils, monkeypatch, job_list):
+def test_start_unpack(
+    test_dir: str, wlmutils, monkeypatch: pytest.MonkeyPatch, job_list: job.Job
+):
     """Test unpacking a sequences of jobs"""
 
     monkeypatch.setattr(
