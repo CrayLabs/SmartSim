@@ -203,7 +203,7 @@ def test_dragonbackend_event_handled():
         listener._on_shutdown()
 
     for i in range(10):
-        if "BackboneFeatureStore.MLI_BACKEND_CONSUMER" not in backbone:
+        if BackboneFeatureStore.MLI_BACKEND_CONSUMER not in backbone:
             logger.debug(f"The listener was removed after {i} iterations")
             channel_desc = None
             break
