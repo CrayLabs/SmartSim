@@ -30,15 +30,14 @@ from unittest import mock
 
 import pytest
 
-from smartsim._core.mli.infrastructure.control.event_listener import (
-    ConsumerRegistrationListener,
-)
-
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
+from smartsim._core.mli.infrastructure.control.event_listener import (
+    ConsumerRegistrationListener,
+)
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
     EventBase,

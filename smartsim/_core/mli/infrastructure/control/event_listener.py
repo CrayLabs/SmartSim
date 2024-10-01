@@ -149,8 +149,8 @@ class ConsumerRegistrationListener(Service):
         return False
 
     def _on_unregister(self, event: OnRemoveConsumer) -> None:
-        """Event handler for updating the backbone when new event consumers
-        are registered.
+        """Event handler for updating the backbone when event consumers
+        are un-registered.
 
         :param event: The event that was received
         """
@@ -176,8 +176,8 @@ class ConsumerRegistrationListener(Service):
         self._backbone.notification_channels = list(notify_list)
 
     def _on_event_received(self, event: EventBase) -> None:
-        """Event handler for updating the backbone when new event consumers
-        are registered.
+        """Primary event handler for the listener. Distributes events to
+        type-specific handlers.
 
         :param event: The event that was received
         """
@@ -290,7 +290,7 @@ def _connect_backbone() -> t.Optional[BackboneFeatureStore]:
     Load the backbone by retrieving the descriptor from environment variables.
 
     :returns: The backbone feature store
-    :raises: SmartSimError if a descriptor is not found
+    :raises SmartSimError: if a descriptor is not found
     """
     descriptor = os.environ.get(BackboneFeatureStore.MLI_BACKBONE, "")
 

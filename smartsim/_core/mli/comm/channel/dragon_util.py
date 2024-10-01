@@ -54,7 +54,7 @@ def channel_to_descriptor(channel: t.Union[dch.Channel, fli.FLInterface]) -> str
 
     :param channel: The dragon channel to convert
     :returns: The descriptor string
-    :raises: SmartSimError if a dragon channel is not provided
+    :raises SmartSimError: If a dragon channel is not provided
     """
     if channel is None:
         raise SmartSimError("Channel is not available to create a descriptor")

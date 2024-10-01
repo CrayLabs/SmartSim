@@ -414,7 +414,7 @@ class EventSender:
         :param event: The event to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
         :returns: The number of message copies that were sent
-        :raises: SmartSimError if the comm channel is not configured
+        :raises SmartSimError: If the comm channel is not configured
         """
         if self._channel is None:
             raise SmartSimError("No channel to send on")
