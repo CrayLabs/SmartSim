@@ -167,9 +167,8 @@ class Ensemble(entity.CompoundEntity):
         :param value: the executable
         :raises TypeError: if the exe argument is not str or PathLike str
         """
-        if value:
-            if not isinstance(value, (str, os.PathLike)):
-                raise TypeError("exe argument was not of type str or PathLike str")
+        if not isinstance(value, (str, os.PathLike)):
+            raise TypeError("exe argument was not of type str or PathLike str")
 
         self._exe = os.fspath(value)
 
@@ -188,12 +187,12 @@ class Ensemble(entity.CompoundEntity):
         :param value: the executable arguments
         :raises TypeError: if exe_args is not sequence of str
         """
-        if value:
-            if not (
-                isinstance(value, collections.abc.Sequence)
-                and (all(isinstance(x, str) for x in value))
-            ):
-                raise TypeError("exe_args argument was not of type sequence of str")
+
+        if not (
+            isinstance(value, collections.abc.Sequence)
+            and (all(isinstance(x, str) for x in value))
+        ):
+            raise TypeError("exe_args argument was not of type sequence of str")
 
         self._exe_args = list(value)
 
@@ -215,28 +214,28 @@ class Ensemble(entity.CompoundEntity):
         :raises TypeError: if exe_arg_parameters is not mapping
         of str and sequences of sequences of strings
         """
-        if value:
-            if not (
-                isinstance(value, collections.abc.Mapping)
-                and (
-                    all(
-                        isinstance(key, str)
-                        and isinstance(val, collections.abc.Sequence)
-                        and all(
-                            isinstance(subval, collections.abc.Sequence)
-                            for subval in val
-                        )
-                        and all(
-                            isinstance(item, str)
-                            for item in itertools.chain.from_iterable(val)
-                        )
-                        for key, val in value.items()
+
+        if not (
+            isinstance(value, collections.abc.Mapping)
+            and (
+                all(
+                    isinstance(key, str)
+                    and isinstance(val, collections.abc.Sequence)
+                    and all(
+                        isinstance(subval, collections.abc.Sequence) for subval in val
                     )
+                    and all(
+                        isinstance(item, str)
+                        for item in itertools.chain.from_iterable(val)
+                    )
+                    for key, val in value.items()
                 )
-            ):
-                raise TypeError(
-                    "exe_arg_parameters argument was not of type mapping of str and sequences of sequences of strings"
-                )
+            )
+        ):
+            raise TypeError(
+                "exe_arg_parameters argument was not of type "
+                "mapping of str and sequences of sequences of strings"
+            )
 
         self._exe_arg_parameters = copy.deepcopy(value)
 
@@ -257,9 +256,9 @@ class Ensemble(entity.CompoundEntity):
             and/or configured prior to execution
         :raises TypeError: if files is not of type EntityFiles
         """
-        if value:
-            if not isinstance(value, EntityFiles):
-                raise TypeError("files argument was not of type EntityFiles")
+
+        if not isinstance(value, EntityFiles):
+            raise TypeError("files argument was not of type EntityFiles")
         self._files = copy.deepcopy(value)
 
     @property
@@ -278,21 +277,22 @@ class Ensemble(entity.CompoundEntity):
         :raises TypeError: if file_parameters is not a mapping of str and
         sequence of str
         """
-        if value:
-            if not (
-                isinstance(value, t.Mapping)
-                and (
-                    all(
-                        isinstance(key, str)
-                        and isinstance(val, collections.abc.Sequence)
-                        and all(isinstance(subval, str) for subval in val)
-                        for key, val in value.items()
-                    )
+
+        if not (
+            isinstance(value, t.Mapping)
+            and (
+                all(
+                    isinstance(key, str)
+                    and isinstance(val, collections.abc.Sequence)
+                    and all(isinstance(subval, str) for subval in val)
+                    for key, val in value.items()
                 )
-            ):
-                raise TypeError(
-                    "file_parameters argument was not of type mapping of str and sequence of str"
-                )
+            )
+        ):
+            raise TypeError(
+                "file_parameters argument was not of type mapping of str "
+                "and sequence of str"
+            )
 
         self._file_parameters = dict(value)
 
@@ -314,11 +314,12 @@ class Ensemble(entity.CompoundEntity):
         :raises TypeError: if permutation_strategy is not str or
         PermutationStrategyType
         """
-        if value:
-            if not callable(value):
-                raise TypeError(
-                    "permutation_strategy argument was not of type str or PermutationStrategyType"
-                )
+
+        if not callable(value):
+            raise TypeError(
+                "permutation_strategy argument was not of "
+                "type str or PermutationStrategyType"
+            )
         self._permutation_strategy = value
 
     @property
@@ -336,9 +337,8 @@ class Ensemble(entity.CompoundEntity):
         :param value: the max permutations
         :raises TypeError: max_permutations argument was not of type int
         """
-        if value:
-            if not isinstance(value, int):
-                raise TypeError("max_permutations argument was not of type int")
+        if not isinstance(value, int):
+            raise TypeError("max_permutations argument was not of type int")
 
         self._max_permutations = value
 
@@ -357,9 +357,8 @@ class Ensemble(entity.CompoundEntity):
         :return: the number of replicas
         :raises TypeError: replicas argument was not of type int
         """
-        if value:
-            if not isinstance(value, int):
-                raise TypeError("replicas argument was not of type int")
+        if not isinstance(value, int):
+            raise TypeError("replicas argument was not of type int")
 
         self._replicas = value
 

@@ -107,20 +107,15 @@ def test_ensemble_init_empty_params(test_dir: str) -> None:
         Ensemble()
 
 
-def test_ensemble_build_jobs():
-    """Test a call to build_jobs with empty launchsettings"""
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-    launch_settings = None
-    with pytest.raises(ValueError):
-        ensemble.build_jobs(launch_settings)
-
-
-def test_ensemble_no_launch_settings():
+@pytest.mark.parametrize(
+    "bad_settings",
+    [pytest.param(None, id="Nullish"), pytest.param("invalid", id="String")],
+)
+def test_ensemble_incorrect_launch_settings_type(bad_settings):
     """test starting an ensemble with invalid launch settings"""
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-    launch_settings = "invalid"
     with pytest.raises(TypeError):
-        ensemble.build_jobs(launch_settings)
+        ensemble.build_jobs(bad_settings)
 
 
 def test_ensemble_type_exe():
@@ -135,7 +130,15 @@ def test_ensemble_type_exe():
         ensemble.exe = 2
 
 
-def test_ensemble_type_exe_args():
+@pytest.mark.parametrize(
+    "bad_settings",
+    [
+        pytest.param([1, 2, 3], id="sequence of ints"),
+        pytest.param(0, id="null"),
+        pytest.param({"foo": "bar"}, id="dict"),
+    ],
+)
+def test_ensemble_type_exe_args(bad_settings):
     ensemble = Ensemble(
         "ensemble-name",
         exe="echo",
@@ -143,7 +146,7 @@ def test_ensemble_type_exe_args():
     with pytest.raises(
         TypeError, match="exe_args argument was not of type sequence of str"
     ):
-        ensemble.exe_args = [1, 2, 3]
+        ensemble.exe_args = bad_settings
 
 
 @pytest.mark.parametrize(
@@ -172,7 +175,8 @@ def test_ensemble_type_exe_arg_parameters(exe_arg_params):
     )
     with pytest.raises(
         TypeError,
-        match="exe_arg_parameters argument was not of type mapping of str and sequences of sequences of strings",
+        match="exe_arg_parameters argument was not of type mapping "
+        "of str and sequences of sequences of strings",
     ):
         ensemble.exe_arg_parameters = exe_arg_params
 
@@ -202,7 +206,8 @@ def test_ensemble_type_file_parameters(file_params):
     )
     with pytest.raises(
         TypeError,
-        match="file_parameters argument was not of type mapping of str and sequence of str",
+        match="file_parameters argument was not of type "
+        "mapping of str and sequence of str",
     ):
         ensemble.file_parameters = file_params
 
@@ -215,7 +220,8 @@ def test_ensemble_type_permutation_strategy():
     )
     with pytest.raises(
         TypeError,
-        match="permutation_strategy argument was not of type str or PermutationStrategyType",
+        match="permutation_strategy argument was not of "
+        "type str or PermutationStrategyType",
     ):
         ensemble.permutation_strategy = 2
 

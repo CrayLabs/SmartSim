@@ -95,11 +95,11 @@ def test_empty_executable():
         Application(name="application", exe=None, exe_args=None)
 
 
-def test_executable_is_not_none():
-    """Test that an error is raised when the exe property is empty"""
-    exe = ""
+def test_executable_is_not_empty_str():
+    """Test that an error is raised when the exe property is and empty str"""
+    app = Application(name="application", exe="echo", exe_args=None)
     with pytest.raises(ValueError):
-        Application(name="application", exe=exe, exe_args=None)
+        app.exe = ""
 
 
 def test_type_exe():

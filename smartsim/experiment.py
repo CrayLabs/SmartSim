@@ -166,17 +166,17 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        if jobs:
-            if not all(isinstance(job, Job) for job in jobs):
-                raise TypeError("jobs argument was not of type Job")
-
-            # Create the run id
-            run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
-            # Generate the root path
-            root = pathlib.Path(self.exp_path, run_id)
-            return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
-        else:
+        if not jobs:
             raise ValueError("No jobs provided to start")
+
+        if not all(isinstance(job, Job) for job in jobs):
+            raise TypeError("jobs argument was not of type Job")
+
+        # Create the run id
+        run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
+        # Generate the root path
+        root = pathlib.Path(self.exp_path, run_id)
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
 
     def _dispatch(
         self,
@@ -255,11 +255,10 @@ class Experiment:
         :returns: A tuple of statuses with order respective of the order of the
             calling arguments.
         """
-        if ids:
-            if not all(isinstance(id, str) for id in ids):
-                raise TypeError("ids argument was not of type LaunchedJobID")
-        else:
+        if not ids:
             raise ValueError("No job ids provided to get status")
+        if not all(isinstance(id, str) for id in ids):
+            raise TypeError("ids argument was not of type LaunchedJobID")
 
         to_query = self._launch_history.group_by_launcher(
             set(ids), unknown_ok=True
@@ -269,7 +268,6 @@ class Experiment:
         stats = (stats_map.get(i, InvalidJobStatus.NEVER_STARTED) for i in ids)
         return tuple(stats)
 
-    # TODO: LaunchedJobID isinstance check
     def wait(
         self, *ids: LaunchedJobID, timeout: float | None = None, verbose: bool = True
     ) -> None:
