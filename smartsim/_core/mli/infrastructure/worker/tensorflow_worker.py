@@ -74,6 +74,7 @@ class TensorFlowWorker(MachineLearningWorkerBase):
         device memory.
 
         :param request: The request that triggered the pipeline
+        :param fetch_result: Raw outputs from fetching model
         :param device: The device on which the model must be placed
         :returns: LoadModelResult wrapping the model loaded for the request
         :raises ValueError: If model reference object is not found
@@ -109,7 +110,6 @@ class TensorFlowWorker(MachineLearningWorkerBase):
                 )
                 input_layers.add(f"{operation.name}:0")
 
-
         # Code initially taken from
         # apple.github.io/coremltools/docs-guides/source/tensorflow-1-workflow.html
         output_tensors = set()
@@ -122,7 +122,9 @@ class TensorFlowWorker(MachineLearningWorkerBase):
                 x = operation.outputs[0]
                 potential_names = [x.name]
                 name_split = x.name.split(":")
-                potential_names.append(":".join((name_split[0]+"/resource", name_split[-1])))
+                potential_names.append(
+                    ":".join((name_split[0] + "/resource", name_split[-1]))
+                )
                 if all(name not in input_tensors for name in potential_names):
                     logger.debug(
                         f"Output tensor name: {x.name}, "
@@ -148,8 +150,8 @@ class TensorFlowWorker(MachineLearningWorkerBase):
         """Given a collection of data, perform a transformation on the data and put
         the raw tensor data on a MemoryPool allocation.
 
-        :param request: The request that triggered the pipeline
-        :param fetch_result: Raw outputs from fetching inputs out of a feature store
+        :param batch: The request batch that triggered the pipeline
+        :param fetch_result: Raw outputs from fetching inputs
         :param mem_pool: The memory pool used to access batched input tensors
         :returns: The transformed inputs wrapped in a TransformInputResult
         :raises ValueError: If tensors cannot be reconstructed

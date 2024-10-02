@@ -65,6 +65,7 @@ class TorchWorker(MachineLearningWorkerBase):
         device memory.
 
         :param request: The request that triggered the pipeline
+        :param fetch_result: Raw outputs from fetching model
         :param device: The device on which the model must be placed
         :returns: LoadModelResult wrapping the model loaded for the request
         :raises ValueError: If model reference object is not found
