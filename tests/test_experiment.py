@@ -712,7 +712,7 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
                     ),
                 ]
             ],
-            id="[job_1, (job_2, job_3)]",
+            id="[job_1, ((job_2, job_3), job_4)]",
         ),
     ),
 )
