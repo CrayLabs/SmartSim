@@ -21,7 +21,7 @@ Detailed Notes
 - PML's Scylla is still under development. The usual SmartSim
   build instructions do not apply because the GPU dependencies
   have yet to be installed at a system-wide level. Scylla has
-  its own entry in the documentations.
+  its own entry in the documentation.
   ([SmartSim-PR733](https://github.com/CrayLabs/SmartSim/pull/733))
 
 ### 0.8.0
