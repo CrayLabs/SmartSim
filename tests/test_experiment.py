@@ -669,7 +669,7 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
                     ),
                 )
             ],
-            id="(job1, (job2, job3))",
+            id="((job1, job2), (job3, job4))",
         ),
         pytest.param(
             [
