@@ -66,7 +66,7 @@ def unpack(value: _NestedJobSequenceType) -> t.Generator[Job, None, None]:
     """Unpack any iterable input in order to obtain a
     single sequence of values
 
-    :param: Sequence containing elements of type Job or other
+    :param value: Sequence containing elements of type Job or other
     sequences that are also of type _NestedJobSequenceType
     :return: flattened list of Jobs"""
 
