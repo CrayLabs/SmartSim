@@ -1,7 +1,9 @@
+import os
 import pathlib
 import sys
 import typing as t
-import os
+import pickle
+import base64
 from dataclasses import dataclass, field
 
 from ..commands import Command
@@ -25,18 +27,22 @@ def create_final_dest(
     :return: Combined path
     :raises ValueError: An error occurred during path combination
     """
-    if dest is None:
-        dest = pathlib.Path("")
-    # these need to be more descriptive
+    if dest is not None and not isinstance(dest, pathlib.Path):
+        raise ValueError(f"Must be absolute path")
+    if isinstance(dest, pathlib.Path) and not dest.is_absolute():
+        raise ValueError("Invalid destination path")
+    if isinstance(dest, pathlib.Path) and " " in str(dest):
+        raise ValueError("Path contains spaces, which are not allowed")
     if (
         job_root_path is None
         or job_root_path == pathlib.Path("")
         or isinstance(job_root_path, str)
-        or job_root_path.suffix
     ):
         raise ValueError(f"Job root path '{job_root_path}' is not a directory.")
     try:
-        combined_path = job_root_path / dest
+        combined_path = job_root_path
+        if dest:
+            combined_path = job_root_path / dest
         return str(combined_path)
     except Exception as e:
         raise ValueError(f"Error combining paths: {e}")
@@ -60,7 +66,9 @@ class GenerationProtocol(t.Protocol):
 class CopyOperation(GenerationProtocol):
     """Copy Operation"""
 
-    def __init__(self, src: pathlib.Path, dest: t.Union[pathlib.Path, None]) -> None:
+    def __init__(
+        self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None
+    ) -> None:
         self.src = src
         self.dest = dest
 
@@ -83,7 +91,7 @@ class CopyOperation(GenerationProtocol):
 class SymlinkOperation(GenerationProtocol):
     """Symlink Operation"""
 
-    def __init__(self, src: pathlib.Path, dest: t.Union[pathlib.Path, None]) -> None:
+    def __init__(self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None) -> None:
         self.src = src
         self.dest = dest
 
@@ -94,7 +102,6 @@ class SymlinkOperation(GenerationProtocol):
         parent_dir = os.path.basename(normalized_path)
         final_dest = create_final_dest(context.job_root_path, self.dest)
         new_dest = os.path.join(final_dest, parent_dir)
-        print(f"here: {new_dest}")
         return Command(
             [
                 sys.executable,
@@ -113,14 +120,17 @@ class ConfigureOperation(GenerationProtocol):
     def __init__(
         self,
         src: pathlib.Path,
-        dest: t.Union[pathlib.Path, None],
+        file_parameters: t.Mapping[str,str],
+        dest: t.Optional[pathlib.Path] = None,
         tag: t.Optional[str] = None,
     ) -> None:
         self.src = src
         self.dest = dest
+        pickled_dict = pickle.dumps(file_parameters)
+        encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
+        self.file_parameters = encoded_dict
         self.tag = tag if tag else ";"
 
-    # TODO discuss format as function name
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke configure fs entry point"""
         final_dest = create_final_dest(context.job_root_path, self.dest)
@@ -133,7 +143,7 @@ class ConfigureOperation(GenerationProtocol):
                 str(self.src),
                 final_dest,
                 self.tag,
-                "encoded_dict",
+                self.file_parameters,
             ]
         )
 
@@ -164,11 +174,12 @@ class FileSysOperationSet:
     def add_configuration(
         self,
         src: pathlib.Path,
+        file_parameters: t.Mapping[str,str],
         dest: t.Optional[pathlib.Path] = None,
         tag: t.Optional[str] = None,
     ) -> None:
         """Add a configure operation to the operations list"""
-        self.operations.append(ConfigureOperation(src, dest, tag))
+        self.operations.append(ConfigureOperation(src, file_parameters, dest, tag))
 
     @property
     def copy_operations(self) -> t.List[CopyOperation]:
