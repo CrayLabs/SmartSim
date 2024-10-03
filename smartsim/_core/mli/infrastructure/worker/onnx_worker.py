@@ -28,16 +28,16 @@ import logging
 import os
 
 import numpy as np
-import tensorflow as tf
-
-# pylint: disable-next=no-name-in-module
-from tensorflow.python.framework.ops import disable_eager_execution
+from onnx import load_model_from_string
+from onnxruntime import InferenceSession  # type: ignore
 
 # isort: off
 # isort: on
 
 # pylint: disable=import-error
 from dragon.managed_memory import MemoryAlloc, MemoryPool
+
+# pylint: enable=import-error
 
 from .....error import SmartSimError
 from .....log import get_logger
@@ -53,18 +53,12 @@ from .worker import (
     TransformOutputResult,
 )
 
-# pylint: enable=import-error
 
-
-tf.get_logger().setLevel(logging.ERROR)
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 logger = get_logger(__name__)
 
-disable_eager_execution()
 
-
-class TensorFlowWorker(MachineLearningWorkerBase):
-    """A worker that executes a TensorFlow model."""
+class ONNXWorker(MachineLearningWorkerBase):
+    """A worker that executes an ONNX model."""
 
     @staticmethod
     def load_model(
@@ -87,62 +81,38 @@ class TensorFlowWorker(MachineLearningWorkerBase):
         else:
             raise ValueError("Unable to load model without reference object")
 
-        device_to_tf = {"cpu": "/CPU", "gpu": "/GPU"}
-        for old, new in device_to_tf.items():
-            device = device.replace(old, new)
-
         try:
-            graph_def = tf.compat.v1.GraphDef()
-            graph_def.ParseFromString(model_bytes)
+            providers = []
+            if "gpu" in device.lower():
+                device_split = device.split(":")
+                if len(device_split) > 1:
+                    provider_options = {"device_id": device_split[-1]}
+                if "ROCR_VISIBLE_DEVICES" in os.environ:
+                    providers = [("ROCMExecutionProvider", provider_options)]
+                else:
+                    providers = [("CUDAExecutionProvider", provider_options)]
 
-            # pylint: disable-next=not-context-manager
-            with tf.Graph().as_default() as graph, tf.device(device):
-                tf.import_graph_def(graph_def, name="")
-            ops = graph.get_operations()
+            # Fallback
+            providers.append(("CPUExecutionProvider", {}))
+
         except Exception as e:
             raise RuntimeError(
                 "Failed to load and evaluate the model: "
                 f"Model key {batch.model_id.key}, Device {device}"
             ) from e
 
-        input_layers = set()
-        for operation in ops:
-            if operation.type == "Placeholder":
-                logger.debug(
-                    f"Input op name: {operation.name}, "
-                    f"output shape: {operation.outputs[0].get_shape()}"
-                )
-                input_layers.add(f"{operation.name}:0")
+        onnx_deserialized = load_model_from_string(model_bytes)
+        output_tensors = [n.name for n in onnx_deserialized.graph.output]
+        input_layers = [n.name for n in onnx_deserialized.graph.input]
 
-        # Code initially taken from
-        # apple.github.io/coremltools/docs-guides/source/tensorflow-1-workflow.html
-        output_tensors = set()
-        input_tensors = set()
-        for operation in ops:
-            for x in operation.inputs:
-                input_tensors.add(x.name)
-        for operation in ops:
-            if len(operation.outputs) > 0:
-                x = operation.outputs[0]
-                potential_names = [x.name]
-                name_split = x.name.split(":")
-                potential_names.append(
-                    ":".join((name_split[0] + "/resource", name_split[-1]))
-                )
-                if all(name not in input_tensors for name in potential_names):
-                    logger.debug(
-                        f"Output tensor name: {x.name}, "
-                        f"tensor shape: {x.get_shape()}, "
-                        f"parent op type: {operation.type}"
-                    )
-                    output_tensors.add(x.name)
-
-        with tf.device(device):
-            result = LoadModelResult(
-                tf.compat.v1.Session(graph=graph),
-                list(input_layers),
-                list(output_tensors),
-            )
+        session = InferenceSession(
+            model_bytes, providers=providers
+        )
+        result = LoadModelResult(
+            session,
+            input_layers,
+            output_tensors,
+        )
         return result
 
     @staticmethod
@@ -238,9 +208,6 @@ class TensorFlowWorker(MachineLearningWorkerBase):
         """
         if not load_result.model:
             raise SmartSimError("Model must be loaded to execute")
-        device_to_tf = {"cpu": "/CPU", "gpu": "/GPU"}
-        for old, new in device_to_tf.items():
-            device = device.replace(old, new)
 
         tensors = []
         mem_allocs = []
@@ -266,11 +233,10 @@ class TensorFlowWorker(MachineLearningWorkerBase):
         if load_result.inputs is None:
             raise ValueError("Model was stored without inputs")
         try:
-            with tf.device(device):
-                results = sess.run(
-                    load_result.outputs,
-                    feed_dict=dict(zip(load_result.inputs, tensors)),
-                )
+            results = sess.run(
+                load_result.outputs,
+                input_feed=dict(zip(load_result.inputs, tensors)),
+            )
         except Exception as e:
             raise ValueError(
                 f"Error while evaluating the model: Model {batch.model_id.key}"
