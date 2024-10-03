@@ -240,7 +240,7 @@ class Ensemble(entity.CompoundEntity):
         self._exe_arg_parameters = copy.deepcopy(value)
 
     @property
-    def files(self) -> t.Union[EntityFiles, None]:
+    def files(self) -> EntityFiles:
         """Return attached EntityFiles object.
 
         :return: the EntityFiles object of files to be copied, symlinked,
@@ -249,7 +249,7 @@ class Ensemble(entity.CompoundEntity):
         return self._files
 
     @files.setter
-    def files(self, value: t.Optional[EntityFiles]) -> None:
+    def files(self, value: EntityFiles) -> None:
         """Set the EntityFiles object.
 
         :param value: the EntityFiles object of files to be copied, symlinked,
@@ -359,6 +359,8 @@ class Ensemble(entity.CompoundEntity):
         """
         if not isinstance(value, int):
             raise TypeError("replicas argument was not of type int")
+        if value <= 0:
+            raise ValueError
 
         self._replicas = value
 

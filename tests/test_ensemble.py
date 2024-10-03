@@ -251,6 +251,16 @@ def test_ensemble_type_replicas():
     ):
         ensemble.replicas = "invalid"
 
+def test_ensemble_type_replicas_negative():
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        ValueError
+    ):
+        ensemble.replicas = -20
 
 def test_ensemble_type_build_jobs():
     ensemble = Ensemble("ensemble-name", "echo", replicas=2)
