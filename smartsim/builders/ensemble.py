@@ -315,7 +315,7 @@ class Ensemble(entity.CompoundEntity):
         PermutationStrategyType
         """
 
-        if not callable(value):
+        if not (callable(value) or isinstance(value, str)):
             raise TypeError(
                 "permutation_strategy argument was not of "
                 "type str or PermutationStrategyType"
