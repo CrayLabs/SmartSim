@@ -188,11 +188,9 @@ class Application(SmartSimEntity):
         """
         if not (
             isinstance(value, t.Mapping)
-            and (
-                all(
-                    isinstance(key, str) and isinstance(val, str)
-                    for key, val in value.items()
-                )
+            and all(
+                isinstance(key, str) and isinstance(val, str)
+                for key, val in value.items()
             )
         ):
             raise TypeError(
