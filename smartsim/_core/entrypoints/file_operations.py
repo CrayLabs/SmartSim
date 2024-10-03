@@ -159,7 +159,6 @@ def copy(parsed_args: argparse.Namespace) -> None:
         not includedm and the destination file already exists, a
         FileExistsError will be raised
     """
-    print(parsed_args.source)
     if os.path.isdir(parsed_args.source):
         shutil.copytree(
             parsed_args.source,
@@ -227,7 +226,6 @@ def configure(parsed_args: argparse.Namespace) -> None:
             for file_name in filenames:
                 src_file = os.path.join(dirpath, file_name)
                 dst_file = os.path.join(new_dir_dest, file_name)
-                print(type(substitutions))
                 _process_file(substitutions, src_file, dst_file)
     else:
         dst_file = parsed_args.dest / os.path.basename(parsed_args.source)
