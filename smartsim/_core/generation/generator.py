@@ -24,27 +24,21 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
-import os
 import pathlib
-import pickle
 import subprocess
-import sys
 import typing as t
 from collections import namedtuple
 from datetime import datetime
 
-from ...entity.files import EntityFiles
 from ...entity import entity
 from ...launchable import Job
 from ...log import get_logger
 from ..commands import Command, CommandList
 from .operations import (
+    ConfigureOperation,
     CopyOperation,
     FileSysOperationSet,
     GenerationContext,
-    ConfigureOperation,
-    GenerationProtocol,
     SymlinkOperation,
 )
 
@@ -67,7 +61,7 @@ Job_Path = namedtuple("Job_Path", ["run_path", "out_path", "err_path"])
 
 
 class Generator:
-    """ The Generator class creates the directory structure for a SmartSim Job by building
+    """The Generator class creates the directory structure for a SmartSim Job by building
     and executing file operation commands.
     """
 
@@ -198,7 +192,10 @@ class Generator:
 
     @classmethod
     def _build_commands(
-        cls, entity: entity.SmartSimEntity, job_path: pathlib.Path, log_path: pathlib.Path
+        cls,
+        entity: entity.SmartSimEntity,
+        job_path: pathlib.Path,
+        log_path: pathlib.Path,
     ) -> CommandList:
         """Build file operation commands for a Job's entity.
 
@@ -223,7 +220,9 @@ class Generator:
         return cmd_list
 
     @classmethod
-    def _append_mkdir_commands(cls, cmd_list: CommandList, job_path: pathlib.Path, log_path: pathlib.Path) -> None:
+    def _append_mkdir_commands(
+        cls, cmd_list: CommandList, job_path: pathlib.Path, log_path: pathlib.Path
+    ) -> None:
         """Append file operation Commands (mkdir) for a Job's run and log directory.
 
         :param cmd_list: A CommandList object containing the commands to be executed
@@ -234,7 +233,12 @@ class Generator:
         cmd_list.commands.append(cls._mkdir_file(log_path))
 
     @classmethod
-    def _append_file_operations(cls, cmd_list: CommandList, entity: _GenerableProtocol, context: GenerationContext) -> None:
+    def _append_file_operations(
+        cls,
+        cmd_list: CommandList,
+        entity: _GenerableProtocol,
+        context: GenerationContext,
+    ) -> None:
         """Append file operation Commands (copy, symlink, configure) for all
         files attached to the entity.
 

@@ -59,8 +59,10 @@ class Application(SmartSimEntity):
         self,
         name: str,
         exe: str,
-        file_parameters: t.Mapping[str,str], # TODO remove when Ensemble is addressed
-        files: t.Optional[EntityFiles] = None, # TODO remove when Ensemble is addressed
+        file_parameters: (
+            t.Mapping[str, str] | None
+        ) = None,  # TODO remove when Ensemble is addressed
+        files: t.Optional[EntityFiles] = None,  # TODO remove when Ensemble is addressed
         exe_args: t.Optional[t.Union[str, t.Sequence[str]]] = None,
     ) -> None:
         """Initialize an ``Application``
@@ -86,6 +88,11 @@ class Application(SmartSimEntity):
         self._exe_args = self._build_exe_args(exe_args) or []
         """The executable arguments"""
         self.files = FileSysOperationSet([])
+        """Attach files"""
+        self._file_parameters = (
+            copy.deepcopy(file_parameters) if file_parameters else {}
+        )
+        """TODO MOCK until Ensemble is implemented"""
         """Files to be copied, symlinked, and/or configured prior to execution"""
         self._incoming_entities: t.List[SmartSimEntity] = []
         """Entities for which the prefix will have to be known by other entities"""
