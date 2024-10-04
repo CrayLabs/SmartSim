@@ -139,7 +139,7 @@ class Ensemble(entity.CompoundEntity):
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         )
         """The parameters and values to be used when configuring entities"""
-        self._files = copy.deepcopy(files) if files else None
+        self._files = copy.deepcopy(files) if files else EntityFiles()
         """The files to be copied, symlinked, and/or configured prior to execution"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
