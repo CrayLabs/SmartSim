@@ -25,9 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import dragon
-
-# pylint disable=import-error
+# pylint: disable=import-error
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
@@ -35,9 +33,8 @@ from dragon import fli
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.globalservices.api_setup import connect_to_infrastructure
-from dragon.managed_memory import MemoryPool
-from dragon.utils import b64decode, b64encode
-# pylint enable=import-error
+
+# pylint: enable=import-error
 
 # isort: off
 # isort: on
@@ -46,23 +43,14 @@ import argparse
 import base64
 import multiprocessing as mp
 import os
-import pickle
 import socket
-import sys
 import time
-import typing as t
 
 import cloudpickle
-import optparse
-import os
 
 from smartsim._core.entrypoints.service import Service
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
-    DragonFeatureStore,
-)
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
@@ -71,8 +59,6 @@ from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConf
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.worker.worker import MachineLearningWorkerBase
-
 from smartsim.log import get_logger
 
 logger = get_logger("Worker Manager Entry Point")
@@ -83,7 +69,6 @@ pid = os.getpid()
 affinity = os.sched_getaffinity(pid)
 logger.info(f"Entry point: {socket.gethostname()}, {affinity}")
 logger.info(f"CPUS: {os.cpu_count()}")
-
 
 
 def service_as_dragon_proc(
@@ -108,8 +93,6 @@ def service_as_dragon_proc(
     )
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Worker Manager")
     parser.add_argument(
@@ -132,13 +115,15 @@ if __name__ == "__main__":
         "--batch_size",
         type=int,
         default=1,
-        help="How many requests the workers will try to aggregate before processing them",
+        help="How many requests the workers will try "
+        "to aggregate before processing them",
     )
     parser.add_argument(
         "--batch_timeout",
         type=float,
         default=0.001,
-        help="How much time (in seconds) should be waited before processing an incomplete aggregated request",
+        help="How much time (in seconds) should be waited "
+        "before processing an incomplete aggregated request",
     )
     args = parser.parse_args()
 
@@ -163,7 +148,7 @@ if __name__ == "__main__":
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
-        callback_factory=DragonCommChannel,
+        callback_factory=DragonCommChannel.from_descriptor,
         queue_factory=DragonFLIChannel.from_descriptor,
     )
 
@@ -172,13 +157,14 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         config_loader=config_loader,
         worker_type=arg_worker_type,
+        mem_pool_size=128 * 1024**3,
     )
 
     wms = []
     worker_device = args.device
     for wm_idx in range(args.num_workers):
 
-        worker_manager =  WorkerManager(
+        worker_manager = WorkerManager(
             config_loader=config_loader,
             worker_type=arg_worker_type,
             as_service=True,
@@ -196,28 +182,34 @@ if __name__ == "__main__":
     # the GPU-to-CPU mapping is taken from the nvidia-smi tool
     # TODO can this be computed on the fly?
     gpu_to_cpu_aff: dict[int, list[int]] = {}
-    gpu_to_cpu_aff[0] = list(range(48,64)) + list(range(112,128))
-    gpu_to_cpu_aff[1] = list(range(32,48)) + list(range(96,112))
-    gpu_to_cpu_aff[2] = list(range(16,32)) + list(range(80,96))
-    gpu_to_cpu_aff[3] = list(range(0,16)) + list(range(64,80))
+    gpu_to_cpu_aff[0] = list(range(48, 64)) + list(range(112, 128))
+    gpu_to_cpu_aff[1] = list(range(32, 48)) + list(range(96, 112))
+    gpu_to_cpu_aff[2] = list(range(16, 32)) + list(range(80, 96))
+    gpu_to_cpu_aff[3] = list(range(0, 16)) + list(range(64, 80))
 
     worker_manager_procs = []
     for worker_idx in range(args.num_workers):
         wm_cpus = len(gpu_to_cpu_aff[worker_idx]) - 4
         wm_affinity = gpu_to_cpu_aff[worker_idx][:wm_cpus]
         disp_affinity.extend(gpu_to_cpu_aff[worker_idx][wm_cpus:])
-        worker_manager_procs.append(service_as_dragon_proc(
+        worker_manager_procs.append(
+            service_as_dragon_proc(
                 worker_manager, cpu_affinity=wm_affinity, gpu_affinity=[worker_idx]
-            ))
+            )
+        )
 
-    dispatcher_proc = service_as_dragon_proc(dispatcher, cpu_affinity=disp_affinity, gpu_affinity=[])
+    dispatcher_proc = service_as_dragon_proc(
+        dispatcher, cpu_affinity=disp_affinity, gpu_affinity=[]
+    )
 
     # TODO: use ProcessGroup and restart=True?
     all_procs = [dispatcher_proc, *worker_manager_procs]
 
-    print(f"Dispatcher proc: {dispatcher_proc}")
     for proc in all_procs:
         proc.start()
 
     while all(proc.is_alive for proc in all_procs):
         time.sleep(1)
+
+    for proc in all_procs:
+        logger.info(f"{proc} is alive: {proc.is_alive}")

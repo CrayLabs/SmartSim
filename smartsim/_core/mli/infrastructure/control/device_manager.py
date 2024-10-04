@@ -29,7 +29,7 @@ from contextlib import _GeneratorContextManager, contextmanager
 
 from .....log import get_logger
 from ..storage.feature_store import FeatureStore
-from ..worker.worker import MachineLearningWorkerBase, RequestBatch
+from ..worker.worker import LoadModelResult, MachineLearningWorkerBase, RequestBatch
 
 logger = get_logger(__name__)
 
@@ -42,7 +42,7 @@ class WorkerDevice:
         """
         self._name = name
         """The name used by the toolkit to identify this device"""
-        self._models: dict[str, t.Any] = {}
+        self._models: dict[str, LoadModelResult] = {}
         """Dict of keys to models which are loaded on this device"""
 
     @property
@@ -53,7 +53,7 @@ class WorkerDevice:
         """
         return self._name
 
-    def add_model(self, key: str, model: t.Any) -> None:
+    def add_model(self, key: str, model: LoadModelResult) -> None:
         """Add a reference to a model loaded on this device and assign it a key.
 
         :param key: The key under which the model is saved
@@ -73,7 +73,7 @@ class WorkerDevice:
             logger.warning(f"An unknown key was requested for removal: {key}")
             raise
 
-    def get_model(self, key: str) -> t.Any:
+    def get_model(self, key: str) -> LoadModelResult:
         """Get the model corresponding to a given key.
 
         :param key: The model key
@@ -136,7 +136,7 @@ class DeviceManager:
 
         model_bytes = worker.fetch_model(batch, feature_stores)
         loaded_model = worker.load_model(batch, model_bytes, self._device.name)
-        self._device.add_model(batch.model_id.key, loaded_model.model)
+        self._device.add_model(batch.model_id.key, loaded_model)
 
     def get_device(
         self,

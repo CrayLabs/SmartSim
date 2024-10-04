@@ -241,6 +241,7 @@ def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
 
 
 def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
+    # pylint: disable-next=no-name-in-module
     from tensorflow import keras
 
     from smartsim.ml.tf import freeze_model

@@ -145,7 +145,7 @@ class BatchQueue(Queue[InferenceRequest]):
             return False
 
         timed_out = (
-            self._batch_timeout > 0 and self._elapsed_time >= self._batch_timeout
+            self._batch_timeout >= 0 and self._elapsed_time >= self._batch_timeout
         )
         logger.debug(f"Is full: {self.full()} or has timed out: {timed_out}")
         return self.full() or timed_out
@@ -235,7 +235,7 @@ class RequestDispatcher(Service):
             raise SmartSimError("No incoming channel for dispatcher")
         self._incoming_channel = incoming_channel
         """The channel the dispatcher monitors for new tasks"""
-        self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
+        self._outgoing_queue: DragonQueue = mp.Queue(maxsize=10000)
         """The queue on which batched inference requests are placed"""
         self._feature_stores: t.Dict[str, FeatureStore] = {}
         """A collection of attached feature stores"""
@@ -367,10 +367,22 @@ class RequestDispatcher(Service):
             tensor_bytes_list = bytes_list[1:]
             self._perf_timer.start_timings()
 
-            request = self._worker.deserialize_message(
-                request_bytes, self._callback_factory
-            )
-            if request.has_input_meta and tensor_bytes_list:
+            request = None
+            try:
+                request = self._worker.deserialize_message(
+                    request_bytes, self._callback_factory
+                )
+            except Exception as exc:
+                exception_handler(exc, None, "Error deserializing request")
+                self._perf_timer.end_timings()
+                return
+
+            if request is None:
+                exception_handler(exc, None, "Error deserializing request")
+                self._perf_timer.end_timings()
+                return
+
+            if request.input_meta and tensor_bytes_list:
                 request.raw_inputs = tensor_bytes_list
 
             self._perf_timer.measure_time("deserialize_message")
@@ -391,9 +403,6 @@ class RequestDispatcher(Service):
             self.remove_queues()
 
             self._perf_timer.end_timings()
-
-        if self._perf_timer.max_length == 801 and self._perf_timer.is_active:
-            self._perf_timer.print_timings(True)
 
     def remove_queues(self) -> None:
         """Remove references to queues that can be removed

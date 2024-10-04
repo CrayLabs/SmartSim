@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Add `TensorFlowWorker`
 - Quick bug fix in _validate
 - Add helper methods to MLI classes
 - Update error handling for consistency
@@ -46,7 +47,7 @@ To be released at some future point in time
 
 Description
 
-- Allow specifying Model and Ensemble parameters with 
+- Allow specifying Model and Ensemble parameters with
   number-like types (e.g. numpy types)
 - Pin watchdog to 4.x
 - Update codecov to 4.5.0
@@ -64,9 +65,9 @@ Description
 
 Detailed Notes
 
-- The serializer would fail if a parameter for a Model or Ensemble 
-  was specified as a numpy dtype. The constructors for these 
-  methods now validate that the input is number-like and convert 
+- The serializer would fail if a parameter for a Model or Ensemble
+  was specified as a numpy dtype. The constructors for these
+  methods now validate that the input is number-like and convert
   them to strings
   ([SmartSim-PR676](https://github.com/CrayLabs/SmartSim/pull/676))
 - Pin watchdog to 4.x because v5 introduces new types and requires

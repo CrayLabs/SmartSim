@@ -42,9 +42,15 @@ import time
 import typing as t
 import warnings
 
-import numpy
-import torch
 from mpi4py import MPI
+import numpy
+from numpy.polynomial import Polynomial
+
+import onnx
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+from skl2onnx import to_onnx
 
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
@@ -54,12 +60,7 @@ from smartsim._core.mli.message_handler import MessageHandler
 from smartsim._core.utils.timings import PerfTimer
 from smartsim.log import get_logger
 
-torch.set_num_interop_threads(16)
-torch.set_num_threads(1)
-
 logger = get_logger("App")
-
-warnings.filterwarnings("ignore", "\*The given NumPy array is not writable\*")
 
 
 class ProtoClient:
@@ -86,8 +87,8 @@ class ProtoClient:
         )
         self._num_its: int = 0
 
-    def run_model(self, model: t.Union[bytes, str], batch: torch.Tensor):
-        tensors = [batch.numpy()]
+    def run_model(self, model: t.Union[bytes, str], batch: numpy.typing.ArrayLike):
+        tensors = [batch]
         self.perf_timer.start_timings("batch_size", batch.shape[0])
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
             "c", "float32", list(batch.shape)
@@ -96,7 +97,7 @@ class ProtoClient:
         if isinstance(model, str):
             model_arg = MessageHandler.build_model_key(model, self._backbone_descriptor)
         else:
-            model_arg = MessageHandler.build_model(model, "resnet-50", "1.0")
+            model_arg = MessageHandler.build_model(model, "lin_reg", "1.0")
         request = MessageHandler.build_request(
             reply_channel=self._from_worker_ch_serialized,
             model=model_arg,
@@ -114,9 +115,8 @@ class ProtoClient:
             to_sendh.send_bytes(request_bytes)
             self.perf_timer.measure_time("send_request")
             for tensor in tensors:
-                to_sendh.send_bytes(tensor.tobytes())  # TODO NOT FAST ENOUGH!!!
+                to_sendh.send_bytes(tensor.tobytes())
         self.perf_timer.measure_time("send_tensors")
-
         resp = self._from_worker_ch.recv(timeout=None)
         self.perf_timer.measure_time("receive_response")
         response = MessageHandler.deserialize_response(resp[0])
@@ -127,12 +127,11 @@ class ProtoClient:
         else:
             data_blob: bytes = self._from_worker_ch.recv(timeout=None)[0]
         self.perf_timer.measure_time("receive_tensor")
-        result = torch.from_numpy(
-            numpy.frombuffer(
-                data_blob,
-                dtype=str(response.result.descriptors[0].dataType),
-            )
+        result = numpy.frombuffer(
+            data_blob,
+            dtype=str(response.result.descriptors[0].dataType),
         )
+
         self.perf_timer.measure_time("deserialize_tensor")
 
         self.perf_timer.end_timings()
@@ -144,17 +143,22 @@ class ProtoClient:
         self._ddict[key] = model
 
 
-class ResNetWrapper:
-    def __init__(self, name: str, model: str):
-        self._model = None  # torch.jit.load(model)
+class LinRegWrapper:
+    def __init__(
+        self,
+        name: str,
+        model: onnx.onnx_ml_pb2.ModelProto,
+    ):
+        self._get_onnx_model(model)
         self._name = name
+        self._poly = PolynomialFeatures
 
-        with open(model, "rb") as model_file:
-            buffer = io.BytesIO(model_file.read())
-        self._serialized_model = buffer.getvalue()
+    def _get_onnx_model(self, model: onnx.onnx_ml_pb2.ModelProto):
+        self._serialized_model = model.SerializeToString()
 
     def get_batch(self, batch_size: int = 32):
-        return torch.randn((batch_size, 3, 224, 224), dtype=torch.float32)
+        x = numpy.random.randn(batch_size, 1).astype(numpy.float32)
+        return poly.fit_transform(x.reshape(-1,1))
 
     @property
     def model(self):
@@ -177,11 +181,21 @@ if __name__ == "__main__":
     parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
-    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
+    X = numpy.linspace(0, 10, 10).astype(numpy.float32)
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    p = Polynomial([1.4, -10, 4])
+    poly_features = poly.fit_transform(X.reshape(-1, 1))
+    poly_reg_model = LinearRegression()
+    poly_reg_model.fit(poly_features, p(X))
+
+    onnx_model = to_onnx(poly_reg_model, poly_features, target_opset=13)
+
+    linreg = LinRegWrapper("LinReg", onnx_model)
 
     client = ProtoClient(timing_on=True)
+
     if client._rank == 0:
-        client.set_model(resnet.name, resnet.model)
+        client.set_model(linreg.name, linreg.model)
 
     MPI.COMM_WORLD.Barrier()
 
@@ -191,8 +205,8 @@ if __name__ == "__main__":
         b_size: int = 2**log2_bsize
         log(f"Batch size: {b_size}", client._rank)
         for iteration_number in range(TOTAL_ITERATIONS):
-            sample_batch = resnet.get_batch(b_size)
-            remote_result = client.run_model(resnet.name, sample_batch)
+            sample_batch = linreg.get_batch(b_size)
+            remote_result = client.run_model(linreg.name, sample_batch)
             log(
                 f"Completed iteration: {iteration_number} in {client.perf_timer.get_last('total_time')} seconds",
                 client._rank,

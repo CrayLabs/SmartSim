@@ -66,7 +66,7 @@ class DragonFLIChannel(cch.CommChannelBase):
             create_local(buffer_size) if sender_supplied else None
         )
 
-    def send(self, value: bytes, timeout: float = 0.001) -> None:
+    def send(self, value: bytes, timeout: t.Optional[float] = 0.001) -> None:
         """Send a message through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to send
@@ -82,7 +82,7 @@ class DragonFLIChannel(cch.CommChannelBase):
                 f"Error sending message: DragonFLIChannel {self.descriptor!r}"
             ) from e
 
-    def recv(self, timeout: float = 0.001) -> t.List[bytes]:
+    def recv(self, timeout: t.Optional[float] = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
@@ -94,7 +94,7 @@ class DragonFLIChannel(cch.CommChannelBase):
         with self._fli.recvh(timeout=timeout) as recvh:
             while not eot:
                 try:
-                    message, _ = recvh.recv_bytes(timeout=timeout)
+                    message, _ = recvh.recv_bytes(timeout=None)
                     messages.append(message)
                     logger.debug(
                         f"DragonFLIChannel {self.descriptor!r} received message"
