@@ -33,17 +33,17 @@ import pytest
 
 onnx = pytest.importorskip("onnx")
 from onnx import load_model_from_string
+
 pytest.importorskip("onnxruntime")
 from onnxruntime import InferenceSession
+
 dragon = pytest.importorskip("dragon")
-
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
-
-from skl2onnx import to_onnx
 
 import dragon.globalservices.pool as dragon_gs_pool
 from dragon.managed_memory import MemoryAlloc, MemoryPool
+from skl2onnx import to_onnx
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 
 from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
 from smartsim._core.mli.infrastructure.worker.onnx_worker import ONNXWorker
@@ -67,14 +67,17 @@ pytestmark = pytest.mark.dragon
 def get_X() -> npt.ArrayLike:
     return np.linspace(0, 10, 10).astype(np.float32)
 
+
 def get_poly_features() -> npt.ArrayLike:
 
     poly = PolynomialFeatures(degree=2, include_bias=False)
     return poly.fit_transform(get_X().reshape(-1, 1))
 
+
 def get_Y() -> npt.ArrayLike:
     p = np.polynomial.Polynomial([1.4, -10, 4])
     return p(get_X())
+
 
 def create_onnx_model():
 
@@ -89,7 +92,6 @@ def create_onnx_model():
     input_names = [n.name for n in onnx_model.graph.input]
 
     return onnx_serialized, input_names, output_names
-
 
 
 def get_request() -> InferenceRequest:
@@ -173,11 +175,9 @@ def test_execute(mlutils) -> None:
 
     onnx_serialized, inputs, outputs = create_onnx_model()
 
-    providers = ['CPUExecutionProvider']
+    providers = ["CPUExecutionProvider"]
     session = InferenceSession(onnx_serialized, providers=providers)
-    load_model_result = LoadModelResult(
-           session, inputs=inputs, outputs=outputs
-        )
+    load_model_result = LoadModelResult(session, inputs=inputs, outputs=outputs)
 
     fetch_input_result = FetchInputResult(
         sample_request.raw_inputs, sample_request.input_meta

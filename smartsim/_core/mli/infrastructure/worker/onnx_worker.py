@@ -37,8 +37,6 @@ from onnxruntime import InferenceSession  # type: ignore
 # pylint: disable=import-error
 from dragon.managed_memory import MemoryAlloc, MemoryPool
 
-# pylint: enable=import-error
-
 from .....error import SmartSimError
 from .....log import get_logger
 from ...mli_schemas.tensor import tensor_capnp
@@ -52,6 +50,8 @@ from .worker import (
     TransformInputResult,
     TransformOutputResult,
 )
+
+# pylint: enable=import-error
 
 
 logger = get_logger(__name__)
@@ -83,18 +83,21 @@ class ONNXWorker(MachineLearningWorkerBase):
 
         try:
             providers = []
+            provider_options = []
             if "gpu" in device.lower():
                 device_split = device.split(":")
                 if len(device_split) > 1:
-                    provider_options = {"device_id": device_split[-1]}
-                if "ROCR_VISIBLE_DEVICES" in os.environ:
-                    providers = [("ROCMExecutionProvider", provider_options)]
+                    provider_options.append({"device_id": device_split[-1]})
                 else:
-                    providers = [("CUDAExecutionProvider", provider_options)]
+                    provider_options.append({})
+                if "ROCR_VISIBLE_DEVICES" in os.environ:
+                    providers = ["ROCMExecutionProvider"]
+                else:
+                    providers = ["CUDAExecutionProvider"]
 
             # Fallback
-            providers.append(("CPUExecutionProvider", {}))
-
+            providers.append("CPUExecutionProvider")
+            provider_options.append({})
         except Exception as e:
             raise RuntimeError(
                 "Failed to load and evaluate the model: "
@@ -105,8 +108,9 @@ class ONNXWorker(MachineLearningWorkerBase):
         output_tensors = [n.name for n in onnx_deserialized.graph.output]
         input_layers = [n.name for n in onnx_deserialized.graph.input]
 
+        print(device, providers, provider_options)
         session = InferenceSession(
-            model_bytes, providers=providers
+            model_bytes, providers=providers, provider_options=provider_options
         )
         result = LoadModelResult(
             session,
