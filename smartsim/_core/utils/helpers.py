@@ -43,10 +43,14 @@ import warnings
 from datetime import datetime
 from shutil import which
 
+from typing_extensions import TypeAlias
+
 if t.TYPE_CHECKING:
     from types import FrameType
 
     from typing_extensions import TypeVarTuple, Unpack
+
+    from smartsim.launchable.job import Job
 
     _Ts = TypeVarTuple("_Ts")
 
@@ -54,6 +58,30 @@ if t.TYPE_CHECKING:
 _T = t.TypeVar("_T")
 _HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
+
+_NestedJobSequenceType: TypeAlias = "t.Sequence[Job | _NestedJobSequenceType]"
+
+
+def unpack(value: _NestedJobSequenceType) -> t.Generator[Job, None, None]:
+    """Unpack any iterable input in order to obtain a
+    single sequence of values
+
+    :param value: Sequence containing elements of type Job or other
+    sequences that are also of type _NestedJobSequenceType
+    :return: flattened list of Jobs"""
+    from smartsim.launchable.job import Job
+
+    for item in value:
+
+        if isinstance(item, t.Iterable):
+            # string are iterable of string. Avoid infinite recursion
+            if isinstance(item, str):
+                raise TypeError("jobs argument was not of type Job")
+            yield from unpack(item)
+        else:
+            if not isinstance(item, Job):
+                raise TypeError("jobs argument was not of type Job")
+            yield item
 
 
 def check_name(name: str) -> None:
