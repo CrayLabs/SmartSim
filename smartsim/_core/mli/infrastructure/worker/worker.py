@@ -489,7 +489,7 @@ class MachineLearningWorkerCore:
             feature_store = feature_stores[fsd]
             raw_bytes: bytes = t.cast(bytes, feature_store[key])
             return FetchModelResult(raw_bytes)
-        except FileNotFoundError as ex:
+        except (FileNotFoundError, KeyError) as ex:
             logger.exception(ex)
             raise SmartSimError(f"Model could not be retrieved with key {key}") from ex
 

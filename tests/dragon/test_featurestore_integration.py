@@ -114,7 +114,7 @@ def test_eventconsumer_max_dequeue(
     wmgr_consumer = EventConsumer(
         the_worker_channel,
         the_backbone,
-        filters=[EventCategory.FEATURE_STORE_WRITTEN],
+        filters=[OnWriteFeatureStore.FEATURE_STORE_WRITTEN],
     )
 
     # create a broadcaster to publish messages
