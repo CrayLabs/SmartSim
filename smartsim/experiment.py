@@ -153,7 +153,7 @@ class Experiment:
         experiment
         """
 
-    def start(self, *jobs: Job) -> tuple[LaunchedJobID, ...]:
+    def start(self, *jobs: Job | t.Sequence[Job]) -> tuple[LaunchedJobID, ...]:
         """Execute a collection of `Job` instances.
 
         :param jobs: A collection of other job instances to start
@@ -161,11 +161,10 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-        # Create the run id
+        jobs_ = list(_helpers.unpack(jobs))
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
-        # Generate the root path
         root = pathlib.Path(self.exp_path, run_id)
-        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs_)
 
     def _dispatch(
         self,
