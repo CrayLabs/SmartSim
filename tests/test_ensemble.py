@@ -258,7 +258,10 @@ def test_ensemble_type_replicas_negative():
         exe="echo",
         exe_args=["spam", "eggs"],
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Number of replicas must be a positive integer",
+    ):
         ensemble.replicas = -20
 
 

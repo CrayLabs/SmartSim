@@ -360,7 +360,7 @@ class Ensemble(entity.CompoundEntity):
         if not isinstance(value, int):
             raise TypeError("replicas argument was not of type int")
         if value <= 0:
-            raise ValueError
+            raise ValueError("Number of replicas must be a positive integer")
 
         self._replicas = value
 
