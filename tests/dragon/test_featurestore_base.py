@@ -71,7 +71,7 @@ def test_event_uid() -> None:
     # generate a bunch of events and keep track all the IDs
     for i in range(num_iters):
         event_a = OnCreateConsumer("test_event_uid", str(i), filters=[])
-        event_b = OnWriteFeatureStore("test_event_uid", str(i), filters=[])
+        event_b = OnWriteFeatureStore("test_event_uid", str(i))
 
         uids.add(event_a.uid)
         uids.add(event_b.uid)
