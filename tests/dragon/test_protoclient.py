@@ -37,10 +37,10 @@ dragon = pytest.importorskip("dragon")
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
+from smartsim._core.mli.infrastructure.comm.broadcaster import EventBroadcaster
+from smartsim._core.mli.infrastructure.comm.event import OnWriteFeatureStore
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
-    EventBroadcaster,
-    OnWriteFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim.error.errors import SmartSimError
@@ -281,7 +281,7 @@ def test_protoclient_write_model_notification_sent(
     the_backbone[BackboneFeatureStore.MLI_BACKBONE] = the_backbone.descriptor
     the_backbone[BackboneFeatureStore.MLI_WORKER_QUEUE] = the_worker_queue.descriptor
     the_backbone[BackboneFeatureStore.MLI_NOTIFY_CONSUMERS] = ",".join(listeners)
-    the_backbone[BackboneFeatureStore.MLI_BACKEND_CONSUMER] = None
+    the_backbone[BackboneFeatureStore.MLI_REGISTRAR_CONSUMER] = None
 
     with monkeypatch.context() as ctx:
         ctx.setenv(BackboneFeatureStore.MLI_BACKBONE, the_backbone.descriptor)
@@ -323,6 +323,9 @@ def test_protoclient_write_model_notification_sent(
             ), "Expected default timeout on call to `publisher.send`, "
 
             # confirm the correct event was raised
-            event = t.cast(OnWriteFeatureStore, pickle.loads(event_bytes))
+            event = t.cast(
+                OnWriteFeatureStore,
+                pickle.loads(event_bytes),
+            )
             assert event.descriptor == the_backbone.descriptor
             assert event.key == model_key

@@ -39,6 +39,11 @@ class EnvironmentConfigLoader:
     Facilitates the loading of a FeatureStore and Queue into the WorkerManager.
     """
 
+    REQUEST_QUEUE_ENV_VAR = "_SMARTSIM_REQUEST_QUEUE"
+    """The environment variable that holds the request queue descriptor"""
+    BACKBONE_ENV_VAR = "_SMARTSIM_INFRA_BACKBONE"
+    """The environment variable that holds the backbone descriptor"""
+
     def __init__(
         self,
         featurestore_factory: t.Callable[[str], FeatureStore],
@@ -76,7 +81,7 @@ class EnvironmentConfigLoader:
 
         :returns: The attached feature store via `_SMARTSIM_INFRA_BACKBONE`
         """
-        descriptor = os.getenv("_SMARTSIM_INFRA_BACKBONE", "")
+        descriptor = os.getenv(self.BACKBONE_ENV_VAR, "")
 
         if not descriptor:
             logger.warning("No backbone descriptor is configured")
@@ -97,7 +102,7 @@ class EnvironmentConfigLoader:
 
         :returns: The attached queue specified via `_SMARTSIM_REQUEST_QUEUE`
         """
-        descriptor = os.getenv("_SMARTSIM_REQUEST_QUEUE", "")
+        descriptor = os.getenv(self.REQUEST_QUEUE_ENV_VAR, "")
 
         if not descriptor:
             logger.warning("No queue descriptor is configured")

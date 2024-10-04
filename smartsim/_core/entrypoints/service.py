@@ -42,19 +42,21 @@ class Service(ABC):
     def __init__(
         self,
         as_service: bool = False,
-        cooldown: int = 0,
-        loop_delay: int = 0,
+        cooldown: float = 0,
+        loop_delay: float = 0,
         health_check_frequency: float = 0,
     ) -> None:
         """Initialize the ServiceHost
 
-        :param as_service: Determines if the host will run until shutdown criteria
-        are met or as a run-once instance
-        :param cooldown: Period of time to allow service to run before automatic
-        shutdown, in seconds. A non-zero, positive integer.
-        :param loop_delay: Delay between iterations of the event loop (in seconds)
-        :param health_check_frequency: Delay between calls to a
-        health check handler (in seconds)
+        :param as_service: Determines if the host runs continuously until
+        shutdown criteria are met, or executes the service lifecycle once and exits
+        :param cooldown: Period of time (in seconds) to allow the service to run
+         after a shutdown is permitted. Enables the service to avoid restarting if
+         new work is discovered. A value of 0 disables the cooldown.
+        :param loop_delay: Time (in seconds) between iterations of the event loop
+        :param health_check_frequency: Time (in seconds) between calls to a
+         health check handler. A value of 0 triggers the health check on every
+         iteration.
         """
         self._as_service = as_service
         """If the service should run until shutdown function returns True"""
@@ -64,8 +66,8 @@ class Service(ABC):
         self._loop_delay = abs(loop_delay)
         """Forced delay between iterations of the event loop"""
         self._health_check_frequency = health_check_frequency
-        """The time (in seconds) between desired health checks. A health check
-        frequency of zero will never trigger the health check."""
+        """The time (in seconds) between desired health checks. Frequency of 0
+        will trigger the health check on every event loop iteration."""
         self._last_health_check = time.time()
         """The timestamp of the latest health check"""
 
@@ -135,7 +137,7 @@ class Service(ABC):
                     "Failure in event loop resulted in service termination"
                 )
 
-            if self._health_check_frequency > 0:
+            if self._health_check_frequency >= 0:
                 hc_elapsed = time.time() - self._last_health_check
                 if hc_elapsed >= self._health_check_frequency:
                     self._on_health_check()

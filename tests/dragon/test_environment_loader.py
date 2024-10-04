@@ -36,7 +36,7 @@ from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
-from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     DragonFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
@@ -64,7 +64,8 @@ def test_environment_loader_attach_fli(content: bytes, monkeypatch: pytest.Monke
     chan = create_local()
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+        EnvironmentConfigLoader.REQUEST_QUEUE_ENV_VAR,
+        du.B64.bytes_to_str(queue.serialize()),
     )
 
     config = EnvironmentConfigLoader(
@@ -87,7 +88,8 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
     chan = create_local()
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+        EnvironmentConfigLoader.REQUEST_QUEUE_ENV_VAR,
+        du.B64.bytes_to_str(queue.serialize()),
     )
 
     config = EnvironmentConfigLoader(
@@ -102,7 +104,7 @@ def test_environment_loader_serialize_fli(monkeypatch: pytest.MonkeyPatch):
 def test_environment_loader_flifails(monkeypatch: pytest.MonkeyPatch):
     """An incorrect serialized descriptor will fails to attach."""
 
-    monkeypatch.setenv("_SMARTSIM_REQUEST_QUEUE", "randomstring")
+    monkeypatch.setenv(EnvironmentConfigLoader.REQUEST_QUEUE_ENV_VAR, "randomstring")
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -120,7 +122,9 @@ def test_environment_loader_backbone_load_dfs(
     """Verify the dragon feature store is loaded correctly by the
     EnvironmentConfigLoader to demonstrate featurestore_factory correctness."""
     feature_store = DragonFeatureStore(the_storage)
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", feature_store.descriptor)
+    monkeypatch.setenv(
+        EnvironmentConfigLoader.BACKBONE_ENV_VAR, feature_store.descriptor
+    )
 
     config = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -138,8 +142,8 @@ def test_environment_variables_not_set(monkeypatch: pytest.MonkeyPatch):
     """EnvironmentConfigLoader getters return None when environment
     variables are not set."""
     with monkeypatch.context() as patch:
-        patch.setenv("_SMARTSIM_INFRA_BACKBONE", "")
-        patch.setenv("_SMARTSIM_REQUEST_QUEUE", "")
+        patch.setenv(EnvironmentConfigLoader.BACKBONE_ENV_VAR, "")
+        patch.setenv(EnvironmentConfigLoader.REQUEST_QUEUE_ENV_VAR, "")
 
         config = EnvironmentConfigLoader(
             featurestore_factory=DragonFeatureStore.from_descriptor,

@@ -35,22 +35,18 @@ dragon = pytest.importorskip("dragon")
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
-from smartsim._core.mli.infrastructure.control.event_listener import (
+from smartsim._core.mli.infrastructure.comm.broadcaster import EventBroadcaster
+from smartsim._core.mli.infrastructure.comm.consumer import EventConsumer
+from smartsim._core.mli.infrastructure.comm.event import (
+    OnCreateConsumer,
+    OnShutdownRequested,
+    OnWriteFeatureStore,
+)
+from smartsim._core.mli.infrastructure.control.listener import (
     ConsumerRegistrationListener,
 )
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
-    EventBase,
-    EventBroadcaster,
-    EventCategory,
-    EventConsumer,
-    OnCreateConsumer,
-    OnRemoveConsumer,
-    OnShutdownRequested,
-    OnWriteFeatureStore,
-)
-from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
-    time as bbtime,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim.log import get_logger
@@ -129,7 +125,7 @@ def test_eventconsumer_eventpublisher_integration(
     wmgr_consumer = EventConsumer(
         wmgr_channel,
         the_backbone,
-        filters=[EventCategory.FEATURE_STORE_WRITTEN],
+        filters=[OnWriteFeatureStore.FEATURE_STORE_WRITTEN],
     )
     capp_consumer = EventConsumer(
         capp_channel,
@@ -138,7 +134,7 @@ def test_eventconsumer_eventpublisher_integration(
     back_consumer = EventConsumer(
         back_channel,
         the_backbone,
-        filters=[EventCategory.CONSUMER_CREATED],
+        filters=[OnCreateConsumer.CONSUMER_CREATED],
     )
 
     # create some broadcasters to publish messages
@@ -160,12 +156,20 @@ def test_eventconsumer_eventpublisher_integration(
     ]
 
     # simulate worker manager sending a notification to backend that it's alive
-    event_1 = OnCreateConsumer(wmgr_consumer_descriptor, filters=[])
+    event_1 = OnCreateConsumer(
+        "test_eventconsumer_eventpublisher_integration",
+        wmgr_consumer_descriptor,
+        filters=[],
+    )
     mock_worker_mgr.send(event_1)
 
     # simulate the app updating a model a few times
     for key in ["key-1", "key-2", "key-1"]:
-        event = OnWriteFeatureStore(the_backbone.descriptor, key)
+        event = OnWriteFeatureStore(
+            "test_eventconsumer_eventpublisher_integration",
+            the_backbone.descriptor,
+            key,
+        )
         mock_client_app.send(event, timeout=0.1)
 
     # worker manager should only get updates about feature update
@@ -209,7 +213,7 @@ def test_eventconsumer_invalid_timeout(
     wmgr_consumer = EventConsumer(
         wmgr_channel,
         the_backbone,
-        filters=[EventCategory.FEATURE_STORE_WRITTEN],
+        filters=[OnWriteFeatureStore.FEATURE_STORE_WRITTEN],
     )
 
     # the consumer should report an error for the invalid timeout value
@@ -246,7 +250,11 @@ def test_eventconsumer_no_event_handler_registered(
 
     # simulate the app updating a model a few times
     for key in ["key-1", "key-2", "key-1"]:
-        event = OnWriteFeatureStore(the_backbone.descriptor, key)
+        event = OnWriteFeatureStore(
+            "test_eventconsumer_no_event_handler_registered",
+            the_backbone.descriptor,
+            key,
+        )
         mock_worker_mgr.send(event, timeout=0.1)
 
     # run the handler and let it discard messages
@@ -287,10 +295,16 @@ def test_eventconsumer_no_event_handler_registered_shutdown(
 
     # simulate the app updating a model a few times
     for key in ["key-1", "key-2", "key-1"]:
-        event = OnWriteFeatureStore(the_backbone.descriptor, key)
+        event = OnWriteFeatureStore(
+            "test_eventconsumer_no_event_handler_registered_shutdown",
+            the_backbone.descriptor,
+            key,
+        )
         mock_worker_mgr.send(event, timeout=0.1)
 
-    event = OnShutdownRequested()
+    event = OnShutdownRequested(
+        "test_eventconsumer_no_event_handler_registered_shutdown"
+    )
     mock_worker_mgr.send(event, timeout=0.1)
 
     # wmgr will stop listening to messages when it is told to stop listening
@@ -389,19 +403,19 @@ def test_registrar_teardown(
         registrar._create_eventing()
 
         # confirm the registrar is published to the backbone
-        cfg = the_backbone.wait_for([BackboneFeatureStore.MLI_BACKEND_CONSUMER], 10)
-        assert BackboneFeatureStore.MLI_BACKEND_CONSUMER in cfg
+        cfg = the_backbone.wait_for([BackboneFeatureStore.MLI_REGISTRAR_CONSUMER], 10)
+        assert BackboneFeatureStore.MLI_REGISTRAR_CONSUMER in cfg
 
         # execute the entire service lifecycle 1x
         registrar.execute()
 
-        consumer_found = BackboneFeatureStore.MLI_BACKEND_CONSUMER in the_backbone
+        consumer_found = BackboneFeatureStore.MLI_REGISTRAR_CONSUMER in the_backbone
 
         for i in range(15):
             time.sleep(0.1)
-            consumer_found = BackboneFeatureStore.MLI_BACKEND_CONSUMER in the_backbone
+            consumer_found = BackboneFeatureStore.MLI_REGISTRAR_CONSUMER in the_backbone
             if not consumer_found:
                 logger.debug(f"Registrar removed from the backbone on iteration {i}")
                 break
 
-        assert BackboneFeatureStore.MLI_BACKEND_CONSUMER not in the_backbone
+        assert BackboneFeatureStore.MLI_REGISTRAR_CONSUMER not in the_backbone

@@ -135,7 +135,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     connect_to_infrastructure()
-    ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]
+    ddict_str = os.environ[BackboneFeatureStore.MLI_BACKBONE]
 
     backbone = BackboneFeatureStore.from_descriptor(ddict_str)
 

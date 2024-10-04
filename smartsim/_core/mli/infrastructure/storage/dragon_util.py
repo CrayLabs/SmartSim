@@ -40,6 +40,7 @@ def ddict_to_descriptor(ddict: dragon_ddict.DDict) -> str:
 
     :param ddict: The dragon dictionary to convert
     :returns: The descriptor string
+    :raises ValueError: If a ddict is not provided
     """
     if ddict is None:
         raise ValueError("DDict is not available to create a descriptor")

@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import pathlib
 import uuid
 
@@ -35,6 +36,8 @@ dragon = pytest.importorskip("dragon")
 
 # isort: off
 import dragon.channels as dch
+import dragon.infrastructure.parameters as dp
+import dragon.managed_memory as dm
 import dragon.fli as fli
 
 # isort: on
@@ -45,6 +48,16 @@ from smartsim.log import get_logger
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
 logger = get_logger(__name__)
+
+
+@pytest.fixture(scope="function")
+def the_pool() -> dm.MemoryPool:
+    """Creates a memory pool."""
+    raw_pool_descriptor = dp.this_process.default_pd
+    descriptor_ = base64.b64decode(raw_pool_descriptor)
+
+    pool = dm.MemoryPool.attach(descriptor_)
+    return pool
 
 
 @pytest.fixture(scope="function")
@@ -226,3 +239,19 @@ def test_descriptor_to_fli_happy_path(the_fli: dch.Channel) -> None:
 
     # and just make sure creation of the descriptor is transitive
     assert dragon_util.channel_to_descriptor(reattached) == descriptor
+
+
+def test_pool_to_descriptor_empty() -> None:
+    """Verify that `pool_to_descriptor` raises an exception when
+    provided with a null pool."""
+
+    with pytest.raises(ValueError) as ex:
+        dragon_util.pool_to_descriptor(None)
+
+
+def test_pool_to_happy_path(the_pool) -> None:
+    """Verify that `pool_to_descriptor` creates a descriptor
+    when supplied with a valid memory pool."""
+
+    descriptor = dragon_util.pool_to_descriptor(the_pool)
+    assert descriptor

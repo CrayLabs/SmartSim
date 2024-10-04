@@ -36,16 +36,10 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
-    EventBroadcaster,
-    EventCategory,
-    EventConsumer,
-    OnCreateConsumer,
-    OnWriteFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     time as bbtime,

@@ -51,7 +51,7 @@ class DragonFLIChannel(cch.CommChannelBase):
     ) -> None:
         """Initialize the DragonFLIChannel instance.
 
-        :param fli_desc: The descriptor of the FLI channel to attach
+        :param fli_: The FLIInterface to use as the underlying communications channel
         :param sender_supplied: Flag indicating if the FLI uses sender-supplied streams
         :param buffer_size: Maximum number of sent messages that can be buffered
         """
@@ -79,7 +79,7 @@ class DragonFLIChannel(cch.CommChannelBase):
                 logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
             raise SmartSimError(
-                f"Error sending message: DragonFLIChannel {self.descriptor}"
+                f"Error sending via DragonFLIChannel {self.descriptor}"
             ) from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:
@@ -99,6 +99,7 @@ class DragonFLIChannel(cch.CommChannelBase):
                     logger.debug(f"DragonFLIChannel {self.descriptor} received message")
                 except fli.FLIEOT:
                     eot = True
+                    logger.debug(f"DragonFLIChannel exhausted: {self.descriptor}")
                 except Exception as e:
                     raise SmartSimError(
                         f"Error receiving messages: DragonFLIChannel {self.descriptor}"
@@ -134,7 +135,8 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFLIChannel
-        :raises SmartSimError: If creation of DragonFLIChanenel fails
+        :raises SmartSimError: If creation of DragonFLIChannel fails
+        :raises ValueError: If the descriptor is invalid
         """
         if not descriptor:
             raise ValueError("Invalid descriptor provided")

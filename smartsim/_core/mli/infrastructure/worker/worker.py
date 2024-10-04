@@ -111,7 +111,7 @@ class InferenceRequest:
 
     @property
     def has_raw_inputs(self) -> bool:
-        """Check if the InferenceRequest contains raw_outputs.
+        """Check if the InferenceRequest contains raw_inputs.
 
         :returns: True if raw_outputs is not None and is not an empty list,
         False otherwise

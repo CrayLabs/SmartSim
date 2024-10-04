@@ -35,14 +35,6 @@ from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-DEFAULT_CHANNEL_BUFFER_SIZE = 500
-"""Maximum number of messages that can be buffered. DragonCommChannel will
-raise an exception if no clients consume messages before the buffer is filled."""
-
-LAST_OFFSET = 0
-"""The last offset used to create a local channel. This is used to avoid
-unnecessary retries when creating a local channel."""
-
 
 class DragonCommChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon channel."""

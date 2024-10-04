@@ -51,11 +51,10 @@ import torch
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
+from smartsim._core.mli.infrastructure.comm.broadcaster import EventBroadcaster
+from smartsim._core.mli.infrastructure.comm.event import OnWriteFeatureStore
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
-    EventBroadcaster,
-    EventProducer,
-    OnWriteFeatureStore,
 )
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim._core.utils.timings import PerfTimer
@@ -82,6 +81,10 @@ class ProtoClient:
     """A default number of events to be buffered in the work queue before
     triggering QueueFull exceptions."""
 
+    _EVENT_SOURCE = "proto-client"
+    """A user-friendly name for this class instance to identify 
+    the client as the publisher of an event."""
+
     @staticmethod
     def _attach_to_backbone() -> BackboneFeatureStore:
         """Use the supplied environment variables to attach
@@ -90,6 +93,8 @@ class ProtoClient:
         environment variable.
 
         :returns: The attached backbone featurestore
+        :raises SmartSimError: If the backbone descriptor is not contained
+         in the appropriate environment variable
         """
         descriptor = os.environ.get(BackboneFeatureStore.MLI_BACKBONE, None)
         if descriptor is None or not descriptor:
@@ -128,11 +133,11 @@ class ProtoClient:
 
         return DragonFLIChannel.from_descriptor(descriptor)
 
-    def _create_broadcaster(self) -> EventProducer:
-        """Create an event publisher that will broadcast updates to
-        other MLI components. This publisher
+    def _create_broadcaster(self) -> EventBroadcaster:
+        """Create an EventBroadcaster that broadcasts events to
+        all MLI components registered to consume them.
 
-        :returns: the event publisher instance
+        :returns: An EventBroadcaster instance
         """
         broadcaster = EventBroadcaster(
             self._backbone, DragonCommChannel.from_descriptor
@@ -147,10 +152,11 @@ class ProtoClient:
         """Initialize the client instance.
 
         :param timing_on: Flag indicating if timing information should be
-        written to file
-        :param wait_timeout: Maximum wait time (in seconds) allowed to attach to the
-        worker queue
+         written to file
+        :param backbone_timeout: Maximum wait time (in seconds) allowed to attach to the
+         worker queue
         :raises SmartSimError: If unable to attach to a backbone featurestore
+        :raises ValueError: If an invalid backbone timeout is specified
         """
         if MPI is not None:
             # TODO: determine a way to make MPI work in the test environment
@@ -215,8 +221,8 @@ class ProtoClient:
     def start_timings(self, batch_size: numbers.Number) -> None:
         """Configure the client to begin storing timing information.
 
-        :param bach_size: The size of batches to generate as inputs
-        to the model
+        :param batch_size: The size of batches to generate as inputs
+         to the model
         """
         if self._timing_on:
             self._add_label_to_timings("batch_size")
@@ -245,10 +251,11 @@ class ProtoClient:
             self._interm = time.perf_counter()
 
     def print_timings(self, to_file: bool = False) -> None:
-        """Print timing information to standard output.
+        """Print timing information to standard output. If `to_file`
+        is `True`, also write results to a file.
 
         :param to_file: If `True`, also saves timing information
-        to the files `timings.npy` and `timings.txt`
+         to the files `timings.npy` and `timings.txt`
         """
         print(" ".join(self._timings.keys()))
 
@@ -261,7 +268,7 @@ class ProtoClient:
             numpy.savetxt("timings.txt", value_array)
 
     def run_model(self, model: t.Union[bytes, str], batch: torch.Tensor) -> t.Any:
-        """Execute a bach of inference requests with the supplied ML model.
+        """Execute a batch of inference requests with the supplied ML model.
 
         :param model: The raw bytes or path to a pytorch model
         :param batch: The tensor batch to perform inference on
@@ -305,7 +312,6 @@ class ProtoClient:
             self.perf_timer.measure_time("send_request")
             for tensor in tensors:
                 to_sendh.send_bytes(tensor.tobytes())  # TODO NOT FAST ENOUGH!!!
-                # to_sendh.send_bytes(bytes(tensor.data))
         logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.perf_timer.measure_time("send_tensors")
@@ -314,7 +320,7 @@ class ProtoClient:
             self.perf_timer.measure_time("receive_response")
             response = MessageHandler.deserialize_response(resp)
             self.perf_timer.measure_time("deserialize_response")
-            # list of data blobs?
+
             # recv depending on the len(response.result.descriptors)?
             data_blob: bytes = from_recvh.recv_bytes(timeout=None)
             self.perf_timer.measure_time("receive_tensor")
@@ -338,5 +344,5 @@ class ProtoClient:
         self._backbone[key] = model
 
         # notify components of a change in the data at this key
-        event = OnWriteFeatureStore(self._backbone.descriptor, key)
+        event = OnWriteFeatureStore(self._EVENT_SOURCE, self._backbone.descriptor, key)
         self._publisher.send(event)

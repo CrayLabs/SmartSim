@@ -48,7 +48,7 @@ import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
 from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
-from smartsim._core.mli.infrastructure.control.event_listener import (
+from smartsim._core.mli.infrastructure.control.listener import (
     ConsumerRegistrationListener,
 )
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
@@ -158,6 +158,7 @@ class DragonBackend:
     """
 
     _DEFAULT_NUM_MGR_PER_NODE = 2
+    """The default number of manager processes for each feature store node"""
     _DEFAULT_MEM_PER_NODE = 256 * 1024**2
     """The default memory capacity to allocate for a feaure store node (in megabytes)"""
 
@@ -550,7 +551,9 @@ class DragonBackend:
 
     def _create_backbone(self) -> BackboneFeatureStore:
         """
-        Create a BackboneFeatureStore if one does not exist.
+        Creates a BackboneFeatureStore if one does not exist. Updates
+        environment variables of this process to include the backbone
+        descriptor.
 
         :returns: The descriptor of the backbone feature store
         """
@@ -587,6 +590,13 @@ class DragonBackend:
     def start_event_listener(
         self, cpu_affinity: list[int], gpu_affinity: list[int]
     ) -> dragon_process.Process:
+        """Start a standalone event listener.
+
+        :param cpu_affinity: The CPU affinity for the process
+        :param gpu_affinity: The CPU affinity for the process
+        :returns: The dragon Process managing the process
+        :raises SmartSimError: If the backbone is not provided
+        """
         if self._backbone is None:
             raise SmartSimError("Backbone feature store is not available")
 
@@ -607,7 +617,7 @@ class DragonBackend:
             cwd=os.getcwd(),
             env={
                 **os.environ,
-                **(self._backbone.get_env() if self._backbone is not None else {}),
+                **self._backbone.get_env(),
             },
             policy=local_policy,
             options=options,
@@ -657,6 +667,7 @@ class DragonBackend:
         )
 
     def _start_steps(self) -> None:
+        """Start all new steps created since the last update."""
         self._heartbeat()
 
         with self._queue_lock:
@@ -821,6 +832,9 @@ class DragonBackend:
                     group_info.redir_workers = None
 
     def _update_shutdown_status(self) -> None:
+        """Query the status of running tasks and update the status
+        of any that have completed.
+        """
         self._heartbeat()
         with self._queue_lock:
             self._can_shutdown |= (
@@ -834,6 +848,9 @@ class DragonBackend:
             )
 
     def _should_print_status(self) -> bool:
+        """Determine if status messages should be printed based off the last
+        update. Returns `True` to trigger prints, `False` otherwise.
+        """
         if self.current_time - self._last_update_time > 10:
             self._last_update_time = self.current_time
             return True

@@ -146,7 +146,7 @@ class BatchQueue(Queue[InferenceRequest]):
             return False
 
         timed_out = False
-        if self._batch_timeout > 0:
+        if self._batch_timeout >= 0:
             timed_out = self._elapsed_time >= self._batch_timeout
 
         if self.full():

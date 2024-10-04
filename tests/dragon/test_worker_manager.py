@@ -265,8 +265,10 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
 
     # NOTE: env vars must be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
-    os.environ["_SMARTSIM_REQUEST_QUEUE"] = to_worker_fli_comm_channel.descriptor
-    os.environ["_SMARTSIM_INFRA_BACKBONE"] = backbone.descriptor
+    os.environ[BackboneFeatureStore.MLI_WORKER_QUEUE] = (
+        to_worker_fli_comm_channel.descriptor
+    )
+    os.environ[BackboneFeatureStore.MLI_BACKBONE] = backbone.descriptor
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,

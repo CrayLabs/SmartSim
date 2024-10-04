@@ -93,6 +93,7 @@ built_mpi_app = False
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
 
+
 def get_account() -> str:
     return test_account
 
@@ -459,15 +460,10 @@ def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture(scope="function", autouse=True)
 def check_output_dir() -> None:
-    try:
-        global test_output_dirs
-        assert os.path.isdir(test_output_root)
-        assert len(os.listdir(test_output_root)) >= test_output_dirs
-        test_output_dirs = len(os.listdir(test_output_root))
-    except Exception:
-        # swallow error when the tests can't clean up test dirs
-        # and let the next run do the job.
-        ...
+    global test_output_dirs
+    assert os.path.isdir(test_output_root)
+    assert len(os.listdir(test_output_root)) >= test_output_dirs
+    test_output_dirs = len(os.listdir(test_output_root))
 
 
 @pytest.fixture

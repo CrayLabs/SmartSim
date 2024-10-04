@@ -51,13 +51,19 @@ class DragonFeatureStore(FeatureStore):
 
         :param storage: A distributed dictionary to be used as the underlying
         storage mechanism of the feature store"""
+        if storage is None:
+            raise ValueError(
+                "Storage is required when instantiating a DragonFeatureStore."
+            )
+
+        descriptor = ""
         if isinstance(storage, dragon_ddict.DDict):
             descriptor = ddict_to_descriptor(storage)
-        else:
-            descriptor = "not-set"
 
         super().__init__(descriptor)
         self._storage: t.Dict[str, t.Union[str, bytes]] = storage
+        """The underlying storage mechanism of the DragonFeatureStore; a
+        distributed, in-memory key-value store"""
 
     def _get(self, key: str) -> t.Union[str, bytes]:
         """Retrieve a value from the underlying storage mechanism.

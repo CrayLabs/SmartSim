@@ -245,6 +245,9 @@ class DragonConnector:
 
         with open(config.dragon_dotenv, encoding="utf-8") as dot_env:
             for kvp in dot_env.readlines():
+                if not kvp:
+                    continue
+
                 # skip any commented lines
                 if not kvp.startswith("#"):
                     split = kvp.strip().split("=", maxsplit=1)

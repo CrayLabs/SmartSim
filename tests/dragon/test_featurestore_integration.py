@@ -30,18 +30,16 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.comm.channel.dragon_channel import (
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragon_util import (
     DEFAULT_CHANNEL_BUFFER_SIZE,
-    DragonCommChannel,
+    create_local,
 )
-from smartsim._core.mli.comm.channel.dragon_util import create_local
+from smartsim._core.mli.infrastructure.comm.broadcaster import EventBroadcaster
+from smartsim._core.mli.infrastructure.comm.consumer import EventConsumer
+from smartsim._core.mli.infrastructure.comm.event import OnWriteFeatureStore
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
-    EventBroadcaster,
-    EventCategory,
-    EventConsumer,
-    OnCreateConsumer,
-    OnWriteFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_util import (
     create_ddict,
@@ -131,7 +129,9 @@ def test_eventconsumer_max_dequeue(
 
     # simulate the app updating a model a lot of times
     for key in (f"key-{i}" for i in range(num_events)):
-        event = OnWriteFeatureStore(the_backbone.descriptor, key)
+        event = OnWriteFeatureStore(
+            "test_eventconsumer_max_dequeue", the_backbone.descriptor, key
+        )
         mock_client_app.send(event, timeout=0.01)
 
     num_dequeued = 0
@@ -223,7 +223,9 @@ def test_channel_buffer_size(
 
     # simulate the app updating a model a lot of times
     for key in (f"key-{i}" for i in range(buffer_size)):
-        event = OnWriteFeatureStore(backbone.descriptor, key)
+        event = OnWriteFeatureStore(
+            "test_channel_buffer_size", backbone.descriptor, key
+        )
         mock_client_app.send(event, timeout=0.01)
 
     # adding 1 more over the configured buffer size should report the error

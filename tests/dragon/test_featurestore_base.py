@@ -31,13 +31,14 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
-    BackboneFeatureStore,
-    EventBroadcaster,
-    EventCategory,
-    EventConsumer,
+from smartsim._core.mli.infrastructure.comm.broadcaster import EventBroadcaster
+from smartsim._core.mli.infrastructure.comm.consumer import EventConsumer
+from smartsim._core.mli.infrastructure.comm.event import (
     OnCreateConsumer,
     OnWriteFeatureStore,
+)
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
@@ -55,9 +56,6 @@ if t.TYPE_CHECKING:
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
 
-WORK_QUEUE_KEY = "_SMARTSIM_REQUEST_QUEUE"
-RANDOMLY_SET_KEY = "_SOMETHING_ELSE"
-
 
 def boom(*args, **kwargs) -> None:
     """Helper function that blows up when used to mock up
@@ -72,8 +70,8 @@ def test_event_uid() -> None:
 
     # generate a bunch of events and keep track all the IDs
     for i in range(num_iters):
-        event_a = OnCreateConsumer(str(i), filters=[])
-        event_b = OnWriteFeatureStore(str(i), "key")
+        event_a = OnCreateConsumer("test_event_uid", str(i), filters=[])
+        event_b = OnWriteFeatureStore("test_event_uid", str(i), filters=[])
 
         uids.add(event_a.uid)
         uids.add(event_b.uid)
@@ -186,7 +184,9 @@ def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
     # NOTE: we're not putting any consumers into the backbone here!
     backbone = BackboneFeatureStore(mock_storage)
 
-    event = OnCreateConsumer(consumer_descriptor, filters=[])
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_no_factory", consumer_descriptor, filters=[]
+    )
 
     publisher = EventBroadcaster(backbone)
     num_receivers = 0
@@ -194,7 +194,9 @@ def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
     # publishing this event without any known consumers registered should succeed
     # but report that it didn't have anybody to send the event to
     consumer_descriptor = storage_path / f"test-consumer"
-    event = OnCreateConsumer(consumer_descriptor, filters=[])
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_no_factory", consumer_descriptor, filters=[]
+    )
 
     num_receivers += publisher.send(event)
 
@@ -225,7 +227,11 @@ def test_eventpublisher_broadcast_to_empty_consumer_list(test_dir: str) -> None:
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = []
 
-    event = OnCreateConsumer(consumer_descriptor, filters=[])
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_to_empty_consumer_list",
+        consumer_descriptor,
+        filters=[],
+    )
     publisher = EventBroadcaster(
         backbone, channel_factory=FileSystemCommChannel.from_descriptor
     )
@@ -258,7 +264,11 @@ def test_eventpublisher_broadcast_without_channel_factory(test_dir: str) -> None
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = [consumer_descriptor]
 
-    event = OnCreateConsumer(consumer_descriptor, filters=[])
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_without_channel_factory",
+        consumer_descriptor,
+        filters=[],
+    )
     publisher = EventBroadcaster(
         backbone,
         # channel_factory=FileSystemCommChannel.from_descriptor # <--- not supplied
@@ -293,11 +303,17 @@ def test_eventpublisher_broadcast_empties_buffer(test_dir: str) -> None:
     # mock building up some buffered events
     num_buffered_events = 14
     for i in range(num_buffered_events):
-        event = OnCreateConsumer(storage_path / f"test-consumer-{str(i)}", [])
+        event = OnCreateConsumer(
+            "test_eventpublisher_broadcast_empties_buffer",
+            storage_path / f"test-consumer-{str(i)}",
+            [],
+        )
         publisher._event_buffer.append(bytes(event))
 
     event0 = OnCreateConsumer(
-        storage_path / f"test-consumer-{str(num_buffered_events + 1)}", []
+        "test_eventpublisher_broadcast_empties_buffer",
+        storage_path / f"test-consumer-{str(num_buffered_events + 1)}",
+        [],
     )
 
     num_receivers = publisher.send(event0)
@@ -344,13 +360,21 @@ def test_eventpublisher_broadcast_returns_total_sent(
 
     # mock building up some buffered events
     for i in range(num_buffered):
-        event = OnCreateConsumer(storage_path / f"test-consumer-{str(i)}", [])
+        event = OnCreateConsumer(
+            "test_eventpublisher_broadcast_returns_total_sent",
+            storage_path / f"test-consumer-{str(i)}",
+            [],
+        )
         publisher._event_buffer.append(bytes(event))
 
     assert publisher.num_buffered == num_buffered
 
     # this event will trigger clearing anything already in buffer
-    event0 = OnCreateConsumer(storage_path / f"test-consumer-{num_buffered}", [])
+    event0 = OnCreateConsumer(
+        "test_eventpublisher_broadcast_returns_total_sent",
+        storage_path / f"test-consumer-{num_buffered}",
+        [],
+    )
 
     # num_receivers should contain a number that computes w/all consumers and all events
     num_receivers = publisher.send(event0)
@@ -376,7 +400,11 @@ def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
         backbone, channel_factory=FileSystemCommChannel.from_descriptor
     )
 
-    event = OnCreateConsumer(consumer_descriptor, filters=[])
+    event = OnCreateConsumer(
+        "test_eventpublisher_prune_unused_consumer",
+        consumer_descriptor,
+        filters=[],
+    )
 
     # the only registered cnosumer is in the event, expect no pruning
     backbone.notification_channels = (consumer_descriptor,)
@@ -390,7 +418,9 @@ def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
     # ... and remove the old descriptor from the backbone when it's looked up
     backbone.notification_channels = (consumer_descriptor2,)
 
-    event = OnCreateConsumer(consumer_descriptor2, filters=[])
+    event = OnCreateConsumer(
+        "test_eventpublisher_prune_unused_consumer", consumer_descriptor2, filters=[]
+    )
 
     publisher.send(event)
 
@@ -447,7 +477,9 @@ def test_eventpublisher_serialize_failure(
     )
 
     with monkeypatch.context() as patch:
-        event = OnCreateConsumer(target_descriptor, filters=[])
+        event = OnCreateConsumer(
+            "test_eventpublisher_serialize_failure", target_descriptor, filters=[]
+        )
 
         # patch the __bytes__ implementation to cause pickling to fail during send
         def bad_bytes(self) -> bytes:
@@ -490,7 +522,9 @@ def test_eventpublisher_factory_failure(
     publisher = EventBroadcaster(backbone, channel_factory=boom)
 
     with monkeypatch.context() as patch:
-        event = OnCreateConsumer(target_descriptor, filters=[])
+        event = OnCreateConsumer(
+            "test_eventpublisher_factory_failure", target_descriptor, filters=[]
+        )
 
         backbone.notification_channels = (target_descriptor,)
 
@@ -527,7 +561,9 @@ def test_eventpublisher_failure(test_dir: str, monkeypatch: pytest.MonkeyPatch) 
         raise Exception("That was unexpected...")
 
     with monkeypatch.context() as patch:
-        event = OnCreateConsumer(target_descriptor, filters=[])
+        event = OnCreateConsumer(
+            "test_eventpublisher_failure", target_descriptor, filters=[]
+        )
 
         # patch the _broadcast implementation to cause send to fail after
         # after the event has been pickled
@@ -559,7 +595,9 @@ def test_eventconsumer_receive(test_dir: str) -> None:
 
     backbone = BackboneFeatureStore(mock_storage)
     comm_channel = FileSystemCommChannel.from_descriptor(target_descriptor)
-    event = OnCreateConsumer(target_descriptor, filters=[])
+    event = OnCreateConsumer(
+        "test_eventconsumer_receive", target_descriptor, filters=[]
+    )
 
     # simulate a sent event by writing directly to the input comm channel
     comm_channel.send(bytes(event))
@@ -596,7 +634,9 @@ def test_eventconsumer_receive_multi(test_dir: str, num_sent: int) -> None:
 
     # simulate multiple sent events by writing directly to the input comm channel
     for _ in range(num_sent):
-        event = OnCreateConsumer(target_descriptor, filters=[])
+        event = OnCreateConsumer(
+            "test_eventconsumer_receive_multi", target_descriptor, filters=[]
+        )
         comm_channel.send(bytes(event))
 
     consumer = EventConsumer(comm_channel, backbone)
@@ -660,7 +700,7 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     wmgr_consumer = EventConsumer(
         wmgr_channel,
         backbone,
-        filters=[EventCategory.FEATURE_STORE_WRITTEN],
+        filters=[OnWriteFeatureStore.FEATURE_STORE_WRITTEN],
     )
     capp_consumer = EventConsumer(
         capp_channel,
@@ -669,7 +709,7 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     back_consumer = EventConsumer(
         back_channel,
         backbone,
-        filters=[EventCategory.CONSUMER_CREATED],
+        filters=[OnCreateConsumer.CONSUMER_CREATED],
     )
 
     # create some broadcasters to publish messages
@@ -691,13 +731,23 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     ]
 
     # simulate worker manager sending a notification to backend that it's alive
-    event_1 = OnCreateConsumer(wmgr_consumer_descriptor, filters=[])
+    event_1 = OnCreateConsumer(
+        "test_eventconsumer_eventpublisher_integration",
+        wmgr_consumer_descriptor,
+        filters=[],
+    )
     mock_worker_mgr.send(event_1)
 
     # simulate the app updating a model a few times
-    event_2 = OnWriteFeatureStore(mock_fs_descriptor, "key-1")
-    event_3 = OnWriteFeatureStore(mock_fs_descriptor, "key-2")
-    event_4 = OnWriteFeatureStore(mock_fs_descriptor, "key-1")
+    event_2 = OnWriteFeatureStore(
+        "test_eventconsumer_eventpublisher_integration", mock_fs_descriptor, "key-1"
+    )
+    event_3 = OnWriteFeatureStore(
+        "test_eventconsumer_eventpublisher_integration", mock_fs_descriptor, "key-2"
+    )
+    event_4 = OnWriteFeatureStore(
+        "test_eventconsumer_eventpublisher_integration", mock_fs_descriptor, "key-1"
+    )
 
     mock_client_app.send(event_2)
     mock_client_app.send(event_3)
@@ -741,7 +791,7 @@ def test_eventconsumer_batch_timeout(
         consumer = EventConsumer(
             channel,
             backbone,
-            filters=[EventCategory.FEATURE_STORE_WRITTEN],
+            filters=[OnWriteFeatureStore.FEATURE_STORE_WRITTEN],
         )
         consumer.recv(batch_timeout=invalid_timeout)
 

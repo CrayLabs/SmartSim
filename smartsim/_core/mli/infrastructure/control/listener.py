@@ -27,10 +27,8 @@
 # isort: off
 # pylint: disable=import-error
 # pylint: disable=unused-import
+import socket
 import dragon
-
-# from dragon.globalservices.api_setup import connect_to_infrastructure
-
 
 # pylint: enable=unused-import
 # pylint: enable=import-error
@@ -45,13 +43,15 @@ import typing as t
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
-from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
-    BackboneFeatureStore,
+from smartsim._core.mli.infrastructure.comm.consumer import EventConsumer
+from smartsim._core.mli.infrastructure.comm.event import (
     EventBase,
-    EventCategory,
-    EventConsumer,
     OnCreateConsumer,
     OnRemoveConsumer,
+    OnShutdownRequested,
+)
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
 )
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
@@ -60,8 +60,9 @@ logger = get_logger(__name__)
 
 
 class ConsumerRegistrationListener(Service):
-    """A long-running service that listens for events of a specific type
-    and executes the appropriate event handler."""
+    """A long-running service that manages the list of consumers receiving
+    events that are broadcast. It hosts handlers for adding and removing consumers
+    """
 
     def __init__(
         self,
@@ -78,7 +79,6 @@ class ConsumerRegistrationListener(Service):
         :param timeout: Maximum time (in seconds) to allow a single recv request to wait
         :param batch_timeout: Maximum time (in seconds) to allow a batch of receives to
          continue to build
-        :param filters: Filters specifying the message types to handle
         :param as_service: Specifies run-once or run-until-complete behavior of service
         :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
@@ -86,17 +86,13 @@ class ConsumerRegistrationListener(Service):
         super().__init__(
             as_service, cooldown, health_check_frequency=health_check_frequency
         )
-
         self._timeout = timeout
         """ Maximum time (in seconds) to allow a single recv request to wait"""
-
         self._batch_timeout = batch_timeout
         """Maximum time (in seconds) to allow a batch of receives to
          continue to build"""
-
         self._consumer: t.Optional[EventConsumer] = None
         """The event consumer that handles receiving events"""
-
         self._backbone = backbone
         """A standalone, system-created feature store used to share internal
         information among MLI components"""
@@ -112,8 +108,20 @@ class ConsumerRegistrationListener(Service):
         the main event loop during automatic shutdown."""
         super()._on_shutdown()
 
-        # unregister this listener in the backbone
-        self._backbone.pop(BackboneFeatureStore.MLI_BACKEND_CONSUMER)
+        if not self._consumer:
+            return
+
+        # remove descriptor for this listener from the backbone if it's there
+        if registered_consumer := self._backbone.backend_channel:
+            # if there is a descriptor in the backbone and it's still this listener
+            if registered_consumer == self._consumer.descriptor:
+                logger.info(
+                    f"Listener clearing backend consumer {self._consumer.name} "
+                    "from backbone"
+                )
+
+                # unregister this listener in the backbone
+                self._backbone.pop(BackboneFeatureStore.MLI_REGISTRAR_CONSUMER)
 
         # TODO: need the channel to be cleaned up
         # self._consumer._comm_channel._channel.destroy()
@@ -135,15 +143,18 @@ class ConsumerRegistrationListener(Service):
         """
 
         if self._backbone is None:
-            logger.info("Listener must shutdown: no backbone attached")
+            logger.info("Listener must shutdown. No backbone attached")
             return True
 
         if self._consumer is None:
-            logger.info("Listener must shutdown: no consumer channel created")
+            logger.info("Listener must shutdown. No consumer channel created")
             return True
 
         if not self._consumer.listening:
-            logger.info("Listener can shutdown: consumer is not listening")
+            logger.info(
+                f"Listener can shutdown. Consumer `{self._consumer.name}` "
+                "is not listening"
+            )
             return True
 
         return False
@@ -202,7 +213,7 @@ class ConsumerRegistrationListener(Service):
 
         try:
             logger.debug("Retrieving registered listener descriptor")
-            descriptor = self._backbone[BackboneFeatureStore.MLI_BACKEND_CONSUMER]
+            descriptor = self._backbone[BackboneFeatureStore.MLI_REGISTRAR_CONSUMER]
         except KeyError:
             descriptor = None
             if self._consumer:
@@ -210,8 +221,8 @@ class ConsumerRegistrationListener(Service):
 
         if self._consumer and descriptor != self._consumer.descriptor:
             logger.warning(
-                "This listener is no longer registered. It "
-                "will automatically shut down."
+                f"Consumer `{self._consumer.name}` for `ConsumerRegistrationListener` "
+                "is no longer registered. It will automatically shut down."
             )
             self._consumer.listening = False
 
@@ -221,7 +232,8 @@ class ConsumerRegistrationListener(Service):
             logger.warning("No registrar consumer descriptor available to publisher")
             return
 
-        self._backbone[BackboneFeatureStore.MLI_BACKEND_CONSUMER] = (
+        logger.debug(f"Publishing {self._consumer.descriptor} to backbone")
+        self._backbone[BackboneFeatureStore.MLI_REGISTRAR_CONSUMER] = (
             self._consumer.descriptor
         )
 
@@ -235,6 +247,7 @@ class ConsumerRegistrationListener(Service):
         NOTE: the backbone must be initialized before connecting eventing clients.
 
         :returns: The newly created EventConsumer instance
+        :raises SmartSimError: If a listener channel cannot be created
         """
 
         if self._consumer:
@@ -253,8 +266,12 @@ class ConsumerRegistrationListener(Service):
         self._consumer = EventConsumer(
             event_channel,
             self._backbone,
-            [EventCategory.CONSUMER_CREATED, EventCategory.CONSUMER_REMOVED],
-            name="ConsumerRegistrar",
+            [
+                OnCreateConsumer.CONSUMER_CREATED,
+                OnRemoveConsumer.CONSUMER_REMOVED,
+                OnShutdownRequested.SHUTDOWN,
+            ],
+            name=f"ConsumerRegistrar.{socket.gethostname()}",
             event_handler=self._on_event_received,
         )
         self._publish_consumer()

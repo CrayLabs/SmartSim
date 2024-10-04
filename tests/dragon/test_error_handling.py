@@ -523,3 +523,14 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch) -> None:
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")
+
+
+def test_dragon_feature_store_invalid_storage():
+    """Verify that attempting to create a DragonFeatureStore without storage fails."""
+    storage = None
+
+    with pytest.raises(ValueError) as ex:
+        DragonFeatureStore(storage)
+
+    assert "storage" in ex.value.args[0].lower()
+    assert "required" in ex.value.args[0].lower()

@@ -96,7 +96,8 @@ def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
     """Create a simple torch model and persist to disk for
     testing purposes.
 
-    TODO: remove once unit tests are in place"""
+    :returns: Path to the model file
+    """
     # test_path = pathlib.Path(work_dir)
     if not model_path.parent.exists():
         model_path.parent.mkdir(parents=True, exist_ok=True)

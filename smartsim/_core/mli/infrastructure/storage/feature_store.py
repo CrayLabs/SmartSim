@@ -43,7 +43,7 @@ class ReservedKeys(str, enum.Enum):
     """Storage location for the list of registered consumers that will receive
     events from an EventBroadcaster"""
 
-    MLI_BACKEND_CONSUMER = "_SMARTIM_MLI_BACKEND_CONSUMER"
+    MLI_REGISTRAR_CONSUMER = "_SMARTIM_MLI_REGISTRAR_CONSUMER"
     """Storage location for the channel used to send messages directly to
     the MLI backend"""
 

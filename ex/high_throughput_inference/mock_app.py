@@ -53,7 +53,7 @@ from collections import OrderedDict
 from smartsim.log import get_logger, log_to_file
 from smartsim.protoclient import ProtoClient
 
-logger = get_logger("App", "DEBUG")
+logger = get_logger("App")
 
 
 CHECK_RESULTS_AND_MAKE_ALL_SLOWER = False
