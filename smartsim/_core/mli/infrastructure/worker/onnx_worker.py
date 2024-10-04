@@ -108,7 +108,6 @@ class ONNXWorker(MachineLearningWorkerBase):
         output_tensors = [n.name for n in onnx_deserialized.graph.output]
         input_layers = [n.name for n in onnx_deserialized.graph.input]
 
-        print(device, providers, provider_options)
         session = InferenceSession(
             model_bytes, providers=providers, provider_options=provider_options
         )

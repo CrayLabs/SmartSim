@@ -92,6 +92,12 @@ class TorchWorker(MachineLearningWorkerBase):
                 "Failed to load and evaluate the model: "
                 f"Model key {batch.model_id.key}, Device {device}"
             ) from e
+        try:
+            model = torch.compile(model, dynamic=True)
+        except Exception as exc:
+            logger.info("Could not compile Torch model, original exception: ")
+            logger.info(exc)
+            pass
         result = LoadModelResult(model)
         return result
 

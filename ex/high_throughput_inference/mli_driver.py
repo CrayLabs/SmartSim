@@ -62,8 +62,6 @@ elif args.toolkit == "onnx":
     from smartsim._core.mli.infrastructure.worker.onnx_worker import ONNXWorker
     worker_str = base64.b64encode(cloudpickle.dumps(ONNXWorker)).decode("ascii")
 
-
-
 worker_manager_rs: DragonRunSettings = exp.create_run_settings(
     sys.executable,
     [
