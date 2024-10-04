@@ -9,15 +9,13 @@ import typing as t
 import cloudpickle
 
 from smartsim import Experiment
-from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
-from smartsim._core.mli.infrastructure.worker.tensorflow_worker import TensorFlowWorker
 from smartsim.settings import DragonRunSettings
 from smartsim.status import TERMINAL_STATUSES
 
 parser = argparse.ArgumentParser("Mock application")
 parser.add_argument("--log_max_batchsize", default=8, type=int)
 parser.add_argument("--num_nodes_app", default=1, type=int)
-parser.add_argument("--toolkit", default="torch", choices=["torch","tensorflow"], type=str)
+parser.add_argument("--toolkit", default="torch", choices=["torch","tensorflow","onnx"], type=str)
 args = parser.parse_args()
 
 DEVICE = "gpu"
@@ -31,9 +29,9 @@ worker_manager_script_name = os.path.join(filedir, "standalone_worker_manager.py
 if args.toolkit == "torch":
     # keeping old name for backward compatibility
     app_script_name = os.path.join(filedir, "mock_app.py")
+    model_name = os.path.join(filedir, f"resnet50.{DEVICE}.pt")
 else:
     app_script_name = os.path.join(filedir, f"mock_app_{args.toolkit}.py")
-model_name = os.path.join(filedir, f"resnet50.{DEVICE}.pt")
 
 transport: t.Literal["hsta", "tcp"] = "hsta"
 
@@ -55,9 +53,15 @@ os.makedirs(exp_path, exist_ok=True)
 exp = Experiment("MLI_benchmark", launcher="dragon", exp_path=exp_path)
 
 if args.toolkit == "torch":
+    from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
     worker_str = base64.b64encode(cloudpickle.dumps(TorchWorker)).decode("ascii")
 elif args.toolkit == "tensorflow":
+    from smartsim._core.mli.infrastructure.worker.tensorflow_worker import TensorFlowWorker
     worker_str = base64.b64encode(cloudpickle.dumps(TensorFlowWorker)).decode("ascii")
+elif args.toolkit == "onnx":
+    from smartsim._core.mli.infrastructure.worker.onnx_worker import ONNXWorker
+    worker_str = base64.b64encode(cloudpickle.dumps(ONNXWorker)).decode("ascii")
+
 
 
 worker_manager_rs: DragonRunSettings = exp.create_run_settings(
@@ -81,7 +85,7 @@ aff = []
 
 worker_manager_rs.set_cpu_affinity(aff)
 worker_manager_rs.set_gpu_affinity([0, 1, 2, 3])
-worker_manager_rs.set_hostlist(["pinoak0043"])
+worker_manager_rs.set_hostlist(["pinoak0037"])
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
@@ -99,7 +103,8 @@ app_rs.set_tasks_per_node(NUM_RANKS_PER_NODE)
 app_rs.set_nodes(NUM_NODES_APP)
 
 app = exp.create_model("app", run_settings=app_rs)
-app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
+if args.toolkit == "torch":
+    app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
 
 exp.generate(worker_manager, app, overwrite=True)
 exp.start(worker_manager, block=False)

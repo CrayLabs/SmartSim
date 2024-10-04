@@ -44,10 +44,13 @@ import warnings
 
 from mpi4py import MPI
 import numpy
-import tensorflow as tf
-from tensorflow.python.framework.convert_to_constants import (
-    convert_variables_to_constants_v2_as_graph,
-)
+from numpy.polynomial import Polynomial
+
+import onnx
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+from skl2onnx import to_onnx
 
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
@@ -94,7 +97,7 @@ class ProtoClient:
         if isinstance(model, str):
             model_arg = MessageHandler.build_model_key(model, self._backbone_descriptor)
         else:
-            model_arg = MessageHandler.build_model(model, "resnet-50", "1.0")
+            model_arg = MessageHandler.build_model(model, "lin_reg", "1.0")
         request = MessageHandler.build_request(
             reply_channel=self._from_worker_ch_serialized,
             model=model_arg,
@@ -140,24 +143,22 @@ class ProtoClient:
         self._ddict[key] = model
 
 
-class ResNetWrapper:
+class LinRegWrapper:
     def __init__(
         self,
         name: str,
-        model: tf.keras.Model,
+        model: onnx.onnx_ml_pb2.ModelProto,
     ):
-        self._get_tf_model(model)
+        self._get_onnx_model(model)
         self._name = name
+        self._poly = PolynomialFeatures
 
-    def _get_tf_model(self, model: tf.keras.Model):
-        real_model = tf.function(model).get_concrete_function(
-            tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
-        )
-        _, graph_def = convert_variables_to_constants_v2_as_graph(real_model)
-        self._serialized_model = graph_def.SerializeToString()
+    def _get_onnx_model(self, model: onnx.onnx_ml_pb2.ModelProto):
+        self._serialized_model = model.SerializeToString()
 
     def get_batch(self, batch_size: int = 32):
-        return numpy.random.randn(batch_size, 224, 224, 3).astype(numpy.float32)
+        x = numpy.random.randn(batch_size, 1).astype(numpy.float32)
+        return poly.fit_transform(x.reshape(-1,1))
 
     @property
     def model(self):
@@ -180,12 +181,21 @@ if __name__ == "__main__":
     parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
-    resnet = ResNetWrapper("resnet50", tf.keras.applications.ResNet50())
+    X = numpy.linspace(0, 10, 10).astype(numpy.float32)
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    p = Polynomial([1.4, -10, 4])
+    poly_features = poly.fit_transform(X.reshape(-1, 1))
+    poly_reg_model = LinearRegression()
+    poly_reg_model.fit(poly_features, p(X))
+
+    onnx_model = to_onnx(poly_reg_model, poly_features, target_opset=13)
+
+    linreg = LinRegWrapper("LinReg", onnx_model)
 
     client = ProtoClient(timing_on=True)
 
     if client._rank == 0:
-        client.set_model(resnet.name, resnet.model)
+        client.set_model(linreg.name, linreg.model)
 
     MPI.COMM_WORLD.Barrier()
 
@@ -195,8 +205,8 @@ if __name__ == "__main__":
         b_size: int = 2**log2_bsize
         log(f"Batch size: {b_size}", client._rank)
         for iteration_number in range(TOTAL_ITERATIONS):
-            sample_batch = resnet.get_batch(b_size)
-            remote_result = client.run_model(resnet.name, sample_batch)
+            sample_batch = linreg.get_batch(b_size)
+            remote_result = client.run_model(linreg.name, sample_batch)
             log(
                 f"Completed iteration: {iteration_number} in {client.perf_timer.get_last('total_time')} seconds",
                 client._rank,
