@@ -2,9 +2,8 @@ PML Scylla
 ==========
 
 .. warning::
-    What about: As of September 2024, the software stack on Scylla is still
-    being finalized. Therefore, please consider these instructions as
-    preliminary for now.
+    As of September 2024, the software stack on Scylla is still being finalized.
+    Therefore, please consider these instructions as preliminary for now.
 
 One-time Setup
 --------------
@@ -49,12 +48,12 @@ To install SmartSim on Scylla, follow these steps:
     The first workaround is needed because for some reason the autodetection
     of CUDA architectures is not consistent internally with one of PyTorch's
     dependencies. This seems to be unique to this machine as we do not see
-    this on other platforms
+    this on other platforms.
 
     The second workaround is needed because PyTorch 2.3 (and possibly 2.2)
     will attempt to load the version of cuDNN that is in the LD_LIBRARY_PATH
     instead of the version shipped with PyTorch itself. This results in
-    unfound symbols
+    unfound symbols.
 
 **Step 5:** Check that SmartSim has been installed and built correctly:
 
@@ -80,6 +79,6 @@ can reload the conda environment by running the following commands:
 
 .. code:: bash
 
-    module load cudatoolkit/12.4.1 git # # cudnn should NOT be loadded
+    module load cudatoolkit/12.4.1 git # cudnn should NOT be loaded
     source /scyllafps/scratch/$USER/venvs/smartsim/bin/activate
 
