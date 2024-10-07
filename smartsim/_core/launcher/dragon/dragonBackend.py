@@ -100,7 +100,7 @@ class ProcessGroupInfo:
     return_codes: t.Optional[t.List[int]] = None
     """List of return codes of completed processes"""
     hosts: t.List[str] = field(default_factory=list)
-    """List of hosts on which the Process Group """
+    """List of hosts on which the Process Group should be executed"""
     redir_workers: t.Optional[dragon_process_group.ProcessGroup] = None
     """Workers used to redirect stdout and stderr to file"""
 
@@ -593,7 +593,7 @@ class DragonBackend:
         """Start a standalone event listener.
 
         :param cpu_affinity: The CPU affinity for the process
-        :param gpu_affinity: The CPU affinity for the process
+        :param gpu_affinity: The GPU affinity for the process
         :returns: The dragon Process managing the process
         :raises SmartSimError: If the backbone is not provided
         """

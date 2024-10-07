@@ -71,17 +71,23 @@ class DragonConnector:
 
     def __init__(self) -> None:
         self._context: zmq.Context[t.Any] = zmq.Context.instance()
+        """ZeroMQ context used to share configuration across requests"""
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
         self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
+        """ZeroMQ authenticator used to secure queue access"""
         config = get_config()
         self._reset_timeout(config.dragon_server_timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
+        """ZeroMQ socket exposing the connection to the DragonBackend"""
         self._dragon_head_process: t.Optional[subprocess.Popen[bytes]] = None
+        """A handle to the process executing the DragonBackend"""
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
+        """Process ID of the process executing the DragonBackend"""
         self._dragon_server_path = config.dragon_server_path
+        """Path to a dragon installation"""
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         self._env_vars: t.Dict[str, str] = {}
         if self._dragon_server_path is None:
@@ -95,7 +101,7 @@ class DragonConnector:
 
     @property
     def is_connected(self) -> bool:
-        """Whether the Connector established a connection to the server
+        """Whether the Connector established a connection to the server.
 
         :return: True if connected
         """
@@ -104,12 +110,18 @@ class DragonConnector:
     @property
     def can_monitor(self) -> bool:
         """Whether the Connector knows the PID of the dragon server head process
-        and can monitor its status
+        and can monitor its status.
 
         :return: True if the server can be monitored"""
         return self._dragon_head_pid is not None
 
     def _handshake(self, address: str) -> None:
+        """Perform the handshake process with the DragonBackend and
+        confirm two-way communication is established.
+
+        :param address: The address of the head node socket to initiate a
+        handhake with
+        """
         self._dragon_head_socket = dragonSockets.get_secure_socket(
             self._context, zmq.REQ, False
         )
@@ -132,6 +144,11 @@ class DragonConnector:
             ) from e
 
     def _reset_timeout(self, timeout: int = get_config().dragon_server_timeout) -> None:
+        """Reset the timeout applied to the ZMQ context. If an authenticator is
+        enabled, also update the authenticator timeouts.
+
+        :param timeout: The timeout value to apply to ZMQ sockets
+        """
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
         if self._authenticator is not None and self._authenticator.thread is not None:
@@ -183,11 +200,19 @@ class DragonConnector:
 
     @staticmethod
     def _get_dragon_log_level() -> str:
+        """Maps the log level from SmartSim to a valid log level
+        for a dragon process.
+
+        :returns: The dragon log level string
+        """
         smartsim_to_dragon = defaultdict(lambda: "NONE")
         smartsim_to_dragon["developer"] = "INFO"
         return smartsim_to_dragon.get(get_config().log_level, "NONE")
 
     def _connect_to_existing_server(self, path: Path) -> None:
+        """Connects to an existing DragonBackend using address information from
+        a persisted dragon log file.
+        """
         config = get_config()
         dragon_config_log = path / config.dragon_log_filename
 
@@ -217,6 +242,11 @@ class DragonConnector:
                 return
 
     def _start_connector_socket(self, socket_addr: str) -> zmq.Socket[t.Any]:
+        """Instantiate the ZMQ socket to be used by the connector.
+
+        :param socket_addr: The socket address the connector should bind to
+        :returns: The bound socket
+        """
         config = get_config()
         connector_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._reset_timeout(config.dragon_server_startup_timeout)
@@ -423,6 +453,15 @@ class DragonConnector:
     def _parse_launched_dragon_server_info_from_iterable(
         stream: t.Iterable[str], num_dragon_envs: t.Optional[int] = None
     ) -> t.List[t.Dict[str, str]]:
+        """Parses dragon backend connection information from a stream.
+
+        :param stream: The stream to inspect. Usually the stdout of the
+        DragonBackend process
+        :param num_dragon_envs: The expected number of dragon environments
+        to parse from the stream.
+        :returns: A list of dictionaries, one per environment, containing
+        the parsed server information
+        """
         lines = (line.strip() for line in stream)
         lines = (line for line in lines if line)
         tokenized = (line.split(maxsplit=1) for line in lines)
@@ -449,6 +488,15 @@ class DragonConnector:
         file_paths: t.List[t.Union[str, "os.PathLike[str]"]],
         num_dragon_envs: t.Optional[int] = None,
     ) -> t.List[t.Dict[str, str]]:
+        """Read a known log file into a Stream and parse dragon server configuration
+        from the stream.
+
+        :param file_paths: Path to a file containing dragon server configuration
+        :num_dragon_envs: The expected number of dragon environments to be found
+        in the file
+        :returns: The parsed server configuration, one item per
+        discovered dragon environment
+        """
         with fileinput.FileInput(file_paths) as ifstream:
             dragon_envs = cls._parse_launched_dragon_server_info_from_iterable(
                 ifstream, num_dragon_envs
@@ -463,6 +511,15 @@ class DragonConnector:
         send_flags: int = 0,
         recv_flags: int = 0,
     ) -> DragonResponse:
+        """Sends a synchronous request through a ZMQ socket.
+
+        :param socket: Socket to send on
+        :param request: The request to send
+        :param send_flags: Configuration to apply to the send operation
+        :param recv_flags: Configuration to apply to the recv operation; used to
+        allow the receiver to immediately respond to the sent request.
+        :returns: The response from the target
+        """
         client = dragonSockets.as_client(socket)
         with DRG_LOCK:
             logger.debug(f"Sending {type(request).__name__}: {request}")
@@ -474,6 +531,13 @@ class DragonConnector:
 
 
 def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
+    """Verify that objects can be sent as messages acceptable to the target.
+
+    :param obj: The message to test
+    :param typ: The type that is acceptable
+    :returns: The original `obj` if it is of the requested type
+    :raises TypeError: If the object fails the test and is not
+    an instance of the desired type"""
     if not isinstance(obj, typ):
         raise TypeError(f"Expected schema of type `{typ}`, but got {type(obj)}")
     return obj
@@ -525,6 +589,12 @@ def _dragon_cleanup(
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
+    """Determine the applicable dragon server path for the connector
+
+    :param fallback: A default dragon server path to use if one is not
+    found in the runtime configuration
+    :returns: The path to the dragon libraries
+    """
     dragon_server_path = get_config().dragon_server_path or os.path.join(
         fallback, ".smartsim", "dragon"
     )

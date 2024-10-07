@@ -61,6 +61,8 @@ class EventBroadcaster:
 
         :param backbone: The MLI backbone feature store
         :param channel_factory: Factory method to construct new channel instances
+        :param name: A unique identifer assigned to the broadcaster for logging. If
+         not provided, the system will auto-assign one.
         """
         self._backbone = backbone
         """The backbone feature store used to retrieve consumer descriptors"""
@@ -178,8 +180,7 @@ class EventBroadcaster:
         :param timeout: Maximum time to wait (in seconds) for messages to send
         :returns: BroadcastResult containing the number of messages that were
         successfully and unsuccessfully sent for all consumers
-        :raises SmartSimError: If the channel fails to attach
-        :raises SmartSimError: If broadcasting fails
+        :raises SmartSimError: If the channel fails to attach or broadcasting fails
         """
         # allow descriptors to be empty since events are buffered
         self._descriptors = set(x for x in self._backbone.notification_channels if x)

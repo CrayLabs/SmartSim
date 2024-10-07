@@ -35,9 +35,9 @@ logger = get_logger(__name__)
 
 
 class Service(ABC):
-    """Base contract for standalone entrypoint scripts. Defines API for entrypoint
-    behaviors (event loop, automatic shutdown, cooldown) as well as simple
-    hooks for status changes"""
+    """Core API for standalone entrypoint scripts. Makes use of overridable hook
+    methods to modify behaviors (event loop, automatic shutdown, cooldown) as
+    well as simple hooks for status changes"""
 
     def __init__(
         self,
@@ -46,7 +46,7 @@ class Service(ABC):
         loop_delay: float = 0,
         health_check_frequency: float = 0,
     ) -> None:
-        """Initialize the ServiceHost
+        """Initialize the Service
 
         :param as_service: Determines if the host runs continuously until
         shutdown criteria are met, or executes the service lifecycle once and exits
@@ -83,7 +83,7 @@ class Service(ABC):
 
     def _on_start(self) -> None:
         """Empty hook method for use by subclasses. Called on initial entry into
-        ServiceHost `execute` event loop before `_on_iteration` is invoked."""
+        Service `execute` event loop before `_on_iteration` is invoked."""
         logger.debug(f"Starting {self.__class__.__name__}")
 
     def _on_shutdown(self) -> None:

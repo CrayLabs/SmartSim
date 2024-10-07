@@ -54,7 +54,6 @@ class EventConsumer:
     def __init__(
         self,
         comm_channel: CommChannelBase,
-        # channel_factory: ...,
         backbone: BackboneFeatureStore,
         filters: t.Optional[t.List[str]] = None,
         name: t.Optional[str] = None,
@@ -68,7 +67,6 @@ class EventConsumer:
         events will be delivered
         :param name: A user-friendly name for logging. If not provided, an
         auto-generated GUID will be used
-        :raises ValueError: If batch_timeout <= 0
         """
         self._comm_channel = comm_channel
         """The comm channel used by the consumer to receive messages. The channel
