@@ -24,6 +24,8 @@ from smartsim._core.generation.operations import (
 # TODO test python protocol?
 # TODO do I allow the paths to combine if src is empty?
 
+pytestmark = pytest.mark.group_a
+
 
 @pytest.fixture
 def generation_context(test_dir: str):

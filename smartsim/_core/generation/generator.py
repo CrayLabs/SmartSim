@@ -48,16 +48,17 @@ logger.propagate = False
 
 @t.runtime_checkable
 class _GenerableProtocol(t.Protocol):
-    """Ensures functions using job.entity proceed if both attribute files and
-    parameters are supported."""
+    """Protocol to ensure that an entity supports both file operations
+    and parameters."""
 
     files: FileSysOperationSet
-    # TODO might need to review if file_params is taken off
+    # TODO change when file_parameters taken off Application during Ensemble refactor ticket
     file_parameters: t.Mapping[str, str]
 
 
 Job_Path = namedtuple("Job_Path", ["run_path", "out_path", "err_path"])
-"""Stores the Job's run path, output path, and error file path."""
+"""Namedtuple that stores a Job's run directory, output file path, and
+error file path."""
 
 
 class Generator:
@@ -73,7 +74,7 @@ class Generator:
     def __init__(self, root: pathlib.Path) -> None:
         """Initialize a Generator object
 
-        The Generator class is responsible for constructing a Job's directory, including
+        The Generator class is responsible for constructing a Job's directory, performing
         the following tasks:
 
         - Creating the run and log directories
@@ -81,7 +82,7 @@ class Generator:
         - Building the parameter settings file
         - Managing symlinking, copying, and configuration of attached files
 
-        :param root: Job base path
+        :param root: The base path for job-related files and directories
         """
         self.root = root
         """The root directory under which all generated files and directories will be placed."""
@@ -102,8 +103,8 @@ class Generator:
 
     def _build_job_run_path(self, job: Job, job_index: int) -> pathlib.Path:
         """Build and return a Job's run directory. The path is formed by combining
-        the base directory with the `run` class-level variable, where run specifies
-        the name of the job's run folder.
+        the base directory with the `run_directory` class-level constant, which specifies
+        the name of the Job's run folder.
 
         :param job: Job object
         :param job_index: Job index
@@ -114,8 +115,8 @@ class Generator:
 
     def _build_job_log_path(self, job: Job, job_index: int) -> pathlib.Path:
         """Build and return a Job's log directory. The path is formed by combining
-        the base directory with the `log` class-level variable, where log specifies
-        the name of the job's log folder.
+        the base directory with the `log_directory` class-level constant, which specifies
+        the name of the Job's log folder.
 
         :param job: Job object
         :param job_index: Job index
@@ -126,7 +127,7 @@ class Generator:
 
     @staticmethod
     def _build_log_file_path(log_path: pathlib.Path) -> pathlib.Path:
-        """Build and return an entities file summarizing the parameters
+        """Build and return a parameters file summarizing the parameters
         used for the generation of the entity.
 
         :param log_path: Path to log directory
@@ -159,7 +160,7 @@ class Generator:
         return err_file_path
 
     def generate_job(self, job: Job, job_index: int) -> Job_Path:
-        """Build and return the Job's run directory, error file and out file.
+        """Build and return the Job's run directory, output file, and error file.
 
         This method creates the Job's run and log directories, generates the
         `smartsim_params.txt` file to log parameters used for the Job, and sets
@@ -269,7 +270,7 @@ class Generator:
 
     @staticmethod
     def _mkdir_file(file_path: pathlib.Path) -> Command:
-        """Build a Command to create a directory, including any
+        """Build a Command to create the directory along with any
         necessary parent directories.
 
         :param file_path: The directory path to be created

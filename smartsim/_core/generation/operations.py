@@ -46,7 +46,7 @@ def check_src_and_dest_path(
     of type pathlib.Path
 
     :param src: The source path to be checked.
-    :param des: The destination path to be checked.
+    :param dest: The destination path to be checked.
     :raises TypeError: If either src or dest is not an instance of pathlib.Path
     """
     if not isinstance(src, pathlib.Path):
@@ -72,7 +72,8 @@ def check_run_path(run_path: pathlib.Path) -> None:
     """Validate that the provided run path is of type pathlib.Path
 
     :param run_path: The run path to be checked
-    :raises TypeError: If either src or dest is not an instance of pathlib.Path
+    :raises TypeError: If either run path is not an instance of pathlib.Path
+    :raises ValueError: If the run path is not a directory
     """
     if not isinstance(run_path, pathlib.Path):
         raise TypeError(
@@ -114,7 +115,7 @@ class CopyOperation(GenerationProtocol):
         self.dest = dest
 
     def format(self, context: GenerationContext) -> Command:
-        """Create Command to invoke copy fs entry point
+        """Create Command to invoke copy file system entry point
 
         :param context: Context for copy operation
         :return: Copy Command
@@ -149,7 +150,7 @@ class SymlinkOperation(GenerationProtocol):
         self.dest = dest
 
     def format(self, context: GenerationContext) -> Command:
-        """Create Command to invoke symlink fs entry point
+        """Create Command to invoke symlink file system entry point
 
         :param context: Context for symlink operation
         :return: Symlink Command
@@ -196,7 +197,7 @@ class ConfigureOperation(GenerationProtocol):
         self.tag = tag if tag else ";"
 
     def format(self, context: GenerationContext) -> Command:
-        """Create Command to invoke configure fs entry point
+        """Create Command to invoke configure file system entry point
 
         :param context: Context for configure operation
         :return: Configure Command
@@ -221,11 +222,11 @@ T = t.TypeVar("T", bound=GenerationProtocol)
 
 @dataclass
 class FileSysOperationSet:
-    """Dataclass to represent a set of FS Operation Objects"""
+    """Dataclass to represent a set of file system operation objects"""
 
     # TODO disallow modification - dunder function (post ticket to reevaluate API objects)
     operations: t.List[GenerationProtocol] = field(default_factory=list)
-    """Set of FS Objects that match the GenerationProtocol"""
+    """Set of file system objects that match the GenerationProtocol"""
 
     def add_copy(
         self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None

@@ -215,7 +215,7 @@ def test_build_err_file_path(
 
 
 def test_generate_job(
-    mock_job: unittest.mock.MagicMock, generator_instance: Generator, mock_index
+    mock_job: unittest.mock.MagicMock, generator_instance: Generator, mock_index: int
 ):
     """Test Generator.generate_job returns correct paths"""
     job_paths = generator_instance.generate_job(mock_job, mock_index)
@@ -243,7 +243,6 @@ def test_mkdir_file(generator_instance: Generator, test_dir: str):
     assert cmd.command == ["mkdir", "-p", test_dir]
 
 
-# might change this to files that can be configured
 @pytest.fixture
 def files(fileutils):
     path_to_files = fileutils.get_test_conf_path(
@@ -280,7 +279,9 @@ def source(request, files, directory):
     ),
 )
 @pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
-def test_copy_files_valid_dest(dest, source, generator_instance, test_dir):
+def test_copy_files_valid_dest(
+    dest, source, generator_instance: Generator, test_dir: str
+):
     to_copy = [CopyOperation(src=file, dest=dest) for file in source]
     gen = GenerationContext(pathlib.Path(test_dir))
     cmd_list = generator_instance._copy_files(files=to_copy, context=gen)
@@ -310,7 +311,9 @@ def test_copy_files_valid_dest(dest, source, generator_instance, test_dir):
     ),
 )
 @pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
-def test_symlink_files_valid_dest(dest, source, generator_instance, test_dir):
+def test_symlink_files_valid_dest(
+    dest, source, generator_instance: Generator, test_dir: str
+):
     to_copy = [CopyOperation(src=file, dest=dest) for file in source]
     gen = GenerationContext(pathlib.Path(test_dir))
     cmd_list = generator_instance._copy_files(files=to_copy, context=gen)
@@ -340,7 +343,9 @@ def test_symlink_files_valid_dest(dest, source, generator_instance, test_dir):
     ),
 )
 @pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
-def test_configure_files_valid_dest(dest, source, generator_instance, test_dir):
+def test_configure_files_valid_dest(
+    dest, source, generator_instance: Generator, test_dir: str
+):
     file_param = {
         "5": 10,
         "FIRST": "SECOND",
@@ -412,6 +417,7 @@ def test_append_mkdir_commands(
     run_directory: pathlib.Path,
     log_directory: pathlib.Path,
 ):
+    """Test Generator._append_mkdir_commands calls Generator._mkdir_file twice"""
     with (
         unittest.mock.patch(
             "smartsim._core.generation.Generator._mkdir_file"
@@ -425,7 +431,10 @@ def test_append_mkdir_commands(
         assert mock_mkdir_file.call_count == 2
 
 
-def test_append_file_operations(context, generator_instance):
+def test_append_file_operations(
+    context: GenerationContext, generator_instance: Generator
+):
+    """Test Generator._append_file_operations calls all file operations"""
     with (
         unittest.mock.patch(
             "smartsim._core.generation.Generator._copy_files"
@@ -449,13 +458,13 @@ def test_append_file_operations(context, generator_instance):
 
 @pytest.fixture
 def paths_to_copy(fileutils):
-    paths = fileutils.get_test_conf_path(osp.join("mock", "copy_mock"))
+    paths = fileutils.get_test_conf_path(osp.join("generator_files", "to_copy_dir"))
     yield [pathlib.Path(path) for path in sorted(glob(paths + "/*"))]
 
 
 @pytest.fixture
 def paths_to_symlink(fileutils):
-    paths = fileutils.get_test_conf_path(osp.join("mock", "symlink_mock"))
+    paths = fileutils.get_test_conf_path(osp.join("generator_files", "to_symlink_dir"))
     yield [pathlib.Path(path) for path in sorted(glob(paths + "/*"))]
 
 
@@ -468,24 +477,24 @@ def paths_to_configure(fileutils):
 
 
 @pytest.fixture
-def context(test_dir):
+def context(test_dir: str):
     yield GenerationContext(pathlib.Path(test_dir))
 
 
 @pytest.fixture
 def operations_list(paths_to_copy, paths_to_symlink, paths_to_configure):
-    merp = []
+    op_list = []
     for file in paths_to_copy:
-        merp.append(CopyOperation(src=file))
+        op_list.append(CopyOperation(src=file))
     for file in paths_to_symlink:
-        merp.append(SymlinkOperation(src=file))
+        op_list.append(SymlinkOperation(src=file))
     for file in paths_to_configure:
-        merp.append(SymlinkOperation(src=file))
-    return merp
+        op_list.append(SymlinkOperation(src=file))
+    return op_list
 
 
 @pytest.fixture
-def formatted_command_list(operations_list, context):
+def formatted_command_list(operations_list: list, context: GenerationContext):
     new_list = CommandList()
     for file in operations_list:
         new_list.append(file.format(context))
@@ -493,8 +502,9 @@ def formatted_command_list(operations_list, context):
 
 
 def test_execute_commands(
-    operations_list, formatted_command_list, generator_instance, test_dir
+    operations_list: list, formatted_command_list, generator_instance: Generator
 ):
+    """Test Generator._execute_commands calls with appropriate type and num times"""
     with (
         unittest.mock.patch(
             "smartsim._core.generation.generator.subprocess.run"
