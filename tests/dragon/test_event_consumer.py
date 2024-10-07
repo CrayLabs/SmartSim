@@ -79,7 +79,7 @@ def the_worker_channel() -> DragonFLIChannel:
     that can be attached to. Does not modify environment vars."""
     channel_ = create_local()
     fli_ = fli.FLInterface(main_ch=channel_, manager_ch=None)
-    comm_channel = DragonFLIChannel(fli_, True)
+    comm_channel = DragonFLIChannel(fli_)
     return comm_channel
 
 

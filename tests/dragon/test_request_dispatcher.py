@@ -104,7 +104,7 @@ def test_request_dispatcher(
 
     to_worker_channel = create_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
-    to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli, sender_supplied=True)
+    to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli)
 
     backbone_fs = BackboneFeatureStore(the_storage, allow_reserved_writes=True)
 
@@ -116,7 +116,7 @@ def test_request_dispatcher(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=DragonCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
 
     request_dispatcher = RequestDispatcher(

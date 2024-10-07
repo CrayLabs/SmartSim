@@ -94,7 +94,7 @@ def the_worker_queue(the_backbone: BackboneFeatureStore) -> DragonFLIChannel:
     # create the FLI
     to_worker_channel = create_local()
     fli_ = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
-    comm_channel = DragonFLIChannel(fli_, True)
+    comm_channel = DragonFLIChannel(fli_)
 
     # store the descriptor in the backbone
     the_backbone.worker_queue = comm_channel.descriptor

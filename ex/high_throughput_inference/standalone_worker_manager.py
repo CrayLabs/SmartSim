@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     to_worker_channel = create_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
-    to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli, True)
+    to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli)
 
     backbone.worker_queue = to_worker_fli_comm_ch.descriptor
 

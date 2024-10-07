@@ -94,7 +94,7 @@ def the_worker_channel() -> DragonFLIChannel:
     that can be attached to."""
     channel_ = create_local()
     fli_ = FLInterface(main_ch=channel_, manager_ch=None)
-    comm_channel = DragonFLIChannel(fli_, True)
+    comm_channel = DragonFLIChannel(fli_)
     return comm_channel
 
 
@@ -132,7 +132,7 @@ def setup_worker_manager_model_bytes(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
 
     dispatcher_task_queue: mp.Queue[RequestBatch] = mp.Queue(maxsize=0)
@@ -190,7 +190,7 @@ def setup_worker_manager_model_key(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
 
     dispatcher_task_queue: mp.Queue[RequestBatch] = mp.Queue(maxsize=0)
@@ -246,7 +246,7 @@ def setup_request_dispatcher_model_bytes(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
 
     request_dispatcher = RequestDispatcher(
@@ -289,7 +289,7 @@ def setup_request_dispatcher_model_key(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
 
     request_dispatcher = RequestDispatcher(

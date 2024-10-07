@@ -149,7 +149,7 @@ def mock_messages(
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
     backbone = config_loader.get_backbone()
 
@@ -212,7 +212,7 @@ def mock_mli_infrastructure_mgr() -> None:
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
 
     integrated_worker = TorchWorker
@@ -261,7 +261,7 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     to_worker_channel = create_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
 
-    to_worker_fli_comm_channel = DragonFLIChannel(to_worker_fli, sender_supplied=True)
+    to_worker_fli_comm_channel = DragonFLIChannel(to_worker_fli)
 
     # NOTE: env vars must be set prior to instantiating EnvironmentConfigLoader
     # or test environment may be unable to send messages w/queue
@@ -273,7 +273,7 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
         callback_factory=FileSystemCommChannel.from_descriptor,
-        queue_factory=DragonFLIChannel.from_sender_supplied_descriptor,
+        queue_factory=DragonFLIChannel.from_descriptor,
     )
     integrated_worker_type = TorchWorker
 

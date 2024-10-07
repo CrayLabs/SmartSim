@@ -46,8 +46,7 @@ class DragonFLIChannel(cch.CommChannelBase):
     def __init__(
         self,
         fli_: fli.FLInterface,
-        sender_supplied: bool = True,
-        buffer_size: int = 0,
+        buffer_size: int = drg_util.DEFAULT_CHANNEL_BUFFER_SIZE,
     ) -> None:
         """Initialize the DragonFLIChannel instance.
 
@@ -60,11 +59,11 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         self._fli = fli_
         """The underlying dragon FLInterface used by this CommChannel for communications"""
-        self._channel: t.Optional["dch.Channel"] = (
-            drg_util.create_local(buffer_size) if sender_supplied else None
-        )
+        self._channel: t.Optional["dch.Channel"] = None
         """The underlying dragon Channel used by a sender-side DragonFLIChannel
         to attach to the main FLI channel"""
+        self._buffer_size: int = buffer_size
+        """Maximum number of messages that can be buffered before sending"""
 
     def send(self, value: bytes, timeout: float = 0.001) -> None:
         """Send a message through the underlying communication channel.
@@ -74,10 +73,14 @@ class DragonFLIChannel(cch.CommChannelBase):
         :raises SmartSimError: If sending message fails
         """
         try:
+            if self._channel is None:
+                self._channel = drg_util.create_local(self._buffer_size)
+
             with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
                 sendh.send_bytes(value, timeout=timeout)
                 logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
+            self._channel = None
             raise SmartSimError(
                 f"Error sending via DragonFLIChannel {self.descriptor}"
             ) from e
@@ -107,26 +110,6 @@ class DragonFLIChannel(cch.CommChannelBase):
         return messages
 
     @classmethod
-    def from_sender_supplied_descriptor(
-        cls,
-        descriptor: str,
-    ) -> "DragonFLIChannel":
-        """A factory method that creates an instance from a descriptor string
-
-        :param descriptor: the descriptor of the main FLI channel to attach
-        :returns: An attached DragonFLIChannel"""
-        try:
-            return DragonFLIChannel(
-                fli_=drg_util.descriptor_to_fli(descriptor),
-                sender_supplied=True,
-            )
-        except:
-            logger.error(
-                f"Error while creating sender supplied DragonFLIChannel: {descriptor}"
-            )
-            raise
-
-    @classmethod
     def from_descriptor(
         cls,
         descriptor: str,
@@ -142,10 +125,7 @@ class DragonFLIChannel(cch.CommChannelBase):
             raise ValueError("Invalid descriptor provided")
 
         try:
-            return DragonFLIChannel(
-                fli_=drg_util.descriptor_to_fli(descriptor),
-                sender_supplied=False,
-            )
+            return DragonFLIChannel(fli_=drg_util.descriptor_to_fli(descriptor))
         except Exception as e:
             raise SmartSimError(
                 f"Error while creating DragonFLIChannel: {descriptor}"

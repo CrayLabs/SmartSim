@@ -122,9 +122,7 @@ def mock_messages(
     offset = 2 * parent_iteration
 
     feature_store = BackboneFeatureStore.from_descriptor(fs_descriptor)
-    request_dispatcher_queue = DragonFLIChannel.from_sender_supplied_descriptor(
-        dispatch_fli_descriptor
-    )
+    request_dispatcher_queue = DragonFLIChannel.from_descriptor(dispatch_fli_descriptor)
 
     for iteration_number in range(2):
         logged_iteration = offset + iteration_number
