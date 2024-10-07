@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import itertools
 import typing as t
 from glob import glob
 from os import path as osp
@@ -45,6 +44,19 @@ _2x2_EXE_ARG = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
 @pytest.fixture
 def get_gen_configure_dir(fileutils):
     yield fileutils.get_test_conf_path(osp.join("generator_files", "tag_dir_template"))
+
+
+def user_created_function(
+    file_params: t.Mapping[str, t.Sequence[str]],
+    exe_arg_params: t.Mapping[str, t.Sequence[t.Sequence[str]]],
+    n_permutations: int = 0,
+) -> list[ParamSet]:
+    return [ParamSet({}, {})]
+
+
+@pytest.fixture
+def mock_launcher_settings(wlmutils):
+    return LaunchSettings(wlmutils.get_test_launcher(), {}, {})
 
 
 def test_exe_property():
@@ -86,21 +98,177 @@ def test_file_parameters_property():
         file_parameters=file_parameters,
     )
     file_parameters = e.file_parameters
-
     assert file_parameters == e.file_parameters
 
 
-def user_created_function(
-    file_params: t.Mapping[str, t.Sequence[str]],
-    exe_arg_params: t.Mapping[str, t.Sequence[t.Sequence[str]]],
-    n_permutations: int = 0,
-) -> list[ParamSet]:
-    return [ParamSet({}, {})]
+def test_ensemble_init_empty_params(test_dir: str) -> None:
+    """Ensemble created without required args"""
+    with pytest.raises(TypeError):
+        Ensemble()
 
 
-@pytest.fixture
-def mock_launcher_settings(wlmutils):
-    return LaunchSettings(wlmutils.get_test_launcher(), {}, {})
+@pytest.mark.parametrize(
+    "bad_settings",
+    [pytest.param(None, id="Nullish"), pytest.param("invalid", id="String")],
+)
+def test_ensemble_incorrect_launch_settings_type(bad_settings):
+    """test starting an ensemble with invalid launch settings"""
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+    with pytest.raises(TypeError):
+        ensemble.build_jobs(bad_settings)
+
+
+def test_ensemble_type_exe():
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="valid",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        TypeError, match="exe argument was not of type str or PathLike str"
+    ):
+        ensemble.exe = 2
+
+
+@pytest.mark.parametrize(
+    "bad_settings",
+    [
+        pytest.param([1, 2, 3], id="sequence of ints"),
+        pytest.param(0, id="null"),
+        pytest.param({"foo": "bar"}, id="dict"),
+    ],
+)
+def test_ensemble_type_exe_args(bad_settings):
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+    )
+    with pytest.raises(
+        TypeError, match="exe_args argument was not of type sequence of str"
+    ):
+        ensemble.exe_args = bad_settings
+
+
+@pytest.mark.parametrize(
+    "exe_arg_params",
+    (
+        pytest.param(["invalid"], id="Not a mapping"),
+        pytest.param({"key": [1, 2, 3]}, id="Value is not sequence of sequences"),
+        pytest.param(
+            {"key": [[1, 2, 3], [4, 5, 6]]},
+            id="Value is not sequence of sequence of str",
+        ),
+        pytest.param(
+            {1: 2},
+            id="key and value wrong type",
+        ),
+        pytest.param({"1": 2}, id="Value is not mapping of str and str"),
+        pytest.param({1: "2"}, id="Key is not str"),
+        pytest.param({1: 2}, id="Values not mapping of str and str"),
+    ),
+)
+def test_ensemble_type_exe_arg_parameters(exe_arg_params):
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        TypeError,
+        match="exe_arg_parameters argument was not of type mapping "
+        "of str and sequences of sequences of strings",
+    ):
+        ensemble.exe_arg_parameters = exe_arg_params
+
+
+def test_ensemble_type_files():
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(TypeError, match="files argument was not of type EntityFiles"):
+        ensemble.files = 2
+
+
+@pytest.mark.parametrize(
+    "file_params",
+    (
+        pytest.param(["invalid"], id="Not a mapping"),
+        pytest.param({"key": [1, 2, 3]}, id="Key is not sequence of sequences"),
+    ),
+)
+def test_ensemble_type_file_parameters(file_params):
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        TypeError,
+        match="file_parameters argument was not of type "
+        "mapping of str and sequence of str",
+    ):
+        ensemble.file_parameters = file_params
+
+
+def test_ensemble_type_permutation_strategy():
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        TypeError,
+        match="permutation_strategy argument was not of "
+        "type str or PermutationStrategyType",
+    ):
+        ensemble.permutation_strategy = 2
+
+
+def test_ensemble_type_max_permutations():
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        TypeError,
+        match="max_permutations argument was not of type int",
+    ):
+        ensemble.max_permutations = "invalid"
+
+
+def test_ensemble_type_replicas():
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        TypeError,
+        match="replicas argument was not of type int",
+    ):
+        ensemble.replicas = "invalid"
+
+
+def test_ensemble_type_replicas_negative():
+    ensemble = Ensemble(
+        "ensemble-name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    with pytest.raises(
+        ValueError,
+        match="Number of replicas must be a positive integer",
+    ):
+        ensemble.replicas = -20
+
+
+def test_ensemble_type_build_jobs():
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+    with pytest.raises(TypeError):
+        ensemble.build_jobs("invalid")
 
 
 def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
@@ -212,7 +380,7 @@ def test_all_perm_strategy(
     assert len(jobs) == expected_num_jobs
 
 
-def test_all_perm_strategy_contents():
+def test_all_perm_strategy_contents(mock_launcher_settings):
     jobs = Ensemble(
         "test_ensemble",
         "echo",

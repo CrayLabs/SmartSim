@@ -69,11 +69,18 @@ def unpack(value: _NestedJobSequenceType) -> t.Generator[Job, None, None]:
     :param value: Sequence containing elements of type Job or other
     sequences that are also of type _NestedJobSequenceType
     :return: flattened list of Jobs"""
+    from smartsim.launchable.job import Job
 
     for item in value:
+
         if isinstance(item, t.Iterable):
+            # string are iterable of string. Avoid infinite recursion
+            if isinstance(item, str):
+                raise TypeError("jobs argument was not of type Job")
             yield from unpack(item)
         else:
+            if not isinstance(item, Job):
+                raise TypeError("jobs argument was not of type Job")
             yield item
 
 
@@ -157,10 +164,13 @@ def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
 
     :param exe: executable or file
+    :raises ValueError: if no executable is provided
     :raises TypeError: if file is not an executable
     :raises FileNotFoundError: if executable cannot be found
     """
 
+    if not exe:
+        raise ValueError("No executable provided")
     # which returns none if not found
     in_path = which(exe)
     if not in_path:
