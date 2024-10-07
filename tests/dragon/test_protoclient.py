@@ -51,7 +51,7 @@ from dragon import fli
 from dragon.data.ddict.ddict import DDict
 
 # from ..ex..high_throughput_inference.mock_app import ProtoClient
-from smartsim.protoclient import ProtoClient
+from smartsim._core.mli.client.protoclient import ProtoClient
 
 
 # The tests in this file belong to the dragon group
