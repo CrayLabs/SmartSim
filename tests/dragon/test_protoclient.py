@@ -138,6 +138,10 @@ def test_protoclient_timeout(
 
     with monkeypatch.context() as ctx, pytest.raises(SmartSimError) as ex:
         start_time = time.time()
+        # remove the worker queue value from the backbone if it exists
+        # to ensure the timeout occurs
+        the_backbone.pop(BackboneFeatureStore.MLI_WORKER_QUEUE)
+
         ctx.setenv(BackboneFeatureStore.MLI_BACKBONE, the_backbone.descriptor)
 
         ProtoClient(timing_on=False, backbone_timeout=backbone_timeout)
