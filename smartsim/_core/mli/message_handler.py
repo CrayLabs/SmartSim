@@ -35,6 +35,9 @@ from .mli_schemas.tensor import tensor_capnp
 
 
 class MessageHandler:
+    """Utility methods for transforming capnproto messages to and from
+    internal representations.
+    """
     @staticmethod
     def build_tensor_descriptor(
         order: "tensor_capnp.Order",

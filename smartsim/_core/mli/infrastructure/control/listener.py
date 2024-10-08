@@ -242,8 +242,6 @@ class ConsumerRegistrationListener(Service):
         Create an event publisher and event consumer for communicating with
         other MLI resources.
 
-        :param backbone: The backbone feature store used by the MLI backend.
-
         NOTE: the backbone must be initialized before connecting eventing clients.
 
         :returns: The newly created EventConsumer instance

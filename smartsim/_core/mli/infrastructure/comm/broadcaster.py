@@ -61,8 +61,8 @@ class EventBroadcaster:
 
         :param backbone: The MLI backbone feature store
         :param channel_factory: Factory method to construct new channel instances
-        :param name: A unique identifer assigned to the broadcaster for logging. If
-         not provided, the system will auto-assign one.
+        :param name: A user-friendly name for logging. If not provided, an
+        auto-generated GUID will be used
         """
         self._backbone = backbone
         """The backbone feature store used to retrieve consumer descriptors"""

@@ -227,7 +227,6 @@ class RequestDispatcher(Service):
         :param config_loader: Object to load configuration from environment
         :param worker_type: Type of worker to instantiate to batch inputs
         :param mem_pool_size: Size of the memory pool used to allocate tensors
-        :raises SmartSimError: If config_loaded.get_queue() does not return a channel
         """
         super().__init__(as_service=True, cooldown=1)
         self._queues: dict[str, list[BatchQueue]] = {}

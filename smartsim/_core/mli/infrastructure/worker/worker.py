@@ -200,6 +200,7 @@ class LoadModelResult:
         :param model: The loaded model
         """
         self.model = model
+        """The loaded model (e.g. a TensorFlow, PyTorch, ONNX, etc. model)"""
 
 
 class TransformInputResult:
@@ -549,7 +550,7 @@ class MachineLearningWorkerCore:
         feature store.
 
         :param request: The request that triggered the pipeline
-        :param execute_result: Results from inference
+        :param transform_result: Transformed version of the inference result
         :param feature_stores: Available feature stores used for persistence
         :returns: A collection of keys that were placed in the feature store
         :raises ValueError: If a feature store is not provided
@@ -579,10 +580,12 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     def load_model(
         batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
-        """Given a loaded MachineLearningModel, ensure it is loaded into
-        device memory.
+        """Given the raw bytes of an ML model that were fetched, ensure
+        it is loaded into device memory.
 
         :param request: The request that triggered the pipeline
+        :param fetch_result: The result of a fetch-model operation; contains
+        the raw bytes of the ML model.
         :param device: The device on which the model must be placed
         :returns: LoadModelResult wrapping the model loaded for the request
         :raises ValueError: If model reference object is not found
@@ -599,7 +602,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         """Given a collection of data, perform a transformation on the data and put
         the raw tensor data on a MemoryPool allocation.
 
-        :param request: The request that triggered the pipeline
+        :param batch: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
         :param mem_pool: The memory pool used to access batched input tensors
         :returns: The transformed inputs wrapped in a TransformInputResult

@@ -160,7 +160,7 @@ class DragonBackend:
     _DEFAULT_NUM_MGR_PER_NODE = 2
     """The default number of manager processes for each feature store node"""
     _DEFAULT_MEM_PER_NODE = 256 * 1024**2
-    """The default memory capacity to allocate for a feaure store node (in megabytes)"""
+    """The default memory capacity (in bytes) to allocate for a feaure store node"""
 
     def __init__(self, pid: int) -> None:
         self._pid = pid
@@ -555,7 +555,7 @@ class DragonBackend:
         environment variables of this process to include the backbone
         descriptor.
 
-        :returns: The descriptor of the backbone feature store
+        :returns: The backbone feature store
         """
         if self._backbone is None:
             backbone_storage = create_ddict(
