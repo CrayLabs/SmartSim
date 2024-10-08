@@ -159,7 +159,7 @@ class DragonBackend:
 
     _DEFAULT_NUM_MGR_PER_NODE = 2
     """The default number of manager processes for each feature store node"""
-    _DEFAULT_MEM_PER_NODE = 256 * 1024**2
+    _DEFAULT_MEM_PER_NODE = 512 * 1024**2
     """The default memory capacity (in bytes) to allocate for a feaure store node"""
 
     def __init__(self, pid: int) -> None:
