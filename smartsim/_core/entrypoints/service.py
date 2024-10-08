@@ -48,26 +48,35 @@ class Service(ABC):
     ) -> None:
         """Initialize the Service
 
-        :param as_service: Determines if the host runs continuously until
-        shutdown criteria are met, or executes the service lifecycle once and exits
+        :param as_service: Determines lifetime of the service. When `True`, calling
+        execute on the service will run continuously until shutdown criteria are met.
+        Otherwise, `execute` performs a single pass through the service lifecycle and
+        automatically exits (regardless of the result of `_can_shutdown`).
         :param cooldown: Period of time (in seconds) to allow the service to run
-         after a shutdown is permitted. Enables the service to avoid restarting if
-         new work is discovered. A value of 0 disables the cooldown.
-        :param loop_delay: Time (in seconds) between iterations of the event loop
+        after a shutdown is permitted. Enables the service to avoid restarting if
+        new work is discovered. A value of 0 disables the cooldown.
+        :param loop_delay: Duration (in seconds) of a forced delay between
+        iterations of the event loop
         :param health_check_frequency: Time (in seconds) between calls to a
-         health check handler. A value of 0 triggers the health check on every
-         iteration.
+        health check handler. A value of 0 triggers the health check on every
+        iteration.
         """
         self._as_service = as_service
-        """If the service should run until shutdown function returns True"""
+        """Determines lifetime of the service. When `True`, calling
+         `execute` on the service will run continuously until shutdown criteria are met.
+         Otherwise, `execute` performs a single pass through the service lifecycle and
+         automatically exits (regardless of the result of `_can_shutdown`)."""
         self._cooldown = abs(cooldown)
-        """Duration of a cooldown period between requests to the service
-        before shutdown"""
+        """Period of time (in seconds) to allow the service to run
+        after a shutdown is permitted. Enables the service to avoid restarting if
+        new work is discovered. A value of 0 disables the cooldown."""
         self._loop_delay = abs(loop_delay)
-        """Forced delay between iterations of the event loop"""
+        """Duration (in seconds) of a forced delay between
+         iterations of the event loop"""
         self._health_check_frequency = health_check_frequency
-        """The time (in seconds) between desired health checks. Frequency of 0
-        will trigger the health check on every event loop iteration."""
+        """Time (in seconds) between calls to a
+         health check handler. A value of 0 triggers the health check on every
+         iteration."""
         self._last_health_check = time.time()
         """The timestamp of the latest health check"""
 
