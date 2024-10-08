@@ -1,0 +1,480 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>smartsim.launcher.slurm.slurm &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.launcher.slurm.slurm</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.launcher.slurm.slurm</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">which</span>
+
+<span class="kn">from</span> <span class="nn">...error</span> <span class="kn">import</span> <span class="n">LauncherError</span>
+<span class="kn">from</span> <span class="nn">...utils</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">...utils.helpers</span> <span class="kn">import</span> <span class="n">init_default</span>
+<span class="kn">from</span> <span class="nn">..util.launcherUtil</span> <span class="kn">import</span> <span class="n">ComputeNode</span><span class="p">,</span> <span class="n">Partition</span>
+<span class="kn">from</span> <span class="nn">.slurmCommands</span> <span class="kn">import</span> <span class="n">salloc</span><span class="p">,</span> <span class="n">scancel</span><span class="p">,</span> <span class="n">sinfo</span>
+<span class="kn">from</span> <span class="nn">.slurmLauncher</span> <span class="kn">import</span> <span class="n">SlurmLauncher</span>
+<span class="kn">from</span> <span class="nn">.slurmParser</span> <span class="kn">import</span> <span class="n">parse_salloc</span><span class="p">,</span> <span class="n">parse_salloc_error</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_allocation"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.launcher.slurm.slurm.get_allocation">[docs]</a><span class="k">def</span> <span class="nf">get_allocation</span><span class="p">(</span><span class="n">nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">account</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Request an allocation</span>
+
+<span class="sd">    This function requests an allocation with the specified arguments.</span>
+<span class="sd">    Anything passed to the options will be processed as a Slurm</span>
+<span class="sd">    argument and appended to the salloc command with the appropriate</span>
+<span class="sd">    prefix (e.g. &quot;-&quot; or &quot;--&quot;).</span>
+
+<span class="sd">    The options can be used to pass extra settings to the</span>
+<span class="sd">    workload manager such as the following for Slurm:</span>
+
+<span class="sd">        - nodelist=&quot;nid00004&quot;</span>
+
+<span class="sd">    For arguments without a value, pass None or and empty</span>
+<span class="sd">    string as the value. For Slurm:</span>
+
+<span class="sd">        - exclusive=None</span>
+
+<span class="sd">    :param nodes: number of nodes for the allocation, defaults to 1</span>
+<span class="sd">    :type nodes: int, optional</span>
+<span class="sd">    :param time: wall time of the allocation, HH:MM:SS format, defaults to None</span>
+<span class="sd">    :type time: str, optional</span>
+<span class="sd">    :param account: account id for allocation, defaults to None</span>
+<span class="sd">    :type account: str, optional</span>
+<span class="sd">    :param options: additional options for the slurm wlm, defaults to None</span>
+<span class="sd">    :type options: dict[str, str], optional</span>
+<span class="sd">    :raises LauncherError: if the allocation is not successful</span>
+<span class="sd">    :return: the id of the allocation</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">which</span><span class="p">(</span><span class="s2">&quot;salloc&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span>
+            <span class="s2">&quot;Attempted slurm function without access to slurm(salloc) at the call site&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">options</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+
+    <span class="n">salloc_args</span> <span class="o">=</span> <span class="n">_get_alloc_cmd</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
+    <span class="n">debug_msg</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">salloc_args</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Allocation settings: </span><span class="si">{</span><span class="n">debug_msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">salloc</span><span class="p">(</span><span class="n">salloc_args</span><span class="p">)</span>
+    <span class="n">alloc_id</span> <span class="o">=</span> <span class="n">parse_salloc</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">alloc_id</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Allocation successful with Job ID: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">alloc_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">parse_salloc_error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span><span class="s2">&quot;Slurm allocation error&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">alloc_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="release_allocation"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.launcher.slurm.slurm.release_allocation">[docs]</a><span class="k">def</span> <span class="nf">release_allocation</span><span class="p">(</span><span class="n">alloc_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Free an allocation&#39;s resources</span>
+
+<span class="sd">    :param alloc_id: allocation id</span>
+<span class="sd">    :type alloc_id: str</span>
+<span class="sd">    :raises LauncherError: if allocation could not be freed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">which</span><span class="p">(</span><span class="s2">&quot;scancel&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span>
+            <span class="s2">&quot;Attempted slurm function without access to slurm(salloc) at the call site&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Releasing allocation: </span><span class="si">{</span><span class="n">alloc_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">returncode</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">scancel</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">alloc_id</span><span class="p">)])</span>
+
+    <span class="k">if</span> <span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to revoke your allocation for jobid </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">alloc_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;The job may have already timed out, or you may need to cancel the job manually&quot;</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unable to revoke your allocation for jobid  </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">alloc_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully freed allocation </span><span class="si">{</span><span class="n">alloc_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="validate"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.launcher.slurm.slurm.validate">[docs]</a><span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppn</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">partition</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that there are sufficient resources in the provided Slurm partitions.</span>
+
+<span class="sd">    if no partition is provided, the default partition is found and used.</span>
+
+<span class="sd">    :param nodes: Override the default node count to validate, defaults to 1</span>
+<span class="sd">    :type nodes: int, optional</span>
+<span class="sd">    :param ppn: Override the default processes per node to validate, defaults to 1</span>
+<span class="sd">    :type ppn: int, optional</span>
+<span class="sd">    :param partition: partition to validate, defaults to None</span>
+<span class="sd">    :type partition: str, optional</span>
+<span class="sd">    :raises: LauncherError</span>
+<span class="sd">    :returns: True if resources are available, False otherwise</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sys_partitions</span> <span class="o">=</span> <span class="n">_get_system_partition_info</span><span class="p">()</span>
+
+    <span class="n">n_avail_nodes</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">avail_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="n">p_name</span> <span class="o">=</span> <span class="n">partition</span>
+    <span class="k">if</span> <span class="n">p_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">p_name</span> <span class="o">==</span> <span class="s2">&quot;default&quot;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">p_name</span> <span class="o">=</span> <span class="n">get_default_partition</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">LauncherError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span>
+                <span class="s2">&quot;No partition provided and default partition could not be found&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">p_name</span> <span class="ow">in</span> <span class="n">sys_partitions</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Partition </span><span class="si">{</span><span class="n">p_name</span><span class="si">}</span><span class="s2"> is not found on this system&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">sys_partitions</span><span class="p">[</span><span class="n">p_name</span><span class="p">]</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">ppn</span> <span class="o">&gt;=</span> <span class="n">ppn</span><span class="p">:</span>
+            <span class="n">avail_nodes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="n">n_avail_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">avail_nodes</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">n_avail_nodes</span><span class="si">}</span><span class="s2"> nodes that match the constraints provided&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n_avail_nodes</span> <span class="o">&lt;</span> <span class="n">nodes</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nodes</span><span class="si">}</span><span class="s2"> nodes are not available on the specified partitions.  Only &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_avail_nodes</span><span class="si">}</span><span class="s2"> nodes available.&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully validated Slurm with sufficient resources&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="get_default_partition"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.launcher.slurm.slurm.get_default_partition">[docs]</a><span class="k">def</span> <span class="nf">get_default_partition</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the default partition from Slurm</span>
+
+<span class="sd">    This default partition is assumed to be the partition with</span>
+<span class="sd">    a star following its partition name in sinfo output</span>
+
+<span class="sd">    :returns: the name of the default partition</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sinfo_output</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sinfo</span><span class="p">([</span><span class="s2">&quot;--noheader&quot;</span><span class="p">,</span> <span class="s2">&quot;--format&quot;</span><span class="p">,</span> <span class="s2">&quot;%P&quot;</span><span class="p">])</span>
+
+    <span class="n">default</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sinfo_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">):</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">default</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LauncherError</span><span class="p">(</span><span class="s2">&quot;Could not find default partition!&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">default</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_system_partition_info</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Build a dictionary of slurm partitions</span>
+<span class="sd">    :returns: dict of Partition objects</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sinfo_output</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sinfo</span><span class="p">([</span><span class="s2">&quot;--noheader&quot;</span><span class="p">,</span> <span class="s2">&quot;--format&quot;</span><span class="p">,</span> <span class="s2">&quot;%R %n </span><span class="si">%c</span><span class="s2">&quot;</span><span class="p">])</span>
+
+    <span class="n">partitions</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sinfo_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">p_info</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="n">p_name</span> <span class="o">=</span> <span class="n">p_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">p_node</span> <span class="o">=</span> <span class="n">p_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">p_ppn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p_info</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">p_name</span> <span class="ow">in</span> <span class="n">partitions</span><span class="p">:</span>
+            <span class="n">partitions</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">p_name</span><span class="p">:</span> <span class="n">Partition</span><span class="p">()})</span>
+
+        <span class="n">partitions</span><span class="p">[</span><span class="n">p_name</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">p_name</span>
+        <span class="n">partitions</span><span class="p">[</span><span class="n">p_name</span><span class="p">]</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ComputeNode</span><span class="p">(</span><span class="n">node_name</span><span class="o">=</span><span class="n">p_node</span><span class="p">,</span> <span class="n">node_ppn</span><span class="o">=</span><span class="n">p_ppn</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">partitions</span>
+
+
+<span class="k">def</span> <span class="nf">_get_alloc_cmd</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the command to request an allocation from Slurm with</span>
+<span class="sd">    the class variables as the slurm options.&quot;&quot;&quot;</span>
+
+    <span class="n">salloc_args</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;--no-shell&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-N&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">nodes</span><span class="p">),</span>
+        <span class="s2">&quot;-J&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SmartSim&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="c1"># TODO check format here</span>
+    <span class="k">if</span> <span class="n">time</span><span class="p">:</span>
+        <span class="n">salloc_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;-t&quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">account</span><span class="p">:</span>
+        <span class="n">salloc_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;-A&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">account</span><span class="p">)])</span>
+
+    <span class="k">for</span> <span class="n">opt</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">opt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;nodes&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;account&quot;</span><span class="p">]:</span>
+            <span class="n">short_arg</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">opt</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span> <span class="k">if</span> <span class="n">short_arg</span> <span class="k">else</span> <span class="s2">&quot;--&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">val</span><span class="p">:</span>
+                <span class="n">salloc_args</span> <span class="o">+=</span> <span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">short_arg</span><span class="p">:</span>
+                    <span class="n">salloc_args</span> <span class="o">+=</span> <span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">salloc_args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;=&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)))]</span>
+
+    <span class="k">return</span> <span class="n">salloc_args</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,2136 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Using SmartRedis Clients &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Online Analysis" href="lattice_boltz_analysis.html" />
+    <link rel="prev" title="Getting Started" href="01_getting_started/01_getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using SmartRedis Clients</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#python-client">2.1 Python Client</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tensors">Tensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#datasets">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#models">Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scripts">Scripts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#c-client">2.2 C++ Client</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Tensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">DataSets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sr-cpp-models">Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sr-cpp-scripts">Scripts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-mpi-execution">Parallel (MPI) execution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fortran-client">2.3 Fortran Client</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Tensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sr-fortran-models">Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sr-fortran-scripts">Scripts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sr-parallel-mpi">Parallel (MPI) execution</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Using SmartRedis Clients</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/tutorials/using_clients.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="using-smartredis-clients">
+<h1>Using SmartRedis Clients<a class="headerlink" href="#using-smartredis-clients" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="python-client">
+<h2>2.1 Python Client<a class="headerlink" href="#python-client" title="Permalink to this headline">¶</a></h2>
+<p>In this section, examples are presented using the SmartRedis Python
+API to interact with the RedisAI tensor, model, and script
+data types.  Additionally, an example of utilizing the
+SmartRedis <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> API is also provided.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Python API examples are written to connect to a
+database at <code class="docutils literal notranslate"><span class="pre">127.0.0.1:6379</span></code>.  When running this example,
+ensure that the address and port of your Redis instance are used.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Python API examples are written
+to connect to a non-cluster Redis database.  Update the
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> constructor call to connect to a Redis cluster.</p>
+</div>
+<div class="section" id="tensors">
+<h3>Tensors<a class="headerlink" href="#tensors" title="Permalink to this headline">¶</a></h3>
+<p>The Python client has the ability to send and receive tensors from
+the Redis database.  The tensors are stored in the Redis database
+as RedisAI data structures.  Additionally, Python client API
+functions involving tensor data are compatible with Numpy arrays
+and do not require any other data types.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># Connect a SmartRedis client to Redis database</span>
+<span class="n">db_address</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1:6379&quot;</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db_address</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Send a 2D tensor to the database</span>
+<span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;2D_array&quot;</span>
+<span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+
+<span class="c1"># Retrieve the tensor</span>
+<span class="n">returned_array</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;2D_array&quot;</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="datasets">
+<h3>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h3>
+<p>The Python client can store and retrieve tensors and metadata in datasets.
+For further information about datasets, please refer to the <a class="reference internal" href="../sr_data_structures.html#data-structures-dataset"><span class="std std-ref">Dataset
+section of the Data Structures documentation page</span></a>.</p>
+<p>The code below shows how to store and retrieve tensors which belong to a <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">Dataset</span>
+
+<span class="c1"># Create two arrays to store in the DataSet</span>
+<span class="n">data_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+<span class="n">data_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+<span class="c1"># Create a DataSet object and add the two sample tensors</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="s2">&quot;test-dataset&quot;</span><span class="p">)</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="n">data_1</span><span class="p">)</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="n">data_2</span><span class="p">)</span>
+
+<span class="c1"># Connect SmartRedis client to Redis database</span>
+<span class="n">db_address</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1:6379&quot;</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db_address</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Place the DataSet into the database</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+<span class="c1"># Retrieve the DataSet from the database</span>
+<span class="n">rdataset</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="s2">&quot;test-dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Retrieve a tensor from inside of the fetched</span>
+<span class="c1"># DataSet</span>
+<span class="n">rdata_1</span> <span class="o">=</span> <span class="n">rdataset</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="models">
+<h3>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
+<p>The SmartRedis clients allow users to set and use a PyTorch, ONNX, TensorFlow,
+or TensorFlow Lite model in the database. Models can be sent to the database directly
+from memory or from a file. The code below illustrates how a
+jit-traced PyTorch model can be used with the Python client library.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">io</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># Taken from https://pytorch.org/docs/master/generated/torch.jit.trace.html</span>
+<span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+<span class="n">example_forward_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># Trace a module (implicitly traces `forward`) and construct a</span>
+<span class="c1"># `ScriptModule` with a single `forward` method</span>
+<span class="n">module</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">example_forward_input</span><span class="p">)</span>
+
+<span class="c1"># Create a buffer of the traced model</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+<span class="c1"># Connect a SmartRedis client and set the model in the database</span>
+<span class="n">db_address</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1:6379&quot;</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db_address</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_model</span><span class="p">(</span><span class="s2">&quot;torch_cnn&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;TORCH&quot;</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+
+<span class="c1"># Retrieve the model and verify that the retrieved</span>
+<span class="c1"># model matches the original model.</span>
+<span class="n">returned_model</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;torch_cnn&quot;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">model</span> <span class="o">==</span> <span class="n">returned_model</span>
+
+<span class="c1"># Setup input tensor</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;torch_cnn_input&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Run model and get output</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s2">&quot;torch_cnn&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;torch_cnn_input&quot;</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;torch_cnn_output&quot;</span><span class="p">])</span>
+<span class="n">out_data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;torch_cnn_output&quot;</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+<p>Models can also be set from a file, as in the code below.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+
+
+<span class="c1"># taken from https://pytorch.org/docs/master/generated/torch.jit.trace.html</span>
+<span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="c1"># Connect a SmartRedis client</span>
+<span class="n">db_address</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1:6379&quot;</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db_address</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+    <span class="n">example_forward_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="c1"># Trace a module (implicitly traces `forward`) and construct a</span>
+    <span class="c1"># `ScriptModule` with a single `forward` method</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">example_forward_input</span><span class="p">)</span>
+
+    <span class="c1"># Save the traced model to a file</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;./torch_cnn.pt&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Set the model in the Redis database from the file</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="s2">&quot;file_cnn&quot;</span><span class="p">,</span> <span class="s2">&quot;./torch_cnn.pt&quot;</span><span class="p">,</span> <span class="s2">&quot;TORCH&quot;</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Put a tensor in the database as a test input</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;torch_cnn_input&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="c1"># Run model and retrieve the output</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s2">&quot;file_cnn&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;torch_cnn_input&quot;</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;torch_cnn_output&quot;</span><span class="p">])</span>
+    <span class="n">out_data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;torch_cnn_output&quot;</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;torch_cnn.pt&quot;</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="scripts">
+<h3>Scripts<a class="headerlink" href="#scripts" title="Permalink to this headline">¶</a></h3>
+<p>Scripts are a way to store python-executable code in the database. The Python
+client can send scripts to the dataset from a file, or directly from memory.</p>
+<p>As an example, the code below illustrates how a function can be defined and sent
+to the database on the fly, without storing it in an intermediate file.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="k">def</span> <span class="nf">two_to_one</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">data_2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sample torchscript script that returns the</span>
+<span class="sd">    highest elements in both arguments</span>
+
+<span class="sd">    Two inputs to one output</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># return the highest element</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="n">data_2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">merged</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># Connect a SmartRedis client to the Redis database</span>
+<span class="n">db_address</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1:6379&quot;</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db_address</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Generate some test data to feed to the two_to_one function</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="n">data_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]])</span>
+
+<span class="c1"># Put the test data into the Redis database</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;script-data-1&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;script-data-2&quot;</span><span class="p">,</span> <span class="n">data_2</span><span class="p">)</span>
+
+<span class="c1"># Put the function into the Redis database</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_function</span><span class="p">(</span><span class="s2">&quot;two-to-one&quot;</span><span class="p">,</span> <span class="n">two_to_one</span><span class="p">)</span>
+
+<span class="c1"># Run the script using the test data</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_script</span><span class="p">(</span>
+    <span class="s2">&quot;two-to-one&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;two_to_one&quot;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s2">&quot;script-data-1&quot;</span><span class="p">,</span> <span class="s2">&quot;script-data-2&quot;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s2">&quot;script-multi-out-output&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="c1"># Retrieve the output of the test function</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;script-multi-out-output&quot;</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+<p>The code below shows how to set a script from a file.  Running the
+script set from file uses the same API calls as the example shown
+above.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">osp</span>
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># Construct a string holding the script file location</span>
+<span class="n">file_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">script_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;./data_processing_script.txt&quot;</span><span class="p">)</span>
+
+<span class="c1"># Connect to the Redis database</span>
+<span class="n">db_address</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1:6379&quot;</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db_address</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Place the script in the database</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_script_from_file</span><span class="p">(</span>
+    <span class="s2">&quot;test-script-file&quot;</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;./data_processing_script.txt&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+<p>The content of the script file has to be written
+in Python. For the example above, the file <code class="docutils literal notranslate"><span class="pre">data_processing_script.txt</span></code>
+looks like this:</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">pre_process</span><span class="p">(</span><span class="n">inp</span><span class="p">):</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inp</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">*</span> <span class="n">mean</span>
+    <span class="k">return</span> <span class="n">temp</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+</div>
+<div class="section" id="c-client">
+<h2>2.2 C++ Client<a class="headerlink" href="#c-client" title="Permalink to this headline">¶</a></h2>
+<p>In this section, examples are presented using the SmartRedis C++
+API to interact with the RedisAI tensor, model, and script
+data types.  Additionally, an example of utilizing the
+SmartRedis <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> API is also provided.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The C++ API examples rely on the <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment
+variable being set to the address and port of the Redis database.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The C++ API examples are written
+to connect to a non-cluster Redis database.  Update the
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> constructor call to connect to a Redis cluster.</p>
+</div>
+<div class="section" id="id1">
+<h3>Tensors<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The following example shows how to send a receive a tensor using the
+SmartRedis C++ client API.</p>
+<div class="highlight-C++ notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+
+    <span class="c1">// Initialize tensor dimensions</span>
+    <span class="kt">size_t</span> <span class="n">dim1</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">dim2</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">dim3</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span> <span class="n">dims</span> <span class="o">=</span> <span class="p">{</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">};</span>
+
+    <span class="c1">// Initialize a tensor to random values.  Note that a dynamically</span>
+    <span class="c1">// allocated tensor via malloc is also useable with the client</span>
+    <span class="c1">// API.  The std::vector is used here for brevity.</span>
+    <span class="kt">size_t</span> <span class="n">n_values</span> <span class="o">=</span> <span class="n">dim1</span> <span class="o">*</span> <span class="n">dim2</span> <span class="o">*</span> <span class="n">dim3</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">input_tensor</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">input_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">rand</span><span class="p">()</span><span class="o">/</span><span class="n">RAND_MAX</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">;</span>
+
+    <span class="c1">// Initialize a SmartRedis client</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span> <span class="n">client</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+
+    <span class="c1">// Put the tensor in the database</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">key</span> <span class="o">=</span> <span class="s">&quot;3d_tensor&quot;</span><span class="p">;</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">dims</span><span class="p">,</span>
+                      <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">dbl</span><span class="p">,</span>
+                      <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Retrieve the tensor from the database using the unpack feature.</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">unpack_tensor</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">unpack_tensor</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="p">{</span><span class="n">n_values</span><span class="p">},</span>
+                        <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">dbl</span><span class="p">,</span>
+                        <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Print the values retrieved with the unpack feature</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Comparison of the sent and &quot;</span>\
+                <span class="s">&quot;retrieved (via unpack) values: &quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Sent: &quot;</span><span class="o">&lt;&lt;</span><span class="n">input_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &quot;</span>
+                 <span class="o">&lt;&lt;</span><span class="s">&quot;Received: &quot;</span><span class="o">&lt;&lt;</span><span class="n">unpack_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+
+    <span class="c1">// Retrieve the tensor from the database using the get feature.</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span> <span class="n">get_type</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span> <span class="n">get_dims</span><span class="p">;</span>
+    <span class="kt">void</span><span class="o">*</span> <span class="n">get_tensor</span><span class="p">;</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">get_tensor</span><span class="p">,</span> <span class="n">get_dims</span><span class="p">,</span> <span class="n">get_type</span><span class="p">,</span>
+                      <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">nested</span><span class="p">);</span>
+
+    <span class="c1">// Print the values retrieved with the unpack feature</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Comparison of the sent and &quot;</span>\
+                <span class="s">&quot;retrieved (via get) values: &quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span><span class="o">&lt;</span><span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">k</span><span class="o">&lt;</span><span class="n">dims</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span> <span class="n">k</span><span class="o">++</span><span class="p">,</span> <span class="n">c</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Sent: &quot;</span><span class="o">&lt;&lt;</span><span class="n">input_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &quot;</span>
+                         <span class="o">&lt;&lt;</span><span class="s">&quot;Received: &quot;</span>
+                         <span class="o">&lt;&lt;</span><span class="p">((</span><span class="kt">double</span><span class="o">***</span><span class="p">)</span><span class="n">get_tensor</span><span class="p">)[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="id2">
+<h3>DataSets<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>The C++ client can store and retrieve tensors and metadata in datasets.
+For further information about datasets, please refer to the <a class="reference internal" href="../sr_data_structures.html#data-structures-dataset"><span class="std std-ref">Dataset
+section of the Data Structures documentation page</span></a>.</p>
+<p>The code below shows how to store and retrieve tensors and metadata
+which belong to a <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>.</p>
+<div class="highlight-C++ notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+
+    <span class="c1">// Initialize tensor dimensions</span>
+    <span class="kt">size_t</span> <span class="n">dim1</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">dim2</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">dim3</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">n_values</span> <span class="o">=</span> <span class="n">dim1</span> <span class="o">*</span> <span class="n">dim2</span> <span class="o">*</span> <span class="n">dim3</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span> <span class="n">dims</span> <span class="o">=</span> <span class="p">{</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">};</span>
+
+    <span class="c1">// Initialize two tensors to random values</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">tensor_1</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span> <span class="n">tensor_2</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">tensor_1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">rand</span><span class="p">()</span><span class="o">/</span><span class="n">RAND_MAX</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">;</span>
+        <span class="n">tensor_2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Initialize three metadata values we will add</span>
+    <span class="c1">// to the DataSet</span>
+    <span class="kt">uint32_t</span> <span class="n">meta_scalar_1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">uint32_t</span> <span class="n">meta_scalar_2</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="kt">int64_t</span> <span class="n">meta_scalar_3</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+
+    <span class="c1">// Initialize a SmartRedis client</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span> <span class="n">client</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+
+    <span class="c1">// Create a DataSet</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">DataSet</span> <span class="n">dataset</span><span class="p">(</span><span class="s">&quot;example_dataset&quot;</span><span class="p">);</span>
+
+    <span class="c1">// Add tensors to the DataSet</span>
+    <span class="n">dataset</span><span class="p">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="n">tensor_1</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">dims</span><span class="p">,</span>
+                       <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">dbl</span><span class="p">,</span>
+                       <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="n">dataset</span><span class="p">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="n">tensor_2</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">dims</span><span class="p">,</span>
+                       <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">int64</span><span class="p">,</span>
+                       <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Add metadata scalar values to the DataSet</span>
+    <span class="n">dataset</span><span class="p">.</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="s">&quot;meta_field_1&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">meta_scalar_1</span><span class="p">,</span>
+                            <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MetaDataType</span><span class="o">::</span><span class="n">uint32</span><span class="p">);</span>
+    <span class="n">dataset</span><span class="p">.</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="s">&quot;meta_field_1&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">meta_scalar_2</span><span class="p">,</span>
+                            <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MetaDataType</span><span class="o">::</span><span class="n">uint32</span><span class="p">);</span>
+    <span class="n">dataset</span><span class="p">.</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="s">&quot;meta_field_2&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">meta_scalar_3</span><span class="p">,</span>
+                            <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MetaDataType</span><span class="o">::</span><span class="n">int64</span><span class="p">);</span>
+
+
+    <span class="c1">// Put the DataSet in the database</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">put_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">);</span>
+
+    <span class="c1">// Retrieve the DataSet from the database</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">DataSet</span> <span class="n">retrieved_dataset</span> <span class="o">=</span>
+        <span class="n">client</span><span class="p">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="s">&quot;example_dataset&quot;</span><span class="p">);</span>
+
+    <span class="c1">// Retrieve one of the tensors</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span> <span class="n">unpack_dataset_tensor</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">retrieved_dataset</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="s">&quot;tensor_2&quot;</span><span class="p">,</span>
+                                    <span class="n">unpack_dataset_tensor</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span>
+                                    <span class="p">{</span><span class="n">n_values</span><span class="p">},</span>
+                                    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">int64</span><span class="p">,</span>
+                                    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Print out the retrieved values</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Comparing sent and received &quot;</span>\
+               <span class="s">&quot;values for tensor_2: &quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Sent: &quot;</span><span class="o">&lt;&lt;</span><span class="n">tensor_2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &quot;</span>
+                 <span class="o">&lt;&lt;</span><span class="s">&quot;Received: &quot;</span>
+                 <span class="o">&lt;&lt;</span><span class="n">unpack_dataset_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+    <span class="c1">//Retrieve a metadata field</span>
+    <span class="kt">size_t</span> <span class="n">get_n_meta_values</span><span class="p">;</span>
+    <span class="kt">void</span><span class="o">*</span> <span class="n">get_meta_values</span><span class="p">;</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MetaDataType</span> <span class="n">get_type</span><span class="p">;</span>
+    <span class="n">dataset</span><span class="p">.</span><span class="n">get_meta_scalars</span><span class="p">(</span><span class="s">&quot;meta_field_1&quot;</span><span class="p">,</span>
+                             <span class="n">get_meta_values</span><span class="p">,</span>
+                             <span class="n">get_n_meta_values</span><span class="p">,</span>
+                             <span class="n">get_type</span><span class="p">);</span>
+
+    <span class="c1">// Print out the metadata field values</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">get_n_meta_values</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;meta_field_1 value &quot;</span><span class="o">&lt;&lt;</span><span class="n">i</span><span class="o">&lt;&lt;</span><span class="s">&quot; = &quot;</span>
+                 <span class="o">&lt;&lt;</span><span class="p">((</span><span class="kt">uint32_t</span><span class="o">*</span><span class="p">)</span><span class="n">get_meta_values</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="sr-cpp-models">
+<span id="id3"></span><h3>Models<a class="headerlink" href="#sr-cpp-models" title="Permalink to this headline">¶</a></h3>
+<p>The following example shows how to store, and use a DL model
+in the database with the C++ Client.  The model is stored a file
+in the <code class="docutils literal notranslate"><span class="pre">../../../common/mnist_data/</span></code> path relative to the
+compiled executable.  Note that this example also sets and
+executes a preprocessing script.</p>
+<div class="highlight-C++ notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;fstream&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+
+    <span class="c1">// Initialize a vector that will hold input image tensor</span>
+    <span class="kt">size_t</span> <span class="n">n_values</span> <span class="o">=</span> <span class="mi">1</span><span class="o">*</span><span class="mi">1</span><span class="o">*</span><span class="mi">28</span><span class="o">*</span><span class="mi">28</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="n">img</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="c1">// Load the mnist image from a file</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">image_file</span> <span class="o">=</span> <span class="s">&quot;../../../common/mnist_data/one.raw&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ifstream</span> <span class="n">fin</span><span class="p">(</span><span class="n">image_file</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ios</span><span class="o">::</span><span class="n">binary</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ostringstream</span> <span class="n">ostream</span><span class="p">;</span>
+    <span class="n">ostream</span> <span class="o">&lt;&lt;</span> <span class="n">fin</span><span class="p">.</span><span class="n">rdbuf</span><span class="p">();</span>
+    <span class="n">fin</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+
+    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">ostream</span><span class="p">.</span><span class="n">str</span><span class="p">();</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">memcpy</span><span class="p">(</span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">tmp</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span>
+
+    <span class="c1">// Initialize a SmartRedis client to connect to the Redis database</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span> <span class="n">client</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+
+    <span class="c1">// Use the client to set a model in the database from a file</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">model_key</span> <span class="o">=</span> <span class="s">&quot;mnist_model&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">model_file</span> <span class="o">=</span> <span class="s">&quot;../../../common/mnist_data/mnist_cnn.pt&quot;</span><span class="p">;</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="s">&quot;TORCH&quot;</span><span class="p">,</span> <span class="s">&quot;CPU&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+
+    <span class="c1">// Use the client to set a script from the database form a file</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">script_key</span> <span class="o">=</span> <span class="s">&quot;mnist_script&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">script_file</span> <span class="o">=</span> <span class="s">&quot;../../../common/mnist_data/data_processing_script.txt&quot;</span><span class="p">;</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span> <span class="s">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">script_file</span><span class="p">);</span>
+
+    <span class="c1">// Declare keys that we will use in forthcoming client commands</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">in_key</span> <span class="o">=</span> <span class="s">&quot;mnist_input&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">script_out_key</span> <span class="o">=</span> <span class="s">&quot;mnist_processed_input&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">out_key</span> <span class="o">=</span> <span class="s">&quot;mnist_output&quot;</span><span class="p">;</span>
+
+    <span class="c1">// Put the tensor into the database that was loaded from file</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span> <span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">},</span>
+                        <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">flt</span><span class="p">,</span>
+                        <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Run the preprocessing script on the input tensor</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">run_script</span><span class="p">(</span><span class="s">&quot;mnist_script&quot;</span><span class="p">,</span> <span class="s">&quot;pre_process&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">in_key</span><span class="p">},</span> <span class="p">{</span><span class="n">script_out_key</span><span class="p">});</span>
+
+    <span class="c1">// Run the model using the output of the preprocessing script</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">run_model</span><span class="p">(</span><span class="s">&quot;mnist_model&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">script_out_key</span><span class="p">},</span> <span class="p">{</span><span class="n">out_key</span><span class="p">});</span>
+
+    <span class="c1">// Retrieve the output of the model</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="n">result</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span> <span class="n">result</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="p">{</span><span class="mi">10</span><span class="p">},</span>
+                        <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">flt</span><span class="p">,</span>
+                        <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Print out the results of the model evaluation</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">result</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Result[&quot;</span><span class="o">&lt;&lt;</span><span class="n">i</span><span class="o">&lt;&lt;</span><span class="s">&quot;] = &quot;</span><span class="o">&lt;&lt;</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="sr-cpp-scripts">
+<span id="id4"></span><h3>Scripts<a class="headerlink" href="#sr-cpp-scripts" title="Permalink to this headline">¶</a></h3>
+<p>The example in <a class="reference internal" href="#sr-cpp-models"><span class="std std-ref">Models</span></a> shows how to store, and use a PyTorch script
+in the database with the C++ Client.  The script is stored a file
+in the <code class="docutils literal notranslate"><span class="pre">../../../common/mnist_data/</span></code> path relative to the
+compiled executable.  Note that this example also sets and
+executes a PyTorch model.</p>
+</div>
+<div class="section" id="parallel-mpi-execution">
+<span id="sr-cpp-parallel-mpi"></span><h3>Parallel (MPI) execution<a class="headerlink" href="#parallel-mpi-execution" title="Permalink to this headline">¶</a></h3>
+<p>In this example, the example shown in <a class="reference internal" href="#sr-cpp-models"><span class="std std-ref">Models</span></a> and
+<a class="reference internal" href="#sr-cpp-scripts"><span class="std std-ref">Scripts</span></a> is adapted to run in parallel using MPI.
+This example has the same functionality, however,
+it shows how keys can be prefixed to prevent key
+collisions across MPI ranks.  Note that only one
+model and script are set, which is shared across
+all ranks.</p>
+<p>For completeness, the pre-processing script
+source code is also shown.</p>
+<p><strong>C++ program</strong></p>
+<div class="highlight-C++ notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">  1</span>
+<span class="normal">  2</span>
+<span class="normal">  3</span>
+<span class="normal">  4</span>
+<span class="normal">  5</span>
+<span class="normal">  6</span>
+<span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
+<span class="normal"> 11</span>
+<span class="normal"> 12</span>
+<span class="normal"> 13</span>
+<span class="normal"> 14</span>
+<span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;mpi.h&gt;</span><span class="cp"></span>
+
+<span class="kt">void</span> <span class="nf">run_mnist</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">model_name</span><span class="p">,</span>
+               <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">script_name</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Get the MPI rank</span>
+    <span class="kt">int</span> <span class="n">rank</span><span class="p">;</span>
+    <span class="n">MPI_Comm_rank</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rank</span><span class="p">);</span>
+
+    <span class="c1">// Initialize a vector that will hold input image tensor</span>
+    <span class="kt">size_t</span> <span class="n">n_values</span> <span class="o">=</span> <span class="mi">1</span><span class="o">*</span><span class="mi">1</span><span class="o">*</span><span class="mi">28</span><span class="o">*</span><span class="mi">28</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="n">img</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="c1">// Load the mnist image from a file using MPI rank 0</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">rank</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">image_file</span> <span class="o">=</span> <span class="s">&quot;../../../common/mnist_data/one.raw&quot;</span><span class="p">;</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">ifstream</span> <span class="n">fin</span><span class="p">(</span><span class="n">image_file</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ios</span><span class="o">::</span><span class="n">binary</span><span class="p">);</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">ostringstream</span> <span class="n">ostream</span><span class="p">;</span>
+        <span class="n">ostream</span> <span class="o">&lt;&lt;</span> <span class="n">fin</span><span class="p">.</span><span class="n">rdbuf</span><span class="p">();</span>
+        <span class="n">fin</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+
+        <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">ostream</span><span class="p">.</span><span class="n">str</span><span class="p">();</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">memcpy</span><span class="p">(</span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">tmp</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Broadcast the image to all MPI ranks.  This is more efficient</span>
+    <span class="c1">// thank all ranks loading the same file.  This is specific</span>
+    <span class="c1">// to this example.</span>
+    <span class="n">MPI_Bcast</span><span class="p">(</span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="mi">28</span><span class="o">*</span><span class="mi">28</span><span class="p">,</span> <span class="n">MPI_FLOAT</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+    <span class="n">MPI_Barrier</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">rank</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;All ranks have MNIST image&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+    <span class="c1">// Declare keys that we will use in forthcoming client commands</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">in_key</span> <span class="o">=</span> <span class="s">&quot;mnist_input_rank_&quot;</span> <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">rank</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">script_out_key</span> <span class="o">=</span> <span class="s">&quot;mnist_processed_input_rank_&quot;</span> <span class="o">+</span>
+                                 <span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">rank</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">out_key</span> <span class="o">=</span> <span class="s">&quot;mnist_output_rank_&quot;</span> <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">rank</span><span class="p">);</span>
+
+    <span class="c1">// Initialize a Client object</span>
+    <span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span> <span class="n">client</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+
+    <span class="c1">// Put the image tensor on the database</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span> <span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">},</span>
+                      <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">flt</span><span class="p">,</span>
+                      <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Run the preprocessing script</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">run_script</span><span class="p">(</span><span class="n">script_name</span><span class="p">,</span> <span class="s">&quot;pre_process&quot;</span><span class="p">,</span>
+                      <span class="p">{</span><span class="n">in_key</span><span class="p">},</span> <span class="p">{</span><span class="n">script_out_key</span><span class="p">});</span>
+
+    <span class="c1">// Run the model</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">run_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="p">{</span><span class="n">script_out_key</span><span class="p">},</span> <span class="p">{</span><span class="n">out_key</span><span class="p">});</span>
+
+    <span class="c1">// Get the result of the model</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="n">result</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="mi">10</span><span class="p">);</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span> <span class="n">result</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="p">{</span><span class="mi">10</span><span class="p">},</span>
+                         <span class="n">SmartRedis</span><span class="o">::</span><span class="n">TensorType</span><span class="o">::</span><span class="n">flt</span><span class="p">,</span>
+                         <span class="n">SmartRedis</span><span class="o">::</span><span class="n">MemoryLayout</span><span class="o">::</span><span class="n">contiguous</span><span class="p">);</span>
+
+    <span class="c1">// Print out the results of the model for Rank 0</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">rank</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">result</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Rank 0: Result[&quot;</span><span class="o">&lt;&lt;</span><span class="n">i</span><span class="o">&lt;&lt;</span><span class="s">&quot;] = &quot;</span><span class="o">&lt;&lt;</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+
+    <span class="c1">// Initialize the MPI comm world</span>
+    <span class="n">MPI_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">argc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">argv</span><span class="p">);</span>
+
+    <span class="c1">// Retrieve the MPI rank</span>
+    <span class="kt">int</span> <span class="n">rank</span><span class="p">;</span>
+    <span class="n">MPI_Comm_rank</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rank</span><span class="p">);</span>
+
+    <span class="c1">// Set the model and script that will be used by all ranks</span>
+    <span class="c1">// from MPI rank 0.</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">rank</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span> <span class="n">client</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+
+        <span class="c1">// Build model key, file name, and then set model</span>
+        <span class="c1">// from file using client API</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">model_key</span> <span class="o">=</span> <span class="s">&quot;mnist_model&quot;</span><span class="p">;</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">model_file</span> <span class="o">=</span> <span class="s">&quot;../../../&quot;</span>\
+                                 <span class="s">&quot;common/mnist_data/mnist_cnn.pt&quot;</span><span class="p">;</span>
+        <span class="n">client</span><span class="p">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span>
+                                <span class="s">&quot;TORCH&quot;</span><span class="p">,</span> <span class="s">&quot;CPU&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+
+        <span class="c1">// Build script key, file name, and then set script</span>
+        <span class="c1">// from file using client API</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">script_key</span> <span class="o">=</span> <span class="s">&quot;mnist_script&quot;</span><span class="p">;</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">script_file</span> <span class="o">=</span> <span class="s">&quot;../../../common/mnist_data/&quot;</span>
+                                <span class="s">&quot;data_processing_script.txt&quot;</span><span class="p">;</span>
+        <span class="n">client</span><span class="p">.</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span> <span class="s">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">script_file</span><span class="p">);</span>
+
+        <span class="c1">// Get model and script to illustrate client API</span>
+        <span class="c1">// functionality, but this is not necessary for this example.</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string_view</span> <span class="n">model</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">model_key</span><span class="p">);</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string_view</span> <span class="n">script</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">get_script</span><span class="p">(</span><span class="n">script_key</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Run the MNIST model</span>
+    <span class="n">MPI_Barrier</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+    <span class="n">run_mnist</span><span class="p">(</span><span class="s">&quot;mnist_model&quot;</span><span class="p">,</span> <span class="s">&quot;mnist_script&quot;</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">rank</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Finished SmartRedis MNIST example.&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+    <span class="c1">// Finalize MPI Comm World</span>
+    <span class="n">MPI_Finalize</span><span class="p">();</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</td></tr></table></div>
+<p><strong>Python Pre-Processing</strong></p>
+<div class="highlight-Python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">pre_process</span><span class="p">(</span><span class="n">inp</span><span class="p">):</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inp</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">*</span> <span class="n">mean</span>
+    <span class="k">return</span> <span class="n">temp</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+</div>
+<div class="section" id="fortran-client">
+<h2>2.3 Fortran Client<a class="headerlink" href="#fortran-client" title="Permalink to this headline">¶</a></h2>
+<p>In this section, examples are presented using the SmartRedis Fortran
+API to interact with the RedisAI tensor, model, and script
+data types.  Additionally, an example of utilizing the
+SmartRedis <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> API is also provided.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Fortran API examples rely on the <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment
+variable being set to the address and port of the Redis database.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Fortran API examples are written
+to connect to a non-cluster Redis database.  Update the
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> constructor call to connect to a Redis cluster.</p>
+</div>
+<div class="section" id="id5">
+<h3>Tensors<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>The SmartRedis Fortran client is used to communicate between
+a Fortran client and the Redis database. In this example,
+the client will be used to send an array to the database
+and then unpack the data into another Fortran array.</p>
+<p>This example will go step-by-step through the program and
+then present the entirety of the example code at the end.</p>
+<p><strong>Importing and declaring the SmartRedis client</strong></p>
+<p>The SmartRedis client must be declared as the derived type
+<code class="docutils literal notranslate"><span class="pre">client_type</span></code> imported from the <code class="docutils literal notranslate"><span class="pre">smartredis_client</span></code> module.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">example</span>
+  <span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span> <span class="k">only</span> <span class="p">:</span> <span class="n">client_type</span>
+
+  <span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span> <span class="kd">::</span> <span class="n">client</span>
+<span class="k">end program </span><span class="n">example</span>
+</pre></div>
+</div>
+<p><strong>Initializing the SmartRedis client</strong></p>
+<p>The SmartRedis client needs to be initialized before it can be used
+to interact with the database. Within Fortran this is
+done by calling the type-bound procedure
+<code class="docutils literal notranslate"><span class="pre">initialize</span></code> with the input argument <code class="docutils literal notranslate"><span class="pre">.true.</span></code>
+if using a clustered database or <code class="docutils literal notranslate"><span class="pre">.false.</span></code> otherwise.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">example</span>
+  <span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span> <span class="k">only</span> <span class="p">:</span> <span class="n">client_type</span>
+
+  <span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span> <span class="kd">::</span> <span class="n">client</span>
+
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">false</span><span class="p">.)</span> <span class="c">! Change .true. to false if using a clustered database</span>
+<span class="k">end program </span><span class="n">example</span>
+</pre></div>
+</div>
+<p><strong>Putting a Fortran array into the database</strong></p>
+<p>After the SmartRedis client has been initialized,
+a Fortran array of any dimension and shape
+and with a type of either 8, 16, 32, 64 bit
+<code class="docutils literal notranslate"><span class="pre">integer</span></code> or 32 or 64-bit <code class="docutils literal notranslate"><span class="pre">real</span></code> can be
+put into the database using the type-bound
+procedure <code class="docutils literal notranslate"><span class="pre">put_tensor</span></code>.
+In this example, as a proxy for model-generated
+data, the array <code class="docutils literal notranslate"><span class="pre">send_array_real_64</span></code> will be
+filled with random numbers and stored in the
+database using <code class="docutils literal notranslate"><span class="pre">put_tensor</span></code>. This subroutine
+requires the user to specify a string used as the
+‘key’ (here: <code class="docutils literal notranslate"><span class="pre">send_array</span></code>) identifying the tensor
+in the database, the array to be stored, and the
+shape of the array.</p>
+<div class="highlight-fortran notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">main</span>
+
+  <span class="k">use </span><span class="nb">iso_c_binding</span>
+<span class="nb">  </span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span> <span class="k">only</span> <span class="p">:</span> <span class="n">client_type</span>
+
+  <span class="k">implicit none</span>
+
+<span class="k">  </span><span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim1</span> <span class="o">=</span> <span class="mi">10</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim2</span> <span class="o">=</span> <span class="mi">20</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim3</span> <span class="o">=</span> <span class="mi">30</span>
+
+  <span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_double</span><span class="p">),</span>    <span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span> <span class="n">dim2</span><span class="p">,</span> <span class="n">dim3</span><span class="p">)</span> <span class="kd">::</span> <span class="n">send_array_real_64</span>
+
+  <span class="kt">integer</span> <span class="kd">::</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span>
+  <span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span> <span class="kd">::</span> <span class="n">client</span>
+
+  <span class="kt">integer</span> <span class="kd">::</span> <span class="n">err_code</span><span class="p">,</span> <span class="n">pe_id</span>
+
+  <span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="n">send_array_real_64</span><span class="p">)</span>
+
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">false</span><span class="p">.)</span> <span class="c">! Change .true. to false if using a clustered database</span>
+
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;send_array&quot;</span><span class="p">,</span> <span class="n">send_array_real_64</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="n">send_array_real_64</span><span class="p">))</span>
+
+<span class="k">end program </span><span class="n">main</span>
+</pre></div>
+</td></tr></table></div>
+<p><strong>Unpacking an array stored in the database</strong></p>
+<p>‘Unpacking’ an array in SmartRedis refers to filling
+a Fortran array with the values of a tensor
+stored in the database.  The dimensions and type of
+data of the incoming array and the pre-declared
+array are checked within the client to
+ensure that they match. Unpacking requires
+declaring an array and using the <code class="docutils literal notranslate"><span class="pre">unpack_tensor</span></code>
+procedure.  This example generates an array
+of random numbers, puts that into the database,
+and retrieves the values from the database
+into a different array.</p>
+<div class="highlight-fortran notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">main</span>
+
+  <span class="k">use </span><span class="nb">iso_c_binding</span>
+<span class="nb">  </span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span> <span class="k">only</span> <span class="p">:</span> <span class="n">client_type</span>
+
+  <span class="k">implicit none</span>
+
+<span class="k">  </span><span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim1</span> <span class="o">=</span> <span class="mi">10</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim2</span> <span class="o">=</span> <span class="mi">20</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim3</span> <span class="o">=</span> <span class="mi">30</span>
+
+  <span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span>    <span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span> <span class="n">dim2</span><span class="p">,</span> <span class="n">dim3</span><span class="p">)</span> <span class="kd">::</span> <span class="n">recv_array_real_64</span>
+  <span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_double</span><span class="p">),</span>    <span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span> <span class="n">dim2</span><span class="p">,</span> <span class="n">dim3</span><span class="p">)</span> <span class="kd">::</span> <span class="n">send_array_real_64</span>
+
+  <span class="kt">integer</span> <span class="kd">::</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span>
+  <span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span> <span class="kd">::</span> <span class="n">client</span>
+
+  <span class="kt">integer</span> <span class="kd">::</span> <span class="n">err_code</span><span class="p">,</span> <span class="n">pe_id</span>
+
+  <span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="n">send_array_real_64</span><span class="p">)</span>
+
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">false</span><span class="p">.)</span> <span class="c">! Change .true. to false if using a clustered database</span>
+
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;send_array&quot;</span><span class="p">,</span> <span class="n">send_array_real_64</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="n">send_array_real_64</span><span class="p">))</span>
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="s2">&quot;send_array&quot;</span><span class="p">,</span> <span class="n">recv_array_real_64</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="n">recv_array_real_64</span><span class="p">))</span>
+
+<span class="k">end program </span><span class="n">main</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="id6">
+<h3>Datasets<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>The following code snippet shows how to use the Fortran
+Client to store and retrieve dataset tensors and
+dataset metadata scalars.</p>
+<div class="highlight-fortran notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">main</span>
+
+  <span class="k">use </span><span class="nb">iso_c_binding</span>
+<span class="nb">  </span><span class="k">use </span><span class="n">smartredis_dataset</span><span class="p">,</span> <span class="k">only</span> <span class="p">:</span> <span class="n">dataset_type</span>
+
+  <span class="k">implicit none</span>
+
+<span class="k">  </span><span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim1</span> <span class="o">=</span> <span class="mi">10</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim2</span> <span class="o">=</span> <span class="mi">20</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dim3</span> <span class="o">=</span> <span class="mi">30</span>
+
+  <span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span>      <span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span> <span class="n">dim2</span><span class="p">,</span> <span class="n">dim3</span><span class="p">)</span> <span class="kd">::</span> <span class="n">recv_array_real_32</span>
+ 
+  <span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span>      <span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span> <span class="n">dim2</span><span class="p">,</span> <span class="n">dim3</span><span class="p">)</span> <span class="kd">::</span> <span class="n">true_array_real_32</span>
+
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span> <span class="kd">::</span> <span class="n">meta_flt</span> <span class="o">=</span> <span class="s1">&#39;meta_flt&#39;</span>
+
+  <span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span>  <span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">)</span> <span class="kd">::</span> <span class="n">meta_flt_vec</span>
+  <span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span> <span class="k">dimension</span><span class="p">(:),</span> <span class="k">pointer</span> <span class="kd">::</span> <span class="n">meta_flt_recv</span>
+
+  <span class="kt">integer</span> <span class="kd">::</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span>
+  <span class="k">type</span><span class="p">(</span><span class="n">dataset_type</span><span class="p">)</span> <span class="kd">::</span> <span class="n">dataset</span>
+
+  <span class="kt">integer</span> <span class="kd">::</span> <span class="n">err_code</span>
+
+  <span class="c">! Fill array</span>
+  <span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="n">true_array_real_32</span><span class="p">)</span>
+
+  <span class="k">call </span><span class="n">dataset</span><span class="p">%</span><span class="n">initialize</span><span class="p">(</span><span class="s2">&quot;example_fortran_dataset&quot;</span><span class="p">)</span>
+
+  <span class="k">call </span><span class="n">dataset</span><span class="p">%</span><span class="n">add_tensor</span><span class="p">(</span><span class="s2">&quot;true_array_real_32&quot;</span><span class="p">,</span> <span class="n">true_array_real_32</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="n">true_array_real_32</span><span class="p">))</span>
+  <span class="k">call </span><span class="n">dataset</span><span class="p">%</span><span class="n">unpack_dataset_tensor</span><span class="p">(</span><span class="s2">&quot;true_array_real_32&quot;</span><span class="p">,</span> <span class="n">recv_array_real_32</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="n">recv_array_real_32</span><span class="p">))</span>
+
+  <span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="n">meta_flt_vec</span><span class="p">)</span>
+
+  <span class="k">do </span><span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">dim1</span>
+    <span class="k">call </span><span class="n">dataset</span><span class="p">%</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="n">meta_flt</span><span class="p">,</span> <span class="n">meta_flt_vec</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+  <span class="k">enddo</span>
+
+<span class="k">  call </span><span class="n">dataset</span><span class="p">%</span><span class="n">get_meta_scalars</span><span class="p">(</span><span class="n">meta_flt</span><span class="p">,</span> <span class="n">meta_flt_recv</span><span class="p">)</span>
+
+<span class="k">end program </span><span class="n">main</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="sr-fortran-models">
+<span id="id7"></span><h3>Models<a class="headerlink" href="#sr-fortran-models" title="Permalink to this headline">¶</a></h3>
+<p>For an example of placing a model in the database
+and executing the model using a stored tensor,
+see the <a class="reference internal" href="#sr-parallel-mpi"><span class="std std-ref">Parallel (MPI) execution</span></a> example.  The
+aforementioned example is customized to show how
+key collisions can be avoided in parallel
+applications, but the <code class="docutils literal notranslate"><span class="pre">Client</span></code> API calls
+pertaining to model actions are identical
+to non-parallel applications.</p>
+</div>
+<div class="section" id="sr-fortran-scripts">
+<span id="id8"></span><h3>Scripts<a class="headerlink" href="#sr-fortran-scripts" title="Permalink to this headline">¶</a></h3>
+<p>For an example of placing a PyTorch script in the database
+and executing the script using a stored tensor,
+see the <a class="reference internal" href="#sr-parallel-mpi"><span class="std std-ref">Parallel (MPI) execution</span></a> example.  The
+aforementioned example is customized to show how
+key collisions can be avoided in parallel
+applications, but the <code class="docutils literal notranslate"><span class="pre">Client</span></code> API calls
+pertaining to script actions are identical
+to non-parallel applications.</p>
+</div>
+<div class="section" id="sr-parallel-mpi">
+<span id="id9"></span><h3>Parallel (MPI) execution<a class="headerlink" href="#sr-parallel-mpi" title="Permalink to this headline">¶</a></h3>
+<p>In this example, an MPI program that
+sets a model, sets a script, executes a script,
+executes a model, sends a tensor, and receives
+a tensor is shown.  This example illustrates
+how keys can be prefixed to prevent key
+collisions across MPI ranks.  Note that only one
+model and script are set, which is shared across
+all ranks.  It is important to note that the
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> API calls made in this program are
+equally applicable to non-MPI programs.</p>
+<p>This example will go step-by-step through the program and
+then present the entirety of the example code at the end.</p>
+<p>The MNIST dataset and model typically take images of
+digits and quantifies how likely that number is to be 0, 1, 2,
+etc.. For simplicity here, this example instead
+generates random numbers to represent an image.</p>
+<p><strong>Initialization</strong></p>
+<p>At the top of the program, the SmartRedis Fortran client
+(which is coded as a Fortran module) is imported using</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span> <span class="k">only</span> <span class="p">:</span> <span class="n">client_type</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">client_type</span></code> is a Fortran derived-type containing
+the methods used to communicate with the RedisAI database.
+A particular instance is declared via</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span> <span class="kd">::</span> <span class="n">client</span>
+</pre></div>
+</div>
+<p>An initializer routine, implemented as a type-bound
+procedure, must be called before any of the other
+methods are used:</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">true</span><span class="p">.)</span>
+</pre></div>
+</div>
+<p>The only optional argument to the initialize
+routine is to determine whether the RedisAI
+database is clustered (i.e. spread over a number
+of nodes, <code class="docutils literal notranslate"><span class="pre">.true.</span></code>) or exists as a single instance.</p>
+<p>If an individual rank is expected to
+send only its local data, a separate client must
+be initialized on every MPI task Furthermore,
+to avoid the collision of key names when running
+on multiple MPI tasks, we store the rank of the
+MPI process which will be used as the suffix for
+all keys in this example.</p>
+<p>On the root MPI task, two additional client methods
+(<code class="docutils literal notranslate"><span class="pre">set_model_from_file</span></code> and <code class="docutils literal notranslate"><span class="pre">set_script_from_file</span></code>)
+are called. <code class="docutils literal notranslate"><span class="pre">set_model_from_file</span></code> loads a saved
+PyTorch model and stores it in the database using the key
+<code class="docutils literal notranslate"><span class="pre">mnist_model</span></code>. Similarly, <code class="docutils literal notranslate"><span class="pre">set_script_from_file</span></code>
+loads a script that can be used to process data on the
+database cluster.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">pe_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<span class="k">  call </span><span class="n">client</span><span class="p">%</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="s2">&quot;TORCH&quot;</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">script_file</span><span class="p">)</span>
+<span class="k">endif</span>
+</pre></div>
+</div>
+<p>This only needs to be done on the root MPI task because
+this example assumes that every rank is using the same model.
+If the model is intended to be rank-specific, a unique
+identifier (like the MPI rank) must be used.</p>
+<p>At this point the initialization of the program is
+complete: each rank has its own SmartRedis client,
+initialized a PyTorch model has been loaded and
+stored into the database with its own identifying
+key, and a preprocessing script has also
+been loaded and stored in the database</p>
+<p><strong>Performing inference on Fortran data</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">run_mnist</span></code> subroutine coordinates the inference
+cycle of generating data (i.e. the synthetic MNIST image) from
+the application and then the use of the client to
+run a preprocessing script on data within the database and to
+perform an inference from the AI model. The local
+variables are declared at the top of the subroutine and are
+instructive to communicate the expected shape of the
+inputs to the various client methods.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">mnist_dim1</span> <span class="o">=</span> <span class="mi">28</span>
+<span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">mnist_dim2</span> <span class="o">=</span> <span class="mi">28</span>
+<span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">result_dim1</span> <span class="o">=</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>The first two integers <code class="docutils literal notranslate"><span class="pre">mnist_dim1</span></code> and <code class="docutils literal notranslate"><span class="pre">mnist_dim2</span></code>
+specify the shape of the input data. In the case of the
+MNIST dataset, it expects a 4D tensor describing a ‘picture’
+of a number with dimensions [1,1,28,28] representing a
+batch size (of one) and a three dimensional array. <code class="docutils literal notranslate"><span class="pre">result_dim1</span></code>
+specifies what the size of the resulting inference
+will be. In this case, it is a vector of length 10, where
+each element represents the probability that the data
+represents a number from 0-9.</p>
+<p>The next declaration declare the strings that will be
+used to define objects representing inputs/outputs from the
+scripts and inference models.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span> <span class="kd">::</span> <span class="n">in_key</span>
+<span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span> <span class="kd">::</span> <span class="n">script_out_key</span>
+<span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span> <span class="kd">::</span> <span class="n">out_key</span>
+</pre></div>
+</div>
+<p>Note that these are standard Fortran strings. However,
+because the model and scripts may require the use of multiple
+inputs/outputs, these will need to be converted into a
+vector of strings.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span> <span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="kd">::</span> <span class="n">inputs</span>
+<span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span> <span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="kd">::</span> <span class="n">outputs</span>
+</pre></div>
+</div>
+<p>In this case, only one input and output are expected the
+vector of strings only need to be one element long. In the
+case of multiple inputs/outputs, change the <code class="docutils literal notranslate"><span class="pre">dimension</span></code>
+attribute of the <code class="docutils literal notranslate"><span class="pre">inputs</span></code> and <code class="docutils literal notranslate"><span class="pre">outputs</span></code> accordingly,
+e.g. for two inputs this code would be <code class="docutils literal notranslate"><span class="pre">character(len=255),</span>
+<span class="pre">dimension(2)</span> <span class="pre">::</span> <span class="pre">inputs</span></code>.</p>
+<p>Next, the input and output keys for the model and script are
+now constructed</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="n">in_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span>
+<span class="n">script_out_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span>
+<span class="n">out_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As mentioned previously, unique identifying keys are
+constructed by including a suffix based on MPI tasks.</p>
+<p>The subroutine, in place of an actual simulation, next
+generates an array of random numbers and puts this array
+into the Redis database.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="k">array</span><span class="p">)</span>
+<span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span> <span class="k">array</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="k">array</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The Redis database can now be called to run preprocessing
+scripts on these data.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">in_key</span>
+<span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">script_out_key</span>
+<span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">run_script</span><span class="p">(</span><span class="n">script_name</span><span class="p">,</span> <span class="s2">&quot;pre_process&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The call to <code class="docutils literal notranslate"><span class="pre">client%run_script</span></code> specifies the
+key used to identify the script loaded during
+initialization, <code class="docutils literal notranslate"><span class="pre">pre_process</span></code> is the name of
+the function to run that is defined in that script,
+and the <code class="docutils literal notranslate"><span class="pre">inputs</span></code>/<code class="docutils literal notranslate"><span class="pre">outputs</span></code> are the vector of
+keys described previously. In this case, the call to
+<code class="docutils literal notranslate"><span class="pre">run_script</span></code> will trigger the RedisAI database
+to execute <code class="docutils literal notranslate"><span class="pre">pre_process</span></code> on the generated data
+(stored using the key <code class="docutils literal notranslate"><span class="pre">mnist_input_rank_XX</span></code> where <code class="docutils literal notranslate"><span class="pre">XX</span></code>
+represents the MPI rank) and storing the result of
+<code class="docutils literal notranslate"><span class="pre">pre_process</span></code> in the database as
+<code class="docutils literal notranslate"><span class="pre">mnist_processed_input_rank_XX</span></code>. One key aspect to
+emphasize, is that the calculations are done within the
+database, not on the application side and the results
+are not immediately available to the application. The retrieval
+of data from the database is demonstrated next.</p>
+<p>The data have been processed and now we can run the
+inference model. The setup of the inputs/outputs
+is the same as before, with the exception that the
+input to the inference model, is stored using the
+key <code class="docutils literal notranslate"><span class="pre">mnist_processed_input_rank_XX</span></code>
+and the output will stored using the same key.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">script_out_key</span>
+<span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">out_key</span>
+<span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">run_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As before the results of running the inference are
+stored within the database and are not available to
+the application immediately. However, we can ‘retrieve’
+the tensor from the database by using the <code class="docutils literal notranslate"><span class="pre">unpack_tensor</span></code> method.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span> <span class="k">result</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="k">result</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">result</span></code> array now contains the outcome of the inference.
+It is a 10-element array representing the likelihood that the
+‘image’ (generated using the random numbers) is one of the numbers
+[0-9].</p>
+<p><strong>Key points</strong></p>
+<p>The script, models, and data used here represent the
+coordination of different software stacks (PyTorch, RedisAI, and
+Fortran) however the application code is all written in
+standard Fortran. Any operations that need to be done to
+communicate with the database and exchange data are opaque
+to the application.</p>
+<p><strong>Source Code</strong></p>
+<p>Fortran program:</p>
+<div class="highlight-fortran notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">mnist_example</span>
+
+  <span class="k">use </span><span class="n">mpi</span>
+  <span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span> <span class="k">only</span> <span class="p">:</span> <span class="n">client_type</span>
+
+  <span class="k">implicit none</span>
+
+<span class="k">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">model_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_model&quot;</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">model_file</span> <span class="o">=</span> <span class="s2">&quot;../../../common/mnist_data/mnist_cnn.pt&quot;</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">script_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_script&quot;</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">script_file</span> <span class="o">=</span> <span class="s2">&quot;../../../common/mnist_data/data_processing_script.txt&quot;</span>
+
+  <span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span> <span class="kd">::</span> <span class="n">client</span>
+  <span class="kt">integer</span> <span class="kd">::</span> <span class="n">err_code</span><span class="p">,</span> <span class="n">pe_id</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="kd">::</span> <span class="n">key_suffix</span>
+
+  <span class="c">! Initialize MPI and get the rank of the processor</span>
+  <span class="k">call </span><span class="n">MPI_init</span><span class="p">(</span><span class="n">err_code</span><span class="p">)</span>
+  <span class="k">call </span><span class="n">MPI_comm_rank</span><span class="p">(</span> <span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="n">pe_id</span><span class="p">,</span> <span class="n">err_code</span><span class="p">)</span>
+
+  <span class="c">! Format the suffix for a key as a zero-padded version of the rank</span>
+  <span class="k">write</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">,</span> <span class="s2">&quot;(A,I1.1)&quot;</span><span class="p">)</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span><span class="n">pe_id</span>
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">true</span><span class="p">.)</span>
+
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">pe_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<span class="k">    call </span><span class="n">client</span><span class="p">%</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="s2">&quot;TORCH&quot;</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+    <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">script_file</span><span class="p">)</span>
+  <span class="k">endif</span>
+
+<span class="k">  call </span><span class="n">MPI_barrier</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="n">err_code</span><span class="p">)</span>
+
+  <span class="k">call </span><span class="n">run_mnist</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">key_suffix</span><span class="p">,</span> <span class="n">model_key</span><span class="p">,</span> <span class="n">script_key</span><span class="p">)</span>
+
+  <span class="k">call </span><span class="n">MPI_finalize</span><span class="p">(</span><span class="n">err_code</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">pe_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<span class="k">    print</span> <span class="o">*</span><span class="p">,</span> <span class="s2">&quot;SmartRedis Fortran MPI MNIST example finished without errors.&quot;</span>
+  <span class="k">endif</span>
+
+<span class="k">contains</span>
+
+<span class="k">subroutine </span><span class="n">run_mnist</span><span class="p">(</span> <span class="n">client</span><span class="p">,</span> <span class="n">key_suffix</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">script_name</span> <span class="p">)</span>
+  <span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">),</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">client</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span>  <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">key_suffix</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span>  <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">model_name</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span>  <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">script_name</span>
+
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">mnist_dim1</span> <span class="o">=</span> <span class="mi">28</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">mnist_dim2</span> <span class="o">=</span> <span class="mi">28</span>
+  <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">result_dim1</span> <span class="o">=</span> <span class="mi">10</span>
+
+  <span class="kt">real</span><span class="p">,</span> <span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">mnist_dim1</span><span class="p">,</span><span class="n">mnist_dim2</span><span class="p">)</span> <span class="kd">::</span> <span class="k">array</span>
+<span class="k">  </span><span class="kt">real</span><span class="p">,</span> <span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">result_dim1</span><span class="p">)</span> <span class="kd">::</span> <span class="k">result</span>
+
+<span class="k">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span> <span class="kd">::</span> <span class="n">in_key</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span> <span class="kd">::</span> <span class="n">script_out_key</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span> <span class="kd">::</span> <span class="n">out_key</span>
+
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span> <span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="kd">::</span> <span class="n">inputs</span>
+  <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span> <span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="kd">::</span> <span class="n">outputs</span>
+
+  <span class="c">! Construct the keys used for the specifiying inputs and outputs</span>
+  <span class="n">in_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span>
+  <span class="n">script_out_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span>
+  <span class="n">out_key</span> <span class="o">=</span> <span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span>
+
+  <span class="c">! Generate some fake data for inference</span>
+  <span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="k">array</span><span class="p">)</span>
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span> <span class="k">array</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="k">array</span><span class="p">))</span>
+
+  <span class="c">! Prepare the script inputs and outputs</span>
+  <span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">in_key</span>
+  <span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">script_out_key</span>
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">run_script</span><span class="p">(</span><span class="n">script_name</span><span class="p">,</span> <span class="s2">&quot;pre_process&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
+  <span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">script_out_key</span>
+  <span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">out_key</span>
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">run_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
+  <span class="k">result</span><span class="p">(:,:)</span> <span class="o">=</span> <span class="mf">0.</span>
+  <span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span> <span class="k">result</span><span class="p">,</span> <span class="nb">shape</span><span class="p">(</span><span class="k">result</span><span class="p">))</span>
+
+<span class="k">end subroutine </span><span class="n">run_mnist</span>
+
+<span class="k">end program </span><span class="n">mnist_example</span>
+</pre></div>
+</td></tr></table></div>
+<p>Python Pre-Processing:</p>
+<div class="highlight-Python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">pre_process</span><span class="p">(</span><span class="n">inp</span><span class="p">):</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inp</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">*</span> <span class="n">mean</span>
+    <span class="k">return</span> <span class="n">temp</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="lattice_boltz_analysis.html" class="btn btn-neutral float-right" title="Online Analysis" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="01_getting_started/01_getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

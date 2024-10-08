@@ -1,0 +1,781 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>smartsim.exp.ray.raycluster &#8212; SmartSim 0.4.0 documentation</title>
+    
+  <link href="../../../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../../../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.0 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../community.html">
+   Community
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../tutorials/training.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../tutorials/ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <h1>Source code for smartsim.exp.ray.raycluster</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span> <span class="k">as</span> <span class="nn">_time</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">..._core.utils</span> <span class="kn">import</span> <span class="n">init_default</span>
+<span class="kn">from</span> <span class="nn">..._core.utils.helpers</span> <span class="kn">import</span> <span class="n">expand_exe_path</span>
+<span class="kn">from</span> <span class="nn">...entity</span> <span class="kn">import</span> <span class="n">EntityList</span><span class="p">,</span> <span class="n">SmartSimEntity</span>
+<span class="kn">from</span> <span class="nn">...error</span> <span class="kn">import</span> <span class="n">SmartSimError</span><span class="p">,</span> <span class="n">SSUnsupportedError</span>
+<span class="kn">from</span> <span class="nn">...log</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">...settings</span> <span class="kn">import</span> <span class="n">settings</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RayCluster"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.exp.ray.RayCluster">[docs]</a><span class="k">class</span> <span class="nc">RayCluster</span><span class="p">(</span><span class="n">EntityList</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Entity used to run a Ray cluster on a given number of hosts. One Ray node is</span>
+<span class="sd">    launched on each host, and the first host is used to launch the head node.</span>
+
+<span class="sd">    :param name: The name of the entity.</span>
+<span class="sd">    :type name: str</span>
+<span class="sd">    :param path: path to output, error, and configuration files</span>
+<span class="sd">    :type path: str</span>
+<span class="sd">    :param ray_port: Port at which the head node will be running.</span>
+<span class="sd">    :type ray_port: int</span>
+<span class="sd">    :param ray_args: Arguments to be passed to Ray executable.</span>
+<span class="sd">    :type ray_args: dict[str,str]</span>
+<span class="sd">    :param num_nodes: Number of hosts, includes 1 head node and all worker nodes.</span>
+<span class="sd">    :type num_nodes: int</span>
+<span class="sd">    :param run_args: Arguments to pass to launcher to specify details such as partition or time.</span>
+<span class="sd">    :type run_args: dict[str,str]</span>
+<span class="sd">    :param batch_args: Additional batch arguments passed to launcher when running batch jobs.</span>
+<span class="sd">    :type batch_args: dict[str,str]</span>
+<span class="sd">    :param launcher: Name of launcher to use for starting the cluster.</span>
+<span class="sd">    :type launcher: str</span>
+<span class="sd">    :param interface: Name of network interface the cluster nodes should bind to.</span>
+<span class="sd">    :type interface: str</span>
+<span class="sd">    :param alloc: ID of allocation to run on, if obtained with ``smartsim.slurm.get_allocation``</span>
+<span class="sd">    :type alloc: int</span>
+<span class="sd">    :param batch: Whether cluster should be launched as batch file, ignored when ``launcher`` is `local`</span>
+<span class="sd">    :type batch: bool</span>
+<span class="sd">    :param time: The walltime the cluster will be running for</span>
+<span class="sd">    :type time: str</span>
+<span class="sd">    :param run_command: specify launch binary, defaults to automatic selection.</span>
+<span class="sd">    :type run_command: str</span>
+<span class="sd">    :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI.</span>
+<span class="sd">    :type hosts: str, list[str]</span>
+<span class="sd">    :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.</span>
+<span class="sd">                     Can be set to</span>
+<span class="sd">                     - `auto`: a strong password will be generated internally</span>
+<span class="sd">                     - a string: it will be used as password</span>
+<span class="sd">                     - `None`: the default Ray password will be used.</span>
+<span class="sd">                     Defaults to `auto`</span>
+<span class="sd">    :type password: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span>
+        <span class="n">ray_port</span><span class="o">=</span><span class="mi">6789</span><span class="p">,</span>
+        <span class="n">ray_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">run_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
+        <span class="n">batch</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">time</span><span class="o">=</span><span class="s2">&quot;01:00:00&quot;</span><span class="p">,</span>
+        <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ipogif0&quot;</span><span class="p">,</span>
+        <span class="n">alloc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">run_command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">host_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">password</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">launcher</span> <span class="o">=</span> <span class="n">launcher</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">supported_launchers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span> <span class="s2">&quot;pbs&quot;</span><span class="p">,</span> <span class="s2">&quot;cobalt&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">launcher</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_launchers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span>
+                <span class="s2">&quot;The supported launchers for RayCluster are&quot;</span><span class="p">,</span>
+                <span class="o">*</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">launcher_name</span><span class="si">}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">launcher_name</span> <span class="ow">in</span> <span class="n">supported_launchers</span><span class="p">],</span>
+                <span class="sa">f</span><span class="s2">&quot;but </span><span class="si">{</span><span class="n">launcher</span><span class="si">}</span><span class="s2"> was provided.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">password</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">password</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ray_password</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ray_password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ray_password</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">num_nodes</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of nodes must be larger than 0.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">alloc</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">run_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">run_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="n">batch_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">batch_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="n">ray_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">ray_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ray_args</span> <span class="o">=</span> <span class="n">ray_args</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">ray_args</span><span class="o">=</span><span class="n">ray_args</span><span class="p">,</span>
+            <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="p">,</span>
+            <span class="n">ray_port</span><span class="o">=</span><span class="n">ray_port</span><span class="p">,</span>
+            <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+            <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+            <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">,</span>
+            <span class="n">num_nodes</span><span class="o">=</span><span class="n">num_nodes</span><span class="p">,</span>
+            <span class="n">run_command</span><span class="o">=</span><span class="n">run_command</span> <span class="k">if</span> <span class="n">run_command</span> <span class="k">else</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+            <span class="n">host_list</span><span class="o">=</span><span class="n">host_list</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">batch</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">create_batch_settings</span><span class="p">(</span>
+                <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+                <span class="n">nodes</span><span class="o">=</span><span class="n">num_nodes</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                <span class="n">batch_args</span><span class="o">=</span><span class="n">batch_args</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ray_head_address</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">host_list</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_hosts</span><span class="p">(</span><span class="n">host_list</span><span class="o">=</span><span class="n">host_list</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">batch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="RayCluster.set_hosts"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.exp.ray.RayCluster.set_hosts">[docs]</a>    <span class="k">def</span> <span class="nf">set_hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_list</span><span class="p">,</span> <span class="n">launcher</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Specify the hosts for the ``RayCluster`` to launch on. This is</span>
+<span class="sd">        optional, unless ``run_command`` is `mpirun`.</span>
+
+<span class="sd">        :param host_list: list of hosts (compute node names)</span>
+<span class="sd">        :type host_list: str | list[str]</span>
+<span class="sd">        :raises TypeError: if wrong type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">host_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">host_list</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be a list of strings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">host_list</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be list of strings&quot;</span><span class="p">)</span>
+        <span class="c1"># TODO check length</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span><span class="o">.</span><span class="n">set_hostlist</span><span class="p">(</span><span class="n">host_list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">):</span>
+            <span class="c1"># Aprun doesn&#39;t like settings hosts in batch launch</span>
+            <span class="k">if</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;pbs&quot;</span> <span class="ow">or</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;cobalt&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="p">:</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">run_settings</span><span class="o">.</span><span class="n">set_hostlist</span><span class="p">([</span><span class="n">host</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">run_settings</span><span class="o">.</span><span class="n">set_hostlist</span><span class="p">([</span><span class="n">host</span><span class="p">])</span></div>
+
+    <span class="k">def</span> <span class="nf">_initialize_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">ray_port</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ray_port&quot;</span><span class="p">,</span> <span class="mi">6789</span><span class="p">)</span>
+        <span class="n">launcher</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;launcher&quot;</span><span class="p">,</span> <span class="s2">&quot;slurm&quot;</span><span class="p">)</span>
+        <span class="n">ray_args</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ray_args&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">run_args</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;run_args&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">interface</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interface&quot;</span><span class="p">,</span> <span class="s2">&quot;ipogif0&quot;</span><span class="p">)</span>
+        <span class="n">num_nodes</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_nodes&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">alloc</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alloc&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">run_command</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;run_command&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">ray_head</span> <span class="o">=</span> <span class="n">RayHead</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ray_head&quot;</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">ray_password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ray_password</span><span class="p">,</span>
+            <span class="n">ray_port</span><span class="o">=</span><span class="n">ray_port</span><span class="p">,</span>
+            <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+            <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="n">ray_args</span><span class="o">=</span><span class="n">ray_args</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+            <span class="n">run_command</span><span class="o">=</span><span class="n">run_command</span><span class="p">,</span>
+            <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ray_head</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">worker_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_nodes</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">worker_model</span> <span class="o">=</span> <span class="n">RayWorker</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;ray_worker_</span><span class="si">{</span><span class="n">worker_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                <span class="n">ray_port</span><span class="o">=</span><span class="n">ray_port</span><span class="p">,</span>
+                <span class="n">ray_password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ray_password</span><span class="p">,</span>
+                <span class="n">ray_args</span><span class="o">=</span><span class="n">ray_args</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+                <span class="n">run_command</span><span class="o">=</span><span class="n">run_command</span><span class="p">,</span>
+                <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+                <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_model</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RayCluster.get_head_address"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.exp.ray.RayCluster.get_head_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_head_address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return address of head node</span>
+
+<span class="sd">        If address has not been initialized, returns None</span>
+
+<span class="sd">        :returns: Address of head node</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ray_head_address</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ray_head_address</span> <span class="o">=</span> <span class="n">parse_ray_head_node_address</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.out&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ray_head_address</span></div>
+
+<div class="viewcode-block" id="RayCluster.get_dashboard_address"><a class="viewcode-back" href="../../../../api/smartsim_api.html#smartsim.exp.ray.RayCluster.get_dashboard_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_dashboard_address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns dashboard address</span>
+
+<span class="sd">        The format is &lt;head_ip&gt;:&lt;dashboard_port&gt;</span>
+
+<span class="sd">        :returns: Dashboard address</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_head_address</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dashboard_port</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_update_workers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update worker args before launching them.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="n">worker</span><span class="p">]</span><span class="o">.</span><span class="n">set_head_log</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s2">.out&quot;</span>
+            <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">find_ray_exe</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Find ray executable in current path.&quot;&quot;&quot;</span>
+    <span class="c1"># TODO add this to CONFIG?</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">expand_exe_path</span><span class="p">(</span><span class="s2">&quot;ray&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">FileNotFoundError</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Could not find ray executable&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">parse_ray_head_node_address</span><span class="p">(</span><span class="n">head_log</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the ray head node host address from the log file produced</span>
+<span class="sd">    by the head process.</span>
+
+<span class="sd">    :param head_log: full path to log file of head node</span>
+<span class="sd">    :return: address of the head host</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">max_attempts</span> <span class="o">=</span> <span class="mi">24</span>
+    <span class="n">attempts</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">head_log</span><span class="p">):</span>
+        <span class="n">_time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">attempts</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">attempts</span> <span class="o">==</span> <span class="n">max_attempts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not find Ray cluster head log file </span><span class="si">{</span><span class="n">head_log</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">attempts</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">head_ip</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">while</span> <span class="n">head_ip</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">head_log</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">plain_line</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\033\\</span><span class="s2">[([0-9]+)(;[0-9]+)*m&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="k">if</span> <span class="s2">&quot;Local node IP:&quot;</span> <span class="ow">in</span> <span class="n">plain_line</span><span class="p">:</span>
+                    <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?&lt;=Local node IP: ).*&quot;</span><span class="p">,</span> <span class="n">plain_line</span><span class="p">)</span>
+                    <span class="n">head_ip</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+                    <span class="k">break</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">attempts</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">attempts</span> <span class="o">==</span> <span class="n">max_attempts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Could not find Ray cluster head address in log file </span><span class="si">{</span><span class="n">head_log</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">head_ip</span>
+
+
+<span class="k">class</span> <span class="nc">RayHead</span><span class="p">(</span><span class="n">SmartSimEntity</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">ray_password</span><span class="p">,</span>
+        <span class="n">ray_port</span><span class="o">=</span><span class="mi">6789</span><span class="p">,</span>
+        <span class="n">run_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">ray_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
+        <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ipogif0&quot;</span><span class="p">,</span>
+        <span class="n">run_command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">alloc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">dash_port</span><span class="o">=</span><span class="mi">8265</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dashboard_port</span> <span class="o">=</span> <span class="n">dash_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">run_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">run_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="n">ray_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">ray_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+
+        <span class="n">ray_exe_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_ray_exe_args</span><span class="p">(</span>
+            <span class="n">ray_port</span><span class="p">,</span> <span class="n">ray_password</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">ray_args</span>
+        <span class="p">)</span>
+
+        <span class="n">run_settings</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span>
+            <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+            <span class="n">exe</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+            <span class="n">exe_args</span><span class="o">=</span><span class="n">ray_exe_args</span><span class="p">,</span>
+            <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="p">,</span>
+            <span class="n">run_command</span><span class="o">=</span><span class="n">run_command</span> <span class="k">if</span> <span class="n">run_command</span> <span class="k">else</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+            <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">run_settings</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">run_settings</span><span class="o">.</span><span class="n">set_tasks</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_build_ray_exe_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ray_port</span><span class="p">,</span> <span class="n">ray_password</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">ray_args</span><span class="p">):</span>
+
+        <span class="c1"># python script that launches ray head node</span>
+        <span class="n">ray_starter_args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;-m&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;smartsim._core.entrypoints.ray&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;+port=</span><span class="si">{</span><span class="n">ray_port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;+ifname=</span><span class="si">{</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;+ray-exe=</span><span class="si">{</span><span class="n">find_ray_exe</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;+head&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">ray_password</span><span class="p">:</span>
+            <span class="n">ray_starter_args</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;+redis-password=</span><span class="si">{</span><span class="n">ray_password</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="s2">&quot;dashboard-port&quot;</span> <span class="ow">in</span> <span class="n">ray_args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dashboard_port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ray_args</span><span class="p">[</span><span class="s2">&quot;dashboard-port&quot;</span><span class="p">])</span>
+        <span class="n">ray_starter_args</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;+dashboard-port=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dashboard_port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+
+        <span class="n">used</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="s2">&quot;redis-password&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;head&quot;</span><span class="p">,</span> <span class="s2">&quot;port&quot;</span><span class="p">,</span> <span class="s2">&quot;dashboard-port&quot;</span><span class="p">]</span>
+        <span class="n">extra_ray_args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ray_args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used</span><span class="p">:</span>
+                <span class="n">extra_ray_args</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;+ray-args=--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="n">ray_starter_args</span> <span class="o">+=</span> <span class="n">extra_ray_args</span>
+
+        <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ray_starter_args</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">RayWorker</span><span class="p">(</span><span class="n">SmartSimEntity</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">ray_password</span><span class="p">,</span>
+        <span class="n">ray_port</span><span class="p">,</span>
+        <span class="n">run_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">ray_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ipogif0&quot;</span><span class="p">,</span>
+        <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
+        <span class="n">run_command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">alloc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">run_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">run_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="n">ray_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">ray_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+
+        <span class="n">ray_exe_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_ray_exe_args</span><span class="p">(</span>
+            <span class="n">ray_password</span><span class="p">,</span> <span class="n">ray_args</span><span class="p">,</span> <span class="n">ray_port</span><span class="p">,</span> <span class="n">interface</span>
+        <span class="p">)</span>
+
+        <span class="n">run_settings</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span>
+            <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+            <span class="n">exe</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span>
+            <span class="n">exe_args</span><span class="o">=</span><span class="n">ray_exe_args</span><span class="p">,</span>
+            <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="p">,</span>
+            <span class="n">run_command</span><span class="o">=</span><span class="n">run_command</span><span class="p">,</span>
+            <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">run_settings</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">run_settings</span><span class="o">.</span><span class="n">set_tasks</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">batch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">set_head_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">head_log</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set head log file (with full path)</span>
+
+<span class="sd">        The head log file is used by the worker to discover</span>
+<span class="sd">        the head IP address. This function is called by</span>
+<span class="sd">        RayCluster before the cluster is launched.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_settings</span><span class="o">.</span><span class="n">add_exe_args</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;+head-log=</span><span class="si">{</span><span class="n">head_log</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_build_ray_exe_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ray_password</span><span class="p">,</span> <span class="n">ray_args</span><span class="p">,</span> <span class="n">ray_port</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+
+        <span class="c1"># python script that launches ray  node</span>
+        <span class="n">ray_starter_args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;-m&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;smartsim._core.entrypoints.ray&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;+ray-exe=</span><span class="si">{</span><span class="n">find_ray_exe</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;+port=</span><span class="si">{</span><span class="n">ray_port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;+ifname=</span><span class="si">{</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">ray_password</span><span class="p">:</span>
+            <span class="n">ray_starter_args</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;+redis-password=</span><span class="si">{</span><span class="n">ray_password</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+
+        <span class="n">used</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;block&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;redis-password&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;head&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;port&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dashboard-port&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dashboard-host&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">extra_ray_args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ray_args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used</span><span class="p">:</span>
+                <span class="n">extra_ray_args</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;+ray-args=--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="n">ray_starter_args</span> <span class="o">+=</span> <span class="n">extra_ray_args</span>
+
+        <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ray_starter_args</span><span class="p">)</span>
+</pre></div>
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
