@@ -41,7 +41,6 @@ import dragon.data.ddict.ddict as dragon_ddict
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
-from dragon.mpbridge.queues import DragonQueue
 
 # isort: on
 
