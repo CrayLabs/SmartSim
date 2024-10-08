@@ -9,6 +9,24 @@ Jump to:
 
 ## SmartSim
 
+### develop
+
+To be released at some point in the future
+
+Description
+
+- Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
+
+Detailed Notes
+
+- In libtensorflow, the input argument to TF_SessionRun seems to be mistyped to
+  TF_Output instead of TF_Input. These two types differ only in name. GCC-14
+  catches this and throws an error, even though earlier versions allow this. To
+  solve this problem, patches are applied to the Tensorflow backend in RedisAI.
+  Future versions of Tensorflow may fix this problem, but for now this seems to be
+  the best workaround.
+  ([SmartSim-PR738](https://github.com/CrayLabs/SmartSim/pull/738))
+
 ### 0.8.0
 
 Released on 27 September, 2024
