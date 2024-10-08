@@ -36,12 +36,38 @@ from smartsim.builders.utils import strategies
 from smartsim.builders.utils.strategies import ParamSet
 from smartsim.entity import entity
 from smartsim.entity.application import Application
-from smartsim.entity.files import EntityFiles
 from smartsim.launchable.job import Job
+from smartsim._core.generation.builder_operations import EnsembleFileSysOperationSet, EnsembleConfigureOperation
+from dataclasses import dataclass, field
+
 
 if t.TYPE_CHECKING:
     from smartsim.settings.launch_settings import LaunchSettings
+@dataclass(frozen=True)
+class FileSet:
+    """
+    Represents a set of file parameters and execution arguments as parameters.
+    """
 
+    file: EnsembleConfigureOperation
+    combinations: ParamSet
+
+@dataclass(frozen=True)
+class Combo:
+    """
+    Represents a set of file parameters and execution arguments as parameters.
+    """
+
+    file: EnsembleConfigureOperation
+    combination: ParamSet
+
+@dataclass(frozen=True)
+class ComboSet:
+    """
+    Represents a set of file parameters and execution arguments as parameters.
+    """
+
+    combos: t.List[Combo]
 
 class Ensemble(entity.CompoundEntity):
     """An Ensemble is a builder class that parameterizes the creation of multiple
@@ -54,8 +80,6 @@ class Ensemble(entity.CompoundEntity):
         exe: str | os.PathLike[str],
         exe_args: t.Sequence[str] | None = None,
         exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
-        files: EntityFiles | None = None,
-        file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
         permutation_strategy: str | strategies.PermutationStrategyType = "all_perm",
         max_permutations: int = -1,
         replicas: int = 1,
@@ -137,12 +161,8 @@ class Ensemble(entity.CompoundEntity):
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         )
         """The parameters and values to be used when configuring entities"""
-        self._files = copy.deepcopy(files) if files else None
+        self.files = EnsembleFileSysOperationSet([])
         """The files to be copied, symlinked, and/or configured prior to execution"""
-        self._file_parameters = (
-            copy.deepcopy(file_parameters) if file_parameters else {}
-        )
-        """The parameters and values to be used when configuring files"""
         self._permutation_strategy = permutation_strategy
         """The strategy to control how the param values are applied to the Ensemble"""
         self._max_permutations = max_permutations
@@ -199,40 +219,6 @@ class Ensemble(entity.CompoundEntity):
         :param value: the executable argument parameters
         """
         self._exe_arg_parameters = copy.deepcopy(value)
-
-    @property
-    def files(self) -> t.Union[EntityFiles, None]:
-        """Return attached EntityFiles object.
-
-        :return: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        """
-        return self._files
-
-    @files.setter
-    def files(self, value: t.Optional[EntityFiles]) -> None:
-        """Set the EntityFiles object.
-
-        :param value: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        """
-        self._files = copy.deepcopy(value)
-
-    @property
-    def file_parameters(self) -> t.Mapping[str, t.Sequence[str]]:
-        """Return the attached file parameters.
-
-        :return: the file parameters
-        """
-        return self._file_parameters
-
-    @file_parameters.setter
-    def file_parameters(self, value: t.Mapping[str, t.Sequence[str]]) -> None:
-        """Set the file parameters.
-
-        :param value: the file parameters
-        """
-        self._file_parameters = dict(value)
 
     @property
     def permutation_strategy(self) -> str | strategies.PermutationStrategyType:
@@ -293,25 +279,50 @@ class Ensemble(entity.CompoundEntity):
 
         :return: A tuple of Application instances
         """
+        ls = []
         permutation_strategy = strategies.resolve(self.permutation_strategy)
+        for file in self.files.configure_operations:
+            new_list = []
+            combinations = permutation_strategy(
+                file.file_parameters, self.exe_arg_parameters, self.max_permutations
+            )
+            combinations = combinations if combinations else [ParamSet({}, {})]
+            # permutations_ = itertools.chain.from_iterable(
+            #     itertools.repeat(permutation, self.replicas) for permutation in combinations
+            # )
+            for combo in combinations:
+                new_list.append(FileSet(file, combo))
+            ls.append(new_list)
+        combo = self._cartesian_values(ls)
+        print(combo)
+        print(type(combo))
+        print(len(combo))
+        for item in combo:
+            print(type(item))
+            print(item)
 
-        combinations = permutation_strategy(
-            self.file_parameters, self.exe_arg_parameters, self.max_permutations
-        )
-        combinations = combinations if combinations else [ParamSet({}, {})]
-        permutations_ = itertools.chain.from_iterable(
-            itertools.repeat(permutation, self.replicas) for permutation in combinations
-        )
-        return tuple(
-            Application(
+        # return tuple(
+        #     self.create_app(i, item)
+
+        #     for i, item in combo
+        # )
+        apps = []
+        i = 0
+        for item in combo:
+            i+=1
+            apps.append(self.create_app(i, item))
+        return tuple(apps)
+
+    def create_app(self, i, item):
+        app = Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
                 exe_args=self.exe_args,
-                files=self.files,
-                file_parameters=permutation.params,
             )
-            for i, permutation in enumerate(permutations_)
-        )
+        for merp in item:
+            app.files.add_configuration(src=merp.file.src, file_parameters=merp.combinations.params)
+        return app
+
 
     def build_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
         """Expand an Ensemble into a list of deployable Jobs and apply
@@ -347,3 +358,14 @@ class Ensemble(entity.CompoundEntity):
         if not apps:
             raise ValueError("There are no members as part of this ensemble")
         return tuple(Job(app, settings, app.name) for app in apps)
+
+    def _step_values(self, ls):
+        return list(zip(*ls))
+
+    def _cartesian_values(self, ls): # needs to return a list[tuples]
+        combo = itertools.product(ls)
+        yup: t.Iterable = (
+            val for val in zip(combo)
+        )
+        print(yup)
+        return list(yup)
