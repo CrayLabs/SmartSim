@@ -59,11 +59,11 @@ class Application(SmartSimEntity):
         self,
         name: str,
         exe: str,
+        exe_args: t.Optional[t.Union[str, t.Sequence[str]]] = None,
         file_parameters: (
             t.Mapping[str, str] | None
         ) = None,  # TODO remove when Ensemble is addressed
         files: t.Optional[EntityFiles] = None,  # TODO remove when Ensemble is addressed
-        exe_args: t.Optional[t.Union[str, t.Sequence[str]]] = None,
     ) -> None:
         """Initialize an ``Application``
 

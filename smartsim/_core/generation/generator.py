@@ -230,8 +230,8 @@ class Generator:
         :param job_path: The file path for the Job run folder
         :param log_path: The file path for the Job log folder
         """
-        cmd_list.commands.append(cls._mkdir_file(job_path))
-        cmd_list.commands.append(cls._mkdir_file(log_path))
+        cmd_list.append(cls._mkdir_file(job_path))
+        cmd_list.append(cls._mkdir_file(log_path))
 
     @classmethod
     def _append_file_operations(
@@ -248,13 +248,13 @@ class Generator:
         :param context: A GenerationContext object that holds the Job's run directory
         """
         copy_ret = cls._copy_files(entity.files.copy_operations, context)
-        cmd_list.commands.extend(copy_ret.commands)
+        cmd_list.extend(copy_ret)
 
         symlink_ret = cls._symlink_files(entity.files.symlink_operations, context)
-        cmd_list.commands.extend(symlink_ret.commands)
+        cmd_list.extend(symlink_ret)
 
         configure_ret = cls._configure_files(entity.files.configure_operations, context)
-        cmd_list.commands.extend(configure_ret.commands)
+        cmd_list.extend(configure_ret)
 
     @classmethod
     def _execute_commands(cls, cmd_list: CommandList) -> None:
@@ -290,10 +290,7 @@ class Generator:
         :param context: A GenerationContext object that holds the Job's run directory
         :return: A CommandList containing the copy commands
         """
-        cmd_list = CommandList()
-        for file in files:
-            cmd_list.append(file.format(context))
-        return cmd_list
+        return CommandList([file.format(context) for file in files])
 
     @staticmethod
     def _symlink_files(
@@ -306,10 +303,7 @@ class Generator:
         :param context: A GenerationContext object that holds the Job's run directory
         :return: A CommandList containing the symlink commands
         """
-        cmd_list = CommandList()
-        for file in files:
-            cmd_list.append(file.format(context))
-        return cmd_list
+        return CommandList([file.format(context) for file in files])
 
     @staticmethod
     def _configure_files(
@@ -323,7 +317,4 @@ class Generator:
         :param context: A GenerationContext object that holds the Job's run directory
         :return: A CommandList containing the configuration commands
         """
-        cmd_list = CommandList()
-        for file in files:
-            cmd_list.append(file.format(context))
-        return cmd_list
+        return CommandList([file.format(context) for file in files])

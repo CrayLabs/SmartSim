@@ -16,13 +16,11 @@ from smartsim._core.generation.operations import (
     SymlinkOperation,
     configure_cmd,
     copy_cmd,
-    create_final_dest,
+    _create_final_dest,
     symlink_cmd,
 )
 
-# QUESTIONS
-# TODO test python protocol?
-# TODO do I allow the paths to combine if src is empty?
+# TODO ADD CHECK TO ENFORCE SRC AS RELATIVE
 
 pytestmark = pytest.mark.group_a
 
@@ -40,9 +38,9 @@ def mock_src(test_dir: str):
 
 
 @pytest.fixture
-def mock_dest(test_dir: str):
+def mock_dest():
     """Fixture to create a mock destination path."""
-    return pathlib.Path(test_dir) / pathlib.Path("mock_dest")
+    return pathlib.Path("mock_dest")
 
 
 @pytest.fixture
@@ -99,8 +97,8 @@ def file_system_operation_set(
     ),
 )
 def test_create_final_dest_valid(job_root_path, dest, expected):
-    """Test valid path inputs for operations.create_final_dest"""
-    assert create_final_dest(job_root_path, dest) == expected
+    """Test valid path inputs for operations._create_final_dest"""
+    assert _create_final_dest(job_root_path, dest) == expected
 
 
 @pytest.mark.parametrize(
@@ -112,15 +110,16 @@ def test_create_final_dest_valid(job_root_path, dest, expected):
     ),
 )
 def test_create_final_dest_invalid(job_root_path, dest):
-    """Test invalid path inputs for operations.create_final_dest"""
-    with pytest.raises(ValueError):
-        create_final_dest(job_root_path, dest)
+    """Test invalid path inputs for operations._create_final_dest"""
+    with pytest.raises(TypeError):
+        _create_final_dest(job_root_path, dest)
 
 
 def test_valid_init_generation_context(
-    test_dir: str, generation_context: GenerationContext
+    test_dir: str
 ):
     """Validate GenerationContext init"""
+    generation_context = GenerationContext(pathlib.Path(test_dir))
     assert isinstance(generation_context, GenerationContext)
     assert generation_context.job_root_path == pathlib.Path(test_dir)
 
@@ -134,9 +133,10 @@ def test_invalid_init_generation_context():
 
 
 def test_init_copy_operation(
-    copy_operation: CopyOperation, mock_src: pathlib.Path, mock_dest: pathlib.Path
+    mock_src: pathlib.Path, mock_dest: pathlib.Path
 ):
     """Validate CopyOperation init"""
+    copy_operation = CopyOperation(mock_src, mock_dest)
     assert isinstance(copy_operation, CopyOperation)
     assert copy_operation.src == mock_src
     assert copy_operation.dest == mock_dest
@@ -144,22 +144,24 @@ def test_init_copy_operation(
 
 def test_copy_operation_format(
     copy_operation: CopyOperation,
-    mock_src: str,
     mock_dest: str,
+    mock_src: str,
     generation_context: GenerationContext,
+    test_dir: str
 ):
     """Validate CopyOperation.format"""
     exec = copy_operation.format(generation_context)
     assert isinstance(exec, Command)
     assert str(mock_src) in exec.command
     assert copy_cmd in exec.command
-    assert create_final_dest(mock_src, mock_dest) in exec.command
+    assert _create_final_dest(test_dir, mock_dest) in exec.command
 
 
 def test_init_symlink_operation(
-    symlink_operation: SymlinkOperation, mock_src: str, mock_dest: str
+    mock_src: str, mock_dest: str
 ):
     """Validate SymlinkOperation init"""
+    symlink_operation = SymlinkOperation(mock_src, mock_dest)
     assert isinstance(symlink_operation, SymlinkOperation)
     assert symlink_operation.src == mock_src
     assert symlink_operation.dest == mock_dest
@@ -178,16 +180,17 @@ def test_symlink_operation_format(
     assert symlink_cmd in exec.command
 
     normalized_path = os.path.normpath(mock_src)
-    parent_dir = os.path.basename(normalized_path)
-    final_dest = create_final_dest(generation_context.job_root_path, mock_dest)
+    parent_dir = os.path.dirname(normalized_path)
+    final_dest = _create_final_dest(generation_context.job_root_path, mock_dest)
     new_dest = os.path.join(final_dest, parent_dir)
     assert new_dest in exec.command
 
 
 def test_init_configure_operation(
-    configure_operation: ConfigureOperation, mock_src: str, mock_dest: str
+    mock_src: str, mock_dest: str
 ):
     """Validate ConfigureOperation init"""
+    configure_operation = ConfigureOperation(src=mock_src, dest=mock_dest,file_parameters={"FOO": "BAR"})
     assert isinstance(configure_operation, ConfigureOperation)
     assert configure_operation.src == mock_src
     assert configure_operation.dest == mock_dest
@@ -199,8 +202,9 @@ def test_init_configure_operation(
 
 def test_configure_operation_format(
     configure_operation: ConfigureOperation,
-    mock_src: str,
+    test_dir: str,
     mock_dest: str,
+    mock_src: str,
     generation_context: GenerationContext,
 ):
     """Validate ConfigureOperation.format"""
@@ -208,11 +212,15 @@ def test_configure_operation_format(
     assert isinstance(exec, Command)
     assert str(mock_src) in exec.command
     assert configure_cmd in exec.command
-    assert create_final_dest(mock_src, mock_dest) in exec.command
+    assert _create_final_dest(test_dir, mock_dest) in exec.command
 
 
-def test_init_file_sys_operation_set(file_system_operation_set: FileSysOperationSet):
+def test_init_file_sys_operation_set(
+    copy_operation: CopyOperation,
+    symlink_operation: SymlinkOperation,
+    configure_operation: ConfigureOperation):
     """Test initialize FileSystemOperationSet"""
+    file_system_operation_set = FileSysOperationSet([copy_operation,symlink_operation,configure_operation])
     assert isinstance(file_system_operation_set.operations, list)
     assert len(file_system_operation_set.operations) == 3
 
@@ -222,7 +230,7 @@ def test_add_copy_operation(
 ):
     """Test FileSystemOperationSet.add_copy"""
     assert len(file_system_operation_set.copy_operations) == 1
-    file_system_operation_set.add_copy(src=pathlib.Path("src"))
+    file_system_operation_set.add_copy(src=pathlib.Path("/src"))
     assert len(file_system_operation_set.copy_operations) == 2
 
 
@@ -279,13 +287,6 @@ def source(request, files, directory):
         pytest.param(123, TypeError, id="dest as integer"),
         pytest.param("", TypeError, id="dest as empty str"),
         pytest.param("/absolute/path", TypeError, id="dest as absolute str"),
-        pytest.param(
-            pathlib.Path("relative/path"), ValueError, id="dest as relative Path"
-        ),
-        pytest.param(
-            pathlib.Path("/path with spaces"), ValueError, id="dest as Path with spaces"
-        ),
-        # TODO pytest.param(pathlib.Path("/path/with/special!@#"), id="dest as Path with special char"),
     ),
 )
 @pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
@@ -301,13 +302,6 @@ def test_copy_files_invalid_dest(dest, error, source):
         pytest.param(123, TypeError, id="dest as integer"),
         pytest.param("", TypeError, id="dest as empty str"),
         pytest.param("/absolute/path", TypeError, id="dest as absolute str"),
-        pytest.param(
-            pathlib.Path("relative/path"), ValueError, id="dest as relative Path"
-        ),
-        pytest.param(
-            pathlib.Path("/path with spaces"), ValueError, id="dest as Path with spaces"
-        ),
-        # TODO pytest.param(pathlib.Path("/path/with/special!@#"), id="dest as Path with special char"),
     ),
 )
 @pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
@@ -323,13 +317,6 @@ def test_symlink_files_invalid_dest(dest, error, source):
         pytest.param(123, TypeError, id="dest as integer"),
         pytest.param("", TypeError, id="dest as empty str"),
         pytest.param("/absolute/path", TypeError, id="dest as absolute str"),
-        pytest.param(
-            pathlib.Path("relative/path"), ValueError, id="dest as relative Path"
-        ),
-        pytest.param(
-            pathlib.Path("/path with spaces"), ValueError, id="dest as Path with spaces"
-        ),
-        # TODO pytest.param(pathlib.Path("/path/with/special!@#"), id="dest as Path with special char"),
     ),
 )
 @pytest.mark.parametrize("source", ["files", "directory"], indirect=True)

@@ -36,9 +36,9 @@ class Command(MutableSequence[str]):
 
     def __init__(self, command: t.List[str]) -> None:
         if not command:
-            raise ValueError("Command list cannot be empty")
+            raise TypeError("Command list cannot be empty")
         if not all(isinstance(item, str) for item in command):
-            raise ValueError("All items in the command list must be strings")
+            raise TypeError("All items in the command list must be strings")
         """Command constructor"""
         self._command = command
 
