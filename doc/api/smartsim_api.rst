@@ -14,20 +14,11 @@ Experiment
 
    Experiment.__init__
    Experiment.start
-   Experiment.stop
-   Experiment.create_ensemble
-   Experiment.create_model
-   Experiment.create_database
-   Experiment.create_run_settings
-   Experiment.create_batch_settings
-   Experiment.generate
-   Experiment.poll
-   Experiment.finished
    Experiment.get_status
-   Experiment.reconnect_orchestrator
+   Experiment.wait
    Experiment.preview
    Experiment.summary
-   Experiment.telemetry
+   Experiment.stop
 
 .. autoclass:: Experiment
    :show-inheritance:
@@ -41,7 +32,7 @@ Settings
 
 .. currentmodule:: smartsim.settings
 
-Settings are provided to ``Model`` and ``Ensemble`` objects
+Settings are provided to ``Application`` and ``Ensemble`` objects
 to provide parameters for how a job should be executed. Some
 are specifically meant for certain launchers like ``SbatchSettings``
 is solely meant for system using Slurm as a workload manager.
@@ -55,7 +46,7 @@ Types of Settings:
 
     RunSettings
     SrunSettings
-    AprunSettings
+    AprunLaunchArguments
     MpirunSettings
     MpiexecSettings
     OrterunSettings
@@ -102,31 +93,40 @@ launches that utilize a parallel launch binary like
 
 .. _srun_api:
 
-SrunSettings
+SlurmLaunchArguments
 ------------
 
 
-``SrunSettings`` can be used for running on existing allocations,
+``SlurmLaunchArguments`` can be used for running on existing allocations,
 running jobs in interactive allocations, and for adding srun
 steps to a batch.
 
 
 .. autosummary::
 
-    SrunSettings.set_nodes
-    SrunSettings.set_node_feature
-    SrunSettings.set_tasks
-    SrunSettings.set_tasks_per_node
-    SrunSettings.set_walltime
-    SrunSettings.set_hostlist
-    SrunSettings.set_excluded_hosts
-    SrunSettings.set_cpus_per_task
-    SrunSettings.add_exe_args
-    SrunSettings.format_run_args
-    SrunSettings.format_env_vars
-    SrunSettings.update_env
+    SlurmLaunchArguments.launcher_str
+    SlurmLaunchArguments.set_nodes
+    SlurmLaunchArguments.set_hostlist
+    SlurmLaunchArguments.set_hostlist_from_file
+    SlurmLaunchArguments.set_excluded_hosts
+    SlurmLaunchArguments.set_cpus_per_task
+    SlurmLaunchArguments.set_tasks
+    SlurmLaunchArguments.set_tasks_per_node
+    SlurmLaunchArguments.set_cpu_bindings
+    SlurmLaunchArguments.set_memory_per_node
+    SlurmLaunchArguments.set_executable_broadcast
+    SlurmLaunchArguments.set_node_feature
+    SlurmLaunchArguments.set_walltime
+    SlurmLaunchArguments.set_het_group
+    SlurmLaunchArguments.set_verbose_launch
+    SlurmLaunchArguments.set_quiet_launch
+    SlurmLaunchArguments.format_launch_args
+    SlurmLaunchArguments.format_env_vars
+    SlurmLaunchArguments.format_comma_sep_env_vars
+    SlurmLaunchArguments.set
 
-.. autoclass:: SrunSettings
+
+.. autoclass:: SlurmLaunchArguments
     :inherited-members:
     :undoc-members:
     :members:
@@ -134,31 +134,37 @@ steps to a batch.
 
 .. _aprun_api:
 
-AprunSettings
+AprunLaunchArguments
 -------------
 
 
-``AprunSettings`` can be used on any system that supports the
-Cray ALPS layer. SmartSim supports using ``AprunSettings``
+``AprunLaunchArguments`` can be used on any system that supports the
+Cray ALPS layer. SmartSim supports using ``AprunLaunchArguments``
 on PBSPro WLM systems.
 
-``AprunSettings`` can be used in interactive session (on allocation)
+``AprunLaunchArguments`` can be used in interactive session (on allocation)
 and within batch launches (e.g., ``QsubBatchSettings``)
 
 
 .. autosummary::
 
-    AprunSettings.set_cpus_per_task
-    AprunSettings.set_hostlist
-    AprunSettings.set_tasks
-    AprunSettings.set_tasks_per_node
-    AprunSettings.make_mpmd
-    AprunSettings.add_exe_args
-    AprunSettings.format_run_args
-    AprunSettings.format_env_vars
-    AprunSettings.update_env
+    AprunLaunchArguments.launcher_str
+    AprunLaunchArguments.set_cpus_per_task
+    AprunLaunchArguments.set_tasks
+    AprunLaunchArguments.set_tasks_per_node
+    AprunLaunchArguments.set_hostlist
+    AprunLaunchArguments.set_hostlist_from_file
+    AprunLaunchArguments.set_excluded_hosts
+    AprunLaunchArguments.set_cpu_bindings
+    AprunLaunchArguments.set_memory_per_node
+    AprunLaunchArguments.set_walltime
+    AprunLaunchArguments.set_verbose_launch
+    AprunLaunchArguments.set_quiet_launch
+    AprunLaunchArguments.format_env_vars
+    AprunLaunchArguments.format_launch_args
+    AprunLaunchArguments.set
 
-.. autoclass:: AprunSettings
+.. autoclass:: AprunLaunchArguments
     :inherited-members:
     :undoc-members:
     :members:
@@ -166,20 +172,26 @@ and within batch launches (e.g., ``QsubBatchSettings``)
 
 .. _dragonsettings_api:
 
-DragonRunSettings
+DragonLaunchArguments
 -----------------
 
-``DragonRunSettings`` can be used on systems that support Slurm or
+``DragonLaunchArguments`` can be used on systems that support Slurm or
 PBS, if Dragon is available in the Python environment (see `_dragon_install`
 for instructions on how to install it through ``smart``).
 
-``DragonRunSettings`` can be used in interactive sessions (on allcation)
+``DragonLaunchArguments`` can be used in interactive sessions (on allcation)
 and within batch launches (i.e. ``SbatchSettings`` or ``QsubBatchSettings``,
 for Slurm and PBS sessions, respectively).
 
 .. autosummary::
-    DragonRunSettings.set_nodes
+
+    DragonLaunchArguments.launcher_str
+    DragonLaunchArguments.set_nodes
     DragonRunSettings.set_tasks_per_node
+    DragonLaunchArguments.set
+    DragonLaunchArguments.set_node_feature
+    DragonLaunchArguments.set_cpu_affinity
+    DragonLaunchArguments.set_gpu_affinity
 
 .. autoclass:: DragonRunSettings
     :inherited-members:
@@ -189,33 +201,25 @@ for Slurm and PBS sessions, respectively).
 
 .. _jsrun_api:
 
-JsrunSettings
+JsrunLaunchArguments
 -------------
 
 
-``JsrunSettings`` can be used on any system that supports the
+``JsrunLaunchArguments`` can be used on any system that supports the
 IBM LSF launcher.
 
-``JsrunSettings`` can be used in interactive session (on allocation)
+``JsrunLaunchArguments`` can be used in interactive session (on allocation)
 and within batch launches (i.e. ``BsubBatchSettings``)
 
 
 .. autosummary::
 
-    JsrunSettings.set_num_rs
-    JsrunSettings.set_cpus_per_rs
-    JsrunSettings.set_gpus_per_rs
-    JsrunSettings.set_rs_per_host
-    JsrunSettings.set_tasks
-    JsrunSettings.set_tasks_per_rs
-    JsrunSettings.set_binding
-    JsrunSettings.make_mpmd
-    JsrunSettings.set_mpmd_preamble
-    JsrunSettings.update_env
-    JsrunSettings.set_erf_sets
-    JsrunSettings.format_env_vars
-    JsrunSettings.format_run_args
-
+    JsrunLaunchArguments.launcher_str
+    JsrunLaunchArguments.set_tasks
+    JsrunLaunchArguments.set_binding
+    JsrunLaunchArguments.format_env_vars
+    JsrunLaunchArguments.format_launch_args
+    JsrunLaunchArguments.set
 
 .. autoclass:: JsrunSettings
     :inherited-members:
@@ -224,79 +228,98 @@ and within batch launches (i.e. ``BsubBatchSettings``)
 
 .. _openmpi_run_api:
 
-MpirunSettings
+MpirunLaunchArguments
 --------------
 
 
-``MpirunSettings`` are for launching with OpenMPI. ``MpirunSettings`` are
+``MpirunLaunchArguments`` are for launching with OpenMPI. ``BMpirunLaunchArguments`` are
 supported on Slurm and PBSpro.
 
 
 .. autosummary::
 
-    MpirunSettings.set_cpus_per_task
-    MpirunSettings.set_hostlist
-    MpirunSettings.set_tasks
-    MpirunSettings.set_task_map
-    MpirunSettings.make_mpmd
-    MpirunSettings.add_exe_args
-    MpirunSettings.format_run_args
-    MpirunSettings.format_env_vars
-    MpirunSettings.update_env
+    MpirunLaunchArguments.set_task_map
+    MpirunLaunchArguments.set_cpus_per_task
+    MpirunLaunchArguments.set_executable_broadcast
+    MpirunLaunchArguments.set_cpu_binding_type
+    MpirunLaunchArguments.set_tasks_per_node
+    MpirunLaunchArguments.set_tasks
+    MpirunLaunchArguments.set_hostlist
+    MpirunLaunchArguments.set_hostlist_from_file
+    MpirunLaunchArguments.set_verbose_launch
+    MpirunLaunchArguments.set_walltime
+    MpirunLaunchArguments.set_quiet_launch
+    MpirunLaunchArguments.format_env_vars
+    MpirunLaunchArguments.format_launch_args
+    MpirunLaunchArguments.set
 
-.. autoclass:: MpirunSettings
+
+.. autoclass:: MpirunLaunchArguments
     :inherited-members:
     :undoc-members:
     :members:
 
 .. _openmpi_exec_api:
 
-MpiexecSettings
+MpiexecLaunchArguments
 ---------------
 
 
-``MpiexecSettings`` are for launching with OpenMPI's ``mpiexec``. ``MpirunSettings`` are
+``MpiexecLaunchArguments`` are for launching with OpenMPI's ``mpiexec``. ``MpirunLaunchArguments`` are
 supported on Slurm and PBSpro.
 
 
 .. autosummary::
 
-    MpiexecSettings.set_cpus_per_task
-    MpiexecSettings.set_hostlist
-    MpiexecSettings.set_tasks
-    MpiexecSettings.set_task_map
-    MpiexecSettings.make_mpmd
-    MpiexecSettings.add_exe_args
-    MpiexecSettings.format_run_args
-    MpiexecSettings.format_env_vars
-    MpiexecSettings.update_env
+    MpiexecLaunchArguments.launcher_str
+    MpiexecLaunchArguments.set_task_map
+    MpiexecLaunchArguments.set_cpus_per_task
+    MpiexecLaunchArguments.set_executable_broadcast
+    MpiexecLaunchArguments.set_cpu_binding_type
+    MpiexecLaunchArguments.set_tasks_per_node
+    MpiexecLaunchArguments.set_tasks
+    MpiexecLaunchArguments.set_hostlist
+    MpiexecLaunchArguments.set_hostlist_from_file
+    MpiexecLaunchArguments.set_verbose_launch
+    MpiexecLaunchArguments.set_walltime
+    MpiexecLaunchArguments.set_quiet_launch
+    MpiexecLaunchArguments..format_env_vars
+    MpiexecLaunchArguments.format_launch_args
+    MpiexecLaunchArguments.set
 
-.. autoclass:: MpiexecSettings
+
+.. autoclass:: MpiexecLaunchArguments
     :inherited-members:
     :undoc-members:
     :members:
 
 .. _openmpi_orte_api:
 
-OrterunSettings
+OrterunLaunchArguments
 ---------------
 
 
-``OrterunSettings`` are for launching with OpenMPI's ``orterun``. ``OrterunSettings`` are
+``OrterunLaunchArguments`` are for launching with OpenMPI's ``orterun``. ``OrterunLaunchArguments`` are
 supported on Slurm and PBSpro.
 
 
 .. autosummary::
 
-    OrterunSettings.set_cpus_per_task
-    OrterunSettings.set_hostlist
-    OrterunSettings.set_tasks
-    OrterunSettings.set_task_map
-    OrterunSettings.make_mpmd
-    OrterunSettings.add_exe_args
-    OrterunSettings.format_run_args
-    OrterunSettings.format_env_vars
-    OrterunSettings.update_env
+    OrterunLaunchArguments.launcher_str
+    OrterunLaunchArguments.set_task_map
+    OrterunLaunchArguments.set_cpus_per_task
+    OrterunLaunchArguments.set_executable_broadcast
+    OrterunLaunchArguments.set_cpu_binding_type
+    OrterunLaunchArguments.set_tasks_per_node
+    OrterunLaunchArguments.set_tasks
+    OrterunLaunchArguments.set_hostlist
+    OrterunLaunchArguments.set_hostlist_from_file
+    OrterunLaunchArguments.set_verbose_launch
+    OrterunLaunchArguments.set_walltime
+    OrterunLaunchArguments.set_quiet_launch
+    OrterunLaunchArguments.format_env_vars
+    OrterunLaunchArguments.format_launch_args
+    OrterunLaunchArguments.set
 
 .. autoclass:: OrterunSettings
     :inherited-members:
@@ -309,53 +332,57 @@ supported on Slurm and PBSpro.
 
 .. _sbatch_api:
 
-SbatchSettings
+SlurmBatchArguments
 --------------
 
 
-``SbatchSettings`` are used for launching batches onto Slurm
+``SlurmBatchArguments`` are used for launching batches onto Slurm
 WLM systems.
 
 
 .. autosummary::
 
-    SbatchSettings.set_account
-    SbatchSettings.set_batch_command
-    SbatchSettings.set_nodes
-    SbatchSettings.set_hostlist
-    SbatchSettings.set_partition
-    SbatchSettings.set_queue
-    SbatchSettings.set_walltime
-    SbatchSettings.format_batch_args
+    SlurmBatchArguments.scheduler_str
+    SlurmBatchArguments.set_walltime
+    SlurmBatchArguments.set_nodes
+    SlurmBatchArguments.set_account
+    SlurmBatchArguments.set_partition
+    SlurmBatchArguments.set_queue
+    SlurmBatchArguments.set_cpus_per_task
+    SlurmBatchArguments.set_hostlist
+    SlurmBatchArguments.format_batch_args
+    SlurmBatchArguments.set
+    
 
-.. autoclass:: SbatchSettings
+.. autoclass:: SlurmBatchArguments
     :inherited-members:
     :undoc-members:
     :members:
 
 .. _qsub_api:
 
-QsubBatchSettings
+QsubBatchArguments
 -----------------
 
 
-``QsubBatchSettings`` are used to configure jobs that should
+``QsubBatchArguments`` are used to configure jobs that should
 be launched as a batch on PBSPro systems.
 
 
 .. autosummary::
 
-    QsubBatchSettings.set_account
-    QsubBatchSettings.set_batch_command
-    QsubBatchSettings.set_nodes
-    QsubBatchSettings.set_ncpus
-    QsubBatchSettings.set_queue
-    QsubBatchSettings.set_resource
-    QsubBatchSettings.set_walltime
-    QsubBatchSettings.format_batch_args
+    QsubBatchArguments.scheduler_str
+    QsubBatchArguments.set_nodes
+    QsubBatchArguments.set_hostlist
+    QsubBatchArguments.set_walltime
+    QsubBatchArguments.set_queue
+    QsubBatchArguments.set_ncpus
+    QsubBatchArguments.set_account
+    QsubBatchArguments.format_batch_args
+    QsubBatchArguments.set
 
 
-.. autoclass:: QsubBatchSettings
+.. autoclass:: QsubBatchArguments
     :inherited-members:
     :undoc-members:
     :members:
@@ -363,27 +390,29 @@ be launched as a batch on PBSPro systems.
 
 .. _bsub_api:
 
-BsubBatchSettings
+BsubBatchArguments
 -----------------
 
 
-``BsubBatchSettings`` are used to configure jobs that should
+``BsubBatchArguments`` are used to configure jobs that should
 be launched as a batch on LSF systems.
 
 
 .. autosummary::
 
-    BsubBatchSettings.set_walltime
-    BsubBatchSettings.set_smts
-    BsubBatchSettings.set_project
-    BsubBatchSettings.set_nodes
-    BsubBatchSettings.set_expert_mode_req
-    BsubBatchSettings.set_hostlist
-    BsubBatchSettings.set_tasks
-    BsubBatchSettings.format_batch_args
+    BsubBatchArguments.scheduler_str
+    BsubBatchArguments.set_walltime
+    BsubBatchArguments.set_smts
+    BsubBatchArguments.set_account
+    BsubBatchArguments.set_nodes
+    BsubBatchArguments.set_hostlist
+    BsubBatchArguments.set_tasks
+    BsubBatchArguments.set_queue
+    BsubBatchArguments.format_batch_args
+    BsubBatchArguments.set
 
 
-.. autoclass:: BsubBatchSettings
+.. autoclass:: BsubBatchArguments
     :inherited-members:
     :undoc-members:
     :members:
@@ -405,75 +434,72 @@ container.
 
 .. _orc_api:
 
-Orchestrator
+FeatureStore
 ============
 
 .. currentmodule:: smartsim.database
 
 .. autosummary::
 
-   Orchestrator.__init__
-   Orchestrator.db_identifier
-   Orchestrator.num_shards
-   Orchestrator.db_nodes
-   Orchestrator.hosts
-   Orchestrator.reset_hosts
-   Orchestrator.remove_stale_files
-   Orchestrator.get_address
-   Orchestrator.is_active
-   Orchestrator.set_cpus
-   Orchestrator.set_walltime
-   Orchestrator.set_hosts
-   Orchestrator.set_batch_arg
-   Orchestrator.set_run_arg
-   Orchestrator.enable_checkpoints
-   Orchestrator.set_max_memory
-   Orchestrator.set_eviction_strategy
-   Orchestrator.set_max_clients
-   Orchestrator.set_max_message_size
-   Orchestrator.set_db_conf
-   Orchestrator.telemetry
-   Orchestrator.checkpoint_file
-   Orchestrator.batch
+   FeatureStore.__init__
+   FeatureStore.fs_identifier
+   FeatureStore.num_shards
+   FeatureStore.fs_nodes
+   FeatureStore.hosts
+   FeatureStore.telemetry
+   FeatureStore.reset_hosts
+   FeatureStore.remove_stale_files
+   FeatureStore.get_address
+   FeatureStore.is_active
+   FeatureStore.checkpoint_file
+   FeatureStore.set_cpus
+   FeatureStore.set_walltime
+   FeatureStore.set_hosts
+   FeatureStore.set_batch_arg
+   FeatureStore.set_run_arg
+   FeatureStore.enable_checkpoints
+   FeatureStore.set_max_memory
+   FeatureStore.set_eviction_strategy
+   FeatureStore.set_max_clients
+   FeatureStore.set_max_message_size
+   FeatureStore.set_fs_conf
 
-Orchestrator
+FeatureStore
 ------------
 
-.. _orchestrator_api:
+.. _FeatureStore_api:
 
-.. autoclass:: Orchestrator
+.. autoclass:: FeatureStore
    :members:
    :inherited-members:
    :undoc-members:
 
-.. _model_api:
+.. _Application_api:
 
-Model
+Application
 =====
 
-.. currentmodule:: smartsim.entity.model
+.. currentmodule:: smartsim.entity.application
 
 .. autosummary::
 
-   Model.__init__
-   Model.attach_generator_files
-   Model.colocate_db
-   Model.colocate_db_tcp
-   Model.colocate_db_uds
-   Model.colocated
-   Model.add_ml_model
-   Model.add_script
-   Model.add_function
-   Model.params_to_args
-   Model.register_incoming_entity
-   Model.enable_key_prefixing
-   Model.disable_key_prefixing
-   Model.query_key_prefixing
+   Application.__init__
+   Application.exe
+   Application.exe_args
+   Application.add_exe_args
+   Application.files
+   Application.file_parameters
+   Application.incoming_entities
+   Application.key_prefixing_enabled
+   Application.as_executable_sequence
+   Application.attach_generator_files
+   Application.print_attached_files
 
-Model
+
+Application
 -----
 
-.. autoclass:: Model
+.. autoclass:: Application
    :members:
    :show-inheritance:
    :inherited-members:
@@ -481,20 +507,21 @@ Model
 Ensemble
 ========
 
-.. currentmodule:: smartsim.entity.ensemble
+.. currentmodule:: smartsim.builders.ensemble
 
 .. autosummary::
 
    Ensemble.__init__
-   Ensemble.add_model
-   Ensemble.add_ml_model
-   Ensemble.add_script
-   Ensemble.add_function
-   Ensemble.attach_generator_files
-   Ensemble.enable_key_prefixing
-   Ensemble.models
-   Ensemble.query_key_prefixing
-   Ensemble.register_incoming_entity
+   Ensemble.exe
+   Ensemble.exe_args
+   Ensemble.exe_arg_parameters
+   Ensemble.files
+   Ensemble.file_parameters
+   Ensemble.permutation_strategy
+   Ensemble.max_permutations
+   Ensemble.replicas
+   Ensemble.build_jobs
+
 
 Ensemble
 --------
@@ -571,6 +598,7 @@ Slurm
 
 .. autosummary::
 
+    fmt_walltime
     get_allocation
     release_allocation
     validate
