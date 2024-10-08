@@ -39,17 +39,10 @@ from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConf
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim.error.errors import SmartSimError
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
-
-
-@pytest.fixture(scope="module")
-def the_storage() -> dragon_ddict.DDict:
-    """Fixture to instantiate a dragon distributed dictionary."""
-    return create_ddict(1, 2, 4 * 1024**2)
 
 
 @pytest.mark.parametrize(

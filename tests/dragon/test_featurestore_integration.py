@@ -41,10 +41,6 @@ from smartsim._core.mli.infrastructure.comm.event import OnWriteFeatureStore
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_util import (
-    create_ddict,
-    dragon_ddict,
-)
 
 # isort: off
 from dragon.channels import Channel
@@ -60,28 +56,12 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture(scope="module")
-def the_storage() -> dragon_ddict.DDict:
-    """Fixture to instantiate a dragon distributed dictionary."""
-    return create_ddict(1, 2, 32 * 1024**2)
-
-
-@pytest.fixture(scope="module")
 def the_worker_channel() -> DragonCommChannel:
     """Fixture to create a valid descriptor for a worker channel
     that can be attached to."""
     wmgr_channel_ = create_local()
     wmgr_channel = DragonCommChannel(wmgr_channel_)
     return wmgr_channel
-
-
-@pytest.fixture(scope="module")
-def the_backbone(the_storage: t.Any) -> BackboneFeatureStore:
-    """Fixture to create a distributed dragon dictionary and wrap it
-    in a BackboneFeatureStore.
-
-    :param the_storage: The dragon storage engine to use
-    """
-    return BackboneFeatureStore(the_storage, allow_reserved_writes=True)
 
 
 @pytest.mark.parametrize(

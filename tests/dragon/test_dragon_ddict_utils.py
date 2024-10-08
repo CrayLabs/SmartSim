@@ -41,12 +41,6 @@ pytestmark = pytest.mark.dragon
 logger = get_logger(__name__)
 
 
-@pytest.fixture(scope="module")
-def the_storage() -> dragon_ddict.DDict:
-    """Fixture to instantiate a dragon distributed dictionary."""
-    return dragon_util.create_ddict(1, 2, 3 * 1024**2)
-
-
 @pytest.mark.parametrize(
     "num_nodes, num_managers, mem_per_node",
     [

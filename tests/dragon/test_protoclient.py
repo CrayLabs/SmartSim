@@ -42,7 +42,6 @@ from smartsim._core.mli.infrastructure.comm.event import OnWriteFeatureStore
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
@@ -58,27 +57,6 @@ from smartsim._core.mli.client.protoclient import ProtoClient
 pytestmark = pytest.mark.dragon
 WORK_QUEUE_KEY = BackboneFeatureStore.MLI_WORKER_QUEUE
 logger = get_logger(__name__)
-
-
-@pytest.fixture(scope="module")
-def the_storage() -> DDict:
-    """Fixture that creates a dragon distributed dictionary.
-
-    :returns: The attached distributed dictionary
-    """
-    return create_ddict(1, 2, 32 * 1024**2)
-
-
-@pytest.fixture(scope="module")
-def the_backbone(the_storage) -> BackboneFeatureStore:
-    """Fixture that creates a dragon backbone feature store.
-
-    :param storage_for_dragon_fs: the distributed dictionary to use in backbone
-    :returns: The backbone feature store
-    :returns: The attached `BackboneFeatureStore`
-    """
-
-    return BackboneFeatureStore(the_storage, allow_reserved_writes=True)
 
 
 @pytest.fixture(scope="module")

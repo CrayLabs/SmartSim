@@ -35,7 +35,7 @@ from queue import Empty
 import numpy as np
 import pytest
 
-import conftest
+from . import conftest
 
 pytest.importorskip("dragon")
 
@@ -84,12 +84,6 @@ try:
     mp.set_start_method("dragon")
 except Exception:
     pass
-
-
-@pytest.fixture(scope="module")
-def the_storage() -> DDict:
-    """Fixture to instantiate a dragon distributed dictionary."""
-    return create_ddict(1, 2, 4 * 1024**2)
 
 
 @pytest.mark.parametrize("num_iterations", [4])

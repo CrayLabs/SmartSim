@@ -40,7 +40,6 @@ from dragon.mpbridge.queues import DragonQueue
 
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
-from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
@@ -55,7 +54,6 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
     ModelKey,
@@ -80,29 +78,6 @@ from .utils.worker import IntegratedTorchWorker
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
-
-
-@pytest.fixture(scope="module")
-def the_storage() -> DDict:
-    """Fixture to instantiate a dragon distributed dictionary."""
-    return create_ddict(1, 2, 4 * 1024**2)
-
-
-@pytest.fixture(scope="module")
-def the_worker_channel() -> DragonFLIChannel:
-    """Fixture to create a valid descriptor for a worker channel
-    that can be attached to."""
-    channel_ = create_local()
-    fli_ = FLInterface(main_ch=channel_, manager_ch=None)
-    comm_channel = DragonFLIChannel(fli_)
-    return comm_channel
-
-
-@pytest.fixture(scope="module")
-def backbone_descriptor(the_storage) -> str:
-    # create a shared backbone featurestore
-    feature_store = DragonFeatureStore(the_storage)
-    return feature_store.descriptor
 
 
 @pytest.fixture(scope="module")
