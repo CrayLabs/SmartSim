@@ -20,6 +20,8 @@ that SmartSim may be used on.
 
 .. include:: platform/olcf-summit.rst
 
+.. include:: platform/pml-scylla.rst
+
 .. _site_installation:
 
 .. include:: site-install.rst
