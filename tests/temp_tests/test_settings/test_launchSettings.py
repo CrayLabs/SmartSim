@@ -87,3 +87,29 @@ def test_update_env_vars_errors():
         # and that the function is atomic
         ls.update_env({"test": "test", "test": 1})
         assert ls.env_vars == {"ENV": "VAR"}
+
+
+def test_type_launcher():
+    launcher = "invalid"
+    with pytest.raises(ValueError, match="Invalid launcher type: invalid"):
+        LaunchSettings(
+            launcher=launcher, launch_args={"launch": "var"}, env_vars={"ENV": "VAR"}
+        )
+
+
+def test_type_launch_args():
+    launch_args = "invalid"
+    with pytest.raises(
+        TypeError, match="batch_args argument was not of type mapping of str and str"
+    ):
+        LaunchSettings(
+            launcher="local", launch_args=launch_args, env_vars={"ENV": "VAR"}
+        )
+
+
+def test_type_env_vars():
+    env_vars = "invalid"
+    with pytest.raises(
+        TypeError, match="env_vars argument was not of type dic of str and str"
+    ):
+        LaunchSettings(launcher="local", env_vars=env_vars)
