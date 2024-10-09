@@ -26,6 +26,7 @@
 
 # isort: off
 from dragon import fli
+from dragon.channels import Channel
 
 # isort: on
 
@@ -56,6 +57,10 @@ class DragonFLIChannel(cch.CommChannelBase):
         descriptor = drg_util.channel_to_descriptor(fli_)
         super().__init__(descriptor)
 
+        self._channel: t.Optional["Channel"] = None
+        """The underlying dragon Channel used by a sender-side DragonFLIChannel
+        to attach to the main FLI channel"""
+
         self._fli = fli_
         """The underlying dragon FLInterface used by this CommChannel for communications"""
         self._buffer_size: int = buffer_size
@@ -79,7 +84,11 @@ class DragonFLIChannel(cch.CommChannelBase):
                 f"Error sending via DragonFLIChannel {self.descriptor}"
             ) from e
 
-    def send_multiple(self, values: t.Sequence[bytes], timeout: float = 0.001) -> None:
+    def send_multiple(
+        self,
+        values: t.Sequence[bytes],
+        timeout: float = 0.001,
+    ) -> None:
         """Send a message through the underlying communication channel.
 
         :param values: The values to send
@@ -87,9 +96,10 @@ class DragonFLIChannel(cch.CommChannelBase):
         :raises SmartSimError: If sending message fails
         """
         try:
-            channel = drg_util.create_local(self._buffer_size)
+            if self._channel is None:
+                self._channel = drg_util.create_local(self._buffer_size)
 
-            with self._fli.sendh(timeout=None, stream_channel=channel) as sendh:
+            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
                 for value in values:
                     sendh.send_bytes(value)
                     logger.debug(f"DragonFLIChannel {self.descriptor} sent message")

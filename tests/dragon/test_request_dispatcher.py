@@ -26,7 +26,6 @@
 
 import gc
 import os
-import pathlib
 import subprocess as sp
 import time
 import typing as t
@@ -36,6 +35,7 @@ import numpy as np
 import pytest
 
 from . import conftest
+from .utils import msg_pump
 
 pytest.importorskip("dragon")
 
@@ -68,12 +68,10 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
-_MsgPumpFactory = t.Callable[[conftest.MsgPumpRequest], sp.Popen]
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -87,7 +85,9 @@ except Exception:
 
 @pytest.mark.parametrize("num_iterations", [4])
 def test_request_dispatcher(
-    msg_pump_factory: _MsgPumpFactory, num_iterations: int, the_storage: DDict
+    num_iterations: int,
+    the_storage: DDict,
+    test_dir: str,
 ) -> None:
     """Test the request dispatcher batching and queueing system
 
@@ -113,7 +113,7 @@ def test_request_dispatcher(
     )
 
     request_dispatcher = RequestDispatcher(
-        batch_timeout=0,
+        batch_timeout=1000,
         batch_size=2,
         config_loader=config_loader,
         worker_type=TorchWorker,
@@ -130,6 +130,8 @@ def test_request_dispatcher(
     request_dispatcher._on_start()
 
     # put some messages into the work queue for the dispatcher to pickup
+    channels = []
+    processes = []
     for i in range(num_iterations):
         batch: t.Optional[RequestBatch] = None
         mem_allocs = []
@@ -139,27 +141,31 @@ def test_request_dispatcher(
         # down when mock_messages terms but before the final response message is sent
 
         callback_channel = DragonCommChannel.from_local()
+        channels.append(callback_channel)
 
-        request = conftest.MsgPumpRequest(
-            backbone_fs.descriptor,
-            worker_queue.descriptor,
-            callback_channel.descriptor,
-            i,
+        process = conftest.function_as_dragon_proc(
+            msg_pump.mock_messages,
+            [
+                worker_queue.descriptor,
+                backbone_fs.descriptor,
+                i,
+                callback_channel.descriptor,
+            ],
+            [],
+            [],
         )
+        processes.append(process)
+        process.start()
+        assert process.returncode is None, "The message pump failed to start"
 
-        msg_pump = msg_pump_factory(request)
-
-        assert msg_pump is not None, "Msg Pump Process Creation Failed"
-        assert msg_pump.wait() == 0
-
-        time.sleep(1)
-
+        # give dragon some time to populate the message queues
         for i in range(15):
             try:
                 request_dispatcher._on_iteration()
-                batch = request_dispatcher.task_queue.get(timeout=0.1)
+                batch = request_dispatcher.task_queue.get(timeout=1.0)
                 break
             except Empty:
+                time.sleep(2)
                 logger.warning(f"Task queue is empty on iteration {i}")
                 continue
             except Exception as exc:

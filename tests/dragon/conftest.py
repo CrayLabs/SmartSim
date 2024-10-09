@@ -26,7 +26,9 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
+import socket
 import subprocess
 import sys
 import typing as t
@@ -37,9 +39,10 @@ dragon = pytest.importorskip("dragon")
 
 # isort: off
 import dragon.data.ddict.ddict as dragon_ddict
+import dragon.infrastructure.policy as dragon_policy
+import dragon.infrastructure.process_desc as dragon_process_desc
+import dragon.native.process as dragon_process
 
-from dragon.channels import Channel
-from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 
 # isort: on
@@ -53,90 +56,6 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
-msg_pump_path = pathlib.Path(__file__).parent / "utils" / "msg_pump.py"
-
-
-class MsgPumpRequest(t.NamedTuple):
-    """Fields required for starting a simulated inference request producer."""
-
-    backbone_descriptor: str
-    """The descriptor to use when connecting the message pump to a 
-    backbone featurestore.
-    
-    Passed to the message pump as `--fs-descriptor`
-    """
-    work_queue_descriptor: str
-    """The descriptor to use for sending work from the pump to the worker manager.
-    
-    Passed to the message pump as `--dispatch-fli-descriptor`
-    """
-    callback_descriptor: str
-    """The descriptor the worker should use to returning results.
-    
-    Passed to the message pump as `--callback-descriptor`
-    """
-    iteration_index: int = 1
-    """If calling the message pump repeatedly, supply an iteration index to ensure
-    that logged messages appear unique instead of apparing to be duplicated logs.
-    
-    Passed to the message pump as `--parent-iteration`
-    """
-
-    def as_command(self) -> t.List[str]:
-        """Produce CLI arguments suitable for calling subprocess.Popen that
-        to execute the msg pump.
-
-        NOTE: does NOT include the `[sys.executable, msg_pump_path, ...]`
-        portion of the necessary parameters to Popen.
-
-        :returns: The arguments of the request formatted appropriately to
-        Popen the `<project_dir>/tests/dragon/utils/msg_pump.py`"""
-        return [
-            "--dispatch-fli-descriptor",
-            self.work_queue_descriptor,
-            "--fs-descriptor",
-            self.backbone_descriptor,
-            "--parent-iteration",
-            str(self.iteration_index),
-            "--callback-descriptor",
-            self.callback_descriptor,
-        ]
-
-
-@pytest.fixture(scope="session")
-def msg_pump_factory() -> t.Callable[[MsgPumpRequest], subprocess.Popen]:
-    """A pytest fixture used to create a mock event producer capable of
-    feeding asynchronous inference requests to tests requiring them.
-
-    :returns: A function that opens a subprocess running a mock message pump
-    """
-
-    def run_message_pump(request: MsgPumpRequest) -> subprocess.Popen:
-        """Invoke the message pump entry-point with the descriptors
-        from the request.
-
-        :param request: A request containing all parameters required to
-        invoke the message pump entrypoint
-        :returns: The Popen object for the subprocess that was started"""
-        assert request.backbone_descriptor
-        assert request.callback_descriptor
-        assert request.work_queue_descriptor
-
-        # <smartsim_dir>/tests/dragon/utils/msg_pump.py
-        cmd = [sys.executable, str(msg_pump_path.absolute()), *request.as_command()]
-        logger.debug(f"Executing msg_pump with command: {cmd}")
-
-        popen = subprocess.Popen(
-            args=cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        assert popen is not None
-        assert popen.returncode is None
-        return popen
-
-    return run_message_pump
 
 
 @pytest.fixture(scope="module")
@@ -176,3 +95,35 @@ def the_backbone(
 def backbone_descriptor(the_backbone: BackboneFeatureStore) -> str:
     # create a shared backbone featurestore
     return the_backbone.descriptor
+
+
+def function_as_dragon_proc(
+    entrypoint_fn: t.Callable[[t.Any], None],
+    args: t.List[t.Any],
+    cpu_affinity: t.List[int],
+    gpu_affinity: t.List[int],
+) -> dragon_process.Process:
+    """Execute a function as an independent dragon process.
+
+    :param entrypoint_fn: The function to execute
+    :param args: The arguments for the entrypoint function
+    :param cpu_affinity: The cpu affinity for the process
+    :param gpu_affinity: The gpu affinity for the process
+    :returns: The dragon process handle
+    """
+    options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
+    local_policy = dragon_policy.Policy(
+        placement=dragon_policy.Policy.Placement.HOST_NAME,
+        host_name=socket.gethostname(),
+        cpu_affinity=cpu_affinity,
+        gpu_affinity=gpu_affinity,
+    )
+    return dragon_process.Process(
+        target=entrypoint_fn,
+        args=args,
+        cwd=os.getcwd(),
+        policy=local_policy,
+        options=options,
+        stderr=dragon_process.Popen.STDOUT,
+        stdout=dragon_process.Popen.STDOUT,
+    )
