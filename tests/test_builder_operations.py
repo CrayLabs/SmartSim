@@ -295,3 +295,15 @@ def test_step_mock():
             print(config.src)
             deserialized_dict = pickle.loads(decoded_dict)
             print(deserialized_dict)
+
+def test_all_perm_mock():
+    ensemble = Ensemble("name", "echo", exe_arg_parameters = {"-N": ["1", "2"]}, permutation_strategy="step")
+    ensemble.files.add_configuration(pathlib.Path("src_1"), file_parameters={"FOO":["BAR", "TOE"]})
+    ensemble.files.add_configuration(pathlib.Path("src_2"), file_parameters={"CAN":["TOM", "STO"]})
+    apps = ensemble._create_applications()
+    for app in apps:
+        for config in app.files.configure_operations:
+            decoded_dict = base64.b64decode(config.file_parameters)
+            print(config.src)
+            deserialized_dict = pickle.loads(decoded_dict)
+            print(deserialized_dict)

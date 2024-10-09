@@ -279,10 +279,15 @@ class Ensemble(entity.CompoundEntity):
 
         :return: A tuple of Application instances
         """
+        # Create a list
         ls = []
+        # Grabbing the associated register function
         permutation_strategy = strategies.resolve(self.permutation_strategy)
+        # Open a loop to for configured files
         for file in self.files.configure_operations:
+            # list
             new_list = []
+            # return a list of ParamSets
             combinations = permutation_strategy(
                 file.file_parameters, self.exe_arg_parameters, self.max_permutations
             )
@@ -290,8 +295,10 @@ class Ensemble(entity.CompoundEntity):
             # permutations_ = itertools.chain.from_iterable(
             #     itertools.repeat(permutation, self.replicas) for permutation in combinations
             # )
+            # Attach each paramset with the associated file via dataset and append to the list
             for combo in combinations:
                 new_list.append(FileSet(file, combo))
+            # Add the list of (file, paramset) to a new list
             ls.append(new_list)
         combo = self._cartesian_values(ls)
         print(combo)
@@ -360,12 +367,11 @@ class Ensemble(entity.CompoundEntity):
         return tuple(Job(app, settings, app.name) for app in apps)
 
     def _step_values(self, ls):
+        #facilitate parallel iteration over multiple sequences
         return list(zip(*ls))
 
     def _cartesian_values(self, ls): # needs to return a list[tuples]
-        combo = itertools.product(ls)
-        yup: t.Iterable = (
-            val for val in zip(combo)
-        )
-        print(yup)
-        return list(yup)
+        return list(itertools.product(*ls))
+
+    def _random_values(self, ls):
+        val = self._cartesian_values()
