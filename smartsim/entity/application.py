@@ -63,7 +63,6 @@ class Application(SmartSimEntity):
         file_parameters: (
             t.Mapping[str, str] | None
         ) = None,  # TODO remove when Ensemble is addressed
-        files: t.Optional[EntityFiles] = None,  # TODO remove when Ensemble is addressed
     ) -> None:
         """Initialize an ``Application``
 

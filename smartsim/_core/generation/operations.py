@@ -20,9 +20,7 @@ configure_cmd = "configure"
 """Configure file operations command"""
 
 
-def _create_final_dest(
-    job_root_path: pathlib.Path, dest: t.Union[pathlib.Path, None]
-) -> str:
+def _create_final_dest(job_root_path: pathlib.Path, dest: pathlib.Path) -> str:
     """Combine the job root path and destination path. Return as a string for
     entry point consumption.
 
@@ -31,9 +29,7 @@ def _create_final_dest(
     :return: Combined path
     :raises ValueError: An error occurred during path combination
     """
-    combined_path = job_root_path
-    if dest:
-        combined_path = job_root_path / dest
+    combined_path = job_root_path / dest
     return str(combined_path)
 
 
@@ -47,7 +43,7 @@ def _check_src_and_dest_path(
     :param dest: The destination path to be checked.
     :raises TypeError: If either src or dest is not an instance of pathlib.Path
     """
-    if not isinstance(src, pathlib.Path):
+    if not isinstance(src, pathlib.Path) or not src.is_absolute():
         raise TypeError(f"src must be of type pathlib.Path, not {type(src).__name__}")
     if dest is not None and not isinstance(dest, pathlib.Path):
         raise TypeError(
@@ -101,7 +97,7 @@ class CopyOperation(GenerationProtocol):
         """
         _check_src_and_dest_path(src, dest)
         self.src = src
-        self.dest = dest or src.name
+        self.dest = dest or pathlib.Path(src.name)
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke copy file system entry point
@@ -136,7 +132,7 @@ class SymlinkOperation(GenerationProtocol):
         """
         _check_src_and_dest_path(src, dest)
         self.src = src
-        self.dest = dest or src.name
+        self.dest = dest or pathlib.Path(src.name)
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke symlink file system entry point
@@ -179,7 +175,7 @@ class ConfigureOperation(GenerationProtocol):
         """
         _check_src_and_dest_path(src, dest)
         self.src = src
-        self.dest = dest or src.name
+        self.dest = dest or pathlib.Path(src.name)
         pickled_dict = pickle.dumps(file_parameters)
         encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
         self.file_parameters = encoded_dict

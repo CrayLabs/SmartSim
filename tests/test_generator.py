@@ -40,7 +40,6 @@ from smartsim._core.generation.operations import (
     FileSysOperationSet,
     GenerationContext,
     SymlinkOperation,
-    _create_final_dest,
 )
 from smartsim.entity import SmartSimEntity
 from smartsim.launchable import Job
@@ -65,42 +64,9 @@ def generator_instance(test_dir: str) -> Generator:
 
 
 @pytest.fixture
-def mock_src(test_dir: str):
-    """Fixture to create a mock source path."""
-    return pathlib.Path(test_dir) / pathlib.Path("mock_src")
-
-
-@pytest.fixture
-def mock_dest(test_dir: str):
-    """Fixture to create a mock destination path."""
-    return pathlib.Path(test_dir) / pathlib.Path("mock_dest")
-
-
-@pytest.fixture
 def mock_index():
     """Fixture to create a mock destination path."""
     return 1
-
-
-@pytest.fixture
-def copy_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a CopyOperation object."""
-    return CopyOperation(src=mock_src, dest=mock_dest)
-
-
-@pytest.fixture
-def symlink_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a CopyOperation object."""
-    return SymlinkOperation(src=mock_src, dest=mock_dest)
-
-
-@pytest.fixture
-def configure_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a CopyOperation object."""
-    return ConfigureOperation(
-        src=mock_src,
-        dest=mock_dest,
-    )
 
 
 class EchoHelloWorldEntity(SmartSimEntity):
@@ -241,28 +207,6 @@ def test_mkdir_file(generator_instance: Generator, test_dir: str):
     cmd = generator_instance._mkdir_file(pathlib.Path(test_dir))
     assert isinstance(cmd, Command)
     assert cmd.command == ["mkdir", "-p", test_dir]
-
-
-@pytest.fixture
-def files(fileutils):
-    path_to_files = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "correct/")
-    )
-    list_of_files_strs = glob(path_to_files + "/*")
-    yield [pathlib.Path(str_path) for str_path in list_of_files_strs]
-
-
-@pytest.fixture
-def directory(fileutils):
-    directory = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "correct/")
-    )
-    yield [pathlib.Path(directory)]
-
-
-@pytest.fixture(params=["files", "directory"])
-def source(request):
-    yield request.getfixturevalue(request.param)
 
 
 @pytest.mark.parametrize(
