@@ -69,9 +69,9 @@ def test_command_setitem_slice():
 
 def test_command_setitem_fail():
     cmd = Command(command=["salloc", "-N", "1"])
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         cmd[0] = 1
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         cmd[0:2] = [1, "-n"]
 
 

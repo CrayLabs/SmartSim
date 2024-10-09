@@ -42,6 +42,7 @@ from smartsim._core.control import preview_renderer
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
+from smartsim.launchable.job import Job
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
 from ._core import Generator, Manifest
@@ -125,7 +126,11 @@ class Experiment:
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
         """
-        if not name:
+
+        if name:
+            if not isinstance(name, str):
+                raise TypeError("name argument was not of type str")
+        else:
             raise TypeError("Experiment name must be non-empty string")
 
         self.name = name
@@ -153,19 +158,26 @@ class Experiment:
         experiment
         """
 
-    def start(self, *jobs: Job) -> tuple[LaunchedJobID, ...]:
+    def start(self, *jobs: Job | t.Sequence[Job]) -> tuple[LaunchedJobID, ...]:
         """Execute a collection of `Job` instances.
 
         :param jobs: A collection of other job instances to start
+        :raises TypeError: If jobs provided are not the correct type
+        :raises ValueError: No Jobs were provided.
         :returns: A sequence of ids with order corresponding to the sequence of
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
+
+        if not jobs:
+            raise ValueError("No jobs provided to start")
+
         # Create the run id
+        jobs_ = list(_helpers.unpack(jobs))
+
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
-        # Generate the root path
         root = pathlib.Path(self.exp_path, run_id)
-        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs)
+        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs_)
 
     def _dispatch(
         self,
@@ -241,9 +253,16 @@ class Experiment:
         unique.
 
         :param ids: A sequence of launched job ids issued by the experiment.
+        :raises TypeError: If ids provided are not the correct type
+        :raises ValueError: No IDs were provided.
         :returns: A tuple of statuses with order respective of the order of the
             calling arguments.
         """
+        if not ids:
+            raise ValueError("No job ids provided to get status")
+        if not all(isinstance(id, str) for id in ids):
+            raise TypeError("ids argument was not of type LaunchedJobID")
+
         to_query = self._launch_history.group_by_launcher(
             set(ids), unknown_ok=True
         ).items()
@@ -261,9 +280,13 @@ class Experiment:
         :param ids: The ids of the launched jobs to wait for.
         :param timeout: The max time to wait for all of the launched jobs to end.
         :param verbose: Whether found statuses should be displayed in the console.
+        :raises TypeError: If IDs provided are not the correct type
         :raises ValueError: No IDs were provided.
         """
-        if not ids:
+        if ids:
+            if not all(isinstance(id, str) for id in ids):
+                raise TypeError("ids argument was not of type LaunchedJobID")
+        else:
             raise ValueError("No job ids to wait on provided")
         self._poll_for_statuses(
             ids, TERMINAL_STATUSES, timeout=timeout, verbose=verbose
@@ -426,11 +449,15 @@ class Experiment:
         """Cancel the execution of a previously launched job.
 
         :param ids: The ids of the launched jobs to stop.
+        :raises TypeError: If ids provided are not the correct type
         :raises ValueError: No job ids were provided.
         :returns: A tuple of job statuses upon cancellation with order
             respective of the order of the calling arguments.
         """
-        if not ids:
+        if ids:
+            if not all(isinstance(id, str) for id in ids):
+                raise TypeError("ids argument was not of type LaunchedJobID")
+        else:
             raise ValueError("No job ids provided")
         by_launcher = self._launch_history.group_by_launcher(set(ids), unknown_ok=True)
         id_to_stop_stat = (

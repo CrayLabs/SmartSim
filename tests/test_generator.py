@@ -303,9 +303,6 @@ def test_configure_files_valid_dest(
     assert file_paths == cmd_src_paths, "Not all file paths are in the command list"
 
 
-# TODO Add configure_file tests
-
-
 @pytest.fixture
 def run_directory(test_dir, generator_instance):
     return pathlib.Path(test_dir) / generator_instance.run_directory

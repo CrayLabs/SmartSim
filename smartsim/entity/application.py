@@ -111,8 +111,16 @@ class Application(SmartSimEntity):
         """Set the executable.
 
         :param value: the executable
+        :raises TypeError: exe argument is not int
+
         """
-        self._exe = copy.deepcopy(value)
+        if not isinstance(value, str):
+            raise TypeError("exe argument was not of type str")
+
+        if value == "":
+            raise ValueError("exe cannot be an empty str")
+
+        self._exe = value
 
     @property
     def exe_args(self) -> t.MutableSequence[str]:
@@ -151,7 +159,18 @@ class Application(SmartSimEntity):
         """Set the file parameters.
 
         :param value: the file parameters
+        :raises TypeError: file_parameters argument is not a mapping of str and str
         """
+        if not (
+            isinstance(value, t.Mapping)
+            and all(
+                isinstance(key, str) and isinstance(val, str)
+                for key, val in value.items()
+            )
+        ):
+            raise TypeError(
+                "file_parameters argument was not of type mapping of str and str"
+            )
         self._file_parameters = copy.deepcopy(value)
 
     @property
@@ -167,7 +186,15 @@ class Application(SmartSimEntity):
         """Set the incoming entities.
 
         :param value: incoming entities
+        :raises TypeError: incoming_entities argument is not a list of SmartSimEntity
         """
+        if not isinstance(value, list) or not all(
+            isinstance(x, SmartSimEntity) for x in value
+        ):
+            raise TypeError(
+                "incoming_entities argument was not of type list of SmartSimEntity"
+            )
+
         self._incoming_entities = copy.copy(value)
 
     @property
@@ -183,7 +210,11 @@ class Application(SmartSimEntity):
         """Set whether key prefixing is enabled for the application.
 
         :param value: key prefixing enabled
+        :raises TypeError: key prefixings enabled argument was not of type bool
         """
+        if not isinstance(value, bool):
+            raise TypeError("key_prefixing_enabled argument was not of type bool")
+
         self.key_prefixing_enabled = copy.deepcopy(value)
 
     def as_executable_sequence(self) -> t.Sequence[str]:

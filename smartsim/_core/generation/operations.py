@@ -64,8 +64,6 @@ def _check_run_path(run_path: pathlib.Path) -> None:
         raise TypeError(
             f"run_path must be of type pathlib.Path, not {type(run_path).__name__}"
         )
-    if run_path == pathlib.Path(""):
-        raise ValueError(f"Job root path '{run_path}' is not a directory.")
 
 
 class GenerationContext:
