@@ -78,3 +78,33 @@ def test_env_vars_property():
     assert bs.env_vars == {"ENV": "VAR"}
     ref = bs.env_vars
     assert ref is bs.env_vars
+
+
+def test_type_batch_scheduler():
+    batch_scheduler = "invalid"
+    with pytest.raises(ValueError, match="Invalid scheduler type: invalid"):
+        BatchSettings(
+            batch_scheduler=batch_scheduler,
+            batch_args={"launch": "var"},
+            env_vars={"ENV": "VAR"},
+        )
+
+
+def test_type_batch_args():
+    batch_args = "invalid"
+    with pytest.raises(
+        TypeError, match="batch_args argument was not of type mapping of str and str"
+    ):
+        BatchSettings(
+            batch_scheduler="slurm",
+            batch_args=batch_args,
+            env_vars={"ENV": "VAR"},
+        )
+
+
+def test_type_env_vars():
+    env_vars = "invalid"
+    with pytest.raises(
+        TypeError, match="env_vars argument was not of type dic of str and str"
+    ):
+        BatchSettings(batch_scheduler="slurm", env_vars=env_vars)

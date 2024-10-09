@@ -126,6 +126,15 @@ class LaunchSettings(BaseSettings):
             """The launcher type"""
         except ValueError:
             raise ValueError(f"Invalid launcher type: {launcher}")
+
+        if launch_args:
+            if not (
+                isinstance(launch_args, t.Mapping)
+                and all(isinstance(key, str) for key, val in launch_args.items())
+            ):
+                raise TypeError(
+                    "batch_args argument was not of type mapping of str and str"
+                )
         self._arguments = self._get_arguments(launch_args)
         """The LaunchSettings child class based on launcher type"""
         self.env_vars = env_vars or {}
@@ -165,6 +174,15 @@ class LaunchSettings(BaseSettings):
 
         :param value: The new environment mapping
         """
+        if not (
+            isinstance(value, t.Mapping)
+            and all(
+                isinstance(key, str) and isinstance(val, str)
+                for key, val in value.items()
+            )
+        ):
+            raise TypeError("env_vars argument was not of type dic of str and str")
+
         self._env_vars = copy.deepcopy(value)
 
     def _get_arguments(self, launch_args: StringArgument | None) -> LaunchArguments:
@@ -209,6 +227,15 @@ class LaunchSettings(BaseSettings):
         :param env_vars: environment variables to update or add
         :raises TypeError: if env_vars values cannot be coerced to strings
         """
+        if not (
+            isinstance(env_vars, t.Mapping)
+            and all(
+                isinstance(key, str) and isinstance(val, str)
+                for key, val in env_vars.items()
+            )
+        ):
+            raise TypeError("env_vars argument was not of type dic of str and str")
+
         # Coerce env_vars values to str as a convenience to user
         for env, val in env_vars.items():
             if not isinstance(env, str):
