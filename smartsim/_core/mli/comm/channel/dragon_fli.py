@@ -74,12 +74,14 @@ class DragonFLIChannel(cch.CommChannelBase):
         :raises SmartSimError: If sending message fails
         """
         try:
-            channel = drg_util.create_local(self._buffer_size)
+            if self._channel is None:
+                self._channel = drg_util.create_local(self._buffer_size)
 
-            with self._fli.sendh(timeout=None, stream_channel=channel) as sendh:
+            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
                 sendh.send_bytes(value, timeout=timeout)
                 logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
+            self._channel = None
             raise SmartSimError(
                 f"Error sending via DragonFLIChannel {self.descriptor}"
             ) from e
