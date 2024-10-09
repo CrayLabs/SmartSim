@@ -50,9 +50,11 @@ from smartsim._core.mli.infrastructure.storage import dragon_util
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
-    DragonFeatureStore,
-)
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
+msg_pump_path = pathlib.Path(__file__).parent / "utils" / "msg_pump.py"
+
 
 class MsgPumpRequest(t.NamedTuple):
     """Fields required for starting a simulated inference request producer."""
@@ -116,17 +118,22 @@ def msg_pump_factory() -> t.Callable[[MsgPumpRequest], subprocess.Popen]:
         :param request: A request containing all parameters required to
         invoke the message pump entrypoint
         :returns: The Popen object for the subprocess that was started"""
-        # <smartsim_dir>/tests/dragon/utils/msg_pump.py
-        msg_pump_script = "tests/dragon/utils/msg_pump.py"
-        msg_pump_path = pathlib.Path(__file__).parent / msg_pump_script
+        assert request.backbone_descriptor
+        assert request.callback_descriptor
+        assert request.work_queue_descriptor
 
+        # <smartsim_dir>/tests/dragon/utils/msg_pump.py
         cmd = [sys.executable, str(msg_pump_path.absolute()), *request.as_command()]
+        logger.debug(f"Executing msg_pump with command: {cmd}")
 
         popen = subprocess.Popen(
             args=cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+
+        assert popen is not None
+        assert popen.returncode is None
         return popen
 
     return run_message_pump

@@ -27,7 +27,7 @@
 import io
 import logging
 import pathlib
-import time
+import sys
 import typing as t
 
 import pytest
@@ -44,7 +44,6 @@ import torch.nn as nn
 
 # isort: on
 
-from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
     BackboneFeatureStore,
@@ -124,6 +123,8 @@ def mock_messages(
     feature_store = BackboneFeatureStore.from_descriptor(fs_descriptor)
     request_dispatcher_queue = DragonFLIChannel.from_descriptor(dispatch_fli_descriptor)
 
+    feature_store[model_key] = load_model()
+
     for iteration_number in range(2):
         logged_iteration = offset + iteration_number
         logger.debug(f"Sending mock message {logged_iteration}")
@@ -164,13 +165,9 @@ def mock_messages(
         logger.info(
             f"Retrieving {iteration_number} from callback channel: {callback_descriptor}"
         )
-        callback_channel = DragonCommChannel.from_descriptor(callback_descriptor)
 
-        # Results will be empty. The test pulls messages off the queue before they
-        # can be serviced by a worker. Just ensure the callback channel works.
-        results = callback_channel.recv(timeout=0.1)
-        logger.debug(f"Received mock message results on callback channel: {results}")
-        time.sleep(1)
+        # send the header & body together so they arrive together
+        request_dispatcher_queue.send_multiple([request_bytes, tensor.tobytes()])
 
 
 if __name__ == "__main__":
@@ -185,9 +182,15 @@ if __name__ == "__main__":
 
     args = args.parse_args()
 
-    mock_messages(
-        args.dispatch_fli_descriptor,
-        args.fs_descriptor,
-        args.parent_iteration,
-        args.callback_descriptor,
-    )
+    try:
+        mock_messages(
+            args.dispatch_fli_descriptor,
+            args.fs_descriptor,
+            args.parent_iteration,
+            args.callback_descriptor,
+        )
+    except Exception as ex:
+        logger.exception("The message pump did not execute properly")
+        sys.exit(100)
+
+    sys.exit(0)

@@ -371,6 +371,7 @@ class RequestDispatcher(Service):
                     None,
                 )
 
+            logger.debug(f"Dispatcher is processing {len(bytes_list)} messages")
             request_bytes = bytes_list[0]
             tensor_bytes_list = bytes_list[1:]
             self._perf_timer.start_timings()

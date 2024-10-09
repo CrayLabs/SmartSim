@@ -26,7 +26,6 @@
 
 # isort: off
 from dragon import fli
-import dragon.channels as dch
 
 # isort: on
 
@@ -59,9 +58,6 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         self._fli = fli_
         """The underlying dragon FLInterface used by this CommChannel for communications"""
-        self._channel: t.Optional["dch.Channel"] = None
-        """The underlying dragon Channel used by a sender-side DragonFLIChannel
-        to attach to the main FLI channel"""
         self._buffer_size: int = buffer_size
         """Maximum number of messages that can be buffered before sending"""
 
@@ -73,16 +69,34 @@ class DragonFLIChannel(cch.CommChannelBase):
         :raises SmartSimError: If sending message fails
         """
         try:
-            if self._channel is None:
-                self._channel = drg_util.create_local(self._buffer_size)
+            channel = drg_util.create_local(self._buffer_size)
 
-            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
+            with self._fli.sendh(timeout=None, stream_channel=channel) as sendh:
                 sendh.send_bytes(value, timeout=timeout)
                 logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
-            self._channel = None
             raise SmartSimError(
                 f"Error sending via DragonFLIChannel {self.descriptor}"
+            ) from e
+
+    def send_multiple(self, values: t.Sequence[bytes], timeout: float = 0.001) -> None:
+        """Send a message through the underlying communication channel.
+
+        :param values: The values to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :raises SmartSimError: If sending message fails
+        """
+        try:
+            channel = drg_util.create_local(self._buffer_size)
+
+            with self._fli.sendh(timeout=None, stream_channel=channel) as sendh:
+                for value in values:
+                    sendh.send_bytes(value)
+                    logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
+        except Exception as e:
+            self._channel = None
+            raise SmartSimError(
+                f"Error sending via DragonFLIChannel {self.descriptor} {e}"
             ) from e
 
     def recv(self, timeout: float = 0.001) -> t.List[bytes]:

@@ -73,7 +73,6 @@ from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
-mock_msg_pump_path = pathlib.Path(__file__).parent / "utils" / "msg_pump.py"
 _MsgPumpFactory = t.Callable[[conftest.MsgPumpRequest], sp.Popen]
 
 # The tests in this file belong to the dragon group
@@ -129,8 +128,8 @@ def test_request_dispatcher(
         )
 
     request_dispatcher._on_start()
-    pump_processes: t.List[sp.Popen] = []
 
+    # put some messages into the work queue for the dispatcher to pickup
     for i in range(num_iterations):
         batch: t.Optional[RequestBatch] = None
         mem_allocs = []
@@ -149,18 +148,22 @@ def test_request_dispatcher(
         )
 
         msg_pump = msg_pump_factory(request)
-        pump_processes.append(msg_pump)
+
+        assert msg_pump is not None, "Msg Pump Process Creation Failed"
+        assert msg_pump.wait() == 0
 
         time.sleep(1)
 
-        for _ in range(200):
+        for i in range(15):
             try:
                 request_dispatcher._on_iteration()
                 batch = request_dispatcher.task_queue.get(timeout=0.1)
                 break
             except Empty:
+                logger.warning(f"Task queue is empty on iteration {i}")
                 continue
             except Exception as exc:
+                logger.error(f"Task queue exception on iteration {i}")
                 raise exc
 
         assert batch is not None
@@ -218,13 +221,6 @@ def test_request_dispatcher(
 
         assert model_key not in request_dispatcher._active_queues
         assert model_key not in request_dispatcher._queues
-
-        msg_pump.wait()
-
-    for msg_pump in pump_processes:
-        if msg_pump.returncode is not None:
-            continue
-        msg_pump.terminate()
 
     # Try to remove the dispatcher and free the memory
     del request_dispatcher
