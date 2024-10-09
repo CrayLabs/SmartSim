@@ -69,20 +69,20 @@ class CommandList(MutableSequence[Command]):
         """Set the Commands at the specified index."""
         if isinstance(idx, int):
             if not isinstance(value, Command):
-                raise ValueError(
+                raise TypeError(
                     "Value must be of type `Command` when assigning to an index"
                 )
             self._commands[idx] = deepcopy(value)
             return
         if not isinstance(value, list):
-            raise ValueError(
+            raise TypeError(
                 "Value must be a list of Commands when assigning to a slice"
             )
         for sublist in value:
             if not isinstance(sublist.command, list) or not all(
                 isinstance(item, str) for item in sublist.command
             ):
-                raise ValueError(
+                raise TypeError(
                     "Value sublists must be a list of Commands when assigning to a slice"
                 )
         self._commands[idx] = (deepcopy(val) for val in value)

@@ -387,7 +387,6 @@ class Ensemble(entity.CompoundEntity):
                 name=f"{self.name}-{i}",
                 exe=self.exe,
                 exe_args=self.exe_args,
-                files=self.files,
                 file_parameters=permutation.params,
             )
             for i, permutation in enumerate(permutations_)

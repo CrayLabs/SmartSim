@@ -36,10 +36,16 @@ def test_command_init():
     assert cmd.command == ["salloc", "-N", "1"]
 
 
-def test_command_getitem_int():
+def test_command_invalid_init():
     cmd = Command(command=["salloc", "-N", "1"])
-    get_value = cmd[0]
-    assert get_value == "salloc"
+    assert cmd.command == ["salloc", "-N", "1"]
+
+
+def test_command_getitem_int():
+    with pytest.raises(TypeError):
+        _ = Command(command=[1])
+    with pytest.raises(TypeError):
+        _ = Command(command=[])
 
 
 def test_command_getitem_slice():
@@ -63,9 +69,9 @@ def test_command_setitem_slice():
 
 def test_command_setitem_fail():
     cmd = Command(command=["salloc", "-N", "1"])
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         cmd[0] = 1
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         cmd[0:2] = [1, "-n"]
 
 
