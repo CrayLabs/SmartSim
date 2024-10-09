@@ -9,29 +9,53 @@ Experiment
 
 .. currentmodule:: smartsim.experiment
 
-.. _exp_init:
 .. autosummary::
+    :toctree:
+    :recursive:
 
-   Experiment.__init__
-   Experiment.start
-   Experiment.stop
-   Experiment.create_ensemble
-   Experiment.create_model
-   Experiment.create_database
-   Experiment.create_run_settings
-   Experiment.create_batch_settings
-   Experiment.generate
-   Experiment.poll
-   Experiment.finished
-   Experiment.get_status
-   Experiment.reconnect_orchestrator
-   Experiment.preview
-   Experiment.summary
-   Experiment.telemetry
+    smartsim.experiment.Experiment
 
 .. autoclass:: Experiment
+   :toctree:
    :show-inheritance:
    :members:
+
+
+.. _experiment_api:
+
+.. Experiment
+.. ==========
+
+.. .. currentmodule:: smartsim.experiment
+
+.. .. _exp_init:
+ .. autosummary::
+..     :toctree: generated
+..     :members:
+..     :recursive:
+
+..     Experiment
+
+..     .. Experiment.__init__
+..     .. Experiment.start
+..     .. Experiment.stop
+.. ..    Experiment.create_ensemble
+.. ..    Experiment.create_model
+.. ..    Experiment.create_database
+.. ..    Experiment.create_run_settings
+.. ..    Experiment.create_batch_settings
+.. ..    Experiment.generate
+.. ..    Experiment.poll
+.. ..    Experiment.finished
+.. ..    Experiment.get_status
+.. ..    Experiment.reconnect_orchestrator
+.. ..    Experiment.preview
+.. ..    Experiment.summary
+.. ..    Experiment.telemetry
+
+.. .. autoclass:: Experiment
+..    :show-inheritance:
+..    :members:
 
 
 .. _settings-info:
@@ -52,6 +76,8 @@ and PBSPro.
 Types of Settings:
 
 .. autosummary::
+    :toctree: 
+    :recursive:
 
     RunSettings
     SrunSettings
@@ -90,9 +116,10 @@ launches that utilize a parallel launch binary like
 
 
 .. autosummary::
+    :toctree:
+    :recursive:
 
-    RunSettings.add_exe_args
-    RunSettings.update_env
+    smartsim.settings.RunSettings
 
 .. autoclass:: RunSettings
     :inherited-members:
@@ -112,19 +139,10 @@ steps to a batch.
 
 
 .. autosummary::
+    :toctree:
+    :recursive:
 
-    SrunSettings.set_nodes
-    SrunSettings.set_node_feature
-    SrunSettings.set_tasks
-    SrunSettings.set_tasks_per_node
-    SrunSettings.set_walltime
-    SrunSettings.set_hostlist
-    SrunSettings.set_excluded_hosts
-    SrunSettings.set_cpus_per_task
-    SrunSettings.add_exe_args
-    SrunSettings.format_run_args
-    SrunSettings.format_env_vars
-    SrunSettings.update_env
+    smartsim.settings.SrunSettings
 
 .. autoclass:: SrunSettings
     :inherited-members:
@@ -147,6 +165,8 @@ and within batch launches (e.g., ``QsubBatchSettings``)
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     AprunSettings.set_cpus_per_task
     AprunSettings.set_hostlist
@@ -178,6 +198,8 @@ and within batch launches (i.e. ``SbatchSettings`` or ``QsubBatchSettings``,
 for Slurm and PBS sessions, respectively).
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
     DragonRunSettings.set_nodes
     DragonRunSettings.set_tasks_per_node
 
@@ -201,6 +223,8 @@ and within batch launches (i.e. ``BsubBatchSettings``)
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     JsrunSettings.set_num_rs
     JsrunSettings.set_cpus_per_rs
@@ -233,6 +257,8 @@ supported on Slurm and PBSpro.
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     MpirunSettings.set_cpus_per_task
     MpirunSettings.set_hostlist
@@ -260,6 +286,8 @@ supported on Slurm and PBSpro.
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     MpiexecSettings.set_cpus_per_task
     MpiexecSettings.set_hostlist
@@ -287,6 +315,8 @@ supported on Slurm and PBSpro.
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     OrterunSettings.set_cpus_per_task
     OrterunSettings.set_hostlist
@@ -318,6 +348,8 @@ WLM systems.
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     SbatchSettings.set_account
     SbatchSettings.set_batch_command
@@ -344,6 +376,8 @@ be launched as a batch on PBSPro systems.
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     QsubBatchSettings.set_account
     QsubBatchSettings.set_batch_command
@@ -372,6 +406,8 @@ be launched as a batch on LSF systems.
 
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     BsubBatchSettings.set_walltime
     BsubBatchSettings.set_smts
@@ -411,6 +447,8 @@ Orchestrator
 .. currentmodule:: smartsim.database
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
    Orchestrator.__init__
    Orchestrator.db_identifier
@@ -454,6 +492,8 @@ Model
 .. currentmodule:: smartsim.entity.model
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
    Model.__init__
    Model.attach_generator_files
@@ -484,6 +524,8 @@ Ensemble
 .. currentmodule:: smartsim.entity.ensemble
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
    Ensemble.__init__
    Ensemble.add_model
@@ -570,6 +612,8 @@ Slurm
 .. currentmodule:: smartsim.wlm.slurm
 
 .. autosummary::
+    :toctree: generated
+    :recursive:
 
     get_allocation
     release_allocation
