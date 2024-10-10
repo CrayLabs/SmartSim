@@ -312,6 +312,16 @@ class FetchModelResult:
         """The raw fetched model"""
 
 
+@dataclass(frozen=True)
+class OutputKeyTuple:
+    """Allows output keys to hold a reference to their espective callback"""
+
+    callback: CommChannelBase
+    """The channel that corresponds with the output keya"""
+    output_keys: t.List[FeatureStoreKey]
+    """A list of tuples containing a (key, descriptor) pair"""
+
+
 @dataclass
 class RequestBatch:
     """A batch of aggregated inference requests."""
@@ -326,7 +336,7 @@ class RequestBatch:
     """Metadata about the input data"""
     input_keys: t.List[FeatureStoreKey]
     """A list of tuples containing a (key, descriptor) pair"""
-    output_keys: t.List[FeatureStoreKey]
+    output_keys: t.List[OutputKeyTuple]
     """A list of tuples containing a (key, descriptor) pair"""
     inputs: t.Optional[TransformInputResult]
     """Transformed batch of input tensors"""
@@ -370,7 +380,11 @@ class RequestBatch:
             raw_inputs=[key for request in requests for key in request.raw_inputs],
             input_meta=[key for request in requests for key in request.input_meta],
             input_keys=[key for request in requests for key in request.input_keys],
-            output_keys=[key for request in requests for key in request.output_keys],
+            output_keys=[
+                OutputKeyTuple(request.callback, request.output_keys)
+                for request in requests
+                if request.output_keys and request.callback
+            ],
             inputs=inputs,
             model_id=model_id,
         )
@@ -543,8 +557,8 @@ class MachineLearningWorkerCore:
 
     @staticmethod
     def place_output(
-        batch: RequestBatch,
-        transform_result: t.List[TransformOutputResult],
+        output_keys: t.List[FeatureStoreKey],
+        transform_result: TransformOutputResult,
         feature_stores: t.Dict[str, FeatureStore],
     ) -> t.Collection[t.Optional[FeatureStoreKey]]:
         """Given a collection of data, make it available as a shared resource in the
@@ -563,9 +577,8 @@ class MachineLearningWorkerCore:
         # need to decide how to get back to original sub-batch inputs so they can be
         # accurately placed, datum might need to include this.
 
-        all_result_outputs = [output for result in transform_result for output in result.outputs]
         # Consider parallelizing all PUT feature_store operations
-        for fs_key, v in zip(batch.output_keys, all_result_outputs):
+        for fs_key, v in zip(output_keys, transform_result.outputs):
             feature_store = feature_stores[fs_key.descriptor]
             feature_store[fs_key.key] = v
             keys.append(fs_key)

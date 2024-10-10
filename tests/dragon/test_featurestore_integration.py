@@ -221,7 +221,7 @@ def test_eventconsumer_max_dequeue(
         pytest.param(0, id="use default: 500"),
         pytest.param(1, id="non-zero buffer size: 1"),
         pytest.param(500, id="buffer size: 500"),
-        # pytest.param(1000, id="buffer size: 1000"),
+        pytest.param(1000, id="buffer size: 1000"),
     ],
 )
 def test_channel_buffer_size(

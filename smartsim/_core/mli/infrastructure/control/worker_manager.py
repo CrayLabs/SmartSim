@@ -133,7 +133,7 @@ class WorkerManager(Service):
         if batch.model_id.key:
             fs_model = {batch.model_id.descriptor}
         fs_inputs = {key.descriptor for key in batch.input_keys}
-        fs_outputs = {key.descriptor for key in batch.output_keys}
+        fs_outputs = {key.descriptor for keys in batch.output_keys for key in keys.output_keys}
 
         # identify which feature stores are requested and unknown
         fs_desired = fs_model.union(fs_inputs).union(fs_outputs)
@@ -269,23 +269,27 @@ class WorkerManager(Service):
                     )
                 return
 
-            for callback in batch.callbacks:
+            for callback, transformed_output in zip(
+                batch.callbacks, transformed_outputs
+            ):
                 reply = InferenceReply()
                 if batch.output_keys:
-                    try:
-                        reply.output_keys = self._worker.place_output(
-                            batch,
-                            transformed_outputs,
-                            self._feature_stores,
-                        )
-                    except Exception as e:
-                        print("INFO wm place output")
-                        exception_handler(
-                            e, callback, "Error while placing the output."
-                        )
-                    continue
+                    for output_key_tuple in batch.output_keys:
+                        if callback == output_key_tuple.callback:
+                            try:
+                                reply.output_keys = self._worker.place_output(
+                                    output_key_tuple.output_keys,
+                                    transformed_output,
+                                    self._feature_stores,
+                                )
+                            except Exception as e:
+                                print("INFO wm place output")
+                                exception_handler(
+                                    e, callback, "Error while placing the output."
+                                )
+                                return
                 else:
-                    reply.outputs = [output for result in transformed_outputs for output in result.outputs]
+                    reply.outputs = transformed_output.outputs
                 self._perf_timer.measure_time("assign_output")
 
                 if not reply.has_outputs:
@@ -310,7 +314,6 @@ class WorkerManager(Service):
 
                 callback.send(serialized_resp)
                 if reply.has_outputs:
-                    # send tensor data after response
                     for output in reply.outputs:
                         callback.send(output)
                 self._perf_timer.measure_time("send")

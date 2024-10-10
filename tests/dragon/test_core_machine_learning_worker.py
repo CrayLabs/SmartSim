@@ -365,18 +365,27 @@ def test_place_outputs() -> None:
     data2 = [b"stuvwx", b"yzabcd", b"efghij"]
 
     model_id = FeatureStoreKey(key="test-model", descriptor=fsd)
-    request = InferenceRequest(output_keys=keys)
-    request2 = InferenceRequest(output_keys=keys2)
+    request = InferenceRequest(callback=FileSystemFeatureStore.from_descriptor, output_keys=keys)
+    request2 = InferenceRequest(callback=FileSystemFeatureStore.from_descriptor, output_keys=keys2)
     transform_result = TransformOutputResult(data, [1], "c", "float32")
-    transform_result2 = TransformOutputResult(data2, [1], "c", "float32")
 
     request_batch = RequestBatch.from_requests([request, request2], None, model_id)
 
-    worker.place_output(request_batch, [transform_result, transform_result2], {fsd: feature_store})
+    worker.place_output(
+        request_batch.output_keys[0].output_keys,
+        transform_result,
+        {fsd: feature_store},
+    )
+
+    worker.place_output(
+        request_batch.output_keys[1].output_keys,
+        transform_result,
+        {fsd: feature_store},
+    )
 
     all_keys = keys + keys2
     all_data = data + data2
-    for i in range(6):
+    for i in range(3):
         assert feature_store[all_keys[i].key] == all_data[i]
 
 
