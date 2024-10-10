@@ -126,6 +126,7 @@ def test_slurm_launcher_can_start_a_command(monkeypatch, make_srun_command):
     )
     launcher = SlurmLauncher()
     srun = make_srun_command(["-N", "1", "-n", "1"], ["echo", "spam", "eggs"])
+    monkeypatch.setattr(srun, "start", lambda *_, **__: ...)
     id_ = launcher.start(srun)
     info = launcher._launched[id_]
     assert info.slurm_id == "mock-step-id"
@@ -145,6 +146,7 @@ def test_slurm_launcher_errors_if_cannot_parse_id(monkeypatch, make_srun_command
     monkeypatch.setattr(time, "sleep", lambda *_, **__: ...)
     launcher = SlurmLauncher()
     srun = make_srun_command(["-N", "1", "-n", "1"], ["echo", "spam", "eggs"])
+    monkeypatch.setattr(srun, "start", lambda *_, **__: ...)
     with pytest.raises(
         errors.LauncherError, match=r"Could not find id of launched job step"
     ):

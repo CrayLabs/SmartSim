@@ -33,6 +33,8 @@ import subprocess as sp
 import time
 import typing as t
 
+from typing_extensions import TypeAlias
+
 from smartsim._core.config import CONFIG
 from smartsim._core.launcher_.slurm import slurm_commands as commands
 from smartsim._core.launcher_.slurm import slurm_parser as parser
@@ -118,7 +120,7 @@ class SrunCommand:
         )
 
 
-_SlurmCommandType: t.TypeAlias = SrunCommand
+_SlurmCommandType: TypeAlias = SrunCommand
 """Types that are capable of being launched by the `SlurmLauncher`"""
 
 
