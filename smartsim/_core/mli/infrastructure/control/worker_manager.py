@@ -180,7 +180,6 @@ class WorkerManager(Service):
         )
 
         if not self._validate_batch(batch):
-            print("INFO wm validate")
             exception_handler(
                 ValueError("An invalid batch was received"),
                 None,
@@ -199,7 +198,6 @@ class WorkerManager(Service):
                 except Exception:
                     msg += "\nThe batch could not be put back in the queue "
                     "and will not be processed."
-                    print("INFO wm device manager")
                 exception_handler(
                     RuntimeError(msg),
                     callback,
@@ -215,7 +213,6 @@ class WorkerManager(Service):
             )
         except Exception as exc:
             for callback in batch.callbacks:
-                print("INFO wm get device")
                 exception_handler(
                     exc,
                     callback,
@@ -230,14 +227,12 @@ class WorkerManager(Service):
                 model_result = LoadModelResult(device.get_model(batch.model_id.key))
             except Exception as exc:
                 for callback in batch.callbacks:
-                    print("INFO wm getmodel")
                     exception_handler(exc, callback, "Error getting model from device.")
                 return
             self._perf_timer.measure_time("load_model")
 
             if not batch.inputs:
                 for callback in batch.callbacks:
-                    print("INFO wm batch inputs")
                     exception_handler(
                         ValueError("Error batching inputs"),
                         callback,
@@ -252,7 +247,6 @@ class WorkerManager(Service):
                 )
             except Exception as e:
                 for callback in batch.callbacks:
-                    print("INFO wm execute")
                     exception_handler(e, callback, "Error while executing.")
                 return
             self._perf_timer.measure_time("execute")
@@ -263,7 +257,6 @@ class WorkerManager(Service):
                 )
             except Exception as e:
                 for callback in batch.callbacks:
-                    print("INFO wm transform output")
                     exception_handler(
                         e, callback, "Error while transforming the output."
                     )
@@ -283,7 +276,6 @@ class WorkerManager(Service):
                                     self._feature_stores,
                                 )
                             except Exception as e:
-                                print("INFO wm place output")
                                 exception_handler(
                                     e, callback, "Error while placing the output."
                                 )

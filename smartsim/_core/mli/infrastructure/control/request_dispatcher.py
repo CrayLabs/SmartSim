@@ -495,7 +495,6 @@ class RequestDispatcher(Service):
                             batch=batch, feature_stores=self._feature_stores
                         )
                     except Exception as exc:
-                        print("INFO rd flush req")
                         exception_handler(
                             exc,
                             None,
@@ -510,7 +509,6 @@ class RequestDispatcher(Service):
                             mem_pool=self._mem_pool,
                         )
                     except Exception as exc:
-                        print("INFO rd transform input")
                         exception_handler(
                             exc,
                             None,
@@ -527,7 +525,6 @@ class RequestDispatcher(Service):
                     try:
                         self._outgoing_queue.put(batch)
                     except Exception as exc:
-                        print("INFO rd outgoing queue put")
                         exception_handler(
                             exc,
                             None,
