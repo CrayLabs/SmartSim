@@ -318,7 +318,7 @@ class OutputKeyTuple:
 
     callback: CommChannelBase
     """The channel that corresponds with the output keya"""
-    output_keys: t.List[FeatureStoreKey]
+    output_keys: t.List[TensorKey]
     """A list of tuples containing a (key, descriptor) pair"""
 
 
@@ -334,7 +334,7 @@ class RequestBatch:
     """Raw bytes of tensor inputs"""
     input_meta: t.List[t.Any]
     """Metadata about the input data"""
-    input_keys: t.List[FeatureStoreKey]
+    input_keys: t.List[TensorKey]
     """A list of tuples containing a (key, descriptor) pair"""
     output_keys: t.List[OutputKeyTuple]
     """A list of tuples containing a (key, descriptor) pair"""
@@ -557,7 +557,7 @@ class MachineLearningWorkerCore:
 
     @staticmethod
     def place_output(
-        output_keys: t.List[FeatureStoreKey],
+        output_keys: t.List[TensorKey],
         transform_result: TransformOutputResult,
         feature_stores: t.Dict[str, FeatureStore],
     ) -> t.Collection[t.Optional[TensorKey]]:
