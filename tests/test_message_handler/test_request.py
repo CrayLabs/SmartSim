@@ -101,7 +101,7 @@ torch_direct_request = MessageHandler.build_request(
     "reply_channel, model, input, output, output_descriptors, custom_attributes",
     [
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             [input_key1, input_key2],
             [output_key1, output_key2],
@@ -109,7 +109,7 @@ torch_direct_request = MessageHandler.build_request(
             torch_attributes,
         ),
         pytest.param(
-            b"another reply channel",
+            "another reply channel",
             model,
             [input_key1],
             [output_key2],
@@ -117,7 +117,7 @@ torch_direct_request = MessageHandler.build_request(
             tf_attributes,
         ),
         pytest.param(
-            b"another reply channel",
+            "another reply channel",
             model,
             [input_key1],
             [output_key2],
@@ -125,7 +125,7 @@ torch_direct_request = MessageHandler.build_request(
             torch_attributes,
         ),
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             [input_key1],
             [output_key1],
@@ -185,7 +185,7 @@ def test_build_request_indirect_successful(
             id="bad channel",
         ),
         pytest.param(
-            b"reply channel",
+            "reply channel",
             "bad model",
             [input_key1],
             [output_key2],
@@ -194,7 +194,7 @@ def test_build_request_indirect_successful(
             id="bad model",
         ),
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             ["input_key1", "input_key2"],
             [output_key1, output_key2],
@@ -212,7 +212,7 @@ def test_build_request_indirect_successful(
             id="bad input schema type",
         ),
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             [input_key1],
             ["output_key1", "output_key2"],
@@ -230,7 +230,7 @@ def test_build_request_indirect_successful(
             id="bad output schema type",
         ),
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             [input_key1],
             [output_key1, output_key2],
@@ -239,7 +239,7 @@ def test_build_request_indirect_successful(
             id="bad custom attributes",
         ),
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             [input_key1],
             [output_key1, output_key2],
@@ -248,7 +248,7 @@ def test_build_request_indirect_successful(
             id="bad custom attributes schema type",
         ),
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             [input_key1],
             [output_key1, output_key2],
@@ -276,7 +276,7 @@ def test_build_request_indirect_unsuccessful(
     "reply_channel, model, input, output, output_descriptors, custom_attributes",
     [
         pytest.param(
-            b"reply channel",
+            "reply channel",
             model_key,
             [tensor_1, tensor_2],
             [],
@@ -284,7 +284,7 @@ def test_build_request_indirect_unsuccessful(
             torch_attributes,
         ),
         pytest.param(
-            b"another reply channel",
+            "another reply channel",
             model,
             [tensor_1],
             [],
@@ -292,7 +292,7 @@ def test_build_request_indirect_unsuccessful(
             tf_attributes,
         ),
         pytest.param(
-            b"another reply channel",
+            "another reply channel",
             model,
             [tensor_2],
             [],
@@ -300,7 +300,7 @@ def test_build_request_indirect_unsuccessful(
             tf_attributes,
         ),
         pytest.param(
-            b"another reply channel",
+            "another reply channel",
             model,
             [tensor_1],
             [],

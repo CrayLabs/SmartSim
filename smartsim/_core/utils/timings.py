@@ -145,10 +145,12 @@ class PerfTimer:
         return max(len(value) for value in self._timings.values())
 
     def print_timings(self, to_file: bool = False) -> None:
-        """Print all timing information
+        """Print timing information to standard output. If `to_file`
+        is `True`, also write results to a file.
 
-        :param to_file: flag indicating if timing should be written to stdout
-        or to the timing file"""
+        :param to_file: If `True`, also saves timing information
+         to the files `timings.npy` and `timings.txt`
+        """
         print(" ".join(self._timings.keys()))
         try:
             value_array = np.array(list(self._timings.values()), dtype=float)

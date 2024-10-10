@@ -13,12 +13,12 @@ Jump to:
 
 Description
 
+- Implement asynchronous notifications for shared data
 - Quick bug fix in _validate
 - Add helper methods to MLI classes
 - Update error handling for consistency
 - Parameterize installation of dragon package with `smart build`
 - Update docstrings
-- Implement asynchronous notifications for shared data
 - Filenames conform to snake case
 - Update SmartSim environment variables using new naming convention
 - Refactor `exception_handler`

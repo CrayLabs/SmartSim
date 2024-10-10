@@ -27,6 +27,7 @@
 import datetime
 import multiprocessing as mp
 import pathlib
+import time
 import typing as t
 from asyncore import loop
 
@@ -47,23 +48,37 @@ class SimpleService(Service):
     def __init__(
         self,
         log: t.List[str],
-        quit_after: int = 0,
+        quit_after: int = -1,
         as_service: bool = False,
-        cooldown: int = 0,
-        loop_delay: int = 0,
+        cooldown: float = 0,
+        loop_delay: float = 0,
+        hc_freq: float = -1,
+        run_for: float = 0,
     ) -> None:
-        super().__init__(as_service, cooldown, loop_delay)
+        super().__init__(as_service, cooldown, loop_delay, hc_freq)
         self._log = log
         self._quit_after = quit_after
-        self.num_iterations = 0
         self.num_starts = 0
         self.num_shutdowns = 0
+        self.num_health_checks = 0
         self.num_cooldowns = 0
-        self.num_can_shutdown = 0
         self.num_delays = 0
+        self.num_iterations = 0
+        self.num_can_shutdown = 0
+        self.run_for = run_for
+        self.start_time = time.time()
 
-    def _on_iteration(self) -> None:
-        self.num_iterations += 1
+    @property
+    def runtime(self) -> float:
+        return time.time() - self.start_time
+
+    def _can_shutdown(self) -> bool:
+        self.num_can_shutdown += 1
+
+        if self._quit_after > -1 and self.num_iterations >= self._quit_after:
+            return True
+        if self.run_for > 0:
+            return self.runtime >= self.run_for
 
     def _on_start(self) -> None:
         self.num_starts += 1
@@ -71,16 +86,17 @@ class SimpleService(Service):
     def _on_shutdown(self) -> None:
         self.num_shutdowns += 1
 
+    def _on_health_check(self) -> None:
+        self.num_health_checks += 1
+
     def _on_cooldown_elapsed(self) -> None:
         self.num_cooldowns += 1
 
     def _on_delay(self) -> None:
         self.num_delays += 1
 
-    def _can_shutdown(self) -> bool:
-        self.num_can_shutdown += 1
-        if self._quit_after == 0:
-            return True
+    def _on_iteration(self) -> None:
+        self.num_iterations += 1
 
         return self.num_iterations >= self._quit_after
 
@@ -134,6 +150,7 @@ def test_service_run_until_can_shutdown(num_iterations: int) -> None:
         # no matter what, it should always execute the _on_iteration method
         assert service.num_iterations == 1
     else:
+        # the shutdown check follows on_iteration. there will be one last call
         assert service.num_iterations == num_iterations
 
     assert service.num_starts == 1
@@ -201,5 +218,73 @@ def test_service_delay(delay: int, num_iterations: int) -> None:
     duration_in_seconds = (ts1 - ts0).total_seconds()
 
     assert duration_in_seconds <= expected_duration
+    assert service.num_cooldowns == 0
+    assert service.num_shutdowns == 1
+
+
+@pytest.mark.parametrize(
+    "health_check_freq, run_for",
+    [
+        pytest.param(1, 5.5, id="1s freq, 10x"),
+        pytest.param(5, 10.5, id="5s freq, 2x"),
+        pytest.param(0.1, 5.1, id="0.1s freq, 50x"),
+    ],
+)
+def test_service_health_check_freq(health_check_freq: float, run_for: float) -> None:
+    """Verify that a the health check frequency is honored
+
+    :param health_check_freq: The desired frequency of the health check
+    :pram run_for: A fixed duration to allow the service to run
+    """
+    activity_log: t.List[str] = []
+
+    service = SimpleService(
+        activity_log,
+        quit_after=-1,
+        as_service=True,
+        cooldown=0,
+        hc_freq=health_check_freq,
+        run_for=run_for,
+    )
+
+    ts0 = datetime.datetime.now()
+    service.execute()
+    ts1 = datetime.datetime.now()
+
+    # the expected duration is the sum of the delay between each iteration
+    expected_hc_count = run_for // health_check_freq
+
+    # allow some wiggle room for frequency comparison
+    assert expected_hc_count - 1 <= service.num_health_checks <= expected_hc_count + 1
+
+    assert service.num_cooldowns == 0
+    assert service.num_shutdowns == 1
+
+
+def test_service_health_check_freq_unbound() -> None:
+    """Verify that a health check frequency of zero is treated as
+    "always on" and is called each loop iteration
+
+    :param health_check_freq: The desired frequency of the health check
+    :pram run_for: A fixed duration to allow the service to run
+    """
+    health_check_freq: float = 0.0
+    run_for: float = 5
+
+    activity_log: t.List[str] = []
+
+    service = SimpleService(
+        activity_log,
+        quit_after=-1,
+        as_service=True,
+        cooldown=0,
+        hc_freq=health_check_freq,
+        run_for=run_for,
+    )
+
+    service.execute()
+
+    # allow some wiggle room for frequency comparison
+    assert service.num_health_checks == service.num_iterations
     assert service.num_cooldowns == 0
     assert service.num_shutdowns == 1

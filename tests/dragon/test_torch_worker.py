@@ -37,7 +37,7 @@ from dragon.managed_memory import MemoryAlloc, MemoryPool
 from torch import nn
 from torch.nn import functional as F
 
-from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.feature_store import ModelKey
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
@@ -109,7 +109,7 @@ def get_request() -> InferenceRequest:
     ]
 
     return InferenceRequest(
-        model_key=FeatureStoreKey(key="model", descriptor="xyz"),
+        model_key=ModelKey(key="model", descriptor="xyz"),
         callback=None,
         raw_inputs=tensor_numpy,
         input_keys=None,

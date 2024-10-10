@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 from unittest.mock import MagicMock
 
 import pytest
@@ -32,14 +33,13 @@ dragon = pytest.importorskip("dragon")
 
 import multiprocessing as mp
 
-import dragon.utils as du
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 from dragon.mpbridge.queues import DragonQueue
 
+from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
-from smartsim._core.mli.infrastructure.control.device_manager import WorkerDevice
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
@@ -48,25 +48,30 @@ from smartsim._core.mli.infrastructure.control.worker_manager import (
     exception_handler,
 )
 from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
+)
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
-    FeatureStoreKey,
+    ModelKey,
+    TensorKey,
 )
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
     FetchInputResult,
     FetchModelResult,
-    InferenceReply,
     InferenceRequest,
     LoadModelResult,
+    MachineLearningWorkerBase,
     RequestBatch,
     TransformInputResult,
     TransformOutputResult,
 )
 from smartsim._core.mli.message_handler import MessageHandler
+from smartsim._core.mli.mli_schemas.response.response_capnp import ResponseBuilder
 
 from .utils.channel import FileSystemCommChannel
 from .utils.worker import IntegratedTorchWorker
@@ -75,37 +80,29 @@ from .utils.worker import IntegratedTorchWorker
 pytestmark = pytest.mark.dragon
 
 
-@pytest.fixture
-def backbone_descriptor() -> str:
-    # create a shared backbone featurestore
-    feature_store = DragonFeatureStore(DDict())
-    return feature_store.descriptor
-
-
-@pytest.fixture
-def app_feature_store() -> FeatureStore:
+@pytest.fixture(scope="module")
+def app_feature_store(the_storage) -> FeatureStore:
     # create a standalone feature store to mimic a user application putting
     # data into an application-owned resource (app should not access backbone)
-    app_fs = DragonFeatureStore(DDict())
+    app_fs = DragonFeatureStore(the_storage)
     return app_fs
 
 
 @pytest.fixture
 def setup_worker_manager_model_bytes(
-    test_dir,
+    test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
     )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -113,7 +110,7 @@ def setup_worker_manager_model_bytes(
         queue_factory=DragonFLIChannel.from_descriptor,
     )
 
-    dispatcher_task_queue = mp.Queue(maxsize=0)
+    dispatcher_task_queue: mp.Queue[RequestBatch] = mp.Queue(maxsize=0)
 
     worker_manager = WorkerManager(
         config_loader=config_loader,
@@ -123,10 +120,10 @@ def setup_worker_manager_model_bytes(
         cooldown=3,
     )
 
-    tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
-    output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+    tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
+    output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
 
-    request = InferenceRequest(
+    inf_request = InferenceRequest(
         model_key=None,
         callback=None,
         raw_inputs=None,
@@ -137,10 +134,10 @@ def setup_worker_manager_model_bytes(
         batch_size=0,
     )
 
-    model_id = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
+    model_id = ModelKey(key="key", descriptor=app_feature_store.descriptor)
 
     request_batch = RequestBatch(
-        [request],
+        [inf_request],
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_id=model_id,
     )
@@ -155,16 +152,15 @@ def setup_worker_manager_model_key(
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
     )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -172,7 +168,7 @@ def setup_worker_manager_model_key(
         queue_factory=DragonFLIChannel.from_descriptor,
     )
 
-    dispatcher_task_queue = mp.Queue(maxsize=0)
+    dispatcher_task_queue: mp.Queue[RequestBatch] = mp.Queue(maxsize=0)
 
     worker_manager = WorkerManager(
         config_loader=config_loader,
@@ -182,9 +178,9 @@ def setup_worker_manager_model_key(
         cooldown=3,
     )
 
-    tensor_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
-    output_key = FeatureStoreKey(key="key", descriptor=app_feature_store.descriptor)
-    model_id = FeatureStoreKey(key="model key", descriptor=app_feature_store.descriptor)
+    tensor_key = TensorKey(key="key", descriptor=app_feature_store.descriptor)
+    output_key = TensorKey(key="key", descriptor=app_feature_store.descriptor)
+    model_id = ModelKey(key="model key", descriptor=app_feature_store.descriptor)
 
     request = InferenceRequest(
         model_key=model_id,
@@ -208,20 +204,19 @@ def setup_worker_manager_model_key(
 
 @pytest.fixture
 def setup_request_dispatcher_model_bytes(
-    test_dir,
+    test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
     )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -252,20 +247,19 @@ def setup_request_dispatcher_model_bytes(
 
 @pytest.fixture
 def setup_request_dispatcher_model_key(
-    test_dir,
+    test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     backbone_descriptor: str,
     app_feature_store: FeatureStore,
+    the_worker_channel: DragonFLIChannel,
 ):
     integrated_worker_type = IntegratedTorchWorker
 
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
     monkeypatch.setenv(
-        "_SMARTSIM_REQUEST_QUEUE", du.B64.bytes_to_str(queue.serialize())
+        BackboneFeatureStore.MLI_WORKER_QUEUE, the_worker_channel.descriptor
     )
     # Put backbone descriptor into env var for the `EnvironmentConfigLoader`
-    monkeypatch.setenv("_SMARTSIM_INFRA_BACKBONE", backbone_descriptor)
+    monkeypatch.setenv(BackboneFeatureStore.MLI_BACKBONE, backbone_descriptor)
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,
@@ -284,7 +278,7 @@ def setup_request_dispatcher_model_key(
     tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
     output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
     model_key = MessageHandler.build_model_key(
-        key="model key", feature_store_descriptor=app_feature_store.descriptor
+        key="model key", descriptor=app_feature_store.descriptor
     )
     request = MessageHandler.build_request(
         test_dir, model_key, [tensor_key], [output_key], [], None
@@ -296,8 +290,12 @@ def setup_request_dispatcher_model_key(
     return request_dispatcher, integrated_worker_type
 
 
-def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stage):
-    def mock_stage(*args, **kwargs):
+def mock_pipeline_stage(
+    monkeypatch: pytest.MonkeyPatch,
+    integrated_worker: MachineLearningWorkerBase,
+    stage: str,
+) -> t.Callable[[t.Any], ResponseBuilder]:
+    def mock_stage(*args: t.Any, **kwargs: t.Any) -> None:
         raise ValueError(f"Simulated error in {stage}")
 
     monkeypatch.setattr(integrated_worker, stage, mock_stage)
@@ -314,8 +312,10 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
     mock_reply_channel = MagicMock()
     mock_reply_channel.send = MagicMock()
 
-    def mock_exception_handler(exc, reply_channel, failure_message):
-        return exception_handler(exc, mock_reply_channel, failure_message)
+    def mock_exception_handler(
+        exc: Exception, reply_channel: CommChannelBase, failure_message: str
+    ) -> None:
+        exception_handler(exc, mock_reply_channel, failure_message)
 
     monkeypatch.setattr(
         "smartsim._core.mli.infrastructure.control.worker_manager.exception_handler",
@@ -362,12 +362,12 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
     ],
 )
 def test_wm_pipeline_stage_errors_handled(
-    request,
-    setup_worker_manager,
+    request: pytest.FixtureRequest,
+    setup_worker_manager: str,
     monkeypatch: pytest.MonkeyPatch,
     stage: str,
     error_message: str,
-):
+) -> None:
     """Ensures that the worker manager does not crash after a failure in various pipeline stages"""
     worker_manager, integrated_worker_type = request.getfixturevalue(
         setup_worker_manager
@@ -446,12 +446,12 @@ def test_wm_pipeline_stage_errors_handled(
     ],
 )
 def test_dispatcher_pipeline_stage_errors_handled(
-    request,
-    setup_request_dispatcher,
+    request: pytest.FixtureRequest,
+    setup_request_dispatcher: str,
     monkeypatch: pytest.MonkeyPatch,
     stage: str,
     error_message: str,
-):
+) -> None:
     """Ensures that the request dispatcher does not crash after a failure in various pipeline stages"""
     request_dispatcher, integrated_worker_type = request.getfixturevalue(
         setup_request_dispatcher
@@ -473,7 +473,7 @@ def test_dispatcher_pipeline_stage_errors_handled(
     mock_reply_fn.assert_called_with("fail", error_message)
 
 
-def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
+def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensures that the worker manager does not crash after a failure in the
     execute pipeline stage"""
 
@@ -498,3 +498,14 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
 
     mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")
+
+
+def test_dragon_feature_store_invalid_storage():
+    """Verify that attempting to create a DragonFeatureStore without storage fails."""
+    storage = None
+
+    with pytest.raises(ValueError) as ex:
+        DragonFeatureStore(storage)
+
+    assert "storage" in ex.value.args[0].lower()
+    assert "required" in ex.value.args[0].lower()
