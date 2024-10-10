@@ -29,6 +29,13 @@ import time
 import typing as t
 from shutil import which
 
+from smartsim._core.launcher_.slurm.slurm_commands import sacct, scancel, sstat
+from smartsim._core.launcher_.slurm.slurm_parser import (
+    parse_sacct,
+    parse_sstat_nodes,
+    parse_step_id_from_sacct,
+)
+
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
@@ -53,8 +60,6 @@ from ..step import (
     Step,
 )
 from ..step_info import SlurmStepInfo, StepInfo
-from .slurm_commands import sacct, scancel, sstat
-from .slurm_parser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 
 logger = get_logger(__name__)
 
