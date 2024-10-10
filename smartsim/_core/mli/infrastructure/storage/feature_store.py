@@ -43,6 +43,14 @@ class ReservedKeys(str, enum.Enum):
     """Storage location for the list of registered consumers that will receive
     events from an EventBroadcaster"""
 
+    MLI_REGISTRAR_CONSUMER = "_SMARTIM_MLI_REGISTRAR_CONSUMER"
+    """Storage location for the channel used to send messages directly to
+    the MLI backend"""
+
+    MLI_WORKER_QUEUE = "_SMARTSIM_REQUEST_QUEUE"
+    """Storage location for the channel used to send work requests 
+    to the available worker managers"""
+
     @classmethod
     def contains(cls, value: str) -> bool:
         """Convert a string representation into an enumeration member.
@@ -59,7 +67,27 @@ class ReservedKeys(str, enum.Enum):
 
 
 @dataclass(frozen=True)
-class FeatureStoreKey:
+class TensorKey:
+    """A key,descriptor pair enabling retrieval of an item from a feature store."""
+
+    key: str
+    """The unique key of an item in a feature store"""
+    descriptor: str
+    """The unique identifier of the feature store containing the key"""
+
+    def __post_init__(self) -> None:
+        """Ensure the key and descriptor have at least one character.
+
+        :raises ValueError: If key or descriptor are empty strings
+        """
+        if len(self.key) < 1:
+            raise ValueError("Key must have at least one character.")
+        if len(self.descriptor) < 1:
+            raise ValueError("Descriptor must have at least one character.")
+
+
+@dataclass(frozen=True)
+class ModelKey:
     """A key,descriptor pair enabling retrieval of an item from a feature store."""
 
     key: str
@@ -119,8 +147,8 @@ class FeatureStore(ABC):
         """
         try:
             return self._get(key)
-        except KeyError as ex:
-            raise SmartSimError(f"An unknown key was requested: {key}") from ex
+        except KeyError:
+            raise
         except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence
             raise SmartSimError(

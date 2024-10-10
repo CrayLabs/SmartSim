@@ -57,7 +57,7 @@ class DragonInstallRequest:
     def _check(self) -> None:
         """Perform validation of this instance
 
-        :raises: ValueError if any value fails validation"""
+        :raises ValueError: if any value fails validation"""
         if not self.repo_name or len(self.repo_name.split("/")) != 2:
             raise ValueError(
                 f"Invalid dragon repository name. Example: `dragonhpc/dragon`"
@@ -95,13 +95,13 @@ def get_auth_token(request: DragonInstallRequest) -> t.Optional[Token]:
 def create_dotenv(dragon_root_dir: pathlib.Path, dragon_version: str) -> None:
     """Create a .env file with required environment variables for the Dragon runtime"""
     dragon_root = str(dragon_root_dir)
-    dragon_inc_dir = str(dragon_root_dir / "include")
-    dragon_lib_dir = str(dragon_root_dir / "lib")
-    dragon_bin_dir = str(dragon_root_dir / "bin")
+    dragon_inc_dir = dragon_root + "/include"
+    dragon_lib_dir = dragon_root + "/lib"
+    dragon_bin_dir = dragon_root + "/bin"
 
     dragon_vars = {
         "DRAGON_BASE_DIR": dragon_root,
-        "DRAGON_ROOT_DIR": dragon_root,  # note: same as base_dir
+        "DRAGON_ROOT_DIR": dragon_root,
         "DRAGON_INCLUDE_DIR": dragon_inc_dir,
         "DRAGON_LIB_DIR": dragon_lib_dir,
         "DRAGON_VERSION": dragon_version,
@@ -286,7 +286,7 @@ def retrieve_asset(
     :param request: details of a request for the installation of the dragon package
     :param asset: GitHub release asset to retrieve
     :returns: path to the directory containing the extracted release asset
-    :raises: SmartSimCLIActionCancelled if the asset cannot be downloaded or extracted
+    :raises SmartSimCLIActionCancelled: if the asset cannot be downloaded or extracted
     """
     download_dir = request.working_dir / str(asset.id)
 

@@ -39,17 +39,15 @@ logger = get_logger(__name__)
 class FileSystemCommChannel(CommChannelBase):
     """Passes messages by writing to a file"""
 
-    def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
-        """Initialize the FileSystemCommChannel instance
+    def __init__(self, key: pathlib.Path) -> None:
+        """Initialize the FileSystemCommChannel instance.
 
-        :param key: a path to the root directory of the feature store"""
+        :param key: a path to the root directory of the feature store
+        """
         self._lock = threading.RLock()
-        if isinstance(key, pathlib.Path):
-            super().__init__(key.as_posix().encode("utf-8"))
-            self._file_path = key
-        else:
-            super().__init__(key)
-            self._file_path = pathlib.Path(key.decode("utf-8"))
+
+        super().__init__(key.as_posix())
+        self._file_path = key
 
         if not self._file_path.parent.exists():
             self._file_path.parent.mkdir(parents=True)
@@ -67,10 +65,11 @@ class FileSystemCommChannel(CommChannelBase):
         self._lock = threading.RLock()
 
     def send(self, value: bytes, timeout: float = 0) -> None:
-        """Send a message throuh the underlying communication channel
+        """Send a message throuh the underlying communication channel.
 
+        :param value: The value to send
         :param timeout: maximum time to wait (in seconds) for messages to send
-        :param value: The value to send"""
+        """
         with self._lock:
             # write as text so we can add newlines as delimiters
             with open(self._file_path, "a") as fp:
@@ -79,11 +78,12 @@ class FileSystemCommChannel(CommChannelBase):
                 logger.debug(f"FileSystemCommChannel {self._file_path} sent message")
 
     def recv(self, timeout: float = 0) -> t.List[bytes]:
-        """Receives message(s) through the underlying communication channel
+        """Receives message(s) through the underlying communication channel.
 
         :param timeout: maximum time to wait (in seconds) for messages to arrive
         :returns: the received message
-        :raises SmartSimError: if the descriptor points to a missing file"""
+        :raises SmartSimError: if the descriptor points to a missing file
+        """
         with self._lock:
             messages: t.List[bytes] = []
             if not self._file_path.exists():
@@ -112,7 +112,7 @@ class FileSystemCommChannel(CommChannelBase):
             return messages
 
     def clear(self) -> None:
-        """Create an empty file for events"""
+        """Create an empty file for events."""
         if self._file_path.exists():
             self._file_path.unlink()
         self._file_path.touch()
@@ -120,17 +120,15 @@ class FileSystemCommChannel(CommChannelBase):
     @classmethod
     def from_descriptor(
         cls,
-        descriptor: t.Union[str, bytes],
+        descriptor: str,
     ) -> "FileSystemCommChannel":
-        """A factory method that creates an instance from a descriptor string
+        """A factory method that creates an instance from a descriptor string.
 
         :param descriptor: The descriptor that uniquely identifies the resource
-        :returns: An attached FileSystemCommChannel"""
+        :returns: An attached FileSystemCommChannel
+        """
         try:
-            if isinstance(descriptor, str):
-                path = pathlib.Path(descriptor)
-            else:
-                path = pathlib.Path(descriptor.decode("utf-8"))
+            path = pathlib.Path(descriptor)
             return FileSystemCommChannel(path)
         except:
             logger.warning(f"failed to create fs comm channel: {descriptor}")

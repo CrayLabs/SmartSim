@@ -26,6 +26,8 @@
 import collections
 import functools
 import itertools
+import os
+import socket
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -34,18 +36,26 @@ from threading import RLock
 
 from tabulate import tabulate
 
-# pylint: disable=import-error
+# pylint: disable=import-error,C0302,R0915
 # isort: off
-import dragon.data.ddict.ddict as dragon_ddict
+
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
-import dragon.native.group_state as dragon_group_state
+
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
 
 from smartsim._core.launcher.dragon.pqueue import NodePrioritizer, PrioritizerFilter
+from smartsim._core.mli.infrastructure.control.listener import (
+    ConsumerRegistrationListener,
+)
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
+)
+from smartsim._core.mli.infrastructure.storage.dragon_util import create_ddict
+from smartsim.error.errors import SmartSimError
 
 # pylint: enable=import-error
 # isort: on
@@ -72,8 +82,8 @@ logger = get_logger(__name__)
 
 
 class DragonStatus(str, Enum):
-    ERROR = str(dragon_group_state.Error())
-    RUNNING = str(dragon_group_state.Running())
+    ERROR = "Error"
+    RUNNING = "Running"
 
     def __str__(self) -> str:
         return self.value
@@ -90,7 +100,7 @@ class ProcessGroupInfo:
     return_codes: t.Optional[t.List[int]] = None
     """List of return codes of completed processes"""
     hosts: t.List[str] = field(default_factory=list)
-    """List of hosts on which the Process Group """
+    """List of hosts on which the Process Group should be executed"""
     redir_workers: t.Optional[dragon_process_group.ProcessGroup] = None
     """Workers used to redirect stdout and stderr to file"""
 
@@ -147,6 +157,11 @@ class DragonBackend:
     by threads spawned by it.
     """
 
+    _DEFAULT_NUM_MGR_PER_NODE = 2
+    """The default number of manager processes for each feature store node"""
+    _DEFAULT_MEM_PER_NODE = 512 * 1024**2
+    """The default memory capacity (in bytes) to allocate for a feaure store node"""
+
     def __init__(self, pid: int) -> None:
         self._pid = pid
         """PID of dragon executable which launched this server"""
@@ -180,14 +195,12 @@ class DragonBackend:
         """Whether the server frontend should shut down when the backend does"""
         self._shutdown_initiation_time: t.Optional[float] = None
         """The time at which the server initiated shutdown"""
-        smartsim_config = get_config()
-        self._cooldown_period = (
-            smartsim_config.telemetry_frequency * 2 + 5
-            if smartsim_config.telemetry_enabled
-            else 5
-        )
-        """Time in seconds needed to server to complete shutdown"""
-        self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
+        self._cooldown_period = self._initialize_cooldown()
+        """Time in seconds needed by the server to complete shutdown"""
+        self._backbone: t.Optional[BackboneFeatureStore] = None
+        """The backbone feature store"""
+        self._listener: t.Optional[dragon_process.Process] = None
+        """The standalone process executing the event consumer"""
 
         self._nodes: t.List["dragon_machine.Node"] = []
         """Node capability information for hosts in the allocation"""
@@ -201,8 +214,6 @@ class DragonBackend:
         """Mapping with hostnames as keys and a set of running step IDs as the value"""
 
         self._initialize_hosts()
-        self._view = DragonBackendView(self)
-        logger.debug(self._view.host_desc)
         self._prioritizer = NodePrioritizer(self._nodes, self._queue_lock)
 
     @property
@@ -254,12 +265,11 @@ class DragonBackend:
 
         :returns: a status message
         """
-        return (
-            "Dragon server backend update\n"
-            f"{self._view.host_table}\n{self._view.step_table}"
-        )
+        view = DragonBackendView(self)
+        return "Dragon server backend update\n" f"{view.host_table}\n{view.step_table}"
 
     def _heartbeat(self) -> None:
+        """Update the value of the last heartbeat to the current time."""
         self._last_beat = self.current_time
 
     @property
@@ -539,21 +549,83 @@ class DragonBackend:
                 self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
                 self._group_infos[step_id].return_codes = [-9]
 
-    @property
-    def infra_ddict(self) -> str:
-        """Create a Dragon distributed dictionary and return its
-        serialized descriptor
+    def _create_backbone(self) -> BackboneFeatureStore:
         """
-        if self._infra_ddict is None:
-            logger.info("Creating DDict")
-            self._infra_ddict = dragon_ddict.DDict(
-                n_nodes=len(self._hosts), total_mem=len(self._hosts) * 1024**3
-            )  # todo: parametrize
-            logger.info("Created DDict")
-            self._infra_ddict["creation"] = str(time.time())
-            logger.info(self._infra_ddict["creation"])
+        Creates a BackboneFeatureStore if one does not exist. Updates
+        environment variables of this process to include the backbone
+        descriptor.
 
-        return str(self._infra_ddict.serialize())
+        :returns: The backbone feature store
+        """
+        if self._backbone is None:
+            backbone_storage = create_ddict(
+                len(self._hosts),
+                self._DEFAULT_NUM_MGR_PER_NODE,
+                self._DEFAULT_MEM_PER_NODE,
+            )
+
+            self._backbone = BackboneFeatureStore(
+                backbone_storage, allow_reserved_writes=True
+            )
+
+            # put the backbone descriptor in the env vars
+            os.environ.update(self._backbone.get_env())
+
+        return self._backbone
+
+    @staticmethod
+    def _initialize_cooldown() -> int:
+        """Load environment configuration and determine the correct cooldown
+        period to apply to the backend process.
+
+        :returns: The calculated cooldown (in seconds)
+        """
+        smartsim_config = get_config()
+        return (
+            smartsim_config.telemetry_frequency * 2 + 5
+            if smartsim_config.telemetry_enabled
+            else 5
+        )
+
+    def start_event_listener(
+        self, cpu_affinity: list[int], gpu_affinity: list[int]
+    ) -> dragon_process.Process:
+        """Start a standalone event listener.
+
+        :param cpu_affinity: The CPU affinity for the process
+        :param gpu_affinity: The GPU affinity for the process
+        :returns: The dragon Process managing the process
+        :raises SmartSimError: If the backbone is not provided
+        """
+        if self._backbone is None:
+            raise SmartSimError("Backbone feature store is not available")
+
+        service = ConsumerRegistrationListener(
+            self._backbone, 1.0, 2.0, as_service=True, health_check_frequency=90
+        )
+
+        options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
+        local_policy = dragon_policy.Policy(
+            placement=dragon_policy.Policy.Placement.HOST_NAME,
+            host_name=socket.gethostname(),
+            cpu_affinity=cpu_affinity,
+            gpu_affinity=gpu_affinity,
+        )
+        process = dragon_process.Process(
+            target=service.execute,
+            args=[],
+            cwd=os.getcwd(),
+            env={
+                **os.environ,
+                **self._backbone.get_env(),
+            },
+            policy=local_policy,
+            options=options,
+            stderr=dragon_process.Popen.STDOUT,
+            stdout=dragon_process.Popen.STDOUT,
+        )
+        process.start()
+        return process
 
     @staticmethod
     def create_run_policy(
@@ -595,7 +667,9 @@ class DragonBackend:
         )
 
     def _start_steps(self) -> None:
+        """Start all new steps created since the last update."""
         self._heartbeat()
+
         with self._queue_lock:
             started = []
             for step_id, request in self._queued_steps.items():
@@ -622,7 +696,7 @@ class DragonBackend:
                         env={
                             **request.current_env,
                             **request.env,
-                            "_SMARTSIM_INFRA_BACKBONE": self.infra_ddict,
+                            **(self._backbone.get_env() if self._backbone else {}),
                         },
                         stdout=dragon_process.Popen.PIPE,
                         stderr=dragon_process.Popen.PIPE,
@@ -758,6 +832,9 @@ class DragonBackend:
                     group_info.redir_workers = None
 
     def _update_shutdown_status(self) -> None:
+        """Query the status of running tasks and update the status
+        of any that have completed.
+        """
         self._heartbeat()
         with self._queue_lock:
             self._can_shutdown |= (
@@ -771,6 +848,9 @@ class DragonBackend:
             )
 
     def _should_print_status(self) -> bool:
+        """Determine if status messages should be printed based off the last
+        update. Returns `True` to trigger prints, `False` otherwise.
+        """
         if self.current_time - self._last_update_time > 10:
             self._last_update_time = self.current_time
             return True
@@ -778,6 +858,8 @@ class DragonBackend:
 
     def _update(self) -> None:
         """Trigger all update queries and update local state database"""
+        self._create_backbone()
+
         self._stop_steps()
         self._start_steps()
         self._refresh_statuses()
@@ -785,6 +867,9 @@ class DragonBackend:
 
     def _kill_all_running_jobs(self) -> None:
         with self._queue_lock:
+            if self._listener and self._listener.is_alive:
+                self._listener.kill()
+
             for step_id, group_info in self._group_infos.items():
                 if group_info.status not in TERMINAL_STATUSES:
                     self._stop_requests.append(DragonStopRequest(step_id=step_id))
@@ -871,6 +956,8 @@ class DragonBackendView:
         :param backend: A dragon backend used to produce the view"""
         self._backend = backend
         """A dragon backend used to produce the view"""
+
+        logger.debug(self.host_desc)
 
     @property
     def host_desc(self) -> str:

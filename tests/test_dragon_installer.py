@@ -511,10 +511,18 @@ def test_create_dotenv_existing_dotenv(monkeypatch: pytest.MonkeyPatch, test_dir
 
         # ensure file was overwritten and env vars are not duplicated
         dotenv_content = exp_env_path.read_text(encoding="utf-8")
-        split_content = dotenv_content.split(var_name)
-
-        # split to confirm env var only appars once
-        assert len(split_content) == 2
+        lines = [
+            line for line in dotenv_content.split("\n") if line and not "#" in line
+        ]
+        for line in lines:
+            if line.startswith(var_name):
+                # make sure the var isn't defined recursively
+                # DRAGON_BASE_DIR=$DRAGON_BASE_DIR
+                assert var_name not in line[len(var_name) + 1 :]
+            else:
+                # make sure any values reference the original base dir var
+                if var_name in line:
+                    assert f"${var_name}" in line
 
 
 def test_create_dotenv_format(monkeypatch: pytest.MonkeyPatch, test_dir: str):
@@ -532,7 +540,7 @@ def test_create_dotenv_format(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         content = exp_env_path.read_text(encoding="utf-8")
 
         # ensure we have values written, but ignore empty lines
-        lines = [line for line in content.split("\n") if line]
+        lines = [line for line in content.split("\n") if line and not "#" in line]
         assert lines
 
         # ensure each line is formatted as key=value

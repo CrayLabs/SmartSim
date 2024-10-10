@@ -38,7 +38,7 @@ def test_build_model_key_successful():
     fsd = "mock-feature-store-descriptor"
     model_key = handler.build_model_key("tensor_key", fsd)
     assert model_key.key == "tensor_key"
-    assert model_key.featureStoreDescriptor == fsd
+    assert model_key.descriptor == fsd
 
 
 def test_build_model_key_unsuccessful():

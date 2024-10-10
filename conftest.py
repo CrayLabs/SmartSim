@@ -93,6 +93,7 @@ built_mpi_app = False
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
 
+
 def get_account() -> str:
     return test_account
 
@@ -225,7 +226,6 @@ def kill_all_test_spawned_processes() -> None:
             child.kill()
     except Exception:
         print("Not all processes were killed after test")
-
 
 
 def get_hostlist() -> t.Optional[t.List[str]]:

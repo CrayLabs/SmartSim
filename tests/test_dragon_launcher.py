@@ -510,7 +510,26 @@ def test_load_env_env_file_created(monkeypatch: pytest.MonkeyPatch, test_dir: st
         assert loaded_env
 
         # confirm .env was parsed as expected by inspecting a key
+        assert "DRAGON_BASE_DIR" in loaded_env
+        base_dir = loaded_env["DRAGON_BASE_DIR"]
+
         assert "DRAGON_ROOT_DIR" in loaded_env
+        assert loaded_env["DRAGON_ROOT_DIR"] == base_dir
+
+        assert "DRAGON_INCLUDE_DIR" in loaded_env
+        assert loaded_env["DRAGON_INCLUDE_DIR"] == f"{base_dir}/include"
+
+        assert "DRAGON_LIB_DIR" in loaded_env
+        assert loaded_env["DRAGON_LIB_DIR"] == f"{base_dir}/lib"
+
+        assert "DRAGON_VERSION" in loaded_env
+        assert loaded_env["DRAGON_VERSION"] == DEFAULT_DRAGON_VERSION
+
+        assert "PATH" in loaded_env
+        assert loaded_env["PATH"] == f"{base_dir}/bin"
+
+        assert "LD_LIBRARY_PATH" in loaded_env
+        assert loaded_env["LD_LIBRARY_PATH"] == f"{base_dir}/lib"
 
 
 def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):

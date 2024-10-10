@@ -36,7 +36,8 @@ from smartsim._core.mli.infrastructure.control.device_manager import (
 )
 from smartsim._core.mli.infrastructure.storage.feature_store import (
     FeatureStore,
-    FeatureStoreKey,
+    ModelKey,
+    TensorKey,
 )
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
@@ -116,9 +117,9 @@ def test_device_manager_model_in_request():
 
     worker = MockWorker()
 
-    tensor_key = FeatureStoreKey(key="key", descriptor="desc")
-    output_key = FeatureStoreKey(key="key", descriptor="desc")
-    model_key = FeatureStoreKey(key="model key", descriptor="desc")
+    tensor_key = TensorKey(key="key", descriptor="desc")
+    output_key = TensorKey(key="key", descriptor="desc")
+    model_key = ModelKey(key="model key", descriptor="desc")
 
     request = InferenceRequest(
         model_key=model_key,
@@ -154,9 +155,9 @@ def test_device_manager_model_key():
 
     worker = MockWorker()
 
-    tensor_key = FeatureStoreKey(key="key", descriptor="desc")
-    output_key = FeatureStoreKey(key="key", descriptor="desc")
-    model_key = FeatureStoreKey(key="model key", descriptor="desc")
+    tensor_key = TensorKey(key="key", descriptor="desc")
+    output_key = TensorKey(key="key", descriptor="desc")
+    model_key = ModelKey(key="model key", descriptor="desc")
 
     request = InferenceRequest(
         model_key=model_key,
