@@ -51,11 +51,15 @@ import cloudpickle
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
+from smartsim._core.mli.comm.channel.dragon_util import create_local
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestDispatcher,
 )
 from smartsim._core.mli.infrastructure.control.worker_manager import WorkerManager
 from smartsim._core.mli.infrastructure.environment_loader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
+)
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
@@ -128,23 +132,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     connect_to_infrastructure()
-    ddict_str = os.environ["_SMARTSIM_INFRA_BACKBONE"]
-    ddict = DDict.attach(ddict_str)
+    ddict_str = os.environ[BackboneFeatureStore.MLI_BACKBONE]
 
-    to_worker_channel = Channel.make_process_local()
+    backbone = BackboneFeatureStore.from_descriptor(ddict_str)
+
+    to_worker_channel = create_local()
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
-    to_worker_fli_serialized = to_worker_fli.serialize()
-    ddict["to_worker_fli"] = to_worker_fli_serialized
+    to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli)
+
+    backbone.worker_queue = to_worker_fli_comm_ch.descriptor
+
+    os.environ[BackboneFeatureStore.MLI_WORKER_QUEUE] = to_worker_fli_comm_ch.descriptor
+    os.environ[BackboneFeatureStore.MLI_BACKBONE] = backbone.descriptor
 
     arg_worker_type = cloudpickle.loads(
         base64.b64decode(args.worker_class.encode("ascii"))
     )
-
-    dfs = DragonFeatureStore(ddict)
-    comm_channel = DragonFLIChannel(to_worker_fli_serialized)
-
-    descriptor = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
-    os.environ["_SMARTSIM_REQUEST_QUEUE"] = descriptor
 
     config_loader = EnvironmentConfigLoader(
         featurestore_factory=DragonFeatureStore.from_descriptor,

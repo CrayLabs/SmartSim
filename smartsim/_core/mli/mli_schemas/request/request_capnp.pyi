@@ -61,7 +61,7 @@ from .request_attributes.request_attributes_capnp import (
 )
 
 class ChannelDescriptor:
-    descriptor: bytes
+    descriptor: str
     @staticmethod
     @contextmanager
     def from_bytes(

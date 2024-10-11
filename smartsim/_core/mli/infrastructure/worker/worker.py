@@ -39,17 +39,16 @@ from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
 from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
-from ..storage.feature_store import FeatureStore, FeatureStoreKey
+from ..storage.feature_store import FeatureStore, ModelKey, TensorKey
 
 if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.data.data_references_capnp import TensorKey
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
     from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
 
 # Placeholder
-ModelIdentifier = FeatureStoreKey
+ModelIdentifier = ModelKey
 
 
 class InferenceRequest:
@@ -57,12 +56,12 @@ class InferenceRequest:
 
     def __init__(
         self,
-        model_key: t.Optional[FeatureStoreKey] = None,
+        model_key: t.Optional[ModelKey] = None,
         callback: t.Optional[CommChannelBase] = None,
         raw_inputs: t.Optional[t.List[bytes]] = None,
-        input_keys: t.Optional[t.List[FeatureStoreKey]] = None,
+        input_keys: t.Optional[t.List[TensorKey]] = None,
         input_meta: t.Optional[t.List[t.Any]] = None,
-        output_keys: t.Optional[t.List[FeatureStoreKey]] = None,
+        output_keys: t.Optional[t.List[TensorKey]] = None,
         raw_model: t.Optional[Model] = None,
         batch_size: int = 0,
     ):
@@ -112,7 +111,7 @@ class InferenceRequest:
 
     @property
     def has_raw_inputs(self) -> bool:
-        """Check if the InferenceRequest contains raw_outputs.
+        """Check if the InferenceRequest contains raw_inputs.
 
         :returns: True if raw_outputs is not None and is not an empty list,
         False otherwise
@@ -153,7 +152,7 @@ class InferenceReply:
     def __init__(
         self,
         outputs: t.Optional[t.Collection[t.Any]] = None,
-        output_keys: t.Optional[t.Collection[FeatureStoreKey]] = None,
+        output_keys: t.Optional[t.Collection[TensorKey]] = None,
         status_enum: "Status" = "running",
         message: str = "In progress",
     ) -> None:
@@ -166,7 +165,7 @@ class InferenceReply:
         """
         self.outputs: t.Collection[t.Any] = outputs or []
         """List of output data"""
-        self.output_keys: t.Collection[t.Optional[FeatureStoreKey]] = output_keys or []
+        self.output_keys: t.Collection[t.Optional[TensorKey]] = output_keys or []
         """List of keys used for output data"""
         self.status_enum = status_enum
         """Status of the reply"""
@@ -206,7 +205,7 @@ class LoadModelResult:
         :param model: The loaded model
         """
         self.model = model
-        """The model as bytes"""
+        """The loaded model (e.g. a TensorFlow, PyTorch, ONNX, etc. model)"""
         self.inputs = inputs
         """List of input layer names, only used in TensorFlow"""
         self.outputs = outputs
@@ -330,7 +329,7 @@ class RequestBatch:
     """List of InferenceRequests in the batch"""
     inputs: t.Optional[TransformInputResult]
     """Transformed batch of input tensors"""
-    model_id: ModelIdentifier
+    model_id: "ModelIdentifier"
     """Model (key, descriptor) tuple"""
 
     @property
@@ -360,7 +359,7 @@ class RequestBatch:
         return None
 
     @property
-    def input_keys(self) -> t.List[FeatureStoreKey]:
+    def input_keys(self) -> t.List[TensorKey]:
         """All input keys available in this batch's requests.
 
         :returns: All input keys belonging to requests in this batch"""
@@ -371,7 +370,7 @@ class RequestBatch:
         return keys
 
     @property
-    def output_keys(self) -> t.List[FeatureStoreKey]:
+    def output_keys(self) -> t.List[TensorKey]:
         """All output keys available in this batch's requests.
 
         :returns: All output keys belonging to requests in this batch"""
@@ -388,7 +387,7 @@ class MachineLearningWorkerCore:
     @staticmethod
     def deserialize_message(
         data_blob: bytes,
-        callback_factory: t.Callable[[bytes], CommChannelBase],
+        callback_factory: t.Callable[[str], CommChannelBase],
     ) -> InferenceRequest:
         """Deserialize a message from a byte stream into an InferenceRequest.
 
@@ -398,27 +397,27 @@ class MachineLearningWorkerCore:
         :returns: The raw input message deserialized into an InferenceRequest
         """
         request = MessageHandler.deserialize_request(data_blob)
-        model_key: t.Optional[FeatureStoreKey] = None
+        model_key: t.Optional[ModelKey] = None
         model_bytes: t.Optional[Model] = None
 
         if request.model.which() == "key":
-            model_key = FeatureStoreKey(
+            model_key = ModelKey(
                 key=request.model.key.key,
-                descriptor=request.model.key.featureStoreDescriptor,
+                descriptor=request.model.key.descriptor,
             )
         elif request.model.which() == "data":
             model_bytes = request.model.data
 
         callback_key = request.replyChannel.descriptor
         comm_channel = callback_factory(callback_key)
-        input_keys: t.Optional[t.List[FeatureStoreKey]] = None
+        input_keys: t.Optional[t.List[TensorKey]] = None
         input_bytes: t.Optional[t.List[bytes]] = None
-        output_keys: t.Optional[t.List[FeatureStoreKey]] = None
+        output_keys: t.Optional[t.List[TensorKey]] = None
         input_meta: t.Optional[t.List[TensorDescriptor]] = None
 
         if request.input.which() == "keys":
             input_keys = [
-                FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
+                TensorKey(key=value.key, descriptor=value.descriptor)
                 for value in request.input.keys
             ]
         elif request.input.which() == "descriptors":
@@ -426,7 +425,7 @@ class MachineLearningWorkerCore:
 
         if request.output:
             output_keys = [
-                FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
+                TensorKey(key=value.key, descriptor=value.descriptor)
                 for value in request.output
             ]
 
@@ -500,7 +499,7 @@ class MachineLearningWorkerCore:
             feature_store = feature_stores[fsd]
             raw_bytes: bytes = t.cast(bytes, feature_store[key])
             return FetchModelResult(raw_bytes)
-        except FileNotFoundError as ex:
+        except (FileNotFoundError, KeyError) as ex:
             logger.exception(ex)
             raise SmartSimError(f"Model could not be retrieved with key {key}") from ex
 
@@ -555,12 +554,12 @@ class MachineLearningWorkerCore:
         request: InferenceRequest,
         transform_result: TransformOutputResult,
         feature_stores: t.Dict[str, FeatureStore],
-    ) -> t.Collection[t.Optional[FeatureStoreKey]]:
+    ) -> t.Collection[t.Optional[TensorKey]]:
         """Given a collection of data, make it available as a shared resource in the
         feature store.
 
         :param request: The request that triggered the pipeline
-        :param execute_result: Results from inference
+        :param transform_result: Transformed version of the inference result
         :param feature_stores: Available feature stores used for persistence
         :returns: A collection of keys that were placed in the feature store
         :raises ValueError: If a feature store is not provided
@@ -568,7 +567,7 @@ class MachineLearningWorkerCore:
         if not feature_stores:
             raise ValueError("Feature store is required for output persistence")
 
-        keys: t.List[t.Optional[FeatureStoreKey]] = []
+        keys: t.List[t.Optional[TensorKey]] = []
         # need to decide how to get back to original sub-batch inputs so they can be
         # accurately placed, datum might need to include this.
 
@@ -590,10 +589,12 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     def load_model(
         batch: RequestBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
-        """Given a loaded MachineLearningModel, ensure it is loaded into
-        device memory.
+        """Given the raw bytes of an ML model that were fetched, ensure
+        it is loaded into device memory.
 
         :param request: The request that triggered the pipeline
+        :param fetch_result: The result of a fetch-model operation; contains
+        the raw bytes of the ML model.
         :param device: The device on which the model must be placed
         :returns: LoadModelResult wrapping the model loaded for the request
         :raises ValueError: If model reference object is not found
@@ -610,7 +611,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         """Given a collection of data, perform a transformation on the data and put
         the raw tensor data on a MemoryPool allocation.
 
-        :param request: The request that triggered the pipeline
+        :param batch: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
         :param mem_pool: The memory pool used to access batched input tensors
         :returns: The transformed inputs wrapped in a TransformInputResult

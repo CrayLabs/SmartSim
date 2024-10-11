@@ -26,6 +26,7 @@
 
 import base64
 import typing as t
+import uuid
 from abc import ABC, abstractmethod
 
 from smartsim.log import get_logger
@@ -36,24 +37,31 @@ logger = get_logger(__name__)
 class CommChannelBase(ABC):
     """Base class for abstracting a message passing mechanism"""
 
-    def __init__(self, descriptor: t.Union[str, bytes]) -> None:
+    def __init__(
+        self,
+        descriptor: str,
+        name: t.Optional[str] = None,
+    ) -> None:
         """Initialize the CommChannel instance.
 
         :param descriptor: Channel descriptor
         """
         self._descriptor = descriptor
+        """An opaque identifier used to connect to an underlying communication channel"""
+        self._name = name or str(uuid.uuid4())
+        """A user-friendly identifier for channel-related logging"""
 
     @abstractmethod
-    def send(self, value: bytes, timeout: t.Optional[float] = 0) -> None:
+    def send(self, value: bytes, timeout: t.Optional[float] = 0.001) -> None:
         """Send a message through the underlying communication channel.
 
-        :param timeout: Maximum time to wait (in seconds) for messages to send
         :param value: The value to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
         :raises SmartSimError: If sending message fails
         """
 
     @abstractmethod
-    def recv(self, timeout: t.Optional[float] = 0) -> t.List[bytes]:
+    def recv(self, timeout: t.Optional[float] = 0.001) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
@@ -61,11 +69,14 @@ class CommChannelBase(ABC):
         """
 
     @property
-    def descriptor(self) -> bytes:
+    def descriptor(self) -> str:
         """Return the channel descriptor for the underlying dragon channel.
 
         :returns: Byte encoded channel descriptor
         """
-        if isinstance(self._descriptor, str):
-            return base64.b64decode(self._descriptor.encode("utf-8"))
         return self._descriptor
+
+    def __str__(self) -> str:
+        """Build a string representation of the channel useful for printing."""
+        classname = type(self).__class__.__name__
+        return f"{classname}('{self._name}', '{self._descriptor}')"

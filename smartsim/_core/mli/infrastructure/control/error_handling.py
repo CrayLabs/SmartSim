@@ -48,7 +48,7 @@ def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
     return MessageHandler.build_response(
         status=status,
         message=message,
-        result=[],
+        result=None,
         custom_attributes=None,
     )
 

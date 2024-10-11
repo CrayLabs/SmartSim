@@ -26,19 +26,14 @@
 
 # isort: off
 from dragon import fli
-import dragon.channels as dch
-import dragon.infrastructure.facts as df
-import dragon.infrastructure.parameters as dp
-import dragon.managed_memory as dm
-import dragon.utils as du
+from dragon.channels import Channel
 
 # isort: on
 
-import base64
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
-from smartsim._core.mli.comm.channel.dragon_channel import create_local
+import smartsim._core.mli.comm.channel.dragon_util as drg_util
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 
@@ -50,36 +45,70 @@ class DragonFLIChannel(cch.CommChannelBase):
 
     def __init__(
         self,
-        fli_desc: bytes,
-        sender_supplied: bool = True,
-        buffer_size: int = 0,
+        fli_: fli.FLInterface,
+        buffer_size: int = drg_util.DEFAULT_CHANNEL_BUFFER_SIZE,
     ) -> None:
         """Initialize the DragonFLIChannel instance.
 
-        :param fli_desc: The descriptor of the FLI channel to attach
+        :param fli_: The FLIInterface to use as the underlying communications channel
         :param sender_supplied: Flag indicating if the FLI uses sender-supplied streams
         :param buffer_size: Maximum number of sent messages that can be buffered
         """
-        super().__init__(fli_desc)
-        self._fli: "fli" = fli.FLInterface.attach(fli_desc)
-        self._channel: t.Optional["dch"] = (
-            create_local(buffer_size) if sender_supplied else None
-        )
+        descriptor = drg_util.channel_to_descriptor(fli_)
+        super().__init__(descriptor)
+
+        self._channel: t.Optional["Channel"] = None
+        """The underlying dragon Channel used by a sender-side DragonFLIChannel
+        to attach to the main FLI channel"""
+
+        self._fli = fli_
+        """The underlying dragon FLInterface used by this CommChannel for communications"""
+        self._buffer_size: int = buffer_size
+        """Maximum number of messages that can be buffered before sending"""
 
     def send(self, value: bytes, timeout: t.Optional[float] = 0.001) -> None:
         """Send a message through the underlying communication channel.
 
-        :param timeout: Maximum time to wait (in seconds) for messages to send
         :param value: The value to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
         :raises SmartSimError: If sending message fails
         """
         try:
+            if self._channel is None:
+                self._channel = drg_util.create_local(self._buffer_size)
+
             with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
                 sendh.send_bytes(value, timeout=timeout)
-                logger.debug(f"DragonFLIChannel {self.descriptor!r} sent message")
+                logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
+            self._channel = None
             raise SmartSimError(
-                f"Error sending message: DragonFLIChannel {self.descriptor!r}"
+                f"Error sending via DragonFLIChannel {self.descriptor}"
+            ) from e
+
+    def send_multiple(
+        self,
+        values: t.Sequence[bytes],
+        timeout: float = 0.001,
+    ) -> None:
+        """Send a message through the underlying communication channel.
+
+        :param values: The values to send
+        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :raises SmartSimError: If sending message fails
+        """
+        try:
+            if self._channel is None:
+                self._channel = drg_util.create_local(self._buffer_size)
+
+            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
+                for value in values:
+                    sendh.send_bytes(value)
+                    logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
+        except Exception as e:
+            self._channel = None
+            raise SmartSimError(
+                f"Error sending via DragonFLIChannel {self.descriptor} {e}"
             ) from e
 
     def recv(self, timeout: t.Optional[float] = 0.001) -> t.List[bytes]:
@@ -96,14 +125,13 @@ class DragonFLIChannel(cch.CommChannelBase):
                 try:
                     message, _ = recvh.recv_bytes(timeout=None)
                     messages.append(message)
-                    logger.debug(
-                        f"DragonFLIChannel {self.descriptor!r} received message"
-                    )
+                    logger.debug(f"DragonFLIChannel {self.descriptor} received message")
                 except fli.FLIEOT:
                     eot = True
+                    logger.debug(f"DragonFLIChannel exhausted: {self.descriptor}")
                 except Exception as e:
                     raise SmartSimError(
-                        f"Error receiving messages: DragonFLIChannel {self.descriptor!r}"
+                        f"Error receiving messages: DragonFLIChannel {self.descriptor}"
                     ) from e
         return messages
 
@@ -116,13 +144,14 @@ class DragonFLIChannel(cch.CommChannelBase):
 
         :param descriptor: The descriptor that uniquely identifies the resource
         :returns: An attached DragonFLIChannel
-        :raises SmartSimError: If creation of DragonFLIChanenel fails
+        :raises SmartSimError: If creation of DragonFLIChannel fails
+        :raises ValueError: If the descriptor is invalid
         """
+        if not descriptor:
+            raise ValueError("Invalid descriptor provided")
+
         try:
-            return DragonFLIChannel(
-                fli_desc=base64.b64decode(descriptor),
-                sender_supplied=True,
-            )
+            return DragonFLIChannel(fli_=drg_util.descriptor_to_fli(descriptor))
         except Exception as e:
             raise SmartSimError(
                 f"Error while creating DragonFLIChannel: {descriptor}"

@@ -142,13 +142,22 @@ class BatchQueue(Queue[InferenceRequest]):
         :returns: True if the queue can be flushed, False otherwise
         """
         if self.empty():
+            logger.debug("Request dispatcher queue is empty")
             return False
 
-        timed_out = (
-            self._batch_timeout >= 0 and self._elapsed_time >= self._batch_timeout
-        )
-        logger.debug(f"Is full: {self.full()} or has timed out: {timed_out}")
-        return self.full() or timed_out
+        timed_out = False
+        if self._batch_timeout >= 0:
+            timed_out = self._elapsed_time >= self._batch_timeout
+
+        if self.full():
+            logger.debug("Request dispatcher ready to deliver full batch")
+            return True
+
+        if timed_out:
+            logger.debug("Request dispatcher delivering partial batch")
+            return True
+
+        return False
 
     def make_disposable(self) -> None:
         """Set this queue as disposable, and never use it again after it gets
@@ -218,7 +227,6 @@ class RequestDispatcher(Service):
         :param config_loader: Object to load configuration from environment
         :param worker_type: Type of worker to instantiate to batch inputs
         :param mem_pool_size: Size of the memory pool used to allocate tensors
-        :raises SmartSimError: If config_loaded.get_queue() does not return a channel
         """
         super().__init__(as_service=True, cooldown=1)
         self._queues: dict[str, list[BatchQueue]] = {}
@@ -281,7 +289,7 @@ class RequestDispatcher(Service):
         fs_missing = fs_desired - fs_actual
 
         if not self.has_featurestore_factory:
-            logger.error("No feature store factory configured")
+            logger.error("No feature store factory is configured. Unable to dispatch.")
             return False
 
         # create the feature stores we need to service request
@@ -363,6 +371,7 @@ class RequestDispatcher(Service):
                     None,
                 )
 
+            logger.debug(f"Dispatcher is processing {len(bytes_list)} messages")
             request_bytes = bytes_list[0]
             tensor_bytes_list = bytes_list[1:]
             self._perf_timer.start_timings()
@@ -472,7 +481,7 @@ class RequestDispatcher(Service):
             )
             self._active_queues[tmp_id] = tmp_queue
             self._queues[tmp_id] = [tmp_queue]
-            tmp_queue.put_nowait(request)
+            tmp_queue.put(request)
             tmp_queue.make_disposable()
             return
 

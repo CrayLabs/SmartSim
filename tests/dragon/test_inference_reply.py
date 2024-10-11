@@ -28,7 +28,7 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.feature_store import TensorKey
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 from smartsim._core.mli.message_handler import MessageHandler
 
@@ -44,8 +44,8 @@ def inference_reply() -> InferenceReply:
 
 
 @pytest.fixture
-def fs_key() -> FeatureStoreKey:
-    return FeatureStoreKey("key", "descriptor")
+def fs_key() -> TensorKey:
+    return TensorKey("key", "descriptor")
 
 
 @pytest.mark.parametrize(

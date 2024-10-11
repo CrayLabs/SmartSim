@@ -24,19 +24,21 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pathlib
+import time
 import typing as t
 
 import pytest
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
-    BackboneFeatureStore,
-    EventBroadcaster,
-    EventCategory,
-    EventConsumer,
+from smartsim._core.mli.infrastructure.comm.broadcaster import EventBroadcaster
+from smartsim._core.mli.infrastructure.comm.consumer import EventConsumer
+from smartsim._core.mli.infrastructure.comm.event import (
     OnCreateConsumer,
     OnWriteFeatureStore,
+)
+from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
+    BackboneFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
@@ -55,15 +57,21 @@ if t.TYPE_CHECKING:
 pytestmark = pytest.mark.dragon
 
 
+def boom(*args, **kwargs) -> None:
+    """Helper function that blows up when used to mock up
+    some other function."""
+    raise Exception(f"you shall not pass! {args}, {kwargs}")
+
+
 def test_event_uid() -> None:
-    """Verify that all events include a unique identifier"""
+    """Verify that all events include a unique identifier."""
     uids: t.Set[str] = set()
     num_iters = 1000
 
     # generate a bunch of events and keep track all the IDs
     for i in range(num_iters):
-        event_a = OnCreateConsumer(str(i))
-        event_b = OnWriteFeatureStore(str(i), "key")
+        event_a = OnCreateConsumer("test_event_uid", str(i), filters=[])
+        event_b = OnWriteFeatureStore("test_event_uid", "test_event_uid", str(i))
 
         uids.add(event_a.uid)
         uids.add(event_b.uid)
@@ -74,7 +82,7 @@ def test_event_uid() -> None:
 
 def test_mli_reserved_keys_conversion() -> None:
     """Verify that conversion from a string to an enum member
-    works as expected"""
+    works as expected."""
 
     for reserved_key in ReservedKeys:
         # iterate through all keys and verify `from_string` works
@@ -87,7 +95,7 @@ def test_mli_reserved_keys_conversion() -> None:
 
 def test_mli_reserved_keys_writes() -> None:
     """Verify that attempts to write to reserved keys are blocked from a
-    standard DragonFeatureStore but enabled with the BackboneFeatureStore"""
+    standard DragonFeatureStore but enabled with the BackboneFeatureStore."""
 
     mock_storage = {}
     dfs = DragonFeatureStore(mock_storage)
@@ -116,10 +124,8 @@ def test_mli_reserved_keys_writes() -> None:
 
 
 def test_mli_consumers_read_by_key() -> None:
-    """Verify that the value returned from the mli consumers
-    method is written to the correct key and reads are
-    allowed via standard dragon feature store.
-    NOTE: should reserved reads also be blocked"""
+    """Verify that the value returned from the mli consumers method is written
+    to the correct key and reads are allowed via standard dragon feature store."""
 
     mock_storage = {}
     dfs = DragonFeatureStore(mock_storage)
@@ -138,7 +144,7 @@ def test_mli_consumers_read_by_key() -> None:
 
 def test_mli_consumers_read_by_backbone() -> None:
     """Verify that the backbone reads the correct location
-    when using the backbone feature store API instead of mapping API"""
+    when using the backbone feature store API instead of mapping API."""
 
     mock_storage = {}
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
@@ -152,7 +158,7 @@ def test_mli_consumers_read_by_backbone() -> None:
 
 def test_mli_consumers_write_by_backbone() -> None:
     """Verify that the backbone writes the correct location
-    when using the backbone feature store API instead of mapping API"""
+    when using the backbone feature store API instead of mapping API."""
 
     mock_storage = {}
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
@@ -166,10 +172,11 @@ def test_mli_consumers_write_by_backbone() -> None:
 
 def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
     """Verify that a broadcast operation without any registered subscribers
-    succeeds without raising Exceptions
+    succeeds without raising Exceptions.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
     consumer_descriptor = storage_path / "test-consumer"
@@ -177,7 +184,9 @@ def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
     # NOTE: we're not putting any consumers into the backbone here!
     backbone = BackboneFeatureStore(mock_storage)
 
-    event = OnCreateConsumer(consumer_descriptor)
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_no_factory", consumer_descriptor, filters=[]
+    )
 
     publisher = EventBroadcaster(backbone)
     num_receivers = 0
@@ -185,7 +194,9 @@ def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
     # publishing this event without any known consumers registered should succeed
     # but report that it didn't have anybody to send the event to
     consumer_descriptor = storage_path / f"test-consumer"
-    event = OnCreateConsumer(consumer_descriptor)
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_no_factory", consumer_descriptor, filters=[]
+    )
 
     num_receivers += publisher.send(event)
 
@@ -201,10 +212,11 @@ def test_eventpublisher_broadcast_no_factory(test_dir: str) -> None:
 
 def test_eventpublisher_broadcast_to_empty_consumer_list(test_dir: str) -> None:
     """Verify that a broadcast operation without any registered subscribers
-    succeeds without raising Exceptions
+    succeeds without raising Exceptions.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -215,7 +227,11 @@ def test_eventpublisher_broadcast_to_empty_consumer_list(test_dir: str) -> None:
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = []
 
-    event = OnCreateConsumer(consumer_descriptor)
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_to_empty_consumer_list",
+        consumer_descriptor,
+        filters=[],
+    )
     publisher = EventBroadcaster(
         backbone, channel_factory=FileSystemCommChannel.from_descriptor
     )
@@ -233,10 +249,11 @@ def test_eventpublisher_broadcast_to_empty_consumer_list(test_dir: str) -> None:
 
 def test_eventpublisher_broadcast_without_channel_factory(test_dir: str) -> None:
     """Verify that a broadcast operation reports an error if no channel
-    factory was supplied for constructing the consumer channels
+    factory was supplied for constructing the consumer channels.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -247,7 +264,11 @@ def test_eventpublisher_broadcast_without_channel_factory(test_dir: str) -> None
     backbone = BackboneFeatureStore(mock_storage, allow_reserved_writes=True)
     backbone.notification_channels = [consumer_descriptor]
 
-    event = OnCreateConsumer(consumer_descriptor)
+    event = OnCreateConsumer(
+        "test_eventpublisher_broadcast_without_channel_factory",
+        consumer_descriptor,
+        filters=[],
+    )
     publisher = EventBroadcaster(
         backbone,
         # channel_factory=FileSystemCommChannel.from_descriptor # <--- not supplied
@@ -261,10 +282,11 @@ def test_eventpublisher_broadcast_without_channel_factory(test_dir: str) -> None
 
 def test_eventpublisher_broadcast_empties_buffer(test_dir: str) -> None:
     """Verify that a successful broadcast clears messages from the event
-    buffer when a new message is sent and consumers are registered
+    buffer when a new message is sent and consumers are registered.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -281,11 +303,17 @@ def test_eventpublisher_broadcast_empties_buffer(test_dir: str) -> None:
     # mock building up some buffered events
     num_buffered_events = 14
     for i in range(num_buffered_events):
-        event = OnCreateConsumer(storage_path / f"test-consumer-{str(i)}")
+        event = OnCreateConsumer(
+            "test_eventpublisher_broadcast_empties_buffer",
+            storage_path / f"test-consumer-{str(i)}",
+            [],
+        )
         publisher._event_buffer.append(bytes(event))
 
     event0 = OnCreateConsumer(
-        storage_path / f"test-consumer-{str(num_buffered_events + 1)}"
+        "test_eventpublisher_broadcast_empties_buffer",
+        storage_path / f"test-consumer-{str(num_buffered_events + 1)}",
+        [],
     )
 
     num_receivers = publisher.send(event0)
@@ -332,13 +360,21 @@ def test_eventpublisher_broadcast_returns_total_sent(
 
     # mock building up some buffered events
     for i in range(num_buffered):
-        event = OnCreateConsumer(storage_path / f"test-consumer-{str(i)}")
+        event = OnCreateConsumer(
+            "test_eventpublisher_broadcast_returns_total_sent",
+            storage_path / f"test-consumer-{str(i)}",
+            [],
+        )
         publisher._event_buffer.append(bytes(event))
 
     assert publisher.num_buffered == num_buffered
 
     # this event will trigger clearing anything already in buffer
-    event0 = OnCreateConsumer(storage_path / f"test-consumer-{num_buffered}")
+    event0 = OnCreateConsumer(
+        "test_eventpublisher_broadcast_returns_total_sent",
+        storage_path / f"test-consumer-{num_buffered}",
+        [],
+    )
 
     # num_receivers should contain a number that computes w/all consumers and all events
     num_receivers = publisher.send(event0)
@@ -347,10 +383,11 @@ def test_eventpublisher_broadcast_returns_total_sent(
 
 
 def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
-    """Verify that any unused consumers are pruned each time a new event is sent
+    """Verify that any unused consumers are pruned each time a new event is sent.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     mock_storage = {}
 
@@ -363,7 +400,11 @@ def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
         backbone, channel_factory=FileSystemCommChannel.from_descriptor
     )
 
-    event = OnCreateConsumer(consumer_descriptor)
+    event = OnCreateConsumer(
+        "test_eventpublisher_prune_unused_consumer",
+        consumer_descriptor,
+        filters=[],
+    )
 
     # the only registered cnosumer is in the event, expect no pruning
     backbone.notification_channels = (consumer_descriptor,)
@@ -377,7 +418,9 @@ def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
     # ... and remove the old descriptor from the backbone when it's looked up
     backbone.notification_channels = (consumer_descriptor2,)
 
-    event = OnCreateConsumer(consumer_descriptor2)
+    event = OnCreateConsumer(
+        "test_eventpublisher_prune_unused_consumer", consumer_descriptor2, filters=[]
+    )
 
     publisher.send(event)
 
@@ -413,12 +456,13 @@ def test_eventpublisher_prune_unused_consumer(test_dir: str) -> None:
 def test_eventpublisher_serialize_failure(
     test_dir: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Verify that errors during message serialization are raised to the caller
+    """Verify that errors during message serialization are raised to the caller.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param monkeypatch: pytest fixture for modifying behavior of existing code
-    with mock implementations"""
+    with mock implementations
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -433,15 +477,21 @@ def test_eventpublisher_serialize_failure(
     )
 
     with monkeypatch.context() as patch:
-        event = OnCreateConsumer(target_descriptor)
+        event = OnCreateConsumer(
+            "test_eventpublisher_serialize_failure", target_descriptor, filters=[]
+        )
 
         # patch the __bytes__ implementation to cause pickling to fail during send
-        patch.setattr(event, "__bytes__", lambda x: b"abc")
+        def bad_bytes(self) -> bytes:
+            return b"abc"
+
+        # this patch causes an attribute error when event pickling is attempted
+        patch.setattr(event, "__bytes__", bad_bytes)
 
         backbone.notification_channels = (target_descriptor,)
 
         # send a message into the channel
-        with pytest.raises(ValueError) as ex:
+        with pytest.raises(AttributeError) as ex:
             publisher.send(event)
 
         assert "serialize" in ex.value.args[0]
@@ -450,12 +500,13 @@ def test_eventpublisher_serialize_failure(
 def test_eventpublisher_factory_failure(
     test_dir: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Verify that errors during channel construction are raised to the caller
+    """Verify that errors during channel construction are raised to the caller.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param monkeypatch: pytest fixture for modifying behavior of existing code
-    with mock implementations"""
+    with mock implementations
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -471,7 +522,9 @@ def test_eventpublisher_factory_failure(
     publisher = EventBroadcaster(backbone, channel_factory=boom)
 
     with monkeypatch.context() as patch:
-        event = OnCreateConsumer(target_descriptor)
+        event = OnCreateConsumer(
+            "test_eventpublisher_factory_failure", target_descriptor, filters=[]
+        )
 
         backbone.notification_channels = (target_descriptor,)
 
@@ -484,12 +537,13 @@ def test_eventpublisher_factory_failure(
 
 def test_eventpublisher_failure(test_dir: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that unexpected errors during message send are caught and wrapped in a
-    SmartSimError so they are not propagated directly to the caller
+    SmartSimError so they are not propagated directly to the caller.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param monkeypatch: pytest fixture for modifying behavior of existing code
-    with mock implementations"""
+    with mock implementations
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -507,7 +561,9 @@ def test_eventpublisher_failure(test_dir: str, monkeypatch: pytest.MonkeyPatch) 
         raise Exception("That was unexpected...")
 
     with monkeypatch.context() as patch:
-        event = OnCreateConsumer(target_descriptor)
+        event = OnCreateConsumer(
+            "test_eventpublisher_failure", target_descriptor, filters=[]
+        )
 
         # patch the _broadcast implementation to cause send to fail after
         # after the event has been pickled
@@ -524,10 +580,11 @@ def test_eventpublisher_failure(test_dir: str, monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_eventconsumer_receive(test_dir: str) -> None:
-    """Verify that a consumer retrieves a message from the given channel
+    """Verify that a consumer retrieves a message from the given channel.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -538,14 +595,16 @@ def test_eventconsumer_receive(test_dir: str) -> None:
 
     backbone = BackboneFeatureStore(mock_storage)
     comm_channel = FileSystemCommChannel.from_descriptor(target_descriptor)
-    event = OnCreateConsumer(target_descriptor)
+    event = OnCreateConsumer(
+        "test_eventconsumer_receive", target_descriptor, filters=[]
+    )
 
     # simulate a sent event by writing directly to the input comm channel
     comm_channel.send(bytes(event))
 
     consumer = EventConsumer(comm_channel, backbone)
 
-    all_received: t.List[OnCreateConsumer] = consumer.receive()
+    all_received: t.List[OnCreateConsumer] = consumer.recv()
     assert len(all_received) == 1
 
     # verify we received the same event that was raised
@@ -555,12 +614,13 @@ def test_eventconsumer_receive(test_dir: str) -> None:
 
 @pytest.mark.parametrize("num_sent", [0, 1, 2, 4, 8, 16])
 def test_eventconsumer_receive_multi(test_dir: str, num_sent: int) -> None:
-    """Verify that a consumer retrieves multiple message from the given channel
+    """Verify that a consumer retrieves multiple message from the given channel.
 
     :param test_dir: pytest fixture automatically generating unique working
     directories for individual test outputs
     :param num_sent: parameterized value used to vary the number of events
-    that are enqueued and validations are checked at multiple queue sizes"""
+    that are enqueued and validations are checked at multiple queue sizes
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -574,21 +634,24 @@ def test_eventconsumer_receive_multi(test_dir: str, num_sent: int) -> None:
 
     # simulate multiple sent events by writing directly to the input comm channel
     for _ in range(num_sent):
-        event = OnCreateConsumer(target_descriptor)
+        event = OnCreateConsumer(
+            "test_eventconsumer_receive_multi", target_descriptor, filters=[]
+        )
         comm_channel.send(bytes(event))
 
     consumer = EventConsumer(comm_channel, backbone)
 
-    all_received: t.List[OnCreateConsumer] = consumer.receive()
+    all_received: t.List[OnCreateConsumer] = consumer.recv()
     assert len(all_received) == num_sent
 
 
 def test_eventconsumer_receive_empty(test_dir: str) -> None:
     """Verify that a consumer receiving an empty message ignores the
-    message and continues processing
+    message and continues processing.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -605,7 +668,7 @@ def test_eventconsumer_receive_empty(test_dir: str) -> None:
 
     consumer = EventConsumer(comm_channel, backbone)
 
-    messages = consumer.receive()
+    messages = consumer.recv()
 
     # the messages array should be empty
     assert not messages
@@ -616,7 +679,8 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     multiple publishers and consumers are sending simultaneously.
 
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -628,15 +692,15 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     capp_channel = FileSystemCommChannel(storage_path / "test-capp")
     back_channel = FileSystemCommChannel(storage_path / "test-backend")
 
-    wmgr_consumer_descriptor = wmgr_channel.descriptor.decode("utf-8")
-    capp_consumer_descriptor = capp_channel.descriptor.decode("utf-8")
-    back_consumer_descriptor = back_channel.descriptor.decode("utf-8")
+    wmgr_consumer_descriptor = wmgr_channel.descriptor
+    capp_consumer_descriptor = capp_channel.descriptor
+    back_consumer_descriptor = back_channel.descriptor
 
     # create some consumers to receive messages
     wmgr_consumer = EventConsumer(
         wmgr_channel,
         backbone,
-        filters=[EventCategory.FEATURE_STORE_WRITTEN],
+        filters=[OnWriteFeatureStore.FEATURE_STORE_WRITTEN],
     )
     capp_consumer = EventConsumer(
         capp_channel,
@@ -645,7 +709,7 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     back_consumer = EventConsumer(
         back_channel,
         backbone,
-        filters=[EventCategory.CONSUMER_CREATED],
+        filters=[OnCreateConsumer.CONSUMER_CREATED],
     )
 
     # create some broadcasters to publish messages
@@ -667,28 +731,38 @@ def test_eventconsumer_eventpublisher_integration(test_dir: str) -> None:
     ]
 
     # simulate worker manager sending a notification to backend that it's alive
-    event_1 = OnCreateConsumer(wmgr_consumer_descriptor)
+    event_1 = OnCreateConsumer(
+        "test_eventconsumer_eventpublisher_integration",
+        wmgr_consumer_descriptor,
+        filters=[],
+    )
     mock_worker_mgr.send(event_1)
 
     # simulate the app updating a model a few times
-    event_2 = OnWriteFeatureStore(mock_fs_descriptor, "key-1")
-    event_3 = OnWriteFeatureStore(mock_fs_descriptor, "key-2")
-    event_4 = OnWriteFeatureStore(mock_fs_descriptor, "key-1")
+    event_2 = OnWriteFeatureStore(
+        "test_eventconsumer_eventpublisher_integration", mock_fs_descriptor, "key-1"
+    )
+    event_3 = OnWriteFeatureStore(
+        "test_eventconsumer_eventpublisher_integration", mock_fs_descriptor, "key-2"
+    )
+    event_4 = OnWriteFeatureStore(
+        "test_eventconsumer_eventpublisher_integration", mock_fs_descriptor, "key-1"
+    )
 
     mock_client_app.send(event_2)
     mock_client_app.send(event_3)
     mock_client_app.send(event_4)
 
     # worker manager should only get updates about feature update
-    wmgr_messages = wmgr_consumer.receive()
+    wmgr_messages = wmgr_consumer.recv()
     assert len(wmgr_messages) == 3
 
     # the backend should only receive messages about consumer creation
-    back_messages = back_consumer.receive()
+    back_messages = back_consumer.recv()
     assert len(back_messages) == 1
 
     # hypothetical app has no filters and will get all events
-    app_messages = capp_consumer.receive()
+    app_messages = capp_consumer.recv()
     assert len(app_messages) == 4
 
 
@@ -702,7 +776,8 @@ def test_eventconsumer_batch_timeout(
 
     :param invalid_timeout: any invalid timeout that should fail validation
     :param test_dir: pytest fixture automatically generating unique working
-    directories for individual test outputs"""
+    directories for individual test outputs
+    """
     storage_path = pathlib.Path(test_dir) / "features"
     storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -713,11 +788,57 @@ def test_eventconsumer_batch_timeout(
 
     with pytest.raises(ValueError) as ex:
         # try to create a consumer w/a max recv size of 0
-        EventConsumer(
+        consumer = EventConsumer(
             channel,
             backbone,
-            filters=[EventCategory.FEATURE_STORE_WRITTEN],
-            batch_timeout=invalid_timeout,
+            filters=[OnWriteFeatureStore.FEATURE_STORE_WRITTEN],
         )
+        consumer.recv(batch_timeout=invalid_timeout)
 
     assert "positive" in ex.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "wait_timeout, exp_wait_max",
+    [
+        # aggregate the 1+1+1 into 3 on remaining parameters
+        pytest.param(1, 1 + 1 + 1, id="1s wait, 3 cycle steps"),
+        pytest.param(2, 3 + 2, id="2s wait, 4 cycle steps"),
+        pytest.param(4, 3 + 2 + 4, id="4s wait, 5 cycle steps"),
+        pytest.param(9, 3 + 2 + 4 + 8, id="9s wait, 6 cycle steps"),
+        # aggregate an entire cycle into 16
+        pytest.param(19.5, 16 + 3 + 2 + 4, id="20s wait, repeat cycle"),
+    ],
+)
+def test_backbone_wait_timeout(wait_timeout: float, exp_wait_max: float) -> None:
+    """Verify that attempts to attach to the worker queue from the protoclient
+    timeout in an appropriate amount of time. Note: due to the backoff, we verify
+    the elapsed time is less than the 15s of a cycle of waits.
+
+    :param wait_timeout: Maximum amount of time (in seconds) to allow the backbone
+    to wait for the requested value to exist
+    :param exp_wait_max: Maximum amount of time (in seconds) to set as the upper
+    bound to allow the delays with backoff to occur
+    :param storage_for_dragon_fs: the dragon storage engine to use
+    """
+
+    # NOTE: exp_wait_time maps to the cycled backoff of [0.1, 0.2, 0.4, 0.8]
+    # with leeway added (by allowing 1s each for the 0.1 and 0.5 steps)
+    start_time = time.time()
+
+    storage = {}
+    backbone = BackboneFeatureStore(storage)
+
+    with pytest.raises(SmartSimError) as ex:
+        backbone.wait_for(["does-not-exist"], wait_timeout)
+
+    assert "timeout" in str(ex.value.args[0]).lower()
+
+    end_time = time.time()
+    elapsed = end_time - start_time
+
+    # confirm that we met our timeout
+    assert elapsed > wait_timeout, f"below configured timeout {wait_timeout}"
+
+    # confirm that the total wait time is aligned with the sleep cycle
+    assert elapsed < exp_wait_max, f"above expected max wait {exp_wait_max}"

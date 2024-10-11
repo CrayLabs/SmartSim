@@ -32,6 +32,10 @@ import dragon.data.ddict.ddict as dragon_ddict
 
 # isort: on
 
+from smartsim._core.mli.infrastructure.storage.dragon_util import (
+    ddict_to_descriptor,
+    descriptor_to_ddict,
+)
 from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStore
 from smartsim.error import SmartSimError
 from smartsim.log import get_logger
@@ -46,15 +50,20 @@ class DragonFeatureStore(FeatureStore):
         """Initialize the DragonFeatureStore instance.
 
         :param storage: A distributed dictionary to be used as the underlying
-        storage mechanism of the feature store
-        """
+        storage mechanism of the feature store"""
+        if storage is None:
+            raise ValueError(
+                "Storage is required when instantiating a DragonFeatureStore."
+            )
+
+        descriptor = ""
         if isinstance(storage, dragon_ddict.DDict):
-            descriptor = str(storage.serialize())
-        else:
-            descriptor = "not-set"
+            descriptor = ddict_to_descriptor(storage)
 
         super().__init__(descriptor)
         self._storage: t.Dict[str, t.Union[str, bytes]] = storage
+        """The underlying storage mechanism of the DragonFeatureStore; a
+        distributed, in-memory key-value store"""
 
     def _get(self, key: str) -> t.Union[str, bytes]:
         """Retrieve a value from the underlying storage mechanism.
@@ -65,7 +74,7 @@ class DragonFeatureStore(FeatureStore):
         """
         try:
             return self._storage[key]
-        except KeyError as e:
+        except dragon_ddict.DDictError as e:
             raise KeyError(f"Key not found in FeatureStore: {key}") from e
 
     def _set(self, key: str, value: t.Union[str, bytes]) -> None:
@@ -85,6 +94,17 @@ class DragonFeatureStore(FeatureStore):
         """
         return key in self._storage
 
+    def pop(self, key: str) -> t.Union[str, bytes, None]:
+        """Remove the value from the dictionary and return the value.
+
+        :param key: Dictionary key to retrieve
+        :returns: The value held at the key if it exists, otherwise `None
+        `"""
+        try:
+            return self._storage.pop(key)
+        except dragon_ddict.DDictError:
+            return None
+
     @classmethod
     def from_descriptor(
         cls,
@@ -97,9 +117,10 @@ class DragonFeatureStore(FeatureStore):
         :raises SmartSimError: If attachment to DragonFeatureStore fails
         """
         try:
-            return DragonFeatureStore(dragon_ddict.DDict.attach(descriptor))
+            logger.debug(f"Attaching to FeatureStore with descriptor: {descriptor}")
+            storage = descriptor_to_ddict(descriptor)
+            return cls(storage)
         except Exception as ex:
-            logger.error(f"Error creating dragon feature store: {descriptor}")
             raise SmartSimError(
-                f"Error creating dragon feature store: {descriptor}"
+                f"Error creating dragon feature store from descriptor: {descriptor}"
             ) from ex

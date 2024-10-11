@@ -28,10 +28,10 @@
 
 struct ModelKey {
   key @0 :Text;
-  featureStoreDescriptor @1 :Text;
+  descriptor @1 :Text;
 }
 
 struct TensorKey {
   key @0 :Text;
-  featureStoreDescriptor @1 :Text;
+  descriptor @1 :Text;
 }
