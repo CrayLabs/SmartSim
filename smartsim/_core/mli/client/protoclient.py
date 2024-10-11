@@ -34,9 +34,7 @@ from dragon.globalservices.api_setup import connect_to_infrastructure
 # isort: on
 # pylint: enable=unused-import,import-error
 
-import numbers
 import os
-import time
 import typing as t
 from collections import OrderedDict
 
@@ -145,7 +143,7 @@ class ProtoClient:
         self,
         timing_on: bool,
         backbone_timeout: float = _DEFAULT_BACKBONE_TIMEOUT,
-        rank: int = 0
+        rank: int = 0,
     ) -> None:
         """Initialize the client instance.
 
@@ -171,7 +169,9 @@ class ProtoClient:
         self._backbone.wait_timeout = self.backbone_timeout
         self._to_worker_fli = self._attach_to_worker_queue()
 
-        self._from_worker_ch = DragonCommChannel(create_local(self._DEFAULT_WORK_QUEUE_SIZE))
+        self._from_worker_ch = DragonCommChannel(
+            create_local(self._DEFAULT_WORK_QUEUE_SIZE)
+        )
         self._to_worker_ch = create_local(self._DEFAULT_WORK_QUEUE_SIZE)
 
         self._publisher = self._create_broadcaster()
@@ -225,7 +225,9 @@ class ProtoClient:
             raise ValueError("No worker queue available.")
 
         # pylint: disable-next=protected-access
-        self._to_worker_fli.send_multiple([request_bytes, *[tensor.tobytes() for tensor in tensors]], timeout=None)
+        self._to_worker_fli.send_multiple(
+            [request_bytes, *[tensor.tobytes() for tensor in tensors]], timeout=None
+        )
         logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.perf_timer.measure_time("send_tensors")
@@ -239,9 +241,9 @@ class ProtoClient:
             data_blob: bytes = from_recvh.recv_bytes(timeout=None)
             self.perf_timer.measure_time("receive_tensor")
             result = numpy.frombuffer(
-                    data_blob,
-                    dtype=str(response.result.descriptors[0].dataType),
-                )
+                data_blob,
+                dtype=str(response.result.descriptors[0].dataType),
+            )
 
             self.perf_timer.measure_time("deserialize_tensor")
 
