@@ -91,7 +91,7 @@ class DragonFLIChannel(cch.CommChannelBase):
     def send_multiple(
         self,
         values: t.Sequence[bytes],
-        timeout: float = 0.001,
+        timeout: t.Optional[float] = 0.001,
     ) -> None:
         """Send a message through the underlying communication channel.
 

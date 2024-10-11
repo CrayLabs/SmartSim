@@ -39,7 +39,6 @@ import typing as t
 from collections import OrderedDict
 
 import numpy
-import numpy.typing as npt
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
@@ -188,7 +187,7 @@ class ProtoClient:
         :returns: A float indicating the number of seconds to allow"""
         return self._backbone_timeout
 
-    def run_model(self, model: t.Union[bytes, str], batch: npt.ArrayLike) -> t.Any:
+    def run_model(self, model: t.Union[bytes, str], batch: numpy.ndarray[t.Any, t.Any]) -> t.Any:
         """Execute a batch of inference requests with the supplied ML model.
 
         :param model: The raw bytes or path to a model
