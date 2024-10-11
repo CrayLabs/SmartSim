@@ -187,7 +187,9 @@ class ProtoClient:
         :returns: A float indicating the number of seconds to allow"""
         return self._backbone_timeout
 
-    def run_model(self, model: t.Union[bytes, str], batch: numpy.ndarray[t.Any, t.Any]) -> t.Any:
+    def run_model(
+        self, model: t.Union[bytes, str], batch: numpy.ndarray[t.Any, t.Any]
+    ) -> t.Any:
         """Execute a batch of inference requests with the supplied ML model.
 
         :param model: The raw bytes or path to a model
