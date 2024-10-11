@@ -39,6 +39,7 @@ logger = get_logger(__name__)
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
+    from smartsim.types import LaunchedJobID
 
 
 @t.final
@@ -158,3 +159,35 @@ class Job(BaseJob):
         string = f"SmartSim Entity: {self.entity}\n"
         string += f"Launch Settings: {self.launch_settings}"
         return string
+
+
+@t.final
+class Record:
+    """A record a job that was launched and launch ID assigned to the
+    launching.
+    """
+
+    def __init__(self, launch_id: LaunchedJobID, job: Job) -> None:
+        """Initialize a new record of a launched job
+
+        :param launch_id: A unique identifier for the launch of the job.
+        :param job: The job that was launched.
+        """
+        self._id = launch_id
+        self._job = deepcopy(job)
+
+    @property
+    def launched_id(self) -> LaunchedJobID:
+        """The unique identifier for the launched job.
+
+        :returns: A unique identifier for the launched job.
+        """
+        return self._id
+
+    @property
+    def job(self) -> Job:
+        """A deep copy of the job that was launched.
+
+        :returns: A deep copy of the launched job.
+        """
+        return deepcopy(self._job)

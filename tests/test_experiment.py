@@ -111,6 +111,14 @@ def job_maker(monkeypatch):
     yield lambda: next(jobs)
 
 
+@pytest.fixture
+def record_maker(job_maker):
+    def impl(id_):
+        return job.Record(id_, job_maker())
+
+    yield impl
+
+
 JobMakerType: t.TypeAlias = t.Callable[[], job.Job]
 
 
@@ -247,7 +255,7 @@ def test_start_can_launch_jobs(
     assert (
         len(list(experiment._launch_history.iter_past_launchers())) == 0
     ), "Initialized w/ launchers"
-    launched_ids = experiment.start(*jobs)
+    records = experiment.start(*jobs)
     assert (
         len(list(experiment._launch_history.iter_past_launchers())) == 1
     ), "Unexpected number of launchers"
@@ -257,20 +265,26 @@ def test_start_can_launch_jobs(
     assert isinstance(launcher, NoOpRecordLauncher), "Unexpected launcher type"
     assert launcher.created_by_experiment is experiment, "Not created by experiment"
     assert (
-        len(jobs) == len(launcher.launched_order) == len(launched_ids) == num_jobs
+        len(jobs) == len(launcher.launched_order) == len(records) == num_jobs
     ), "Inconsistent number of jobs/launched jobs/launched ids/expected number of jobs"
     expected_launched = [LaunchRecord.from_job(job) for job in jobs]
 
     # Check that `job_a, job_b, job_c, ...` are started in that order when
     # calling `experiemnt.start(job_a, job_b, job_c, ...)`
     assert expected_launched == list(launcher.launched_order), "Unexpected launch order"
-    assert sorted(launched_ids) == sorted(exp_cached_ids), "Exp did not cache ids"
+    assert sorted(rec.launched_id for rec in records) == sorted(
+        exp_cached_ids
+    ), "Exp did not cache ids"
 
-    # Similarly, check that `id_a, id_b, id_c, ...` corresponds to
+    # Similarly, check that `rec_a, rec_b, rec_c, ...` corresponds to
     # `job_a, job_b, job_c, ...` when calling
-    # `id_a, id_b, id_c, ... = experiemnt.start(job_a, job_b, job_c, ...)`
-    expected_id_map = dict(zip(launched_ids, expected_launched))
-    assert expected_id_map == launcher.ids_to_launched, "IDs returned in wrong order"
+    # `rec_a, rec_b, rec_c, ... = experiemnt.start(job_a, job_b, job_c, ...)`
+    expected_record_map = dict(
+        zip((rec.launched_id for rec in records), expected_launched)
+    )
+    assert (
+        expected_record_map == launcher.ids_to_launched
+    ), "records returned in wrong order"
 
 
 @pytest.mark.parametrize(
@@ -285,7 +299,8 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     ), "Initialized w/ launchers"
     job = job_maker()
     ids_to_launches = {
-        experiment.start(job)[0]: LaunchRecord.from_job(job) for _ in range(num_starts)
+        experiment.start(job)[0].launched_id: LaunchRecord.from_job(job)
+        for _ in range(num_starts)
     }
     assert (
         len(list(experiment._launch_history.iter_past_launchers())) == 1
@@ -297,12 +312,12 @@ def test_start_can_start_a_job_multiple_times_accross_multiple_calls(
     assert len(launcher.launched_order) == num_starts, "Unexpected number launches"
 
     # Check that a single `job` instance can be launched and re-launched and
-    # that `id_a, id_b, id_c, ...` corresponds to
+    # that `rec_a, rec_b, rec_c, ...` corresponds to
     # `"start_a", "start_b", "start_c", ...` when calling
     # ```py
-    # id_a = experiment.start(job)  # "start_a"
-    # id_b = experiment.start(job)  # "start_b"
-    # id_c = experiment.start(job)  # "start_c"
+    # rec_a = experiment.start(job)  # "start_a"
+    # rec_b = experiment.start(job)  # "start_b"
+    # rec_c = experiment.start(job)  # "start_c"
     # ...
     # ```
     assert ids_to_launches == launcher.ids_to_launched, "Job was not re-launched"
@@ -356,11 +371,11 @@ def make_populated_experiment(monkeypatch, experiment):
     yield impl
 
 
-def test_experiment_can_get_statuses(make_populated_experiment):
+def test_experiment_can_get_statuses(make_populated_experiment, record_maker):
     exp = make_populated_experiment(num_active_launchers=1)
     (launcher,) = exp._launch_history.iter_past_launchers()
     ids = tuple(launcher.known_ids)
-    recieved_stats = exp.get_status(*ids)
+    recieved_stats = exp.get_status(*map(record_maker, ids))
     assert len(recieved_stats) == len(ids), "Unexpected number of statuses"
     assert (
         dict(zip(ids, recieved_stats)) == launcher.id_to_status
@@ -372,7 +387,7 @@ def test_experiment_can_get_statuses(make_populated_experiment):
     [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
 )
 def test_experiment_can_get_statuses_from_many_launchers(
-    make_populated_experiment, num_launchers
+    make_populated_experiment, num_launchers, record_maker
 ):
     exp = make_populated_experiment(num_active_launchers=num_launchers)
     launcher_and_rand_ids = (
@@ -383,13 +398,13 @@ def test_experiment_can_get_statuses_from_many_launchers(
         id_: launcher.id_to_status[id_] for launcher, id_ in launcher_and_rand_ids
     }
     query_ids = tuple(expected_id_to_stat)
-    stats = exp.get_status(*query_ids)
+    stats = exp.get_status(*map(record_maker, query_ids))
     assert len(stats) == len(expected_id_to_stat), "Unexpected number of statuses"
     assert dict(zip(query_ids, stats)) == expected_id_to_stat, "Statuses in wrong order"
 
 
 def test_get_status_returns_not_started_for_unrecognized_ids(
-    monkeypatch, make_populated_experiment
+    monkeypatch, make_populated_experiment, record_maker
 ):
     exp = make_populated_experiment(num_active_launchers=1)
     brand_new_id = create_job_id()
@@ -399,12 +414,14 @@ def test_get_status_returns_not_started_for_unrecognized_ids(
     new_history = LaunchHistory({id_: launcher for id_ in rest})
     monkeypatch.setattr(exp, "_launch_history", new_history)
     expected_stats = (InvalidJobStatus.NEVER_STARTED,) * 2
-    actual_stats = exp.get_status(brand_new_id, id_not_known_by_exp)
+    actual_stats = exp.get_status(
+        record_maker(brand_new_id), record_maker(id_not_known_by_exp)
+    )
     assert expected_stats == actual_stats
 
 
 def test_get_status_de_dups_ids_passed_to_launchers(
-    monkeypatch, make_populated_experiment
+    monkeypatch, make_populated_experiment, record_maker
 ):
     def track_calls(fn):
         calls = []
@@ -419,7 +436,8 @@ def test_get_status_de_dups_ids_passed_to_launchers(
     ((launcher, (id_, *_)),) = exp._launch_history.group_by_launcher().items()
     calls, tracked_get_status = track_calls(launcher.get_status)
     monkeypatch.setattr(launcher, "get_status", tracked_get_status)
-    stats = exp.get_status(id_, id_, id_)
+    record = record_maker(id_)
+    stats = exp.get_status(record, record, record)
     assert len(stats) == 3, "Unexpected number of statuses"
     assert all(stat == stats[0] for stat in stats), "Statuses are not eq"
     assert len(calls) == 1, "Launcher's `get_status` was called more than once"
@@ -429,20 +447,20 @@ def test_get_status_de_dups_ids_passed_to_launchers(
 
 def test_wait_handles_empty_call_args(experiment):
     """An exception is raised when there are no jobs to complete"""
-    with pytest.raises(ValueError, match="No job ids"):
+    with pytest.raises(ValueError, match="No records"):
         experiment.wait()
 
 
-def test_wait_does_not_block_unknown_id(experiment):
+def test_wait_does_not_block_unknown_id(experiment, record_maker):
     """If an experiment does not recognize a job id, it should not wait for its
     completion
     """
     now = time.perf_counter()
-    experiment.wait(create_job_id())
+    experiment.wait(record_maker(create_job_id()))
     assert time.perf_counter() - now < 1
 
 
-def test_wait_calls_prefered_impl(make_populated_experiment, monkeypatch):
+def test_wait_calls_prefered_impl(make_populated_experiment, record_maker, monkeypatch):
     """Make wait is calling the expected method for checking job statuses.
     Right now we only have the "polling" impl, but in future this might change
     to an event based system.
@@ -456,7 +474,7 @@ def test_wait_calls_prefered_impl(make_populated_experiment, monkeypatch):
         was_called = True
 
     monkeypatch.setattr(exp, "_poll_for_statuses", mocked_impl)
-    exp.wait(id_)
+    exp.wait(record_maker(id_))
     assert was_called
 
 
@@ -469,7 +487,7 @@ def test_wait_calls_prefered_impl(make_populated_experiment, monkeypatch):
 )
 @pytest.mark.parametrize("verbose", [True, False])
 def test_poll_status_blocks_until_job_is_completed(
-    monkeypatch, make_populated_experiment, num_polls, verbose
+    monkeypatch, make_populated_experiment, record_maker, num_polls, verbose
 ):
     """Make sure that the polling based implementation blocks the calling
     thread. Use varying number of polls to simulate varying lengths of job time
@@ -501,17 +519,25 @@ def test_poll_status_blocks_until_job_is_completed(
     monkeypatch.setattr(
         "smartsim.experiment.logger.info", lambda s: mock_log.write(f"{s}\n")
     )
+    record = record_maker(id_)
     final_statuses = exp._poll_for_statuses(
-        [id_], different_statuses, timeout=10, interval=0, verbose=verbose
+        [record],
+        different_statuses,
+        timeout=10,
+        interval=0,
+        verbose=verbose,
     )
-    assert final_statuses == {id_: new_status}
+    assert final_statuses == {record: new_status}
 
     expected_log = io.StringIO()
+    name = record.job.name
     expected_log.writelines(
-        f"Job({id_}): Running with status '{current_status.value}'\n"
+        f"Job({id_}, {name}): Running with status '{current_status.value}'\n"
         for _ in range(num_polls - 1)
     )
-    expected_log.write(f"Job({id_}): Finished with status '{new_status.value}'\n")
+    expected_log.write(
+        f"Job({id_}, {name}): Finished with status '{new_status.value}'\n"
+    )
     assert mock_get_status.num_calls == num_polls
     assert mock_log.getvalue() == (expected_log.getvalue() if verbose else "")
 
@@ -534,7 +560,7 @@ def test_poll_status_raises_when_called_with_infinite_iter_wait(
 
 
 def test_poll_for_status_raises_if_ids_not_found_within_timeout(
-    make_populated_experiment,
+    make_populated_experiment, record_maker
 ):
     """If there is a timeout, a timeout error should be raised when it is exceeded"""
     exp = make_populated_experiment(1)
@@ -548,7 +574,7 @@ def test_poll_for_status_raises_if_ids_not_found_within_timeout(
         ),
     ):
         exp._poll_for_statuses(
-            [id_],
+            [record_maker(id_)],
             different_statuses,
             timeout=1,
             interval=0,
@@ -584,14 +610,18 @@ def test_poll_for_status_raises_if_ids_not_found_within_timeout(
         ),
     ],
 )
-def test_experiment_can_stop_jobs(make_populated_experiment, num_launchers, select_ids):
+def test_experiment_can_stop_jobs(
+    make_populated_experiment, record_maker, num_launchers, select_ids
+):
     exp = make_populated_experiment(num_launchers)
     ids = (launcher.known_ids for launcher in exp._launch_history.iter_past_launchers())
     ids = tuple(itertools.chain.from_iterable(ids))
-    before_stop_stats = exp.get_status(*ids)
+    records = tuple(map(record_maker, ids))
+    ids_to_records = dict(zip(ids, records))
+    before_stop_stats = exp.get_status(*records)
     to_cancel = tuple(select_ids(exp._launch_history))
-    stats = exp.stop(*to_cancel)
-    after_stop_stats = exp.get_status(*ids)
+    stats = exp.stop(*(ids_to_records[id_] for id_ in to_cancel))
+    after_stop_stats = exp.get_status(*records)
     assert stats == (JobStatus.CANCELLED,) * len(to_cancel)
     assert dict(zip(ids, before_stop_stats)) | dict(zip(to_cancel, stats)) == dict(
         zip(ids, after_stop_stats)
@@ -599,7 +629,7 @@ def test_experiment_can_stop_jobs(make_populated_experiment, num_launchers, sele
 
 
 def test_experiment_raises_if_asked_to_stop_no_jobs(experiment):
-    with pytest.raises(ValueError, match="No job ids provided"):
+    with pytest.raises(ValueError, match="No records provided"):
         experiment.stop()
 
 
@@ -607,16 +637,17 @@ def test_experiment_raises_if_asked_to_stop_no_jobs(experiment):
     "num_launchers",
     [pytest.param(i, id=f"{i} launcher(s)") for i in (2, 3, 5, 10, 20, 100)],
 )
-def test_experiment_stop_does_not_raise_on_unknown_job_id(
-    make_populated_experiment, num_launchers
+def test_experiment_stop_does_not_raise_on_unknown_record(
+    make_populated_experiment, num_launchers, record_maker
 ):
     exp = make_populated_experiment(num_launchers)
-    new_id = create_job_id()
     all_known_ids = tuple(exp._launch_history._id_to_issuer)
-    before_cancel = exp.get_status(*all_known_ids)
-    (stat,) = exp.stop(new_id)
+    all_known_records = tuple(map(record_maker, all_known_ids))
+    unknown_record = record_maker(create_job_id())
+    before_cancel = exp.get_status(*all_known_records)
+    (stat,) = exp.stop(unknown_record)
     assert stat == InvalidJobStatus.NEVER_STARTED
-    after_cancel = exp.get_status(*all_known_ids)
+    after_cancel = exp.get_status(*all_known_records)
     assert before_cancel == after_cancel
 
 
@@ -628,27 +659,28 @@ def test_start_raises_if_no_args_supplied(test_dir):
 
 def test_stop_raises_if_no_args_supplied(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(ValueError, match="No job ids provided"):
+    with pytest.raises(ValueError, match="No records provided"):
         exp.stop()
 
 
 def test_get_status_raises_if_no_args_supplied(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(ValueError, match="No job ids provided"):
+    with pytest.raises(ValueError, match="No records provided"):
         exp.get_status()
 
 
 def test_poll_raises_if_no_args_supplied(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
     with pytest.raises(
-        TypeError, match="missing 2 required positional arguments: 'ids' and 'statuses'"
+        TypeError,
+        match="missing 2 required positional arguments: 'records' and 'statuses'",
     ):
         exp._poll_for_statuses()
 
 
 def test_wait_raises_if_no_args_supplied(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(ValueError, match="No job ids to wait on provided"):
+    with pytest.raises(ValueError, match="No records to wait on provided"):
         exp.wait()
 
 
@@ -665,19 +697,19 @@ def test_type_start_parameters(test_dir):
 
 def test_type_get_status_parameters(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+    with pytest.raises(TypeError, match="record argument was not of type Record"):
         exp.get_status(2)
 
 
 def test_type_wait_parameter(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+    with pytest.raises(TypeError, match="record argument was not of type Record"):
         exp.wait(2)
 
 
 def test_type_stop_parameter(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+    with pytest.raises(TypeError, match="record argument was not of type Record"):
         exp.stop(2)
 
 
