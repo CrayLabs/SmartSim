@@ -360,9 +360,14 @@ def test_place_outputs() -> None:
     data2 = [b"stuvwx", b"yzabcd", b"efghij"]
 
     model_id = ModelKey(key="test-model", descriptor=fsd)
-    request = InferenceRequest(callback=FileSystemFeatureStore.from_descriptor, output_keys=keys)
-    request2 = InferenceRequest(callback=FileSystemFeatureStore.from_descriptor, output_keys=keys2)
+    request = InferenceRequest(
+        callback=FileSystemFeatureStore.from_descriptor, output_keys=keys
+    )
+    request2 = InferenceRequest(
+        callback=FileSystemFeatureStore.from_descriptor, output_keys=keys2
+    )
     transform_result = TransformOutputResult(data, [1], "c", "float32")
+    transform_result2 = TransformOutputResult(data2, [1], "c", "float32")
 
     request_batch = RequestBatch.from_requests([request, request2], None, model_id)
 
@@ -374,7 +379,7 @@ def test_place_outputs() -> None:
 
     worker.place_output(
         request_batch.output_keys[1].output_keys,
-        transform_result,
+        transform_result2,
         {fsd: feature_store},
     )
 

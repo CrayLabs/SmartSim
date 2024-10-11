@@ -133,7 +133,9 @@ class WorkerManager(Service):
         if batch.model_id.key:
             fs_model = {batch.model_id.descriptor}
         fs_inputs = {key.descriptor for key in batch.input_keys}
-        fs_outputs = {key.descriptor for keys in batch.output_keys for key in keys.output_keys}
+        fs_outputs = {
+            key.descriptor for keys in batch.output_keys for key in keys.output_keys
+        }
 
         # identify which feature stores are requested and unknown
         fs_desired = fs_model.union(fs_inputs).union(fs_outputs)
@@ -279,7 +281,7 @@ class WorkerManager(Service):
                                 exception_handler(
                                     e, callback, "Error while placing the output."
                                 )
-                                return
+                                continue
                 else:
                     reply.outputs = transformed_output.outputs
                 self._perf_timer.measure_time("assign_output")

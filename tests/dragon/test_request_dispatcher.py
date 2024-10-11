@@ -68,10 +68,7 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.feature_store import (
-    ModelKey,
-    TensorKey
-)
+from smartsim._core.mli.infrastructure.storage.feature_store import ModelKey, TensorKey
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.worker.worker import (
     InferenceRequest,
@@ -312,5 +309,7 @@ def test_request_batch():
     ]
     assert request_batch.output_keys == [
         OutputKeyTuple(FileSystemCommChannel.from_descriptor, [output_key]),
-        OutputKeyTuple(FileSystemCommChannel.from_descriptor, [output_key, output_key2]),
+        OutputKeyTuple(
+            FileSystemCommChannel.from_descriptor, [output_key, output_key2]
+        ),
     ]

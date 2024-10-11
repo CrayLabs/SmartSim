@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
 import typing as t
 from unittest.mock import MagicMock
 
@@ -125,7 +126,7 @@ def setup_worker_manager_model_bytes(
 
     inf_request = InferenceRequest(
         model_key=None,
-        callback=FileSystemCommChannel.from_descriptor,
+        callback=FileSystemCommChannel(pathlib.Path(test_dir) / "callback"),
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -184,7 +185,7 @@ def setup_worker_manager_model_key(
 
     request = InferenceRequest(
         model_key=model_id,
-        callback=FileSystemCommChannel.from_descriptor,
+        callback=FileSystemCommChannel(pathlib.Path(test_dir) / "callback"),
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
