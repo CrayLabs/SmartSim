@@ -140,7 +140,9 @@ if __name__ == "__main__":
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
     to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli)
 
+    backbone._allow_reserved_writes = True
     backbone.worker_queue = to_worker_fli_comm_ch.descriptor
+    backbone._allow_reserved_writes = False
 
     os.environ[BackboneFeatureStore.MLI_WORKER_QUEUE] = to_worker_fli_comm_ch.descriptor
     os.environ[BackboneFeatureStore.MLI_BACKBONE] = backbone.descriptor

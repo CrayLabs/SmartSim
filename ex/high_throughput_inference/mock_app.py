@@ -24,23 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# isort: off
-import dragon
-from dragon import fli
-from dragon.channels import Channel
-import dragon.channels
-from dragon.data.ddict.ddict import DDict
-from dragon.globalservices.api_setup import connect_to_infrastructure
-from dragon.utils import b64decode, b64encode
-
-# isort: on
 
 import argparse
 import io
-
+from mpi4py import MPI
 import torch
 
 from smartsim.log import get_logger
+from smartsim._core.mli.client.protoclient import ProtoClient
 
 torch.set_num_interop_threads(16)
 torch.set_num_threads(1)
@@ -48,18 +39,13 @@ torch.set_num_threads(1)
 logger = get_logger("App")
 logger.info("Started app")
 
-from collections import OrderedDict
-
-from smartsim.log import get_logger, log_to_file
-from smartsim._core.mli.client.protoclient import ProtoClient
 
 logger = get_logger("App")
 
 
-
-
 class ResNetWrapper:
     """Wrapper around a pre-rained ResNet model."""
+
     def __init__(self, name: str, model: str):
         """Initialize the instance.
 
@@ -72,6 +58,7 @@ class ResNetWrapper:
             buffer = io.BytesIO(model_file.read())
         self._serialized_model = buffer.getvalue()
 
+    # pylint: disable-next=no-self-use
     def get_batch(self, batch_size: int = 32):
         """Create a random batch of data with the correct dimensions to
         invoke a ResNet model.
@@ -95,8 +82,8 @@ class ResNetWrapper:
         return self._name
 
 
-def log(msg: str, rank: int) -> None:
-    if rank == 0:
+def log(msg: str, rank_: int) -> None:
+    if rank_ == 0:
         logger.info(msg)
 
 
@@ -109,21 +96,24 @@ if __name__ == "__main__":
 
     resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
 
-    client = ProtoClient(timing_on=True)
-    if client._rank == 0:
+    comm_world = MPI.COMM_WORLD
+    rank = comm_world.Get_rank()
+    client = ProtoClient(timing_on=True, rank=rank)
+
+    if rank == 0:
         client.set_model(resnet.name, resnet.model)
 
-
+    comm_world.Barrier()
 
     TOTAL_ITERATIONS = 100
 
     for log2_bsize in range(args.log_max_batchsize, args.log_max_batchsize + 1):
         b_size: int = 2**log2_bsize
-        log(f"Batch size: {b_size}", client._rank)
+        log(f"Batch size: {b_size}", rank)
         for iteration_number in range(TOTAL_ITERATIONS):
-            sample_batch = resnet.get_batch(b_size)
+            sample_batch = resnet.get_batch(b_size).numpy()
             remote_result = client.run_model(resnet.name, sample_batch)
+            comm_world.Barrier()
             logger.info(client.perf_timer.get_last("total_time"))
 
-
-    client.perf_timer.print_timings(to_file=True, to_stdout=client._rank == 0)
+    client.perf_timer.print_timings(to_file=True, to_stdout=rank == 0)

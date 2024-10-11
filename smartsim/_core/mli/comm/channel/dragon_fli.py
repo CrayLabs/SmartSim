@@ -77,8 +77,8 @@ class DragonFLIChannel(cch.CommChannelBase):
             if self._channel is None:
                 self._channel = drg_util.create_local(self._buffer_size)
 
-            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
-                sendh.send_bytes(value, timeout=timeout)
+            with self._fli.sendh(timeout=timeout, stream_channel=self._channel) as sendh:
+                sendh.send_bytes(value, timeout=None)
                 logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
             self._channel = None
@@ -101,9 +101,9 @@ class DragonFLIChannel(cch.CommChannelBase):
             if self._channel is None:
                 self._channel = drg_util.create_local(self._buffer_size)
 
-            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
+            with self._fli.sendh(timeout=timeout, stream_channel=self._channel) as sendh:
                 for value in values:
-                    sendh.send_bytes(value)
+                    sendh.send_bytes(value, timeout=None)
                     logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
             self._channel = None

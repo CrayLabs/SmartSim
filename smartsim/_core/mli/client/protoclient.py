@@ -30,11 +30,6 @@ import dragon
 import dragon.channels
 from dragon.globalservices.api_setup import connect_to_infrastructure
 
-try:
-    from mpi4py import MPI  # type: ignore[import-not-found]
-except Exception:
-    MPI = None
-    print("Unable to import `mpi4py` package")
 
 # isort: on
 # pylint: enable=unused-import,import-error
@@ -46,7 +41,7 @@ import typing as t
 from collections import OrderedDict
 
 import numpy
-import torch
+import numpy.typing as npt
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
@@ -82,7 +77,7 @@ class ProtoClient:
     triggering QueueFull exceptions."""
 
     _EVENT_SOURCE = "proto-client"
-    """A user-friendly name for this class instance to identify 
+    """A user-friendly name for this class instance to identify
     the client as the publisher of an event."""
 
     @staticmethod
@@ -131,7 +126,9 @@ class ProtoClient:
             )
             raise SmartSimError("Unable to locate worker queue using backbone") from ex
 
-        return DragonFLIChannel.from_descriptor(descriptor)
+        fli_channel = DragonFLIChannel.from_descriptor(descriptor)
+
+        return fli_channel
 
     def _create_broadcaster(self) -> EventBroadcaster:
         """Create an EventBroadcaster that broadcasts events to
@@ -148,6 +145,7 @@ class ProtoClient:
         self,
         timing_on: bool,
         backbone_timeout: float = _DEFAULT_BACKBONE_TIMEOUT,
+        rank: int = 0
     ) -> None:
         """Initialize the client instance.
 
@@ -158,13 +156,7 @@ class ProtoClient:
         :raises SmartSimError: If unable to attach to a backbone featurestore
         :raises ValueError: If an invalid backbone timeout is specified
         """
-        if MPI is not None:
-            # TODO: determine a way to make MPI work in the test environment
-            #  - consider catching the import exception and defaulting rank to 0
-            comm = MPI.COMM_WORLD
-            rank: int = comm.Get_rank()
-        else:
-            rank = 0
+        self._rank = rank
 
         if backbone_timeout <= 0:
             raise ValueError(
@@ -179,18 +171,14 @@ class ProtoClient:
         self._backbone.wait_timeout = self.backbone_timeout
         self._to_worker_fli = self._attach_to_worker_queue()
 
-        self._from_worker_ch = create_local(self._DEFAULT_WORK_QUEUE_SIZE)
+        self._from_worker_ch = DragonCommChannel(create_local(self._DEFAULT_WORK_QUEUE_SIZE))
         self._to_worker_ch = create_local(self._DEFAULT_WORK_QUEUE_SIZE)
 
         self._publisher = self._create_broadcaster()
 
         self.perf_timer: PerfTimer = PerfTimer(
-            debug=False, timing_on=timing_on, prefix=f"a{rank}_"
+            debug=False, timing_on=timing_on, prefix=f"a{self._rank}_"
         )
-        self._start: t.Optional[float] = None
-        self._interm: t.Optional[float] = None
-        self._timings: _TimingDict = OrderedDict()
-        self._timing_on = timing_on
 
     @property
     def backbone_timeout(self) -> float:
@@ -200,83 +188,16 @@ class ProtoClient:
         :returns: A float indicating the number of seconds to allow"""
         return self._backbone_timeout
 
-    def _add_label_to_timings(self, label: str) -> None:
-        """Adds a new label into the timing dictionary to prepare for
-        receiving timing events.
-
-        :param label: The label to create storage for
-        """
-        if label not in self._timings:
-            self._timings[label] = []
-
-    @staticmethod
-    def _format_number(number: t.Union[numbers.Number, float]) -> str:
-        """Utility function for formatting numbers consistently for logs.
-
-        :param number: The number to convert to a formatted string
-        :returns: The formatted string containing the number
-        """
-        return f"{number:0.4e}"
-
-    def start_timings(self, batch_size: numbers.Number) -> None:
-        """Configure the client to begin storing timing information.
-
-        :param batch_size: The size of batches to generate as inputs
-         to the model
-        """
-        if self._timing_on:
-            self._add_label_to_timings("batch_size")
-            self._timings["batch_size"].append(self._format_number(batch_size))
-            self._start = time.perf_counter()
-            self._interm = time.perf_counter()
-
-    def end_timings(self) -> None:
-        """Configure the client to stop storing timing information."""
-        if self._timing_on and self._start is not None:
-            self._add_label_to_timings("total_time")
-            self._timings["total_time"].append(
-                self._format_number(time.perf_counter() - self._start)
-            )
-
-    def measure_time(self, label: str) -> None:
-        """Measures elapsed time since the last recorded signal.
-
-        :param label: The label to measure time for
-        """
-        if self._timing_on and self._interm is not None:
-            self._add_label_to_timings(label)
-            self._timings[label].append(
-                self._format_number(time.perf_counter() - self._interm)
-            )
-            self._interm = time.perf_counter()
-
-    def print_timings(self, to_file: bool = False) -> None:
-        """Print timing information to standard output. If `to_file`
-        is `True`, also write results to a file.
-
-        :param to_file: If `True`, also saves timing information
-         to the files `timings.npy` and `timings.txt`
-        """
-        print(" ".join(self._timings.keys()))
-
-        value_array = numpy.array(self._timings.values(), dtype=float)
-        value_array = numpy.transpose(value_array)
-        for i in range(value_array.shape[0]):
-            print(" ".join(self._format_number(value) for value in value_array[i]))
-        if to_file:
-            numpy.save("timings.npy", value_array)
-            numpy.savetxt("timings.txt", value_array)
-
-    def run_model(self, model: t.Union[bytes, str], batch: torch.Tensor) -> t.Any:
+    def run_model(self, model: t.Union[bytes, str], batch: npt.ArrayLike) -> t.Any:
         """Execute a batch of inference requests with the supplied ML model.
 
-        :param model: The raw bytes or path to a pytorch model
+        :param model: The raw bytes or path to a model
         :param batch: The tensor batch to perform inference on
         :returns: The inference results
         :raises ValueError: if the worker queue is not configured properly
         in the environment variables
         """
-        tensors = [batch.numpy()]
+        tensors = [batch]
         self.perf_timer.start_timings("batch_size", batch.shape[0])
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
             "c", "float32", list(batch.shape)
@@ -304,14 +225,7 @@ class ProtoClient:
             raise ValueError("No worker queue available.")
 
         # pylint: disable-next=protected-access
-        with self._to_worker_fli._channel.sendh(  # type: ignore
-            timeout=None,
-            stream_channel=self._to_worker_ch.channel,
-        ) as to_sendh:
-            to_sendh.send_bytes(request_bytes)
-            self.perf_timer.measure_time("send_request")
-            for tensor in tensors:
-                to_sendh.send_bytes(tensor.tobytes())  # TODO NOT FAST ENOUGH!!!
+        self._to_worker_fli.send_multiple([request_bytes, *[tensor.tobytes() for tensor in tensors]], timeout=None)
         logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.perf_timer.measure_time("send_tensors")
@@ -324,15 +238,15 @@ class ProtoClient:
             # recv depending on the len(response.result.descriptors)?
             data_blob: bytes = from_recvh.recv_bytes(timeout=None)
             self.perf_timer.measure_time("receive_tensor")
-            result = torch.from_numpy(
-                numpy.frombuffer(
+            result = numpy.frombuffer(
                     data_blob,
                     dtype=str(response.result.descriptors[0].dataType),
                 )
-            )
+
             self.perf_timer.measure_time("deserialize_tensor")
 
         self.perf_timer.end_timings()
+
         return result
 
     def set_model(self, key: str, model: bytes) -> None:

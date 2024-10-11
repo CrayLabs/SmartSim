@@ -948,13 +948,6 @@ class DragonBackend:
         self._frontend_shutdown = request.frontend_shutdown
         return DragonShutdownResponse()
 
-    def __del__(self) -> None:
-        try:
-            if self._infra_ddict is not None:
-                self._infra_ddict.destroy()
-        except Exception:
-            logger.error("Could not destroy Backbone dictionary")
-
 
 class DragonBackendView:
     def __init__(self, backend: DragonBackend) -> None:
