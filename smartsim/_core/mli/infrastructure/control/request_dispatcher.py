@@ -493,9 +493,8 @@ class RequestDispatcher(Service):
                 if queue.ready:
                     self._perf_timer.measure_time("find_queue")
                     try:
-                        flushed_requests = queue.flush()
                         batch = RequestBatch.from_requests(
-                            flushed_requests, None, queue.model_id
+                            queue.flush(), None, queue.model_id
                         )
                     finally:
                         self._perf_timer.measure_time("flush_requests")
@@ -527,9 +526,6 @@ class RequestDispatcher(Service):
 
                     self._perf_timer.measure_time("transform_input")
                     batch.inputs = transformed_inputs
-                    # for request in batch.requests:
-                    #     request.raw_inputs = []
-                    #     request.input_meta = []
 
                     try:
                         self._outgoing_queue.put(batch)

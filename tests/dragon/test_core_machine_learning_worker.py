@@ -372,13 +372,13 @@ def test_place_outputs() -> None:
     request_batch = RequestBatch.from_requests([request, request2], None, model_id)
 
     worker.place_output(
-        request_batch.output_keys[0].output_keys,
+        request_batch.output_key_refs[0].output_keys,
         transform_result,
         {fsd: feature_store},
     )
 
     worker.place_output(
-        request_batch.output_keys[1].output_keys,
+        request_batch.output_key_refs[1].output_keys,
         transform_result2,
         {fsd: feature_store},
     )

@@ -134,7 +134,7 @@ class WorkerManager(Service):
             fs_model = {batch.model_id.descriptor}
         fs_inputs = {key.descriptor for key in batch.input_keys}
         fs_outputs = {
-            key.descriptor for keys in batch.output_keys for key in keys.output_keys
+            key.descriptor for keys in batch.output_key_refs for key in keys.output_keys
         }
 
         # identify which feature stores are requested and unknown
@@ -268,8 +268,8 @@ class WorkerManager(Service):
                 batch.callbacks, transformed_outputs
             ):
                 reply = InferenceReply()
-                if batch.output_keys:
-                    for output_key_tuple in batch.output_keys:
+                if batch.output_key_refs:
+                    for output_key_tuple in batch.output_key_refs:
                         if callback == output_key_tuple.callback:
                             try:
                                 reply.output_keys = self._worker.place_output(

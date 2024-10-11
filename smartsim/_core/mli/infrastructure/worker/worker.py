@@ -314,10 +314,10 @@ class FetchModelResult:
 
 @dataclass(frozen=True)
 class OutputKeyTuple:
-    """Allows output keys to hold a reference to their espective callback"""
+    """Allows output keys to hold a reference to their respective callback"""
 
     callback: CommChannelBase
-    """The channel that corresponds with the output keya"""
+    """The channel that corresponds with the output keys"""
     output_keys: t.List[TensorKey]
     """A list of tuples containing a (key, descriptor) pair"""
 
@@ -336,8 +336,8 @@ class RequestBatch:
     """Metadata about the input data"""
     input_keys: t.List[TensorKey]
     """A list of tuples containing a (key, descriptor) pair"""
-    output_keys: t.List[OutputKeyTuple]
-    """A list of tuples containing a (key, descriptor) pair"""
+    output_key_refs: t.List[OutputKeyTuple]
+    """A list of output keys and their respective callbacks"""
     inputs: t.Optional[TransformInputResult]
     """Transformed batch of input tensors"""
     model_id: "ModelIdentifier"
@@ -380,7 +380,7 @@ class RequestBatch:
             raw_inputs=[key for request in requests for key in request.raw_inputs],
             input_meta=[key for request in requests for key in request.input_meta],
             input_keys=[key for request in requests for key in request.input_keys],
-            output_keys=[
+            output_key_refs=[
                 OutputKeyTuple(request.callback, request.output_keys)
                 for request in requests
                 if request.output_keys and request.callback
@@ -564,7 +564,7 @@ class MachineLearningWorkerCore:
         """Given a collection of data, make it available as a shared resource in the
         feature store.
 
-        :param request: The request that triggered the pipeline
+        :param output_keys: The output_keys that will be placed in the feature store
         :param transform_result: Transformed version of the inference result
         :param feature_stores: Available feature stores used for persistence
         :returns: A collection of keys that were placed in the feature store

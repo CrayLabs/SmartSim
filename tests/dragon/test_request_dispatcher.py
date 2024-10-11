@@ -288,7 +288,7 @@ def test_request_batch():
     )
 
     print(request_batch.__dict__)
-    assert len(request_batch.output_keys) == 2
+    assert len(request_batch.output_key_refs) == 2
     assert request_batch.has_valid_requests
     assert request_batch.model_id == req_batch_model_id
     assert request_batch.inputs == None
@@ -307,7 +307,7 @@ def test_request_batch():
         tensor_key,
         tensor_key2,
     ]
-    assert request_batch.output_keys == [
+    assert request_batch.output_key_refs == [
         OutputKeyTuple(FileSystemCommChannel.from_descriptor, [output_key]),
         OutputKeyTuple(
             FileSystemCommChannel.from_descriptor, [output_key, output_key2]
