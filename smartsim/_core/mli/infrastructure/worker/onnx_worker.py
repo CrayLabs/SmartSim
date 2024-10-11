@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging
 import os
 
 import numpy as np
@@ -81,36 +80,36 @@ class ONNXWorker(MachineLearningWorkerBase):
         else:
             raise ValueError("Unable to load model without reference object")
 
-        try:
-            providers = []
-            provider_options = []
-            if "gpu" in device.lower():
-                device_split = device.split(":")
-                if len(device_split) > 1:
-                    provider_options.append({"device_id": device_split[-1]})
-                else:
-                    provider_options.append({})
-                if "ROCR_VISIBLE_DEVICES" in os.environ:
-                    providers = ["ROCMExecutionProvider"]
-                else:
-                    providers = ["CUDAExecutionProvider"]
+        providers = []
+        provider_options = []
 
-            # Fallback
-            providers.append("CPUExecutionProvider")
-            provider_options.append({})
+        if "gpu" in device.lower():
+            device_split = device.split(":")
+            if len(device_split) > 1:
+                provider_options.append({"device_id": device_split[-1]})
+            else:
+                provider_options.append({})
+            if "ROCR_VISIBLE_DEVICES" in os.environ:
+                providers = ["ROCMExecutionProvider"]
+            else:
+                providers = ["CUDAExecutionProvider"]
+
+        # Fallback
+        providers.append("CPUExecutionProvider")
+        provider_options.append({})
+
+        try:
+            onnx_deserialized = load_model_from_string(model_bytes)
+            output_tensors = [n.name for n in onnx_deserialized.graph.output]
+            input_layers = [n.name for n in onnx_deserialized.graph.input]
+            session = InferenceSession(
+                model_bytes, providers=providers, provider_options=provider_options
+            )
         except Exception as e:
             raise RuntimeError(
                 "Failed to load and evaluate the model: "
                 f"Model key {batch.model_id.key}, Device {device}"
             ) from e
-
-        onnx_deserialized = load_model_from_string(model_bytes)
-        output_tensors = [n.name for n in onnx_deserialized.graph.output]
-        input_layers = [n.name for n in onnx_deserialized.graph.input]
-
-        session = InferenceSession(
-            model_bytes, providers=providers, provider_options=provider_options
-        )
         result = LoadModelResult(
             session,
             input_layers,

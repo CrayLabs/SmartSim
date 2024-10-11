@@ -97,7 +97,6 @@ class TorchWorker(MachineLearningWorkerBase):
         except Exception as exc:
             logger.info("Could not compile Torch model, original exception: ")
             logger.info(exc)
-            pass
         result = LoadModelResult(model)
         return result
 
