@@ -67,7 +67,7 @@ def create_ddict(
     :param num_nodes: The number of distributed nodes to distribute the dictionary to.
      At least one node is required.
     :param mgr_per_node: The number of manager processes per node
-    :param mem_per_node: The amount of memory (in megabytes) to allocate per node. Total
+    :param mem_per_node: The amount of memory (in bytes) to allocate per node. Total
      memory available will be calculated as `num_nodes * node_mem`
 
     :returns: The instantiated dragon dictionary
@@ -84,18 +84,18 @@ def create_ddict(
     if mem_per_node < dragon_ddict.DDICT_MIN_SIZE:
         raise ValueError(
             "A dragon dictionary requires at least "
-            f"{dragon_ddict.DDICT_MIN_SIZE / 1024} MB"
+            f"{dragon_ddict.DDICT_MIN_SIZE / (1024**2)} MB"
         )
 
     mem_total = num_nodes * mem_per_node
 
     logger.debug(
-        f"Creating dragon dictionary with {num_nodes} nodes, {mem_total} MB memory"
+        f"Creating dragon dictionary with {num_nodes} nodes, {mem_total} bytes memory"
     )
 
     distributed_dict = dragon_ddict.DDict(num_nodes, mgr_per_node, total_mem=mem_total)
     logger.debug(
         "Successfully created dragon dictionary with "
-        f"{num_nodes} nodes, {mem_total} MB total memory"
+        f"{num_nodes} nodes, {mem_total} bytes total memory"
     )
     return distributed_dict

@@ -196,7 +196,7 @@ def test_protoclient_initialization(
         assert client._to_worker_ch is not None
 
         # wrap the channels just to easily verify they produces a descriptor
-        assert DragonCommChannel(client._from_worker_ch).descriptor
+        assert DragonCommChannel(client._from_worker_ch.channel).descriptor
         assert DragonCommChannel(client._to_worker_ch).descriptor
 
         # confirm a publisher is created

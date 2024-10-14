@@ -163,7 +163,9 @@ def _mock_messages(
 
         # send the header & body together so they arrive together
         try:
-            request_dispatcher_queue.send_multiple([request_bytes, tensor.tobytes()])
+            request_dispatcher_queue.send_multiple(
+                [request_bytes, tensor.tobytes()], timeout=None, handle_timeout=None
+            )
             logger.info(f"\tenvelope 0: {request_bytes[:5]}...")
             logger.info(f"\tenvelope 1: {tensor.tobytes()[:5]}...")
         except Exception as ex:

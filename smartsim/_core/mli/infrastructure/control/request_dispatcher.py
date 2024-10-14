@@ -243,7 +243,7 @@ class RequestDispatcher(Service):
             raise SmartSimError("No incoming channel for dispatcher")
         self._incoming_channel = incoming_channel
         """The channel the dispatcher monitors for new tasks"""
-        self._outgoing_queue: DragonQueue = mp.Queue(maxsize=10000)
+        self._outgoing_queue: DragonQueue = mp.Queue(maxsize=1000)
         """The queue on which batched inference requests are placed"""
         self._feature_stores: t.Dict[str, FeatureStore] = {}
         """A collection of attached feature stores"""

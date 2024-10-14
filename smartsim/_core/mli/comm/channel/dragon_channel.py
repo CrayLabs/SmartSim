@@ -57,33 +57,42 @@ class DragonCommChannel(cch.CommChannelBase):
         """
         return self._channel
 
-    def send(self, value: bytes, timeout: t.Optional[float] = 0.001) -> None:
+    def send(
+        self,
+        value: bytes,
+        timeout: t.Optional[float] = 0.001,
+        handle_timeout: float = 0.001,
+    ) -> None:
         """Send a message through the underlying communication channel.
 
         :param value: The value to send
-        :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param timeout: Maximum time to wait (in seconds) for messages to be sent
+        :param handle_timeout: Maximum time to wait to obtain new send handle
         :raises SmartSimError: If sending message fails
         """
         try:
-            with self._channel.sendh(timeout=timeout) as sendh:
-                sendh.send_bytes(value, timeout=None)
+            with self._channel.sendh(timeout=handle_timeout) as sendh:
+                sendh.send_bytes(value, timeout=timeout)
                 logger.debug(f"DragonCommChannel {self.descriptor} sent message")
         except Exception as e:
             raise SmartSimError(
                 f"Error sending via DragonCommChannel {self.descriptor}"
             ) from e
 
-    def recv(self, timeout: t.Optional[float] = 0.001) -> t.List[bytes]:
+    def recv(
+        self, timeout: t.Optional[float] = 0.001, handle_timeout: float = 0.001
+    ) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
 
-        :param timeout: Maximum time to wait (in seconds) for messages to arrive
+        :param timeout: Maximum time to wait (in seconds) for message to arrive
+        :param handle_timeout: Maximum time to wait to obtain new receive handle
         :returns: The received message(s)
         """
-        with self._channel.recvh(timeout=timeout) as recvh:
+        with self._channel.recvh(timeout=handle_timeout) as recvh:
             messages: t.List[bytes] = []
 
             try:
-                message_bytes = recvh.recv_bytes(timeout=None)
+                message_bytes = recvh.recv_bytes(timeout=timeout)
                 messages.append(message_bytes)
                 logger.debug(f"DragonCommChannel {self.descriptor} received message")
             except dch.ChannelEmpty:

@@ -143,7 +143,7 @@ def test_device_manager_model_in_request():
     ) as returned_device:
 
         assert returned_device == worker_device
-        assert worker_device.get_model(model_key.key).model == b'raw model'
+        assert worker_device.get_model(model_key.key).model == b"raw model"
 
     assert model_key.key not in worker_device
 

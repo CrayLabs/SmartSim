@@ -109,7 +109,6 @@ def test_dragonbackend_start_listener(the_backend: DragonBackend):
     comm_channel.send(event_bytes)
 
     subscriber_list = []
-    logger.warning(backbone.notification_channels)
 
     # Give the channel time to write the message and the listener time to handle it
     for i in range(20):
