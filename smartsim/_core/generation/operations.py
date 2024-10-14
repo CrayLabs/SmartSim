@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 
 from ..commands import Command
 
+# pylint: disable=invalid-name
 entry_point_path = "smartsim._core.entrypoints.file_operations"
 """Path to file operations module"""
 
@@ -19,9 +20,7 @@ configure_cmd = "configure"
 """Configure file operations command"""
 
 
-def create_final_dest(
-    job_root_path: pathlib.Path, dest: t.Union[pathlib.Path, None]
-) -> str:
+def _create_final_dest(job_root_path: pathlib.Path, dest: pathlib.Path) -> str:
     """Combine the job root path and destination path. Return as a string for
     entry point consumption.
 
@@ -30,16 +29,11 @@ def create_final_dest(
     :return: Combined path
     :raises ValueError: An error occurred during path combination
     """
-    try:
-        combined_path = job_root_path
-        if dest:
-            combined_path = job_root_path / dest
-        return str(combined_path)
-    except Exception as e:
-        raise ValueError(f"Error combining paths: {e}")
+    combined_path = job_root_path / dest
+    return str(combined_path)
 
 
-def check_src_and_dest_path(
+def _check_src_and_dest_path(
     src: pathlib.Path, dest: t.Union[pathlib.Path, None]
 ) -> None:
     """Validate that the provided source and destination paths are
@@ -49,19 +43,17 @@ def check_src_and_dest_path(
     :param dest: The destination path to be checked.
     :raises TypeError: If either src or dest is not an instance of pathlib.Path
     """
-    if not isinstance(src, pathlib.Path):
+    if not isinstance(src, pathlib.Path) or not src.is_absolute():
         raise TypeError(f"src must be of type pathlib.Path, not {type(src).__name__}")
     if dest is not None and not isinstance(dest, pathlib.Path):
         raise TypeError(
             f"dest must be of type pathlib.Path or None, not {type(dest).__name__}"
         )
-    if isinstance(dest, pathlib.Path) and not dest.is_absolute():
+    if isinstance(dest, pathlib.Path) and dest.is_absolute():
         raise ValueError("Invalid destination path")
-    if isinstance(dest, pathlib.Path) and " " in str(dest):
-        raise ValueError("Path contains spaces, which are not allowed")
 
 
-def check_run_path(run_path: pathlib.Path) -> None:
+def _check_run_path(run_path: pathlib.Path) -> None:
     """Validate that the provided run path is of type pathlib.Path
 
     :param run_path: The run path to be checked
@@ -72,15 +64,13 @@ def check_run_path(run_path: pathlib.Path) -> None:
         raise TypeError(
             f"run_path must be of type pathlib.Path, not {type(run_path).__name__}"
         )
-    if run_path == pathlib.Path(""):
-        raise ValueError(f"Job root path '{run_path}' is not a directory.")
 
 
 class GenerationContext:
     """Context for file system generation operations."""
 
     def __init__(self, job_root_path: pathlib.Path):
-        check_run_path(job_root_path)
+        _check_run_path(job_root_path)
         self.job_root_path = job_root_path
         """The Job run path"""
 
@@ -103,9 +93,9 @@ class CopyOperation(GenerationProtocol):
         :param src: Path to source
         :param dest: Path to destination
         """
-        check_src_and_dest_path(src, dest)
+        _check_src_and_dest_path(src, dest)
         self.src = src
-        self.dest = dest
+        self.dest = dest or pathlib.Path(src.name)
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke copy file system entry point
@@ -113,7 +103,7 @@ class CopyOperation(GenerationProtocol):
         :param context: Context for copy operation
         :return: Copy Command
         """
-        final_dest = create_final_dest(context.job_root_path, self.dest)
+        final_dest = _create_final_dest(context.job_root_path, self.dest)
         return Command(
             [
                 sys.executable,
@@ -138,9 +128,9 @@ class SymlinkOperation(GenerationProtocol):
         :param src: Path to source
         :param dest: Path to destination
         """
-        check_src_and_dest_path(src, dest)
+        _check_src_and_dest_path(src, dest)
         self.src = src
-        self.dest = dest
+        self.dest = dest or pathlib.Path(src.name)
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke symlink file system entry point
@@ -149,8 +139,8 @@ class SymlinkOperation(GenerationProtocol):
         :return: Symlink Command
         """
         normalized_path = os.path.normpath(self.src)
-        parent_dir = os.path.basename(normalized_path)
-        final_dest = create_final_dest(context.job_root_path, self.dest)
+        parent_dir = os.path.dirname(normalized_path)
+        final_dest = _create_final_dest(context.job_root_path, self.dest)
         new_dest = os.path.join(final_dest, parent_dir)
         return Command(
             [
@@ -181,9 +171,9 @@ class ConfigureOperation(GenerationProtocol):
         :param dest: Path to destination
         :param tag: Tag to use for find and replacement
         """
-        check_src_and_dest_path(src, dest)
+        _check_src_and_dest_path(src, dest)
         self.src = src
-        self.dest = dest
+        self.dest = dest or pathlib.Path(src.name)
         pickled_dict = pickle.dumps(file_parameters)
         encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
         self.file_parameters = encoded_dict
@@ -195,7 +185,7 @@ class ConfigureOperation(GenerationProtocol):
         :param context: Context for configure operation
         :return: Configure Command
         """
-        final_dest = create_final_dest(context.job_root_path, self.dest)
+        final_dest = _create_final_dest(context.job_root_path, self.dest)
         return Command(
             [
                 sys.executable,
@@ -210,7 +200,7 @@ class ConfigureOperation(GenerationProtocol):
         )
 
 
-T = t.TypeVar("T", bound=GenerationProtocol)
+GenerationProtocolT = t.TypeVar("GenerationProtocolT", bound=GenerationProtocol)
 
 
 @dataclass
@@ -258,7 +248,7 @@ class FileSysOperationSet:
         self.operations.append(ConfigureOperation(src, file_parameters, dest, tag))
 
     @property
-    def copy_operations(self) -> t.List[CopyOperation]:
+    def copy_operations(self) -> list[CopyOperation]:
         """Property to get the list of copy files.
 
         :return: List of CopyOperation objects
@@ -266,7 +256,7 @@ class FileSysOperationSet:
         return self._filter(CopyOperation)
 
     @property
-    def symlink_operations(self) -> t.List[SymlinkOperation]:
+    def symlink_operations(self) -> list[SymlinkOperation]:
         """Property to get the list of symlink files.
 
         :return: List of SymlinkOperation objects
@@ -274,18 +264,18 @@ class FileSysOperationSet:
         return self._filter(SymlinkOperation)
 
     @property
-    def configure_operations(self) -> t.List[ConfigureOperation]:
+    def configure_operations(self) -> list[ConfigureOperation]:
         """Property to get the list of configure files.
 
         :return: List of ConfigureOperation objects
         """
         return self._filter(ConfigureOperation)
 
-    def _filter(self, type: t.Type[T]) -> t.List[T]:
+    def _filter(self, type_: type[GenerationProtocolT]) -> list[GenerationProtocolT]:
         """Filters the operations list to include only instances of the
         specified type.
 
         :param type: The type of operations to filter
         :return: A list of operations that are instances of the specified type
         """
-        return [x for x in self.operations if isinstance(x, type)]
+        return [x for x in self.operations if isinstance(x, type_)]

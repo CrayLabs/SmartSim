@@ -70,13 +70,13 @@ def test_command_setitem_slice():
 
 def test_command_setitem_fail():
     cmd_list = CommandList(commands=[srun_cmd, srun_cmd])
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         cmd_list[0] = "fail"
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         cmd_list[0:1] = "fail"
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         cmd_list[0:1] = "fail"
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _ = Command(command=["salloc", "-N", 1])
     with pytest.raises(TypeError):
         cmd_list[0:1] = [Command(command=["salloc", "-N", "1"]), Command(command=1)]

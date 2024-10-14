@@ -34,23 +34,32 @@ import re
 import time
 import typing as t
 import uuid
+from os import path as osp
 
 import pytest
 
 from smartsim._core import dispatch
-from smartsim._core.control.interval import SynchronousTimeInterval
 from smartsim._core.control.launch_history import LaunchHistory
 from smartsim._core.generation.generator import Job_Path
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
+from smartsim.builders.ensemble import Ensemble
 from smartsim.entity import entity
+from smartsim.entity.application import Application
 from smartsim.error import errors
 from smartsim.experiment import Experiment
 from smartsim.launchable import job
 from smartsim.settings import launch_settings
 from smartsim.settings.arguments import launch_arguments
 from smartsim.status import InvalidJobStatus, JobStatus
+from smartsim.types import LaunchedJobID
 
 pytestmark = pytest.mark.group_a
+
+_ID_GENERATOR = (str(i) for i in itertools.count())
+
+
+def random_id():
+    return next(_ID_GENERATOR)
 
 
 @pytest.fixture
@@ -215,11 +224,6 @@ class EchoHelloWorldEntity(entity.SmartSimEntity):
 
     def as_executable_sequence(self):
         return ("echo", "Hello", "World!")
-
-
-def test_start_raises_if_no_args_supplied(experiment):
-    with pytest.raises(TypeError, match="missing 1 required positional argument"):
-        experiment.start()
 
 
 # fmt: off
@@ -614,3 +618,172 @@ def test_experiment_stop_does_not_raise_on_unknown_job_id(
     assert stat == InvalidJobStatus.NEVER_STARTED
     after_cancel = exp.get_status(*all_known_ids)
     assert before_cancel == after_cancel
+
+
+def test_start_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No jobs provided to start"):
+        exp.start()
+
+
+def test_stop_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No job ids provided"):
+        exp.stop()
+
+
+def test_get_status_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No job ids provided"):
+        exp.get_status()
+
+
+def test_poll_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(
+        TypeError, match="missing 2 required positional arguments: 'ids' and 'statuses'"
+    ):
+        exp._poll_for_statuses()
+
+
+def test_wait_raises_if_no_args_supplied(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(ValueError, match="No job ids to wait on provided"):
+        exp.wait()
+
+
+def test_type_experiment_name_parameter(test_dir):
+    with pytest.raises(TypeError, match="name argument was not of type str"):
+        Experiment(name=1, exp_path=test_dir)
+
+
+def test_type_start_parameters(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="jobs argument was not of type Job"):
+        exp.start("invalid")
+
+
+def test_type_get_status_parameters(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+        exp.get_status(2)
+
+
+def test_type_wait_parameter(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+        exp.wait(2)
+
+
+def test_type_stop_parameter(test_dir):
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    with pytest.raises(TypeError, match="ids argument was not of type LaunchedJobID"):
+        exp.stop(2)
+
+
+@pytest.mark.parametrize(
+    "job_list",
+    (
+        pytest.param(
+            [
+                (
+                    job.Job(
+                        Application(
+                            "test_name",
+                            exe="echo",
+                            exe_args=["spam", "eggs"],
+                        ),
+                        launch_settings.LaunchSettings("local"),
+                    ),
+                    Ensemble("ensemble-name", "echo", replicas=2).build_jobs(
+                        launch_settings.LaunchSettings("local")
+                    ),
+                )
+            ],
+            id="(job1, (job2, job_3))",
+        ),
+        pytest.param(
+            [
+                (
+                    Ensemble("ensemble-name", "echo", replicas=2).build_jobs(
+                        launch_settings.LaunchSettings("local")
+                    ),
+                    (
+                        job.Job(
+                            Application(
+                                "test_name",
+                                exe="echo",
+                                exe_args=["spam", "eggs"],
+                            ),
+                            launch_settings.LaunchSettings("local"),
+                        ),
+                        job.Job(
+                            Application(
+                                "test_name_2",
+                                exe="echo",
+                                exe_args=["spam", "eggs"],
+                            ),
+                            launch_settings.LaunchSettings("local"),
+                        ),
+                    ),
+                )
+            ],
+            id="((job1, job2), (job3, job4))",
+        ),
+        pytest.param(
+            [
+                (
+                    job.Job(
+                        Application(
+                            "test_name",
+                            exe="echo",
+                            exe_args=["spam", "eggs"],
+                        ),
+                        launch_settings.LaunchSettings("local"),
+                    ),
+                )
+            ],
+            id="(job,)",
+        ),
+        pytest.param(
+            [
+                [
+                    job.Job(
+                        Application(
+                            "test_name",
+                            exe="echo",
+                            exe_args=["spam", "eggs"],
+                        ),
+                        launch_settings.LaunchSettings("local"),
+                    ),
+                    (
+                        Ensemble("ensemble-name", "echo", replicas=2).build_jobs(
+                            launch_settings.LaunchSettings("local")
+                        ),
+                        job.Job(
+                            Application(
+                                "test_name_2",
+                                exe="echo",
+                                exe_args=["spam", "eggs"],
+                            ),
+                            launch_settings.LaunchSettings("local"),
+                        ),
+                    ),
+                ]
+            ],
+            id="[job_1, ((job_2, job_3), job_4)]",
+        ),
+    ),
+)
+def test_start_unpack(
+    test_dir: str, wlmutils, monkeypatch: pytest.MonkeyPatch, job_list: job.Job
+):
+    """Test unpacking a sequences of jobs"""
+
+    monkeypatch.setattr(
+        "smartsim._core.dispatch._LauncherAdapter.start",
+        lambda launch, exe, job_execution_path, env, out, err: random_id(),
+    )
+
+    exp = Experiment(name="exp_name", exp_path=test_dir)
+    exp.start(*job_list)

@@ -40,7 +40,6 @@ from smartsim._core.generation.operations import (
     FileSysOperationSet,
     GenerationContext,
     SymlinkOperation,
-    create_final_dest,
 )
 from smartsim.entity import SmartSimEntity
 from smartsim.launchable import Job
@@ -65,42 +64,9 @@ def generator_instance(test_dir: str) -> Generator:
 
 
 @pytest.fixture
-def mock_src(test_dir: str):
-    """Fixture to create a mock source path."""
-    return pathlib.Path(test_dir) / pathlib.Path("mock_src")
-
-
-@pytest.fixture
-def mock_dest(test_dir: str):
-    """Fixture to create a mock destination path."""
-    return pathlib.Path(test_dir) / pathlib.Path("mock_dest")
-
-
-@pytest.fixture
 def mock_index():
     """Fixture to create a mock destination path."""
     return 1
-
-
-@pytest.fixture
-def copy_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a CopyOperation object."""
-    return CopyOperation(src=mock_src, dest=mock_dest)
-
-
-@pytest.fixture
-def symlink_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a CopyOperation object."""
-    return SymlinkOperation(src=mock_src, dest=mock_dest)
-
-
-@pytest.fixture
-def configure_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a CopyOperation object."""
-    return ConfigureOperation(
-        src=mock_src,
-        dest=mock_dest,
-    )
 
 
 class EchoHelloWorldEntity(SmartSimEntity):
@@ -243,42 +209,16 @@ def test_mkdir_file(generator_instance: Generator, test_dir: str):
     assert cmd.command == ["mkdir", "-p", test_dir]
 
 
-@pytest.fixture
-def files(fileutils):
-    path_to_files = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "correct/")
-    )
-    list_of_files_strs = sorted(glob(path_to_files + "/*"))
-    yield [pathlib.Path(str_path) for str_path in list_of_files_strs]
-
-
-@pytest.fixture
-def directory(fileutils):
-    directory = fileutils.get_test_conf_path(
-        osp.join("generator_files", "easy", "correct/")
-    )
-    yield [pathlib.Path(directory)]
-
-
-@pytest.fixture
-def source(request, files, directory):
-    if request.param == "files":
-        return files
-    elif request.param == "directory":
-        return directory
-
-
 @pytest.mark.parametrize(
     "dest",
     (
         pytest.param(None, id="dest as None"),
         pytest.param(
-            pathlib.Path("/absolute/path"),
+            pathlib.Path("absolute/path"),
             id="dest as valid path",
         ),
     ),
 )
-@pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
 def test_copy_files_valid_dest(
     dest, source, generator_instance: Generator, test_dir: str
 ):
@@ -289,15 +229,11 @@ def test_copy_files_valid_dest(
     # Extract file paths from commands
     cmd_src_paths = set()
     for cmd in cmd_list.commands:
-        # Assert destination path exists in cmd
-        assert create_final_dest(pathlib.Path(test_dir), dest) in cmd.command
         src_index = cmd.command.index("copy") + 1
         cmd_src_paths.add(cmd.command[src_index])
     # Assert all file paths are in the command list
     file_paths = {str(file) for file in source}
-    assert file_paths.issubset(
-        cmd_src_paths
-    ), "Not all file paths are in the command list"
+    assert file_paths == cmd_src_paths, "Not all file paths are in the command list"
 
 
 @pytest.mark.parametrize(
@@ -305,31 +241,27 @@ def test_copy_files_valid_dest(
     (
         pytest.param(None, id="dest as None"),
         pytest.param(
-            pathlib.Path("/absolute/path"),
+            pathlib.Path("absolute/path"),
             id="dest as valid path",
         ),
     ),
 )
-@pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
 def test_symlink_files_valid_dest(
     dest, source, generator_instance: Generator, test_dir: str
 ):
-    to_copy = [CopyOperation(src=file, dest=dest) for file in source]
+    to_symlink = [SymlinkOperation(src=file, dest=dest) for file in source]
     gen = GenerationContext(pathlib.Path(test_dir))
-    cmd_list = generator_instance._copy_files(files=to_copy, context=gen)
+    cmd_list = generator_instance._symlink_files(files=to_symlink, context=gen)
     assert isinstance(cmd_list, CommandList)
     # Extract file paths from commands
     cmd_src_paths = set()
     for cmd in cmd_list.commands:
-        # Assert destination path exists in cmd
-        assert create_final_dest(pathlib.Path(test_dir), dest) in cmd.command
-        src_index = cmd.command.index("copy") + 1
+        print(cmd)
+        src_index = cmd.command.index("symlink") + 1
         cmd_src_paths.add(cmd.command[src_index])
     # Assert all file paths are in the command list
     file_paths = {str(file) for file in source}
-    assert file_paths.issubset(
-        cmd_src_paths
-    ), "Not all file paths are in the command list"
+    assert file_paths == cmd_src_paths, "Not all file paths are in the command list"
 
 
 @pytest.mark.parametrize(
@@ -337,12 +269,11 @@ def test_symlink_files_valid_dest(
     (
         pytest.param(None, id="dest as None"),
         pytest.param(
-            pathlib.Path("/absolute/path"),
+            pathlib.Path("absolute/path"),
             id="dest as valid path",
         ),
     ),
 )
-@pytest.mark.parametrize("source", ["files", "directory"], indirect=True)
 def test_configure_files_valid_dest(
     dest, source, generator_instance: Generator, test_dir: str
 ):
@@ -365,18 +296,11 @@ def test_configure_files_valid_dest(
     # Extract file paths from commands
     cmd_src_paths = set()
     for cmd in cmd_list.commands:
-        # Assert destination path exists in cmd
-        assert create_final_dest(pathlib.Path(test_dir), dest) in cmd.command
         src_index = cmd.command.index("configure") + 1
         cmd_src_paths.add(cmd.command[src_index])
     # Assert all file paths are in the command list
     file_paths = {str(file) for file in source}
-    assert file_paths.issubset(
-        cmd_src_paths
-    ), "Not all file paths are in the command list"
-
-
-# TODO Add configure_file tests
+    assert file_paths == cmd_src_paths, "Not all file paths are in the command list"
 
 
 @pytest.fixture
@@ -511,4 +435,4 @@ def test_execute_commands(
         ) as mock_run,
     ):
         generator_instance._execute_commands(formatted_command_list)
-        assert mock_run.call_count == len(operations_list)
+        assert mock_run.call_count == len(formatted_command_list)
