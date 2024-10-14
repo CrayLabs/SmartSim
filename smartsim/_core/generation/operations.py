@@ -60,13 +60,6 @@ def check_src_and_dest_path(
     if isinstance(dest, pathlib.Path) and " " in str(dest):
         raise ValueError("Path contains spaces, which are not allowed")
 
-    # TODO I want to add the check below but I do not think this works for remote jobs
-    # full_path = path.abspath(file_path)
-    #     if path.isfile(full_path):
-    #         return full_path
-    #     if path.isdir(full_path):
-    #         return full_path
-
 
 def check_run_path(run_path: pathlib.Path) -> None:
     """Validate that the provided run path is of type pathlib.Path

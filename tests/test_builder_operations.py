@@ -16,6 +16,7 @@ from smartsim._core.generation.builder_operations import (
     EnsembleFileSysOperationSet
 )
 from smartsim.builders import Ensemble
+from smartsim.builders.utils import strategies
 
 # QUESTIONS
 # TODO test python protocol?
@@ -30,24 +31,28 @@ def mock_src(test_dir: str):
     return pathlib.Path(test_dir) / pathlib.Path("mock_src")
 
 
+# TODO remove when PR 732 is merged
 @pytest.fixture
 def mock_dest(test_dir: str):
     """Fixture to create a mock destination path."""
     return pathlib.Path(test_dir) / pathlib.Path("mock_dest")
 
 
+# TODO remove when PR 732 is merged
 @pytest.fixture
 def copy_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
     """Fixture to create a CopyOperation object."""
     return EnsembleCopyOperation(src=mock_src, dest=mock_dest)
 
 
+# TODO remove when PR 732 is merged
 @pytest.fixture
 def symlink_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
     """Fixture to create a SymlinkOperation object."""
     return EnsembleSymlinkOperation(src=mock_src, dest=mock_dest)
 
 
+# TODO remove when PR 732 is merged
 @pytest.fixture
 def configure_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
     """Fixture to create a Configure object."""
@@ -57,7 +62,7 @@ def configure_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
 
 
 @pytest.fixture
-def file_system_operation_set(
+def ensemble_file_system_operation_set(
     copy_operation: EnsembleCopyOperation,
     symlink_operation: EnsembleSymlinkOperation,
     configure_operation: EnsembleConfigureOperation,
@@ -297,13 +302,21 @@ def test_step_mock():
             print(deserialized_dict)
 
 def test_all_perm_mock():
-    ensemble = Ensemble("name", "echo", exe_arg_parameters = {"-N": ["1", "2"]}, permutation_strategy="step")
+    ensemble = Ensemble("name", "echo", exe_arg_parameters = {"-N": ["1", "2"]}, permutation_strategy="step", replicas=2)
     ensemble.files.add_configuration(pathlib.Path("src_1"), file_parameters={"FOO":["BAR", "TOE"]})
     ensemble.files.add_configuration(pathlib.Path("src_2"), file_parameters={"CAN":["TOM", "STO"]})
     apps = ensemble._create_applications()
-    for app in apps:
-        for config in app.files.configure_operations:
-            decoded_dict = base64.b64decode(config.file_parameters)
-            print(config.src)
-            deserialized_dict = pickle.loads(decoded_dict)
-            print(deserialized_dict)
+    print(len(apps))
+    # for app in apps:
+    #     for config in app.files.configure_operations:
+    #         decoded_dict = base64.b64decode(config.file_parameters)
+    #         print(config.src)
+    #         deserialized_dict = pickle.loads(decoded_dict)
+    #         print(deserialized_dict)
+
+def test_mock():
+    ensemble = Ensemble("name", "echo", exe_arg_parameters = {"-N": ["1", "2"]}, permutation_strategy="step")
+    file = EnsembleConfigureOperation(src="src", file_parameters={"FOO":["BAR", "TOE"]})
+    permutation_strategy = strategies.resolve("all_perm")
+    val = ensemble.perm_config_file(file, permutation_strategy)
+    print(val)

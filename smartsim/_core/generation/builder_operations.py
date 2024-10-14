@@ -5,31 +5,47 @@ from dataclasses import dataclass, field
 
 
 class EnsembleGenerationProtocol(t.Protocol):
-    """Protocol for Generation Operations Ensemble."""
+    """Protocol for Ensemble Generation Operations."""
     src: pathlib.Path
+    """Path to source"""
     dest: t.Optional[pathlib.Path]
+    """Path to destination"""
 
 
 class EnsembleCopyOperation(EnsembleGenerationProtocol):
-    """Copy Operation"""
+    """Ensemble Copy Operation"""
 
     def __init__(
         self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None
     ) -> None:
+        """Initialize a EnsembleCopyOperation object
+
+        :param src: Path to source
+        :param dest: Path to destination
+        """
         self.src = src
+        """Path to source"""
         self.dest = dest
+        """Path to destination"""
 
 
 class EnsembleSymlinkOperation(EnsembleGenerationProtocol):
-    """Symlink Operation"""
+    """Ensemble Symlink Operation"""
 
     def __init__(self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None) -> None:
+        """Initialize a EnsembleSymlinkOperation object
+
+        :param src: Path to source
+        :param dest: Path to destination
+        """
         self.src = src
+        """Path to source"""
         self.dest = dest
+        """Path to destination"""
 
 
 class EnsembleConfigureOperation(EnsembleGenerationProtocol):
-    """Configure Operation"""
+    """Ensemble Configure Operation"""
 
     def __init__(
         self,
@@ -38,32 +54,51 @@ class EnsembleConfigureOperation(EnsembleGenerationProtocol):
         dest: t.Optional[pathlib.Path] = None,
         tag: t.Optional[str] = None,
     ) -> None:
+        """Initialize a EnsembleConfigureOperation
+
+        :param src: Path to source
+        :param file_parameters: File parameters to find and replace
+        :param dest: Path to destination
+        :param tag: Tag to use for find and replacement
+        """
         self.src = src
+        """Path to source"""
         self.dest = dest
+        """Path to destination"""
         self.file_parameters = file_parameters
+        """File parameters to find and replace"""
         self.tag = tag if tag else ";"
+        """Tag to use for the file"""
 
 
-U = t.TypeVar("U", bound=EnsembleGenerationProtocol)
+EnsembleGenerationProtocolT = t.TypeVar("EnsembleGenerationProtocolT", bound=EnsembleGenerationProtocol)
 
 
 @dataclass
 class EnsembleFileSysOperationSet:
-    """Dataclass to represent a set of FS Operation Objects"""
+    """Dataclass to represent a set of Ensemble File System Operation Objects"""
 
     operations: t.List[EnsembleGenerationProtocol] = field(default_factory=list)
-    """Set of FS Objects that match the GenerationProtocol"""
+    """Set of Ensemble File System Objects that match the EnsembleGenerationProtocol"""
 
     def add_copy(
         self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None
     ) -> None:
-        """Add a copy operation to the operations list"""
+        """Add a copy operation to the operations list
+
+        :param src: Path to source
+        :param dest: Path to destination
+        """
         self.operations.append(EnsembleCopyOperation(src, dest))
 
     def add_symlink(
         self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None
     ) -> None:
-        """Add a symlink operation to the operations list"""
+        """Add a symlink operation to the operations list
+
+        :param src: Path to source
+        :param dest: Path to destination
+        """
         self.operations.append(EnsembleSymlinkOperation(src, dest))
 
     def add_configuration(
@@ -73,23 +108,44 @@ class EnsembleFileSysOperationSet:
         dest: t.Optional[pathlib.Path] = None,
         tag: t.Optional[str] = None,
     ) -> None:
-        """Add a configure operation to the operations list"""
+        """Add a configure operation to the operations list
+
+        :param src: Path to source
+        :param file_parameters: File parameters to find and replace
+        :param dest: Path to destination
+        :param tag: Tag to use for find and replacement
+        """
         self.operations.append(EnsembleConfigureOperation(src, file_parameters, dest, tag))
 
     @property
     def copy_operations(self) -> t.List[EnsembleCopyOperation]:
-        """Property to get the list of copy files."""
+        """Property to get the list of copy files.
+
+        :return: List of EnsembleCopyOperation objects
+        """
         return self._filter(EnsembleCopyOperation)
 
     @property
     def symlink_operations(self) -> t.List[EnsembleSymlinkOperation]:
-        """Property to get the list of symlink files."""
+        """Property to get the list of symlink files.
+
+        :return: List of EnsembleSymlinkOperation objects
+        """
         return self._filter(EnsembleSymlinkOperation)
 
     @property
     def configure_operations(self) -> t.List[EnsembleConfigureOperation]:
-        """Property to get the list of configure files."""
+        """Property to get the list of configure files.
+
+        :return: List of EnsembleConfigureOperation objects
+        """
         return self._filter(EnsembleConfigureOperation)
 
-    def _filter(self, type: t.Type[U]) -> t.List[U]:
+    def _filter(self, type: t.Type[EnsembleGenerationProtocolT]) -> t.List[EnsembleGenerationProtocolT]:
+        """Filters the operations list to include only instances of the
+        specified type.
+
+        :param type: The type of operations to filter
+        :return: A list of operations that are instances of the specified type
+        """
         return [x for x in self.operations if isinstance(x, type)]

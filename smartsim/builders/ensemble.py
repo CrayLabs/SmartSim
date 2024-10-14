@@ -31,6 +31,7 @@ import itertools
 import os
 import os.path
 import typing as t
+import random
 
 from smartsim.builders.utils import strategies
 from smartsim.builders.utils.strategies import ParamSet
@@ -279,56 +280,41 @@ class Ensemble(entity.CompoundEntity):
 
         :return: A tuple of Application instances
         """
-        # Create a list
-        ls = []
-        # Grabbing the associated register function
+        # resolve the permutation strategy
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-        # Open a loop to for configured files
-        for file in self.files.configure_operations:
-            # list
-            new_list = []
-            # return a list of ParamSets
-            combinations = permutation_strategy(
-                file.file_parameters, self.exe_arg_parameters, self.max_permutations
-            )
-            combinations = combinations if combinations else [ParamSet({}, {})]
-            # permutations_ = itertools.chain.from_iterable(
-            #     itertools.repeat(permutation, self.replicas) for permutation in combinations
-            # )
-            # Attach each paramset with the associated file via dataset and append to the list
-            for combo in combinations:
-                new_list.append(FileSet(file, combo))
-            # Add the list of (file, paramset) to a new list
-            ls.append(new_list)
-        combo = self._cartesian_values(ls)
-        print(combo)
-        print(type(combo))
-        print(len(combo))
-        for item in combo:
-            print(type(item))
-            print(item)
-
-        # return tuple(
-        #     self.create_app(i, item)
-
-        #     for i, item in combo
-        # )
-        apps = []
+        # apply the permutation strategy to each attached config file
+        perm_list: t.List[t.List[FileSet]] = [self.perm_config_file(config_file, permutation_strategy) for config_file in self.files.configure_operations]
+        # group the files together
+        val: t.List[tuple[FileSet]] = self._cartesian_values(perm_list)
+        # duplicate if replicas
+        permutations_ = itertools.chain.from_iterable(
+            itertools.repeat(permutation, self.replicas) for permutation in val
+        )
+        all_apps = []
         i = 0
-        for item in combo:
+        for item in permutations_:
             i+=1
-            apps.append(self.create_app(i, item))
-        return tuple(apps)
-
-    def create_app(self, i, item):
-        app = Application(
+            app = Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
                 exe_args=self.exe_args,
             )
-        for merp in item:
-            app.files.add_configuration(src=merp.file.src, file_parameters=merp.combinations.params)
-        return app
+            # apply the config files in the tuple
+            for file_set in item:
+                app.files.add_configuration(src=file_set.file.src, file_parameters=file_set.combinations.params)
+            all_apps.append(app)
+        return tuple(all_apps)
+
+
+    def perm_config_file(self, file, permutation_strategy):
+        combinations = permutation_strategy(
+            file.file_parameters, self.exe_arg_parameters, self.max_permutations
+        ) or [ParamSet({}, {})]
+        return [FileSet(file, combo) for combo in combinations]
+
+
+    def _cartesian_values(self, ls):
+        return list(itertools.product(*ls))
 
 
     def build_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
@@ -365,13 +351,3 @@ class Ensemble(entity.CompoundEntity):
         if not apps:
             raise ValueError("There are no members as part of this ensemble")
         return tuple(Job(app, settings, app.name) for app in apps)
-
-    def _step_values(self, ls):
-        #facilitate parallel iteration over multiple sequences
-        return list(zip(*ls))
-
-    def _cartesian_values(self, ls): # needs to return a list[tuples]
-        return list(itertools.product(*ls))
-
-    def _random_values(self, ls):
-        val = self._cartesian_values()
