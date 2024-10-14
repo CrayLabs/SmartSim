@@ -25,9 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import dragon
-
-# pylint disable=import-error
+# pylint: disable=import-error
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
@@ -35,10 +33,8 @@ from dragon import fli
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.globalservices.api_setup import connect_to_infrastructure
-from dragon.managed_memory import MemoryPool
-from dragon.utils import b64decode, b64encode
 
-# pylint enable=import-error
+# pylint: enable=import-error
 
 # isort: off
 # isort: on
@@ -49,7 +45,6 @@ import multiprocessing as mp
 import os
 import socket
 import time
-import typing as t
 
 import cloudpickle
 
@@ -124,13 +119,15 @@ if __name__ == "__main__":
         "--batch_size",
         type=int,
         default=1,
-        help="How many requests the workers will try to aggregate before processing them",
+        help="How many requests the workers will try "
+        "to aggregate before processing them",
     )
     parser.add_argument(
         "--batch_timeout",
         type=float,
         default=0.001,
-        help="How much time (in seconds) should be waited before processing an incomplete aggregated request",
+        help="How much time (in seconds) should be waited "
+        "before processing an incomplete aggregated request",
     )
     args = parser.parse_args()
 
@@ -143,7 +140,9 @@ if __name__ == "__main__":
     to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
     to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli)
 
+    backbone._allow_reserved_writes = True
     backbone.worker_queue = to_worker_fli_comm_ch.descriptor
+    backbone._allow_reserved_writes = False
 
     os.environ[BackboneFeatureStore.MLI_WORKER_QUEUE] = to_worker_fli_comm_ch.descriptor
     os.environ[BackboneFeatureStore.MLI_BACKBONE] = backbone.descriptor
@@ -163,6 +162,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         config_loader=config_loader,
         worker_type=arg_worker_type,
+        mem_pool_size=128 * 1024**3,
     )
 
     wms = []
@@ -210,9 +210,11 @@ if __name__ == "__main__":
     # TODO: use ProcessGroup and restart=True?
     all_procs = [dispatcher_proc, *worker_manager_procs]
 
-    print(f"Dispatcher proc: {dispatcher_proc}")
     for proc in all_procs:
         proc.start()
 
     while all(proc.is_alive for proc in all_procs):
         time.sleep(1)
+
+    for proc in all_procs:
+        logger.info(f"{proc} is alive: {proc.is_alive}")

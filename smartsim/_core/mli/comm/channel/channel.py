@@ -52,19 +52,28 @@ class CommChannelBase(ABC):
         """A user-friendly identifier for channel-related logging"""
 
     @abstractmethod
-    def send(self, value: bytes, timeout: float = 0.001) -> None:
+    def send(
+        self,
+        value: bytes,
+        timeout: t.Optional[float] = 0.001,
+        handle_timeout: float = 0.001,
+    ) -> None:
         """Send a message through the underlying communication channel.
 
         :param value: The value to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param handle_timeout: Maximum time to wait to obtain new send handle
         :raises SmartSimError: If sending message fails
         """
 
     @abstractmethod
-    def recv(self, timeout: float = 0.001) -> t.List[bytes]:
+    def recv(
+        self, timeout: t.Optional[float] = 0.001, handle_timeout: float = 0.001
+    ) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
+        :param handle_timeout: Maximum time to wait to obtain new receive handle
         :returns: The received message
         """
 

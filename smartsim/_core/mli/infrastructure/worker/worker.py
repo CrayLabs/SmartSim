@@ -194,13 +194,22 @@ class InferenceReply:
 class LoadModelResult:
     """A wrapper around a loaded model."""
 
-    def __init__(self, model: t.Any) -> None:
+    def __init__(
+        self,
+        model: t.Any,
+        inputs: t.Optional[t.List[str]] = None,
+        outputs: t.Optional[t.List[str]] = None,
+    ) -> None:
         """Initialize the LoadModelResult.
 
         :param model: The loaded model
         """
         self.model = model
         """The loaded model (e.g. a TensorFlow, PyTorch, ONNX, etc. model)"""
+        self.inputs = inputs
+        """List of input layer names, only used in TensorFlow"""
+        self.outputs = outputs
+        """List of output tensor names, only used in TensorFlow"""
 
 
 class TransformInputResult:

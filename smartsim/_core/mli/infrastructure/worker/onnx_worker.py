@@ -24,10 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import io
+import os
 
 import numpy as np
-import torch
+from onnx import load_model_from_string
+from onnxruntime import InferenceSession  # type: ignore
+
+# isort: off
+# isort: on
 
 # pylint: disable=import-error
 from dragon.managed_memory import MemoryAlloc, MemoryPool
@@ -49,13 +53,11 @@ from .worker import (
 # pylint: enable=import-error
 
 
-torch.set_num_threads(1)
-torch.set_num_interop_threads(4)
 logger = get_logger(__name__)
 
 
-class TorchWorker(MachineLearningWorkerBase):
-    """A worker that executes a PyTorch model."""
+class ONNXWorker(MachineLearningWorkerBase):
+    """A worker that executes an ONNX model."""
 
     @staticmethod
     def load_model(
@@ -78,26 +80,41 @@ class TorchWorker(MachineLearningWorkerBase):
         else:
             raise ValueError("Unable to load model without reference object")
 
-        device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        for old, new in device_to_torch.items():
-            device = device.replace(old, new)
+        providers = []
+        provider_options = []
 
-        buffer = io.BytesIO(initial_bytes=model_bytes)
+        if "gpu" in device.lower():
+            device_split = device.split(":")
+            if len(device_split) > 1:
+                provider_options.append({"device_id": device_split[-1]})
+            else:
+                provider_options.append({})
+            if "ROCR_VISIBLE_DEVICES" in os.environ:
+                providers = ["ROCMExecutionProvider"]
+            else:
+                providers = ["CUDAExecutionProvider"]
+
+        # Fallback
+        providers.append("CPUExecutionProvider")
+        provider_options.append({})
+
         try:
-            with torch.no_grad():
-                model = torch.jit.load(buffer, map_location=device)  # type: ignore
-                model.eval()
+            onnx_deserialized = load_model_from_string(model_bytes)
+            output_tensors = [n.name for n in onnx_deserialized.graph.output]
+            input_layers = [n.name for n in onnx_deserialized.graph.input]
+            session = InferenceSession(
+                model_bytes, providers=providers, provider_options=provider_options
+            )
         except Exception as e:
             raise RuntimeError(
                 "Failed to load and evaluate the model: "
                 f"Model key {batch.model_id.key}, Device {device}"
             ) from e
-        try:
-            model = torch.compile(model, dynamic=True)
-        except Exception as exc:
-            logger.info("Could not compile Torch model, original exception: ")
-            logger.info(exc)
-        result = LoadModelResult(model)
+        result = LoadModelResult(
+            session,
+            input_layers,
+            output_tensors,
+        )
         return result
 
     @staticmethod
@@ -109,14 +126,14 @@ class TorchWorker(MachineLearningWorkerBase):
         """Given a collection of data, perform a transformation on the data and put
         the raw tensor data on a MemoryPool allocation.
 
-        :param request: The request that triggered the pipeline
-        :param fetch_result: Raw outputs from fetching inputs out of a feature store
+        :param batch: The request batch that triggered the pipeline
+        :param fetch_result: Raw outputs from fetching inputs
         :param mem_pool: The memory pool used to access batched input tensors
         :returns: The transformed inputs wrapped in a TransformInputResult
         :raises ValueError: If tensors cannot be reconstructed
         :raises IndexError: If index out of range
         """
-        results: list[torch.Tensor] = []
+        results: list[memoryview] = []
         total_samples = 0
         slices: list[slice] = []
 
@@ -155,12 +172,13 @@ class TorchWorker(MachineLearningWorkerBase):
             mem_alloc = mem_pool.alloc(alloc_size)
             mem_view = mem_alloc.get_memview()
             try:
-                mem_view[:alloc_size] = b"".join(
+                joined = b"".join(
                     [
                         fetch_result.inputs[result_tensor_idx]
                         for fetch_result in fetch_results
                     ]
                 )
+                mem_view[:alloc_size] = joined
             except IndexError as e:
                 raise IndexError(
                     "Error accessing elements in fetch_result.inputs "
@@ -192,9 +210,6 @@ class TorchWorker(MachineLearningWorkerBase):
         """
         if not load_result.model:
             raise SmartSimError("Model must be loaded to execute")
-        device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        for old, new in device_to_torch.items():
-            device = device.replace(old, new)
 
         tensors = []
         mem_allocs = []
@@ -206,30 +221,24 @@ class TorchWorker(MachineLearningWorkerBase):
             itemsize = np.empty((1), dtype=dtype).itemsize
             try:
                 tensors.append(
-                    torch.from_numpy(
-                        np.frombuffer(
-                            mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
-                            dtype=dtype,
-                        ).reshape(dims)
-                    )
+                    np.frombuffer(
+                        mem_alloc.get_memview()[0 : np.prod(dims) * itemsize],
+                        dtype=dtype,
+                    ).reshape(dims)
                 )
             except IndexError as e:
                 raise IndexError("Error during memory slicing") from e
             except Exception as e:
                 raise ValueError("Error during tensor creation") from e
 
-        model: torch.nn.Module = load_result.model
+        sess = load_result.model
+        if load_result.inputs is None:
+            raise ValueError("Model was stored without inputs")
         try:
-            with torch.no_grad():
-                model.eval()
-                results = [
-                    model(
-                        *[
-                            tensor.to(device, non_blocking=True).detach()
-                            for tensor in tensors
-                        ]
-                    )
-                ]
+            results = sess.run(
+                load_result.outputs,
+                input_feed=dict(zip(load_result.inputs, tensors)),
+            )
         except Exception as e:
             raise ValueError(
                 f"Error while evaluating the model: Model {batch.model_id.key}"
@@ -257,14 +266,13 @@ class TorchWorker(MachineLearningWorkerBase):
         :raises ValueError: If transforming output fails
         """
         transformed_list: list[TransformOutputResult] = []
-        cpu_predictions = [
-            prediction.cpu() for prediction in execute_result.predictions
-        ]
+        cpu_predictions = execute_result.predictions
+
         for result_slice in execute_result.slices:
             transformed = []
             for cpu_item in cpu_predictions:
                 try:
-                    transformed.append(cpu_item[result_slice].numpy().tobytes())
+                    transformed.append(cpu_item[result_slice].tobytes())
 
                     # todo: need the shape from latest schemas added here.
                     transformed_list.append(

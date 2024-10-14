@@ -26,37 +26,35 @@
 
 
 import argparse
-import io
+
 from mpi4py import MPI
-import torch
+import numpy
+from numpy.polynomial import Polynomial
+
+import onnx
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+from skl2onnx import to_onnx
 
 from smartsim.log import get_logger
 from smartsim._core.mli.client.protoclient import ProtoClient
 
-torch.set_num_interop_threads(16)
-torch.set_num_threads(1)
-
-logger = get_logger("App")
-logger.info("Started app")
-
-
 logger = get_logger("App")
 
 
-class ResNetWrapper:
-    """Wrapper around a pre-rained ResNet model."""
-
-    def __init__(self, name: str, model: str):
-        """Initialize the instance.
-
-        :param name: The name to use for the model
-        :param model: The path to the pre-trained PyTorch model"""
-        self._model = None  # torch.jit.load(model)
+class LinRegWrapper:
+    def __init__(
+        self,
+        name: str,
+        model: onnx.onnx_ml_pb2.ModelProto,
+    ):
+        self._get_onnx_model(model)
         self._name = name
+        self._poly = PolynomialFeatures
 
-        with open(model, "rb") as model_file:
-            buffer = io.BytesIO(model_file.read())
-        self._serialized_model = buffer.getvalue()
+    def _get_onnx_model(self, model: onnx.onnx_ml_pb2.ModelProto):
+        self._serialized_model = model.SerializeToString()
 
     # pylint: disable-next=no-self-use
     def get_batch(self, batch_size: int = 32):
@@ -65,17 +63,18 @@ class ResNetWrapper:
 
         :param batch_size: The desired number of samples to produce
         :returns: A PyTorch tensor"""
-        return torch.randn((batch_size, 3, 224, 224), dtype=torch.float32)
+        x = numpy.random.randn(batch_size, 1).astype(numpy.float32)
+        return poly.fit_transform(x.reshape(-1, 1))
 
     @property
-    def model(self) -> bytes:
+    def model(self):
         """The content of a model file.
 
         :returns: The model bytes"""
         return self._serialized_model
 
     @property
-    def name(self) -> str:
+    def name(self):
         """The name applied to the model.
 
         :returns: The name"""
@@ -94,16 +93,25 @@ if __name__ == "__main__":
     parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
-    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
+    X = numpy.linspace(0, 10, 10).astype(numpy.float32)
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    p = Polynomial([1.4, -10, 4])
+    poly_features = poly.fit_transform(X.reshape(-1, 1))
+    poly_reg_model = LinearRegression()
+    poly_reg_model.fit(poly_features, p(X))
+
+    onnx_model = to_onnx(poly_reg_model, poly_features, target_opset=13)
+
+    linreg = LinRegWrapper("LinReg", onnx_model)
 
     comm_world = MPI.COMM_WORLD
     rank = comm_world.Get_rank()
     client = ProtoClient(timing_on=True, rank=rank)
 
     if rank == 0:
-        client.set_model(resnet.name, resnet.model)
+        client.set_model(linreg.name, linreg.model)
 
-    comm_world.Barrier()
+    MPI.COMM_WORLD.Barrier()
 
     TOTAL_ITERATIONS = 100
 
@@ -111,9 +119,12 @@ if __name__ == "__main__":
         b_size: int = 2**log2_bsize
         log(f"Batch size: {b_size}", rank)
         for iteration_number in range(TOTAL_ITERATIONS):
-            sample_batch = resnet.get_batch(b_size).numpy()
-            remote_result = client.run_model(resnet.name, sample_batch)
-            comm_world.Barrier()
-            logger.info(client.perf_timer.get_last("total_time"))
+            sample_batch = linreg.get_batch(b_size)
+            remote_result = client.run_model(linreg.name, sample_batch)
+            log(
+                f"Completed iteration: {iteration_number} "
+                f"in {client.perf_timer.get_last('total_time')} seconds",
+                rank,
+            )
 
     client.perf_timer.print_timings(to_file=True, to_stdout=rank == 0)

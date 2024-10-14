@@ -45,12 +45,7 @@ from ....entrypoints.service import Service
 from ....utils.timings import PerfTimer
 from ...message_handler import MessageHandler
 from ..environment_loader import EnvironmentConfigLoader
-from ..worker.worker import (
-    InferenceReply,
-    LoadModelResult,
-    MachineLearningWorkerBase,
-    RequestBatch,
-)
+from ..worker.worker import InferenceReply, MachineLearningWorkerBase, RequestBatch
 from .device_manager import DeviceManager, WorkerDevice
 from .error_handling import build_failure_reply, exception_handler
 
@@ -108,6 +103,10 @@ class WorkerManager(Service):
         """Object responsible for model caching and device access"""
         self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
         """Performance timer"""
+        self._processed_batches: int = 0
+        """Number of processed request batches"""
+        self._sent_responses: int = 0
+        """Number of sent responses"""
 
     @property
     def has_featurestore_factory(self) -> bool:
@@ -171,9 +170,18 @@ class WorkerManager(Service):
         the inference pipeline."""
         pre_batch_time = time.perf_counter()
         try:
-            batch: RequestBatch = self._dispatcher_queue.get(timeout=0.0001)
+            batch: RequestBatch = self._dispatcher_queue.get(timeout=None)
         except Empty:
             return
+        except Exception as exc:
+            exception_handler(
+                exc,
+                None,
+                "Error receiving batch.",
+            )
+            return
+
+        self._processed_batches += 1
 
         self._perf_timer.start_timings(
             "flush_requests", time.perf_counter() - pre_batch_time
@@ -224,7 +232,7 @@ class WorkerManager(Service):
         with device_cm as device:
 
             try:
-                model_result = LoadModelResult(device.get_model(batch.model_id.key))
+                model_result = device.get_model(batch.model_id.key)
             except Exception as exc:
                 for request in batch.requests:
                     exception_handler(
@@ -265,6 +273,7 @@ class WorkerManager(Service):
                 return
 
             for request, transformed_output in zip(batch.requests, transformed_outputs):
+                self._sent_responses += 1
                 reply = InferenceReply()
                 if request.has_output_keys:
                     try:
@@ -303,17 +312,20 @@ class WorkerManager(Service):
                 self._perf_timer.measure_time("serialize_resp")
 
                 if request.callback:
-                    request.callback.send(serialized_resp)
-                    if reply.has_outputs:
-                        # send tensor data after response
-                        for output in reply.outputs:
-                            request.callback.send(output)
+                    try:
+                        request.callback.send(serialized_resp)
+                        if reply.has_outputs:
+                            # send tensor data after response
+                            for output in reply.outputs:
+                                request.callback.send(output, timeout=None)
+                    except Exception as e:
+                        exception_handler(
+                            e, request.callback, "Error while sending response."
+                        )
+                        continue
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()
-
-        if self._perf_timer.max_length == 801:
-            self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
         """Determine if the service can be shutdown.

@@ -66,18 +66,26 @@ class DragonFLIChannel(cch.CommChannelBase):
         self._buffer_size: int = buffer_size
         """Maximum number of messages that can be buffered before sending"""
 
-    def send(self, value: bytes, timeout: float = 0.001) -> None:
+    def send(
+        self,
+        value: bytes,
+        timeout: t.Optional[float] = 0.001,
+        handle_timeout: float = 0.001,
+    ) -> None:
         """Send a message through the underlying communication channel.
 
         :param value: The value to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param handle_timeout: Maximum time to wait to obtain new send handle
         :raises SmartSimError: If sending message fails
         """
         try:
             if self._channel is None:
                 self._channel = drg_util.create_local(self._buffer_size)
 
-            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
+            with self._fli.sendh(
+                timeout=handle_timeout, stream_channel=self._channel
+            ) as sendh:
                 sendh.send_bytes(value, timeout=timeout)
                 logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
@@ -89,21 +97,25 @@ class DragonFLIChannel(cch.CommChannelBase):
     def send_multiple(
         self,
         values: t.Sequence[bytes],
-        timeout: float = 0.001,
+        timeout: t.Optional[float] = 0.001,
+        handle_timeout: float = 0.001,
     ) -> None:
         """Send a message through the underlying communication channel.
 
         :param values: The values to send
         :param timeout: Maximum time to wait (in seconds) for messages to send
+        :param handle_timeout: Maximum time to wait to obtain new send handle
         :raises SmartSimError: If sending message fails
         """
         try:
             if self._channel is None:
                 self._channel = drg_util.create_local(self._buffer_size)
 
-            with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
+            with self._fli.sendh(
+                timeout=handle_timeout, stream_channel=self._channel
+            ) as sendh:
                 for value in values:
-                    sendh.send_bytes(value)
+                    sendh.send_bytes(value, timeout=timeout)
                     logger.debug(f"DragonFLIChannel {self.descriptor} sent message")
         except Exception as e:
             self._channel = None
@@ -111,7 +123,9 @@ class DragonFLIChannel(cch.CommChannelBase):
                 f"Error sending via DragonFLIChannel {self.descriptor} {e}"
             ) from e
 
-    def recv(self, timeout: float = 0.001) -> t.List[bytes]:
+    def recv(
+        self, timeout: t.Optional[float] = 0.001, handle_timeout: float = 0.001
+    ) -> t.List[bytes]:
         """Receives message(s) through the underlying communication channel.
 
         :param timeout: Maximum time to wait (in seconds) for messages to arrive
@@ -120,7 +134,7 @@ class DragonFLIChannel(cch.CommChannelBase):
         """
         messages = []
         eot = False
-        with self._fli.recvh(timeout=timeout) as recvh:
+        with self._fli.recvh(timeout=handle_timeout) as recvh:
             while not eot:
                 try:
                     message, _ = recvh.recv_bytes(timeout=timeout)

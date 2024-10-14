@@ -178,6 +178,7 @@ class RedisAIVersion(Version_):
             "onnx": "1.14.1",
             "skl2onnx": "1.16.0",
             "onnxmltools": "1.12.0",
+            "onnxruntime": "1.19.2",
             "scikit-learn": "1.3.2",
             "torch": "2.0.1",
             "torch_cpu_suffix": "+cpu",

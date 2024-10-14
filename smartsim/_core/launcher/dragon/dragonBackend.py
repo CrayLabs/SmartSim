@@ -532,10 +532,10 @@ class DragonBackend:
                         and proc_group.status == DragonStatus.RUNNING
                     ):
                         try:
-                            proc_group.kill()
+                            proc_group.stop()
                         except dragon_process_group.DragonProcessGroupError:
                             try:
-                                proc_group.stop()
+                                proc_group.kill()
                             except dragon_process_group.DragonProcessGroupError:
                                 logger.error("Process group already stopped")
                     redir_group = self._group_infos[step_id].redir_workers

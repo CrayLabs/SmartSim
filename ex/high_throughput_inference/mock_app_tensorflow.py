@@ -26,37 +26,35 @@
 
 
 import argparse
-import io
+
 from mpi4py import MPI
-import torch
+import numpy
+import tensorflow as tf
+from tensorflow.python.framework.convert_to_constants import (
+    convert_variables_to_constants_v2_as_graph,
+)
 
 from smartsim.log import get_logger
 from smartsim._core.mli.client.protoclient import ProtoClient
-
-torch.set_num_interop_threads(16)
-torch.set_num_threads(1)
-
-logger = get_logger("App")
-logger.info("Started app")
-
 
 logger = get_logger("App")
 
 
 class ResNetWrapper:
-    """Wrapper around a pre-rained ResNet model."""
-
-    def __init__(self, name: str, model: str):
-        """Initialize the instance.
-
-        :param name: The name to use for the model
-        :param model: The path to the pre-trained PyTorch model"""
-        self._model = None  # torch.jit.load(model)
+    def __init__(
+        self,
+        name: str,
+        model: tf.keras.Model,
+    ):
+        self._get_tf_model(model)
         self._name = name
 
-        with open(model, "rb") as model_file:
-            buffer = io.BytesIO(model_file.read())
-        self._serialized_model = buffer.getvalue()
+    def _get_tf_model(self, model: tf.keras.Model):
+        real_model = tf.function(model).get_concrete_function(
+            tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
+        )
+        _, graph_def = convert_variables_to_constants_v2_as_graph(real_model)
+        self._serialized_model = graph_def.SerializeToString()
 
     # pylint: disable-next=no-self-use
     def get_batch(self, batch_size: int = 32):
@@ -65,17 +63,17 @@ class ResNetWrapper:
 
         :param batch_size: The desired number of samples to produce
         :returns: A PyTorch tensor"""
-        return torch.randn((batch_size, 3, 224, 224), dtype=torch.float32)
+        return numpy.random.randn(batch_size, 224, 224, 3).astype(numpy.float32)
 
     @property
-    def model(self) -> bytes:
+    def model(self):
         """The content of a model file.
 
         :returns: The model bytes"""
         return self._serialized_model
 
     @property
-    def name(self) -> str:
+    def name(self):
         """The name applied to the model.
 
         :returns: The name"""
@@ -94,7 +92,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_max_batchsize", default=8, type=int)
     args = parser.parse_args()
 
-    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device}.pt")
+    resnet = ResNetWrapper("resnet50", tf.keras.applications.ResNet50())
 
     comm_world = MPI.COMM_WORLD
     rank = comm_world.Get_rank()
@@ -111,9 +109,12 @@ if __name__ == "__main__":
         b_size: int = 2**log2_bsize
         log(f"Batch size: {b_size}", rank)
         for iteration_number in range(TOTAL_ITERATIONS):
-            sample_batch = resnet.get_batch(b_size).numpy()
+            sample_batch = resnet.get_batch(b_size)
             remote_result = client.run_model(resnet.name, sample_batch)
-            comm_world.Barrier()
-            logger.info(client.perf_timer.get_last("total_time"))
+            log(
+                f"Completed iteration: {iteration_number} in "
+                f"{client.perf_timer.get_last('total_time')} seconds",
+                rank,
+            )
 
     client.perf_timer.print_timings(to_file=True, to_stdout=rank == 0)
