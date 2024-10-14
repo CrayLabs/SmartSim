@@ -6,19 +6,19 @@ import pickle
 import pytest
 
 from smartsim._core.commands import Command
-from smartsim._core.generation.operations import (
+from smartsim._core.generation.operations.utils.helpers import check_src_and_dest_path
+from smartsim._core.generation.operations.operations import (
     ConfigureOperation,
     CopyOperation,
     FileSysOperationSet,
     GenerationContext,
     SymlinkOperation,
-    _create_final_dest,
+    _create_dest_path,
+    _check_run_path,
     configure_cmd,
     copy_cmd,
     symlink_cmd,
 )
-
-# TODO ADD CHECK TO ENFORCE SRC AS RELATIVE
 
 pytestmark = pytest.mark.group_a
 
@@ -70,48 +70,103 @@ def file_system_operation_set(
     """Fixture to create a FileSysOperationSet object."""
     return FileSysOperationSet([copy_operation, symlink_operation, configure_operation])
 
-
+# TODO is this test even necessary
 @pytest.mark.parametrize(
-    "job_root_path, dest, expected",
+    "job_run_path, dest",
     (
         pytest.param(
-            pathlib.Path("/valid/root"),
-            pathlib.Path("valid/dest"),
-            "/valid/root/valid/dest",
+            pathlib.Path("/absolute/src"),
+            pathlib.Path("relative/dest"),
             id="Valid paths",
         ),
         pytest.param(
-            pathlib.Path("/valid/root"),
+            pathlib.Path("/absolute/src"),
             pathlib.Path(""),
-            "/valid/root",
             id="Empty destination path",
         ),
     ),
 )
-def test_create_final_dest_valid(job_root_path, dest, expected):
-    """Test valid path inputs for operations._create_final_dest"""
-    assert _create_final_dest(job_root_path, dest) == expected
+def test_check_src_and_dest_path_valid(job_run_path, dest):
+    """Test valid path inputs for helpers.check_src_and_dest_path"""
+    check_src_and_dest_path(job_run_path, dest)
 
 
 @pytest.mark.parametrize(
-    "job_root_path, dest",
+    "job_run_path, dest, error",
     (
-        pytest.param(None, pathlib.Path("valid/dest"), id="None as root path"),
-        pytest.param(1234, pathlib.Path("valid/dest"), id="Number as root path"),
-        pytest.param(pathlib.Path("valid/dest"), 1234, id="Number as dest"),
+        pytest.param(
+            pathlib.Path("relative/src"),
+            pathlib.Path("relative/dest"),
+            ValueError,
+            id="Relative src Path",
+        ),
+        pytest.param(
+            pathlib.Path("/absolute/src"),
+            pathlib.Path("/absolute/src"),
+            ValueError,
+            id="Absolute dest Path",
+        ),
+        pytest.param(
+            123,
+            pathlib.Path("relative/dest"),
+            TypeError,
+            id="non Path src",
+        ),
+        pytest.param(
+            pathlib.Path("/absolute/src"),
+            123,
+            TypeError,
+            id="non Path dest",
+        ),
     ),
 )
-def test_create_final_dest_invalid(job_root_path, dest):
-    """Test invalid path inputs for operations._create_final_dest"""
-    with pytest.raises(TypeError):
-        _create_final_dest(job_root_path, dest)
+def test_check_src_and_dest_path_invalid(job_run_path, dest, error):
+    """Test invalid path inputs for helpers.check_src_and_dest_path"""
+    with pytest.raises(error):
+        check_src_and_dest_path(job_run_path, dest)
+
+
+@pytest.mark.parametrize(
+    "job_run_path, dest, expected",
+    (
+        pytest.param(
+            pathlib.Path("/absolute/root"),
+            pathlib.Path("relative/dest"),
+            "/absolute/root/relative/dest",
+            id="Valid paths",
+        ),
+        pytest.param(
+            pathlib.Path("/absolute/root"),
+            pathlib.Path(""),
+            "/absolute/root",
+            id="Empty destination path",
+        ),
+    ),
+)
+def test_create_dest_path_valid(job_run_path, dest, expected):
+    """Test valid path inputs for operations._create_dest_path"""
+    assert _create_dest_path(job_run_path, dest) == expected
+
+
+@pytest.mark.parametrize(
+    "job_run_path, error",
+    (
+        pytest.param(pathlib.Path("/valid/dest.py"), ValueError, id="Run path is not a directory"),
+        pytest.param(pathlib.Path("relative/path"), ValueError, id="Run path is not absolute"),
+        pytest.param(1234, TypeError, id="Run path is not pathlib.path"),
+    ),
+)
+def test_check_run_path_invalid(job_run_path, error):
+    """Test invalid path inputs for operations._check_run_path"""
+    with pytest.raises(error):
+        _check_run_path(job_run_path)
 
 
 def test_valid_init_generation_context(test_dir: str):
     """Validate GenerationContext init"""
     generation_context = GenerationContext(pathlib.Path(test_dir))
     assert isinstance(generation_context, GenerationContext)
-    assert generation_context.job_root_path == pathlib.Path(test_dir)
+    assert generation_context.job_run_path == pathlib.Path(test_dir)
 
 
 def test_invalid_init_generation_context():
@@ -142,7 +197,7 @@ def test_copy_operation_format(
     assert isinstance(exec, Command)
     assert str(mock_src) in exec.command
     assert copy_cmd in exec.command
-    assert _create_final_dest(test_dir, mock_dest) in exec.command
+    assert _create_dest_path(test_dir, mock_dest) in exec.command
 
 
 def test_init_symlink_operation(mock_src: str, mock_dest: str):
@@ -167,7 +222,7 @@ def test_symlink_operation_format(
 
     normalized_path = os.path.normpath(mock_src)
     parent_dir = os.path.dirname(normalized_path)
-    final_dest = _create_final_dest(generation_context.job_root_path, mock_dest)
+    final_dest = _create_dest_path(generation_context.job_run_path, mock_dest)
     new_dest = os.path.join(final_dest, parent_dir)
     assert new_dest in exec.command
 
@@ -198,7 +253,7 @@ def test_configure_operation_format(
     assert isinstance(exec, Command)
     assert str(mock_src) in exec.command
     assert configure_cmd in exec.command
-    assert _create_final_dest(test_dir, mock_dest) in exec.command
+    assert _create_dest_path(test_dir, mock_dest) in exec.command
 
 
 def test_init_file_sys_operation_set(

@@ -34,7 +34,7 @@ from ...entity import entity
 from ...launchable import Job
 from ...log import get_logger
 from ..commands import Command, CommandList
-from .operations import (
+from .operations.operations import (
     ConfigureOperation,
     CopyOperation,
     FileSysOperationSet,

@@ -32,7 +32,7 @@ import textwrap
 import typing as t
 from os import path as osp
 
-from .._core.generation.operations import FileSysOperationSet
+from .._core.generation.operations.operations import FileSysOperationSet
 from .._core.utils.helpers import expand_exe_path
 from ..log import get_logger
 from .entity import SmartSimEntity

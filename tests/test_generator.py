@@ -34,7 +34,7 @@ import pytest
 
 from smartsim._core.commands import Command, CommandList
 from smartsim._core.generation.generator import Generator
-from smartsim._core.generation.operations import (
+from smartsim._core.generation.operations.operations import (
     ConfigureOperation,
     CopyOperation,
     FileSysOperationSet,
