@@ -40,7 +40,7 @@ dragon = pytest.importorskip("dragon")
 import dragon.globalservices.pool as dragon_gs_pool
 from dragon.managed_memory import MemoryAlloc, MemoryPool
 
-from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.feature_store import ModelKey
 from smartsim._core.mli.infrastructure.worker.tensorflow_worker import TensorFlowWorker
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
@@ -105,7 +105,7 @@ def get_request() -> InferenceRequest:
     ]
 
     return InferenceRequest(
-        model_key=FeatureStoreKey(key="model", descriptor="xyz"),
+        model_key=ModelKey(key="model", descriptor="xyz"),
         callback=None,
         raw_inputs=tensors,
         input_keys=None,

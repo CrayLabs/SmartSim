@@ -45,7 +45,7 @@ from skl2onnx import to_onnx
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
-from smartsim._core.mli.infrastructure.storage.feature_store import FeatureStoreKey
+from smartsim._core.mli.infrastructure.storage.feature_store import ModelKey
 from smartsim._core.mli.infrastructure.worker.onnx_worker import ONNXWorker
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
@@ -103,7 +103,7 @@ def get_request() -> InferenceRequest:
     ]
 
     return InferenceRequest(
-        model_key=FeatureStoreKey(key="model", descriptor="xyz"),
+        model_key=ModelKey(key="model", descriptor="xyz"),
         callback=None,
         raw_inputs=tensors,
         input_keys=None,
