@@ -1,9 +1,10 @@
 import pathlib
 import typing as t
 from dataclasses import dataclass, field
+from .utils.helpers import check_src_and_dest_path
 
-
-
+# TODO do we need to add check for tags?
+# TODO do I need to add checks for file_params?
 class EnsembleGenerationProtocol(t.Protocol):
     """Protocol for Ensemble Generation Operations."""
     src: pathlib.Path
@@ -23,6 +24,7 @@ class EnsembleCopyOperation(EnsembleGenerationProtocol):
         :param src: Path to source
         :param dest: Path to destination
         """
+        check_src_and_dest_path(src, dest)
         self.src = src
         """Path to source"""
         self.dest = dest
@@ -38,6 +40,7 @@ class EnsembleSymlinkOperation(EnsembleGenerationProtocol):
         :param src: Path to source
         :param dest: Path to destination
         """
+        check_src_and_dest_path(src, dest)
         self.src = src
         """Path to source"""
         self.dest = dest
@@ -61,6 +64,7 @@ class EnsembleConfigureOperation(EnsembleGenerationProtocol):
         :param dest: Path to destination
         :param tag: Tag to use for find and replacement
         """
+        check_src_and_dest_path(src, dest)
         self.src = src
         """Path to source"""
         self.dest = dest
@@ -76,10 +80,10 @@ EnsembleGenerationProtocolT = t.TypeVar("EnsembleGenerationProtocolT", bound=Ens
 
 @dataclass
 class EnsembleFileSysOperationSet:
-    """Dataclass to represent a set of Ensemble File System Operation Objects"""
+    """Dataclass to represent a set of Ensemble file system operation objects"""
 
     operations: t.List[EnsembleGenerationProtocol] = field(default_factory=list)
-    """Set of Ensemble File System Objects that match the EnsembleGenerationProtocol"""
+    """Set of Ensemble file system objects that match the EnsembleGenerationProtocol"""
 
     def add_copy(
         self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None

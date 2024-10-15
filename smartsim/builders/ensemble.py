@@ -54,23 +54,6 @@ class FileSet:
     file: EnsembleConfigureOperation
     combinations: ParamSet
 
-@dataclass(frozen=True)
-class Combo:
-    """
-    Represents a set of file parameters and execution arguments as parameters.
-    """
-
-    file: EnsembleConfigureOperation
-    combination: ParamSet
-
-@dataclass(frozen=True)
-class ComboSet:
-    """
-    Represents a set of file parameters and execution arguments as parameters.
-    """
-
-    combos: t.List[Combo]
-
 class Ensemble(entity.CompoundEntity):
     """An Ensemble is a builder class that parameterizes the creation of multiple
     Applications.

@@ -18,9 +18,6 @@ from smartsim._core.generation.operations.ensemble_operations import (
 from smartsim.builders import Ensemble
 from smartsim.builders.utils import strategies
 
-# QUESTIONS
-# TODO test python protocol?
-# TODO do I allow the paths to combine if src is empty?
 
 pytestmark = pytest.mark.group_a
 
