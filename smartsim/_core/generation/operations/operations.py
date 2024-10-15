@@ -20,6 +20,9 @@ symlink_cmd = "symlink"
 configure_cmd = "configure"
 """Configure file operation command"""
 
+default_tag = ";"
+"""Default configure tag"""
+
 
 def _create_dest_path(job_run_path: pathlib.Path, dest: pathlib.Path) -> str:
     """Combine the job run path and destination path. Return as a string for
@@ -174,7 +177,7 @@ class ConfigureOperation(GenerationProtocol):
         encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
         self.file_parameters = encoded_dict
         """File parameters to find and replace"""
-        self.tag = tag if tag else ";"
+        self.tag = tag if tag else default_tag
         """Tag to use for find and replacement"""
 
     def format(self, context: GenerationContext) -> Command:
