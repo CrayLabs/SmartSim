@@ -20,6 +20,9 @@ symlink_cmd = "symlink"
 configure_cmd = "configure"
 """Configure file operation command"""
 
+default_tag = ";"
+"""Default configure tag"""
+
 
 def _create_dest_path(job_run_path: pathlib.Path, dest: pathlib.Path) -> str:
     """Combine the job run path and destination path. Return as a string for
@@ -85,7 +88,9 @@ class CopyOperation(GenerationProtocol):
         """
         check_src_and_dest_path(src, dest)
         self.src = src
+        """Path to source"""
         self.dest = dest or pathlib.Path(src.name)
+        """Path to destination"""
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke copy file system entry point
@@ -120,7 +125,9 @@ class SymlinkOperation(GenerationProtocol):
         """
         check_src_and_dest_path(src, dest)
         self.src = src
+        """Path to source"""
         self.dest = dest or pathlib.Path(src.name)
+        """Path to destination"""
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke symlink file system entry point
@@ -163,11 +170,15 @@ class ConfigureOperation(GenerationProtocol):
         """
         check_src_and_dest_path(src, dest)
         self.src = src
+        """Path to source"""
         self.dest = dest or pathlib.Path(src.name)
+        """Path to destination"""
         pickled_dict = pickle.dumps(file_parameters)
         encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
         self.file_parameters = encoded_dict
-        self.tag = tag if tag else ";"
+        """File parameters to find and replace"""
+        self.tag = tag if tag else default_tag
+        """Tag to use for find and replacement"""
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke configure file system entry point

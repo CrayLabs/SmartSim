@@ -17,6 +17,7 @@ from smartsim._core.generation.operations.operations import (
     configure_cmd,
     copy_cmd,
     symlink_cmd,
+    default_tag
 )
 from smartsim._core.generation.operations.utils.helpers import check_src_and_dest_path
 
@@ -205,7 +206,7 @@ def test_init_configure_operation(mock_src: str, mock_dest: str):
     assert isinstance(configure_operation, ConfigureOperation)
     assert configure_operation.src == mock_src
     assert configure_operation.dest == mock_dest
-    assert configure_operation.tag == ";"
+    assert configure_operation.tag == default_tag
     decoded_dict = base64.b64decode(configure_operation.file_parameters.encode("ascii"))
     unpickled_dict = pickle.loads(decoded_dict)
     assert unpickled_dict == {"FOO": "BAR"}
