@@ -39,7 +39,7 @@ from smartsim.builders.utils.strategies import ParamSet
 from smartsim.entity import entity
 from smartsim.entity.application import Application
 from smartsim.launchable.job import Job
-from smartsim._core.generation.builder_operations import EnsembleFileSysOperationSet, EnsembleConfigureOperation
+from smartsim._core.generation.operations.ensemble_operations import EnsembleFileSysOperationSet, EnsembleConfigureOperation
 from dataclasses import dataclass, field
 
 

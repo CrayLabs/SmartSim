@@ -9,7 +9,7 @@ import pickle
 import pytest
 
 from smartsim._core.commands import Command
-from smartsim._core.generation.builder_operations import (
+from smartsim._core.generation.operations.ensemble_operations import (
     EnsembleCopyOperation,
     EnsembleSymlinkOperation,
     EnsembleConfigureOperation,
