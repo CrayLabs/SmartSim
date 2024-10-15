@@ -19,6 +19,7 @@ Experiment
    Experiment.preview
    Experiment.summary
    Experiment.stop
+   Experiment.telemetry
 
 .. autoclass:: Experiment
    :show-inheritance:
@@ -34,9 +35,9 @@ Settings
 
 Settings are provided to ``Application`` and ``Ensemble`` objects
 to provide parameters for how a job should be executed. Some
-are specifically meant for certain launchers like ``SbatchSettings``
+are specifically meant for certain launchers like ``SlurmBatchArguments``
 is solely meant for system using Slurm as a workload manager.
-``MpirunSettings`` for OpenMPI based jobs is supported by Slurm
+``MpirunLaunchArguments`` for OpenMPI based jobs is supported by Slurm
 and PBSPro.
 
 
@@ -44,17 +45,22 @@ Types of Settings:
 
 .. autosummary::
 
-    RunSettings
-    SrunSettings
+    LaunchSettings
+    SlurmLaunchArguments
+    
+    DragonLaunchArguments
+    PalsMpiexecLaunchArguments
     AprunLaunchArguments
-    MpirunSettings
-    MpiexecSettings
-    OrterunSettings
-    JsrunSettings
-    DragonRunSettings
-    SbatchSettings
-    QsubBatchSettings
-    BsubBatchSettings
+    LocalLaunchArguments
+    MpiexecLaunchArguments
+    MpirunLaunchArguments
+    OrterunLaunchArguments
+    JsrunLaunchArguments
+    SlurmBatchArguments
+    BsubBatchArguments
+    QsubBatchArguments
+    SgeQsubBatchSettings
+   
 
 Settings objects can accept a container object that defines a container
 runtime, image, and arguments to use for the workload. Below is a list of
@@ -69,23 +75,25 @@ Types of Containers:
 
 .. _rs-api:
 
-RunSettings
+LaunchSettings
 -----------
 
 
 When running SmartSim on laptops and single node workstations,
-the base ``RunSettings`` object is used to parameterize jobs.
-``RunSettings`` include a ``run_command`` parameter for local
+the base ``LaunchSettings`` object is used to parameterize jobs.
+``LaunchSettings`` include a ``run_command`` parameter for local
 launches that utilize a parallel launch binary like
 ``mpirun``, ``mpiexec``, and others.
 
 
 .. autosummary::
 
-    RunSettings.add_exe_args
-    RunSettings.update_env
+    LaunchSettings.launcher
+    LaunchSettings.launch_args
+    LaunchSettings.env_vars
+    LaunchSettings.update_env
 
-.. autoclass:: RunSettings
+.. autoclass:: LaunchSettings
     :inherited-members:
     :undoc-members:
     :members:
@@ -226,6 +234,35 @@ and within batch launches (i.e. ``BsubBatchSettings``)
     :undoc-members:
     :members:
 
+
+.. _palsmpiexec_api:
+
+ PalsMpiexecLaunchArguments
+-------------
+
+
+``PalsMpiexecLaunchArguments`` 
+
+
+.. autosummary::
+
+    PalsMpiexecLaunchArguments.launcher_str
+    PalsMpiexecLaunchArguments.set_cpu_binding_type
+    PalsMpiexecLaunchArguments.set_tasks
+    PalsMpiexecLaunchArguments.set_executable_broadcast
+    PalsMpiexecLaunchArguments.set_tasks_per_node
+    PalsMpiexecLaunchArguments.set_hostlist
+    PalsMpiexecLaunchArguments.format_env_vars
+    PalsMpiexecLaunchArguments.format_launch_args
+    PalsMpiexecLaunchArguments.set
+
+.. autoclass:: PalsMpiexecLaunchArguments
+    :inherited-members:
+    :undoc-members:
+    :members:
+
+
+
 .. _openmpi_run_api:
 
 MpirunLaunchArguments
@@ -283,7 +320,7 @@ supported on Slurm and PBSpro.
     MpiexecLaunchArguments.set_verbose_launch
     MpiexecLaunchArguments.set_walltime
     MpiexecLaunchArguments.set_quiet_launch
-    MpiexecLaunchArguments..format_env_vars
+    MpiexecLaunchArguments.format_env_vars
     MpiexecLaunchArguments.format_launch_args
     MpiexecLaunchArguments.set
 
@@ -403,6 +440,7 @@ be launched as a batch on LSF systems.
     BsubBatchArguments.scheduler_str
     BsubBatchArguments.set_walltime
     BsubBatchArguments.set_smts
+    BsubBatchArguments.set_project
     BsubBatchArguments.set_account
     BsubBatchArguments.set_nodes
     BsubBatchArguments.set_hostlist
@@ -417,20 +455,6 @@ be launched as a batch on LSF systems.
     :undoc-members:
     :members:
 
-.. _singularity_api:
-
-Singularity
------------
-
-
-``Singularity`` is a type of ``Container`` that can be passed to a
-``RunSettings`` class or child class to enable running the workload in a
-container.
-
-.. autoclass:: Singularity
-    :inherited-members:
-    :undoc-members:
-    :members:
 
 .. _orc_api:
 
@@ -493,6 +517,7 @@ Application
    Application.key_prefixing_enabled
    Application.as_executable_sequence
    Application.attach_generator_files
+   Application.attached_files_table
    Application.print_attached_files
 
 
