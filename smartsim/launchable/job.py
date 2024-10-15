@@ -163,8 +163,8 @@ class Job(BaseJob):
 
 @t.final
 class Record:
-    """A record a job that was launched and launch ID assigned to the
-    launching.
+    """A Record object to track a launched job along with its assigned
+    launch ID.
     """
 
     def __init__(self, launch_id: LaunchedJobID, job: Job) -> None:
