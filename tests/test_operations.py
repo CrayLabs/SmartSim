@@ -16,8 +16,8 @@ from smartsim._core.generation.operations.operations import (
     _create_dest_path,
     configure_cmd,
     copy_cmd,
+    default_tag,
     symlink_cmd,
-    default_tag
 )
 from smartsim._core.generation.operations.utils.helpers import check_src_and_dest_path
 
@@ -270,7 +270,9 @@ def test_add_configure_operation(
     (
         pytest.param(123, TypeError, id="dest as integer"),
         pytest.param("", TypeError, id="dest as empty str"),
-        pytest.param("/absolute/path", TypeError, id="dest as absolute str"),
+        pytest.param(
+            pathlib.Path("/absolute/path"), ValueError, id="dest as absolute str"
+        ),
     ),
 )
 def test_copy_files_invalid_dest(dest, error, source):
@@ -284,7 +286,9 @@ def test_copy_files_invalid_dest(dest, error, source):
     (
         pytest.param(123, TypeError, id="src as integer"),
         pytest.param("", TypeError, id="src as empty str"),
-        pytest.param("relative/path", TypeError, id="src as relative str"),
+        pytest.param(
+            pathlib.Path("relative/path"), ValueError, id="src as relative str"
+        ),
     ),
 )
 def test_copy_files_invalid_src(src, error):
@@ -298,7 +302,9 @@ def test_copy_files_invalid_src(src, error):
     (
         pytest.param(123, TypeError, id="dest as integer"),
         pytest.param("", TypeError, id="dest as empty str"),
-        pytest.param("/absolute/path", TypeError, id="dest as absolute str"),
+        pytest.param(
+            pathlib.Path("/absolute/path"), ValueError, id="dest as absolute str"
+        ),
     ),
 )
 def test_symlink_files_invalid_dest(dest, error, source):
@@ -312,7 +318,9 @@ def test_symlink_files_invalid_dest(dest, error, source):
     (
         pytest.param(123, TypeError, id="src as integer"),
         pytest.param("", TypeError, id="src as empty str"),
-        pytest.param("relative/path", TypeError, id="src as relative str"),
+        pytest.param(
+            pathlib.Path("relative/path"), ValueError, id="src as relative str"
+        ),
     ),
 )
 def test_symlink_files_invalid_src(src, error):
@@ -326,7 +334,9 @@ def test_symlink_files_invalid_src(src, error):
     (
         pytest.param(123, TypeError, id="dest as integer"),
         pytest.param("", TypeError, id="dest as empty str"),
-        pytest.param("/absolute/path", TypeError, id="dest as absolute str"),
+        pytest.param(
+            pathlib.Path("/absolute/path"), ValueError, id="dest as absolute str"
+        ),
     ),
 )
 def test_configure_files_invalid_dest(dest, error, source):
@@ -343,10 +353,12 @@ def test_configure_files_invalid_dest(dest, error, source):
     (
         pytest.param(123, TypeError, id="src as integer"),
         pytest.param("", TypeError, id="src as empty str"),
-        pytest.param("relative/path", TypeError, id="src as relative str"),
+        pytest.param(
+            pathlib.Path("relative/path"), ValueError, id="src as relative str"
+        ),
     ),
 )
 def test_configure_files_invalid_src(src, error):
     """Test invalid configure source"""
     with pytest.raises(error):
-        _ = ConfigureOperation(src=src)
+        _ = ConfigureOperation(src=src, file_parameters={"FOO": "BAR"})
