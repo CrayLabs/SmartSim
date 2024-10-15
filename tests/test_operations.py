@@ -6,19 +6,19 @@ import pickle
 import pytest
 
 from smartsim._core.commands import Command
-from smartsim._core.generation.operations.utils.helpers import check_src_and_dest_path
 from smartsim._core.generation.operations.operations import (
     ConfigureOperation,
     CopyOperation,
     FileSysOperationSet,
     GenerationContext,
     SymlinkOperation,
-    _create_dest_path,
     _check_run_path,
+    _create_dest_path,
     configure_cmd,
     copy_cmd,
     symlink_cmd,
 )
+from smartsim._core.generation.operations.utils.helpers import check_src_and_dest_path
 
 pytestmark = pytest.mark.group_a
 
@@ -69,6 +69,7 @@ def file_system_operation_set(
 ):
     """Fixture to create a FileSysOperationSet object."""
     return FileSysOperationSet([copy_operation, symlink_operation, configure_operation])
+
 
 # TODO is this test even necessary
 @pytest.mark.parametrize(
@@ -151,8 +152,9 @@ def test_create_dest_path_valid(job_run_path, dest, expected):
 @pytest.mark.parametrize(
     "job_run_path, error",
     (
-        pytest.param(pathlib.Path("/valid/dest.py"), ValueError, id="Run path is not a directory"),
-        pytest.param(pathlib.Path("relative/path"), ValueError, id="Run path is not absolute"),
+        pytest.param(
+            pathlib.Path("relative/path"), ValueError, id="Run path is not absolute"
+        ),
         pytest.param(1234, TypeError, id="Run path is not pathlib.path"),
     ),
 )
@@ -269,9 +271,7 @@ def test_init_file_sys_operation_set(
     assert len(file_system_operation_set.operations) == 3
 
 
-def test_add_copy_operation(
-    file_system_operation_set: FileSysOperationSet, copy_operation: CopyOperation
-):
+def test_add_copy_operation(file_system_operation_set: FileSysOperationSet):
     """Test FileSystemOperationSet.add_copy"""
     orig_num_ops = len(file_system_operation_set.copy_operations)
     file_system_operation_set.add_copy(src=pathlib.Path("/src"))

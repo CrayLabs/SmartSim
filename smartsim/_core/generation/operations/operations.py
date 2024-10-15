@@ -44,9 +44,8 @@ def _check_run_path(run_path: pathlib.Path) -> None:
             f"The Job's run path must be of type pathlib.Path, not {type(run_path).__name__}"
         )
     if not run_path.is_absolute():
-        raise ValueError(
-            f"The Job's run path must be absolute."
-        )
+        raise ValueError(f"The Job's run path must be absolute.")
+    # TODO
     # if not run_path.is_dir():
     #     raise ValueError(
     #         "The Job's run path must be a directory."
