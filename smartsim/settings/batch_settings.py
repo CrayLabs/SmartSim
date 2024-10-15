@@ -118,9 +118,9 @@ class BatchSettings(BaseSettings):
         except ValueError:
             raise ValueError(f"Invalid scheduler type: {batch_scheduler}") from None
 
-        if batch_args:
+        if batch_args is not None:
             if not (
-                isinstance(batch_args, t.Mapping)
+                isinstance(batch_args, dict)
                 and all(isinstance(key, str) for key, val in batch_args.items())
             ):
                 raise TypeError(
@@ -152,10 +152,7 @@ class BatchSettings(BaseSettings):
 
         if not (
             isinstance(value, t.Mapping)
-            and all(
-                isinstance(key, str) and isinstance(val, str)
-                for key, val in value.items()
-            )
+            and all(isinstance(key, str) for key, val in value.items())
         ):
             raise TypeError("env_vars argument was not of type dic of str and str")
 
