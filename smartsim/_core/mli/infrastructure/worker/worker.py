@@ -327,18 +327,18 @@ class RequestBatch:
     input_keys: t.List[TensorKey]
     """A list of tuples containing a (key, descriptor) pair"""
     output_key_refs: t.Dict[CommChannelBase, t.List[TensorKey]]
-    """A list of output keys and their respective callbacks"""
+    """A dictionary mapping callbacks to output keys"""
     inputs: t.Optional[TransformInputResult]
     """Transformed batch of input tensors"""
     model_id: "ModelIdentifier"
     """Model (key, descriptor) tuple"""
 
     @property
-    def has_valid_requests(self) -> bool:
+    def has_callbacks(self) -> bool:
         """Returns whether the batch contains at least one callback,
         which indicates there is at least one request in the batch.
 
-        :returns: True if at least one request is available
+        :returns: True if at least one callback is present
         """
         return len(self.callbacks) > 0
 

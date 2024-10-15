@@ -161,7 +161,7 @@ class WorkerManager(Service):
         :param batch: The batch of requests to validate
         :returns: False if the request fails any validation checks, True otherwise
         """
-        if batch is None or not batch.has_valid_requests:
+        if batch is None or not batch.has_callbacks:
             return False
 
         return self._check_feature_stores(batch)
@@ -264,7 +264,6 @@ class WorkerManager(Service):
                     )
                 return
 
-            assert len(batch.callbacks) == len(transformed_outputs)
             for callback, transformed_output in zip(
                 batch.callbacks, transformed_outputs
             ):

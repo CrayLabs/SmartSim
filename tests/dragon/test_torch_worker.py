@@ -131,7 +131,6 @@ def get_request_batch_from_request(
     )
 
 
-
 sample_request: InferenceRequest = get_request()
 sample_request_batch: RequestBatch = get_request_batch_from_request(sample_request)
 worker = TorchWorker()

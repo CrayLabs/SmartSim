@@ -179,7 +179,7 @@ def test_request_dispatcher(
                 raise exc
 
         assert batch is not None
-        assert batch.has_valid_requests
+        assert batch.has_callbacks
 
         model_key = batch.model_id.key
 
@@ -295,7 +295,7 @@ def test_request_batch(test_dir: str) -> None:
     for callback in request_batch.callbacks:
         assert isinstance(callback, FileSystemCommChannel)
     assert len(request_batch.output_key_refs.keys()) == 2
-    assert request_batch.has_valid_requests
+    assert request_batch.has_callbacks
     assert request_batch.model_id == req_batch_model_id
     assert request_batch.inputs == None
     assert request_batch.raw_model == b"model"
