@@ -45,6 +45,7 @@ from smartsim._core.mli.infrastructure.worker.worker import (
 from smartsim._core.utils import installed_redisai_backends
 
 from .feature_store import FileSystemFeatureStore, MemoryFeatureStore
+from .channel import FileSystemCommChannel
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -336,7 +337,7 @@ def test_fetch_input_memory(persist_torch_tensor: pathlib.Path) -> None:
     assert fetch_result[0].inputs is not None
 
 
-def test_place_outputs() -> None:
+def test_place_outputs(test_dir: str) -> None:
     """Verify outputs are shared using the feature store"""
     worker = MachineLearningWorkerCore
 
@@ -359,12 +360,15 @@ def test_place_outputs() -> None:
     data = [b"abcdef", b"ghijkl", b"mnopqr"]
     data2 = [b"stuvwx", b"yzabcd", b"efghij"]
 
+    callback1 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback1")
+    callback2 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback2")
+
     model_id = ModelKey(key="test-model", descriptor=fsd)
     request = InferenceRequest(
-        callback=FileSystemFeatureStore.from_descriptor, output_keys=keys
+        callback=callback1, output_keys=keys
     )
     request2 = InferenceRequest(
-        callback=FileSystemFeatureStore.from_descriptor, output_keys=keys2
+        callback=callback2, output_keys=keys2
     )
     transform_result = TransformOutputResult(data, [1], "c", "float32")
     transform_result2 = TransformOutputResult(data2, [1], "c", "float32")
@@ -372,13 +376,13 @@ def test_place_outputs() -> None:
     request_batch = RequestBatch.from_requests([request, request2], None, model_id)
 
     worker.place_output(
-        request_batch.output_key_refs[0].output_keys,
+        request_batch.output_key_refs[callback1],
         transform_result,
         {fsd: feature_store},
     )
 
     worker.place_output(
-        request_batch.output_key_refs[1].output_keys,
+        request_batch.output_key_refs[callback2],
         transform_result2,
         {fsd: feature_store},
     )

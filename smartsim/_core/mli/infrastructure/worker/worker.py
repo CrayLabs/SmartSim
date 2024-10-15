@@ -524,7 +524,7 @@ class MachineLearningWorkerCore:
             fetch_results.append(FetchInputResult(batch.raw_inputs, batch.input_meta))
 
         if not feature_stores:
-            raise ValueError("No input and no feature store provided")
+            raise ValueError("No feature stores provided")
 
         if batch.input_keys:
             data: t.List[bytes] = []

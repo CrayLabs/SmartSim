@@ -209,7 +209,7 @@ def test_request_dispatcher(
             assert len(request_dispatcher._queues[model_key]) == 1
             assert request_dispatcher._queues[model_key][0].empty()
             assert request_dispatcher._queues[model_key][0].model_id.key == model_key
-            # assert len(tensors) == 1
+            assert len(tensors) == 1
             assert tensors[0].shape == torch.Size([2, 2])
 
             for tensor in tensors:
