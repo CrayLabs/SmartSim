@@ -471,3 +471,39 @@ def test_random_strategy(
         replicas=replicas,
     ).build_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
+
+
+# # bug found that it does not properly permutate if exe_arg_params is not specified
+# # ISSUE with step, adds one file per application
+# def test_step_mock():
+#     ensemble = Ensemble("name", "echo", exe_arg_parameters = {"-N": ["1", "2"]}, permutation_strategy="step")
+#     ensemble.files.add_configuration(pathlib.Path("src_1"), file_parameters={"FOO":["BAR", "TOE"]})
+#     ensemble.files.add_configuration(pathlib.Path("src_2"), file_parameters={"CAN":["TOM", "STO"]})
+#     apps = ensemble._create_applications()
+#     print(apps)
+#     for app in apps:
+#         for config in app.files.configure_operations:
+#             decoded_dict = base64.b64decode(config.file_parameters)
+#             print(config.src)
+#             deserialized_dict = pickle.loads(decoded_dict)
+#             print(deserialized_dict)
+
+# def test_all_perm_mock():
+#     ensemble = Ensemble("name", "echo", exe_arg_parameters = {"-N": ["1", "2"]}, permutation_strategy="step", replicas=2)
+#     ensemble.files.add_configuration(pathlib.Path("src_1"), file_parameters={"FOO":["BAR", "TOE"]})
+#     ensemble.files.add_configuration(pathlib.Path("src_2"), file_parameters={"CAN":["TOM", "STO"]})
+#     apps = ensemble._create_applications()
+#     print(len(apps))
+#     # for app in apps:
+#     #     for config in app.files.configure_operations:
+#     #         decoded_dict = base64.b64decode(config.file_parameters)
+#     #         print(config.src)
+#     #         deserialized_dict = pickle.loads(decoded_dict)
+#     #         print(deserialized_dict)
+
+# def test_mock():
+#     ensemble = Ensemble("name", "echo", exe_arg_parameters = {"-N": ["1", "2"]}, permutation_strategy="step")
+#     file = EnsembleConfigureOperation(src="src", file_parameters={"FOO":["BAR", "TOE"]})
+#     permutation_strategy = strategies.resolve("all_perm")
+#     val = ensemble.perm_config_file(file, permutation_strategy)
+#     print(val)
