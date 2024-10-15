@@ -48,11 +48,6 @@ _2x2_PARAMS = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
 _2x2_EXE_ARG = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
 
 
-@pytest.fixture
-def get_gen_configure_dir(fileutils):
-    yield fileutils.get_test_conf_path(osp.join("generator_files", "tag_dir_template"))
-
-
 def user_created_function(
     file_params: t.Mapping[str, t.Sequence[str]],
     exe_arg_params: t.Mapping[str, t.Sequence[t.Sequence[str]]],
