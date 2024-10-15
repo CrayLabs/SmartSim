@@ -270,9 +270,9 @@ class WorkerManager(Service):
                 reply = InferenceReply()
                 if batch.output_key_refs:
                     try:
-                        batch_ref = batch.output_key_refs[callback]
+                        output_keys = batch.output_key_refs[callback]
                         reply.output_keys = self._worker.place_output(
-                            batch_ref,
+                            output_keys,
                             transformed_output,
                             self._feature_stores,
                         )
