@@ -55,7 +55,7 @@ class FileSet:
     combinations: ParamSet
 
 class Ensemble(entity.CompoundEntity):
-    """An Ensemble is a builder class that parameterizes the creation of multiple
+    """An Ensemble is a builder class to parameterize the creation of multiple
     Applications.
     """
 
@@ -128,10 +128,6 @@ class Ensemble(entity.CompoundEntity):
         :param exe: executable to run
         :param exe_args: executable arguments
         :param exe_arg_parameters: parameters and values to be used when configuring entities
-        :param files: files to be copied, symlinked, and/or configured prior to
-                      execution
-        :param file_parameters: parameters and values to be used when configuring
-                                files
         :param permutation_strategy: strategy to control how the param values are applied to the Ensemble
         :param max_permutations: max parameter permutations to set for the ensemble
         :param replicas: number of identical entities to create within an Ensemble
