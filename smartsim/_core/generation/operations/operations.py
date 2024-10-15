@@ -85,7 +85,9 @@ class CopyOperation(GenerationProtocol):
         """
         check_src_and_dest_path(src, dest)
         self.src = src
+        """Path to source"""
         self.dest = dest or pathlib.Path(src.name)
+        """Path to destination"""
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke copy file system entry point
@@ -120,7 +122,9 @@ class SymlinkOperation(GenerationProtocol):
         """
         check_src_and_dest_path(src, dest)
         self.src = src
+        """Path to source"""
         self.dest = dest or pathlib.Path(src.name)
+        """Path to destination"""
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke symlink file system entry point
@@ -163,11 +167,15 @@ class ConfigureOperation(GenerationProtocol):
         """
         check_src_and_dest_path(src, dest)
         self.src = src
+        """Path to source"""
         self.dest = dest or pathlib.Path(src.name)
+        """Path to destination"""
         pickled_dict = pickle.dumps(file_parameters)
         encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
         self.file_parameters = encoded_dict
+        """File parameters to find and replace"""
         self.tag = tag if tag else ";"
+        """Tag to use for find and replacement"""
 
     def format(self, context: GenerationContext) -> Command:
         """Create Command to invoke configure file system entry point
