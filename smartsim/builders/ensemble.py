@@ -177,7 +177,7 @@ class Ensemble(entity.CompoundEntity):
         self._exe = os.fspath(value)
 
     @property
-    def exe_args(self) -> t.List[str]:
+    def exe_args(self) -> list[str]:
         """Return attached list of executable arguments.
 
         :return: the executable arguments
@@ -322,7 +322,7 @@ class Ensemble(entity.CompoundEntity):
             ],
             list[ParamSet],
         ],
-    ) -> t.List[FileSet]:
+    ) -> list[FileSet]:
         """Generate all possible permutations of file parameters using the given strategy,
         and create corresponding FileSet objects.
 

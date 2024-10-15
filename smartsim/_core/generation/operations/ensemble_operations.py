@@ -90,7 +90,7 @@ EnsembleGenerationProtocolT = t.TypeVar(
 class EnsembleFileSysOperationSet:
     """Dataclass to represent a set of Ensemble file system operation objects"""
 
-    operations: t.List[EnsembleGenerationProtocol] = field(default_factory=list)
+    operations: list[EnsembleGenerationProtocol] = field(default_factory=list)
     """Set of Ensemble file system objects that match the EnsembleGenerationProtocol"""
 
     def add_copy(
@@ -132,7 +132,7 @@ class EnsembleFileSysOperationSet:
         )
 
     @property
-    def copy_operations(self) -> t.List[EnsembleCopyOperation]:
+    def copy_operations(self) -> list[EnsembleCopyOperation]:
         """Property to get the list of copy files.
 
         :return: List of EnsembleCopyOperation objects
@@ -140,7 +140,7 @@ class EnsembleFileSysOperationSet:
         return self._filter(EnsembleCopyOperation)
 
     @property
-    def symlink_operations(self) -> t.List[EnsembleSymlinkOperation]:
+    def symlink_operations(self) -> list[EnsembleSymlinkOperation]:
         """Property to get the list of symlink files.
 
         :return: List of EnsembleSymlinkOperation objects
@@ -148,7 +148,7 @@ class EnsembleFileSysOperationSet:
         return self._filter(EnsembleSymlinkOperation)
 
     @property
-    def configure_operations(self) -> t.List[EnsembleConfigureOperation]:
+    def configure_operations(self) -> list[EnsembleConfigureOperation]:
         """Property to get the list of configure files.
 
         :return: List of EnsembleConfigureOperation objects
@@ -157,7 +157,7 @@ class EnsembleFileSysOperationSet:
 
     def _filter(
         self, type: t.Type[EnsembleGenerationProtocolT]
-    ) -> t.List[EnsembleGenerationProtocolT]:
+    ) -> list[EnsembleGenerationProtocolT]:
         """Filters the operations list to include only instances of the
         specified type.
 
