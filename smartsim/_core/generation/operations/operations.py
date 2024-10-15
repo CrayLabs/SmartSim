@@ -203,7 +203,7 @@ GenerationProtocolT = t.TypeVar("GenerationProtocolT", bound=GenerationProtocol)
 class FileSysOperationSet:
     """Dataclass to represent a set of file system operation objects"""
 
-    operations: t.List[GenerationProtocol] = field(default_factory=list)
+    operations: list[GenerationProtocol] = field(default_factory=list)
     """Set of file system objects that match the GenerationProtocol"""
 
     def add_copy(
