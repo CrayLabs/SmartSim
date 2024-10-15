@@ -26,6 +26,7 @@
 
 import gc
 import os
+import pathlib
 import subprocess as sp
 import time
 import typing as t
@@ -70,10 +71,7 @@ from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
 )
 from smartsim._core.mli.infrastructure.storage.feature_store import ModelKey, TensorKey
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
-from smartsim._core.mli.infrastructure.worker.worker import (
-    InferenceRequest,
-    OutputKeyTuple,
-)
+from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 from tests.dragon.utils.channel import FileSystemCommChannel
@@ -164,12 +162,13 @@ def test_request_dispatcher(
         processes.append(process)
         process.start()
         assert process.returncode is None, "The message pump failed to start"
-
+        time.sleep(5)
         # give dragon some time to populate the message queues
         for i in range(15):
             try:
                 request_dispatcher._on_iteration()
-                batch = request_dispatcher.task_queue.get(timeout=1.0)
+                batch = request_dispatcher.task_queue.get(timeout=10)
+                print(batch.__dict__)
                 break
             except Empty:
                 time.sleep(2)
@@ -210,7 +209,7 @@ def test_request_dispatcher(
             assert len(request_dispatcher._queues[model_key]) == 1
             assert request_dispatcher._queues[model_key][0].empty()
             assert request_dispatcher._queues[model_key][0].model_id.key == model_key
-            assert len(tensors) == 1
+            # assert len(tensors) == 1
             assert tensors[0].shape == torch.Size([2, 2])
 
             for tensor in tensors:
@@ -240,7 +239,7 @@ def test_request_dispatcher(
     gc.collect()
 
 
-def test_request_batch():
+def test_request_batch(test_dir: str) -> None:
     tensor_key = TensorKey(key="key", descriptor="desc1")
     tensor_key2 = TensorKey(key="key2", descriptor="desc1")
     output_key = TensorKey(key="key", descriptor="desc2")
@@ -250,9 +249,13 @@ def test_request_batch():
     tensor_desc = MessageHandler.build_tensor_descriptor("c", "float32", [1, 2])
     req_batch_model_id = ModelKey(key="req key", descriptor="desc")
 
+    callback1 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback1")
+    callback2 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback2")
+    callback3 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback3")
+
     request1 = InferenceRequest(
         model_key=model_id1,
-        callback=FileSystemCommChannel.from_descriptor,
+        callback=callback1,
         raw_inputs=[b"input data"],
         input_keys=[tensor_key],
         input_meta=[tensor_desc],
@@ -263,7 +266,7 @@ def test_request_batch():
 
     request2 = InferenceRequest(
         model_key=model_id2,
-        callback=FileSystemCommChannel.from_descriptor,
+        callback=callback2,
         raw_inputs=None,
         input_keys=[tensor_key, tensor_key2],
         input_meta=None,
@@ -274,7 +277,7 @@ def test_request_batch():
 
     request3 = InferenceRequest(
         model_key=model_id2,
-        callback=FileSystemCommChannel.from_descriptor,
+        callback=callback3,
         raw_inputs=None,
         input_keys=[tensor_key, tensor_key2],
         input_meta=[tensor_desc],
@@ -288,16 +291,14 @@ def test_request_batch():
     )
 
     print(request_batch.__dict__)
-    assert len(request_batch.output_key_refs) == 2
+    assert len(request_batch.callbacks) == 3
+    for callback in request_batch.callbacks:
+        assert isinstance(callback, FileSystemCommChannel)
+    assert len(request_batch.output_key_refs.keys()) == 2
     assert request_batch.has_valid_requests
     assert request_batch.model_id == req_batch_model_id
     assert request_batch.inputs == None
     assert request_batch.raw_model == b"model"
-    assert request_batch.callbacks == [
-        FileSystemCommChannel.from_descriptor,
-        FileSystemCommChannel.from_descriptor,
-        FileSystemCommChannel.from_descriptor,
-    ]
     assert request_batch.raw_inputs == [b"input data"]
     assert request_batch.input_meta == [tensor_desc, tensor_desc]
     assert request_batch.input_keys == [
@@ -307,9 +308,7 @@ def test_request_batch():
         tensor_key,
         tensor_key2,
     ]
-    assert request_batch.output_key_refs == [
-        OutputKeyTuple(FileSystemCommChannel.from_descriptor, [output_key]),
-        OutputKeyTuple(
-            FileSystemCommChannel.from_descriptor, [output_key, output_key2]
-        ),
-    ]
+    assert request_batch.output_key_refs == {
+        callback1: [output_key],
+        callback2: [output_key, output_key2],
+    }

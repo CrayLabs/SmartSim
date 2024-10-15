@@ -106,7 +106,7 @@ class WorkerManager(Service):
         information among MLI components"""
         self._device_manager: t.Optional[DeviceManager] = None
         """Object responsible for model caching and device access"""
-        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=True)
+        self._perf_timer = PerfTimer(prefix="w_", debug=True, timing_on=True)
         """Performance timer"""
 
     @property
@@ -264,24 +264,28 @@ class WorkerManager(Service):
                     )
                 return
 
+            assert len(batch.callbacks) == len(transformed_outputs)
             for callback, transformed_output in zip(
                 batch.callbacks, transformed_outputs
             ):
                 reply = InferenceReply()
                 if batch.output_key_refs:
-                    for output_key_tuple in batch.output_key_refs:
-                        if callback == output_key_tuple.callback:
-                            try:
-                                reply.output_keys = self._worker.place_output(
-                                    output_key_tuple.output_keys,
-                                    transformed_output,
-                                    self._feature_stores,
-                                )
-                            except Exception as e:
-                                exception_handler(
-                                    e, callback, "Error while placing the output."
-                                )
-                                continue
+                    try:
+                        batch_ref = batch.output_key_refs[callback]
+                        reply.output_keys = self._worker.place_output(
+                            batch_ref,
+                            transformed_output,
+                            self._feature_stores,
+                        )
+                    except KeyError:
+                        # the callback is not in the output_key_refs dict
+                        # because it doesn't have output_keys associated with it
+                        continue
+                    except Exception as e:
+                        exception_handler(
+                            e, callback, "Error while placing the output."
+                        )
+                        continue
                 else:
                     reply.outputs = transformed_output.outputs
                 self._perf_timer.measure_time("assign_output")

@@ -312,16 +312,6 @@ class FetchModelResult:
         """The raw fetched model"""
 
 
-@dataclass(frozen=True)
-class OutputKeyTuple:
-    """Allows output keys to hold a reference to their respective callback"""
-
-    callback: CommChannelBase
-    """The channel that corresponds with the output keys"""
-    output_keys: t.List[TensorKey]
-    """A list of tuples containing a (key, descriptor) pair"""
-
-
 @dataclass
 class RequestBatch:
     """A batch of aggregated inference requests."""
@@ -336,7 +326,7 @@ class RequestBatch:
     """Metadata about the input data"""
     input_keys: t.List[TensorKey]
     """A list of tuples containing a (key, descriptor) pair"""
-    output_key_refs: t.List[OutputKeyTuple]
+    output_key_refs: t.Dict[CommChannelBase, t.List[TensorKey]]
     """A list of output keys and their respective callbacks"""
     inputs: t.Optional[TransformInputResult]
     """Transformed batch of input tensors"""
@@ -374,17 +364,19 @@ class RequestBatch:
         :param model_id: The model identifier
         :returns: A RequestBatch instance
         """
+        for req in requests:
+            logger.warning(f"inputs keys: {req.input_keys}")
         return cls(
             raw_model=requests[0].raw_model,
             callbacks=[request.callback for request in requests if request.callback],
             raw_inputs=[key for request in requests for key in request.raw_inputs],
             input_meta=[key for request in requests for key in request.input_meta],
             input_keys=[key for request in requests for key in request.input_keys],
-            output_key_refs=[
-                OutputKeyTuple(request.callback, request.output_keys)
+            output_key_refs={
+                request.callback: request.output_keys
                 for request in requests
-                if request.output_keys and request.callback
-            ],
+                if request.callback and request.output_keys
+            },
             inputs=inputs,
             model_id=model_id,
         )
