@@ -40,13 +40,36 @@ Description
   inference requests and response messages
 
 
-### Development branch
+### Develop
 
-To be released at some future point in time
+To be released at some point in the future
 
 Description
 
-- Allow specifying Model and Ensemble parameters with 
+- Add instructions for installing SmartSim on PML's Scylla
+
+Detailed Notes
+- PML's Scylla is still under development. The usual SmartSim
+  build instructions do not apply because the GPU dependencies
+  have yet to be installed at a system-wide level. Scylla has
+  its own entry in the documentation.
+  ([SmartSim-PR733](https://github.com/CrayLabs/SmartSim/pull/733))
+
+### 0.8.0
+
+Released on 27 September, 2024
+
+Description
+
+- Add instructions for Frontier to set the MIOPEN cache
+- Refine Frontier documentation for proper use of miniforge3
+- Refactor to the RedisAI build to allow more flexibility in versions
+  and sources of ML backends
+- Add Dockerfiles with GPU support
+- Fine grain build support for GPUs
+- Update Torch to 2.1.0, Tensorflow to 2.15.0
+- Better error messages in build process
+- Allow specifying Model and Ensemble parameters with
   number-like types (e.g. numpy types)
 - Pin watchdog to 4.x
 - Update codecov to 4.5.0
@@ -64,9 +87,41 @@ Description
 
 Detailed Notes
 
-- The serializer would fail if a parameter for a Model or Ensemble 
-  was specified as a numpy dtype. The constructors for these 
-  methods now validate that the input is number-like and convert 
+- On Frontier, the MIOPEN cache may need to be set prior to using
+  RedisAI in the ``smart validate``. The instructions for Frontier
+  have been updated accordingly.
+  ([SmartSim-PR727](https://github.com/CrayLabs/SmartSim/pull/727))
+- On Frontier, the recommended way to activate conda environments is
+  to go through source activate. This also means that ``conda init``
+  is not needed. The instructions for Frontier have been updated to
+  reflect this.
+  ([SmartSim-PR719](https://github.com/CrayLabs/SmartSim/pull/719))
+- The RedisAIBuilder class was completely overhauled to allow users to
+  express a wider range of support for hardware/software stacks. This
+  will be extended to support ROCm, CUDA-11, and CUDA-12.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Versions for each of these packages are no longer specified in an
+  internal class. Instead a default set of JSON files specifies the
+  sources and versions. Users can specify their own custom specifications
+  at smart build time.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Because all build configuration has been moved to static files and all
+  backends are compiled during `smart build`, SmartSim can now be shipped as a
+  pure python wheel.
+  ([SmartSim-PR728](https://github.com/CrayLabs/SmartSim/pull/728))
+- Two new Dockerfiles are now provided (one each for 11.8 and 12.1) that
+  can be used to build a container to run the tutorials. No HPC support
+  should be expected at this time
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- As a result of the previous change, SmartSim now requires C++17 and a
+  minimum Cuda version of 11.8 in order to build Torch 2.1.0.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Error messages were not being interpolated correctly. This has been
+  addressed to provide more context when exposing error messages to users.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- The serializer would fail if a parameter for a Model or Ensemble
+  was specified as a numpy dtype. The constructors for these
+  methods now validate that the input is number-like and convert
   them to strings
   ([SmartSim-PR676](https://github.com/CrayLabs/SmartSim/pull/676))
 - Pin watchdog to 4.x because v5 introduces new types and requires

@@ -39,12 +39,11 @@ from functools import lru_cache
 from pathlib import Path
 from shutil import which
 
-from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
-
 if t.TYPE_CHECKING:
     from types import FrameType
 
 
+_TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime"]
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
@@ -230,7 +229,9 @@ def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
     # pylint: disable-next=import-outside-toplevel
     from ..._core.config import CONFIG
 
-    base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    base_path: Path = (
+        Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    )
     return base_path
 
 
@@ -255,10 +256,10 @@ def installed_redisai_backends(
         "tensorflow",
         "torch",
         "onnxruntime",
-        "tflite",
     }
 
-    return {backend for backend in backends if _installed(base_path, backend)}
+    installed = {backend for backend in backends if _installed(base_path, backend)}
+    return installed
 
 
 def get_ts_ms() -> int:

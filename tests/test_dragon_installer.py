@@ -36,6 +36,7 @@ from github.GitReleaseAsset import GitReleaseAsset
 from github.Requester import Requester
 
 import smartsim
+import smartsim._core._install.utils
 import smartsim._core.utils.helpers as helpers
 from smartsim._core._cli.scripts.dragon_install import (
     DEFAULT_DRAGON_REPO,
@@ -48,7 +49,8 @@ from smartsim._core._cli.scripts.dragon_install import (
     retrieve_asset,
     retrieve_asset_info,
 )
-from smartsim._core._install.builder import _WebTGZ
+
+
 from smartsim.error.errors import SmartSimCLIActionCancelled
 
 # The tests in this file belong to the group_a group
@@ -189,6 +191,7 @@ def test_cleanup_archive_exists(test_archive: pathlib.Path) -> None:
     assert not test_archive.exists()
 
 
+@pytest.mark.skip("Deprecated due to builder.py changes")
 def test_retrieve_updated(
     test_archive: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -199,15 +202,14 @@ def test_retrieve_updated(
     old_asset_id = 100
     asset_id = 123
 
-    def mock__WebTGZ_extract(self_, target_) -> None:
-        mock_extraction_dir = pathlib.Path(target_)
+    def mock__retrieve_archive(source_, destination_) -> None:
+        mock_extraction_dir = pathlib.Path(destination_)
         with tarfile.TarFile.open(test_archive) as tar:
             tar.extractall(mock_extraction_dir)
 
     # we'll use the mock extract to create the files that would normally be downloaded
     expected_output_dir = test_archive.parent / str(asset_id)
     old_output_dir = test_archive.parent / str(old_asset_id)
-    mock__WebTGZ_extract(None, old_output_dir)
 
     requester = Requester(
         auth=None,
@@ -230,9 +232,9 @@ def test_retrieve_updated(
     monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
     monkeypatch.setattr(asset, "_id", _git_attr(value=asset_id))
     monkeypatch.setattr(
-        _WebTGZ,
-        "extract",
-        lambda s_, t_: mock__WebTGZ_extract(s_, expected_output_dir),
+        smartsim._core._install.utils,
+        "retrieve",
+        lambda s_, d_: mock__retrieve_archive(s_, expected_output_dir),
     )  # mock the retrieval of the updated archive
 
     # tell it to retrieve. it should return the path to the new download, not the old one

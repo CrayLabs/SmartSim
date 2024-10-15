@@ -643,11 +643,11 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     <tr>
       <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>2.0.1</td>
+      <td>2.1.0</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.13.1</td>
+      <td>2.15.0</td>
     </tr>
     <tr>
       <td>ONNX</td>

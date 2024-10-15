@@ -18,7 +18,7 @@ Prerequisites
 Basic
 =====
 
-The base prerequisites to install SmartSim and SmartRedis are:
+The base prerequisites to install SmartSim and SmartRedis wtih CPU-only support are:
 
   - Python 3.9-3.11
   - Pip
@@ -27,13 +27,11 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - C++ compiler
   - GNU Make > 4.0
   - git
-  - `git-lfs`_
-
-.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs
 
 .. note::
 
-  GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
+  GCC 9, 11-13 is recommended (here are known issues compiling with GCC 10). For
+  CUDA 11.8, GCC 9 or 11 must be used.
 
 .. warning::
 
@@ -43,42 +41,136 @@ The base prerequisites to install SmartSim and SmartRedis are:
   `which gcc g++` do not point to Apple Clang.
 
 
-GPU Support
-===========
+ML Library Support
+==================
 
-The machine-learning backends have additional requirements in order to
-use GPUs for inference
+We currently support both Nvidia and AMD GPUs when using RedisAI for GPU inference. The support
+for these GPUs often depends on the version of the CUDA or ROCm stack that is availble on your
+machine. In _most_ cases, the versions backwards compatible. If you encounter problems, please
+contact us and we can build the backend libraries for your desired version of CUDA and ROCm.
 
-  - `CUDA Toolkit 11 (tested with 11.8) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
-  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/installation/overview.html>`_
-  - OS: Linux
-  - GPU: Nvidia
+CPU backends are provided for Apple (both Intel and Apple Silicon) and Linux (x86_64).
 
-Be sure to reference the :ref:`installation notes <install-notes>` for helpful
+Be sure to reference the table below to find which versions of the ML libraries are supported for
+your particular platform. Additional, see :ref:`installation notes <install-notes>` for helpful
 information regarding various system types before installation.
 
-==================
-Supported Versions
-==================
+Linux
+-----
 
+.. tabs::
 
-.. list-table:: Supported System for Pre-built Wheels
-   :widths: 50 50 50 50
-   :header-rows: 1
-   :align: center
+    .. group-tab:: CUDA 11
 
-   * - Platform
-     - CPU
-     - GPU
-     - Python Versions
-   * - MacOS
-     - x86_64, aarch64
-     - Not supported
-     - 3.9 - 3.11
-   * - Linux
-     - x86_64
-     - Nvidia
-     - 3.9 - 3.11
+      Additional requirements:
+
+      * GCC <= 11
+      * CUDA Toolkit 11.7 or 11.8
+      * cuDNN 8.9
+
+      .. list-table:: Nvidia CUDA 11
+         :widths: 50 50 50 50
+         :header-rows: 1
+         :align: center
+
+         * - Python Versions
+           - Torch
+           - Tensorflow
+           - ONNX Runtime
+         * - 3.9-3.11
+           - 2.3.1
+           - 2.14.1
+           - 1.17.3
+
+    .. group-tab:: CUDA 12
+
+      Additional requirements:
+
+      * CUDA Toolkit 12
+      * cuDNN 8.9
+
+      .. list-table:: Nvidia CUDA 12
+         :widths: 50 50 50 50
+         :header-rows: 1
+         :align: center
+
+         * - Python Versions
+           - Torch
+           - Tensorflow
+           - ONNX Runtime
+         * - 3.9-3.11
+           - 2.3.1
+           - 2.17
+           - 1.17.3
+
+    .. group-tab:: ROCm 6
+
+      .. list-table:: AMD ROCm 6.1
+         :widths: 50 50 50 50
+         :header-rows: 1
+         :align: center
+
+         * - Python Versions
+           - Torch
+           - Tensorflow
+           - ONNX Runtime
+         * - 3.9-3.11
+           - 2.4.1
+           - N/A
+           - N/A
+
+    .. group-tab:: CPU
+
+      .. list-table:: CPU-only
+         :widths: 50 50 50 50
+         :header-rows: 1
+         :align: center
+
+         * - Python Versions
+           - Torch
+           - Tensorflow
+           - ONNX Runtime
+         * - 3.9-3.11
+           - 2.4.0
+           - 2.15
+           - 1.17.3
+
+MacOSX
+------
+
+.. tabs::
+
+    .. group-tab:: Apple Silicon
+
+      .. list-table:: Apple Silicon ARM64 (no Metal support)
+         :widths: 50 50 50 50
+         :header-rows: 1
+         :align: center
+
+         * - Python Versions
+           - Torch
+           - Tensorflow
+           - ONNX Runtime
+         * - 3.9-3.11
+           - 2.4.0
+           - 2.17
+           - 1.17.3
+
+    .. group-tab:: Intel Mac (x86)
+
+      .. list-table:: CPU-only
+         :widths: 50 50 50 50
+         :header-rows: 1
+         :align: center
+
+         * - Python Versions
+           - Torch
+           - Tensorflow
+           - ONNX Runtime
+         * - 3.9-3.11
+           - 2.2.0
+           - 2.15
+           - 1.17.3
 
 
 .. note::
@@ -88,21 +180,7 @@ Supported Versions
     however we make no guarantee or offer of support.
 
 
-Native support for various machine learning libraries and their
-versions is dictated by our dependency on RedisAI_ 1.2.7.
-
-+------------------+----------+-------------+---------------+
-| RedisAI          | PyTorch  | Tensorflow  | ONNX Runtime  |
-+==================+==========+=============+===============+
-| 1.2.7 (default)  | 2.0.1    | 2.13.1      | 1.16.3        |
-+------------------+----------+-------------+---------------+
-
-.. warning::
-
-  On Apple Silicon, only the PyTorch backend is supported for now. Please contact us
-  if you need support for other backends
-
-TensorFlow_ 2.0 and Keras_ are supported through `graph freezing`_.
+TensorFlow_ and Keras_ are supported through `graph freezing`_.
 
 ScikitLearn_ and Spark_ models are supported by SmartSim as well
 through the use of the ONNX_ runtime (which is not built by
@@ -167,21 +245,8 @@ and install SmartSim from PyPI with the following command:
 
     pip install smartsim
 
-If you would like SmartSim to also install python machine learning libraries
-that can be used outside SmartSim to build SmartSim-compatible models, you
-can request their installation through the ``[ml]`` optional dependencies,
-as follows:
-
-.. code-block:: bash
-
-    # For bash
-    pip install smartsim[ml]
-    # For zsh
-    pip install smartsim\[ml\]
-
-At this point, SmartSim is installed and can be used for more basic features.
-If you want to use the machine learning features of SmartSim, you will need
-to install the ML backends in the section below.
+At this point, SmartSim can be used for describing and launching experiments, but
+without any database/feature store functionality which allows for ML-enabled workflows.
 
 
 Step 2: Build SmartSim
@@ -198,38 +263,25 @@ To see all the installation options:
 
     smart --help
 
-CPU Install
------------
-
-To install the default ML backends for CPU, run
-
 .. code-block:: bash
 
     # run one of the following
-    smart build --device cpu          # install PT and TF for cpu
-    smart build --device cpu --onnx   # install all backends (PT, TF, ONNX) on cpu
+    smart build --device cpu      # For unaccelerated AI/ML loads
+    smart build --device cuda118  # Nvidia Accelerator with CUDA 11.8
+    smart build --device cuda125  # Nvidia Accelerator with CUDA 12.5
+    smart build --device rocm57   # AMD Accelerator with ROCm 5.7.0
 
-By default, ``smart`` will install PyTorch and TensorFlow backends
-for use in SmartSim.
+By default, ``smart`` will install all backends available for the specified accelerator
+_and_ the compatible versions of the Python packages associated with the backends. To
+disable support for a specific backend, ``smart build`` accepts the flags
+``--skip-torch``, ``--skip-tensorflow``, ``--skip-onnx`` which can also be used in
+combination.
 
 .. note::
 
     If a re-build is needed for any reason, ``smart clean`` will remove
     all of the previous installs for the ML backends and ``smart clobber`` will
     remove all pre-built dependencies as well as the ML backends.
-
-
-GPU Install
------------
-
-With the proper environment setup (see :ref:`GPU support`) the only difference
-to building SmartSim with GPU support is to specify a different ``device``
-
-.. code-block:: bash
-
-    # run one of the following
-    smart build --device gpu          # install PT and TF for gpu
-    smart build --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 .. note::
 
@@ -251,9 +303,7 @@ For example, to install dragon alongside the RedisAI CPU backends, you can run
 
 .. code-block:: bash
 
-    # run one of the following
     smart build --device cpu --dragon           # install Dragon, PT and TF for cpu
-    smart build --device cpu --onnx --dragon    # install Dragon and all backends (PT, TF, ONNX) on cpu
 
 ``smart build`` supports installing a specific version of dragon. It exposes the
 parameters ``--dragon-repo`` and ``--dragon-version``, which can be used alone or
@@ -333,35 +383,11 @@ source remains at the site of the clone instead of in site-packages.
 .. code-block:: bash
 
   cd smartsim
-  pip install -e .[dev,ml]    # for bash users
-  pip install -e .\[dev,ml\]  # for zsh users
+  pip install -e .[dev]       # for bash users
+  pip install -e ".[dev]"  # for zsh users
 
-Use the now installed ``smart`` cli to install the machine learning runtimes and dragon.
-
-.. tabs::
-
-  .. tab:: Linux
-
-    .. code-block:: bash
-
-      # run one of the following
-      smart build --device cpu --onnx --dragon  # install with cpu-only support
-      smart build --device gpu --onnx --dragon  # install with both cpu and gpu support
-
-
-  .. tab:: MacOS (Intel x64)
-
-    .. code-block:: bash
-
-      smart build --device cpu --onnx  # install all backends (PT, TF, ONNX) on gpu
-
-
-  .. tab:: MacOS (Apple Silicon)
-
-    .. code-block:: bash
-
-      smart build --device cpu --no_tf # Only install PyTorch (TF/ONNX unsupported)
-
+Use the now installed ``smart`` cli to install the machine learning runtimes and
+dragon. Referring to "Step 2: Build SmartSim above".
 
 Build the SmartRedis library
 ============================

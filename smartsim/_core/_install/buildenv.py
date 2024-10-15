@@ -55,30 +55,6 @@ class SetupError(Exception):
     """
 
 
-class VersionConflictError(SetupError):
-    """An error for when version numbers of some library/package/program/etc
-    do not match and build may not be able to continue
-    """
-
-    def __init__(
-        self,
-        name: str,
-        current_version: "Version_",
-        target_version: "Version_",
-        msg: t.Optional[str] = None,
-    ) -> None:
-        if msg is None:
-            msg = (
-                f"Incompatible version for {name} detected: "
-                f"{name} {target_version} requested but {name} {current_version} "
-                "installed."
-            )
-        super().__init__(msg)
-        self.name = name
-        self.current_version = current_version
-        self.target_version = target_version
-
-
 # so as to not conflict with pkg_resources.packaging.version.Version
 # pylint: disable-next=invalid-name
 class Version_(str):
@@ -156,74 +132,6 @@ def get_env(var: str, default: str) -> str:
     return os.environ.get(var, default)
 
 
-class RedisAIVersion(Version_):
-    """A subclass of Version_ that holds the dependency sets for RedisAI
-
-    this class serves two purposes:
-
-    1. It is used to populate the [ml] ``extras_require`` of the setup.py.
-    This is because the RedisAI version will determine which ML based
-    dependencies are required.
-
-    2. Used to set the default values for PyTorch, TF, and ONNX
-    given the SMARTSIM_REDISAI env var set by the user.
-
-    NOTE: Torch requires additional information depending on whether
-    CPU or GPU support is requested
-    """
-
-    defaults = {
-        "1.2.7": {
-            "tensorflow": "2.13.1",
-            "onnx": "1.14.1",
-            "skl2onnx": "1.16.0",
-            "onnxmltools": "1.12.0",
-            "scikit-learn": "1.3.2",
-            "torch": "2.0.1",
-            "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu117",
-            "torchvision": "0.15.2",
-        },
-    }
-
-    def __init__(self, vers: str) -> None:  # pylint: disable=super-init-not-called
-        min_rai_version = min(Version_(ver) for ver in self.defaults)
-        if min_rai_version > vers:
-            raise SetupError(
-                f"RedisAI version must be greater than or equal to {min_rai_version}"
-            )
-        if vers not in self.defaults:
-            if vers.startswith("1.2"):
-                # resolve to latest version for 1.2.x
-                # the str representation will still be 1.2.x
-                self.version = "1.2.7"
-            else:
-                raise SetupError(
-                    (
-                        f"Invalid RedisAI version {vers}. Options are "
-                        f"{self.defaults.keys()}"
-                    )
-                )
-        else:
-            self.version = vers
-
-    def __getattr__(self, name: str) -> str:
-        try:
-            return self.defaults[self.version][name]
-        except KeyError:
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{name}'\n\n"
-                "This is likely a problem with the SmartSim build process;"
-                "if this problem persists please log a new issue at "
-                "https://github.com/CrayLabs/SmartSim/issues "
-                "or get in contact with us at "
-                "https://www.craylabs.org/docs/community.html"
-            ) from None
-
-    def get_defaults(self) -> t.Dict[str, str]:
-        return self.defaults[self.version].copy()
-
-
 class Versioner:
     """Versioner is responsible for managing all the versions
     within SmartSim including SmartSim itself.
@@ -242,74 +150,35 @@ class Versioner:
     ``smart build`` command to determine which dependency versions
     to look for and download.
 
-    Default versions for SmartSim, Redis, and RedisAI are
-    all set here. Setting a default version for RedisAI also dictates
-    default versions of the machine learning libraries.
+    Default versions for SmartSim, Redis, and RedisAI are specified here.
     """
 
     # compatible Python version
     PYTHON_MIN = Version_("3.9.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.7.0"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.8.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
     REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
-    REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/")
+    REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git")
     REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
     # RedisAI
-    REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.7"))
+    REDISAI = "1.2.7"
     REDISAI_URL = get_env(
-        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
+        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git"
     )
     REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
-
-    # ML/DL (based on RedisAI version defaults)
-    # torch can be set by the user because we download that for them
-    TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
-    TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
-    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
-    TORCH_CUDA_SUFFIX = Version_(
-        get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix)
-    )
-
-    # TensorFlow and ONNX only use the defaults, but these are not built into
-    # the RedisAI package and therefore the user is free to pick other versions.
-    TENSORFLOW = Version_(REDISAI.tensorflow)
-    ONNX = Version_(REDISAI.onnx)
 
     def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
         pkg_map = {
             "SMARTSIM": self.SMARTSIM,
             db_name: self.REDIS,
             "REDISAI": self.REDISAI,
-            "TORCH": self.TORCH,
-            "TENSORFLOW": self.TENSORFLOW,
-            "ONNX": self.ONNX,
         }
         return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
-
-    def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
-        """Optional ML/DL dependencies we suggest for the user.
-
-        The defaults are based on the RedisAI version
-        """
-        ml_defaults = self.REDISAI.get_defaults()
-
-        # remove torch-related fields as they are subject to change
-        # by having the user change hardware (cpu/gpu)
-        _torch_fields = [
-            "torch",
-            "torchvision",
-            "torch_cpu_suffix",
-            "torch_cuda_suffix",
-        ]
-        for field in _torch_fields:
-            ml_defaults.pop(field)
-
-        return {"ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]}
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:
@@ -385,7 +254,7 @@ class BuildEnv:
             self.check_dependencies()
 
     def check_dependencies(self) -> None:
-        deps = ["git", "git-lfs", "make", "wget", "cmake", self.CC, self.CXX]
+        deps = ["git", "make", "wget", "cmake", self.CC, self.CXX]
         if int(self.CHECKS) == 0:
             for dep in deps:
                 self.check_build_dependency(dep)
@@ -497,23 +366,6 @@ class BuildEnv:
             )
         except OSError:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
-
-    @classmethod
-    def check_installed(
-        cls, package: str, version: t.Optional[Version_] = None
-    ) -> bool:
-        """Check if a package is installed. If version is provided, check if
-        it's a compatible version. (major and minor the same)
-        """
-        try:
-            installed = cls.get_py_package_version(package)
-        except importlib.metadata.PackageNotFoundError:
-            return False
-        if version:
-            # detect if major or minor versions differ
-            if installed.major != version.major or installed.minor != version.minor:
-                raise VersionConflictError(package, installed, version)
-        return True
 
     @staticmethod
     def get_py_package_version(package: str) -> Version_:

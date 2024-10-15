@@ -35,7 +35,8 @@ import warnings
 from os import getcwd
 from os import path as osp
 
-from .._core._install.builder import Device
+from smartsim._core.types import Device
+
 from .._core.utils.helpers import cat_arg_and_value
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger

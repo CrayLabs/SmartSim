@@ -33,7 +33,7 @@ from pathlib import Path
 import psutil
 
 from ...error import SSConfigError
-from ..utils.helpers import expand_exe_path
+from ..utils import expand_exe_path
 
 # Configuration Values
 #
@@ -94,13 +94,28 @@ class Config:
     def __init__(self) -> None:
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
+        # TODO: Turn this into a property. Need to modify the configuration
+        # of KeyDB vs Redis at build time
+        self.conf_dir = self.core_path / "config"
+        self.conf_path = self.conf_dir / "redis.conf"
 
-        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", self.core_path)
+    @property
+    def dependency_path(self) -> Path:
+        return Path(
+            os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path))
+        ).resolve()
 
-        self.lib_path = Path(dependency_path, "lib").resolve()
-        self.bin_path = Path(dependency_path, "bin").resolve()
-        self.conf_path = Path(dependency_path, "config", "redis.conf")
-        self.conf_dir = Path(self.core_path, "config")
+    @property
+    def lib_path(self) -> Path:
+        return Path(self.dependency_path, "lib")
+
+    @property
+    def bin_path(self) -> Path:
+        return Path(self.dependency_path, "bin")
+
+    @property
+    def build_path(self) -> Path:
+        return Path(self.dependency_path, "build")
 
     @property
     def redisai(self) -> str:
@@ -162,7 +177,7 @@ class Config:
     @property
     def dragon_dotenv(self) -> Path:
         """Returns the path to a .env file containing dragon environment variables"""
-        return self.conf_dir / "dragon" / ".env"
+        return Path(self.conf_dir / "dragon" / ".env")
 
     @property
     def dragon_server_path(self) -> t.Optional[str]:

@@ -615,10 +615,13 @@ def test_run_step_fail(test_dir: str) -> None:
     step0 = DragonStep("step0", test_dir, rs)
     step0.meta["status_dir"] = status_dir
 
-    mock_connector = MagicMock()  # DragonConnector()
+    mock_connector = MagicMock(spec=DragonConnector)
     mock_connector.is_connected = True
     mock_connector.send_request = MagicMock(
         return_value=DragonRunResponse(step_id=step0.name, error_message="mock fail!")
+    )
+    mock_connector.merge_persisted_env = MagicMock(
+        return_value={"FOO": "bar", "BAZ": "boop"}
     )
 
     launcher = DragonLauncher()
@@ -698,7 +701,7 @@ def test_run_step_success(test_dir: str) -> None:
     step0 = DragonStep("step0", test_dir, rs)
     step0.meta["status_dir"] = status_dir
 
-    mock_connector = MagicMock()  # DragonConnector()
+    mock_connector = MagicMock(spec=DragonConnector)
     mock_connector.is_connected = True
     mock_connector.send_request = MagicMock(
         return_value=DragonRunResponse(step_id=step0.name)
@@ -706,6 +709,9 @@ def test_run_step_success(test_dir: str) -> None:
 
     launcher = DragonLauncher()
     launcher._connector = mock_connector
+    mock_connector.merge_persisted_env = MagicMock(
+        return_value={"FOO": "bar", "BAZ": "boop"}
+    )
 
     result = launcher.run(step0)
 

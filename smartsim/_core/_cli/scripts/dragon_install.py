@@ -13,7 +13,7 @@ from github.GitReleaseAsset import GitReleaseAsset
 from github.Repository import Repository
 
 from smartsim._core._cli.utils import pip
-from smartsim._core._install.builder import _WebTGZ
+from smartsim._core._install.utils import retrieve
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import check_platform, is_crayex_platform
 from smartsim.error.errors import SmartSimCLIActionCancelled
@@ -293,7 +293,6 @@ def retrieve_asset(
     # if we've previously downloaded the release and still have
     # wheels laying around, use that cached version instead
     cleanup(download_dir)
-
     download_dir.mkdir(parents=True, exist_ok=True)
 
     # grab a copy of the complete asset
@@ -308,7 +307,7 @@ def retrieve_asset(
 
     try:
         # a github asset endpoint causes a redirect. the first request
-        # receives a pre-signed URL to the asset to pass on to WebTGZ
+        # receives a pre-signed URL to the asset to pass on to retrieve
         dl_request = Request(asset.url, headers=headers)
         response = urlopen(dl_request)
         presigned_url = response.url
@@ -320,8 +319,8 @@ def retrieve_asset(
 
     # extract the asset
     try:
-        archive = _WebTGZ(presigned_url, headers=headers)
-        archive.extract(asset_path)
+        retrieve(presigned_url, asset_path)
+
         logger.debug(f"Extracted {asset.name} to {download_dir}")
     except Exception as ex:
         raise SmartSimCLIActionCancelled(

@@ -27,7 +27,6 @@
 import argparse
 import contextlib
 import io
-import multiprocessing as mp
 import os
 import os.path
 import tempfile
@@ -39,7 +38,7 @@ from smartredis import Client
 
 from smartsim import Experiment
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
-from smartsim._core._install.builder import Device
+from smartsim._core.types import Device
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim._core.utils.network import find_free_port
 from smartsim.log import get_logger
@@ -207,25 +206,8 @@ def _make_managed_local_orc(
 
 
 def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
-    recv_conn, send_conn = mp.Pipe(duplex=False)
-    # Build the model in a subproc so that keras does not hog the gpu
-    proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
-    proc.start()
 
-    # do not need the sending connection in this proc anymore
-    send_conn.close()
-
-    proc.join(timeout=600)
-    if proc.is_alive():
-        proc.terminate()
-        raise Exception("Failed to build a simple keras model within 2 minutes")
-    try:
-        model_path, inputs, outputs = recv_conn.recv()
-    except EOFError as e:
-        raise Exception(
-            "Failed to receive serialized model from subprocess. "
-            "Is the `tensorflow` python package installed?"
-        ) from e
+    model_path, inputs, outputs = _build_tf_frozen_model(tmp_dir)
 
     client.set_model_from_file(
         "keras-fcn",
@@ -240,8 +222,9 @@ def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
     client.get_tensor("keras-output")
 
 
-def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
-    from tensorflow import keras
+def _build_tf_frozen_model(tmp_dir: str) -> t.Tuple[str, t.List[str], t.List[str]]:
+
+    from tensorflow import keras  # pylint: disable=no-name-in-module
 
     from smartsim.ml.tf import freeze_model
 
@@ -258,7 +241,7 @@ def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
         optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
     model_path, inputs, outputs = freeze_model(fcn, tmp_dir, "keras_model.pb")
-    conn.send((model_path, inputs, outputs))
+    return model_path, inputs, outputs
 
 
 def _test_torch_install(client: Client, device: Device) -> None:
@@ -283,10 +266,12 @@ def _test_torch_install(client: Client, device: Device) -> None:
     net.eval()
 
     forward_input = torch.rand(1, 1, 3, 3).to(device_)
-    traced = torch.jit.trace(net, forward_input)  # type: ignore[no-untyped-call]
+    traced = torch.jit.trace(  # type: ignore[no-untyped-call, unused-ignore]
+        net, forward_input
+    )
 
     buffer = io.BytesIO()
-    torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
+    torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call, unused-ignore]
     model = buffer.getvalue()
 
     client.set_model("torch-nn", model, backend="TORCH", device=device.value.upper())

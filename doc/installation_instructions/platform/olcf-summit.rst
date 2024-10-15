@@ -19,7 +19,7 @@ into problems.
 .. code-block:: bash
 
   # setup Python and build environment
-  export ENV_NAME=smartsim-0.7.0
+  export ENV_NAME=smartsim-0.8.0
   git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   git clone https://github.com/CrayLabs/SmartSim.git smartsim
   conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/1.6.1/

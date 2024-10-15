@@ -49,7 +49,7 @@ env:
 
 jobs:
   run_tests:
-    name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}, RedisAI ${{ matrix.rai }}
+    name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -62,9 +62,6 @@ jobs:
         exclude:
           - os: macos-14
             py_v: "3.9"
-
-    env:
-      SMARTSIM_REDISAI: ${{ matrix.rai }}
 
     steps:
       - uses: actions/checkout@v4
@@ -109,14 +106,15 @@ jobs:
       - name: Install SmartSim (with ML backends)
         run: |
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
-          python -m pip install .[dev,mypy,ml]
+          python -m pip install .[dev,mypy]
 
-      - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset != 'dragon' )
-        run: smart build --device cpu --onnx -v
+      - name: Install ML Runtimes
+        if: matrix.subset != 'dragon'
+        run: smart build --device cpu -v
 
-      - name: Install ML Runtimes with Smart (with pt, tf, dragon, and onnx support)
-        if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset == 'dragon' )
+     
+      - name: Install ML Runtimes (with dragon)
+        if: matrix.subset == 'dragon'
         env:
           SMARTSIM_DRAGON_TOKEN: ${{ secrets.DRAGON_TOKEN }}
         run: |
@@ -128,10 +126,6 @@ jobs:
           SP=$(python -c 'import site; print(site.getsitepackages()[0])')/smartsim/_core/config/dragon/.env
           LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
           echo "LD_LIBRARY_PATH=$LLP:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-
-      - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
-        if: contains( matrix.os, 'macos-14' )
-        run: smart build --device cpu --no_tf -v
 
       - name: Run mypy
         run: |
