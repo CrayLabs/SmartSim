@@ -364,8 +364,6 @@ class RequestBatch:
         :param model_id: The model identifier
         :returns: A RequestBatch instance
         """
-        for req in requests:
-            logger.warning(f"inputs keys: {req.input_keys}")
         return cls(
             raw_model=requests[0].raw_model,
             callbacks=[request.callback for request in requests if request.callback],
