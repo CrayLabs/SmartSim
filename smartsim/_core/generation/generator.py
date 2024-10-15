@@ -281,7 +281,7 @@ class Generator:
 
     @staticmethod
     def _copy_files(
-        files: t.List[CopyOperation], context: GenerationContext
+        files: list[CopyOperation], context: GenerationContext
     ) -> CommandList:
         """Build commands to copy files/directories from specified source paths
         to an optional destination in the run directory.
@@ -294,7 +294,7 @@ class Generator:
 
     @staticmethod
     def _symlink_files(
-        files: t.List[SymlinkOperation], context: GenerationContext
+        files: list[SymlinkOperation], context: GenerationContext
     ) -> CommandList:
         """Build commands to symlink files/directories from specified source paths
         to an optional destination in the run directory.
@@ -307,7 +307,7 @@ class Generator:
 
     @staticmethod
     def _configure_files(
-        files: t.List[ConfigureOperation],
+        files: list[ConfigureOperation],
         context: GenerationContext,
     ) -> CommandList:
         """Build commands to configure files/directories from specified source paths
