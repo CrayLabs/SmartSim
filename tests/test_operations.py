@@ -30,38 +30,6 @@ def generation_context(test_dir: str):
 
 
 @pytest.fixture
-def mock_src(test_dir: str):
-    """Fixture to create a mock source path."""
-    return pathlib.Path(test_dir) / pathlib.Path("mock_src")
-
-
-@pytest.fixture
-def mock_dest():
-    """Fixture to create a mock destination path."""
-    return pathlib.Path("mock_dest")
-
-
-@pytest.fixture
-def copy_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a CopyOperation object."""
-    return CopyOperation(src=mock_src, dest=mock_dest)
-
-
-@pytest.fixture
-def symlink_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a SymlinkOperation object."""
-    return SymlinkOperation(src=mock_src, dest=mock_dest)
-
-
-@pytest.fixture
-def configure_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
-    """Fixture to create a Configure object."""
-    return ConfigureOperation(
-        src=mock_src, dest=mock_dest, file_parameters={"FOO": "BAR"}
-    )
-
-
-@pytest.fixture
 def file_system_operation_set(
     copy_operation: CopyOperation,
     symlink_operation: SymlinkOperation,
