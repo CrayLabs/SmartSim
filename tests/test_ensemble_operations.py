@@ -126,33 +126,36 @@ def ensemble_file_system_operation_set(
 #         GenerationContext("")
 
 
-def test_init_copy_operation(
-    copy_operation: EnsembleCopyOperation, mock_src: pathlib.Path, mock_dest: pathlib.Path
+def test_init_ensemble_copy_operation(
+    mock_src: pathlib.Path, mock_dest: pathlib.Path
 ):
-    """Validate CopyOperation init"""
-    assert isinstance(copy_operation, EnsembleCopyOperation)
-    assert copy_operation.src == mock_src
-    assert copy_operation.dest == mock_dest
+    """Validate EnsembleCopyOperation init"""
+    ensemble_copy_operation = EnsembleCopyOperation(mock_src, mock_dest)
+    assert isinstance(ensemble_copy_operation, EnsembleCopyOperation)
+    assert ensemble_copy_operation.src == mock_src
+    assert ensemble_copy_operation.dest == mock_dest
 
 
-def test_init_symlink_operation(
-    symlink_operation: EnsembleSymlinkOperation, mock_src: str, mock_dest: str
+def test_init_ensemble_symlink_operation(
+    mock_src: str, mock_dest: str
 ):
-    """Validate SymlinkOperation init"""
-    assert isinstance(symlink_operation, EnsembleSymlinkOperation)
-    assert symlink_operation.src == mock_src
-    assert symlink_operation.dest == mock_dest
+    """Validate EnsembleSymlinkOperation init"""
+    ensemble_symlink_operation = EnsembleSymlinkOperation(mock_src, mock_dest)
+    assert isinstance(ensemble_symlink_operation, EnsembleSymlinkOperation)
+    assert ensemble_symlink_operation.src == mock_src
+    assert ensemble_symlink_operation.dest == mock_dest
 
 
 def test_init_configure_operation(
-    configure_operation: EnsembleConfigureOperation, mock_src: str, mock_dest: str
+    mock_src: str, mock_dest: str
 ):
-    """Validate ConfigureOperation init"""
-    assert isinstance(configure_operation, EnsembleConfigureOperation)
-    assert configure_operation.src == mock_src
-    assert configure_operation.dest == mock_dest
-    assert configure_operation.tag == ";"
-    assert configure_operation.file_parameters == {"FOO": ["BAR", "TOE"]}
+    """Validate EnsembleConfigureOperation init"""
+    ensemble_configure_operation = EnsembleConfigureOperation(mock_src, mock_dest)
+    assert isinstance(ensemble_configure_operation, EnsembleConfigureOperation)
+    assert ensemble_configure_operation.src == mock_src
+    assert ensemble_configure_operation.dest == mock_dest
+    assert ensemble_configure_operation.tag == ";"
+    assert ensemble_configure_operation.file_parameters == {"FOO": ["BAR", "TOE"]}
 
 
 def test_init_file_sys_operation_set(file_system_operation_set: EnsembleFileSysOperationSet):
