@@ -134,7 +134,7 @@ def test_device_manager_model_in_request():
 
     request_batch = RequestBatch.from_requests(
         [request],
-        [TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"])],
+        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_key,
     )
 
@@ -172,7 +172,7 @@ def test_device_manager_model_key():
 
     request_batch = RequestBatch.from_requests(
         [request],
-        [TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"])],
+        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
         model_key,
     )
 

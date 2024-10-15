@@ -44,8 +44,8 @@ from smartsim._core.mli.infrastructure.worker.worker import (
 )
 from smartsim._core.utils import installed_redisai_backends
 
-from .feature_store import FileSystemFeatureStore, MemoryFeatureStore
 from .channel import FileSystemCommChannel
+from .feature_store import FileSystemFeatureStore, MemoryFeatureStore
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -364,12 +364,8 @@ def test_place_outputs(test_dir: str) -> None:
     callback2 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback2")
 
     model_id = ModelKey(key="test-model", descriptor=fsd)
-    request = InferenceRequest(
-        callback=callback1, output_keys=keys
-    )
-    request2 = InferenceRequest(
-        callback=callback2, output_keys=keys2
-    )
+    request = InferenceRequest(callback=callback1, output_keys=keys)
+    request2 = InferenceRequest(callback=callback2, output_keys=keys2)
     transform_result = TransformOutputResult(data, [1], "c", "float32")
     transform_result2 = TransformOutputResult(data2, [1], "c", "float32")
 
