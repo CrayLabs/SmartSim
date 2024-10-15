@@ -134,7 +134,7 @@ class WorkerManager(Service):
             fs_model = {batch.model_id.descriptor}
         fs_inputs = {key.descriptor for key in batch.input_keys}
         fs_outputs = {
-            key.descriptor for keys in batch.output_key_refs for key in keys.output_keys
+            key.descriptor for keys in batch.output_key_refs.values() for key in keys
         }
 
         # identify which feature stores are requested and unknown

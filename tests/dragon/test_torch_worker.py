@@ -124,16 +124,12 @@ def get_request_batch_from_request(
     request: InferenceRequest, inputs: t.Optional[TransformInputResult] = None
 ) -> RequestBatch:
 
-    return RequestBatch(
-        request.raw_model,
-        [request.callback],
-        request.raw_inputs,
-        request.input_meta,
-        request.input_keys,
-        request.output_keys,
+    return RequestBatch.from_requests(
+        [request],
         inputs,
         request.model_key,
     )
+
 
 
 sample_request: InferenceRequest = get_request()
