@@ -72,7 +72,10 @@ class BsubBatchArguments(BatchArguments):
         takes precedence.
 
         :param smts: SMT (e.g on Summit: 1, 2, or 4)
+        :raises TypeError: if not an int
         """
+        if not isinstance(smts, int):
+            raise TypeError("smts argument was not of type int")
         self.set("alloc_flags", str(smts))
 
     def set_project(self, project: str) -> None:
@@ -81,7 +84,10 @@ class BsubBatchArguments(BatchArguments):
         This sets ``-P``.
 
         :param time: project name
+        :raises TypeError: if not a str
         """
+        if not isinstance(project, str):
+            raise TypeError("project argument was not of type str")
         self.set("P", project)
 
     def set_account(self, account: str) -> None:
@@ -90,7 +96,10 @@ class BsubBatchArguments(BatchArguments):
         this function is an alias for `set_project`.
 
         :param account: project name
+        :raises TypeError: if not a str
         """
+        if not isinstance(account, str):
+            raise TypeError("account argument was not of type str")
         return self.set_project(account)
 
     def set_nodes(self, num_nodes: int) -> None:
@@ -99,7 +108,10 @@ class BsubBatchArguments(BatchArguments):
         This sets ``-nnodes``.
 
         :param nodes: number of nodes
+        :raises TypeError: if not an int
         """
+        if not isinstance(num_nodes, int):
+            raise TypeError("num_nodes argument was not of type int")
         self.set("nnodes", str(num_nodes))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
@@ -110,10 +122,11 @@ class BsubBatchArguments(BatchArguments):
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
-        if not isinstance(host_list, list):
+        if not (
+            isinstance(host_list, list)
+            and all(isinstance(item, str) for item in host_list)
+        ):
             raise TypeError("host_list argument must be a list of strings")
-        if not all(isinstance(host, str) for host in host_list):
-            raise TypeError("host_list argument must be list of strings")
         self.set("m", '"' + " ".join(host_list) + '"')
 
     def set_tasks(self, tasks: int) -> None:
@@ -122,7 +135,10 @@ class BsubBatchArguments(BatchArguments):
         This sets ``-n``
 
         :param tasks: number of tasks
+        :raises TypeError: if not an int
         """
+        if not isinstance(tasks, int):
+            raise TypeError("tasks argument was not of type int")
         self.set("n", str(tasks))
 
     def set_queue(self, queue: str) -> None:
@@ -131,7 +147,10 @@ class BsubBatchArguments(BatchArguments):
         This sets ``-q``
 
         :param queue: The queue to submit the job on
+        :raises TypeError: if not a str
         """
+        if not isinstance(queue, str):
+            raise TypeError("queue argument was not of type str")
         self.set("q", queue)
 
     def format_batch_args(self) -> t.List[str]:

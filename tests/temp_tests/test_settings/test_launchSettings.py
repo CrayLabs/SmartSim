@@ -97,8 +97,16 @@ def test_type_launcher():
         )
 
 
-def test_type_launch_args():
-    launch_args = "invalid"
+@pytest.mark.parametrize(
+    "launch_args",
+    [
+        pytest.param("invalid", id="invalid"),
+        pytest.param("", id="empty string"),
+        pytest.param(0, id="0"),
+        pytest.param([], id="empty list"),
+    ],
+)
+def test_type_launch_args(launch_args):
     with pytest.raises(
         TypeError, match="batch_args argument was not of type mapping of str and str"
     ):
