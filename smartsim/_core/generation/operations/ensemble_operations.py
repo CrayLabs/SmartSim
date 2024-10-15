@@ -2,6 +2,7 @@ import pathlib
 import typing as t
 from dataclasses import dataclass, field
 from .utils.helpers import check_src_and_dest_path
+from .operations import default_tag
 
 # TODO do we need to add check for tags?
 # TODO do I need to add checks for file_params?
@@ -71,7 +72,7 @@ class EnsembleConfigureOperation(EnsembleGenerationProtocol):
         """Path to destination"""
         self.file_parameters = file_parameters
         """File parameters to find and replace"""
-        self.tag = tag if tag else ";"
+        self.tag = tag if tag else default_tag
         """Tag to use for the file"""
 
 
