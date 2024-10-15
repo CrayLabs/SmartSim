@@ -36,7 +36,6 @@ from .._core.generation.operations.operations import FileSysOperationSet
 from .._core.utils.helpers import expand_exe_path
 from ..log import get_logger
 from .entity import SmartSimEntity
-from .files import EntityFiles
 
 logger = get_logger(__name__)
 

@@ -48,11 +48,6 @@ def _check_run_path(run_path: pathlib.Path) -> None:
         )
     if not run_path.is_absolute():
         raise ValueError(f"The Job's run path must be absolute.")
-    # TODO
-    # if not run_path.is_dir():
-    #     raise ValueError(
-    #         "The Job's run path must be a directory."
-    #     )
 
 
 class GenerationContext:
@@ -208,7 +203,6 @@ GenerationProtocolT = t.TypeVar("GenerationProtocolT", bound=GenerationProtocol)
 class FileSysOperationSet:
     """Dataclass to represent a set of file system operation objects"""
 
-    # TODO disallow modification - dunder function (post ticket to reevaluate API objects)
     operations: t.List[GenerationProtocol] = field(default_factory=list)
     """Set of file system objects that match the GenerationProtocol"""
 
