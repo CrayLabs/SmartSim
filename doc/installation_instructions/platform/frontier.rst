@@ -2,7 +2,7 @@ OLCF Frontier
 =============
 
 Known limitations
------------------
+^^^^^^^^^^^^^^^^^
 
 We are continually working on getting all the features of SmartSim working on
 Frontier, however we do have some known limitations:
@@ -23,7 +23,7 @@ Please raise an issue in the SmartSim Github or contact the developers if the ab
 issues are affecting your workflow or if you find any other problems.
 
 One-time Setup
---------------
+^^^^^^^^^^^^^^
 
 To install the SmartRedis and SmartSim python packages on Frontier, please follow
 these instructions, being sure to set the following variables
@@ -63,7 +63,7 @@ these instructions, being sure to set the following variables
 
 .. code:: bash
 
-   smart build --device=rocm-6
+   smart build ^^device=rocm-6
 
 **Step 5:** Check that SmartSim has been installed and built correctly:
 
@@ -76,7 +76,7 @@ these instructions, being sure to set the following variables
    mkdir -p $MIOPEN_USER_DB_PATH
 
    # Run the install validation utility
-   smart validate --device gpu
+   smart validate ^^device gpu
 
 The following output indicates a successful install:
 
@@ -87,7 +87,7 @@ The following output indicates a successful install:
    16:26:35 login SmartSim[557020:MainThread] INFO Success!
 
 Post-installation
------------------
+^^^^^^^^^^^^^^^^^
 
 Before running SmartSim, the environment should match the one used to
 build, and some variables should be set to optimize performance:
@@ -109,7 +109,7 @@ build, and some variables should be set to optimize performance:
    mkdir -p ${MIOPEN_USER_DB_PATH}
 
 Binding DBs to Slingshot
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Each Frontier node has *four* NICs, which also means users need to bind
 DBs to *four* network interfaces, ``hsn0``, ``hsn1``, ``hsn2``,

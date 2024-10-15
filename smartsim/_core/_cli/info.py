@@ -9,6 +9,7 @@ from tabulate import tabulate
 import smartsim._core._cli.utils as _utils
 import smartsim._core.utils.helpers as _helpers
 from smartsim._core._install.buildenv import BuildEnv as _BuildEnv
+from smartsim._core.config import CONFIG
 
 _MISSING_DEP = _helpers.colorize("Not Installed", "red")
 
@@ -28,6 +29,12 @@ def execute(
         ),
         end="\n\n",
     )
+
+    print("SmartSim Paths")
+    path_table = [["core", str(CONFIG.dependency_path)]]
+    path_table.append(["bin", str(CONFIG.bin_path)])
+    path_table.append(["lib", str(CONFIG.lib_path)])
+    print(tabulate(path_table, tablefmt="fancy_outline"), end="\n\n")
 
     print("Orchestrator Configuration:")
     db_path = _utils.get_db_path()

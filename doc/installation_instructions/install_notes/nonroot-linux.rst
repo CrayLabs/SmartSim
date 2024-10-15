@@ -1,5 +1,5 @@
 GPU dependencies (non-root)
-===========================
+---------------------------
 
 The Nvidia installation instructions for CUDA Toolkit and cuDNN tend to be
 tailored for users with root access. For those on HPC platforms where root

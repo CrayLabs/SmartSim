@@ -306,7 +306,8 @@ def execute(
             logger.warning("Dragon installation failed")
 
     # REDIS/KeyDB
-    build_database(build_env, versions, keydb, verbose)
+    if not args.skip_database:
+        build_database(build_env, versions, keydb, verbose)
 
     if (CONFIG.lib_path / "redisai.so").exists():
         logger.warning("RedisAI was previously built, run 'smart clean' to rebuild")
@@ -367,6 +368,11 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--skip-backends",
         action="store_true",
         help="Do not compile RedisAI and the backends",
+    )
+    parser.add_argument(
+        "--skip-database",
+        action="store_true",
+        help="Do not build the database"
     )
     parser.add_argument(
         "--skip-torch",
