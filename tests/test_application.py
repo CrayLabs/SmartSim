@@ -62,18 +62,6 @@ def test_application_exe_args_property():
     assert exe_args is a.exe_args
 
 
-def test_application_file_parameters_property():
-    file_parameters = {"h": [5, 6, 7, 8]}
-    a = Application(
-        "test_name",
-        exe="echo",
-        file_parameters=file_parameters,
-    )
-    file_parameters = a.file_parameters
-
-    assert file_parameters is a.file_parameters
-
-
 def test_application_key_prefixing_property():
     key_prefixing_enabled = True
     a = Application("test_name", exe="echo", exe_args=["spam", "eggs"])

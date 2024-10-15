@@ -31,20 +31,24 @@ import copy
 import itertools
 import os
 import os.path
-import typing as t
 import random
+import typing as t
+from dataclasses import dataclass, field
 
+from smartsim._core.generation.operations.ensemble_operations import (
+    EnsembleConfigureOperation,
+    EnsembleFileSysOperationSet,
+)
 from smartsim.builders.utils import strategies
 from smartsim.builders.utils.strategies import ParamSet
 from smartsim.entity import entity
 from smartsim.entity.application import Application
 from smartsim.launchable.job import Job
-from smartsim._core.generation.operations.ensemble_operations import EnsembleFileSysOperationSet, EnsembleConfigureOperation
-from dataclasses import dataclass, field
-
 
 if t.TYPE_CHECKING:
     from smartsim.settings.launch_settings import LaunchSettings
+
+
 @dataclass(frozen=True)
 class FileSet:
     """
@@ -53,6 +57,7 @@ class FileSet:
 
     file: EnsembleConfigureOperation
     combinations: ParamSet
+
 
 class Ensemble(entity.CompoundEntity):
     """An Ensemble is a builder class to parameterize the creation of multiple
@@ -306,6 +311,47 @@ class Ensemble(entity.CompoundEntity):
 
         self._replicas = value
 
+    def _permutate_config_file(
+        self,
+        file: EnsembleConfigureOperation,
+        permutation_strategy: t.Callable[
+            [
+                t.Mapping[str, t.Sequence[str]],
+                t.Mapping[str, t.Sequence[t.Sequence[str]]],
+                int,
+            ],
+            list[ParamSet],
+        ],
+    ) -> t.List[FileSet]:
+        """Generate all possible permutations of file parameters using the given strategy,
+        and create corresponding FileSet objects.
+
+        This method applies the provided permutation strategy to the file's parameters,
+        along with execution argument parameters and a maximum permutation limit.
+        It returns a list of FileSet objects, each containing one of the generated
+        ParamSets and an instance of the ConfigurationObject.
+
+        :param file: The configuration file to be permuted
+        :param permutation_strategy: A function that generates permutations
+            of the file parameters
+        :returns: list[FileSet]
+        """
+        combinations = permutation_strategy(
+            file.file_parameters, self.exe_arg_parameters, self.max_permutations
+        ) or [ParamSet({}, {})]
+        return [FileSet(file, combo) for combo in combinations]
+
+    def _cartesian_values(self, ls: list[list[FileSet]]) -> list[tuple[FileSet, ...]]:
+        """Generate the Cartesian product of a list of lists of FileSets.
+
+        This method takes a list of lists of FileSets and returns a list of tuples,
+        where each tuple contains one FileSet from each inner list.
+
+        :param ls: A list of lists of FileSets
+        :returns: A list of tuples, each containing one FileSet from each inner list
+        """
+        return list(itertools.product(*ls))
+
     def _create_applications(self) -> tuple[Application, ...]:
         """Generate a collection of Application instances based on the Ensembles attributes.
 
@@ -315,42 +361,28 @@ class Ensemble(entity.CompoundEntity):
 
         :return: A tuple of Application instances
         """
-        # resolve the permutation strategy
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-        # apply the permutation strategy to each attached config file
-        perm_list: t.List[t.List[FileSet]] = [self.perm_config_file(config_file, permutation_strategy) for config_file in self.files.configure_operations]
-        # group the files together
-        val: t.List[tuple[FileSet]] = self._cartesian_values(perm_list)
-        # duplicate if replicas
+        perm_list: list[list[FileSet]] = [
+            self._permutate_config_file(config_file, permutation_strategy)
+            for config_file in self.files.configure_operations
+        ]
+        val: list[tuple[FileSet, ...]] = self._cartesian_values(perm_list)
         permutations_ = itertools.chain.from_iterable(
             itertools.repeat(permutation, self.replicas) for permutation in val
         )
         all_apps = []
-        i = 0
-        for item in permutations_:
-            i+=1
+        for i, item in enumerate(permutations_, start=1):
             app = Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
                 exe_args=self.exe_args,
             )
-            # apply the config files in the tuple
             for file_set in item:
-                app.files.add_configuration(src=file_set.file.src, file_parameters=file_set.combinations.params)
+                app.files.add_configuration(
+                    src=file_set.file.src, file_parameters=file_set.combinations.params
+                )
             all_apps.append(app)
         return tuple(all_apps)
-
-
-    def perm_config_file(self, file, permutation_strategy):
-        combinations = permutation_strategy(
-            file.file_parameters, self.exe_arg_parameters, self.max_permutations
-        ) or [ParamSet({}, {})]
-        return [FileSet(file, combo) for combo in combinations]
-
-
-    def _cartesian_values(self, ls):
-        return list(itertools.product(*ls))
-
 
     def build_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
         """Expand an Ensemble into a list of deployable Jobs and apply
@@ -384,8 +416,8 @@ class Ensemble(entity.CompoundEntity):
         :raises TypeError: if the ids argument is not type LaunchSettings
         :raises ValueError: if the LaunchSettings provided are empty
         """
-        if not isinstance(settings, LaunchSettings):
-            raise TypeError("ids argument was not of type LaunchSettings")
+        # if not isinstance(settings, LaunchSettings):
+        #     raise TypeError("ids argument was not of type LaunchSettings")
         apps = self._create_applications()
         if not apps:
             raise ValueError("There are no members as part of this ensemble")

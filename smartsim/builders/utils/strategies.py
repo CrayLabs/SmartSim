@@ -265,10 +265,10 @@ def random_permutations(
 # def create_combos(file_sets: List[FileSet]) -> List[List[Combo]]:
 #     # Extract the combinations from each FileSet
 #     all_combinations = [file_set.combinations for file_set in file_sets]
-    
+
 #     # Generate the Cartesian product of all combinations
 #     product_combinations = itertools.product(*all_combinations)
-    
+
 #     # Create Combo instances for each combination in the product
 #     combo_lists = []
 #     for combination_tuple in product_combinations:
@@ -277,5 +277,5 @@ def random_permutations(
 #             for file_set, combination in zip(file_sets, combination_tuple)
 #         ]
 #         combo_lists.append(combo_list)
-    
+
 #     return combo_lists

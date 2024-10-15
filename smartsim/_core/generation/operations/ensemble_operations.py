@@ -1,13 +1,16 @@
 import pathlib
 import typing as t
 from dataclasses import dataclass, field
-from .utils.helpers import check_src_and_dest_path
+
 from .operations import default_tag
+from .utils.helpers import check_src_and_dest_path
+
 
 # TODO do we need to add check for tags?
 # TODO do I need to add checks for file_params?
 class EnsembleGenerationProtocol(t.Protocol):
     """Protocol for Ensemble Generation Operations."""
+
     src: pathlib.Path
     """Path to source"""
     dest: t.Optional[pathlib.Path]
@@ -35,7 +38,9 @@ class EnsembleCopyOperation(EnsembleGenerationProtocol):
 class EnsembleSymlinkOperation(EnsembleGenerationProtocol):
     """Ensemble Symlink Operation"""
 
-    def __init__(self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None) -> None:
+    def __init__(
+        self, src: pathlib.Path, dest: t.Optional[pathlib.Path] = None
+    ) -> None:
         """Initialize a EnsembleSymlinkOperation object
 
         :param src: Path to source
@@ -54,7 +59,7 @@ class EnsembleConfigureOperation(EnsembleGenerationProtocol):
     def __init__(
         self,
         src: pathlib.Path,
-        file_parameters:t.Mapping[str,t.Sequence[str]],
+        file_parameters: t.Mapping[str, t.Sequence[str]],
         dest: t.Optional[pathlib.Path] = None,
         tag: t.Optional[str] = None,
     ) -> None:
@@ -76,7 +81,9 @@ class EnsembleConfigureOperation(EnsembleGenerationProtocol):
         """Tag to use for the file"""
 
 
-EnsembleGenerationProtocolT = t.TypeVar("EnsembleGenerationProtocolT", bound=EnsembleGenerationProtocol)
+EnsembleGenerationProtocolT = t.TypeVar(
+    "EnsembleGenerationProtocolT", bound=EnsembleGenerationProtocol
+)
 
 
 @dataclass
@@ -109,7 +116,7 @@ class EnsembleFileSysOperationSet:
     def add_configuration(
         self,
         src: pathlib.Path,
-        file_parameters: t.Mapping[str,t.Sequence[str]],
+        file_parameters: t.Mapping[str, t.Sequence[str]],
         dest: t.Optional[pathlib.Path] = None,
         tag: t.Optional[str] = None,
     ) -> None:
@@ -120,7 +127,9 @@ class EnsembleFileSysOperationSet:
         :param dest: Path to destination
         :param tag: Tag to use for find and replacement
         """
-        self.operations.append(EnsembleConfigureOperation(src, file_parameters, dest, tag))
+        self.operations.append(
+            EnsembleConfigureOperation(src, file_parameters, dest, tag)
+        )
 
     @property
     def copy_operations(self) -> t.List[EnsembleCopyOperation]:
@@ -146,7 +155,9 @@ class EnsembleFileSysOperationSet:
         """
         return self._filter(EnsembleConfigureOperation)
 
-    def _filter(self, type: t.Type[EnsembleGenerationProtocolT]) -> t.List[EnsembleGenerationProtocolT]:
+    def _filter(
+        self, type: t.Type[EnsembleGenerationProtocolT]
+    ) -> t.List[EnsembleGenerationProtocolT]:
         """Filters the operations list to include only instances of the
         specified type.
 
