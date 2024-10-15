@@ -64,11 +64,13 @@ _NestedJobSequenceType: TypeAlias = "t.Sequence[Job | _NestedJobSequenceType]"
 
 def unpack(value: _NestedJobSequenceType) -> t.Generator[Job, None, None]:
     """Unpack any iterable input in order to obtain a
-    single sequence of values
+    single sequence of values.
 
     :param value: Sequence containing elements of type Job or other
-    sequences that are also of type _NestedJobSequenceType
-    :return: flattened list of Jobs"""
+        sequences that are also of type `_NestedJobSequenceType`.
+    :raises TypeError: If the value is not a nested sequence of jobs.
+    :return: A flattened list of `Jobs`.
+    """
     from smartsim.launchable.job import Job
 
     for item in value:

@@ -161,11 +161,10 @@ class Experiment:
         """Execute a collection of `Job` instances.
 
         :param jobs: A collection of other job instances to start
-        :raises TypeError: If jobs provided are not the correct type
         :raises ValueError: No Jobs were provided.
-        :returns: A sequence of ids with order corresponding to the sequence of
-            jobs that can be used to query or alter the status of that
-            particular execution of the job.
+        :returns: A sequence of records with order corresponding to the
+            sequence of jobs that can be used to query or alter the status of
+            that particular execution of the job.
         """
 
         if not jobs:
@@ -232,12 +231,12 @@ class Experiment:
         )
 
     def get_status(self, *records: Record) -> tuple[JobStatus | InvalidJobStatus, ...]:
-        """Get the status of jobs launched through the `Experiment` from their
-        launched job id returned when calling `Experiment.start`.
+        """Get the status of jobs launched through the `Experiment` from the
+        record returned when calling `Experiment.start`.
 
-        The `Experiment` will map the launched ID back to the launcher that
-        started the job and request a status update. The order of the returned
-        statuses exactly matches the order of the launched job ids.
+        The `Experiment` will map the launched id of the record back to the
+        launcher that started the job and request a status update. The order of
+        the returned statuses exactly matches the order of the records.
 
         If the `Experiment` cannot find any launcher that started the job
         associated with the launched job id, then a
@@ -450,7 +449,7 @@ class Experiment:
         """
         if not records:
             raise ValueError("No records provided")
-        if not all(isinstance(reocrd, Record) for reocrd in records):
+        if not all(isinstance(record, Record) for record in records):
             raise TypeError("record argument was not of type Record")
         ids = tuple(record.launched_id for record in records)
         by_launcher = self._launch_history.group_by_launcher(set(ids), unknown_ok=True)
