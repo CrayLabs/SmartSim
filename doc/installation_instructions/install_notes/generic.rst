@@ -1,5 +1,5 @@
 Customizing environment variables
-=================================
+---------------------------------
 
 Various environment variables can be used to control the compilers and
 dependencies for SmartSim. These are particularly important to set before the
@@ -21,7 +21,7 @@ Toolkit libraries findable by the link loader (e.g. available in the
 ``LD_LIBRARY_PATH`` environment variable).
 
 Compiler environment
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 Unlike SmartRedis, we *strongly* encourage users to only use the GNU compiler
 chain to build the SmartSim dependencies. Notably, RedisAI has some coding
@@ -33,7 +33,7 @@ the following environment variables will control the C and C++ compilers:
 - ``CXX``: Path the C++ compiler
 
 CUDA-related
-------------
+^^^^^^^^^^^^
 
 The following environment variables help the ``smart build`` step find and link in the
 CUDA Toolkit and cuDNN libraries needed to build the ML backends.
