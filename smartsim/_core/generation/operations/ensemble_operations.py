@@ -6,8 +6,6 @@ from .operations import default_tag
 from .utils.helpers import check_src_and_dest_path
 
 
-# TODO do we need to add check for tags?
-# TODO do I need to add checks for file_params?
 class EnsembleGenerationProtocol(t.Protocol):
     """Protocol for Ensemble Generation Operations."""
 

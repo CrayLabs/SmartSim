@@ -38,6 +38,7 @@ from smartsim._core.generation.operations.ensemble_operations import (
     EnsembleSymlinkOperation,
 )
 from smartsim.builders.ensemble import Ensemble, FileSet
+from smartsim.entity import Application
 from smartsim.builders.utils import strategies
 from smartsim.builders.utils.strategies import ParamSet
 from smartsim.settings.launch_settings import LaunchSettings
@@ -81,14 +82,14 @@ def test_ensemble_init():
     assert ensemble.exe == os.fspath("python")
 
 
-def test_ensemble_init_empty_params(test_dir: str) -> None:
-    """Ensemble created without required args"""
+def test_ensemble_init_empty_params() -> None:
+    """Invalid Ensemble init"""
     with pytest.raises(TypeError):
         Ensemble()
 
 
 def test_exe_property(ensemble):
-    """Validate Ensemble property"""
+    """Validate Ensemble exe property"""
     exe = ensemble.exe
     assert exe == ensemble.exe
 
@@ -100,7 +101,7 @@ def test_exe_property(ensemble):
         pytest.param(None, TypeError, id="exe as None"),
     ),
 )
-def test_exe_set_invalid(ensemble, exe, error):
+def test_set_exe_invalid(ensemble, exe, error):
     """Validate Ensemble exe setter throws"""
     with pytest.raises(error):
         ensemble.exe = exe
@@ -113,13 +114,14 @@ def test_exe_set_invalid(ensemble, exe, error):
         pytest.param("this/is/path", id="exe as str"),
     ),
 )
-def test_exe_set_valid(ensemble, exe):
+def test_set_exe_valid(ensemble, exe):
     """Validate Ensemble exe setter sets"""
     ensemble.exe = exe
     assert ensemble.exe == str(exe)
 
 
 def test_exe_args_property(ensemble):
+    """Validate Ensemble exe_args property"""
     exe_args = ensemble.exe_args
     assert exe_args == ensemble.exe_args
 
@@ -132,7 +134,7 @@ def test_exe_args_property(ensemble):
         pytest.param(["script.py", 123], TypeError, id="exe_args as None"),
     ),
 )
-def test_exe_args_set_invalid(ensemble, exe_args, error):
+def test_set_exe_args_invalid(ensemble, exe_args, error):
     """Validate Ensemble exe_arg setter throws"""
     with pytest.raises(error):
         ensemble.exe_args = exe_args
@@ -145,18 +147,35 @@ def test_exe_args_set_invalid(ensemble, exe_args, error):
         pytest.param([], id="exe_args as str"),
     ),
 )
-def test_exe_args_set_valid(ensemble, exe_args):
+def test_set_exe_args_valid(ensemble, exe_args):
     """Validate Ensemble exe_args setter sets"""
     ensemble.exe_args = exe_args
     assert ensemble.exe_args == exe_args
 
 
 def test_exe_arg_parameters_property(ensemble):
+    """Validate Ensemble exe_arg_parameters property"""
     exe_arg_parameters = ensemble.exe_arg_parameters
     assert exe_arg_parameters == ensemble.exe_arg_parameters
 
 
-# TODO need a valid test for exe args as params
+@pytest.mark.parametrize(
+    "exe_arg_parameters",
+    (
+        pytest.param(
+            {"key": [["test"]]},
+            id="Value is a sequence of sequence of str",
+        ),
+        pytest.param(
+            {"key": [["test"], ["test"]]},
+            id="Value is a sequence of sequence of str",
+        ),
+    ),
+)
+def test_set_exe_arg_parameters_valid(exe_arg_parameters, ensemble):
+    """Validate Ensemble exe_arg_parameters setter sets"""
+    ensemble.exe_arg_parameters = exe_arg_parameters
+    assert ensemble.exe_arg_parameters == exe_arg_parameters
 
 
 @pytest.mark.parametrize(
@@ -177,12 +196,8 @@ def test_exe_arg_parameters_property(ensemble):
         pytest.param({1: 2}, id="Values not mapping of str and str"),
     ),
 )
-def test_exe_arg_parameters_set_invalid(exe_arg_params):
-    ensemble = Ensemble(
-        "ensemble-name",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
+def test_set_exe_arg_parameters_invalid(exe_arg_params, ensemble):
+    """Validate Ensemble exe_arg_parameters setter throws"""
     with pytest.raises(
         TypeError,
         match="exe_arg_parameters argument was not of type mapping "
@@ -192,11 +207,13 @@ def test_exe_arg_parameters_set_invalid(exe_arg_params):
 
 
 def test_permutation_strategy_property(ensemble):
+    """Validate Ensemble permutation_strategy property"""
     permutation_strategy = ensemble.permutation_strategy
     assert permutation_strategy == ensemble.permutation_strategy
 
 
 def test_permutation_strategy_set_invalid(ensemble):
+    """Validate Ensemble permutation_strategy setter throws"""
     with pytest.raises(
         TypeError,
         match="permutation_strategy argument was not of "
@@ -205,21 +222,23 @@ def test_permutation_strategy_set_invalid(ensemble):
         ensemble.permutation_strategy = 2
 
 
-# TODO add user created strategy
 @pytest.mark.parametrize(
     "strategy",
     (
         pytest.param("all_perm", id="strategy as all_perm"),
         pytest.param("step", id="strategy as step"),
         pytest.param("random", id="strategy as random"),
+        pytest.param(user_created_function, id="strategy as user_created_function"),
     ),
 )
 def test_permutation_strategy_set_valid(ensemble, strategy):
+    """Validate Ensemble permutation_strategy setter sets"""
     ensemble.permutation_strategy = strategy
     assert ensemble.permutation_strategy == strategy
 
 
 def test_max_permutations_property(ensemble):
+    """Validate Ensemble max_permutations property"""
     max_permutations = ensemble.max_permutations
     assert max_permutations == ensemble.max_permutations
 
@@ -252,6 +271,7 @@ def test_max_permutations_set_invalid(ensemble, max_permutations, error):
 
 
 def test_replicas_property(ensemble):
+    """Validate Ensemble replicas property"""
     replicas = ensemble.replicas
     assert replicas == ensemble.replicas
 
@@ -281,7 +301,257 @@ def test_replicas_set_invalid(ensemble, replicas, error):
         ensemble.replicas = replicas
 
 
-# END OF PROPERTY TESTS
+@pytest.mark.parametrize(
+    "file_parameters",
+    (
+        pytest.param({"SPAM": ["eggs"]}, id="Non-Empty Params"),
+        pytest.param({}, id="Empty Params"),
+        pytest.param(None, id="Nullish Params"),
+    ),
+)
+def test_replicated_applications_have_eq_deep_copies_of_parameters(
+    file_parameters
+):
+    e = Ensemble(
+        "test_ensemble",
+        "echo",
+        ("hello",),
+        replicas=4,
+    )
+    e.files.add_configuration(pathlib.Path("/src"), file_parameters=file_parameters)
+    apps = list(e._create_applications())
+
+    assert len(apps) >= 2  # Sanity check to make sure the test is valid
+    assert all(
+        app_1.file_parameters == app_2.file_parameters
+        for app_1 in apps
+        for app_2 in apps
+    )
+    assert all(
+        app_1.file_parameters is not app_2.file_parameters
+        for app_1 in apps
+        for app_2 in apps
+        if app_1 is not app_2
+    )
+
+
+@pytest.mark.parametrize(
+    "                        params,      exe_arg_params,   max_perms,     strategy, expected_combinations",
+    (
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 8, "all_perm", 8, id="Limit number of perms - 8 : all_perm"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "all_perm", 1, id="Limit number of perms - 1 : all_perm"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "all_perm", 16, id="All permutations : all_perm"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "all_perm", 16, id="Greater number of perms : all_perm"),
+        pytest.param(_2x2_PARAMS, {}, -1, "all_perm", 4, id="Empty exe args params : all_perm"),
+        pytest.param({}, _2x2_EXE_ARG, -1, "all_perm", 4, id="Empty file params : all_perm"),
+        pytest.param({}, {}, -1, "all_perm", 1, id="Empty exe args params and file params : all_perm"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 2, "step", 2, id="Limit number of perms - 2 : step"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "step", 1, id="Limit number of perms - 1 : step"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "step", 2, id="All permutations : step"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "step", 2, id="Greater number of perms : step"),
+        pytest.param(_2x2_PARAMS, {}, -1, "step", 1, id="Empty exe args params : step"),
+        pytest.param({}, _2x2_EXE_ARG, -1, "step", 1, id="Empty file params : step"),
+        pytest.param({}, {}, -1, "step", 1, id="Empty exe args params and file params : step"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 8, "random", 8, id="Limit number of perms - 8 : random"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "random", 1, id="Limit number of perms - 1 : random"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "random", 16, id="All permutations : random"),
+        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "random", 16, id="Greater number of perms : random"),
+        pytest.param(_2x2_PARAMS, {}, -1, "random", 4, id="Empty exe args params : random"),
+        pytest.param({}, _2x2_EXE_ARG, -1, "random", 4, id="Empty file params : random"),
+        pytest.param({}, {}, -1, "random", 1, id="Empty exe args params and file params : random"),
+    ),
+)
+def test_permutate_file_parameters(
+    params, exe_arg_params, max_perms, strategy, expected_combinations
+):
+    """Test Ensemble._permutate_file_parameters returns expected number of combinations for step, random and all_perm"""
+    ensemble = Ensemble(
+        "name",
+        "echo",
+        exe_arg_parameters=exe_arg_params,
+        permutation_strategy=strategy,
+        max_permutations=max_perms,
+    )
+    permutation_strategy = strategies.resolve(strategy)
+    config_file = EnsembleConfigureOperation(
+        src=pathlib.Path("/src"), file_parameters=params
+    )
+    file_set_list = ensemble._permutate_file_parameters(
+        config_file, permutation_strategy
+    )
+    assert len(file_set_list) == expected_combinations
+    for file_set in file_set_list:
+        assert isinstance(file_set, FileSet)
+        assert file_set.file == config_file
+
+
+def test_cartesian_values():
+    """Test Ensemble._cartesian_values returns expected number of combinations"""
+    ensemble = Ensemble(
+        "name",
+        "echo",
+        exe_arg_parameters={"-N": ["1", "2"]},
+    )
+    permutation_strategy = strategies.resolve("all_perm")
+    config_file_1 = EnsembleConfigureOperation(
+        src=pathlib.Path("/src_1"), file_parameters={"SPAM": ["a"]}
+    )
+    config_file_2 = EnsembleConfigureOperation(
+        src=pathlib.Path("/src_2"), file_parameters={"EGGS": ["b"]}
+    )
+    file_set_list = []
+    file_set_list.append(
+        ensemble._permutate_file_parameters(config_file_1, permutation_strategy)
+    )
+    file_set_list.append(
+        ensemble._permutate_file_parameters(config_file_2, permutation_strategy)
+    )
+    file_set_tuple = ensemble._cartesian_values(file_set_list)
+    assert isinstance(file_set_tuple, list)
+    assert len(file_set_tuple) == 4
+    for tup in file_set_tuple:
+        assert isinstance(tup, tuple)
+        assert len(tup) == 2
+        files = [fs.file for fs in tup]
+        # Validate that each config file is in the tuple of FileSets
+        assert config_file_1 in files
+        assert config_file_2 in files
+
+def test_attach_files():
+    ensemble = Ensemble("mock_ensemble", "echo")
+    ensemble.files.add_copy(src=pathlib.Path("/copy"))
+    ensemble.files.add_symlink(src=pathlib.Path("/symlink"))
+    app = Application("mock_app", "echo")
+    file_set_1 = FileSet(EnsembleConfigureOperation(src=pathlib.Path("/src_1"), file_parameters={"FOO": "TOE"}), ParamSet({}, {}))
+    file_set_2 = FileSet(EnsembleConfigureOperation(src=pathlib.Path("/src_2"), file_parameters={"FOO": "TOE"}), ParamSet({}, {}))
+    ensemble._attach_files(app, (file_set_1, file_set_2))
+    assert len(app.files.copy_operations) == 1
+    assert len(app.files.symlink_operations) == 1
+    assert len(app.files.configure_operations) == 2
+    srcs = [file.src for file in app.files.configure_operations]
+    assert file_set_1.file.src in srcs
+    assert file_set_2.file.src in srcs
+
+# fmt: off
+@pytest.mark.parametrize(
+    "                  params,      exe_arg_params,   max_perms, replicas, expected_num_jobs",
+    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          30,        1,                16 , id="Set max permutation high"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          -1,        1,                16 , id="Set max permutation negative"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           0,        1,                 1 , id="Set max permutation zero"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           1,        1,                 1 , id="Set max permutation to lowest"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           6,        2,                12 , id="Set max permutation, set replicas"),
+     pytest.param(         {},        _2x2_EXE_ARG,           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
+     pytest.param(_2x2_PARAMS,                  {},           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
+     pytest.param(         {},                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas")
+))
+# fmt: on
+def test_all_perm_strategy_create_application(
+    # Parameterized
+    params,
+    exe_arg_params,
+    max_perms,
+    replicas,
+    expected_num_jobs,
+):
+    e = Ensemble(
+        "test_ensemble",
+        "echo",
+        ("hello", "world"),
+        exe_arg_parameters=exe_arg_params,
+        permutation_strategy="all_perm",
+        max_permutations=max_perms,
+        replicas=replicas,
+    )
+    e.files.add_configuration(src=pathlib.Path("/src_1"), file_parameters=params)
+    apps = e._create_applications()
+    assert len(apps) == expected_num_jobs
+
+
+# fmt: off
+@pytest.mark.parametrize(
+    "                  params,      exe_arg_params,   max_perms, replicas, expected_num_jobs",         
+    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          30,        1,                 2 , id="Set max permutation high"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          -1,        1,                 2 , id="Set max permutation negtive"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           0,        1,                 1 , id="Set max permutation zero"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           1,        1,                 1 , id="Set max permutation to lowest"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           6,        2,                 4 , id="Set max permutation, set replicas"),
+     pytest.param(         {},        _2x2_EXE_ARG,           6,        2,                 2 , id="Set params as dict, set max permutations and replicas"),
+     pytest.param(_2x2_PARAMS,                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas"),
+     pytest.param(         {},                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas")
+))
+# fmt: on
+def test_step_strategy_create_application(
+    # Parameterized
+    params,
+    exe_arg_params,
+    max_perms,
+    replicas,
+    expected_num_jobs,
+):
+    e = Ensemble(
+        "test_ensemble",
+        "echo",
+        ("hello", "world"),
+        exe_arg_parameters=exe_arg_params,
+        permutation_strategy="step",
+        max_permutations=max_perms,
+        replicas=replicas,
+    )
+    e.files.add_configuration(src=pathlib.Path("/src_1"), file_parameters=params)
+    apps = e._create_applications()
+    assert len(apps) == expected_num_jobs
+
+
+# fmt: off
+@pytest.mark.parametrize(
+    "                  params,      exe_arg_params,   max_perms, replicas, expected_num_jobs",         
+    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          30,        1,                16 , id="Set max permutation high"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          -1,        1,                16 , id="Set max permutation negative"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           0,        1,                 1 , id="Set max permutation zero"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           1,        1,                 1 , id="Set max permutation to lowest"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           6,        2,                12 , id="Set max permutation, set replicas"),
+     pytest.param(         {},        _2x2_EXE_ARG,           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
+     pytest.param(_2x2_PARAMS,                  {},           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
+     pytest.param(         {},                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas")
+))
+# fmt: on
+def test_random_strategy_create_application(
+    # Parameterized
+    params,
+    exe_arg_params,
+    max_perms,
+    replicas,
+    expected_num_jobs,
+):
+    e = Ensemble(
+        "test_ensemble",
+        "echo",
+        ("hello", "world"),
+        exe_arg_parameters=exe_arg_params,
+        permutation_strategy="random",
+        max_permutations=max_perms,
+        replicas=replicas,
+    )
+    e.files.add_configuration(src=pathlib.Path("/src_1"), file_parameters=params)
+    apps = e._create_applications()
+    assert len(apps) == expected_num_jobs
+
+
+def test_ensemble_type_build_jobs():
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+    with pytest.raises(TypeError):
+        ensemble.build_jobs("invalid")
+
+
+@pytest.mark.parametrize(
+    "bad_settings",
+    [pytest.param(None, id="Nullish"), pytest.param("invalid", id="String")],
+)
+def test_ensemble_incorrect_launch_settings_type(bad_settings):
+    """test starting an ensemble with invalid launch settings"""
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+    with pytest.raises(TypeError):
+        ensemble.build_jobs(bad_settings)
 
 
 def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
@@ -295,7 +565,7 @@ def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
 
 
 def test_ensemble_without_any_members_raises_when_cast_to_jobs(
-    mock_launcher_settings, test_dir
+    mock_launcher_settings
 ):
     with pytest.raises(ValueError):
         Ensemble(
@@ -316,257 +586,3 @@ def test_strategy_error_raised_if_a_strategy_that_dne_is_requested(test_dir):
             ("hello",),
             permutation_strategy="THIS-STRATEGY-DNE",
         )._create_applications()
-
-
-# @pytest.mark.parametrize(
-#     "file_parameters",
-#     (
-#         pytest.param({"SPAM": ["eggs"]}, id="Non-Empty Params"),
-#         pytest.param({}, id="Empty Params"),
-#         pytest.param(None, id="Nullish Params"),
-#     ),
-# )
-# def test_replicated_applications_have_eq_deep_copies_of_parameters(
-#     file_parameters
-# ):
-#     apps = list(
-#         Ensemble(
-#             "test_ensemble",
-#             "echo",
-#             ("hello",),
-#             replicas=4,
-#             file_parameters=file_parameters,
-#         )._create_applications()
-#     )
-#     assert len(apps) >= 2  # Sanitiy check to make sure the test is valid
-#     assert all(
-#         app_1.file_parameters == app_2.file_parameters
-#         for app_1 in apps
-#         for app_2 in apps
-#     )
-#     assert all(
-#         app_1.file_parameters is not app_2.file_parameters
-#         for app_1 in apps
-#         for app_2 in apps
-#         if app_1 is not app_2
-#     )
-
-
-# fmt: off
-@pytest.mark.parametrize(
-    "                  params,      exe_arg_params,   max_perms, replicas, expected_num_jobs",         
-    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          30,        1,                16 , id="Set max permutation high"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          -1,        1,                16 , id="Set max permutation negative"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           0,        1,                 1 , id="Set max permutation zero"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           1,        1,                 1 , id="Set max permutation to lowest"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           6,        2,                12 , id="Set max permutation, set replicas"),
-     pytest.param(         {},        _2x2_EXE_ARG,           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
-     pytest.param(_2x2_PARAMS,                  {},           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
-     pytest.param(         {},                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas")
-))
-# fmt: on
-def test_all_perm_strategy(
-    # Parameterized
-    params,
-    exe_arg_params,
-    max_perms,
-    replicas,
-    expected_num_jobs,
-    # Other fixtures
-    mock_launcher_settings,
-    test_dir,
-):
-    e = Ensemble(
-        "test_ensemble",
-        "echo",
-        ("hello", "world"),
-        exe_arg_parameters=exe_arg_params,
-        permutation_strategy="all_perm",
-        max_permutations=max_perms,
-        replicas=replicas,
-    )
-    e.files.add_configuration(src=pathlib.Path("/src_1"), file_parameters=params)
-    jobs = e.build_jobs(mock_launcher_settings)
-    assert len(jobs) == expected_num_jobs
-
-
-# fmt: off
-@pytest.mark.parametrize(
-    "                  params,      exe_arg_params,   max_perms, replicas, expected_num_jobs",         
-    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          30,        1,                 2 , id="Set max permutation high"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          -1,        1,                 2 , id="Set max permutation negtive"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           0,        1,                 1 , id="Set max permutation zero"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           1,        1,                 1 , id="Set max permutation to lowest"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           6,        2,                 4 , id="Set max permutation, set replicas"),
-     pytest.param(         {},        _2x2_EXE_ARG,           6,        2,                 2 , id="Set params as dict, set max permutations and replicas"),
-     pytest.param(_2x2_PARAMS,                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas"),
-     pytest.param(         {},                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas")
-))
-# fmt: on
-def test_step_strategy(
-    # Parameterized
-    params,
-    exe_arg_params,
-    max_perms,
-    replicas,
-    expected_num_jobs,
-    # Other fixtures
-    mock_launcher_settings,
-    test_dir,
-):
-    e = Ensemble(
-        "test_ensemble",
-        "echo",
-        ("hello", "world"),
-        exe_arg_parameters=exe_arg_params,
-        permutation_strategy="step",
-        max_permutations=max_perms,
-        replicas=replicas,
-    )
-    e.files.add_configuration(src=pathlib.Path("/src_1"), file_parameters=params)
-    jobs = e.build_jobs(mock_launcher_settings)
-    assert len(jobs) == expected_num_jobs
-
-
-# fmt: off
-@pytest.mark.parametrize(
-    "                  params,      exe_arg_params,   max_perms, replicas, expected_num_jobs",         
-    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          30,        1,                16 , id="Set max permutation high"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,          -1,        1,                16 , id="Set max permutation negative"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           0,        1,                 1 , id="Set max permutation zero"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           1,        1,                 1 , id="Set max permutation to lowest"),
-     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,           6,        2,                12 , id="Set max permutation, set replicas"),
-     pytest.param(         {},        _2x2_EXE_ARG,           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
-     pytest.param(_2x2_PARAMS,                  {},           6,        2,                 8 , id="Set params as dict, set max permutations and replicas"),
-     pytest.param(         {},                  {},           6,        2,                 2 , id="Set params as dict, set max permutations and replicas")
-))
-# fmt: on
-def test_random_strategy(
-    # Parameterized
-    params,
-    exe_arg_params,
-    max_perms,
-    replicas,
-    expected_num_jobs,
-    # Other fixtures
-    mock_launcher_settings,
-):
-    e = Ensemble(
-        "test_ensemble",
-        "echo",
-        ("hello", "world"),
-        exe_arg_parameters=exe_arg_params,
-        permutation_strategy="random",
-        max_permutations=max_perms,
-        replicas=replicas,
-    )
-    e.files.add_configuration(src=pathlib.Path("/src_1"), file_parameters=params)
-    jobs = e.build_jobs(mock_launcher_settings)
-    assert len(jobs) == expected_num_jobs
-
-
-@pytest.mark.parametrize(
-    "                  params,      exe_arg_params,   max_perms,     strategy, expected_combinations",
-    (
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 8, "all_perm", 8, id="1"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "all_perm", 1, id="2"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "all_perm", 16, id="3"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "all_perm", 16, id="4"),
-        pytest.param(_2x2_PARAMS, {}, -1, "all_perm", 4, id="5"),
-        pytest.param({}, _2x2_EXE_ARG, -1, "all_perm", 4, id="6"),
-        pytest.param({}, {}, -1, "all_perm", 1, id="7"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 2, "step", 2, id="8"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "step", 1, id="9"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "step", 2, id="10"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "step", 2, id="11"),
-        pytest.param(_2x2_PARAMS, {}, -1, "step", 1, id="12"),
-        pytest.param({}, _2x2_EXE_ARG, -1, "step", 1, id="13"),
-        pytest.param({}, {}, -1, "step", 1, id="14"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 8, "random", 8, id="15"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "random", 1, id="16"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "random", 16, id="17"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "random", 16, id="18"),
-        pytest.param(_2x2_PARAMS, {}, -1, "random", 4, id="19"),
-        pytest.param({}, _2x2_EXE_ARG, -1, "random", 4, id="20"),
-        pytest.param({}, {}, -1, "random", 1, id="21"),
-    ),
-)
-def test_permutate_config_file(
-    params, exe_arg_params, max_perms, strategy, expected_combinations
-):
-    ensemble = Ensemble(
-        "name",
-        "echo",
-        exe_arg_parameters=exe_arg_params,
-        permutation_strategy=strategy,
-        max_permutations=max_perms,
-    )
-    permutation_strategy = strategies.resolve(strategy)
-    config_file = EnsembleConfigureOperation(
-        src=pathlib.Path("/src"), file_parameters=params
-    )
-    file_set_list = ensemble._permutate_config_file(config_file, permutation_strategy)
-    assert len(file_set_list) == expected_combinations
-
-
-def test_cartesian_values():
-    ensemble = Ensemble(
-        "name",
-        "echo",
-        exe_arg_parameters={"-N": ["1", "2"]},
-        permutation_strategy="step",
-    )
-    permutation_strategy = strategies.resolve("all_perm")
-    config_file_1 = EnsembleConfigureOperation(
-        src=pathlib.Path("/src_1"), file_parameters={"SPAM": ["a"]}
-    )
-    config_file_2 = EnsembleConfigureOperation(
-        src=pathlib.Path("/src_2"), file_parameters={"EGGS": ["b"]}
-    )
-    file_set_list = []
-    file_set_list.append(
-        ensemble._permutate_config_file(config_file_1, permutation_strategy)
-    )
-    file_set_list.append(
-        ensemble._permutate_config_file(config_file_2, permutation_strategy)
-    )
-    file_set_tuple = ensemble._cartesian_values(file_set_list)
-    assert len(file_set_tuple) == 4
-    for tup in file_set_tuple:
-        assert len(tup) == 2
-
-
-def test_ensemble_type_build_jobs():
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-    with pytest.raises(TypeError):
-        ensemble.build_jobs("invalid")
-
-
-@pytest.mark.parametrize(
-    "bad_settings",
-    [pytest.param(None, id="Nullish"), pytest.param("invalid", id="String")],
-)
-def test_ensemble_incorrect_launch_settings_type(bad_settings):
-    """test starting an ensemble with invalid launch settings"""
-    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
-    with pytest.raises(TypeError):
-        ensemble.build_jobs(bad_settings)
-
-
-@pytest.mark.parametrize(
-    "bad_settings",
-    [
-        pytest.param([1, 2, 3], id="sequence of ints"),
-        pytest.param(0, id="null"),
-        pytest.param({"foo": "bar"}, id="dict"),
-    ],
-)
-def test_ensemble_type_exe_args(bad_settings):
-    ensemble = Ensemble(
-        "ensemble-name",
-        exe="echo",
-    )
-    with pytest.raises(
-        TypeError, match="exe_args argument was not of type sequence of str"
-    ):
-        ensemble.exe_args = bad_settings
