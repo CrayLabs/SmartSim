@@ -31,22 +31,38 @@ import copy
 import itertools
 import os
 import os.path
+import random
 import typing as t
+from dataclasses import dataclass
 
+from smartsim._core.generation.operations.ensemble_operations import (
+    EnsembleConfigureOperation,
+    EnsembleFileSysOperationSet,
+)
 from smartsim.builders.utils import strategies
 from smartsim.builders.utils.strategies import ParamSet
 from smartsim.entity import entity
 from smartsim.entity.application import Application
-from smartsim.entity.files import EntityFiles
 from smartsim.launchable.job import Job
-from smartsim.settings.launch_settings import LaunchSettings
 
 if t.TYPE_CHECKING:
     from smartsim.settings.launch_settings import LaunchSettings
 
 
+@dataclass(frozen=True)
+class FileSet:
+    """
+    Represents a relationship between a parameterized set of arguments and the configuration file.
+    """
+
+    file: EnsembleConfigureOperation
+    """The configuration file associated with the parameter set"""
+    combination: ParamSet
+    """The set of parameters"""
+
+
 class Ensemble(entity.CompoundEntity):
-    """An Ensemble is a builder class that parameterizes the creation of multiple
+    """An Ensemble is a builder class to parameterize the creation of multiple
     Applications.
     """
 
@@ -56,8 +72,6 @@ class Ensemble(entity.CompoundEntity):
         exe: str | os.PathLike[str],
         exe_args: t.Sequence[str] | None = None,
         exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
-        files: EntityFiles | None = None,
-        file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
         permutation_strategy: str | strategies.PermutationStrategyType = "all_perm",
         max_permutations: int = -1,
         replicas: int = 1,
@@ -121,10 +135,6 @@ class Ensemble(entity.CompoundEntity):
         :param exe: executable to run
         :param exe_args: executable arguments
         :param exe_arg_parameters: parameters and values to be used when configuring entities
-        :param files: files to be copied, symlinked, and/or configured prior to
-                      execution
-        :param file_parameters: parameters and values to be used when configuring
-                                files
         :param permutation_strategy: strategy to control how the param values are applied to the Ensemble
         :param max_permutations: max parameter permutations to set for the ensemble
         :param replicas: number of identical entities to create within an Ensemble
@@ -139,12 +149,8 @@ class Ensemble(entity.CompoundEntity):
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         )
         """The parameters and values to be used when configuring entities"""
-        self._files = copy.deepcopy(files) if files else EntityFiles()
+        self.files = EnsembleFileSysOperationSet([])
         """The files to be copied, symlinked, and/or configured prior to execution"""
-        self._file_parameters = (
-            copy.deepcopy(file_parameters) if file_parameters else {}
-        )
-        """The parameters and values to be used when configuring files"""
         self._permutation_strategy = permutation_strategy
         """The strategy to control how the param values are applied to the Ensemble"""
         self._max_permutations = max_permutations
@@ -173,7 +179,7 @@ class Ensemble(entity.CompoundEntity):
         self._exe = os.fspath(value)
 
     @property
-    def exe_args(self) -> t.List[str]:
+    def exe_args(self) -> list[str]:
         """Return attached list of executable arguments.
 
         :return: the executable arguments
@@ -238,63 +244,6 @@ class Ensemble(entity.CompoundEntity):
             )
 
         self._exe_arg_parameters = copy.deepcopy(value)
-
-    @property
-    def files(self) -> EntityFiles:
-        """Return attached EntityFiles object.
-
-        :return: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        """
-        return self._files
-
-    @files.setter
-    def files(self, value: EntityFiles) -> None:
-        """Set the EntityFiles object.
-
-        :param value: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        :raises TypeError: if files is not of type EntityFiles
-        """
-
-        if not isinstance(value, EntityFiles):
-            raise TypeError("files argument was not of type EntityFiles")
-        self._files = copy.deepcopy(value)
-
-    @property
-    def file_parameters(self) -> t.Mapping[str, t.Sequence[str]]:
-        """Return the attached file parameters.
-
-        :return: the file parameters
-        """
-        return self._file_parameters
-
-    @file_parameters.setter
-    def file_parameters(self, value: t.Mapping[str, t.Sequence[str]]) -> None:
-        """Set the file parameters.
-
-        :param value: the file parameters
-        :raises TypeError: if file_parameters is not a mapping of str and
-        sequence of str
-        """
-
-        if not (
-            isinstance(value, t.Mapping)
-            and (
-                all(
-                    isinstance(key, str)
-                    and isinstance(val, collections.abc.Sequence)
-                    and all(isinstance(subval, str) for subval in val)
-                    for key, val in value.items()
-                )
-            )
-        ):
-            raise TypeError(
-                "file_parameters argument was not of type mapping of str "
-                "and sequence of str"
-            )
-
-        self._file_parameters = dict(value)
 
     @property
     def permutation_strategy(self) -> str | strategies.PermutationStrategyType:
@@ -364,6 +313,40 @@ class Ensemble(entity.CompoundEntity):
 
         self._replicas = value
 
+    def _permutate_file_parameters(
+        self,
+        file: EnsembleConfigureOperation,
+        permutation_strategy: strategies.PermutationStrategyType,
+    ) -> list[FileSet]:
+        """Generate all possible permutations of file parameters using the provided strategy,
+        and create FileSet objects.
+
+        This method applies the provided permutation strategy to the file's parameters,
+        along with execution argument parameters and a maximum permutation limit.
+        It returns a list of FileSet objects, each containing one of the generated
+        ParamSets and an instance of the EnsembleConfigurationObject.
+
+        :param file: The configuration file
+        :param permutation_strategy: A function that generates permutations
+            of file parameters
+        :returns: a list of FileSet objects
+        """
+        combinations = permutation_strategy(
+            file.file_parameters, self.exe_arg_parameters, self.max_permutations
+        ) or [ParamSet({}, {})]
+        return [FileSet(file, combo) for combo in combinations]
+
+    def _cartesian_values(self, ls: list[list[FileSet]]) -> list[tuple[FileSet, ...]]:
+        """Generate the Cartesian product of a list of lists of FileSets.
+
+        This method takes a list of lists of FileSet objects and returns a list of tuples,
+        where each tuple contains one FileSet from each sublist.
+
+        :param ls: A list of lists of FileSets
+        :returns: A list of tuples, each containing one FileSet from each sublist
+        """
+        return list(itertools.product(*ls))
+
     def _create_applications(self) -> tuple[Application, ...]:
         """Generate a collection of Application instances based on the Ensembles attributes.
 
@@ -374,23 +357,47 @@ class Ensemble(entity.CompoundEntity):
         :return: A tuple of Application instances
         """
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-
-        combinations = permutation_strategy(
-            self.file_parameters, self.exe_arg_parameters, self.max_permutations
+        file_set_list: list[list[FileSet]] = [
+            self._permutate_file_parameters(config_file, permutation_strategy)
+            for config_file in self.files.configure_operations
+        ]
+        file_set_tuple: list[tuple[FileSet, ...]] = self._cartesian_values(
+            file_set_list
         )
-        combinations = combinations if combinations else [ParamSet({}, {})]
         permutations_ = itertools.chain.from_iterable(
-            itertools.repeat(permutation, self.replicas) for permutation in combinations
+            itertools.repeat(permutation, self.replicas)
+            for permutation in file_set_tuple
         )
-        return tuple(
-            Application(
+        app_list = []
+        for i, item in enumerate(permutations_, start=1):
+            app = Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
                 exe_args=self.exe_args,
-                file_parameters=permutation.params,
             )
-            for i, permutation in enumerate(permutations_)
-        )
+            self._attach_files(app, item)
+            app_list.append(app)
+        return tuple(app_list)
+
+    def _attach_files(
+        self, app: Application, file_set_tuple: tuple[FileSet, ...]
+    ) -> None:
+        """Attach files to an Application.
+
+        :param app: The Application to attach files to
+        :param file_set_tuple: A tuple containing FileSet objects, each representing a configuration file
+        """
+        for config_file in file_set_tuple:
+            app.files.add_configuration(
+                src=config_file.file.src,
+                dest=config_file.file.dest,
+                file_parameters=config_file.combination.params,
+                tag=config_file.file.tag,
+            )
+        for copy_file in self.files.copy_operations:
+            app.files.add_copy(src=copy_file.src, dest=copy_file.dest)
+        for sym_file in self.files.symlink_operations:
+            app.files.add_symlink(src=sym_file.src, dest=sym_file.dest)
 
     def build_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
         """Expand an Ensemble into a list of deployable Jobs and apply
@@ -424,8 +431,8 @@ class Ensemble(entity.CompoundEntity):
         :raises TypeError: if the ids argument is not type LaunchSettings
         :raises ValueError: if the LaunchSettings provided are empty
         """
-        if not isinstance(settings, LaunchSettings):
-            raise TypeError("ids argument was not of type LaunchSettings")
+        # if not isinstance(settings, LaunchSettings):
+        #     raise TypeError("ids argument was not of type LaunchSettings")
         apps = self._create_applications()
         if not apps:
             raise ValueError("There are no members as part of this ensemble")

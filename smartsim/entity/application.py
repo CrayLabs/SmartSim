@@ -59,9 +59,6 @@ class Application(SmartSimEntity):
         name: str,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.Sequence[str]]] = None,
-        file_parameters: (
-            t.Mapping[str, str] | None
-        ) = None,  # TODO remove when Ensemble is addressed
     ) -> None:
         """Initialize an ``Application``
 
@@ -86,12 +83,6 @@ class Application(SmartSimEntity):
         self._exe_args = self._build_exe_args(exe_args) or []
         """The executable arguments"""
         self.files = FileSysOperationSet([])
-        """Attach files"""
-        self._file_parameters = (
-            copy.deepcopy(file_parameters) if file_parameters else {}
-        )
-        """TODO MOCK until Ensemble is implemented"""
-        """Files to be copied, symlinked, and/or configured prior to execution"""
         self._incoming_entities: t.List[SmartSimEntity] = []
         """Entities for which the prefix will have to be known by other entities"""
         self._key_prefixing_enabled = False
@@ -144,33 +135,6 @@ class Application(SmartSimEntity):
         """
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
-
-    @property
-    def file_parameters(self) -> t.Mapping[str, str]:
-        """Return file parameters.
-
-        :return: the file parameters
-        """
-        return self._file_parameters
-
-    @file_parameters.setter
-    def file_parameters(self, value: t.Mapping[str, str]) -> None:
-        """Set the file parameters.
-
-        :param value: the file parameters
-        :raises TypeError: file_parameters argument is not a mapping of str and str
-        """
-        if not (
-            isinstance(value, t.Mapping)
-            and all(
-                isinstance(key, str) and isinstance(val, str)
-                for key, val in value.items()
-            )
-        ):
-            raise TypeError(
-                "file_parameters argument was not of type mapping of str and str"
-            )
-        self._file_parameters = copy.deepcopy(value)
 
     @property
     def incoming_entities(self) -> t.List[SmartSimEntity]:
