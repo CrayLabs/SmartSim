@@ -316,20 +316,31 @@ class FetchModelResult:
 class RequestBatch:
     """A batch of aggregated inference requests."""
 
-    requests: list[InferenceRequest]
-    """List of InferenceRequests in the batch"""
+    raw_model: t.Optional[Model]
+    """Raw bytes of the model"""
+    callbacks: t.List[CommChannelBase]
+    """The channels used for notification of inference completion"""
+    raw_inputs: t.List[bytes]
+    """Raw bytes of tensor inputs"""
+    input_meta: t.List[t.Any]
+    """Metadata about the input data"""
+    input_keys: t.List[TensorKey]
+    """A list of tuples containing a (key, descriptor) pair"""
+    output_key_refs: t.Dict[CommChannelBase, t.List[TensorKey]]
+    """A dictionary mapping callbacks to output keys"""
     inputs: t.Optional[TransformInputResult]
     """Transformed batch of input tensors"""
     model_id: "ModelIdentifier"
     """Model (key, descriptor) tuple"""
 
     @property
-    def has_valid_requests(self) -> bool:
-        """Returns whether the batch contains at least one request.
+    def has_callbacks(self) -> bool:
+        """Returns whether the batch contains at least one callback,
+        which indicates there is at least one request in the batch.
 
-        :returns: True if at least one request is available
+        :returns: True if at least one callback is present
         """
-        return len(self.requests) > 0
+        return len(self.callbacks) > 0
 
     @property
     def has_raw_model(self) -> bool:
@@ -339,37 +350,34 @@ class RequestBatch:
         """
         return self.raw_model is not None
 
-    @property
-    def raw_model(self) -> t.Optional[t.Any]:
-        """Returns the raw model to use to execute for this batch
-        if it is available.
+    @classmethod
+    def from_requests(
+        cls,
+        requests: t.List[InferenceRequest],
+        inputs: t.Optional[TransformInputResult],
+        model_id: ModelIdentifier,
+    ) -> "RequestBatch":
+        """Create a RequestBatch from a list of requests.
 
-        :returns: A model if available, otherwise None"""
-        if self.has_valid_requests:
-            return self.requests[0].raw_model
-        return None
-
-    @property
-    def input_keys(self) -> t.List[TensorKey]:
-        """All input keys available in this batch's requests.
-
-        :returns: All input keys belonging to requests in this batch"""
-        keys = []
-        for request in self.requests:
-            keys.extend(request.input_keys)
-
-        return keys
-
-    @property
-    def output_keys(self) -> t.List[TensorKey]:
-        """All output keys available in this batch's requests.
-
-        :returns: All output keys belonging to requests in this batch"""
-        keys = []
-        for request in self.requests:
-            keys.extend(request.output_keys)
-
-        return keys
+        :param requests: The requests to batch
+        :param inputs: The transformed batch of input tensors
+        :param model_id: The model identifier
+        :returns: A RequestBatch instance
+        """
+        return cls(
+            raw_model=requests[0].raw_model,
+            callbacks=[request.callback for request in requests if request.callback],
+            raw_inputs=[key for request in requests for key in request.raw_inputs],
+            input_meta=[key for request in requests for key in request.input_meta],
+            input_keys=[key for request in requests for key in request.input_keys],
+            output_key_refs={
+                request.callback: request.output_keys
+                for request in requests
+                if request.callback and request.output_keys
+            },
+            inputs=inputs,
+            model_id=model_id,
+        )
 
 
 class MachineLearningWorkerCore:
@@ -508,48 +516,45 @@ class MachineLearningWorkerCore:
         :raises SmartSimError: If a tensor for a given key cannot be retrieved
         """
         fetch_results = []
-        for request in batch.requests:
-            if request.raw_inputs:
-                fetch_results.append(
-                    FetchInputResult(request.raw_inputs, request.input_meta)
-                )
-                continue
 
-            if not feature_stores:
-                raise ValueError("No input and no feature store provided")
-
-            if request.has_input_keys:
-                data: t.List[bytes] = []
-
-                for fs_key in request.input_keys:
-                    try:
-                        feature_store = feature_stores[fs_key.descriptor]
-                        tensor_bytes = t.cast(bytes, feature_store[fs_key.key])
-                        data.append(tensor_bytes)
-                    except KeyError as ex:
-                        logger.exception(ex)
-                        raise SmartSimError(
-                            f"Tensor could not be retrieved with key {fs_key.key}"
-                        ) from ex
-                fetch_results.append(
-                    FetchInputResult(data, meta=None)
-                )  # fixme: need to get both tensor and descriptor
-                continue
-
+        if not batch.raw_inputs and not batch.input_keys:
             raise ValueError("No input source")
+
+        if batch.raw_inputs:
+            fetch_results.append(FetchInputResult(batch.raw_inputs, batch.input_meta))
+
+        if not feature_stores:
+            raise ValueError("No feature stores provided")
+
+        if batch.input_keys:
+            data: t.List[bytes] = []
+
+            for fs_key in batch.input_keys:
+                try:
+                    feature_store = feature_stores[fs_key.descriptor]
+                    tensor_bytes = t.cast(bytes, feature_store[fs_key.key])
+                    data.append(tensor_bytes)
+                except KeyError as ex:
+                    logger.exception(ex)
+                    raise SmartSimError(
+                        f"Tensor could not be retrieved with key {fs_key.key}"
+                    ) from ex
+            fetch_results.append(
+                FetchInputResult(data, meta=None)
+            )  # fixme: need to get both tensor and descriptor
 
         return fetch_results
 
     @staticmethod
     def place_output(
-        request: InferenceRequest,
+        output_keys: t.List[TensorKey],
         transform_result: TransformOutputResult,
         feature_stores: t.Dict[str, FeatureStore],
     ) -> t.Collection[t.Optional[TensorKey]]:
         """Given a collection of data, make it available as a shared resource in the
         feature store.
 
-        :param request: The request that triggered the pipeline
+        :param output_keys: The output_keys that will be placed in the feature store
         :param transform_result: Transformed version of the inference result
         :param feature_stores: Available feature stores used for persistence
         :returns: A collection of keys that were placed in the feature store
@@ -563,7 +568,7 @@ class MachineLearningWorkerCore:
         # accurately placed, datum might need to include this.
 
         # Consider parallelizing all PUT feature_store operations
-        for fs_key, v in zip(request.output_keys, transform_result.outputs):
+        for fs_key, v in zip(output_keys, transform_result.outputs):
             feature_store = feature_stores[fs_key.descriptor]
             feature_store[fs_key.key] = v
             keys.append(fs_key)

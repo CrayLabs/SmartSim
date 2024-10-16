@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- RequestBatch rewrite
 - Implement asynchronous notifications for shared data
 - Quick bug fix in _validate
 - Add helper methods to MLI classes
