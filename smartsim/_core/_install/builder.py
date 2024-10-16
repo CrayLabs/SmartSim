@@ -32,12 +32,8 @@ import shutil
 import stat
 import subprocess
 import typing as t
-# import zipfile
-# from abc import ABC, abstractmethod
-# from dataclasses import dataclass
 from pathlib import Path
 from subprocess import SubprocessError
-from urllib.request import build_opener, install_opener, urlretrieve
 
 from smartsim._core._install.utils import retrieve
 from smartsim._core.utils import expand_exe_path

@@ -49,8 +49,6 @@ from smartsim._core._cli.scripts.dragon_install import (
     retrieve_asset,
     retrieve_asset_info,
 )
-
-
 from smartsim.error.errors import SmartSimCLIActionCancelled
 
 # The tests in this file belong to the group_a group

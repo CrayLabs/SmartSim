@@ -43,7 +43,6 @@ from smartsim._core._cli.scripts.dragon_install import (
     display_post_install_logs,
     install_dragon,
 )
-from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
@@ -216,8 +215,7 @@ def _format_incompatible_python_env_message(
     conflict_str = fmt_list("Conflicting", conflicting)
     sep = "\n" if missing_str and conflict_str else ""
 
-    return textwrap.dedent(
-        f"""\
+    return textwrap.dedent(f"""\
         Python Package Warning:
 
         Requested packages are missing or have a version mismatch with
@@ -227,8 +225,7 @@ def _format_incompatible_python_env_message(
 
         Consider uninstalling any conflicting packages and rerunning
         `smart build` if you encounter issues.
-        """
-    )
+        """)
 
 
 def _configure_keydb_build(versions: Versioner) -> None:
