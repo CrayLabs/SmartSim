@@ -9,17 +9,21 @@ from dataclasses import dataclass, field
 from ...commands import Command
 from .utils.helpers import check_src_and_dest_path
 
-# pylint: disable=invalid-name
+# pylint: disable-next=invalid-name
 entry_point_path = "smartsim._core.entrypoints.file_operations"
 """Path to file operations module"""
 
+# pylint: disable-next=invalid-name
 copy_cmd = "copy"
 """Copy file operation command"""
+# pylint: disable-next=invalid-name
 symlink_cmd = "symlink"
 """Symlink file operation command"""
+# pylint: disable-next=invalid-name
 configure_cmd = "configure"
 """Configure file operation command"""
 
+# pylint: disable-next=invalid-name
 default_tag = ";"
 """Default configure tag"""
 
