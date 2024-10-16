@@ -119,9 +119,9 @@ jobs:
           SMARTSIM_DRAGON_TOKEN: ${{ secrets.DRAGON_TOKEN }}
         run: |
           if [ -n "${SMARTSIM_DRAGON_TOKEN}" ]; then
-            smart build --device cpu --onnx -v --dragon-repo dragonhpc/dragon-nightly --dragon-version 0.10
+            smart build --device cpu -v --dragon-repo dragonhpc/dragon-nightly --dragon-version 0.10
           else
-            smart build --device cpu --onnx -v --dragon
+            smart build --device cpu -v --dragon
           fi
           SP=$(python -c 'import site; print(site.getsitepackages()[0])')/smartsim/_core/config/dragon/.env
           LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
