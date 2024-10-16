@@ -48,7 +48,7 @@ class _Message(t.Generic[_SchemaT]):
     delimiter: str = pydantic.Field(min_length=1, default=_DEFAULT_MSG_DELIM)
 
     def __str__(self) -> str:
-        return self.delimiter.join((self.header, self.payload.json()))
+        return self.delimiter.join((self.header, self.payload.model_dump_json()))
 
     @classmethod
     def from_str(
@@ -58,7 +58,7 @@ class _Message(t.Generic[_SchemaT]):
         delimiter: str = _DEFAULT_MSG_DELIM,
     ) -> "_Message[_SchemaT]":
         header, payload = str_.split(delimiter, 1)
-        return cls(payload_type.parse_raw(payload), header, delimiter)
+        return cls(payload_type.model_validate_json(payload), header, delimiter)
 
 
 class SchemaRegistry(t.Generic[_SchemaT]):

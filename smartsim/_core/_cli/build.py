@@ -36,7 +36,13 @@ from pathlib import Path
 
 from tabulate import tabulate
 
-from smartsim._core._cli.scripts.dragon_install import install_dragon
+from smartsim._core._cli.scripts.dragon_install import (
+    DEFAULT_DRAGON_REPO,
+    DEFAULT_DRAGON_VERSION,
+    DragonInstallRequest,
+    display_post_install_logs,
+    install_dragon,
+)
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
@@ -67,22 +73,22 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 def check_backends_install() -> bool:
     """Checks if backends have already been installed.
     Logs details on how to proceed forward
-    if the RAI_PATH environment variable is set or if
+    if the SMARTSIM_RAI_LIB environment variable is set or if
     backends have already been installed.
     """
-    rai_path = os.environ.get("RAI_PATH", "")
+    rai_path = os.environ.get("SMARTSIM_RAI_LIB", "")
     installed = installed_redisai_backends()
     msg = ""
 
     if rai_path and installed:
         msg = (
             f"There is no need to build. backends are already built and "
-            f"specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
+            f"specified in the environment at 'SMARTSIM_RAI_LIB': {CONFIG.redisai}"
         )
     elif rai_path and not installed:
         msg = (
-            "Before running 'smart build', unset your RAI_PATH environment "
-            "variable with 'unset RAI_PATH'."
+            "Before running 'smart build', unset your SMARTSIM_RAI_LIB environment "
+            "variable with 'unset SMARTSIM_RAI_LIB'."
         )
     elif not rai_path and installed:
         msg = (
@@ -231,7 +237,7 @@ def _configure_keydb_build(versions: Versioner) -> None:
     CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
     if not CONFIG.conf_path.resolve().is_file():
         raise SSConfigError(
-            "Database configuration file at REDIS_CONF could not be found"
+            "Database configuration file at SMARTSIM_REDIS_CONF could not be found"
         )
 
 
@@ -245,6 +251,8 @@ def execute(
     keydb = args.keydb
     device = Device.from_str(args.device.lower())
     is_dragon_requested = args.dragon
+    dragon_repo = args.dragon_repo
+    dragon_version = args.dragon_version
 
     if Path(CONFIG.build_path).exists():
         logger.warning(f"Build path already exists, removing: {CONFIG.build_path}")
@@ -294,12 +302,23 @@ def execute(
     logger.info("ML Packages")
     print(mlpackages)
 
-    if is_dragon_requested:
+    if is_dragon_requested or dragon_repo or dragon_version:
         install_to = CONFIG.core_path / ".dragon"
-        return_code = install_dragon(install_to)
+
+        try:
+            request = DragonInstallRequest(
+                install_to,
+                dragon_repo,
+                dragon_version,
+            )
+            return_code = install_dragon(request)
+        except ValueError as ex:
+            return_code = 2
+            logger.error(" ".join(ex.args))
 
         if return_code == 0:
-            logger.info("Dragon installation complete")
+            display_post_install_logs()
+
         elif return_code == 1:
             logger.info("Dragon installation not supported on platform")
         else:
@@ -357,6 +376,21 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         default=False,
         help="Install the dragon runtime",
+    )
+    parser.add_argument(
+        "--dragon-repo",
+        default=None,
+        type=str,
+        help=(
+            "Specify a git repo containing dragon release assets "
+            f"(e.g. {DEFAULT_DRAGON_REPO})"
+        ),
+    )
+    parser.add_argument(
+        "--dragon-version",
+        default=None,
+        type=str,
+        help=f"Specify the dragon version to install (e.g. {DEFAULT_DRAGON_VERSION})",
     )
     parser.add_argument(
         "--skip-python-packages",

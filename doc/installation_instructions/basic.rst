@@ -305,6 +305,20 @@ For example, to install dragon alongside the RedisAI CPU backends, you can run
 
     smart build --device cpu --dragon           # install Dragon, PT and TF for cpu
 
+``smart build`` supports installing a specific version of dragon. It exposes the
+parameters ``--dragon-repo`` and ``--dragon-version``, which can be used alone or
+in combination to customize the Dragon installation. For example:
+
+.. code-block:: bash
+
+    # using the --dragon-repo and --dragon-version flags to customize the Dragon installation
+    smart build --device cpu --dragon-repo userfork/dragon  # install Dragon from a specific repo
+    smart build --device cpu --dragon-version 0.10          # install a specific Dragon release
+
+    # combining both flags
+    smart build --device cpu --dragon-repo userfork/dragon --dragon-version 0.91
+
+
 .. note::
   Dragon is only supported on Linux systems. For further information, you
   can read :ref:`the dedicated documentation page <dragon>`.
