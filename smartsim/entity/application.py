@@ -137,33 +137,6 @@ class Application(SmartSimEntity):
         self._exe_args.extend(args)
 
     @property
-    def file_parameters(self) -> t.Mapping[str, str]:
-        """Return file parameters.
-
-        :return: the file parameters
-        """
-        return self._file_parameters
-
-    @file_parameters.setter
-    def file_parameters(self, value: t.Mapping[str, str]) -> None:
-        """Set the file parameters.
-
-        :param value: the file parameters
-        :raises TypeError: file_parameters argument is not a mapping of str and str
-        """
-        if not (
-            isinstance(value, t.Mapping)
-            and all(
-                isinstance(key, str) and isinstance(val, str)
-                for key, val in value.items()
-            )
-        ):
-            raise TypeError(
-                "file_parameters argument was not of type mapping of str and str"
-            )
-        self._file_parameters = copy.deepcopy(value)
-
-    @property
     def incoming_entities(self) -> t.List[SmartSimEntity]:
         """Return incoming entities.
 

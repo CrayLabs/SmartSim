@@ -132,28 +132,6 @@ def test_application_type_exe_args():
         application.exe_args = [1, 2, 3]
 
 
-@pytest.mark.parametrize(
-    "file_params",
-    (
-        pytest.param(["invalid"], id="Not a mapping"),
-        pytest.param({"1": 2}, id="Value is not mapping of str and str"),
-        pytest.param({1: "2"}, id="Key is not mapping of str and str"),
-        pytest.param({1: 2}, id="Values not mapping of str and str"),
-    ),
-)
-def test_application_type_file_parameters(file_params):
-    application = Application(
-        "test_name",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
-    with pytest.raises(
-        TypeError,
-        match="file_parameters argument was not of type mapping of str and str",
-    ):
-        application.file_parameters = file_params
-
-
 def test_application_type_incoming_entities():
 
     application = Application(

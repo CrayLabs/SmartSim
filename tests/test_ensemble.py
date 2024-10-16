@@ -38,9 +38,9 @@ from smartsim._core.generation.operations.ensemble_operations import (
     EnsembleSymlinkOperation,
 )
 from smartsim.builders.ensemble import Ensemble, FileSet
-from smartsim.entity import Application
 from smartsim.builders.utils import strategies
 from smartsim.builders.utils.strategies import ParamSet
+from smartsim.entity import Application
 from smartsim.settings.launch_settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
@@ -302,63 +302,122 @@ def test_replicas_set_invalid(ensemble, replicas, error):
 
 
 @pytest.mark.parametrize(
-    "file_parameters",
-    (
-        pytest.param({"SPAM": ["eggs"]}, id="Non-Empty Params"),
-        pytest.param({}, id="Empty Params"),
-        pytest.param(None, id="Nullish Params"),
-    ),
-)
-def test_replicated_applications_have_eq_deep_copies_of_parameters(
-    file_parameters
-):
-    e = Ensemble(
-        "test_ensemble",
-        "echo",
-        ("hello",),
-        replicas=4,
-    )
-    e.files.add_configuration(pathlib.Path("/src"), file_parameters=file_parameters)
-    apps = list(e._create_applications())
-
-    assert len(apps) >= 2  # Sanity check to make sure the test is valid
-    assert all(
-        app_1.file_parameters == app_2.file_parameters
-        for app_1 in apps
-        for app_2 in apps
-    )
-    assert all(
-        app_1.file_parameters is not app_2.file_parameters
-        for app_1 in apps
-        for app_2 in apps
-        if app_1 is not app_2
-    )
-
-
-@pytest.mark.parametrize(
     "                        params,      exe_arg_params,   max_perms,     strategy, expected_combinations",
     (
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 8, "all_perm", 8, id="Limit number of perms - 8 : all_perm"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "all_perm", 1, id="Limit number of perms - 1 : all_perm"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "all_perm", 16, id="All permutations : all_perm"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "all_perm", 16, id="Greater number of perms : all_perm"),
-        pytest.param(_2x2_PARAMS, {}, -1, "all_perm", 4, id="Empty exe args params : all_perm"),
-        pytest.param({}, _2x2_EXE_ARG, -1, "all_perm", 4, id="Empty file params : all_perm"),
-        pytest.param({}, {}, -1, "all_perm", 1, id="Empty exe args params and file params : all_perm"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 2, "step", 2, id="Limit number of perms - 2 : step"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "step", 1, id="Limit number of perms - 1 : step"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "step", 2, id="All permutations : step"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "step", 2, id="Greater number of perms : step"),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            8,
+            "all_perm",
+            8,
+            id="Limit number of perms - 8 : all_perm",
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            1,
+            "all_perm",
+            1,
+            id="Limit number of perms - 1 : all_perm",
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            -1,
+            "all_perm",
+            16,
+            id="All permutations : all_perm",
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            30,
+            "all_perm",
+            16,
+            id="Greater number of perms : all_perm",
+        ),
+        pytest.param(
+            _2x2_PARAMS, {}, -1, "all_perm", 4, id="Empty exe args params : all_perm"
+        ),
+        pytest.param(
+            {}, _2x2_EXE_ARG, -1, "all_perm", 4, id="Empty file params : all_perm"
+        ),
+        pytest.param(
+            {},
+            {},
+            -1,
+            "all_perm",
+            1,
+            id="Empty exe args params and file params : all_perm",
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            2,
+            "step",
+            2,
+            id="Limit number of perms - 2 : step",
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            1,
+            "step",
+            1,
+            id="Limit number of perms - 1 : step",
+        ),
+        pytest.param(
+            _2x2_PARAMS, _2x2_EXE_ARG, -1, "step", 2, id="All permutations : step"
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            30,
+            "step",
+            2,
+            id="Greater number of perms : step",
+        ),
         pytest.param(_2x2_PARAMS, {}, -1, "step", 1, id="Empty exe args params : step"),
         pytest.param({}, _2x2_EXE_ARG, -1, "step", 1, id="Empty file params : step"),
-        pytest.param({}, {}, -1, "step", 1, id="Empty exe args params and file params : step"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 8, "random", 8, id="Limit number of perms - 8 : random"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 1, "random", 1, id="Limit number of perms - 1 : random"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, -1, "random", 16, id="All permutations : random"),
-        pytest.param(_2x2_PARAMS, _2x2_EXE_ARG, 30, "random", 16, id="Greater number of perms : random"),
-        pytest.param(_2x2_PARAMS, {}, -1, "random", 4, id="Empty exe args params : random"),
-        pytest.param({}, _2x2_EXE_ARG, -1, "random", 4, id="Empty file params : random"),
-        pytest.param({}, {}, -1, "random", 1, id="Empty exe args params and file params : random"),
+        pytest.param(
+            {}, {}, -1, "step", 1, id="Empty exe args params and file params : step"
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            8,
+            "random",
+            8,
+            id="Limit number of perms - 8 : random",
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            1,
+            "random",
+            1,
+            id="Limit number of perms - 1 : random",
+        ),
+        pytest.param(
+            _2x2_PARAMS, _2x2_EXE_ARG, -1, "random", 16, id="All permutations : random"
+        ),
+        pytest.param(
+            _2x2_PARAMS,
+            _2x2_EXE_ARG,
+            30,
+            "random",
+            16,
+            id="Greater number of perms : random",
+        ),
+        pytest.param(
+            _2x2_PARAMS, {}, -1, "random", 4, id="Empty exe args params : random"
+        ),
+        pytest.param(
+            {}, _2x2_EXE_ARG, -1, "random", 4, id="Empty file params : random"
+        ),
+        pytest.param(
+            {}, {}, -1, "random", 1, id="Empty exe args params and file params : random"
+        ),
     ),
 )
 def test_permutate_file_parameters(
@@ -417,20 +476,32 @@ def test_cartesian_values():
         assert config_file_1 in files
         assert config_file_2 in files
 
+
 def test_attach_files():
     ensemble = Ensemble("mock_ensemble", "echo")
     ensemble.files.add_copy(src=pathlib.Path("/copy"))
     ensemble.files.add_symlink(src=pathlib.Path("/symlink"))
     app = Application("mock_app", "echo")
-    file_set_1 = FileSet(EnsembleConfigureOperation(src=pathlib.Path("/src_1"), file_parameters={"FOO": "TOE"}), ParamSet({}, {}))
-    file_set_2 = FileSet(EnsembleConfigureOperation(src=pathlib.Path("/src_2"), file_parameters={"FOO": "TOE"}), ParamSet({}, {}))
+    file_set_1 = FileSet(
+        EnsembleConfigureOperation(
+            src=pathlib.Path("/src_1"), file_parameters={"FOO": "TOE"}
+        ),
+        ParamSet({}, {}),
+    )
+    file_set_2 = FileSet(
+        EnsembleConfigureOperation(
+            src=pathlib.Path("/src_2"), file_parameters={"FOO": "TOE"}
+        ),
+        ParamSet({}, {}),
+    )
     ensemble._attach_files(app, (file_set_1, file_set_2))
     assert len(app.files.copy_operations) == 1
     assert len(app.files.symlink_operations) == 1
     assert len(app.files.configure_operations) == 2
-    srcs = [file.src for file in app.files.configure_operations]
-    assert file_set_1.file.src in srcs
-    assert file_set_2.file.src in srcs
+    sources = [file.src for file in app.files.configure_operations]
+    assert file_set_1.file.src in sources
+    assert file_set_2.file.src in sources
+
 
 # fmt: off
 @pytest.mark.parametrize(
@@ -564,9 +635,7 @@ def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
     assert len(jobs) == 1
 
 
-def test_ensemble_without_any_members_raises_when_cast_to_jobs(
-    mock_launcher_settings
-):
+def test_ensemble_without_any_members_raises_when_cast_to_jobs(mock_launcher_settings):
     with pytest.raises(ValueError):
         Ensemble(
             "test_ensemble",
