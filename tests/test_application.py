@@ -30,7 +30,6 @@ from os import path as osp
 import pytest
 
 from smartsim.entity.application import Application
-from smartsim.entity.files import EntityFiles
 from smartsim.settings.launch_settings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
@@ -60,14 +59,6 @@ def test_application_exe_args_property():
     a = Application("test_name", exe="echo", exe_args=["spam", "eggs"])
     exe_args = a.exe_args
     assert exe_args is a.exe_args
-
-
-def test_application_files_property(get_gen_configure_dir):
-    tagged_files = sorted(glob(get_gen_configure_dir + "/*"))
-    files = EntityFiles(tagged=tagged_files)
-    a = Application("test_name", exe="echo", exe_args=["spam", "eggs"], files=files)
-    files = a.files
-    assert files is a.files
 
 
 def test_application_file_parameters_property():
@@ -120,24 +111,6 @@ def test_type_exe_args():
         application.exe_args = [1, 2, 3]
 
 
-def test_type_files_property():
-    application = Application(
-        "test_name",
-        exe="echo",
-    )
-    with pytest.raises(TypeError):
-        application.files = "/path/to/file"
-
-
-def test_type_file_parameters_property():
-    application = Application(
-        "test_name",
-        exe="echo",
-    )
-    with pytest.raises(TypeError):
-        application.file_parameters = {1: 2}
-
-
 def test_type_incoming_entities():
     application = Application(
         "test_name",
@@ -169,16 +142,6 @@ def test_application_type_exe_args():
         TypeError, match="Executable arguments were not a list of str or a str."
     ):
         application.exe_args = [1, 2, 3]
-
-
-def test_application_type_files():
-    application = Application(
-        "test_name",
-        exe="echo",
-        exe_args=["spam", "eggs"],
-    )
-    with pytest.raises(TypeError, match="files argument was not of type EntityFiles"):
-        application.files = 2
 
 
 @pytest.mark.parametrize(

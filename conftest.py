@@ -40,6 +40,8 @@ import time
 import typing as t
 import uuid
 import warnings
+from glob import glob
+from os import path as osp
 from collections import defaultdict
 from dataclasses import dataclass
 from subprocess import run
@@ -53,6 +55,8 @@ from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.launcher.dragon.dragon_connector import DragonConnector
 from smartsim._core.launcher.dragon.dragon_launcher import DragonLauncher
+from smartsim._core.generation.operations.operations import ConfigureOperation, CopyOperation, SymlinkOperation
+from smartsim._core.generation.generator import Generator
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import FeatureStore
 from smartsim.entity import Application
@@ -469,6 +473,58 @@ def check_output_dir() -> None:
 def fsutils() -> t.Type[FSUtils]:
     return FSUtils
 
+@pytest.fixture
+def files(fileutils):
+    path_to_files = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    list_of_files_strs = glob(path_to_files + "/*")
+    yield [pathlib.Path(str_path) for str_path in list_of_files_strs]
+
+
+@pytest.fixture
+def directory(fileutils):
+    directory = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+    yield [pathlib.Path(directory)]
+
+
+@pytest.fixture(params=["files", "directory"])
+def source(request):
+    yield request.getfixturevalue(request.param)
+
+
+@pytest.fixture
+def mock_src(test_dir: str):
+    """Fixture to create a mock source path."""
+    return pathlib.Path(test_dir) / pathlib.Path("mock_src")
+
+
+@pytest.fixture
+def mock_dest():
+    """Fixture to create a mock destination path."""
+    return pathlib.Path("mock_dest")
+
+
+@pytest.fixture
+def copy_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
+    """Fixture to create a CopyOperation object."""
+    return CopyOperation(src=mock_src, dest=mock_dest)
+
+
+@pytest.fixture
+def symlink_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
+    """Fixture to create a CopyOperation object."""
+    return SymlinkOperation(src=mock_src, dest=mock_dest)
+
+
+@pytest.fixture
+def configure_operation(mock_src: pathlib.Path, mock_dest: pathlib.Path):
+    """Fixture to create a Configure object."""
+    return ConfigureOperation(
+        src=mock_src, dest=mock_dest, file_parameters={"FOO": "BAR"}
+    )
 
 class FSUtils:
     @staticmethod
