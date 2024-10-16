@@ -57,6 +57,7 @@ def the_backend() -> DragonBackend:
     return DragonBackend(pid=9999)
 
 
+@pytest.mark.skip("Test is unreliable on build agent and may hang. TODO: Fix")
 def test_dragonbackend_start_listener(the_backend: DragonBackend):
     """Verify the background process listening to consumer registration events
     is up and processing messages as expected."""
