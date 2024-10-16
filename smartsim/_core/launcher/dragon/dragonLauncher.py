@@ -170,7 +170,7 @@ class DragonLauncher(WLMLauncher):
             merged_env = self._connector.merge_persisted_env(os.environ.copy())
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
-            hosts = str(run_args.get("host-list", ""))
+            hosts = run_args.get("host-list", None)
 
             policy = DragonRunPolicy.from_run_args(run_args)
 

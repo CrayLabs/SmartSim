@@ -169,7 +169,7 @@ class DragonBatchStep(Step):
             env = run_settings.env_vars
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
-            hosts_csv = str(run_args.get("host-list", ""))
+            hosts_csv = run_args.get("host-list", None)
 
             policy = DragonRunPolicy.from_run_args(run_args)
 
