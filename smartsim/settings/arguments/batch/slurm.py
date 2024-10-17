@@ -57,7 +57,10 @@ class SlurmBatchArguments(BatchArguments):
 
         :param walltime: wall time
         :raises ValueError: if walltime format is invalid
+        :raises TypeError: if not str
         """
+        if not isinstance(walltime, str):
+            raise TypeError("walltime argument was not of type str")
         pattern = r"^\d{2}:\d{2}:\d{2}$"
         if walltime and re.match(pattern, walltime):
             self.set("time", str(walltime))
@@ -94,8 +97,11 @@ class SlurmBatchArguments(BatchArguments):
         This sets ``--partition``.
 
         :param partition: partition name
+        :raises TypeError: if not a str
         """
-        self.set("partition", str(partition))
+        if not isinstance(partition, str):
+            raise TypeError("partition argument was not of type str")
+        self.set("partition", partition)
 
     def set_queue(self, queue: str) -> None:
         """alias for set_partition
@@ -115,7 +121,10 @@ class SlurmBatchArguments(BatchArguments):
         This sets ``--cpus-per-task``
 
         :param num_cpus: number of cpus to use per task
+        :raises TypeError: if not int
         """
+        if not isinstance(cpus_per_task, int):
+            raise TypeError("cpus_per_task argument was not of type int")
         self.set("cpus-per-task", str(cpus_per_task))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
