@@ -370,9 +370,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Do not compile RedisAI and the backends",
     )
     parser.add_argument(
-        "--skip-database",
-        action="store_true",
-        help="Do not build the database"
+        "--skip-database", action="store_true", help="Do not build the database"
     )
     parser.add_argument(
         "--skip-torch",
