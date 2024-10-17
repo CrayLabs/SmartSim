@@ -1,5 +1,5 @@
 HPE Cray supercomputers
-=======================
+-----------------------
 
 On certain HPE Cray machines, the SmartSim dependencies have been installed
 system-wide though specific paths and names might vary (please contact the team

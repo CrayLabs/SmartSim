@@ -1,12 +1,12 @@
-PML Scylla
-==========
+Scylla (PML)
+------------
 
 .. warning::
     As of September 2024, the software stack on Scylla is still being finalized.
     Therefore, please consider these instructions as preliminary for now.
 
 One-time Setup
---------------
+^^^^^^^^^^^^^^
 
 To install SmartSim on Scylla, follow these steps:
 
@@ -72,7 +72,7 @@ The following output indicates a successful install:
     16:26:35 login SmartSim[557020:MainThread] INFO Success!
 
 Post-installation
------------------
+^^^^^^^^^^^^^^^^^
 
 After completing the above steps to install SmartSim in a conda environment, you
 can reload the conda environment by running the following commands:

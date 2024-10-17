@@ -1,6 +1,6 @@
 
-Summit at OLCF
-==============
+Summit (OLCF)
+-------------
 
 Since SmartSim does not have a built PowerPC build, the build steps for an IBM
 system are slightly different than other systems.

@@ -4,7 +4,9 @@
 Basic Installation
 ******************
 
-The following will show how to install both SmartSim and SmartRedis.
+The following instructions serve as a guide for installing both SmartSim and
+SmartRedis. SmartSim, despite being a Python-library, has a second build
+step for Redis and RedisAI. Please follow these instructions carefully.
 
 .. note::
 
@@ -30,30 +32,26 @@ The base prerequisites to install SmartSim and SmartRedis wtih CPU-only support 
 
 .. note::
 
-  GCC 9, 11-13 is recommended (here are known issues compiling with GCC 10). For
-  CUDA 11.8, GCC 9 or 11 must be used.
-
-.. warning::
-
-  Apple Clang 15 seems to have issues on MacOS with Apple Silicon. Please modify
-  your path to ensure that a version of GCC installed by brew has priority. Note
-  this seems to be hardcoded to `gcc` and `g++` in the Redis build so ensure that
-  `which gcc g++` do not point to Apple Clang.
-
+  GCC is recommended to build the backends for SmartSim. CUDA 11.8 requires GCC
+  9 or 11, CUDA 12 requires GCC 11 or higher. SmartRedis can be compiled with
+  GCC, Intel, Cray, and Nvidia compilers.
 
 ML Library Support
 ==================
 
-We currently support both Nvidia and AMD GPUs when using RedisAI for GPU inference. The support
-for these GPUs often depends on the version of the CUDA or ROCm stack that is availble on your
-machine. In _most_ cases, the versions backwards compatible. If you encounter problems, please
-contact us and we can build the backend libraries for your desired version of CUDA and ROCm.
+We currently support both Nvidia and AMD GPUs when using RedisAI for GPU
+inference. The support for these GPUs often depends on the version of the CUDA
+or ROCm stack that is availble on your machine. In _most_ cases, the versions of
+the ML frameworks are backwards compatible. If you encounter problems, please
+contact us and we can build the backend libraries for your desired version of
+CUDA and ROCm.
 
 CPU backends are provided for Apple (both Intel and Apple Silicon) and Linux (x86_64).
 
-Be sure to reference the table below to find which versions of the ML libraries are supported for
-your particular platform. Additional, see :ref:`installation notes <install-notes>` for helpful
-information regarding various system types before installation.
+Be sure to reference the table below to find which versions of the ML libraries
+are supported for your particular platform. Additionally, see :ref:`Platform
+Installation Guide <platform-installation>` for helpful information regarding
+for specific systems.
 
 Linux
 -----
@@ -287,8 +285,7 @@ combination.
 
   GPU builds can be troublesome due to the way that RedisAI and the ML-package
   backends look for the CUDA Toolkit and cuDNN libraries. Please see the
-  :ref:`Platform Installation Section <install-notes>` section for guidance.
-
+  :ref:`Install Troubleshooting <installation-troubleshooting>` section for guidance.
 
 .. _dragon_install:
 

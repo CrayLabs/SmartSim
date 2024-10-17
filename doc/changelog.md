@@ -16,8 +16,13 @@ To be released at some point in the future
 Description
 
 - Add instructions for installing SmartSim on PML's Scylla
+- Update install notes and documentation for custom backends
 
 Detailed Notes
+- Update/reorganize the install instructions to include a split between advanced
+  install notes and instructions for specific platforms. Additionally, add
+  instructions for machines which do not have access to the internet.
+  ([SmartSim-PR749](https://github.com/CrayLabs/SmartSim/pull/749))
 - PML's Scylla is still under development. The usual SmartSim
   build instructions do not apply because the GPU dependencies
   have yet to be installed at a system-wide level. Scylla has

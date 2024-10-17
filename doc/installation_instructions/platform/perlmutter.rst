@@ -1,8 +1,8 @@
-NERSC Perlmutter
-================
+Perlmutter (NERSC)
+------------------
 
 One-time Setup
---------------
+^^^^^^^^^^^^^^
 
 To install SmartSim on Perlmutter, follow these steps:
 
@@ -53,7 +53,7 @@ The following output indicates a successful install:
     16:26:35 login SmartSim[557020:MainThread] INFO Success!
 
 Post-installation
------------------
+^^^^^^^^^^^^^^^^^
 
 After completing the above steps to install SmartSim in a conda environment, you
 can reload the conda environment by running the following commands:
