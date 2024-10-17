@@ -1,5 +1,5 @@
-NERSC Perlmutter
-----------------
+Perlmutter (NERSC)
+------------------
 
 One-time Setup
 ^^^^^^^^^^^^^^

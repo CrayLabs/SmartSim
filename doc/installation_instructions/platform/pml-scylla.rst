@@ -1,5 +1,5 @@
-PML Scylla
-----------
+Scylla (PML)
+------------
 
 .. warning::
     As of September 2024, the software stack on Scylla is still being finalized.
