@@ -1,25 +1,25 @@
 
-          {%- if model.run_settings.colocated_db_settings.db_identifier %}
-          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+          {%- if model.run_settings.colocated_fs_settings.fs_identifier %}
+          Feature Store Identifier: {{ model.run_settings.colocated_fs_settings.fs_identifier }}
           {%- else %}
-          Database Identifier: N/A
+          Feature Store Identifier: N/A
           {%- endif %}
-            Database Backend: {{ config.database_cli | get_dbtype }}
-            {%- if model.run_settings.colocated_db_settings %}
-            {%- if model.run_settings.colocated_db_settings.port %}
+            Feature Store Backend: {{ config.database_cli | get_fstype }}
+            {%- if model.run_settings.colocated_fs_settings %}
+            {%- if model.run_settings.colocated_fs_settings.port %}
             Connection Type: TCP
             TCP/IP Port(s):
-              {{ model.run_settings.colocated_db_settings.port }}
+              {{ model.run_settings.colocated_fs_settings.port }}
             {%- endif %}
-            {%- if model.run_settings.colocated_db_settings.unix_socket %}
+            {%- if model.run_settings.colocated_fs_settings.unix_socket %}
             Connection Type: UDS
-            Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+            Unix Socket: {{ model.run_settings.colocated_fs_settings.unix_socket }}
             {%- endif %}
-            {%- if model.run_settings.colocated_db_settings.ifname %}
-            {%- if model.run_settings.colocated_db_settings.ifname | is_list %}
-            Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+            {%- if model.run_settings.colocated_fs_settings.ifname %}
+            {%- if model.run_settings.colocated_fs_settings.ifname | is_list %}
+            Network Interface Name: {{ model.run_settings.colocated_fs_settings.ifname[0] }}
             {%- else %}
-            Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname }}
+            Network Interface Name: {{ model.run_settings.colocated_fs_settings.ifname }}
             {%- endif %}
             {%- endif %}
             Type: Colocated

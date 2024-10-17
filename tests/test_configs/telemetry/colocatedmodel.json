@@ -12,10 +12,10 @@
     {
       "run_id": "002816b",
       "timestamp": 1699037041106269774,
-      "model": [
+      "application": [
         {
-          "name": "colocated_model",
-          "path": "/tmp/my-exp/colocated_model",
+          "name": "colocated_application",
+          "path": "/tmp/my-exp/colocated_application",
           "exe_args": [
             "/path/to/my/script.py"
           ],
@@ -33,7 +33,7 @@
             "Configure": [],
             "Copy": []
           },
-          "colocated_db": {
+          "colocated_fs": {
             "settings": {
               "unix_socket": "/tmp/redis.socket",
               "socket_permissions": 755,
@@ -41,19 +41,19 @@
               "cpus": 1,
               "custom_pinning": "0",
               "debug": false,
-              "db_identifier": "",
+              "fs_identifier": "",
               "rai_args": {
                 "threads_per_queue": null,
                 "inter_op_parallelism": null,
                 "intra_op_parallelism": null
               },
-              "extra_db_args": {}
+              "extra_fs_args": {}
             },
             "scripts": [],
             "models": []
           },
           "telemetry_metadata": {
-            "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_ensemble/002816b/model/colocated_model",
+            "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_ensemble/002816b/application/colocated_application",
             "step_id": "4139111.21",
             "task_id": "21529",
             "managed": true
@@ -62,7 +62,7 @@
           "err_file": "/tmp/my-exp/colocated_model/colocated_model.err"
         }
       ],
-      "orchestrator": [],
+      "featurestore": [],
       "ensemble": []
     }
   ]

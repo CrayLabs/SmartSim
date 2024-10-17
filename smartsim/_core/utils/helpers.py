@@ -27,47 +27,99 @@
 """
 A file of helper functions for SmartSim
 """
+from __future__ import annotations
+
 import base64
 import collections.abc
+import functools
+import itertools
 import os
 import signal
 import subprocess
+import sys
 import typing as t
 import uuid
+import warnings
 from datetime import datetime
-from functools import lru_cache
 from pathlib import Path
 from shutil import which
+
+from deprecated import deprecated
+from typing_extensions import TypeAlias
 
 if t.TYPE_CHECKING:
     from types import FrameType
 
+    from typing_extensions import TypeVarTuple, Unpack
+
+    from smartsim.launchable.job import Job
+
+    _Ts = TypeVarTuple("_Ts")
+
 
 _TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime"]
+_T = t.TypeVar("_T")
+_HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
+_NestedJobSequenceType: TypeAlias = "t.Sequence[Job | _NestedJobSequenceType]"
 
-def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
-    """Unpack the unformatted database identifier
+
+def unpack(value: _NestedJobSequenceType) -> t.Generator[Job, None, None]:
+    """Unpack any iterable input in order to obtain a
+    single sequence of values
+
+    :param value: Sequence containing elements of type Job or other
+    sequences that are also of type _NestedJobSequenceType
+    :return: flattened list of Jobs"""
+    from smartsim.launchable.job import Job
+
+    for item in value:
+
+        if isinstance(item, t.Iterable):
+            # string are iterable of string. Avoid infinite recursion
+            if isinstance(item, str):
+                raise TypeError("jobs argument was not of type Job")
+            yield from unpack(item)
+        else:
+            if not isinstance(item, Job):
+                raise TypeError("jobs argument was not of type Job")
+            yield item
+
+
+def check_name(name: str) -> None:
+    """
+    Checks if the input name is valid.
+
+    :param name: The name to be checked.
+
+    :raises ValueError: If the name contains the path separator (os.path.sep).
+    """
+    if os.path.sep in name:
+        raise ValueError("Invalid input: String contains the path separator.")
+
+
+def unpack_fs_identifier(fs_id: str, token: str) -> t.Tuple[str, str]:
+    """Unpack the unformatted feature store identifier
     and format for env variable suffix using the token
-    :param db_id: the unformatted database identifier eg. identifier_1
-    :param token: character to use to construct the db suffix
-    :return: db id suffix and formatted db_id e.g. ("_identifier_1", "identifier_1")
+    :param fs_id: the unformatted feature store identifier eg. identifier_1
+    :param token: character to use to construct the fs suffix
+    :return: fs id suffix and formatted fs_id e.g. ("_identifier_1", "identifier_1")
     """
 
-    if db_id == "orchestrator":
+    if fs_id == "featurestore":
         return "", ""
-    db_name_suffix = token + db_id
-    return db_name_suffix, db_id
+    fs_name_suffix = token + fs_id
+    return fs_name_suffix, fs_id
 
 
-def unpack_colo_db_identifier(db_id: str) -> str:
-    """Create database identifier suffix for colocated database
+def unpack_colo_fs_identifier(fs_id: str) -> str:
+    """Create feature store identifier suffix for colocated feature store
 
-    :param db_id: the unformatted database identifier
-    :return: db suffix
+    :param fs_id: the unformatted feature store identifier
+    :return: fs suffix
     """
-    return "_" + db_id if db_id else ""
+    return "_" + fs_id if fs_id else ""
 
 
 def create_short_id_str() -> str:
@@ -80,13 +132,13 @@ def create_lockfile_name() -> str:
     return f"smartsim-{lock_suffix}.lock"
 
 
-@lru_cache(maxsize=20, typed=False)
+@functools.lru_cache(maxsize=20, typed=False)
 def check_dev_log_level() -> bool:
     lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
     return lvl == "developer"
 
 
-def fmt_dict(value: t.Dict[str, t.Any]) -> str:
+def fmt_dict(value: t.Mapping[str, t.Any]) -> str:
     fmt_str = ""
     for k, v in value.items():
         fmt_str += "\t" + str(k) + " = " + str(v)
@@ -115,10 +167,13 @@ def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
 
     :param exe: executable or file
+    :raises ValueError: if no executable is provided
     :raises TypeError: if file is not an executable
     :raises FileNotFoundError: if executable cannot be found
     """
 
+    if not exe:
+        raise ValueError("No executable provided")
     # which returns none if not found
     in_path = which(exe)
     if not in_path:
@@ -214,6 +269,7 @@ def cat_arg_and_value(arg_name: str, value: str) -> str:
     return f"--{arg_name}={value}"
 
 
+@deprecated("Remove after completing fixes in MLI tests post-merge of refactor")
 def _installed(base_path: Path, backend: str) -> bool:
     """
     Check if a backend is available for the RedisAI module.
@@ -225,6 +281,7 @@ def _installed(base_path: Path, backend: str) -> bool:
     return backend_so.is_file()
 
 
+@deprecated("Remove after completing fixes in MLI tests post-merge of refactor")
 def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
     # pylint: disable-next=import-outside-toplevel
     from ..._core.config import CONFIG
@@ -235,6 +292,7 @@ def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
     return base_path
 
 
+@deprecated("Remove after completing fixes in MLI tests post-merge of refactor")
 def installed_redisai_backends(
     backends_path: t.Optional[str] = None,
 ) -> t.Set[_TRedisAIBackendStr]:
@@ -316,6 +374,20 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
         check=False,
     )
     return process.stdout.decode("utf-8"), process.returncode
+
+
+def _stringify_id(_id: int) -> str:
+    """Return the CPU id as a string if an int, otherwise raise a ValueError
+
+    :params _id: the CPU id as an int
+    :returns: the CPU as a string
+    """
+    if isinstance(_id, int):
+        if _id < 0:
+            raise ValueError("CPU id must be a nonnegative number")
+        return str(_id)
+
+    raise TypeError(f"Argument is of type '{type(_id)}' not 'int'")
 
 
 class CrayExPlatformResult:
@@ -412,6 +484,102 @@ def is_crayex_platform() -> bool:
     return result.is_cray
 
 
+def first(predicate: t.Callable[[_T], bool], iterable: t.Iterable[_T]) -> _T | None:
+    """Return the first instance of an iterable that meets some precondition.
+    Any elements of the iterable that do not meet the precondition will be
+    forgotten. If no item in the iterable is found that meets the predicate,
+    `None` is returned. This is roughly equivalent to
+
+    .. highlight:: python
+    .. code-block:: python
+
+        next(filter(predicate, iterable), None)
+
+    but does not require the predicate to be a type guard to type check.
+
+    :param predicate: A function that returns `True` or `False` given a element
+                      of the iterable
+    :param iterable: An iterable that yields elements to evealuate
+    :returns: The first element of the iterable to make the the `predicate`
+              return `True`
+    """
+    return next((item for item in iterable if predicate(item)), None)
+
+
+def unique(iterable: t.Iterable[_HashableT]) -> t.Iterable[_HashableT]:
+    """Iterate over an iterable, yielding only unique values.
+
+    This helper function will maintain a set of seen values in memory and yield
+    any values not previously seen during iteration. This is nice if you know
+    you will be iterating over the iterable exactly once, but if you need to
+    iterate over the iterable multiple times, it would likely use less memory
+    to cast the iterable to a set first.
+
+    :param iterable: An iterable of possibly not unique values.
+    :returns: An iterable of unique values with order unchanged from the
+        original iterable.
+    """
+    seen = set()
+    for item in filter(lambda x: x not in seen, iterable):
+        seen.add(item)
+        yield item
+
+
+def group_by(
+    fn: t.Callable[[_T], _HashableT], items: t.Iterable[_T]
+) -> t.Mapping[_HashableT, t.Collection[_T]]:
+    """Iterate over an iterable and group the items based on the return of some
+    mapping function. Works similar to SQL's "GROUP BY" statement, but works
+    over an arbitrary mapping function.
+
+    :param fn: A function mapping the iterable values to some hashable values
+    :items: An iterable yielding items to group by mapping function return.
+    :returns: A mapping of mapping function return values to collection of
+        items that returned that value when fed to the mapping function.
+    """
+    groups = collections.defaultdict[_HashableT, list[_T]](list)
+    for item in items:
+        groups[fn(item)].append(item)
+    return dict(groups)
+
+
+def pack_params(
+    fn: t.Callable[[Unpack[_Ts]], _T]
+) -> t.Callable[[tuple[Unpack[_Ts]]], _T]:
+    r"""Take a function that takes an unspecified number of positional arguments
+    and turn it into a function that takes one argument of type `tuple` of
+    unspecified length. The main use case is largely just for iterating over an
+    iterable where arguments are "pre-zipped" into tuples. E.g.
+
+    .. highlight:: python
+    .. code-block:: python
+
+        def pretty_print_dict(d):
+            fmt_pair = lambda key, value: f"{repr(key)}: {repr(value)},"
+            body = "\n".join(map(pack_params(fmt_pair), d.items()))
+            #                    ^^^^^^^^^^^^^^^^^^^^^
+            print(f"{{\n{textwrap.indent(body, '    ')}\n}}")
+
+        pretty_print_dict({"spam": "eggs", "foo": "bar", "hello": "world"})
+        # prints:
+        # {
+        #     'spam': 'eggs',
+        #     'foo': 'bar',
+        #     'hello': 'world',
+        # }
+
+    :param fn: A callable that takes many positional parameters.
+    :returns: A callable that takes a single positional parameter of type tuple
+        of with the same shape as the original callable parameter list.
+    """
+
+    @functools.wraps(fn)
+    def packed(args: tuple[Unpack[_Ts]]) -> _T:
+        return fn(*args)
+
+    return packed
+
+
 @t.final
 class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
     """Registers a stack of callables to be called when a signal is
@@ -490,3 +658,46 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         if did_push := fn not in self:
             self.push(fn)
         return did_push
+
+    def _create_pinning_string(
+        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
+    ) -> t.Optional[str]:
+        """Create a comma-separated string of CPU ids. By default, ``None``
+        returns 0,1,...,cpus-1; an empty iterable will disable pinning
+        altogether, and an iterable constructs a comma separated string of
+        integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
+
+        :params pin_ids: CPU ids
+        :params cpu: number of CPUs
+        :raises TypeError: if pin id is not an iterable of ints
+        :returns: a comma separated string of CPU ids
+        """
+
+        try:
+            pin_ids = tuple(pin_ids) if pin_ids is not None else None
+        except TypeError:
+            raise TypeError(
+                "Expected a cpu pinning specification of type iterable of ints or "
+                f"iterables of ints. Instead got type `{type(pin_ids)}`"
+            ) from None
+
+        # Deal with MacOSX limitations first. The "None" (default) disables pinning
+        # and is equivalent to []. The only invalid option is a non-empty pinning
+        if sys.platform == "darwin":
+            if pin_ids:
+                warnings.warn(
+                    "CPU pinning is not supported on MacOSX. Ignoring pinning "
+                    "specification.",
+                    RuntimeWarning,
+                )
+            return None
+
+        # Flatten the iterable into a list and check to make sure that the resulting
+        # elements are all ints
+        if pin_ids is None:
+            return ",".join(_stringify_id(i) for i in range(cpus))
+        if not pin_ids:
+            return None
+        pin_ids = ((x,) if isinstance(x, int) else x for x in pin_ids)
+        to_fmt = itertools.chain.from_iterable(pin_ids)
+        return ",".join(sorted({_stringify_id(x) for x in to_fmt}))

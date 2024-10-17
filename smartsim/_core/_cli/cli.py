@@ -108,7 +108,7 @@ def default_cli() -> SmartCli:
     menu = [
         MenuItemConfig(
             "build",
-            "Build SmartSim dependencies (Redis, RedisAI, Dragon, ML runtimes)",
+            "Build SmartSim dependencies (Dragon, ML runtimes)",
             build_execute,
             build_parser,
         ),
@@ -117,11 +117,6 @@ def default_cli() -> SmartCli:
             "Remove previous ML runtime installation",
             clean_execute,
             clean_parser,
-        ),
-        MenuItemConfig(
-            "dbcli",
-            "Print the path to the redis-cli binary",
-            dbcli_execute,
         ),
         MenuItemConfig(
             "site",

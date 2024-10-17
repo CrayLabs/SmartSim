@@ -12,7 +12,7 @@
         {
             "run_id": "8c0fbb1",
             "timestamp": 1699037881502730708,
-            "model": [
+            "application": [
                 {
                     "name": "perroquet_0",
                     "path": "/tmp/my-exp/perroquet_0",
@@ -179,7 +179,7 @@
                     "err_file": "/tmp/my-exp/perroquet_4/perroquet_4.err"
                 }
             ],
-            "orchestrator": [],
+            "featurestore": [],
             "ensemble": []
         }
     ]

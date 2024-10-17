@@ -1,9 +1,9 @@
 
-    = Database Identifier: {{ db.entity.db_identifier }} =
-        Shards: {{ db.entity.num_shards }}
+    = Feature Store Identifier: {{ fs.entity.fs_identifier }} =
+        Shards: {{ fs.entity.num_shards }}
         TCP/IP Port(s):
-          {%- for port in db.entity.ports %}
+          {%- for port in fs.entity.ports %}
           {{ port }}
           {%- endfor %}
-        Network Interface: {{ db.entity.run_settings.exe_args | get_ifname }}
-        Type: {{ config.database_cli | get_dbtype }}
+        Network Interface: {{ fs.entity.run_settings.exe_args | get_ifname }}
+        Type: {{ config.database_cli | get_fstype }}

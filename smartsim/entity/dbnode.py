@@ -34,20 +34,21 @@ import typing as t
 from dataclasses import dataclass
 
 from .._core.config import CONFIG
+from .._core.utils.helpers import expand_exe_path
 from ..error import SSDBFilesNotParseable
 from ..log import get_logger
-from ..settings.base import RunSettings
+from ..settings import RunSettings
 from .entity import SmartSimEntity
 
 logger = get_logger(__name__)
 
 
-class DBNode(SmartSimEntity):
-    """DBNode objects are the entities that make up the orchestrator.
-    Each database node can be launched in a cluster configuration
-    and take launch multiple databases per node.
+class FSNode(SmartSimEntity):
+    """FSNode objects are the entities that make up the feature store.
+    Each feature store node can be launched in a cluster configuration
+    and take launch multiple feature stores per node.
 
-    To configure how each instance of the database operates, look
+    To configure how each instance of the feature store operates, look
     into the smartsimdb.conf.
     """
 
@@ -55,13 +56,18 @@ class DBNode(SmartSimEntity):
         self,
         name: str,
         path: str,
+        exe: str,
+        exe_args: t.List[str],
         run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
-        db_identifier: str = "",
+        fs_identifier: str = "",
     ) -> None:
-        """Initialize a database node within an orchestrator."""
-        super().__init__(name, path, run_settings)
+        """Initialize a feature store node within an feature store."""
+        super().__init__(name)
+        self.run_settings = run_settings
+        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
         self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 
@@ -72,7 +78,7 @@ class DBNode(SmartSimEntity):
         ):
             raise ValueError("output_files must be of type list[str]")
         self._output_files = output_files
-        self.db_identifier = db_identifier
+        self.fs_identifier = fs_identifier
 
     @property
     def num_shards(self) -> int:
@@ -88,14 +94,14 @@ class DBNode(SmartSimEntity):
             (host,) = self.hosts
         except ValueError:
             raise ValueError(
-                f"Multiple hosts detected for this DB Node: {', '.join(self.hosts)}"
+                f"Multiple hosts detected for this FS Node: {', '.join(self.hosts)}"
             ) from None
         return host
 
     @property
     def hosts(self) -> t.List[str]:
         if not self._hosts:
-            self._hosts = self._parse_db_hosts()
+            self._hosts = self._parse_fs_hosts()
         return self._hosts
 
     def clear_hosts(self) -> None:
@@ -112,9 +118,9 @@ class DBNode(SmartSimEntity):
     def set_hosts(self, hosts: t.List[str]) -> None:
         self._hosts = [str(host) for host in hosts]
 
-    def remove_stale_dbnode_files(self) -> None:
+    def remove_stale_fsnode_files(self) -> None:
         """This function removes the .conf, .err, and .out files that
-        have the same names used by this dbnode that may have been
+        have the same names used by this fsnode that may have been
         created from a previous experiment execution.
         """
 
@@ -146,7 +152,7 @@ class DBNode(SmartSimEntity):
         This function should bu used if and only if ``_mpmd==True``
 
         :param port: port number
-        :return: the dbnode configuration file name
+        :return: the fsnode configuration file name
         """
         if self.num_shards == 1:
             return [f"nodes-{self.name}-{port}.conf"]
@@ -182,7 +188,7 @@ class DBNode(SmartSimEntity):
             return cls._parse_launched_shard_info_from_iterable(ifstream, num_shards)
 
     def get_launched_shard_info(self) -> "t.List[LaunchedShardData]":
-        """Parse the launched database shard info from the output files
+        """Parse the launched feature store shard info from the output files
 
         :raises SSDBFilesNotParseable: if all shard info could not be found
         :return: The found launched shard info
@@ -206,16 +212,16 @@ class DBNode(SmartSimEntity):
 
         if len(ips) < self.num_shards:
             msg = (
-                f"Failed to parse the launched DB shard information from file(s) "
+                f"Failed to parse the launched FS shard information from file(s) "
                 f"{', '.join(output_files)}. Found the information for "
-                f"{len(ips)} out of {self.num_shards} DB shards."
+                f"{len(ips)} out of {self.num_shards} FS shards."
             )
             logger.error(msg)
             raise SSDBFilesNotParseable(msg)
         return ips
 
-    def _parse_db_hosts(self) -> t.List[str]:
-        """Parse the database hosts/IPs from the output files
+    def _parse_fs_hosts(self) -> t.List[str]:
+        """Parse the feature store hosts/IPs from the output files
 
         The IP address is preferred, but if hostname is only present
         then a lookup to /etc/hosts is done through the socket library.
@@ -228,7 +234,7 @@ class DBNode(SmartSimEntity):
 
 @dataclass(frozen=True)
 class LaunchedShardData:
-    """Data class to write and parse data about a launched database shard"""
+    """Data class to write and parse data about a launched feature store shard"""
 
     name: str
     hostname: str

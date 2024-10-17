@@ -12,8 +12,8 @@
     {
       "run_id": "d041b90",
       "timestamp": 1698679830384608928,
-      "model": [],
-      "orchestrator": [],
+      "application": [],
+      "featurestore": [],
       "ensemble": [
         {
           "name": "my-ens",
@@ -32,7 +32,7 @@
             ]
           },
           "batch_settings": {},
-          "models": [
+          "applications": [
             {
               "name": "my-ens_0",
               "path": "/home/someuser/code/ss",

@@ -29,8 +29,6 @@ import typing as t
 from os import environ
 
 import numpy as np
-from smartredis import Client, Dataset
-from smartredis.error import RedisReplyError
 
 from ..error import SSInternalError
 from ..log import get_logger
@@ -75,48 +73,25 @@ class DataInfo:
         self.num_classes = num_classes
         self._ds_name = form_name(self.list_name, "info")
 
-    def publish(self, client: Client) -> None:
-        """Upload DataInfo information to Orchestrator
+    def publish(self) -> None:
+        """Upload DataInfo information to FeatureStore
 
         The information is put on the DB as a DataSet, with strings
         stored as metastrings and integers stored as metascalars.
 
-        :param client: Client to connect to Database
+        :param client: Client to connect to Feature Store
         """
-        info_ds = Dataset(self._ds_name)
-        info_ds.add_meta_string("sample_name", self.sample_name)
-        if self.target_name:
-            info_ds.add_meta_string("target_name", self.target_name)
-        if self.num_classes:
-            info_ds.add_meta_scalar("num_classes", self.num_classes)
-        client.put_dataset(info_ds)
+        ...
 
-    def download(self, client: Client) -> None:
-        """Download DataInfo information from Orchestrator
+    def download(self) -> None:
+        """Download DataInfo information from FeatureStore
 
         The information retrieved from the DB is used to populate
         this object's members. If the information is not available
         on the DB, the object members are not modified.
 
-        :param client: Client to connect to Database
+        :param client: Client to connect to Feature Store
         """
-        try:
-            info_ds = client.get_dataset(self._ds_name)
-        except RedisReplyError as e:
-            # If the info was not published, proceed with default parameters
-            logger.warning(
-                "Could not retrieve data for DataInfo object, the following "
-                "values will be kept."
-            )
-            logger.error(f"Original error from Redis was {e}")
-            logger.warning(str(self))
-            return
-        self.sample_name = info_ds.get_meta_strings("sample_name")[0]
-        field_names = info_ds.get_metadata_field_names()
-        if "target_name" in field_names:
-            self.target_name = info_ds.get_meta_strings("target_name")[0]
-        if "num_classes" in field_names:
-            self.num_classes = int(info_ds.get_meta_scalars("num_classes")[0])
 
     def __repr__(self) -> str:
         strings = ["DataInfo object"]
@@ -134,7 +109,7 @@ class TrainingDataUploader:
 
     This class can be used to upload samples following a simple convention
     for naming. Once created, the function `publish_info` can be used
-    to put all details about the data set on the Orchestrator. A training
+    to put all details about the data set on the FeatureStore. A training
     process can thus access them and get all relevant information to download
     the batches which are uploaded.
 
@@ -142,12 +117,12 @@ class TrainingDataUploader:
     and the data will be stored following the naming convention specified
     by the attributes of this class.
 
-    :param list_name: Name of the dataset as stored on the Orchestrator
+    :param list_name: Name of the dataset as stored on the FeatureStore
     :param sample_name: Name of samples tensor in uploaded Datasets
     :param target_name: Name of targets tensor (if needed) in uploaded Datasets
     :param num_classes: Number of classes of targets, if categorical
-    :param cluster: Whether the SmartSim Orchestrator is being run as a cluster
-    :param address: Address of Redis DB as <ip_address>:<port>
+    :param cluster: Whether the SmartSim FeatureStore is being run as a cluster
+    :param address:
     :param rank: Rank of DataUploader in multi-process application (e.g. MPI rank).
     :param verbose: If output should be logged to screen.
 
@@ -169,7 +144,6 @@ class TrainingDataUploader:
         if not sample_name:
             raise ValueError("Sample name can not be empty")
 
-        self.client = Client(cluster, address=address)
         self.verbose = verbose
         self.batch_idx = 0
         self.rank = rank
@@ -192,7 +166,7 @@ class TrainingDataUploader:
         return self._info.num_classes
 
     def publish_info(self) -> None:
-        self._info.publish(self.client)
+        self._info.publish()
 
     def put_batch(
         self,
@@ -200,25 +174,20 @@ class TrainingDataUploader:
         targets: t.Optional[np.ndarray] = None,  # type: ignore[type-arg]
     ) -> None:
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
-        batch_ds = Dataset(batch_ds_name)
-        batch_ds.add_tensor(self.sample_name, samples)
         if (
             targets is not None
             and self.target_name
             and (self.target_name != self.sample_name)
         ):
-            batch_ds.add_tensor(self.target_name, targets)
             if self.verbose:
                 logger.info(f"Putting dataset {batch_ds_name} with samples and targets")
         else:
             if self.verbose:
                 logger.info(f"Putting dataset {batch_ds_name} with samples")
 
-        self.client.put_dataset(batch_ds)
-        self.client.append_to_list(self.list_name, batch_ds)
         if self.verbose:
             logger.info(f"Added dataset to list {self.list_name}")
-            logger.info(f"List length {self.client.get_list_length(self.list_name)}")
+            logger.info(f"List length")
 
         self.batch_idx += 1
 
@@ -261,8 +230,8 @@ class DataDownloader:
         download, if a string is passed, it is used to download DataInfo data
         from DB, assuming it was stored with ``list_name=data_info_or_list_name``
     :param list_name: Name of aggregation list used to upload data
-    :param cluster: Whether the Orchestrator will be run as a cluster
-    :param address: Address of Redis client as <ip_address>:<port>
+    :param cluster: Whether the FeatureStore will be run as a cluster
+    :param address:
     :param replica_rank: When StaticDataDownloader is used distributedly,
         indicates the rank of this object
     :param num_replicas: When BatchDownlaoder is used distributedly, indicates
@@ -301,11 +270,9 @@ class DataDownloader:
             self._info = data_info_or_list_name
         elif isinstance(data_info_or_list_name, str):
             self._info = DataInfo(list_name=data_info_or_list_name)
-            client = Client(self.cluster, self.address)
-            self._info.download(client)
+            self._info.download()
         else:
             raise TypeError("data_info_or_list_name must be either DataInfo or str")
-        self._client: t.Optional[Client] = None
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")
 
@@ -313,12 +280,6 @@ class DataDownloader:
 
         if init_samples:
             self.init_samples(max_fetch_trials, wait_interval)
-
-    @property
-    def client(self) -> Client:
-        if self._client is None:
-            raise ValueError("Client not initialized")
-        return self._client
 
     def log(self, message: str) -> None:
         if self.verbose:
@@ -387,7 +348,6 @@ class DataDownloader:
 
         :param init_trials: maximum number of attempts to fetch data
         """
-        self._client = Client(self.cluster, self.address)
 
         num_trials = 0
         max_trials = init_trials or -1
@@ -406,72 +366,14 @@ class DataDownloader:
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_exists(self, batch_name: str, target_name: str) -> bool:
-        if self.need_targets:
-            return all(
-                self.client.tensor_exists(datum) for datum in [batch_name, target_name]
-            )
-
-        return bool(self.client.tensor_exists(batch_name))
+    def _data_exists(self, batch_name: str, target_name: str) -> None:
+        pass
 
     def _add_samples(self, indices: t.List[int]) -> None:
-        datasets: t.List[Dataset] = []
-
-        if self.num_replicas == 1:
-            datasets = self.client.get_dataset_list_range(
-                self.list_name, start_index=indices[0], end_index=indices[-1]
-            )
-        else:
-            for idx in indices:
-                datasets += self.client.get_dataset_list_range(
-                    self.list_name, start_index=idx, end_index=idx
-                )
-
-        if self.samples is None:
-            self.samples = datasets[0].get_tensor(self.sample_name)
-            if self.need_targets:
-                self.targets = datasets[0].get_tensor(self.target_name)
-
-            if len(datasets) > 1:
-                datasets = datasets[1:]
-
-        if self.samples is not None:
-            for dataset in datasets:
-                self.samples = np.concatenate(
-                    (
-                        t.cast("npt.NDArray[t.Any]", self.samples),
-                        dataset.get_tensor(self.sample_name),
-                    )
-                )
-                if self.need_targets:
-                    self.targets = np.concatenate(
-                        (
-                            t.cast("npt.NDArray[t.Any]", self.targets),
-                            dataset.get_tensor(self.target_name),
-                        )
-                    )
-
-            self.num_samples = t.cast("npt.NDArray[t.Any]", self.samples).shape[0]
-            self.indices = np.arange(self.num_samples)
-
-        self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
+        pass
 
     def _update_samples_and_targets(self) -> None:
         self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
-
-        for uploader_idx, uploader_key in enumerate(self.uploader_keys):
-            if uploader_key:
-                self.client.use_list_ensemble_prefix(True)
-                self.client.set_data_source(uploader_key)
-
-            list_length = self.client.get_list_length(self.list_name)
-
-            # Strictly greater, because next_index is 0-based
-            if list_length > self.next_indices[uploader_idx]:
-                start = self.next_indices[uploader_idx]
-                indices = list(range(start, list_length, self.num_replicas))
-                self._add_samples(indices)
-                self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
 
     def update_data(self) -> None:
         if self.dynamic:
