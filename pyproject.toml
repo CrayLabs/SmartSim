@@ -154,7 +154,7 @@ module = [
   "smartsim._core.launcher.lsf.*",
   "smartsim._core.launcher.pbs.*",
   "smartsim._core.launcher.sge.*",
-  "smartsim._core.launcher.slurm.slurmLauncher",
+  "smartsim._core.launcher.slurm.*",
   "smartsim._core.launcher.step.*",
   "smartsim._core.launcher.step_info",
   "smartsim._core.launcher.step_mapping",
