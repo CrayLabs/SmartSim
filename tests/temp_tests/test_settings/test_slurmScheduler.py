@@ -134,3 +134,27 @@ def test_sbatch_manual():
     formatted = slurmScheduler.format_batch_args()
     result = ["--nodes=5", "--account=A3531", "--time=10:00:00"]
     assert formatted == result
+
+
+def test_batch_arguments_type_set_walltime():
+    bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="walltime argument was not of type str"):
+        bs.batch_args.set_walltime(27)
+
+
+def test_batch_arguments_type_set_cpus_per_task():
+    bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="cpus_per_task argument was not of type int"):
+        bs.batch_args.set_cpus_per_task("invalid")
+
+
+def test_batch_arguments_type_set_partition():
+    bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="partition argument was not of type str"):
+        bs.batch_args.set_partition(27)
+
+
+def test_batch_arguments_type_set_hostlist(scheduler):
+    bs = BatchSettings(batch_scheduler="slurm", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="host_list argument must be a list of strings"):
+        bs.batch_args.set_hostlist([25, 37])

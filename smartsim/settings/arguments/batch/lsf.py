@@ -57,8 +57,11 @@ class BsubBatchArguments(BatchArguments):
         :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours,
                          if time is supplied in hh:mm:ss format, seconds
                          will be ignored and walltime will be set as ``hh:mm``
+        :raises TypeError: if not type str
         """
         # For compatibility with other launchers, as explained in docstring
+        if not isinstance(walltime, str):
+            raise TypeError("walltime argument was not of type str")
         if walltime:
             if len(walltime.split(":")) > 2:
                 walltime = ":".join(walltime.split(":")[:2])

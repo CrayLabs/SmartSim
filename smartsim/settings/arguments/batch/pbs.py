@@ -95,7 +95,10 @@ class QsubBatchArguments(BatchArguments):
 
         :param walltime: wall time
         :raises ValueError: if walltime format is invalid
+        :raises TypeError: if not type str
         """
+        if not isinstance(walltime, str):
+            raise TypeError("walltime argument was not of type str")
         pattern = r"^\d{2}:\d{2}:\d{2}$"
         if walltime and re.match(pattern, walltime):
             self.set("walltime", walltime)
@@ -110,7 +113,7 @@ class QsubBatchArguments(BatchArguments):
         """
         if not isinstance(queue, str):
             raise TypeError("queue argument was not of type str")
-        self.set("q", str(queue))
+        self.set("q", queue)
 
     def set_ncpus(self, num_cpus: int) -> None:
         """Set the number of cpus obtained in each node.
@@ -134,7 +137,7 @@ class QsubBatchArguments(BatchArguments):
         """
         if not isinstance(account, str):
             raise TypeError("account argument was not of type str")
-        self.set("A", str(account))
+        self.set("A", account)
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
