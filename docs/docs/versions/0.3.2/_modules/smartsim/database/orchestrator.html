@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>smartsim.database.orchestrator &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.database.orchestrator</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.database.orchestrator</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">getcwd</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span> <span class="nn">psutil</span>
+<span class="kn">import</span> <span class="nn">redis</span>
+<span class="kn">from</span> <span class="nn">rediscluster</span> <span class="kn">import</span> <span class="n">RedisCluster</span>
+<span class="kn">from</span> <span class="nn">rediscluster.exceptions</span> <span class="kn">import</span> <span class="n">ClusterDownError</span><span class="p">,</span> <span class="n">RedisClusterException</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;rediscluster&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">..config</span> <span class="kn">import</span> <span class="n">CONFIG</span>
+<span class="kn">from</span> <span class="nn">..entity</span> <span class="kn">import</span> <span class="n">DBNode</span><span class="p">,</span> <span class="n">EntityList</span>
+<span class="kn">from</span> <span class="nn">..error</span> <span class="kn">import</span> <span class="n">SmartSimError</span>
+<span class="kn">from</span> <span class="nn">..launcher.util.shell</span> <span class="kn">import</span> <span class="n">execute_cmd</span>
+<span class="kn">from</span> <span class="nn">..settings.settings</span> <span class="kn">import</span> <span class="n">RunSettings</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Orchestrator"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.Orchestrator">[docs]</a><span class="k">class</span> <span class="nc">Orchestrator</span><span class="p">(</span><span class="n">EntityList</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Orchestrator is an in-memory database that can be launched</span>
+<span class="sd">    alongside entities in SmartSim. Data can be transferred between</span>
+<span class="sd">    entities by using one of the Python, C, C++ or Fortran clients</span>
+<span class="sd">    within an entity.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;lo&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize an Orchestrator reference for local launch</span>
+
+<span class="sd">        :param port: TCP/IP port, defaults to 6379</span>
+<span class="sd">        :type port: int, optional</span>
+<span class="sd">        :param interface: network interface, defaults to &quot;lo&quot;</span>
+<span class="sd">        :type interface: str, optional</span>
+
+<span class="sd">        Extra configurations for RedisAI</span>
+
+<span class="sd">        See https://oss.redislabs.com/redisai/configuration/</span>
+
+<span class="sd">        :param threads_per_queue: threads per GPU device</span>
+<span class="sd">        :type threads_per_queue: int, optional</span>
+<span class="sd">        :param inter_op_threads: threads accross CPU operations</span>
+<span class="sd">        :type inter_op_threads: int, optional</span>
+<span class="sd">        :param intra_op_threads: threads per CPU operation</span>
+<span class="sd">        :type intra_op_threads: int, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">getcwd</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interface</span> <span class="o">=</span> <span class="n">interface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_network_interface</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_threads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;threads_per_queue&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inter_threads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;inter_op_threads&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intra_threads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;intra_op_threads&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;orchestrator&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_shards</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the number of DB shards contained in the orchestrator.</span>
+<span class="sd">        This might differ from the number of ``DBNode`` objects, as each</span>
+<span class="sd">        ``DBNode`` may start more than one shard (e.g. with MPMD).</span>
+
+<span class="sd">        :returns: num_shards</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the hostnames of orchestrator instance hosts</span>
+
+<span class="sd">        Note that this will only be populated after the orchestrator</span>
+<span class="sd">        has been launched by SmartSim.</span>
+
+<span class="sd">        :return: hostnames</span>
+<span class="sd">        :rtype: list[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_db_hosts</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span>
+
+<div class="viewcode-block" id="Orchestrator.remove_stale_files"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.Orchestrator.remove_stale_files">[docs]</a>    <span class="k">def</span> <span class="nf">remove_stale_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Can be used to remove database files of a previous launch&quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">dbnode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="n">dbnode</span><span class="o">.</span><span class="n">remove_stale_dbnode_files</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">create_cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># cov-wlm</span>
+        <span class="sd">&quot;&quot;&quot;Connect launched cluster instances.</span>
+
+<span class="sd">        Should only be used in the case where cluster initialization</span>
+<span class="sd">        needs to occur manually which is not often.</span>
+
+<span class="sd">        :raises SmartSimError: if cluster creation fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ip_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+            <span class="n">ip</span> <span class="o">=</span> <span class="n">get_ip_from_host</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">:</span>
+                <span class="n">address</span> <span class="o">=</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">ip</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="p">))</span>
+                <span class="n">ip_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="c1"># call cluster command</span>
+        <span class="n">redis_cli</span> <span class="o">=</span> <span class="n">CONFIG</span><span class="o">.</span><span class="n">redis_cli</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="n">redis_cli</span><span class="p">,</span> <span class="s2">&quot;--cluster&quot;</span><span class="p">,</span> <span class="s2">&quot;create&quot;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="n">ip_list</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--cluster-replicas&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">]</span>
+        <span class="n">returncode</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">execute_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">proc_input</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Database &#39;--cluster create&#39; command failed&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+        <span class="c1"># Ensure cluster has been setup correctly</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_cluster_status</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database cluster created with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_shards</span><span class="si">}</span><span class="s2"> shards&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Orchestrator.check_cluster_status"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.Orchestrator.check_cluster_status">[docs]</a>    <span class="k">def</span> <span class="nf">check_cluster_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trials</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>  <span class="c1"># cov-wlm</span>
+        <span class="sd">&quot;&quot;&quot;Check that a cluster is up and running</span>
+<span class="sd">        :param trials: number of attempts to verify cluster status</span>
+<span class="sd">        :type trials: int, optional</span>
+<span class="sd">        :raises SmartSimError: If cluster status cannot be verified</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">host_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">:</span>
+                <span class="n">host_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+                <span class="n">host_dict</span><span class="p">[</span><span class="s2">&quot;host&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_ip_from_host</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+                <span class="n">host_dict</span><span class="p">[</span><span class="s2">&quot;port&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">port</span>
+                <span class="n">host_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">host_dict</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Beginning database cluster status check...&quot;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">trials</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># wait for cluster to spin up</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">redis_tester</span> <span class="o">=</span> <span class="n">RedisCluster</span><span class="p">(</span><span class="n">startup_nodes</span><span class="o">=</span><span class="n">host_list</span><span class="p">)</span>
+                <span class="n">redis_tester</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;__test__&quot;</span><span class="p">,</span> <span class="s2">&quot;__test__&quot;</span><span class="p">)</span>
+                <span class="n">redis_tester</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;__test__&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cluster status verified&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">ClusterDownError</span><span class="p">,</span> <span class="n">RedisClusterException</span><span class="p">,</span> <span class="n">redis</span><span class="o">.</span><span class="n">RedisError</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cluster still spinning up...&quot;</span><span class="p">)</span>
+                <span class="n">trials</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">trials</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Cluster setup could not be verified&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Orchestrator.get_address"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.Orchestrator.get_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return database addresses</span>
+
+<span class="sd">        :return: addresses</span>
+<span class="sd">        :rtype: list[str]</span>
+
+<span class="sd">        :raises SmartSimError: If database address cannot be found or is not active</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Could not find database address&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Database is not active&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_address</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">addresses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">):</span>
+            <span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">ip</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">))))</span>
+        <span class="k">return</span> <span class="n">addresses</span>
+
+<div class="viewcode-block" id="Orchestrator.is_active"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.Orchestrator.is_active">[docs]</a>    <span class="k">def</span> <span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check if the database is active</span>
+
+<span class="sd">        :return: True if database is active, False otherwise</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># if single shard</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_shards</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">client</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">Redis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">ping</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="n">redis</span><span class="o">.</span><span class="n">RedisError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># if a cluster</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">check_cluster_status</span><span class="p">(</span><span class="n">trials</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="n">SmartSimError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_AI_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the RedisAI module from third-party installations</span>
+
+<span class="sd">        :raises SSConfigError: if retrieval fails</span>
+<span class="sd">        :return: path to module</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--loadmodule&quot;</span><span class="p">,</span> <span class="n">CONFIG</span><span class="o">.</span><span class="n">redisai</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_threads</span><span class="p">:</span>
+            <span class="n">module</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;THREADS_PER_QUEUE </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">queue_threads</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inter_threads</span><span class="p">:</span>
+            <span class="n">module</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INTER_OP_PARALLELISM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inter_threads</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">intra_threads</span><span class="p">:</span>
+            <span class="n">module</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INTRA_OP_PARALLELISM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">intra_threads</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;port&quot;</span><span class="p">,</span> <span class="mi">6379</span><span class="p">)</span>
+
+        <span class="n">db_per_host</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;db_per_host&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">db_per_host</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                <span class="s2">&quot;Local Orchestrator does not support multiple databases per node (MPMD)&quot;</span>
+            <span class="p">)</span>
+        <span class="n">db_nodes</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;db_nodes&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">db_nodes</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                <span class="s2">&quot;Local Orchestrator does not support multiple database shards&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># collect database launch command information</span>
+        <span class="n">db_conf</span> <span class="o">=</span> <span class="n">CONFIG</span><span class="o">.</span><span class="n">redis_conf</span>
+        <span class="n">redis_exe</span> <span class="o">=</span> <span class="n">CONFIG</span><span class="o">.</span><span class="n">redis_exe</span>
+        <span class="n">ai_module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_AI_module</span><span class="p">()</span>
+        <span class="n">start_script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_redis_start_script</span><span class="p">()</span>
+
+        <span class="n">start_script_args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">start_script</span><span class="p">,</span>  <span class="c1"># redis_starter.py</span>
+            <span class="sa">f</span><span class="s2">&quot;+ifname=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># pass interface to start script</span>
+            <span class="s2">&quot;+command&quot;</span><span class="p">,</span>  <span class="c1"># command flag for argparser</span>
+            <span class="n">redis_exe</span><span class="p">,</span>  <span class="c1"># redis-server</span>
+            <span class="n">db_conf</span><span class="p">,</span>  <span class="c1"># redis6.conf file</span>
+            <span class="n">ai_module</span><span class="p">,</span>  <span class="c1"># redisai.so</span>
+            <span class="s2">&quot;--port&quot;</span><span class="p">,</span>  <span class="c1"># redis port</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">),</span>  <span class="c1"># port number</span>
+        <span class="p">]</span>
+
+        <span class="n">exe_args</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">start_script_args</span><span class="p">)</span>
+
+        <span class="c1"># python is exe because we are using redis_starter.py to start redis</span>
+        <span class="n">run_settings</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">)</span>
+        <span class="n">db_node_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_0&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">DBNode</span><span class="p">(</span><span class="n">db_node_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">,</span> <span class="p">[</span><span class="n">port</span><span class="p">])</span>
+
+        <span class="c1"># add DBNode to Orchestrator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports</span> <span class="o">=</span> <span class="p">[</span><span class="n">port</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_cluster_args</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the arguments necessary for cluster creation&quot;&quot;&quot;</span>
+        <span class="n">cluster_conf</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s2">&quot;nodes-&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">),</span> <span class="s2">&quot;.conf&quot;</span><span class="p">))</span>
+        <span class="n">db_args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--cluster-enabled yes&quot;</span><span class="p">,</span> <span class="s2">&quot;--cluster-config-file&quot;</span><span class="p">,</span> <span class="n">cluster_conf</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">db_args</span>
+
+    <span class="k">def</span> <span class="nf">_get_db_hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">hosts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dbnode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dbnode</span><span class="o">.</span><span class="n">_multihost</span><span class="p">:</span>
+                <span class="n">hosts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dbnode</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">hosts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">dbnode</span><span class="o">.</span><span class="n">hosts</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">hosts</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_find_redis_start_script</span><span class="p">():</span>
+        <span class="n">current_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+        <span class="n">script_path</span> <span class="o">=</span> <span class="n">current_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;redis_starter.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">script_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_check_network_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">net_if_addrs</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">net_if_addrs</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">net_if_addrs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface</span> <span class="o">!=</span> <span class="s2">&quot;lo&quot;</span><span class="p">:</span>
+            <span class="n">available</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">net_if_addrs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface</span><span class="si">}</span><span class="s2"> is not a valid network interface on this node. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;This could be because the head node doesn&#39;t have the same networks, if so, ignore this.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found network interfaces are: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_ip_from_host</span><span class="p">(</span><span class="n">host</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the IP address for the interconnect.</span>
+
+<span class="sd">    :param host: hostname of the compute node e.g. nid00004</span>
+<span class="sd">    :type host: str</span>
+<span class="sd">    :returns: ip of host</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ip_address</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ip_address</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

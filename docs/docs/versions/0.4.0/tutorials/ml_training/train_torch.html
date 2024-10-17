@@ -1,0 +1,1144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Train a Neural Network loading data from and to SmartSim &#8212; SmartSim 0.4.0 documentation</title>
+    
+  <link href="../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.0 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../community.html">
+   Community
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../training.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../_sources/tutorials/ml_training/train_torch.ipynb.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#1.-First-scenario:-an-ensemble-of-parallel-producers-and-a-single-trainer">
+   1. First scenario: an ensemble of parallel producers and a single trainer
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.1-Workflow-components">
+     1.1 Workflow components
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.2-Request-an-allocation">
+     1.2 Request an allocation
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.3-Run-the-workflow">
+     1.3 Run the workflow
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.4-Stop-the-workflow-(optional)-and-release-the-allocation">
+     1.4 Stop the workflow (optional) and release the allocation
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#2-Second-scenario:-an-ensemble-of-parallel-producers-and-a-distributed-trainer">
+   2 Second scenario: an ensemble of parallel producers and a distributed trainer
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.1-Workflow-components">
+     2.1 Workflow components
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.2-Request-an-allocation">
+     2.2 Request an allocation
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.3-Run-the-workflow">
+     2.3 Run the workflow
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.4-Stop-the-workflow-(optional)-and-release-the-allocation">
+     2.4 Stop the workflow (optional) and release the allocation
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Train a Neural Network loading data from and to SmartSim</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#1.-First-scenario:-an-ensemble-of-parallel-producers-and-a-single-trainer">
+   1. First scenario: an ensemble of parallel producers and a single trainer
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.1-Workflow-components">
+     1.1 Workflow components
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.2-Request-an-allocation">
+     1.2 Request an allocation
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.3-Run-the-workflow">
+     1.3 Run the workflow
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#1.4-Stop-the-workflow-(optional)-and-release-the-allocation">
+     1.4 Stop the workflow (optional) and release the allocation
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#2-Second-scenario:-an-ensemble-of-parallel-producers-and-a-distributed-trainer">
+   2 Second scenario: an ensemble of parallel producers and a distributed trainer
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.1-Workflow-components">
+     2.1 Workflow components
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.2-Request-an-allocation">
+     2.2 Request an allocation
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.3-Run-the-workflow">
+     2.3 Run the workflow
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2.4-Stop-the-workflow-(optional)-and-release-the-allocation">
+     2.4 Stop the workflow (optional) and release the allocation
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Train-a-Neural-Network-loading-data-from-and-to-SmartSim">
+<h1>Train a Neural Network loading data from and to SmartSim<a class="headerlink" href="#Train-a-Neural-Network-loading-data-from-and-to-SmartSim" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial, we will see how one can set up a workflow in which one or multiple processes produce data (e.g. in a simulation) and one or multiple processes consume the data to train a neural network. The key to achieve this behavior is to use SmartSim to load data from and to the database.</p>
+<p>This tutorial works on Slurm, but can easily be adapted to any supported Workload Manager (PBS, Cobalt, or LSF), with an only difference: in Slurm, we are allocating the resources <em>from</em> this Notebook, whereas with other WLMs, this Notebook has to be started <em>within</em> an existing allocation.</p>
+<p>Note: this tutorial requires the python packages <code class="docutils literal notranslate"><span class="pre">torch</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi4py</span></code> and <code class="docutils literal notranslate"><span class="pre">horovod</span></code>.</p>
+<section id="1.-First-scenario:-an-ensemble-of-parallel-producers-and-a-single-trainer">
+<h2>1. First scenario: an ensemble of parallel producers and a single trainer<a class="headerlink" href="#1.-First-scenario:-an-ensemble-of-parallel-producers-and-a-single-trainer" title="Permalink to this headline">¶</a></h2>
+<p>The first use case is similar to a common workflow: - several copies of a simulation (possibly with different initializations) are running, each one consisting of multiple MPI ranks. Each rank produces samples (e.g. data points computed by the simulation) at regular intervals (e.g. each time iteration) - a neural network has to be trained on the data produced by the simulation, and as new data is produced, the neural network needs to add it to its training data set.</p>
+<section id="1.1-Workflow-components">
+<h3>1.1 Workflow components<a class="headerlink" href="#1.1-Workflow-components" title="Permalink to this headline">¶</a></h3>
+<p>We will use SmartSim to allow the exchange of data between the data-producing processes and the training service. Thus, the first component which we will need to launch is the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>. This is a fairly small example, thus we will run a single-node DB.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">smartsim.database</span> <span class="kn">import</span> <span class="n">SlurmOrchestrator</span>
+<span class="kn">from</span> <span class="nn">smartsim.settings</span> <span class="kn">import</span> <span class="n">SrunSettings</span>
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">slurm</span>
+
+<span class="k">def</span> <span class="nf">launch_cluster_orc</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">alloc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Just spin up a database cluster&quot;&quot;&quot;</span>
+
+    <span class="n">db</span> <span class="o">=</span> <span class="n">SlurmOrchestrator</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span>
+                            <span class="n">db_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                            <span class="n">batch</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">,</span>
+                            <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">)</span>
+
+
+    <span class="c1"># generate directories for output files</span>
+    <span class="c1"># pass in objects to make dirs for</span>
+    <span class="n">experiment</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># start the database on interactive allocation</span>
+    <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">db</span>
+<br/></pre></div>
+</div>
+</div>
+<p>Our data will be very simple: each rank will produce random samples, drawing values from a Gaussian distribution centered at the rank id, and each sample will be labeled with the rank id. The neural network will be trained to infer which rank produced a data sample. Thus, our data set will have a total number of labels equal to the number of ranks in each replicas.</p>
+<p>The data-producing processes will be started as part of an ensemble of two replicas (this mimics the execution of two copies of the simulation). The actual script producing the data is called <code class="docutils literal notranslate"><span class="pre">data_uploader.py</span></code> and is contained in the <code class="docutils literal notranslate"><span class="pre">torch</span></code> directory. Its content is</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim.ml</span> <span class="kn">import</span> <span class="n">TrainingDataUploader</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">environ</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+
+<span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+<span class="n">mpi_rank</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+<span class="n">mpi_size</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span>
+
+<span class="n">batches_per_loop</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">data_uploader</span> <span class="o">=</span> <span class="n">TrainingDataUploader</span><span class="p">(</span><span class="n">num_classes</span><span class="o">=</span><span class="n">mpi_size</span><span class="p">,</span>
+                                     <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                     <span class="n">producer_prefixes</span><span class="o">=</span><span class="s2">&quot;uploader&quot;</span><span class="p">,</span>
+                                     <span class="n">num_ranks</span><span class="o">=</span><span class="n">mpi_size</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SSKEYOUT&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;uploader_0&quot;</span><span class="p">:</span>
+    <span class="n">data_uploader</span><span class="o">.</span><span class="n">publish_info</span><span class="p">()</span>
+
+
+<span class="c1"># Start &quot;simulation&quot;, produce data every two minutes, for thirty minutes</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">):</span>
+    <span class="n">new_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mpi_rank</span><span class="p">),</span> <span class="n">scale</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="o">*</span><span class="n">batches_per_loop</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">new_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="o">*</span><span class="n">batches_per_loop</span><span class="p">,))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">mpi_rank</span>
+
+    <span class="n">data_uploader</span><span class="o">.</span><span class="n">put_batch</span><span class="p">(</span><span class="n">new_batch</span><span class="p">,</span> <span class="n">new_labels</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mpi_rank</span><span class="si">}</span><span class="s2">: New data pushed to DB&quot;</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">120</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>as the script is running in python, we can use the <code class="docutils literal notranslate"><span class="pre">TrainingDataUploader</span></code> class, which streamlines uploading of the data samples from the simulation. Here is an explanation of the arguments: - <code class="docutils literal notranslate"><span class="pre">num_classes</span></code> is the number of classes of our training data set - <code class="docutils literal notranslate"><span class="pre">smartredis_cluster=False</span></code> specifies that the DB is not a cluster (it is a single shard) - <code class="docutils literal notranslate"><span class="pre">producer_prefixes</span></code> is used to identify the SmartSim entity names of the processes producing data: this is useful in the case the training
+service has several incoming entities (as defined in SmartSim, through the environment variable <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code>), but it should expect data only from a subset of them. - <code class="docutils literal notranslate"><span class="pre">num_ranks</span></code> is the number of concurrent data loaders withing this application, in this case it is simply the number of MPI ranks, as each process will upload its own data.</p>
+<p>At each iteration, each rank of “simulation” calls <code class="docutils literal notranslate"><span class="pre">put_batch</span></code> to upload a batch of samples and the corresponding labels. The batch will be uploaded on the DB and stored under a key composed by a prefix (defaulting to <code class="docutils literal notranslate"><span class="pre">samples</span></code>), the sub-index, and the iteration number, which increases monotonically every time a batch is uploaded.</p>
+<p>Now that we know the content of <code class="docutils literal notranslate"><span class="pre">data_uploader.py</span></code>, we can create an entity representing the uploader ensemble.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_uploader</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tasks_per_node</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;Start an ensemble of two processes producing sample batches at</span>
+<span class="sd">      regular intervals.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">srun</span> <span class="o">=</span> <span class="n">SrunSettings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+                     <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;data_uploader.py&quot;</span><span class="p">,</span>
+                     <span class="n">env_vars</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;PYTHONUNBUFFERED&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">},</span>
+                     <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">)</span>
+   <span class="n">srun</span><span class="o">.</span><span class="n">set_nodes</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+   <span class="n">srun</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="n">tasks_per_node</span><span class="p">)</span>
+
+   <span class="n">uploader</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;uploader&quot;</span><span class="p">,</span> <span class="n">replicas</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">srun</span><span class="p">)</span>
+
+   <span class="c1"># create directories for the output files and copy</span>
+   <span class="c1"># scripts to execution location inside newly created dir</span>
+   <span class="c1"># only necessary if its not an executable (python is executable here)</span>
+   <span class="n">uploader</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;./torch/data_uploader.py&quot;</span><span class="p">])</span>
+   <span class="n">experiment</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">uploader</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+   <span class="k">return</span> <span class="n">uploader</span>
+</pre></div>
+</div>
+</div>
+<p>The last component of our workflow is the trainer. This process will keep downloading samples as they are produced, and use them to train a neural network.</p>
+<p>Here is the content of the <code class="docutils literal notranslate"><span class="pre">training_service.py</span></code> script, stored in the <code class="docutils literal notranslate"><span class="pre">torch</span></code> directory</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torchvision.models</span> <span class="k">as</span> <span class="nn">models</span>
+<span class="kn">from</span> <span class="nn">smartsim.ml.torch</span> <span class="kn">import</span> <span class="n">DynamicDataGenerator</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">set_start_method</span><span class="p">(</span><span class="s1">&#39;spawn&#39;</span><span class="p">)</span>
+    <span class="n">training_set</span> <span class="o">=</span> <span class="n">DynamicDataGenerator</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                 <span class="n">init_samples</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                 <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">trainloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">training_set</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">num_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">mobilenet_v2</span><span class="p">()</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+    <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Started training&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>  <span class="c1"># loop over the dataset multiple times</span>
+
+        <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">epoch_running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">output_period</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">trainloader</span><span class="p">):</span>
+            <span class="c1"># get the inputs; data is a list of [inputs, labels]</span>
+            <span class="n">inputs</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+            <span class="c1"># zero the parameter gradients</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+            <span class="c1"># forward + backward + optimize</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+            <span class="c1"># print statistics</span>
+            <span class="n">running_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">epoch_running_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="n">output_period</span> <span class="o">==</span> <span class="p">(</span><span class="n">output_period</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>    <span class="c1"># print every &quot;output_period&quot; mini-batches</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%d</span><span class="s1">, </span><span class="si">%5d</span><span class="s1">] loss: </span><span class="si">%.3f</span><span class="s1">&#39;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">running_loss</span> <span class="o">/</span> <span class="n">output_period</span><span class="p">))</span>
+                <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%d</span><span class="s1">, </span><span class="si">%5d</span><span class="s1">] loss: </span><span class="si">%.3f</span><span class="s1">&#39;</span> <span class="o">%</span>
+            <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">epoch_running_loss</span> <span class="o">/</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="n">epoch_running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Finished Training&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The key component is the <code class="docutils literal notranslate"><span class="pre">DataGenerator</span></code> object. Since the DB contains the metadata of the <code class="docutils literal notranslate"><span class="pre">TrainingDataUploader</span></code>, and these are stored under a default key, the <code class="docutils literal notranslate"><span class="pre">DataGenerator</span></code> will retrieve them and use them to know the key of the uploaded batches of samples and labels. We need to specify <code class="docutils literal notranslate"><span class="pre">init_samples=False</span></code>, because initialization of the data set will be performed by the <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> workers: notice that the <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> is imported from <code class="docutils literal notranslate"><span class="pre">smartsim.ml.torch</span></code>: it is our custom
+implementation of a data loader, which will also triger a data update at the beginning of each epoch, to check if there are new samples available.</p>
+<p>We create a SmartSim entity representing the trainer and we are ready to go!</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_trainer</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">alloc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Start a process running a training service which will</span>
+<span class="sd">       download batches from the DB.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">srun</span> <span class="o">=</span> <span class="n">SrunSettings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+                        <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;training_service.py&quot;</span><span class="p">,</span>
+                        <span class="n">env_vars</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;PYTHONUNBUFFERED&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">},</span>
+                        <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">)</span>
+    <span class="n">srun</span><span class="o">.</span><span class="n">set_tasks</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">trainer</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;trainer&quot;</span><span class="p">,</span> <span class="n">srun</span><span class="p">)</span>
+
+    <span class="c1"># create directories for the output files and copy</span>
+    <span class="c1"># scripts to execution location inside newly created dir</span>
+    <span class="c1"># only necessary if its not an executable (python is executable here)</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="s2">&quot;./torch/training_service.py&quot;</span><span class="p">)</span>
+    <span class="n">experiment</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">trainer</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">trainer</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="1.2-Request-an-allocation">
+<h3>1.2 Request an allocation<a class="headerlink" href="#1.2-Request-an-allocation" title="Permalink to this headline">¶</a></h3>
+<p>We need one node for the DB, two for the producer ensemble, and one for the trainer, thus we request 4 nodes to be allocated.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">alloc</span> <span class="o">=</span> <span class="n">slurm</span><span class="o">.</span><span class="n">get_allocation</span><span class="p">(</span><span class="n">nodes</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="s2">&quot;03:00:00&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;constraint&quot;</span><span class="p">:</span> <span class="s2">&quot;V100&quot;</span><span class="p">,</span> <span class="s2">&quot;partition&quot;</span><span class="p">:</span> <span class="s2">&quot;spider&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="1.3-Run-the-workflow">
+<h3>1.3 Run the workflow<a class="headerlink" href="#1.3-Run-the-workflow" title="Permalink to this headline">¶</a></h3>
+<p>Now that all components are available, we create the SmartSim experiment representing our workflow. Notice that the line</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">uploader_model</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>sets the <code class="docutils literal notranslate"><span class="pre">uploader</span></code> process so that tensor keys produced within it will be prefixed with its SmartSim entity name, and the lines</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">uploader</span> <span class="ow">in</span> <span class="n">uploader_model</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+    <span class="n">trainer_model</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">uploader</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>make sure that each uploader replica (within the ensemble) is set as an incoming entity of the <code class="docutils literal notranslate"><span class="pre">trainer_model</span></code>. This will allow the <code class="docutils literal notranslate"><span class="pre">trainer_model</span></code> to know which processes are producing batches it will need to download.</p>
+<p>We call <code class="docutils literal notranslate"><span class="pre">exp.start</span></code> and the workflow is launched! As the trainer was started with <code class="docutils literal notranslate"><span class="pre">verbose=True</span></code>, we can look at its output in <code class="docutils literal notranslate"><span class="pre">launch_streaming</span></code>: we will see that it keeps downloading batches at the end of each epoch, as expected.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;launch_streaming&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;slurm&quot;</span><span class="p">)</span>
+
+<span class="n">db_port</span> <span class="o">=</span> <span class="mi">6780</span>
+
+<span class="c1"># start the database</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">launch_cluster_orc</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">db_port</span><span class="p">,</span> <span class="n">alloc</span><span class="p">)</span>
+<span class="n">uploader_model</span> <span class="o">=</span> <span class="n">create_uploader</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">uploader_model</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">uploader_model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">trainer_model</span> <span class="o">=</span> <span class="n">create_trainer</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">alloc</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">uploader</span> <span class="ow">in</span> <span class="n">uploader_model</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+    <span class="n">trainer_model</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">uploader</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">trainer_model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># shutdown the database because we don&#39;t need it anymore</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="1.4-Stop-the-workflow-(optional)-and-release-the-allocation">
+<h3>1.4 Stop the workflow (optional) and release the allocation<a class="headerlink" href="#1.4-Stop-the-workflow-(optional)-and-release-the-allocation" title="Permalink to this headline">¶</a></h3>
+<p>If we did not wait until completion of the previous cell, but we stopped it, we need to stop the SmartSim entities.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">uploader_model</span><span class="p">,</span> <span class="n">trainer_model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Finally, we release the allocation.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">slurm</span><span class="o">.</span><span class="n">release_allocation</span><span class="p">(</span><span class="n">alloc</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="2-Second-scenario:-an-ensemble-of-parallel-producers-and-a-distributed-trainer">
+<h2>2 Second scenario: an ensemble of parallel producers and a distributed trainer<a class="headerlink" href="#2-Second-scenario:-an-ensemble-of-parallel-producers-and-a-distributed-trainer" title="Permalink to this headline">¶</a></h2>
+<p>In the second scenario, we use Horovod to distribute the training and use multiple ranks. Each rank will download only a portion of the dataset, thus speeding up the download and training process.</p>
+<section id="2.1-Workflow-components">
+<h3>2.1 Workflow components<a class="headerlink" href="#2.1-Workflow-components" title="Permalink to this headline">¶</a></h3>
+<p>The only component we change with respect to the previous example, is the training service, which is now defined in <code class="docutils literal notranslate"><span class="pre">training_service_hvd.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torchvision.models</span> <span class="k">as</span> <span class="nn">models</span>
+
+<span class="kn">from</span> <span class="nn">smartsim.ml.torch</span> <span class="kn">import</span> <span class="n">DynamicDataGenerator</span><span class="p">,</span> <span class="n">DataLoader</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+
+<span class="kn">import</span> <span class="nn">horovod.torch</span> <span class="k">as</span> <span class="nn">hvd</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="c1"># Initialize Horovod</span>
+    <span class="n">hvd</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+    <span class="n">hvd_rank</span> <span class="o">=</span> <span class="n">hvd</span><span class="o">.</span><span class="n">rank</span><span class="p">()</span>
+    <span class="n">hvd_size</span> <span class="o">=</span> <span class="n">hvd</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+
+    <span class="c1"># Pin GPU to be used to process local rank (one GPU per process)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="n">hvd</span><span class="o">.</span><span class="n">local_rank</span><span class="p">())</span>
+
+    <span class="n">torch</span><span class="o">.</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">set_start_method</span><span class="p">(</span><span class="s1">&#39;spawn&#39;</span><span class="p">)</span>
+    <span class="n">training_set</span> <span class="o">=</span> <span class="n">DynamicDataGenerator</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                 <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                 <span class="n">init_samples</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                 <span class="n">num_replicas</span><span class="o">=</span><span class="n">hvd_size</span><span class="p">,</span>
+                                 <span class="n">replica_rank</span><span class="o">=</span><span class="n">hvd_rank</span><span class="p">)</span>
+
+    <span class="n">trainloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">training_set</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">num_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">mobilenet_v2</span><span class="p">()</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+    <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="o">*</span><span class="n">hvd_size</span><span class="p">)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">hvd</span><span class="o">.</span><span class="n">DistributedOptimizer</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">named_parameters</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
+    <span class="n">hvd</span><span class="o">.</span><span class="n">broadcast_parameters</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">root_rank</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rank </span><span class="si">{</span><span class="n">hvd_rank</span><span class="si">}</span><span class="s2">: Started training&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>  <span class="c1"># loop over the dataset multiple times</span>
+
+        <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">epoch_running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">hvd_rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">output_period</span> <span class="o">=</span> <span class="mi">100</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">trainloader</span><span class="p">):</span>
+            <span class="c1"># get the inputs; data is a list of [inputs, labels]</span>
+            <span class="n">inputs</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+            <span class="c1"># zero the parameter gradients</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+            <span class="c1"># forward + backward + optimize</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+            <span class="c1"># print statistics</span>
+            <span class="n">running_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">epoch_running_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">hvd_rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="n">output_period</span> <span class="o">==</span> <span class="p">(</span><span class="n">output_period</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>    <span class="c1"># print every &quot;output_period&quot; mini-batches</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%d</span><span class="s1">, </span><span class="si">%5d</span><span class="s1">] loss: </span><span class="si">%.3f</span><span class="s1">&#39;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">running_loss</span> <span class="o">/</span> <span class="n">output_period</span><span class="p">))</span>
+                    <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">if</span> <span class="n">hvd_rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%d</span><span class="s1">, </span><span class="si">%5d</span><span class="s1">] loss: </span><span class="si">%.3f</span><span class="s1">&#39;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">epoch_running_loss</span> <span class="o">/</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)))</span>
+            <span class="n">epoch_running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Finished Training&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Compared to the previous training service, we notice that the only thing changing for the <code class="docutils literal notranslate"><span class="pre">DataGenerator</span></code> is that we need to specify the total number of replicas, which is equal to the total number of Horovod ranks, and the rank of each replica, which corresponds to the Horovod rank. The rest of the training service script is modified according to the standard Horovod distributed training rules.</p>
+<p>Let’s define the SmartSim entity representing the training service.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_trainer_hvd</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tasks_per_node</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;Start a process running a distributed training service which will</span>
+<span class="sd">      download batches from the DB and use Horovod to distribute</span>
+<span class="sd">      data and compute global weight updates.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">srun</span> <span class="o">=</span> <span class="n">SrunSettings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+                     <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;training_service_hvd.py&quot;</span><span class="p">,</span>
+                     <span class="n">env_vars</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;PYTHONUNBUFFERED&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">},</span>
+                     <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">)</span>
+   <span class="n">srun</span><span class="o">.</span><span class="n">set_nodes</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+   <span class="n">srun</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="n">tasks_per_node</span><span class="p">)</span>
+
+   <span class="n">trainer</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;trainer&quot;</span><span class="p">,</span> <span class="n">srun</span><span class="p">)</span>
+
+   <span class="c1"># create directories for the output files and copy</span>
+   <span class="c1"># scripts to execution location inside newly created dir</span>
+   <span class="c1"># only necessary if its not an executable (python is executable here)</span>
+   <span class="n">trainer</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="s2">&quot;./torch/training_service_hvd.py&quot;</span><span class="p">)</span>
+   <span class="n">experiment</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">trainer</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+   <span class="k">return</span> <span class="n">trainer</span>
+<br/></pre></div>
+</div>
+</div>
+</section>
+<section id="2.2-Request-an-allocation">
+<h3>2.2 Request an allocation<a class="headerlink" href="#2.2-Request-an-allocation" title="Permalink to this headline">¶</a></h3>
+<p>As before, we need one node for the DB, two for the producer ensemble, and one for the trainer, thus we request 4 nodes to be allocated.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">alloc</span> <span class="o">=</span> <span class="n">slurm</span><span class="o">.</span><span class="n">get_allocation</span><span class="p">(</span><span class="n">nodes</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="s2">&quot;03:00:00&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;constraint&quot;</span><span class="p">:</span> <span class="s2">&quot;V100&quot;</span><span class="p">,</span> <span class="s2">&quot;partition&quot;</span><span class="p">:</span> <span class="s2">&quot;spider&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="2.3-Run-the-workflow">
+<h3>2.3 Run the workflow<a class="headerlink" href="#2.3-Run-the-workflow" title="Permalink to this headline">¶</a></h3>
+<p>Now that all components are available, we create the SmartSim experiment representing our workflow. The setup is completely identical to the previous example, thus we can start the experiment and look at the output files to see that now each replica has a smaller portion of the dataset, and the training proceeds much faster!</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;launch_streaming_hvd&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;slurm&quot;</span><span class="p">)</span>
+
+<span class="n">db_port</span> <span class="o">=</span> <span class="mi">6780</span>
+
+<span class="c1"># start the database</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">launch_cluster_orc</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">db_port</span><span class="p">,</span> <span class="n">alloc</span><span class="p">)</span>
+<span class="n">uploader_model</span> <span class="o">=</span> <span class="n">create_uploader</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">uploader_model</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">uploader_model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">trainer_model</span> <span class="o">=</span> <span class="n">create_trainer_hvd</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">uploader</span> <span class="ow">in</span> <span class="n">uploader_model</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+    <span class="n">trainer_model</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">uploader</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">trainer_model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># shutdown the database because we don&#39;t need it anymore</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="2.4-Stop-the-workflow-(optional)-and-release-the-allocation">
+<h3>2.4 Stop the workflow (optional) and release the allocation<a class="headerlink" href="#2.4-Stop-the-workflow-(optional)-and-release-the-allocation" title="Permalink to this headline">¶</a></h3>
+<p>If we did not wait until completion of the previous cell, but we stopped it, we need to stop the SmartSim entities.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">uploader_model</span><span class="p">,</span> <span class="n">trainer_model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Finally, we release the allocation.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">slurm</span><span class="o">.</span><span class="n">release_allocation</span><span class="p">(</span><span class="n">alloc</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

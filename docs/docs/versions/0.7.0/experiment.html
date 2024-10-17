@@ -1,0 +1,1124 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Experiments &#8212; SmartSim 0.7.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom_tab_style.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'experiment';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Run Settings" href="run_settings.html" />
+    <link rel="prev" title="Online Training" href="tutorials/ml_training/surrogate/train_surrogate.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.7.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run_settings.html">Run Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch_settings.html">Batch Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ensemble.html">Ensemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ss_logger.html">Logger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dragon.html">Dragon</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fexperiment.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/experiment.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Experiments</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#launchers">Launchers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#entities">Entities</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orchestrator">Orchestrator</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#model">Model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ensemble">Ensemble</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#file-structure">File Structure</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#default">Default</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configure">Configure</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#initializing">Initializing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generating">Generating</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#previewing">Previewing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#starting">Starting</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stopping">Stopping</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="experiments">
+<h1>Experiments<a class="headerlink" href="#experiments" title="Permalink to this heading">#</a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">#</a></h2>
+<p>SmartSim helps automate the deployment of AI-enabled workflows on HPC systems. With SmartSim, users
+can describe and launch combinations of applications and AI/ML infrastructure to produce novel and
+scalable workflows. SmartSim supports launching these workflows on a diverse set of systems, including
+local environments such as Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS Pro, and LSF).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> API is SmartSim’s top level API that provides users with methods for creating, combining,
+configuring, launching and monitoring <a class="reference internal" href="#entities-exp-docs"><span class="std std-ref">entities</span></a> in an AI-enabled workflow. More specifically, the
+<code class="docutils literal notranslate"><span class="pre">Experiment</span></code> API offers three customizable workflow components that are created and initialized via factory
+methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#orchestrator-exp-docs"><span class="std std-ref">Orchestrator</span></a></p></li>
+<li><p><a class="reference internal" href="#model-exp-docs"><span class="std std-ref">Model</span></a></p></li>
+<li><p><a class="reference internal" href="#ensemble-exp-docs"><span class="std std-ref">Ensemble</span></a></p></li>
+</ul>
+<p>Settings are given to <code class="docutils literal notranslate"><span class="pre">Model</span></code> and <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> objects to provide parameters for how the job should be executed. The
+<a class="reference internal" href="api/smartsim_api.html#experiment-api"><span class="std std-ref">Experiment API</span></a> offers two customizable Settings objects that are created via the factory methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="run_settings.html#run-settings-doc"><span class="std std-ref">RunSettings</span></a></p></li>
+<li><p><a class="reference internal" href="batch_settings.html#batch-settings-doc"><span class="std std-ref">BatchSettings</span></a></p></li>
+</ul>
+<p>Once a workflow component is initialized (e.g. <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>, <code class="docutils literal notranslate"><span class="pre">Model</span></code> or <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>), a user has access
+to the associated entity API which supports configuring and retrieving the entities’ information:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="api/smartsim_api.html#orchestrator-api"><span class="std std-ref">Orchestrator API</span></a></p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#model-api"><span class="std std-ref">Model API</span></a></p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#ensemble-api"><span class="std std-ref">Ensemble API</span></a></p></li>
+</ul>
+<p>There is no limit to the number of SmartSim entities a user can
+initialize within an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>.</p>
+<figure class="align-default" id="id1">
+<img alt="_images/Experiment.png" src="_images/Experiment.png" />
+<figcaption>
+<p><span class="caption-text">Sample <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> showing a user application leveraging
+machine learning infrastructure launched by SmartSim and connected
+to online analysis and visualization via the in-memory <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.</span><a class="headerlink" href="#id1" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<p>Find an example of the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> class and factory methods used within a
+workflow in the <a class="reference internal" href="#exp-example"><span class="std std-ref">Example</span></a> section of this page.</p>
+</section>
+<section id="launchers">
+<span id="launcher-exp-docs"></span><h2>Launchers<a class="headerlink" href="#launchers" title="Permalink to this heading">#</a></h2>
+<p>SmartSim supports launching AI-enabled workflows on a wide variety of systems, including locally on a Mac or
+Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS Pro, and LSF). When creating a SmartSim
+<code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, the user has the opportunity to specify the <cite>launcher</cite> type or defer to automatic <cite>launcher</cite> selection.
+<cite>Launcher</cite> selection determines how SmartSim translates entity configurations into system calls to launch,
+manage, and monitor. Currently, SmartSim supports 7 <cite>launcher</cite> options:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">local</span></code> <strong>[default]</strong>: for single-node, workstation, or laptop</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm</span></code>: for systems using the Slurm scheduler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pbs</span></code>: for systems using the PBS Pro scheduler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pals</span></code>: for systems using the PALS scheduler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lsf</span></code>: for systems using the LSF scheduler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dragon</span></code>: if Dragon is installed in the current Python environment, see <a class="reference internal" href="installation_instructions/basic.html#dragon-install"><span class="std std-ref">Dragon Install</span></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">auto</span></code>: have SmartSim auto-detect the launcher to use (will not detect <code class="docutils literal notranslate"><span class="pre">dragon</span></code>)</p></li>
+</ol>
+<p>The <a class="reference internal" href="dragon.html#dragon"><span class="std std-ref">Dragon-based launcher</span></a> can be run on PBS- or Slurm-based systems
+(MPI applications are supported only when Cray PMI or Cray PALS are available).</p>
+<p>If the systems <cite>launcher</cite> cannot be found or no <cite>launcher</cite> argument is provided, the default value of
+<cite>“local”</cite> will be assigned which will start all <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> launched entities on the
+localhost.</p>
+<p>For examples specifying a <cite>launcher</cite> during <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> initialization, navigate to the
+<code class="docutils literal notranslate"><span class="pre">Experiment</span></code> <a class="reference internal" href="api/smartsim_api.html#exp-init"><span class="std std-ref">__init__ special method</span></a> in the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> API docstring.</p>
+</section>
+<section id="entities">
+<span id="entities-exp-docs"></span><h2>Entities<a class="headerlink" href="#entities" title="Permalink to this heading">#</a></h2>
+<p>Entities are SmartSim API objects that can be launched and
+managed on the compute system through the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> API.
+The SmartSim entities include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Model</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Ensemble</span></code></p></li>
+</ul>
+<p>While the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> object is intended to be instantiated once in the
+Python driver script, there is no limit to the number of SmartSim entities
+within the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>. In the following subsections, we define the
+general purpose of the three entities that can be created through the
+<code class="docutils literal notranslate"><span class="pre">Experiment</span></code>.</p>
+<p>To create a reference to a newly instantiated entity object, use the
+associated <code class="docutils literal notranslate"><span class="pre">Experiment.create_...</span></code> factory method shown below.</p>
+<table class="table" id="id2">
+<caption><span class="caption-text">Experiment API Entity Creation</span><a class="headerlink" href="#id2" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 59%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Factory Method</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Return Type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">create_database</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">orch</span> <span class="pre">=</span> <span class="pre">exp.create_database([port,</span> <span class="pre">db_nodes,</span> <span class="pre">...])</span></code></p></td>
+<td><p><a class="reference internal" href="api/smartsim_api.html#orchestrator-api"><span class="std std-ref">Orchestrator</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">create_model</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">model</span> <span class="pre">=</span> <span class="pre">exp.create_model(name,</span> <span class="pre">run_settings)</span></code></p></td>
+<td><p><a class="reference internal" href="api/smartsim_api.html#model-api"><span class="std std-ref">Model</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">create_ensemble</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ensemble</span> <span class="pre">=</span> <span class="pre">exp.create_ensemble(name[,</span> <span class="pre">params,</span> <span class="pre">...])</span></code></p></td>
+<td><p><a class="reference internal" href="api/smartsim_api.html#ensemble-api"><span class="std std-ref">Ensemble</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<p>After initialization, each entity can be started, monitored, and stopped using
+the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> post-creation methods.</p>
+<table class="table" id="id3">
+<caption><span class="caption-text">Interact with Entities During the Experiment</span><a class="headerlink" href="#id3" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 24%" />
+<col style="width: 52%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Factory Method</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Desc</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">start</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">exp.start(*args[,</span> <span class="pre">block,</span> <span class="pre">summary,</span> <span class="pre">...])</span></code></p></td>
+<td><p>Launch an Entity</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">stop</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">exp.stop(*args)</span></code></p></td>
+<td><p>Stop an Entity</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">get_status</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">exp.get_status(*args)</span></code></p></td>
+<td><p>Retrieve Entity Status</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">preview</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">exp.preview(*args,</span> <span class="pre">...)</span></code></p></td>
+<td><p>Preview an Entity</p></td>
+</tr>
+</tbody>
+</table>
+<section id="orchestrator">
+<span id="orchestrator-exp-docs"></span><h3>Orchestrator<a class="headerlink" href="#orchestrator" title="Permalink to this heading">#</a></h3>
+<p>The <a class="reference internal" href="orchestrator.html#orch-docs"><span class="std std-ref">Orchestrator</span></a> is an in-memory database built for
+a wide variety of AI-enabled workflows. The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> can be thought of as a general
+feature store for numerical data, ML models, and scripts. The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is capable
+of performing inference and script evaluation using data in the feature store.
+Any SmartSim <code class="docutils literal notranslate"><span class="pre">Model</span></code> or <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> member can connect to the
+<code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> via the <a class="reference internal" href="api/smartredis_api.html#smartredis-api"><span class="std std-ref">SmartRedis</span></a>
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> library to transmit data, execute ML models, and execute scripts.</p>
+<p><strong>SmartSim Offers Two Types of Orchestrator Deployments:</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="orchestrator.html#standalone-orch-doc"><span class="std std-ref">Standalone Orchestrator Deployment</span></a></p></li>
+<li><p><a class="reference internal" href="orchestrator.html#colocated-orch-doc"><span class="std std-ref">Colocated Orchestrator Deployment</span></a></p></li>
+</ul>
+<p>To create a standalone <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> that does not share compute resources with other
+SmartSim entities, use the <code class="docutils literal notranslate"><span class="pre">Experiment.create_database</span></code> factory method which
+returns an <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> object. To create a colocated <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> that
+shares compute resources with a <code class="docutils literal notranslate"><span class="pre">Model</span></code>, use the <code class="docutils literal notranslate"><span class="pre">Model.colocate_db_tcp</span></code>
+or <code class="docutils literal notranslate"><span class="pre">Model.colocate_db_uds</span></code> member functions accessible after a
+<code class="docutils literal notranslate"><span class="pre">Model</span></code> object has been initialized. The functions instruct
+SmartSim to launch an <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> on the application compute nodes. An <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> object is not
+returned from a <code class="docutils literal notranslate"><span class="pre">Model.colocate_db</span></code> instruction, and subsequent interactions with the
+colocated <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> are handled through the <a class="reference internal" href="api/smartsim_api.html#model-api"><span class="std std-ref">Model API</span></a>.</p>
+<p>SmartSim supports <a class="reference internal" href="orchestrator.html#mutli-orch-doc"><span class="std std-ref">multi-database</span></a> functionality, enabling an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> to have
+several concurrently launched <code class="docutils literal notranslate"><span class="pre">Orchestrator(s)</span></code>. If there is a need to launch more than
+one <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>, the <code class="docutils literal notranslate"><span class="pre">Experiment.create_database</span></code> and <code class="docutils literal notranslate"><span class="pre">Model.colocate..</span></code>
+functions mandate the specification of a unique <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> identifier, denoted
+by the <cite>db_identifier</cite> argument for each <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>. The <cite>db_identifier</cite> is used
+in an application script by a SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> to connect to a specific <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.</p>
+</section>
+<section id="model">
+<span id="model-exp-docs"></span><h3>Model<a class="headerlink" href="#model" title="Permalink to this heading">#</a></h3>
+<p><a class="reference internal" href="model.html#model-object-doc"><span class="std std-ref">Model(s)</span></a> represent a simulation model or any computational kernel,
+including applications, scripts, or generally, a program. They can
+interact with other SmartSim entities via data transmitted to/from
+SmartSim <code class="docutils literal notranslate"><span class="pre">Orchestrator(s)</span></code> using a SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code>.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">Model</span></code> is created through the factory method: <code class="docutils literal notranslate"><span class="pre">Experiment.create_model</span></code>.
+<code class="docutils literal notranslate"><span class="pre">Model(s)</span></code> are initialized with <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> objects that specify
+how a <code class="docutils literal notranslate"><span class="pre">Model</span></code> should be launched by a workload manager
+(e.g., Slurm) and the compute resources required.
+Optionally, the user may also specify a <code class="docutils literal notranslate"><span class="pre">BatchSettings</span></code> object if
+the <code class="docutils literal notranslate"><span class="pre">Model</span></code> should be launched as a batch job on the WLM system.
+The <code class="docutils literal notranslate"><span class="pre">create_model</span></code> factory method returns an initialized <code class="docutils literal notranslate"><span class="pre">Model</span></code> object that
+gives you access to functions associated with the <a class="reference internal" href="api/smartsim_api.html#model-api"><span class="std std-ref">Model API</span></a>.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">Model</span></code> supports key features, including methods to:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="model.html#files-doc"><span class="std std-ref">Attach configuration files</span></a> for use at <code class="docutils literal notranslate"><span class="pre">Model</span></code> runtime.</p></li>
+<li><p><a class="reference internal" href="model.html#colo-model-doc"><span class="std std-ref">Colocate an Orchestrator</span></a> to a SmartSim <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p></li>
+<li><p><a class="reference internal" href="model.html#ai-model-doc"><span class="std std-ref">Load an ML model</span></a>  into the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> at <code class="docutils literal notranslate"><span class="pre">Model</span></code> runtime.</p></li>
+<li><p><a class="reference internal" href="model.html#ts-doc"><span class="std std-ref">Load a TorchScript function</span></a>  into the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> at <code class="docutils literal notranslate"><span class="pre">Model</span></code> runtime.</p></li>
+<li><p><a class="reference internal" href="model.html#model-key-collision"><span class="std std-ref">Enable data collision prevention</span></a> which allows
+for reuse of key names in different <code class="docutils literal notranslate"><span class="pre">Model</span></code> applications.</p></li>
+</ul>
+<p>Visit the respective links for more information on each topic.</p>
+</section>
+<section id="ensemble">
+<span id="ensemble-exp-docs"></span><h3>Ensemble<a class="headerlink" href="#ensemble" title="Permalink to this heading">#</a></h3>
+<p>In addition to a single <code class="docutils literal notranslate"><span class="pre">Model</span></code>, SmartSim allows users to create,
+configure, and launch an <a class="reference internal" href="ensemble.html#ensemble-doc"><span class="std std-ref">Ensemble</span></a> of <code class="docutils literal notranslate"><span class="pre">Model</span></code> objects.
+<code class="docutils literal notranslate"><span class="pre">Ensemble(s)</span></code> can be given parameters and a permutation strategy that define how the
+<code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> will create the underlying <code class="docutils literal notranslate"><span class="pre">Model</span></code> objects. Users may also
+manually create and append <code class="docutils literal notranslate"><span class="pre">Model(s)</span></code> to an <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>. For information
+and examples on <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> creation strategies, visit the <a class="reference internal" href="ensemble.html#init-ensemble-strategies"><span class="std std-ref">Initialization</span></a>
+section within the <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> documentation.</p>
+<p>An <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> supports key features, including methods to:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="ensemble.html#attach-files-ensemble"><span class="std std-ref">Attach configuration files</span></a> for use at <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> runtime.</p></li>
+<li><p><a class="reference internal" href="ensemble.html#ai-model-ensemble-doc"><span class="std std-ref">Load an ML model</span></a> (TF, TF-lite, PT, or ONNX) into the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> at <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> runtime.</p></li>
+<li><p><a class="reference internal" href="ensemble.html#ts-ensemble-doc"><span class="std std-ref">Load a TorchScript function</span></a> into the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> at <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> runtime.</p></li>
+<li><p><a class="reference internal" href="ensemble.html#prefix-ensemble"><span class="std std-ref">Prevent data collisions</span></a> within the <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>, which allows for reuse of application code.</p></li>
+</ul>
+<p>Visit the respective links for more information on each topic.</p>
+</section>
+</section>
+<section id="file-structure">
+<h2>File Structure<a class="headerlink" href="#file-structure" title="Permalink to this heading">#</a></h2>
+<p>When a user executes an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> script, it generates output folders in the system’s directory.
+By default, SmartSim creates a predefined file structure and assigns a path to each entity initialized.
+However, users have the flexibility to customize this according to workflow needs. Please refer
+to the respective <a class="reference internal" href="#default-folder"><span class="std std-ref">default</span></a> and <a class="reference internal" href="#config-folder"><span class="std std-ref">configure</span></a> sections below
+for more details.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Files added for symlinking, copying, or configuration will not be organized into the generated
+directories unless <code class="docutils literal notranslate"><span class="pre">Experiment.generate</span></code> is invoked on the designated entity.</p>
+</div>
+<section id="default">
+<span id="default-folder"></span><h3>Default<a class="headerlink" href="#default" title="Permalink to this heading">#</a></h3>
+<p>By default, an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> folder is created in your current working directory, using the
+specified <cite>name</cite> parameter during <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> initialization. Each entity created by the
+<code class="docutils literal notranslate"><span class="pre">Experiment</span></code> generates an output folder under the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> directory, named after the
+entity. These folders hold <cite>.err</cite> and <cite>.out</cite> files, containing execution-related information.</p>
+<p>For instance, consider the following Python script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;experiment-example&quot;</span><span class="p">)</span>
+<span class="n">database</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="n">exec_args</span><span class="o">=</span><span class="s2">&quot;hello world&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;model-name&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">settings</span><span class="p">)</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ensemble-name&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">replicas</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ensemble</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When executed, this script creates the following directory structure in your
+working directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>experiment-example
+├── orchestrator
+│   ├── orchestrator_0.err
+│   └── orchestrator_0.out
+├── model-name
+│   ├── model-name.err
+│   └── model-name.out
+└── ensemble-name
+    ├── ensemble-name_0
+    │   ├── ensemble-name_0.err
+    │   └── ensemble-name_0.out
+    ├── ensemble-name_1
+    │   ├── ensemble-name_1.err
+    │   └── ensemble-name_1.out
+</pre></div>
+</div>
+</section>
+<section id="configure">
+<span id="config-folder"></span><h3>Configure<a class="headerlink" href="#configure" title="Permalink to this heading">#</a></h3>
+<p>Customizing the path of the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> and entity folders is possible by providing
+either an absolute or relative path to the <cite>path</cite> argument during initialization. When
+a relative path is provided, SmartSim executes the entity relative to the current working
+directory.</p>
+<p>For instance, consider the following Python script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;experiment-example&quot;</span><span class="p">,</span> <span class="n">exp_path</span><span class="o">=</span><span class="s2">&quot;absolute/path/to/experiment-folder&quot;</span><span class="p">)</span>
+<span class="n">database</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="n">exec_args</span><span class="o">=</span><span class="s2">&quot;hello world&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;model-name&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;./model-folder&quot;</span><span class="p">)</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ensemble-name&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">replicas</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;./ensemble-folder&quot;</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ensemble</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When executed, this script creates the following directory structure in your
+working directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── experiment-folder
+|   ├── orchestrator
+|   │   ├── orchestrator_0.err
+|   │   └── orchestrator_0.out
+├── model-folder
+│   ├── model-name.err
+│   └── model-name.out
+└── ensemble-folder
+    ├── ensemble-name_0
+    │   ├── ensemble-name_0.err
+    │   └── ensemble-name_0.out
+    ├── ensemble-name_1
+    │   ├── ensemble-name_1.err
+    │   └── ensemble-name_1.out
+</pre></div>
+</div>
+</section>
+</section>
+<section id="example">
+<span id="exp-example"></span><h2>Example<a class="headerlink" href="#example" title="Permalink to this heading">#</a></h2>
+<div class="compound">
+<p>In the following section, we provide an example of using SmartSim to automate the
+deployment of an HPC workflow consisting of a <code class="docutils literal notranslate"><span class="pre">Model</span></code> and standalone <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.
+The example demonstrates:</p>
+<dl class="simple">
+<dt><em>Initializing</em></dt><dd><ul class="simple">
+<li><p>a workflow (<code class="docutils literal notranslate"><span class="pre">Experiment</span></code>)</p></li>
+<li><p>an in-memory database (standalone <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>)</p></li>
+<li><p>an application (<code class="docutils literal notranslate"><span class="pre">Model</span></code>)</p></li>
+</ul>
+</dd>
+<dt><em>Generating</em></dt><dd><ul class="simple">
+<li><p>the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> output directory</p></li>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">Model</span></code> output directory</p></li>
+</ul>
+</dd>
+<dt><em>Previewing</em></dt><dd><ul class="simple">
+<li><p>the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> contents</p></li>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">Model</span></code> contents</p></li>
+</ul>
+</dd>
+<dt><em>Starting</em></dt><dd><ul class="simple">
+<li><p>an in-memory database (standalone <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>)</p></li>
+<li><p>an application (<code class="docutils literal notranslate"><span class="pre">Model</span></code>)</p></li>
+</ul>
+</dd>
+<dt><em>Stopping</em></dt><dd><ul class="simple">
+<li><p>an in-memory database (standalone <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>The example source code is available in the dropdown below for convenient execution
+and customization.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+Example Driver Script Source Code<div class="sd-summary-down docutils">
+<svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="sd-summary-up docutils">
+<svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">smartsim._core.control.previewrenderer</span> <span class="kn">import</span> <span class="n">Verbosity</span>
+<span class="kn">from</span> <span class="nn">smartsim.log</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="c1"># Initialize an Experiment</span>
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;example-experiment&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="c1"># Initialize a SmartSim logger</span>
+<span class="n">smartsim_logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;logger&quot;</span><span class="p">)</span>
+
+<span class="c1"># Initialize an Orchestrator</span>
+<span class="n">standalone_database</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">db_nodes</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">)</span>
+
+<span class="c1"># Initialize the Model RunSettings</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;Hello World&quot;</span><span class="p">)</span>
+<span class="c1"># Initialize the Model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;hello_world&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+
+<span class="c1"># Generate the output directory</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Preview the experiment</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">preview</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">verbosity_level</span><span class="o">=</span><span class="n">Verbosity</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+<span class="c1"># Launch the Orchestrator then Model instance</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># Clobber the Orchestrator</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">)</span>
+<span class="c1"># Log the summary of the Experiment</span>
+<span class="n">smartsim_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</details></div>
+<section id="initializing">
+<h3>Initializing<a class="headerlink" href="#initializing" title="Permalink to this heading">#</a></h3>
+<div class="compound">
+<p>To create a workflow, <em>initialize</em> an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> object
+at the start of the Python driver script. This involves specifying
+a name and the system launcher that will execute all entities.
+Set the <cite>launcher</cite> argument to <cite>auto</cite> to instruct SmartSim to attempt
+to find the machines WLM.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="linenos">2</span><span class="kn">from</span> <span class="nn">smartsim._core.control.previewrenderer</span> <span class="kn">import</span> <span class="n">Verbosity</span>
+<span class="linenos">3</span><span class="kn">from</span> <span class="nn">smartsim.log</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="linenos">4</span>
+<span class="linenos">5</span><span class="c1"># Initialize an Experiment</span>
+<span class="linenos">6</span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;example-experiment&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="linenos">7</span><span class="c1"># Initialize a SmartSim logger</span>
+<span class="linenos">8</span><span class="n">smartsim_logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;logger&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We also initialize a SmartSim <a class="reference internal" href="ss_logger.html#ss-logger"><span class="std std-ref">logger</span></a>. We will use the logger to log the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>
+summary.</p>
+</div>
+<div class="compound">
+<p>Next, launch an in-memory database, referred to as an <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.
+To <em>initialize</em> an <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> object, use the <code class="docutils literal notranslate"><span class="pre">Experiment.create_database</span></code>
+factory method. Create a multi-sharded <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> by setting the argument <cite>db_nodes</cite> to three.
+SmartSim will assign a <cite>port</cite> to the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> and attempt to detect your machine’s
+network interface if not provided.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize an Orchestrator</span>
+<span class="linenos">2</span><span class="n">standalone_database</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">db_nodes</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="compound">
+<p>Before invoking the factory method to create a <code class="docutils literal notranslate"><span class="pre">Model</span></code>,
+first create a <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> object. <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> hold the
+information needed to execute the <code class="docutils literal notranslate"><span class="pre">Model</span></code> on the machine. The <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>
+object is initialized using the <code class="docutils literal notranslate"><span class="pre">Experiment.create_run_settings</span></code> method.
+Specify the executable to run and arguments to pass to the executable.</p>
+<p>The example <code class="docutils literal notranslate"><span class="pre">Model</span></code> is a simple <cite>Hello World</cite> program
+that echos <cite>Hello World</cite> to stdout.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize the Model RunSettings</span>
+<span class="linenos">2</span><span class="n">settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;Hello World&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After creating the <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> object, initialize the <code class="docutils literal notranslate"><span class="pre">Model</span></code> object by passing the <cite>name</cite>
+and <cite>settings</cite> to <code class="docutils literal notranslate"><span class="pre">create_model</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize the Model</span>
+<span class="linenos">2</span><span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;hello_world&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="generating">
+<h3>Generating<a class="headerlink" href="#generating" title="Permalink to this heading">#</a></h3>
+<div class="compound">
+<p>Next we generate the file structure for the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>. A call to <code class="docutils literal notranslate"><span class="pre">Experiment.generate</span></code>
+instructs SmartSim to create directories within the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> folder for each instance passed in.
+We organize the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> and <code class="docutils literal notranslate"><span class="pre">Model</span></code> output files within the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> folder by
+passing the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> and <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances to <code class="docutils literal notranslate"><span class="pre">exp.generate</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Generate the output directory</span>
+<span class="linenos">2</span><span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><cite>Overwrite=True</cite> instructs SmartSim to overwrite entity contents if files and subdirectories
+already exist within the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> directory.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If files or folders are attached to a <code class="docutils literal notranslate"><span class="pre">Model</span></code> or <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> members through <code class="docutils literal notranslate"><span class="pre">Model.attach_generator_files</span></code>
+or <code class="docutils literal notranslate"><span class="pre">Ensemble.attach_generator_files</span></code>, the attached files or directories will be symlinked, copied, or configured and
+written into the created directory for that instance.</p>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">Experiment.generate</span></code> call places the <cite>.err</cite> and <cite>.out</cite> log files in the entity
+subdirectories within the main <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> directory.</p>
+</div>
+</section>
+<section id="previewing">
+<h3>Previewing<a class="headerlink" href="#previewing" title="Permalink to this heading">#</a></h3>
+<div class="compound">
+<p>Optionally, users can preview an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> entity. The <code class="docutils literal notranslate"><span class="pre">Experiment.preview</span></code> method displays the entity summaries during runtime
+to offer additional insight into the launch details. Any instance of a <code class="docutils literal notranslate"><span class="pre">Model</span></code>, <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>, or <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> created by the
+<code class="docutils literal notranslate"><span class="pre">Experiment</span></code> can be passed as an argument to the preview method. Additionally, users may specify the name of a file to write preview data to
+via the <code class="docutils literal notranslate"><span class="pre">output_filename</span></code> argument, as well as the text format through the <code class="docutils literal notranslate"><span class="pre">output_format</span></code> argument. Users can also specify how verbose
+the preview is via the <code class="docutils literal notranslate"><span class="pre">verbosity_level</span></code> argument.</p>
+<p>The following options are available when configuring preview:</p>
+<ul class="simple">
+<li><p><cite>verbosity_level=”info”</cite> instructs preview to display user-defined fields and entities.</p></li>
+<li><p><cite>verbosity_level=”debug”</cite> instructs preview to display user-defined field and entities and auto-generated fields.</p></li>
+<li><p><cite>verbosity_level=”developer”</cite> instructs preview to display user-defined field and entities, auto-generated fields, and run commands.</p></li>
+<li><p><cite>output_format=”plain_text”</cite> sets the output format. The only accepted output format is ‘plain_text’.</p></li>
+<li><p><cite>output_filename=”test_name.txt”</cite> specifies name of file and extension to write preview data to. If no output filename is set, the preview will be output to stdout.</p></li>
+</ul>
+<p>In the example below, we preview the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> and <code class="docutils literal notranslate"><span class="pre">Model</span></code> entities by passing their instances to <code class="docutils literal notranslate"><span class="pre">Experiment.preview</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Preview the experiment</span>
+<span class="linenos">2</span><span class="n">exp</span><span class="o">.</span><span class="n">preview</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">verbosity_level</span><span class="o">=</span><span class="n">Verbosity</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>When executed, the preview logs the following in stdout:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">===</span> <span class="n">Experiment</span> <span class="n">Overview</span> <span class="o">===</span>
+
+  <span class="n">Experiment</span> <span class="n">Name</span><span class="p">:</span> <span class="n">example</span><span class="o">-</span><span class="n">experiment</span>
+    <span class="n">Experiment</span> <span class="n">Path</span><span class="p">:</span> <span class="n">absolute</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">SmartSim</span><span class="o">/</span><span class="n">example</span><span class="o">-</span><span class="n">experiment</span>
+    <span class="n">Launcher</span><span class="p">:</span> <span class="n">local</span>
+
+<span class="o">===</span> <span class="n">Entity</span> <span class="n">Preview</span> <span class="o">===</span>
+
+  <span class="o">==</span> <span class="n">Orchestrators</span> <span class="o">==</span>
+
+    <span class="o">=</span> <span class="n">Database</span> <span class="n">Identifier</span><span class="p">:</span> <span class="n">orchestrator</span> <span class="o">=</span>
+        <span class="n">Path</span><span class="p">:</span> <span class="n">absolute</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">SmartSim</span><span class="o">/</span><span class="n">example</span><span class="o">-</span><span class="n">experiment</span><span class="o">/</span><span class="n">orchestrator</span>
+        <span class="n">Shards</span><span class="p">:</span> <span class="mi">1</span>
+        <span class="n">TCP</span><span class="o">/</span><span class="n">IP</span> <span class="n">Port</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+          <span class="mi">6379</span>
+        <span class="n">Network</span> <span class="n">Interface</span><span class="p">:</span> <span class="n">ib0</span>
+        <span class="n">Type</span><span class="p">:</span> <span class="n">redis</span>
+        <span class="n">Executable</span><span class="p">:</span> <span class="n">absolute</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">SmartSim</span><span class="o">/</span><span class="n">smartsim</span><span class="o">/</span><span class="n">_core</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">redis</span><span class="o">-</span><span class="n">server</span>
+
+  <span class="o">==</span> <span class="n">Models</span> <span class="o">==</span>
+
+    <span class="o">=</span> <span class="n">Model</span> <span class="n">Name</span><span class="p">:</span> <span class="n">hello_world</span> <span class="o">=</span>
+        <span class="n">Path</span><span class="p">:</span> <span class="n">absolute</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">SmartSim</span><span class="o">/</span><span class="n">example</span><span class="o">-</span><span class="n">experiment</span><span class="o">/</span><span class="n">hello_world</span>
+        <span class="n">Executable</span><span class="p">:</span> <span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">echo</span>
+        <span class="n">Executable</span> <span class="n">Arguments</span><span class="p">:</span>
+          <span class="n">Hello</span>
+          <span class="n">World</span>
+        <span class="n">Client</span> <span class="n">Configuration</span><span class="p">:</span>
+          <span class="n">Database</span> <span class="n">Identifier</span><span class="p">:</span> <span class="n">orchestrator</span>
+            <span class="n">Database</span> <span class="n">Backend</span><span class="p">:</span> <span class="n">redis</span>
+            <span class="n">TCP</span><span class="o">/</span><span class="n">IP</span> <span class="n">Port</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+              <span class="mi">6379</span>
+            <span class="n">Type</span><span class="p">:</span> <span class="n">Standalone</span>
+          <span class="n">Outgoing</span> <span class="n">Key</span> <span class="n">Collision</span> <span class="n">Prevention</span> <span class="p">(</span><span class="n">Key</span> <span class="n">Prefixing</span><span class="p">):</span>
+            <span class="n">Tensors</span><span class="p">:</span> <span class="n">Off</span>
+            <span class="n">Datasets</span><span class="p">:</span> <span class="n">Off</span>
+            <span class="n">ML</span> <span class="n">Models</span><span class="o">/</span><span class="n">Torch</span> <span class="n">Scripts</span><span class="p">:</span> <span class="n">Off</span>
+            <span class="n">Aggregation</span> <span class="n">Lists</span><span class="p">:</span> <span class="n">Off</span>
+</pre></div>
+</div>
+</section>
+<section id="starting">
+<h3>Starting<a class="headerlink" href="#starting" title="Permalink to this heading">#</a></h3>
+<div class="compound">
+<p>Next launch the components of the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> (<code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> and <code class="docutils literal notranslate"><span class="pre">Model</span></code>).
+To do so, use the <code class="docutils literal notranslate"><span class="pre">Experiment.start</span></code> factory method and pass in the previous
+<code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> and <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Launch the Orchestrator then Model instance</span>
+<span class="linenos">2</span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="stopping">
+<h3>Stopping<a class="headerlink" href="#stopping" title="Permalink to this heading">#</a></h3>
+<div class="compound">
+<p>Lastly, to clean up the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, tear down the launched <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>
+using the <code class="docutils literal notranslate"><span class="pre">Experiment.stop</span></code> factory method.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Clobber the Orchestrator</span>
+<span class="linenos">2</span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">standalone_database</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Notice that we use the <code class="docutils literal notranslate"><span class="pre">Experiment.summary</span></code> function to print
+the summary of the workflow.</p>
+</div>
+<p>When you run the experiment, the following output will appear:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">|</span>    <span class="o">|</span> <span class="n">Name</span>           <span class="o">|</span> <span class="n">Entity</span><span class="o">-</span><span class="n">Type</span>   <span class="o">|</span> <span class="n">JobID</span>       <span class="o">|</span> <span class="n">RunID</span>   <span class="o">|</span> <span class="n">Time</span>    <span class="o">|</span> <span class="n">Status</span>    <span class="o">|</span> <span class="n">Returncode</span>   <span class="o">|</span>
+<span class="o">|----|----------------|---------------|-------------|---------|---------|-----------|--------------|</span>
+<span class="o">|</span> <span class="mi">0</span>  <span class="o">|</span> <span class="n">hello_world</span>    <span class="o">|</span> <span class="n">Model</span>         <span class="o">|</span> <span class="mf">1778304.4</span>   <span class="o">|</span> <span class="mi">0</span>       <span class="o">|</span> <span class="mf">10.0657</span> <span class="o">|</span> <span class="n">Completed</span> <span class="o">|</span> <span class="mi">0</span>            <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1</span>  <span class="o">|</span> <span class="n">orchestrator_0</span> <span class="o">|</span> <span class="n">DBNode</span>        <span class="o">|</span> <span class="mf">1778304.3</span><span class="o">+</span><span class="mi">2</span> <span class="o">|</span> <span class="mi">0</span>       <span class="o">|</span> <span class="mf">43.4797</span> <span class="o">|</span> <span class="n">Cancelled</span> <span class="o">|</span> <span class="mi">0</span>            <span class="o">|</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Failure to tear down the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> at the end of an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>
+may lead to <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> launch failures if another <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> is
+started on the same node.</p>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="tutorials/ml_training/surrogate/train_surrogate.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Online Training</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="run_settings.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Run Settings</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#launchers">Launchers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#entities">Entities</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orchestrator">Orchestrator</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#model">Model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ensemble">Ensemble</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#file-structure">File Structure</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#default">Default</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configure">Configure</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#initializing">Initializing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generating">Generating</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#previewing">Previewing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#starting">Starting</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stopping">Stopping</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2024, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

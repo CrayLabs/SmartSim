@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Runtime Requirements &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SmartRedis API" href="api/smartredis_api.html" />
+    <link rel="prev" title="Data Structures" href="sr_data_structures.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Runtime Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setting-redis-database-location">Setting Redis Database Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ensemble-environment-variables">Ensemble Environment Variables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Runtime Requirements</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/sr_runtime.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="runtime-requirements">
+<h1>Runtime Requirements<a class="headerlink" href="#runtime-requirements" title="Permalink to this headline">¶</a></h1>
+<p>At runtime, the clients need to know where to look
+for the Redis database.  Additionally,  if
+SmartSim ensemble functionality is being used,
+information is needed to prevent key collisions
+and to retrieve the correct information from the
+database.  In the following sections,
+these requirements will be described.</p>
+<div class="section" id="setting-redis-database-location">
+<h2>Setting Redis Database Location<a class="headerlink" href="#setting-redis-database-location" title="Permalink to this headline">¶</a></h2>
+<p>The C++, C, and Fortran clients retrieve
+the Redis database location from the
+<code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment variable that is set
+by the user.  If the SmartSim infrastructure
+library is being used, then the infrastructure
+library will set the value of <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> for the user.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment variable should have the format
+of <code class="docutils literal notranslate"><span class="pre">address:port</span></code>.  For a cluster, the addresses
+and ports should be separated by a “,” character.
+Below is an example of setting <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> for a Redis cluster
+at three different addresses using port <code class="docutils literal notranslate"><span class="pre">6379</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">SSDB</span><span class="o">=</span><span class="s2">&quot;10.128.0.153:6379,10.128.0.154:6379,10.128.0.155:6379&quot;</span>
+</pre></div>
+</div>
+<p>The Python client also relies on <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> to determine database
+location.  However, the Python <code class="docutils literal notranslate"><span class="pre">Client</span></code> constructor also allows
+for the database location to be set as an input parameter.</p>
+</div>
+<div class="section" id="ensemble-environment-variables">
+<h2>Ensemble Environment Variables<a class="headerlink" href="#ensemble-environment-variables" title="Permalink to this headline">¶</a></h2>
+<p>The clients work with SmartSim ensemble functionality through
+environment variables.  There are two environment variables
+that are used for ensembles, <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> and <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> defines the prefix that is attached to
+tensors, datasets, models, and scripts sent from the client
+to the database.  This prefixing prevents key collisions for
+objects sent from the client to the database.  <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code>
+should be set to a single string value.  If using the
+SmartSim infrastructure library to launch the ensemble,
+<code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> will be set by SmartSim.  An example
+value of <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">SSKEYOUT</span><span class="o">=</span><span class="s2">&quot;model_1&quot;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> defines prefixes that can be attached to
+tensors, datasets, models, and scripts when retrieving
+data from the database.  <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> can have multiple,
+comma separated values, however, only one of the values
+can be used at a time.  <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> allows a client
+in an application to retrieve data from clients
+that were part of ensemble when placing data in the
+database.  An example value of <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">SSKEYIN</span><span class="o">=</span><span class="s2">&quot;model_2,model_3,model_4&quot;</span>
+</pre></div>
+</div>
+<p>In the case of multiple <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> values, the <code class="docutils literal notranslate"><span class="pre">Client</span></code>
+API provides a function <code class="docutils literal notranslate"><span class="pre">Client.set_data_source()</span></code>
+to select which <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> value is used.  The
+default is to use the first value of <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code>,
+and any value specified using <code class="docutils literal notranslate"><span class="pre">Client.set_data_source()</span></code>
+must be present in <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> when the <code class="docutils literal notranslate"><span class="pre">Client</span></code>
+is created.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Client</span></code> API provides functions to activate or
+deactivate the use of <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> and <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code>.
+These functions are split by the data type
+that prefixes are applied to in order to give the
+user fine control of prefixing in advanced applications.
+The default is to use prefixes on tensors and datasets
+if <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> and <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> are present.  The default
+is not to use prefixes on scripts and models.
+The functions for changing this default behavior are:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">use_tensor_ensemble_prefix</span><span class="p">(</span><span class="kt">bool</span> <span class="n">use_prefix</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">use_model_ensemble_prefix</span><span class="p">(</span><span class="kt">bool</span> <span class="n">use_prefix</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The function <code class="docutils literal notranslate"><span class="pre">Client.use_tensor_ensemble_prefix()</span></code> controls
+object prefixing for objects stored with <code class="docutils literal notranslate"><span class="pre">Client.put_tensor()</span></code>
+and all <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> components added via <code class="docutils literal notranslate"><span class="pre">DataSet.add_tensor()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">DataSet.add_meta_scalar()</span></code>, and <code class="docutils literal notranslate"><span class="pre">DataSet.add_meta_string()</span></code>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The function <code class="docutils literal notranslate"><span class="pre">Client.use_model_ensemble_prefix()</span></code> controls
+object prefixing for model and script data.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="api/smartredis_api.html" class="btn btn-neutral float-right" title="SmartRedis API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sr_data_structures.html" class="btn btn-neutral float-left" title="Data Structures" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,1535 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Basic Installation &#8212; SmartSim 0.8.0+dev.9f40322 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom_tab_style.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/tabs.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'installation_instructions/basic';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installation on specific platforms" href="platform.html" />
+    <link rel="prev" title="Introduction" href="../overview.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.8.0+dev.9f40322 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Introduction</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../run_settings.html">Run Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../batch_settings.html">Batch Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ensemble.html">Ensemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ss_logger.html">Logger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dragon.html">Dragon</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Finstallation_instructions/basic.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/installation_instructions/basic.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Basic Installation</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic">Basic</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ml-library-support">ML Library Support</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#linux">Linux</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#macosx">MacOSX</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macos-only">MacOS-only</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#smartsim">SmartSim</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-python-package">Step 1: Install Python Package</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-build-smartsim">Step 2: Build SmartSim</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#dragon-install">Dragon Install</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#smartredis">SmartRedis</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-smartredis-library-c-c-fortran">Build SmartRedis Library (C++, C, Fortran)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cmake-based-build">CMake-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#makefile-based-build">Makefile-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-smartredis-as-a-cmake-externalproject">Adding SmartRedis as a CMake ExternalProject</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-instructions-using-compiler-flags">Linking instructions using compiler flags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#from-source">From Source</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#install-smartsim-from-source">Install SmartSim from Source</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-smartredis-library">Build the SmartRedis library</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">CMake-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Makefile-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Adding SmartRedis as a CMake ExternalProject</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Linking instructions using compiler flags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="basic-installation">
+<span id="basic-install-ss"></span><h1>Basic Installation<a class="headerlink" href="#basic-installation" title="Permalink to this heading">#</a></h1>
+<p>The following will show how to install both SmartSim and SmartRedis.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For users on platforms with a ‘site install’ of SmartSim please follow
+<a class="reference internal" href="platform.html#site-installation"><span class="std std-ref">Site Installation</span></a>.</p>
+</div>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading">#</a></h2>
+<section id="basic">
+<h3>Basic<a class="headerlink" href="#basic" title="Permalink to this heading">#</a></h3>
+<p>The base prerequisites to install SmartSim and SmartRedis wtih CPU-only support are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Python 3.9-3.11</p></li>
+<li><p>Pip</p></li>
+<li><p>Cmake 3.13.x (or later)</p></li>
+<li><p>C compiler</p></li>
+<li><p>C++ compiler</p></li>
+<li><p>GNU Make &gt; 4.0</p></li>
+<li><p>git</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>GCC 9, 11-13 is recommended (here are known issues compiling with GCC 10). For
+CUDA 11.8, GCC 9 or 11 must be used.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Apple Clang 15 seems to have issues on MacOS with Apple Silicon. Please modify
+your path to ensure that a version of GCC installed by brew has priority. Note
+this seems to be hardcoded to <cite>gcc</cite> and <cite>g++</cite> in the Redis build so ensure that
+<cite>which gcc g++</cite> do not point to Apple Clang.</p>
+</div>
+</section>
+<section id="ml-library-support">
+<h3>ML Library Support<a class="headerlink" href="#ml-library-support" title="Permalink to this heading">#</a></h3>
+<p>We currently support both Nvidia and AMD GPUs when using RedisAI for GPU inference. The support
+for these GPUs often depends on the version of the CUDA or ROCm stack that is availble on your
+machine. In _most_ cases, the versions backwards compatible. If you encounter problems, please
+contact us and we can build the backend libraries for your desired version of CUDA and ROCm.</p>
+<p>CPU backends are provided for Apple (both Intel and Apple Silicon) and Linux (x86_64).</p>
+<p>Be sure to reference the table below to find which versions of the ML libraries are supported for
+your particular platform. Additional, see <a class="reference internal" href="platform.html#install-notes"><span class="std std-ref">installation notes</span></a> for helpful
+information regarding various system types before installation.</p>
+<section id="linux">
+<h4>Linux<a class="headerlink" href="#linux" title="Permalink to this heading">#</a></h4>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-Q1VEQSAxMQ==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-Q1VEQSAxMQ==" name="Q1VEQSAxMQ==" role="tab" tabindex="0">CUDA 11</button><button aria-controls="panel-0-Q1VEQSAxMg==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-Q1VEQSAxMg==" name="Q1VEQSAxMg==" role="tab" tabindex="-1">CUDA 12</button><button aria-controls="panel-0-Uk9DbSA2" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-Uk9DbSA2" name="Uk9DbSA2" role="tab" tabindex="-1">ROCm 6</button><button aria-controls="panel-0-Q1BV" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-Q1BV" name="Q1BV" role="tab" tabindex="-1">CPU</button></div><div aria-labelledby="tab-0-Q1VEQSAxMQ==" class="sphinx-tabs-panel group-tab" id="panel-0-Q1VEQSAxMQ==" name="Q1VEQSAxMQ==" role="tabpanel" tabindex="0"><p>Additional requirements:</p>
+<ul class="simple">
+<li><p>GCC &lt;= 11</p></li>
+<li><p>CUDA Toolkit 11.7 or 11.8</p></li>
+<li><p>cuDNN 8.9</p></li>
+</ul>
+<div class="pst-scrollable-table-container"><table class="table table-center" id="id7">
+<caption><span class="caption-text">Nvidia CUDA 11</span><a class="headerlink" href="#id7" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Python Versions</p></th>
+<th class="head"><p>Torch</p></th>
+<th class="head"><p>Tensorflow</p></th>
+<th class="head"><p>ONNX Runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3.9-3.11</p></td>
+<td><p>2.3.1</p></td>
+<td><p>2.14.1</p></td>
+<td><p>1.17.3</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><div aria-labelledby="tab-0-Q1VEQSAxMg==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-Q1VEQSAxMg==" name="Q1VEQSAxMg==" role="tabpanel" tabindex="0"><p>Additional requirements:</p>
+<ul class="simple">
+<li><p>CUDA Toolkit 12</p></li>
+<li><p>cuDNN 8.9</p></li>
+</ul>
+<div class="pst-scrollable-table-container"><table class="table table-center" id="id8">
+<caption><span class="caption-text">Nvidia CUDA 12</span><a class="headerlink" href="#id8" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Python Versions</p></th>
+<th class="head"><p>Torch</p></th>
+<th class="head"><p>Tensorflow</p></th>
+<th class="head"><p>ONNX Runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3.9-3.11</p></td>
+<td><p>2.3.1</p></td>
+<td><p>2.17</p></td>
+<td><p>1.17.3</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><div aria-labelledby="tab-0-Uk9DbSA2" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-Uk9DbSA2" name="Uk9DbSA2" role="tabpanel" tabindex="0"><div class="pst-scrollable-table-container"><table class="table table-center" id="id9">
+<caption><span class="caption-text">AMD ROCm 6.1</span><a class="headerlink" href="#id9" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Python Versions</p></th>
+<th class="head"><p>Torch</p></th>
+<th class="head"><p>Tensorflow</p></th>
+<th class="head"><p>ONNX Runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3.9-3.11</p></td>
+<td><p>2.4.1</p></td>
+<td><p>N/A</p></td>
+<td><p>N/A</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><div aria-labelledby="tab-0-Q1BV" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-Q1BV" name="Q1BV" role="tabpanel" tabindex="0"><div class="pst-scrollable-table-container"><table class="table table-center" id="id10">
+<caption><span class="caption-text">CPU-only</span><a class="headerlink" href="#id10" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Python Versions</p></th>
+<th class="head"><p>Torch</p></th>
+<th class="head"><p>Tensorflow</p></th>
+<th class="head"><p>ONNX Runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3.9-3.11</p></td>
+<td><p>2.4.0</p></td>
+<td><p>2.15</p></td>
+<td><p>1.17.3</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></div>
+</section>
+<section id="macosx">
+<h4>MacOSX<a class="headerlink" href="#macosx" title="Permalink to this heading">#</a></h4>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-QXBwbGUgU2lsaWNvbg==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-QXBwbGUgU2lsaWNvbg==" name="QXBwbGUgU2lsaWNvbg==" role="tab" tabindex="0">Apple Silicon</button><button aria-controls="panel-1-SW50ZWwgTWFjICh4ODYp" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-SW50ZWwgTWFjICh4ODYp" name="SW50ZWwgTWFjICh4ODYp" role="tab" tabindex="-1">Intel Mac (x86)</button></div><div aria-labelledby="tab-1-QXBwbGUgU2lsaWNvbg==" class="sphinx-tabs-panel group-tab" id="panel-1-QXBwbGUgU2lsaWNvbg==" name="QXBwbGUgU2lsaWNvbg==" role="tabpanel" tabindex="0"><div class="pst-scrollable-table-container"><table class="table table-center" id="id11">
+<caption><span class="caption-text">Apple Silicon ARM64 (no Metal support)</span><a class="headerlink" href="#id11" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Python Versions</p></th>
+<th class="head"><p>Torch</p></th>
+<th class="head"><p>Tensorflow</p></th>
+<th class="head"><p>ONNX Runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3.9-3.11</p></td>
+<td><p>2.4.0</p></td>
+<td><p>2.17</p></td>
+<td><p>1.17.3</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><div aria-labelledby="tab-1-SW50ZWwgTWFjICh4ODYp" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-SW50ZWwgTWFjICh4ODYp" name="SW50ZWwgTWFjICh4ODYp" role="tabpanel" tabindex="0"><div class="pst-scrollable-table-container"><table class="table table-center" id="id12">
+<caption><span class="caption-text">CPU-only</span><a class="headerlink" href="#id12" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Python Versions</p></th>
+<th class="head"><p>Torch</p></th>
+<th class="head"><p>Tensorflow</p></th>
+<th class="head"><p>ONNX Runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3.9-3.11</p></td>
+<td><p>2.2.0</p></td>
+<td><p>2.15</p></td>
+<td><p>1.17.3</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Users have succesfully run SmartSim on Windows using Windows Subsystem for Linux
+with Nvidia support. Generally, users should follow the Linux instructions here,
+however we make no guarantee or offer of support.</p>
+</div>
+<p><a class="reference external" href="https://github.com/tensorflow/tensorflow">TensorFlow</a> and <a class="reference external" href="https://keras.io">Keras</a> are supported through <a class="reference external" href="https://github.com/leimao/Frozen-Graph-TensorFlow">graph freezing</a>.</p>
+<p><a class="reference external" href="https://github.com/scikit-learn/scikit-learn">ScikitLearn</a> and <a class="reference external" href="https://spark.apache.org/mllib/">Spark</a> models are supported by SmartSim as well
+through the use of the <a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX</a> runtime (which is not built by
+default due to issues with glibc on a variety of Linux platforms).</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="macos-only">
+<h3>MacOS-only<a class="headerlink" href="#macos-only" title="Permalink to this heading">#</a></h3>
+<p>We recommend users and contributors install <a class="reference external" href="https://brew.sh/">brew</a> for managing installed
+packages. For contributors, the following brew packages can be helpful:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/open-mpi#default">openmpi</a> for building and running parallel SmartRedis examples</p></li>
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/doxygen#default">doxygen</a> for building the documentation</p></li>
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/cmake#default">cmake</a> for building SmartSim and SmartRedis from source</p></li>
+</ul>
+<p>For Mac OS users, the version of <code class="docutils literal notranslate"><span class="pre">make</span></code> that comes with the Mac command line
+tools is often 3.81 which needs to be updated to install SmartSim. Users can run
+<code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">make</span></code> to get <code class="docutils literal notranslate"><span class="pre">make</span></code> &gt; 4.0 but brew will install it as
+<code class="docutils literal notranslate"><span class="pre">gmake</span></code>. An easy way around this is to run <code class="docutils literal notranslate"><span class="pre">alias</span> <span class="pre">make=gmake</span></code>.</p>
+</section>
+</section>
+<section id="smartsim">
+<span id="from-pypi"></span><h2>SmartSim<a class="headerlink" href="#smartsim" title="Permalink to this heading">#</a></h2>
+<p>There are two stages for the installation of SmartSim.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><cite>pip</cite> install SmartSim Python package</p></li>
+<li><p>Build SmartSim using the <cite>smart</cite> command line tool</p></li>
+</ol>
+</div></blockquote>
+<section id="step-1-install-python-package">
+<h3>Step 1: Install Python Package<a class="headerlink" href="#step-1-install-python-package" title="Permalink to this heading">#</a></h3>
+<p>We first recommend creating a new
+<a class="reference external" href="https://docs.python.org/3/library/venv.html">virtual environment</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>/path/to/new/environment
+<span class="nb">source</span><span class="w"> </span>/path/to/new/environment/bin/activate
+</pre></div>
+</div>
+<p>and install SmartSim from PyPI with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>smartsim
+</pre></div>
+</div>
+<p>At this point, SmartSim can be used for describing and launching experiments, but
+without any database/feature store functionality which allows for ML-enabled workflows.</p>
+</section>
+<section id="step-2-build-smartsim">
+<h3>Step 2: Build SmartSim<a class="headerlink" href="#step-2-build-smartsim" title="Permalink to this heading">#</a></h3>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">smart</span></code> cli tool to install the machine learning backends that
+are built into the Orchestrator database. <code class="docutils literal notranslate"><span class="pre">smart</span></code> is installed during
+the pip installation of SmartSim and may only be available while your
+virtual environment is active.</p>
+<p>To see all the installation options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>smart<span class="w"> </span>--help
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># run one of the following</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cpu<span class="w">      </span><span class="c1"># For unaccelerated AI/ML loads</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cuda118<span class="w">  </span><span class="c1"># Nvidia Accelerator with CUDA 11.8</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cuda125<span class="w">  </span><span class="c1"># Nvidia Accelerator with CUDA 12.5</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>rocm57<span class="w">   </span><span class="c1"># AMD Accelerator with ROCm 5.7.0</span>
+</pre></div>
+</div>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">smart</span></code> will install all backends available for the specified accelerator
+_and_ the compatible versions of the Python packages associated with the backends. To
+disable support for a specific backend, <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code> accepts the flags
+<code class="docutils literal notranslate"><span class="pre">--skip-torch</span></code>, <code class="docutils literal notranslate"><span class="pre">--skip-tensorflow</span></code>, <code class="docutils literal notranslate"><span class="pre">--skip-onnx</span></code> which can also be used in
+combination.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If a re-build is needed for any reason, <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">clean</span></code> will remove
+all of the previous installs for the ML backends and <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">clobber</span></code> will
+remove all pre-built dependencies as well as the ML backends.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>GPU builds can be troublesome due to the way that RedisAI and the ML-package
+backends look for the CUDA Toolkit and cuDNN libraries. Please see the
+<a class="reference internal" href="platform.html#install-notes"><span class="std std-ref">Platform Installation Section</span></a> section for guidance.</p>
+</div>
+<section id="dragon-install">
+<span id="id1"></span><h4>Dragon Install<a class="headerlink" href="#dragon-install" title="Permalink to this heading">#</a></h4>
+<p><a class="reference external" href="https://dragonhpc.github.io/dragon/doc/_build/html/index.html">Dragon</a> is
+an HPC-native library for distributed computing. SmartSim can use Dragon as a
+launcher on systems with Slurm or PBS as schedulers. To install the correct
+version of Dragon, you can add the <code class="docutils literal notranslate"><span class="pre">--dragon</span></code> option to <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code>.
+For example, to install dragon alongside the RedisAI CPU backends, you can run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cpu<span class="w"> </span>--dragon<span class="w">           </span><span class="c1"># install Dragon, PT and TF for cpu</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Dragon is only supported on Linux systems. For further information, you
+can read <a class="reference internal" href="../dragon.html#dragon"><span class="std std-ref">the dedicated documentation page</span></a>.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="smartredis">
+<h2>SmartRedis<a class="headerlink" href="#smartredis" title="Permalink to this heading">#</a></h2>
+<p>There are implementations of the SmartRedis client in 4 languages: Python, C++,
+C, and Fortran. The Python client is installed through <code class="docutils literal notranslate"><span class="pre">pip</span></code> and the compiled
+clients can be built as a static or shared library through <code class="docutils literal notranslate"><span class="pre">cmake</span></code>.</p>
+<p>SmartRedis Python supports the same architectures for pre-built wheels that
+SmartSim does.</p>
+<div class="pst-scrollable-table-container"><table class="table table-center" id="id13">
+<caption><span class="caption-text">Supported Systems for Pre-built Wheels</span><a class="headerlink" href="#id13" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>Python Versions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MacOS</p></td>
+<td><p>3.9 - 3.11</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linux</p></td>
+<td><p>3.9 - 3.11</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The Python client for SmartRedis is installed through <code class="docutils literal notranslate"><span class="pre">pip</span></code> as follows:</p>
+<p>First, activate your Python virtual environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>&lt;env<span class="w"> </span>name&gt;
+</pre></div>
+</div>
+<p>Install SmartRedis Python client from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>smartredis
+</pre></div>
+</div>
+<p>Developers installing the Python client from PyPI
+can install the SmartRedis client with additional
+dependencies for testing and documentation with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>smartredis<span class="o">[</span>dev<span class="o">]</span>
+<span class="c1"># or if using ZSH</span>
+pip<span class="w"> </span>install<span class="w"> </span>smartredis<span class="se">\[</span>dev<span class="se">\]</span>
+</pre></div>
+</div>
+<p>Now, when inside your virtual environment, you should be able to import
+the <code class="docutils literal notranslate"><span class="pre">Client</span></code> from <code class="docutils literal notranslate"><span class="pre">smartredis</span></code> as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;from smartredis import Client&#39;</span>
+</pre></div>
+</div>
+<section id="build-smartredis-library-c-c-fortran">
+<h3>Build SmartRedis Library (C++, C, Fortran)<a class="headerlink" href="#build-smartredis-library-c-c-fortran" title="Permalink to this heading">#</a></h3>
+<p>For C, C++, and Fortran applications, the SmartRedis client library will need
+to be compiled and linked in. The build system is CMake-based but we also
+offer a Makefile that cover the requirements for most users.</p>
+<p>Downloading SmartRedis via the Github release page is possible, however we recommend
+that most users clone the repository via git</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartRedis.git<span class="w"> </span><span class="o">[</span>--branch<span class="w"> </span>tag_name<span class="o">]</span><span class="w"> </span>smartredis
+</pre></div>
+</div>
+<section id="cmake-based-build">
+<h4>CMake-based build<a class="headerlink" href="#cmake-based-build" title="Permalink to this heading">#</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> file in the SmartRedis root directory is fully self contained
+and can be used directly to compile and install the SmartRedis library. At a bare
+minimum users, can compile the library with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/path/to/SmartRedis
+mkdir<span class="w"> </span>build
+<span class="nb">cd</span><span class="w"> </span>build
+cmake<span class="w"> </span>..<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>/path/to/install/
+make<span class="w"> </span>install<span class="w"> </span>-j
+</pre></div>
+</div>
+<p>which will compile the C and C++ interfaces to SmartRedis and install the libraries
+and all header files to <code class="docutils literal notranslate"><span class="pre">/path/to/install/location</span></code>.</p>
+<p>For other CMake-based projects, the config files for SmartRedis will be in the
+<cite>share/cmake/smartredis</cite> subdirectory and can be included by modifying the
+application’s <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code></p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">find_package</span><span class="p">(</span><span class="s">smartredis</span><span class="w"> </span><span class="s">REQUIRED</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">smartredis</span><span class="p">)</span>
+<span class="nb">target_include_directories</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="o">${</span><span class="nv">smartredis_INCLUDE_DIR</span><span class="o">}</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For more advanced used we provide the following options, their default settings,
+and the allowed values which can be set at configuration time via
+<code class="docutils literal notranslate"><span class="pre">-DEXAMPLE_PARAMETER=EXAMPLE_VALUE</span></code></p>
+<div class="pst-scrollable-table-container"><table class="table" id="id14">
+<caption><span class="caption-text">SmartRedis CMake options</span><a class="headerlink" href="#id14" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 9%" />
+<col style="width: 23%" />
+<col style="width: 45%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter name</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Allowed values</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BUILD_FORTRAN</p></td>
+<td><p>OFF</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>Build the Fortran client library in addition to C/C++</p></td>
+</tr>
+<tr class="row-odd"><td><p>BUILD_PYTHON</p></td>
+<td><p>OFF</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>Build the Python client in addition to C/C++ (useful if the SmartRedis
+python package was installed in editable mode)</p></td>
+</tr>
+<tr class="row-even"><td><p>BUILD_SHARED_LIBS</p></td>
+<td><p>ON</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>If <code class="docutils literal notranslate"><span class="pre">ON</span></code>, build SmartRedis libraries as a dynamic library, otherwise
+as a static library</p></td>
+</tr>
+<tr class="row-odd"><td><p>CMAKE_BUILD_TYPE</p></td>
+<td><p>Release</p></td>
+<td><p>Release, Debug, Coverage</p></td>
+<td><p>Determine whether the optimized, debuggable, or debuggable with coverage
+version of SmartRedis will be compiled</p></td>
+</tr>
+<tr class="row-even"><td><p>CMAKE_INSTALL_PREFIX</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/usr/local</span></code></p></td>
+<td><p>Any path</p></td>
+<td><p>Install path prefix, prepended onto install directories.</p></td>
+</tr>
+<tr class="row-odd"><td><p>PEDANTIC</p></td>
+<td><p>OFF</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>If ON, error out if any compiler warnings are found</p></td>
+</tr>
+<tr class="row-even"><td><p>RETAIN_RPATH</p></td>
+<td><p>ON</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>If ON, retain the path to the libsmartredis library for the Fortran library
+when using dynamic linking</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="makefile-based-build">
+<h4>Makefile-based build<a class="headerlink" href="#makefile-based-build" title="Permalink to this heading">#</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">`Makefile</span></code> included in the top level of the SmartRedis repository has two
+main targets: <code class="docutils literal notranslate"><span class="pre">lib</span></code> which will create a dynamic library for C, C++, and
+(optionally) Fortran and Python clients; and <code class="docutils literal notranslate"><span class="pre">lib-with-fortran</span></code> which will also
+build a library for Fortran applications. <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code> will list additional
+targets that are used for SmartRedis development.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="c1">#or lib-with-fortran</span>
+</pre></div>
+</div>
+<p>By default, the SmartRedis library will be compiled as a shared library with the
+system default compilers and installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/lib/</span></code> and the
+SmartRedis header files (and optionally the Fortran <code class="docutils literal notranslate"><span class="pre">.mod</span></code> files) will be
+installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/include/</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># GCC Toolchain</span>
+make<span class="w"> </span>lib-with-fortran<span class="w"> </span><span class="nv">CC</span><span class="o">=</span>foo<span class="w"> </span><span class="nv">CXX</span><span class="o">=</span>bar<span class="w"> </span><span class="nv">FC</span><span class="o">=</span>baz
+</pre></div>
+</div>
+<p>For reference, the appropriate values for <code class="docutils literal notranslate"><span class="pre">CC</span></code>, <code class="docutils literal notranslate"><span class="pre">CXX</span></code>, and <code class="docutils literal notranslate"><span class="pre">FC</span></code> for the compiler
+chains we support are:</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id15">
+<caption><span class="caption-text">Values for compiler chains</span><a class="headerlink" href="#id15" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Compiler Chain</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">CC</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">CXX</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">FC</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GCC</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gcc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">g++</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gfortran</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Intel (Classic)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icpc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ifort</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Intel (OneAPI)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icx</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icpx</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ifx</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>NVHPC</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvc++</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvfortran</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>By default, the SmartRedis library is built as a shared library. For some
+applications, however, it is preferable to link to a statically compiled
+library. This can be done  by specifying the <code class="docutils literal notranslate"><span class="pre">LINK_TYPE</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>lib<span class="w"> </span><span class="nv">LINK_TYPE</span><span class="o">=</span>shared<span class="w"> </span><span class="c1"># Default shared</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">LINK_TYPE</span><span class="o">=</span>static<span class="w"> </span><span class="c1"># Static build</span>
+</pre></div>
+</div>
+<p>Linked statically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.a</span></code> file extension.  When
+linked dynamically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.so</span></code> file extension.</p>
+<p>It is also possible to adjust compilation settings for the SmartRedis library.
+By default, the library compiles in an optimized build (<code class="docutils literal notranslate"><span class="pre">Release</span></code>), but debug builds
+with full symbols (<code class="docutils literal notranslate"><span class="pre">Debug</span></code>) can be created as can debug builds with extensions enabled
+for code coverage metrics (<code class="docutils literal notranslate"><span class="pre">Coverage</span></code>; this build type is only available with GNU
+compilers). Similar to configuring a link type, selecting the build mode can be done
+via a variable supplied to make:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Release build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Release<span class="w"> </span><span class="c1"># Default</span>
+<span class="c1"># Debug build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Debug
+<span class="c1"># Code coverage build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Coverage
+</pre></div>
+</div>
+<p>Finally, it is possible to build SmartRedis to include Python and/or Fortran support
+(both are omitted by default):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Build support for Python</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_PYTHON</span><span class="o">=</span>ON
+<span class="c1"># Build support for Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># equivalent to make lib-with-fortran</span>
+<span class="c1"># Build support for Python and Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_PYTHON</span><span class="o">=</span>ON<span class="w"> </span><span class="nv">BUILD_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># or make lib-with-fortran BUILD_PYTHON=ON</span>
+</pre></div>
+</div>
+<p>Any combination of the build mode, link type, and Fortran/Python support
+settings is supported For example, a statically linked debug build with Python
+support may be achieved via the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">LINK_TYPE</span><span class="o">=</span>Static<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Debug<span class="w"> </span><span class="nv">BUILD_PYTHON</span><span class="o">=</span>ON
+</pre></div>
+</div>
+<p>The LINK_TYPE, BUILD_TYPE, BUILD_PYTHON, and BUILD_FORTRAN variables are fully supported for all
+test and build targets in the Makefile.</p>
+<p>Fortran support is built in a secondary library <code class="docutils literal notranslate"><span class="pre">libsmartredis-fortran</span></code>.  As
+with the main library, the file extension is dependent on the link type, <code class="docutils literal notranslate"><span class="pre">.so</span></code>
+or <code class="docutils literal notranslate"><span class="pre">.a</span></code>.  All libraries will be located in the <code class="docutils literal notranslate"><span class="pre">install/lib</span></code> folder.</p>
+<p>Additional make variables are described in the <code class="docutils literal notranslate"><span class="pre">help</span></code> make target:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span><span class="nb">help</span>
+</pre></div>
+</div>
+</section>
+<section id="adding-smartredis-as-a-cmake-externalproject">
+<h4>Adding SmartRedis as a CMake ExternalProject<a class="headerlink" href="#adding-smartredis-as-a-cmake-externalproject" title="Permalink to this heading">#</a></h4>
+<p>Most applications should be able to incorporate the following into their
+<code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> to</p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">ExternalProject</span><span class="p">)</span>
+<span class="nb">ExternalProject_Add</span><span class="p">(</span><span class="s">smartredis</span>
+<span class="w">    </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s">https://github.com/CrayLabs/SmartRedis.git</span>
+<span class="w">    </span><span class="s">CMAKE_ARGS</span><span class="w"> </span><span class="s">-DCMAKE_INSTALL_PREFIX:PATH=</span><span class="o">${</span><span class="nv">CMAKE_BINARY_DIR</span><span class="o">}</span><span class="s">/external</span>
+<span class="w">               </span><span class="s">-DBUILD_FORTRAN=on</span><span class="w"> </span><span class="c"># For Fortran applications</span>
+<span class="w">    </span><span class="s">PREFIX</span><span class="w"> </span><span class="o">${</span><span class="nv">CMAKE_BINARY_DIR</span><span class="o">}</span><span class="s">/external</span>
+<span class="p">)</span>
+<span class="nb">ExternalProject_Get_Property</span><span class="p">(</span><span class="s">smartredis</span><span class="w"> </span><span class="s">binary_dir</span><span class="w"> </span><span class="s">source_dir</span><span class="p">)</span>
+
+<span class="nb">add_library</span><span class="p">(</span><span class="s">libsmartredis</span><span class="w"> </span><span class="s">SHARED</span><span class="w"> </span><span class="s">IMPORTED</span><span class="p">)</span>
+<span class="nb">add_dependencies</span><span class="p">(</span><span class="s">libsmartredis</span><span class="w"> </span><span class="s">smartredis</span><span class="p">)</span>
+<span class="nb">set_target_properties</span><span class="p">(</span><span class="s">libsmartredis</span><span class="w"> </span><span class="s">PROPERTIES</span>
+<span class="w">    </span><span class="s">IMPORTED_LOCATION</span><span class="w"> </span><span class="o">${</span><span class="nv">binary_dir</span><span class="o">}</span><span class="s">/libsmartredis.so</span>
+<span class="w">    </span><span class="s">INTERFACE_INCLUDE_DIRECTORIES</span><span class="w">  </span><span class="o">$&lt;</span><span class="nv">INSTALL_INTERFACE:${CMAKE_BINARY_DIR}/external/include}</span><span class="o">&gt;</span>
+<span class="p">)</span>
+
+<span class="c"># Optional, only for Fortran applications</span>
+<span class="nb">add_library</span><span class="p">(</span><span class="s">libsmartredis-fortran</span><span class="w"> </span><span class="s">SHARED</span><span class="w"> </span><span class="s">IMPORTED</span><span class="p">)</span>
+<span class="nb">add_dependencies</span><span class="p">(</span><span class="s">libsmartredis-fortran</span><span class="w"> </span><span class="s">smartredis</span><span class="p">)</span>
+<span class="nb">set_target_properties</span><span class="p">(</span><span class="s">libsmartredis-fortran</span><span class="w"> </span><span class="s">PROPERTIES</span>
+<span class="w">    </span><span class="s">IMPORTED_LOCATION</span><span class="w"> </span><span class="o">${</span><span class="nv">binary_dir</span><span class="o">}</span><span class="s">/libsmartredis-fortran.so</span>
+<span class="w">    </span><span class="s">INTERFACE_INCLUDE_DIRECTORIES</span><span class="w">  </span><span class="o">$&lt;</span><span class="nv">INSTALL_INTERFACE:${CMAKE_BINARY_DIR}/external/include}</span><span class="o">&gt;</span>
+<span class="p">)</span>
+
+<span class="c"># ... define the example_target executable here</span>
+
+<span class="nb">target_include_directories</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="o">${</span><span class="nv">CMAKE_BINARY_DIR</span><span class="o">}</span><span class="s">/external/include</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">libsmartredis</span><span class="p">)</span>
+<span class="c"># Optional, only for Fortran applcations</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">libsmartredis-fortran</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="linking-instructions-using-compiler-flags">
+<h4>Linking instructions using compiler flags<a class="headerlink" href="#linking-instructions-using-compiler-flags" title="Permalink to this heading">#</a></h4>
+<p>For applications which use pre-defined compiler flags for compilation, the
+following flags should be included for the preprocessor</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-I/path/to/smartredis/install/include
+</pre></div>
+</div>
+<p>The linking flags will differ slightly whether the Fortran client library needs
+to be included. If so, be sure that you ran <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">lib-with-fortran</span></code> (or <code class="docutils literal notranslate"><span class="pre">make</span>
+<span class="pre">lib</span> <span class="pre">BUILD_FORTRAN=ON</span></code>) and include the SmartRedis fortran library via the
+following flags:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-L/path/to/smartredis/install/lib -lsmartredis [-lsmartredis-fortran]
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Fortran applications need to link in both <code class="docutils literal notranslate"><span class="pre">smartredis-fortran</span></code> and
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code> libraries whereas C/C++ applications require only
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code>.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>For static linking, due to limitations with CMake, users should also
+add the following flags <code class="docutils literal notranslate"><span class="pre">-lhiredis</span> <span class="pre">-lredis++</span></code> to the link command</p>
+</div>
+</section>
+</section>
+</section>
+<section id="from-source">
+<h2>From Source<a class="headerlink" href="#from-source" title="Permalink to this heading">#</a></h2>
+<p>This section will be geared towards contributors who want to install SmartSim
+and SmartRedis from source for development purposes. If you are installing
+from source for other reasons, follow the steps below but use the source
+distributions provided on GitHub or PyPI.</p>
+<section id="install-smartsim-from-source">
+<span id="id2"></span><h3>Install SmartSim from Source<a class="headerlink" href="#install-smartsim-from-source" title="Permalink to this heading">#</a></h3>
+<p>First, clone SmartSim.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartSim<span class="w"> </span>smartsim
+</pre></div>
+</div>
+<p>And then install SmartSim with pip in <em>editable</em> mode. This way, SmartSim is
+installed in your virtual environment and available on <cite>sys.path</cite>, but the
+source remains at the site of the clone instead of in site-packages.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>smartsim
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span><span class="w">       </span><span class="c1"># for bash users</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span><span class="w">  </span><span class="c1"># for zsh users</span>
+</pre></div>
+</div>
+<p>Use the now installed <code class="docutils literal notranslate"><span class="pre">smart</span></code> cli to install the machine learning runtimes and
+dragon. Referring to “Step 2: Build SmartSim above”.</p>
+</section>
+<section id="build-the-smartredis-library">
+<h3>Build the SmartRedis library<a class="headerlink" href="#build-the-smartredis-library" title="Permalink to this heading">#</a></h3>
+<p>For C, C++, and Fortran applications, the SmartRedis client library will need
+to be compiled and linked in. The build system is CMake-based but we also
+offer a Makefile that cover the requirements for most users.</p>
+<p>Downloading SmartRedis via the Github release page is possible, however we recommend
+that most users clone the repository via git</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartRedis.git<span class="w"> </span><span class="o">[</span>--branch<span class="w"> </span>tag_name<span class="o">]</span><span class="w"> </span>smartredis
+</pre></div>
+</div>
+<section id="id3">
+<h4>CMake-based build<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> file in the SmartRedis root directory is fully self contained
+and can be used directly to compile and install the SmartRedis library. At a bare
+minimum users, can compile the library with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/path/to/SmartRedis
+mkdir<span class="w"> </span>build
+<span class="nb">cd</span><span class="w"> </span>build
+cmake<span class="w"> </span>..<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>/path/to/install/
+make<span class="w"> </span>install<span class="w"> </span>-j
+</pre></div>
+</div>
+<p>which will compile the C and C++ interfaces to SmartRedis and install the libraries
+and all header files to <code class="docutils literal notranslate"><span class="pre">/path/to/install/location</span></code>.</p>
+<p>For other CMake-based projects, the config files for SmartRedis will be in the
+<cite>share/cmake/smartredis</cite> subdirectory and can be included by modifying the
+application’s <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code></p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">find_package</span><span class="p">(</span><span class="s">smartredis</span><span class="w"> </span><span class="s">REQUIRED</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">smartredis</span><span class="p">)</span>
+<span class="nb">target_include_directories</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="o">${</span><span class="nv">smartredis_INCLUDE_DIR</span><span class="o">}</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For more advanced used we provide the following options, their default settings,
+and the allowed values which can be set at configuration time via
+<code class="docutils literal notranslate"><span class="pre">-DEXAMPLE_PARAMETER=EXAMPLE_VALUE</span></code></p>
+<div class="pst-scrollable-table-container"><table class="table" id="id16">
+<caption><span class="caption-text">SmartRedis CMake options</span><a class="headerlink" href="#id16" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 9%" />
+<col style="width: 23%" />
+<col style="width: 45%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter name</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Allowed values</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BUILD_FORTRAN</p></td>
+<td><p>OFF</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>Build the Fortran client library in addition to C/C++</p></td>
+</tr>
+<tr class="row-odd"><td><p>BUILD_PYTHON</p></td>
+<td><p>OFF</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>Build the Python client in addition to C/C++ (useful if the SmartRedis
+python package was installed in editable mode)</p></td>
+</tr>
+<tr class="row-even"><td><p>BUILD_SHARED_LIBS</p></td>
+<td><p>ON</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>If <code class="docutils literal notranslate"><span class="pre">ON</span></code>, build SmartRedis libraries as a dynamic library, otherwise
+as a static library</p></td>
+</tr>
+<tr class="row-odd"><td><p>CMAKE_BUILD_TYPE</p></td>
+<td><p>Release</p></td>
+<td><p>Release, Debug, Coverage</p></td>
+<td><p>Determine whether the optimized, debuggable, or debuggable with coverage
+version of SmartRedis will be compiled</p></td>
+</tr>
+<tr class="row-even"><td><p>CMAKE_INSTALL_PREFIX</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/usr/local</span></code></p></td>
+<td><p>Any path</p></td>
+<td><p>Install path prefix, prepended onto install directories.</p></td>
+</tr>
+<tr class="row-odd"><td><p>PEDANTIC</p></td>
+<td><p>OFF</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>If ON, error out if any compiler warnings are found</p></td>
+</tr>
+<tr class="row-even"><td><p>RETAIN_RPATH</p></td>
+<td><p>ON</p></td>
+<td><p>ON, OFF</p></td>
+<td><p>If ON, retain the path to the libsmartredis library for the Fortran library
+when using dynamic linking</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="id4">
+<h4>Makefile-based build<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">`Makefile</span></code> included in the top level of the SmartRedis repository has two
+main targets: <code class="docutils literal notranslate"><span class="pre">lib</span></code> which will create a dynamic library for C, C++, and
+(optionally) Fortran and Python clients; and <code class="docutils literal notranslate"><span class="pre">lib-with-fortran</span></code> which will also
+build a library for Fortran applications. <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code> will list additional
+targets that are used for SmartRedis development.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="c1">#or lib-with-fortran</span>
+</pre></div>
+</div>
+<p>By default, the SmartRedis library will be compiled as a shared library with the
+system default compilers and installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/lib/</span></code> and the
+SmartRedis header files (and optionally the Fortran <code class="docutils literal notranslate"><span class="pre">.mod</span></code> files) will be
+installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/include/</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># GCC Toolchain</span>
+make<span class="w"> </span>lib-with-fortran<span class="w"> </span><span class="nv">CC</span><span class="o">=</span>foo<span class="w"> </span><span class="nv">CXX</span><span class="o">=</span>bar<span class="w"> </span><span class="nv">FC</span><span class="o">=</span>baz
+</pre></div>
+</div>
+<p>For reference, the appropriate values for <code class="docutils literal notranslate"><span class="pre">CC</span></code>, <code class="docutils literal notranslate"><span class="pre">CXX</span></code>, and <code class="docutils literal notranslate"><span class="pre">FC</span></code> for the compiler
+chains we support are:</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id17">
+<caption><span class="caption-text">Values for compiler chains</span><a class="headerlink" href="#id17" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Compiler Chain</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">CC</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">CXX</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">FC</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GCC</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gcc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">g++</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gfortran</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Intel (Classic)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icpc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ifort</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Intel (OneAPI)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icx</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">icpx</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ifx</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>NVHPC</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvc++</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvfortran</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>By default, the SmartRedis library is built as a shared library. For some
+applications, however, it is preferable to link to a statically compiled
+library. This can be done  by specifying the <code class="docutils literal notranslate"><span class="pre">LINK_TYPE</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>lib<span class="w"> </span><span class="nv">LINK_TYPE</span><span class="o">=</span>shared<span class="w"> </span><span class="c1"># Default shared</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">LINK_TYPE</span><span class="o">=</span>static<span class="w"> </span><span class="c1"># Static build</span>
+</pre></div>
+</div>
+<p>Linked statically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.a</span></code> file extension.  When
+linked dynamically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.so</span></code> file extension.</p>
+<p>It is also possible to adjust compilation settings for the SmartRedis library.
+By default, the library compiles in an optimized build (<code class="docutils literal notranslate"><span class="pre">Release</span></code>), but debug builds
+with full symbols (<code class="docutils literal notranslate"><span class="pre">Debug</span></code>) can be created as can debug builds with extensions enabled
+for code coverage metrics (<code class="docutils literal notranslate"><span class="pre">Coverage</span></code>; this build type is only available with GNU
+compilers). Similar to configuring a link type, selecting the build mode can be done
+via a variable supplied to make:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Release build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Release<span class="w"> </span><span class="c1"># Default</span>
+<span class="c1"># Debug build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Debug
+<span class="c1"># Code coverage build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Coverage
+</pre></div>
+</div>
+<p>Finally, it is possible to build SmartRedis to include Python and/or Fortran support
+(both are omitted by default):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Build support for Python</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_PYTHON</span><span class="o">=</span>ON
+<span class="c1"># Build support for Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># equivalent to make lib-with-fortran</span>
+<span class="c1"># Build support for Python and Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">BUILD_PYTHON</span><span class="o">=</span>ON<span class="w"> </span><span class="nv">BUILD_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># or make lib-with-fortran BUILD_PYTHON=ON</span>
+</pre></div>
+</div>
+<p>Any combination of the build mode, link type, and Fortran/Python support
+settings is supported For example, a statically linked debug build with Python
+support may be achieved via the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">LINK_TYPE</span><span class="o">=</span>Static<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>Debug<span class="w"> </span><span class="nv">BUILD_PYTHON</span><span class="o">=</span>ON
+</pre></div>
+</div>
+<p>The LINK_TYPE, BUILD_TYPE, BUILD_PYTHON, and BUILD_FORTRAN variables are fully supported for all
+test and build targets in the Makefile.</p>
+<p>Fortran support is built in a secondary library <code class="docutils literal notranslate"><span class="pre">libsmartredis-fortran</span></code>.  As
+with the main library, the file extension is dependent on the link type, <code class="docutils literal notranslate"><span class="pre">.so</span></code>
+or <code class="docutils literal notranslate"><span class="pre">.a</span></code>.  All libraries will be located in the <code class="docutils literal notranslate"><span class="pre">install/lib</span></code> folder.</p>
+<p>Additional make variables are described in the <code class="docutils literal notranslate"><span class="pre">help</span></code> make target:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span><span class="nb">help</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h4>Adding SmartRedis as a CMake ExternalProject<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h4>
+<p>Most applications should be able to incorporate the following into their
+<code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> to</p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">ExternalProject</span><span class="p">)</span>
+<span class="nb">ExternalProject_Add</span><span class="p">(</span><span class="s">smartredis</span>
+<span class="w">    </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s">https://github.com/CrayLabs/SmartRedis.git</span>
+<span class="w">    </span><span class="s">CMAKE_ARGS</span><span class="w"> </span><span class="s">-DCMAKE_INSTALL_PREFIX:PATH=</span><span class="o">${</span><span class="nv">CMAKE_BINARY_DIR</span><span class="o">}</span><span class="s">/external</span>
+<span class="w">               </span><span class="s">-DBUILD_FORTRAN=on</span><span class="w"> </span><span class="c"># For Fortran applications</span>
+<span class="w">    </span><span class="s">PREFIX</span><span class="w"> </span><span class="o">${</span><span class="nv">CMAKE_BINARY_DIR</span><span class="o">}</span><span class="s">/external</span>
+<span class="p">)</span>
+<span class="nb">ExternalProject_Get_Property</span><span class="p">(</span><span class="s">smartredis</span><span class="w"> </span><span class="s">binary_dir</span><span class="w"> </span><span class="s">source_dir</span><span class="p">)</span>
+
+<span class="nb">add_library</span><span class="p">(</span><span class="s">libsmartredis</span><span class="w"> </span><span class="s">SHARED</span><span class="w"> </span><span class="s">IMPORTED</span><span class="p">)</span>
+<span class="nb">add_dependencies</span><span class="p">(</span><span class="s">libsmartredis</span><span class="w"> </span><span class="s">smartredis</span><span class="p">)</span>
+<span class="nb">set_target_properties</span><span class="p">(</span><span class="s">libsmartredis</span><span class="w"> </span><span class="s">PROPERTIES</span>
+<span class="w">    </span><span class="s">IMPORTED_LOCATION</span><span class="w"> </span><span class="o">${</span><span class="nv">binary_dir</span><span class="o">}</span><span class="s">/libsmartredis.so</span>
+<span class="w">    </span><span class="s">INTERFACE_INCLUDE_DIRECTORIES</span><span class="w">  </span><span class="o">$&lt;</span><span class="nv">INSTALL_INTERFACE:${CMAKE_BINARY_DIR}/external/include}</span><span class="o">&gt;</span>
+<span class="p">)</span>
+
+<span class="c"># Optional, only for Fortran applications</span>
+<span class="nb">add_library</span><span class="p">(</span><span class="s">libsmartredis-fortran</span><span class="w"> </span><span class="s">SHARED</span><span class="w"> </span><span class="s">IMPORTED</span><span class="p">)</span>
+<span class="nb">add_dependencies</span><span class="p">(</span><span class="s">libsmartredis-fortran</span><span class="w"> </span><span class="s">smartredis</span><span class="p">)</span>
+<span class="nb">set_target_properties</span><span class="p">(</span><span class="s">libsmartredis-fortran</span><span class="w"> </span><span class="s">PROPERTIES</span>
+<span class="w">    </span><span class="s">IMPORTED_LOCATION</span><span class="w"> </span><span class="o">${</span><span class="nv">binary_dir</span><span class="o">}</span><span class="s">/libsmartredis-fortran.so</span>
+<span class="w">    </span><span class="s">INTERFACE_INCLUDE_DIRECTORIES</span><span class="w">  </span><span class="o">$&lt;</span><span class="nv">INSTALL_INTERFACE:${CMAKE_BINARY_DIR}/external/include}</span><span class="o">&gt;</span>
+<span class="p">)</span>
+
+<span class="c"># ... define the example_target executable here</span>
+
+<span class="nb">target_include_directories</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="o">${</span><span class="nv">CMAKE_BINARY_DIR</span><span class="o">}</span><span class="s">/external/include</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">libsmartredis</span><span class="p">)</span>
+<span class="c"># Optional, only for Fortran applcations</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">example_target</span><span class="w"> </span><span class="s">libsmartredis-fortran</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h4>Linking instructions using compiler flags<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h4>
+<p>For applications which use pre-defined compiler flags for compilation, the
+following flags should be included for the preprocessor</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-I/path/to/smartredis/install/include
+</pre></div>
+</div>
+<p>The linking flags will differ slightly whether the Fortran client library needs
+to be included. If so, be sure that you ran <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">lib-with-fortran</span></code> (or <code class="docutils literal notranslate"><span class="pre">make</span>
+<span class="pre">lib</span> <span class="pre">BUILD_FORTRAN=ON</span></code>) and include the SmartRedis fortran library via the
+following flags:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-L/path/to/smartredis/install/lib -lsmartredis [-lsmartredis-fortran]
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Fortran applications need to link in both <code class="docutils literal notranslate"><span class="pre">smartredis-fortran</span></code> and
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code> libraries whereas C/C++ applications require only
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code>.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>For static linking, due to limitations with CMake, users should also
+add the following flags <code class="docutils literal notranslate"><span class="pre">-lhiredis</span> <span class="pre">-lredis++</span></code> to the link command</p>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../overview.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Introduction</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="platform.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Installation on specific platforms</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic">Basic</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ml-library-support">ML Library Support</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#linux">Linux</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#macosx">MacOSX</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macos-only">MacOS-only</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#smartsim">SmartSim</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-install-python-package">Step 1: Install Python Package</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-build-smartsim">Step 2: Build SmartSim</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#dragon-install">Dragon Install</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#smartredis">SmartRedis</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-smartredis-library-c-c-fortran">Build SmartRedis Library (C++, C, Fortran)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cmake-based-build">CMake-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#makefile-based-build">Makefile-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-smartredis-as-a-cmake-externalproject">Adding SmartRedis as a CMake ExternalProject</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-instructions-using-compiler-flags">Linking instructions using compiler flags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#from-source">From Source</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#install-smartsim-from-source">Install SmartSim from Source</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-smartredis-library">Build the SmartRedis library</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">CMake-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Makefile-based build</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Adding SmartRedis as a CMake ExternalProject</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Linking instructions using compiler flags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2024, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

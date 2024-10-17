@@ -1,0 +1,1238 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Online Training &#8212; SmartSim 0.4.1 documentation</title>
+    
+  <link href="../../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Ray Integration" href="../../ray/starting_ray.html" />
+    <link rel="prev" title="Online Inference" href="../../ml_inference/Inference-in-SmartSim.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../community.html">
+   Community
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../contributing_examples.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../../_sources/tutorials/ml_training/surrogate/train_surrogate.ipynb.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Ftutorials/ml_training/surrogate/train_surrogate.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Online Training
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2D-Heat-Diffusion-and-Steady-State">
+     2D Heat Diffusion and Steady State
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#The-Surrogate-Model">
+   The Surrogate Model
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Model-Topology">
+     Model Topology
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Integrating-SmartRedis-and-SmartSim-in-the-Simulation">
+     Integrating SmartRedis and SmartSim in the Simulation
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Starting-the-Experiment">
+     Starting the Experiment
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Running-an-Ensemble-of-Simulations">
+     Running an Ensemble of Simulations
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Using-SmartSim-to-Train-the-Neural-Network">
+     Using SmartSim to Train the Neural Network
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Progress-Visualization">
+     Progress Visualization
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Online Training</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Online Training
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#2D-Heat-Diffusion-and-Steady-State">
+     2D Heat Diffusion and Steady State
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#The-Surrogate-Model">
+   The Surrogate Model
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Model-Topology">
+     Model Topology
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Integrating-SmartRedis-and-SmartSim-in-the-Simulation">
+     Integrating SmartRedis and SmartSim in the Simulation
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Starting-the-Experiment">
+     Starting the Experiment
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Running-an-Ensemble-of-Simulations">
+     Running an Ensemble of Simulations
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Using-SmartSim-to-Train-the-Neural-Network">
+     Using SmartSim to Train the Neural Network
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#Progress-Visualization">
+     Progress Visualization
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Online-Training">
+<h1>Online Training<a class="headerlink" href="#Online-Training" title="Permalink to this headline">¶</a></h1>
+<p>Simulating a complex phenomenon can be computationally intensive and expensive. In some cases the computational model is too expensive or too slow to be used in production, for example, when results are needed in real time. In other cases, a correct computational model, capable of predicting the behavior of a complex system, might not even exist, see e.g. <a class="reference external" href="https://arxiv.org/abs/2104.09355">this article</a>. <em>Surrogate models</em>, or simply <em>surrogates</em>, can compute the outcome of a given
+experiment up to a reasonable degree of approximation, while requiring little computational power or time.</p>
+<p>In this notebook, a neural network is trained to act like a surrogate model and to solve a well-known physical problem, i.e. computing the steady state of heat diffusion. The training dataset is constructed by running simualations <em>while</em> the model is being trained.</p>
+<section id="2D-Heat-Diffusion-and-Steady-State">
+<h2>2D Heat Diffusion and Steady State<a class="headerlink" href="#2D-Heat-Diffusion-and-Steady-State" title="Permalink to this headline">¶</a></h2>
+<p>Throughout this notebook, the heat equation will be solved on the two-dimensional domain <span class="math">[0,1]\times[0,1]</span>, setting the initial temperature to 0 K, except for some specific spots (of radius <span class="math">0.05</span>), where heat sources at a constant temperature of 1 K are placed. Since all boundaries are kept at 0 K, after enough time, the domain will reach a steady state, which is the outcome the surrogate model will learn to compute.</p>
+<p>The problem can be solved using a finite difference scheme. To this end, a modified version of the code written by John Burkardt will be used. Its original version is licensed under LGPL, and so is this example. The code was downloaded from <a class="reference external" href="https://people.sc.fsu.edu/~jburkardt/py_src/fd2d_heat_steady/fd2d_heat_steady.html">this page</a>, which explains how the problem is discretized and solved.</p>
+<p>In the modified version of the code which will be used, a random number (between 1 and 5) of heat sources is placed. Here below, the solver is run with different initial conditions and the results are displayed. To keep the solution time reasonably short, the domain is discretized with a 64x64-point grid.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+<span class="kn">from</span> <span class="nn">steady_state</span> <span class="kn">import</span> <span class="n">fd2d_heat_steady_test01</span>
+<span class="kn">from</span> <span class="nn">vishelpers</span> <span class="kn">import</span> <span class="n">pcolor_list</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <span class="n">default_rng</span>
+
+
+<span class="n">size</span> <span class="o">=</span> <span class="mi">64</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">u_s</span> <span class="o">=</span> <span class="n">fd2d_heat_steady_test01</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="n">pcolor_list</span><span class="p">(</span><span class="n">u_s</span><span class="p">,</span> <span class="s2">&quot;Left: initial temperature. Right: steady state.&quot;</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_0.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_0.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_1.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_2.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_3.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_4.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_4.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_5.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_1_5.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="The-Surrogate-Model">
+<h1>The Surrogate Model<a class="headerlink" href="#The-Surrogate-Model" title="Permalink to this headline">¶</a></h1>
+<p>The surrogate model will be a Convolutional Neural Network (CNN). The training set will be constructed on the fly, by running multiple simulations.</p>
+<section id="Model-Topology">
+<h2>Model Topology<a class="headerlink" href="#Model-Topology" title="Permalink to this headline">¶</a></h2>
+<p>The initial design for the Convolutional Neural Network (CNN) used in this notebook was inspired by the NN2 model defined in <a class="reference external" href="https://arxiv.org/abs/2102.05527">this paper</a>. Half of the Neural Network (NN) computes an encoding of the initial image: each convolutional layer downsamples the image by a factor 4, and doubles the number of channels (the input has one single channel). The second half of the NN reverses the operations, by upscaling the image by a factor 4 at each layer and halving
+the number of channels. In this variation of the model, residual blocks are used instead of convolutional layers, and skip connection between layers which are “symmetric” with respect to the center of the NN are added (the output of the 1st layer is added to the input of the <span class="math">n-1</span>-th layer, the ouput of the 2nd layer is added to the input of the <span class="math">n-2</span>-th layer, and so on).</p>
+<p>The model is defined in the file <code class="docutils literal notranslate"><span class="pre">tf_model.py</span></code>, and its depth is parametrized: for a <span class="math">64 \times 64</span> domain, the maximum depth is <span class="math">6</span>, but with a depth of <span class="math">3</span> or <span class="math">4</span> the results are already noteworthy (and require less resources).</p>
+</section>
+<section id="Integrating-SmartRedis-and-SmartSim-in-the-Simulation">
+<h2>Integrating SmartRedis and SmartSim in the Simulation<a class="headerlink" href="#Integrating-SmartRedis-and-SmartSim-in-the-Simulation" title="Permalink to this headline">¶</a></h2>
+<p>As in the Lattice Boltzmann tutorial, we use SmartRedis to stage tensors.</p>
+<p>For each simulation, both the initial conditions and the steady state solution are put on the database (DB). Since the data will be used to train a Neural Network, an object of the type <code class="docutils literal notranslate"><span class="pre">TrainingDataUploader</span></code> is used in the code. It <span class="math">\puts `the data on the DB in batches which will be consumed by the training process. The function ``simulate`</span> contained in <code class="docutils literal notranslate"><span class="pre">fd_sim.py</span></code> is the core of the computation. Notice that samples are augmented before being uploaded as batches: for each
+simulation, eight rotated and reflected version of the original samples are uploaded.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">simulate</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run multiple simulations and upload results</span>
+
+<span class="sd">    both as tensors and as augmented samples for training.</span>
+
+<span class="sd">    :param steps: Number of simulations to run</span>
+<span class="sd">    :type steps: int</span>
+<span class="sd">    :param size: lateral size of the discretized domain</span>
+<span class="sd">    :type size: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span><span class="n">size</span><span class="p">,</span><span class="n">size</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">single</span><span class="p">)</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">single</span><span class="p">)</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">training_data_uploader</span> <span class="o">=</span> <span class="n">TrainingDataUploader</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">training_data_uploader</span><span class="o">.</span><span class="n">publish_info</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">)):</span>
+
+        <span class="n">u_init</span><span class="p">,</span> <span class="n">u_steady</span> <span class="o">=</span> <span class="n">fd2d_heat_steady_test01</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">u_init</span> <span class="o">=</span> <span class="n">u_init</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">single</span><span class="p">)</span>
+        <span class="n">u_steady</span> <span class="o">=</span> <span class="n">u_steady</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">single</span><span class="p">)</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">create_dataset</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">u_init</span><span class="p">,</span> <span class="n">u_steady</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">put_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+        <span class="n">samples</span><span class="p">[</span><span class="n">i</span><span class="o">%</span><span class="n">batch_size</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_init</span>
+        <span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="o">%</span><span class="n">batch_size</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_steady</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">batch_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">augmented_samples</span><span class="p">,</span> <span class="n">augmented_targets</span> <span class="o">=</span> <span class="n">augment_batch</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+            <span class="n">training_data_uploader</span><span class="o">.</span><span class="n">put_batch</span><span class="p">(</span><span class="n">augmented_samples</span><span class="p">,</span> <span class="n">augmented_targets</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="Starting-the-Experiment">
+<h2>Starting the Experiment<a class="headerlink" href="#Starting-the-Experiment" title="Permalink to this headline">¶</a></h2>
+<p>SmartSim, the infrastructure library, is used here to launch the database, the simulation, and the NN training locally, but in separate processes. The example is designed to run on laptops, so the local launcher is used.</p>
+<p>First, the necessary libraries are imported, and an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> instance is created. An <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> database reference is initialized and launched to stage data between the simulation, the NN training, and this notebook where results will be analyzed.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="c1"># Initialize an Experiment with the local launcher</span>
+<span class="c1"># This will be the name of the output directory that holds</span>
+<span class="c1"># the output from our simulation and SmartSim</span>
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;surrogate_training&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create an Orchestrator database reference,</span>
+<span class="c1"># generate its output directory, and launch it locally</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6780</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;lo&quot;</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database started at address: </span><span class="si">{</span><span class="n">db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Database started at address: [&#39;127.0.0.1:6780&#39;]
+</pre></div></div>
+</div>
+</section>
+<section id="Running-an-Ensemble-of-Simulations">
+<h2>Running an Ensemble of Simulations<a class="headerlink" href="#Running-an-Ensemble-of-Simulations" title="Permalink to this headline">¶</a></h2>
+<p>To run the simulation, <code class="docutils literal notranslate"><span class="pre">Experiment.create_run_settings</span></code> is used to define how the simulation should be executed. To obtain a larger number of samples, we run an ensemble of simulations, i.e. multiple replicas of the simulation, each one producing different samples. To set up the ensemble, the settings are then passed to create a reference to the ensemble through a call to <code class="docutils literal notranslate"><span class="pre">Experiment.create_ensemble()</span></code> which can be used to start, monitor, and stop the simulations from this notebook. Notice
+the call to <code class="docutils literal notranslate"><span class="pre">enable_key_prefixing()</span></code>: that will make sure each simulation adds a prefix to the keys it uploads, to avoid key clashes with other ensemble members.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set simulation parameters we can pass as executable arguments</span>
+<span class="c1"># Number of simulations to run in each replica</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="c1"># create &quot;run settings&quot; for the simulation which define how</span>
+<span class="c1"># the simulation will be executed when passed to Experiment.start()</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+                                   <span class="n">exe_args</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fd_sim.py&quot;</span><span class="p">,</span>
+                                             <span class="sa">f</span><span class="s2">&quot;--steps=</span><span class="si">{</span><span class="n">steps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                             <span class="sa">f</span><span class="s2">&quot;--size=</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+                                   <span class="n">env_vars</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;OMP_NUM_THREADS&quot;</span><span class="p">:</span> <span class="s2">&quot;8&quot;</span><span class="p">})</span>
+
+<span class="c1"># Create the ensemble reference to our simulation and</span>
+<span class="c1"># attach needed files to be copied, configured, or symlinked into</span>
+<span class="c1"># the ensemble directories at runtime.</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;fd_simulation&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">replicas</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ensemble</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fd_sim.py&quot;</span><span class="p">,</span> <span class="s2">&quot;steady_state.py&quot;</span><span class="p">])</span>
+<span class="n">ensemble</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+17:55:20 prod-0001 SmartSim[61617] INFO Working in previously created experiment
+</pre></div></div>
+</div>
+</section>
+<section id="Using-SmartSim-to-Train-the-Neural-Network">
+<h2>Using SmartSim to Train the Neural Network<a class="headerlink" href="#Using-SmartSim-to-Train-the-Neural-Network" title="Permalink to this headline">¶</a></h2>
+<p>The last component of the workflow is the model training. For this notebook, the neural network will be trained using TensorFlow and Keras, but PyTorch is supported too, and a corresponding notebook will soon be available.</p>
+<p>In the code, an object of the type <code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf.DynamicDataGenerator</span></code> is passed to Keras’s <code class="docutils literal notranslate"><span class="pre">Model.fit()</span></code> function. The data generator will download batches from the database before the training starts and then, after each epoch, it will poll the database to check whether new batches are available for download.</p>
+<p>The core of the training code is in <code class="docutils literal notranslate"><span class="pre">tf_training.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">epochs</span><span class="p">):</span>
+    <span class="n">training_generator</span> <span class="o">=</span> <span class="n">DynamicDataGenerator</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Compiling NN&quot;</span><span class="p">)</span>
+
+    <span class="n">initial_learning_rate</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="n">lr_schedule</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">ExponentialDecay</span><span class="p">(</span>
+        <span class="n">initial_learning_rate</span><span class="p">,</span>
+        <span class="n">decay_steps</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+        <span class="n">decay_rate</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">staircase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">lr_schedule</span><span class="p">,</span>
+                                        <span class="n">beta_1</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                                        <span class="n">beta_2</span><span class="o">=</span><span class="mf">0.999</span><span class="p">,</span>
+                                        <span class="n">epsilon</span><span class="o">=</span><span class="mf">1e-07</span><span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s2">&quot;mean_absolute_error&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_generator</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">epochs</span><span class="o">=</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">initial_epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">training_generator</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+                  <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">store_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">epoch</span><span class="o">//</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Notice that after each 10 epochs, a copy of the current state of the model is uploaded to the database. It will be used in this notebook to look at the evolution of the model prediction.</p>
+<p>To set up the model, run settings are defined with the parameters chosen for this run, and used in <code class="docutils literal notranslate"><span class="pre">Experiment.create_model()</span></code>. To allow the training process to check for data produced by the ensemble members, they must be registered as incoming entities by calling <code class="docutils literal notranslate"><span class="pre">Model.register_incoming_entity()</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nn_depth</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">epochs</span> <span class="o">=</span> <span class="mi">40</span>
+
+<span class="n">ml_settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+                                   <span class="n">exe_args</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tf_training.py&quot;</span><span class="p">,</span>
+                                             <span class="sa">f</span><span class="s2">&quot;--depth=</span><span class="si">{</span><span class="n">nn_depth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                             <span class="sa">f</span><span class="s2">&quot;--epochs=</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                             <span class="sa">f</span><span class="s2">&quot;--size=</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+                                   <span class="n">env_vars</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;OMP_NUM_THREADS&quot;</span><span class="p">:</span> <span class="s2">&quot;16&quot;</span><span class="p">})</span>
+
+<span class="n">ml_model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;tf_training&quot;</span><span class="p">,</span> <span class="n">ml_settings</span><span class="p">)</span>
+<span class="n">ml_model</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tf_training.py&quot;</span><span class="p">,</span> <span class="s2">&quot;tf_model.py&quot;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">sim</span> <span class="ow">in</span> <span class="n">ensemble</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+    <span class="n">ml_model</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">ml_model</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+17:55:21 prod-0001 SmartSim[61617] INFO Working in previously created experiment
+</pre></div></div>
+</div>
+<p>Once the ensemble and the model are defined, they are started by passing the references to <code class="docutils literal notranslate"><span class="pre">Experiment.start()</span></code>. The workflow is started with the <code class="docutils literal notranslate"><span class="pre">block=False</span></code> argument. This runs the ensemble and the training in a nonblocking manner so that the data being streamed from the simulation, and the training process can be analyzed in real time.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">ml_model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Progress-Visualization">
+<h2>Progress Visualization<a class="headerlink" href="#Progress-Visualization" title="Permalink to this headline">¶</a></h2>
+<p>To monitor the progress made by the training process, the intermediate models are run on samples drawn randomly from the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> database as soon as they are available.</p>
+<p>Notice that the inference happens on the database through a call to <code class="docutils literal notranslate"><span class="pre">Client.run_model()</span></code>, and only the result is downloaded to be displayed.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Connect a SmartRedis client to retrieve data while the</span>
+<span class="c1"># simulation is producing it and storing it within the</span>
+<span class="c1"># orchestrator database</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">num_tests</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">default_rng</span><span class="p">()</span>
+<span class="c1"># Choose some random samples from the simulation</span>
+<span class="n">sample_indices</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">steps</span><span class="o">//</span><span class="mi">5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_tests</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">sample_indices</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">sample_idx</span> <span class="ow">in</span> <span class="n">sample_indices</span><span class="p">:</span>
+    <span class="n">u_steady_name</span> <span class="o">=</span> <span class="n">ensemble</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.{sim_data_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sample_idx</span><span class="p">)</span><span class="o">+</span> <span class="s2">&quot;}.u_steady&quot;</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">poll_key</span><span class="p">(</span><span class="n">u_steady_name</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="n">u_steady_name</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+
+<span class="n">pcolor_list</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="s2">&quot;Simulation&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">epochs</span><span class="o">//</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">nn_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;DiffusionResNet_</span><span class="si">{</span><span class="n">nn_depth</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">poll_key</span><span class="p">(</span><span class="n">nn_name</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">ml_steady</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">sample_idx</span> <span class="ow">in</span> <span class="n">sample_indices</span><span class="p">:</span>
+        <span class="n">u_init_name</span> <span class="o">=</span> <span class="n">ensemble</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.{sim_data_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sample_idx</span><span class="p">)</span><span class="o">+</span> <span class="s2">&quot;}.u_init&quot;</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="n">nn_name</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">u_init_name</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;ml_steady_</span><span class="si">{</span><span class="n">sample_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+        <span class="n">ml_steady</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ml_steady_</span><span class="si">{</span><span class="n">sample_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+
+    <span class="n">pcolor_list</span><span class="p">(</span><span class="n">ml_steady</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Model at training epoch </span><span class="si">{</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">10</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_0.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_0.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_1.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_2.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_3.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_4.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_4.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_5.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_5.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+17:57:25 prod-0001 SmartSim[61617] INFO fd_simulation_0(61776): Completed
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_7.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_7.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_8.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_8.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+17:57:58 prod-0001 SmartSim[61617] INFO fd_simulation_1(61784): Completed
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_10.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_10.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_11.png" src="../../../_images/tutorials_ml_training_surrogate_train_surrogate_12_11.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Optionally clear the database</span>
+<span class="n">client</span><span class="o">.</span><span class="n">flush_db</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">get_address</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use the Experiment API to wait until the model</span>
+<span class="c1"># is finished and then terminate the database and</span>
+<span class="c1"># release it&#39;s resources</span>
+<span class="k">while</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="n">exp</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">ensemble</span><span class="p">),</span> <span class="n">exp</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">ml_model</span><span class="p">)]):</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+17:58:00 prod-0001 SmartSim[61617] INFO tf_training(61792): Completed
+17:58:04 prod-0001 SmartSim[61617] INFO Stopping model orchestrator_0 with job name orchestrator_0-CIP2C9QSETQV
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">get_status</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">ml_model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;Completed&#39;, &#39;Completed&#39;, &#39;Completed&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;html&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<table>
+<thead>
+<tr><th style="text-align: right;">  </th><th>Name           </th><th>Entity-Type  </th><th style="text-align: right;">  JobID</th><th style="text-align: right;">  RunID</th><th style="text-align: right;">   Time</th><th>Status   </th><th style="text-align: right;">  Returncode</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align: right;"> 0</td><td>fd_simulation_0</td><td>Model        </td><td style="text-align: right;">  61776</td><td style="text-align: right;">      0</td><td style="text-align: right;">124.276</td><td>Completed</td><td style="text-align: right;">           0</td></tr>
+<tr><td style="text-align: right;"> 1</td><td>fd_simulation_1</td><td>Model        </td><td style="text-align: right;">  61784</td><td style="text-align: right;">      0</td><td style="text-align: right;">157.534</td><td>Completed</td><td style="text-align: right;">           0</td></tr>
+<tr><td style="text-align: right;"> 2</td><td>tf_training    </td><td>Model        </td><td style="text-align: right;">  61792</td><td style="text-align: right;">      0</td><td style="text-align: right;">159.324</td><td>Completed</td><td style="text-align: right;">           0</td></tr>
+<tr><td style="text-align: right;"> 3</td><td>orchestrator_0 </td><td>DBNode       </td><td style="text-align: right;">  61701</td><td style="text-align: right;">      0</td><td style="text-align: right;">183.885</td><td>Cancelled</td><td style="text-align: right;">          -9</td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="../../ml_inference/Inference-in-SmartSim.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Online Inference</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../../ray/starting_ray.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Ray Integration</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

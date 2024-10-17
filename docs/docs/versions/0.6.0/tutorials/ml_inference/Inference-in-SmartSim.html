@@ -1,0 +1,1221 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Online Inference &#8212; SmartSim 0.6.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/ml_inference/Inference-in-SmartSim';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Online Training" href="../ml_training/surrogate/train_surrogate.html" />
+    <link rel="prev" title="Online Analysis" href="../online_analysis/lattice/online_analysis.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.6.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="../ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Ftutorials/ml_inference/Inference-in-SmartSim.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/tutorials/ml_inference/Inference-in-SmartSim.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Online Inference</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Online Inference</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Installing-the-ML-backends">Installing the ML backends</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Starting-the-Database-for-Inference">Starting the Database for Inference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-PyTorch">Using PyTorch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-TorchScript">Using TorchScript</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Setting-TensorFlow-and-Keras-Models">Setting TensorFlow and Keras Models</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-ONNX">Using ONNX</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Scikit-Learn-K-means-Cluster">Scikit-Learn K-means Cluster</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Scikit-Learn-Random-Forest">Scikit-Learn Random Forest</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#Colocated-Deployment">Colocated Deployment</a></li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="Online-Inference">
+<h1>Online Inference<a class="headerlink" href="#Online-Inference" title="Permalink to this heading">#</a></h1>
+<p>This tutorial shows how to use trained PyTorch, TensorFlow, and ONNX (format) models, written in Python, directly in HPC workloads written in Fortran, C, C++ and Python.</p>
+<p>The example simulation here is written in Python for brevity, however, the inference API in SmartRedis is the same (besides extra parameters for compiled langauges) across all clients.</p>
+<section id="Installing-the-ML-backends">
+<h2>Installing the ML backends<a class="headerlink" href="#Installing-the-ML-backends" title="Permalink to this heading">#</a></h2>
+<p>In order to use the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> database as an inference engine, the Machine Learning (ML) backends need to be built and supplied to the database at runtime.</p>
+<p>To check which backends are built, a simple helper function is available in SmartSim as shown below.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">## Installing the ML backends</span>
+<span class="kn">from</span> <span class="nn">smartsim._core.utils.helpers</span> <span class="kn">import</span> <span class="n">installed_redisai_backends</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">installed_redisai_backends</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;torch&#39;}
+</pre></div></div>
+</div>
+<p>As you can see, only the Torch backend is built. In order to use the TensorFlow and ONNX backends as well, they need to be built.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">smart</span></code> command line interface can be used to build the backends using the <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code> command. The output of <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span> <span class="pre">--help</span></code> is shown below.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>smart<span class="w"> </span>build<span class="w"> </span>--help
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+usage: smart build [-h] [-v] [--device {cpu,gpu}] [--only_python_packages]
+                   [--no_pt] [--no_tf] [--onnx] [--torch_dir TORCH_DIR]
+                   [--libtensorflow_dir LIBTENSORFLOW_DIR] [--keydb]
+
+Build SmartSim dependencies (Redis, RedisAI, ML runtimes)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v                    Enable verbose build process
+  --device {cpu,gpu}    Device to build ML runtimes for
+  --only_python_packages
+                        Only evaluate the python packages (i.e. skip building
+                        backends)
+  --no_pt               Do not build PyTorch backend
+  --no_tf               Do not build TensorFlow backend
+  --onnx                Build ONNX backend (off by default)
+  --torch_dir TORCH_DIR
+                        Path to custom &lt;path&gt;/torch/share/cmake/Torch/
+                        directory (ONLY USE IF NEEDED)
+  --libtensorflow_dir LIBTENSORFLOW_DIR
+                        Path to custom libtensorflow directory (ONLY USE IF
+                        NEEDED)
+  --keydb               Build KeyDB instead of Redis
+</pre></div></div>
+</div>
+<p>We use <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">clean</span></code> first to remove the previous build, and then call <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code> to build the new backend set. For larger teams, CrayLabs will help setup your system so that the backends do not have to be built by each user.</p>
+<p>By default, the PyTorch and TensorFlow backends are built. To build all three backends for use on CPU, we issue the following command.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>smart<span class="w"> </span>clean<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cpu<span class="w"> </span>--onnx
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Successfully removed existing RedisAI installation
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Successfully removed ML runtimes
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Running SmartSim build process...
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Checking requested versions...
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Checking for build tools...
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Redis build complete!
+
+ML Backends Requested
+╒════════════╤════════╤══════╕
+│ PyTorch    │ 1.11.0 │ <span class="ansi-green-fg">True</span> │
+│ TensorFlow │ 2.8.0  │ <span class="ansi-green-fg">True</span> │
+│ ONNX       │ 1.11.0 │ <span class="ansi-green-fg">True</span> │
+╘════════════╧════════╧══════╛
+
+Building for GPU support: <span class="ansi-red-fg">False</span>
+
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Building RedisAI version 1.2.7 from https://github.com/RedisAI/RedisAI.git/
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> ML Backends and RedisAI build complete!
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> Tensorflow, Torch, Onnxruntime backend(s) built
+<span class="ansi-blue-fg">[SmartSim]</span> <span class="ansi-black-intense-fg ansi-bold">INFO</span> SmartSim build complete!
+</pre></div></div>
+</div>
+</section>
+<section id="Starting-the-Database-for-Inference">
+<h2>Starting the Database for Inference<a class="headerlink" href="#Starting-the-Database-for-Inference" title="Permalink to this heading">#</a></h2>
+<p>SmartSim performs online inference by using the SmartRedis clients to call into the Machine Learning (ML) runtimes linked into the Orchestrator database. The Orchestrator is the name in SmartSim for a Redis or KeyDB database with a RedisAI module built into it with the ML runtimes.</p>
+<p>Therefore, to perform inference, you must first create an Orchestrator database and launch it. There are two methods to couple the database to your application in order to add inference capability to your application. - standard (not colocated) - colocated</p>
+<p><code class="docutils literal notranslate"><span class="pre">standard</span></code> mode launches an optionally clustered (across many compute hosts) database instance that can be treated as a single storage device for many clients (possibly the many ranks of an MPI program) where there is a single address space for keys across all hosts.</p>
+<p><code class="docutils literal notranslate"><span class="pre">colocated</span></code> mode launches a orchestrator instance on each compute host used by a, possibly distributed, application. each instance contains their own address space for keys. In SmartSim, <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances can be launched with a colocated orchetrator through <code class="docutils literal notranslate"><span class="pre">Model.colocate_db_tcp</span></code> or <code class="docutils literal notranslate"><span class="pre">Model.colocate_db_udp</span></code>. Colocated <code class="docutils literal notranslate"><span class="pre">Model</span></code>s are used for highly scalable inference where global aggregations aren’t necessary for inference.</p>
+<p>The code below launches the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> database using the <code class="docutils literal notranslate"><span class="pre">standard</span></code> deployment method.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># some helper libraries for the tutorial</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;TF_CPP_MIN_LOG_LEVEL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;3&#39;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># import smartsim and smartredis</span>
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;Inference-Tutorial&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6780</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;lo&quot;</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Using-PyTorch">
+<h2>Using PyTorch<a class="headerlink" href="#Using-PyTorch" title="Permalink to this heading">#</a></h2>
+<p>The Orchestrator supports both <a class="reference external" href="https://pytorch.org/">PyTorch</a> models and <a class="reference external" href="https://pytorch.org/docs/stable/jit.html">TorchScript</a> functions and scripts in PyTorch.</p>
+<p>Below, the code is shown to create, jit-trace (prepare for inference), set, and call a PyTorch Convolutional Neural Network (CNN) with SmartSim and SmartRedis</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+
+<span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">9216</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">max_pool2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+<br/></pre></div>
+</div>
+</div>
+<p>To set a PyTorch model, we create a function to “jit-trace” the model and save it to a buffer in memory.</p>
+<p>If you aren’t familiar with the concept of tracing, take a look at the Torch documentation for <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.jit.trace.html#torch.jit.trace">trace</a></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize an instance of our CNN model</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+<span class="n">n</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+<span class="c1"># prepare a sample input to trace on (random noise is fine)</span>
+<span class="n">example_forward_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">create_torch_model</span><span class="p">(</span><span class="n">torch_module</span><span class="p">,</span> <span class="n">example_forward_input</span><span class="p">):</span>
+
+    <span class="c1"># perform the trace of the nn.Module.forward() method</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">torch_module</span><span class="p">,</span> <span class="n">example_forward_input</span><span class="p">)</span>
+
+    <span class="c1"># save the traced module to a buffer</span>
+    <span class="n">model_buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">model_buffer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model_buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+<span class="n">traced_cnn</span> <span class="o">=</span> <span class="n">create_torch_model</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">example_forward_input</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Lastly, we use the SmartRedis Python client to</p>
+<ol class="arabic simple">
+<li><p>Connect to the database</p></li>
+<li><p>Put a batch of 20 tensors into the database (<code class="docutils literal notranslate"><span class="pre">put_tensor</span></code>)</p></li>
+<li><p>Set the Torch model in the database (<code class="docutils literal notranslate"><span class="pre">set_model</span></code>)</p></li>
+<li><p>Run the model on the batch of tensors (<code class="docutils literal notranslate"><span class="pre">run_model</span></code>)</p></li>
+<li><p>Retrieve the result (<code class="docutils literal notranslate"><span class="pre">get_tensor</span></code>)</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+<span class="c1"># put the PyTorch CNN in the database in GPU memory</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_model</span><span class="p">(</span><span class="s2">&quot;cnn&quot;</span><span class="p">,</span> <span class="n">traced_cnn</span><span class="p">,</span> <span class="s2">&quot;TORCH&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+
+<span class="c1"># execute the model, supports a variable number of inputs and outputs</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s2">&quot;cnn&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">])</span>
+
+<span class="c1"># get the output</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;output&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Prediction: </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SmartRedis Library@23-56-41:WARNING: Environment variable SR_LOG_FILE is not set. Defaulting to stdout
+SmartRedis Library@23-56-41:WARNING: Environment variable SR_LOG_LEVEL is not set. Defaulting to INFO
+Prediction: [[-2.3274555 -2.3253717 -2.354757  -2.3729622 -2.3431003 -2.1907542
+  -2.3514638 -2.1824958 -2.3210742 -2.2772176]
+ [-2.319342  -2.3146112 -2.370425  -2.372699  -2.3437245 -2.1988375
+  -2.354674  -2.1797025 -2.3205185 -2.2724082]
+ [-2.316474  -2.3222082 -2.354598  -2.3659394 -2.3442194 -2.203955
+  -2.3561926 -2.1938426 -2.3158035 -2.2702417]
+ [-2.3319743 -2.311106  -2.356003  -2.3770962 -2.333499  -2.1953351
+  -2.3548756 -2.195049  -2.310809  -2.2787712]
+ [-2.3205962 -2.3178282 -2.3519592 -2.3816493 -2.3516834 -2.1981795
+  -2.3636622 -2.1777525 -2.3139138 -2.2705152]
+ [-2.3096914 -2.3222034 -2.3647196 -2.3790689 -2.3540542 -2.206103
+  -2.350227  -2.1878397 -2.3078933 -2.2638521]
+ [-2.3328648 -2.3219166 -2.3527567 -2.3824098 -2.3419397 -2.1949291
+  -2.3534136 -2.1831408 -2.31838   -2.2653728]
+ [-2.3125417 -2.324307  -2.3541815 -2.379772  -2.348383  -2.2018006
+  -2.3614779 -2.1773078 -2.322288  -2.2653532]
+ [-2.3261974 -2.3169107 -2.3658333 -2.372918  -2.3417373 -2.1894612
+  -2.3535395 -2.2018242 -2.308719  -2.268019 ]
+ [-2.316616  -2.3056076 -2.355318  -2.3717446 -2.346278  -2.1928883
+  -2.3632033 -2.2028553 -2.3090112 -2.2805274]
+ [-2.3209507 -2.3127859 -2.358682  -2.3774037 -2.3558414 -2.2000623
+  -2.3439143 -2.1920927 -2.3196788 -2.2638488]
+ [-2.3159695 -2.3109243 -2.356306  -2.374135  -2.3412004 -2.1999855
+  -2.3728766 -2.1851294 -2.3103416 -2.2791054]
+ [-2.320004  -2.3205712 -2.3569424 -2.3752837 -2.3463457 -2.1887283
+  -2.3645942 -2.1946917 -2.3067377 -2.272361 ]
+ [-2.310819  -2.3274822 -2.356091  -2.3715394 -2.3474889 -2.200722
+  -2.3434677 -2.1957805 -2.3201551 -2.2701602]
+ [-2.3143158 -2.31956   -2.358585  -2.362682  -2.3464782 -2.196579
+  -2.3578608 -2.2015376 -2.3066673 -2.2789493]
+ [-2.318907  -2.3225117 -2.3634868 -2.3806338 -2.344084  -2.1920872
+  -2.3534818 -2.1955805 -2.3039575 -2.2711294]
+ [-2.3084583 -2.3254113 -2.3642344 -2.3710778 -2.3496058 -2.192245
+  -2.3604536 -2.1796546 -2.310007  -2.286219 ]
+ [-2.3140576 -2.3124697 -2.359347  -2.379842  -2.3481016 -2.1948602
+  -2.3681424 -2.1851056 -2.3161757 -2.2693238]
+ [-2.3162746 -2.3137376 -2.3598473 -2.3751001 -2.3536685 -2.1899457
+  -2.3560162 -2.1918488 -2.3077402 -2.2818694]
+ [-2.3138344 -2.3119657 -2.3552136 -2.3767023 -2.3556495 -2.187487
+  -2.3484402 -2.1922355 -2.3236399 -2.2809098]]
+</pre></div></div>
+</div>
+<p>As we gave the CNN random noise, the predictions reflect that.</p>
+<p>If running on CPU, be sure to change the argument in the <code class="docutils literal notranslate"><span class="pre">set_model</span></code> call above to <code class="docutils literal notranslate"><span class="pre">CPU</span></code>.</p>
+</section>
+<section id="Using-TorchScript">
+<h2>Using TorchScript<a class="headerlink" href="#Using-TorchScript" title="Permalink to this heading">#</a></h2>
+<p>In addition to PyTorch models, TorchScript scripts and functions can be set in the Orchestrator database and called from any of the SmartRedis languages. Functions can be set in the database in Python prior to application launch and then used directly in Fortran, C, and C++ simulations.</p>
+<p>The example below uses the TorchScript Singular Value Decomposition (SVD) function. The function set in side the database and then called with a random input tensor.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calc_svd</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">):</span>
+    <span class="c1"># svd function from TorchScript API</span>
+    <span class="k">return</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">svd</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># connect a client to the database</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># test the SVD function</span>
+<span class="n">tensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_function</span><span class="p">(</span><span class="s2">&quot;svd&quot;</span><span class="p">,</span> <span class="n">calc_svd</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_script</span><span class="p">(</span><span class="s2">&quot;svd&quot;</span><span class="p">,</span> <span class="s2">&quot;calc_svd&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">])</span>
+<span class="n">U</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">)</span>
+<span class="n">S</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;S&quot;</span><span class="p">)</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;V&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;U: </span><span class="si">{</span><span class="n">U</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">, S: </span><span class="si">{</span><span class="n">S</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">, V: </span><span class="si">{</span><span class="n">V</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+U: [[[-0.550159    0.8065786 ]
+  [-0.52288723 -0.5346357 ]
+  [-0.6510868  -0.2521817 ]]
+
+ [[-0.17983183 -0.20003092]
+  [-0.5534476  -0.7888692 ]
+  [-0.81323797  0.58109635]]
+
+ [[-0.20800859  0.42269117]
+  [-0.65485084 -0.7300564 ]
+  [-0.7265692   0.53698224]]
+
+ [[-0.336111    0.77894354]
+  [-0.31149226  0.43854192]
+  [-0.8888205  -0.44825   ]]
+
+ [[-0.6365824   0.7635661 ]
+  [-0.2663487  -0.08588188]
+  [-0.723755   -0.639993  ]]]
+
+, S: [[137.34267   54.616768]
+ [142.89323   35.937744]
+ [ 90.98083   48.821   ]
+ [ 86.74378   31.835794]
+ [146.14839   36.327038]]
+
+, V: [[[-0.48165366  0.8763617 ]
+  [-0.8763617  -0.48165366]]
+
+ [[-0.47905296  0.8777859 ]
+  [-0.8777859  -0.47905296]]
+
+ [[-0.737007   -0.67588514]
+  [-0.67588514  0.737007  ]]
+
+ [[-0.28137407  0.9595981 ]
+  [-0.9595981  -0.28137407]]
+
+ [[-0.5767642  -0.8169106 ]
+  [-0.8169106   0.5767642 ]]]
+
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">## TensorFlow and Keras</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow</span> <span class="kn">import</span> <span class="n">keras</span>
+<span class="n">tf</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+
+<span class="c1"># create a simple Fully connected network in Keras</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">layers</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">),</span>
+        <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;flatten&quot;</span><span class="p">),</span>
+        <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dense&quot;</span><span class="p">),</span>
+        <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;output&quot;</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FCN&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Compile model with optimizer</span>
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s2">&quot;adam&quot;</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="s2">&quot;sparse_categorical_crossentropy&quot;</span><span class="p">,</span>
+              <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<section id="Setting-TensorFlow-and-Keras-Models">
+<h3>Setting TensorFlow and Keras Models<a class="headerlink" href="#Setting-TensorFlow-and-Keras-Models" title="Permalink to this heading">#</a></h3>
+<p>After a model is created (trained or not), the graph of the model is frozen and saved to file so the client method <code class="docutils literal notranslate"><span class="pre">client.set_model_from_file</span></code> can load it into the database.</p>
+<p>SmartSim includes a utility to freeze the graph of a TensorFlow or Keras model in <code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf</span></code>. To use TensorFlow or Keras in SmartSim, specify <code class="docutils literal notranslate"><span class="pre">TF</span></code> as the argument for <em>backend</em> in the call to <code class="docutils literal notranslate"><span class="pre">client.set_model</span></code> or <code class="docutils literal notranslate"><span class="pre">client.set_model_from_file</span></code>.</p>
+<p>Note that TensorFlow and Keras, unlike the other ML libraries supported by SmartSim, requires an <code class="docutils literal notranslate"><span class="pre">input</span></code> and <code class="docutils literal notranslate"><span class="pre">output</span></code> argument in the call to <code class="docutils literal notranslate"><span class="pre">set_model</span></code>. These arguments correspond to the layer names of the created model. The <code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf.freeze_model</span></code> utility returns these values for convenience as shown below.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim.ml.tf</span> <span class="kn">import</span> <span class="n">freeze_model</span>
+
+<span class="c1"># SmartSim utility for Freezing the model and saving it to a file.</span>
+<span class="n">model_path</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span> <span class="o">=</span> <span class="n">freeze_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;fcn.pb&quot;</span><span class="p">)</span>
+
+<span class="c1"># use the same client we used for PyTorch to set the TensorFlow model</span>
+<span class="c1"># this time the method for setting a model from a saved file is shown.</span>
+<span class="c1"># TensorFlow backed requires named inputs and outputs on graph</span>
+<span class="c1"># this differs from PyTorch and ONNX.</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_model_from_file</span><span class="p">(</span>
+    <span class="s2">&quot;keras_fcn&quot;</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="s2">&quot;TF&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="n">outputs</span>
+<span class="p">)</span>
+
+<span class="c1"># put random random input tensor into the database</span>
+<span class="n">input_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">input_data</span><span class="p">)</span>
+
+<span class="c1"># run the Fully Connected Network model on the tensor we just put</span>
+<span class="c1"># in and store the result of the inference at the &quot;output&quot; key</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s2">&quot;keras_fcn&quot;</span><span class="p">,</span> <span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="s2">&quot;output&quot;</span><span class="p">)</span>
+
+<span class="c1"># get the result of the inference</span>
+<span class="n">pred</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;output&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[0.03525018 0.04472604 0.02831913 0.1114466  0.25944078 0.11165252
+  0.2983908  0.04830809 0.02390536 0.03856055]]
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Using-ONNX">
+<h2>Using ONNX<a class="headerlink" href="#Using-ONNX" title="Permalink to this heading">#</a></h2>
+<p>ONNX is a standard format for representing models. A number of different Machine Learning Libraries are supported by ONNX and can be readily used with SmartSim.</p>
+<p>Some popular ones are:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://scikit-learn.org">Scikit-learn</a></p></li>
+<li><p><a class="reference external" href="https://xgboost.readthedocs.io">XGBoost</a></p></li>
+<li><p><a class="reference external" href="https://catboost.ai">CatBoost</a></p></li>
+<li><p><a class="reference external" href="https://lightgbm.readthedocs.io/en/latest/">LightGBM</a></p></li>
+<li><p><a class="reference external" href="https://www.csie.ntu.edu.tw/~cjlin/libsvm/">libsvm</a></p></li>
+</ul>
+<p>As well as some that are not listed. There are also many tools to help convert models to ONNX.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/onnx/onnxmltools">onnxmltools</a></p></li>
+<li><p><a class="reference external" href="https://github.com/onnx/sklearn-onnx/">skl2onnx</a></p></li>
+<li><p><a class="reference external" href="https://github.com/onnx/tensorflow-onnx/">tensorflow-onnx</a></p></li>
+</ul>
+<p>And PyTorch has its own converter.</p>
+<p>Currently the ONNX backend only works on Linux, but MacOS support will be added in the future.</p>
+<p>Below are some examples of a few models in <a class="reference external" href="https://scikit-learn.org">Scikit-learn</a> that are converted into ONNX format for use with SmartSim. To use ONNX in SmartSim, specify <code class="docutils literal notranslate"><span class="pre">ONNX</span></code> as the argument for <em>backend</em> in the call to <code class="docutils literal notranslate"><span class="pre">client.set_model</span></code> or <code class="docutils literal notranslate"><span class="pre">client.set_model_from_file</span></code></p>
+<section id="Scikit-Learn-K-means-Cluster">
+<h3>Scikit-Learn K-means Cluster<a class="headerlink" href="#Scikit-Learn-K-means-Cluster" title="Permalink to this heading">#</a></h3>
+<p>K-means clustering is an unsupervised ML algorithm. It is used to categorize data points into functional groups (“clusters”). Scikit Learn has a built in implementation of K-means clustering and it is easily converted to ONNX for use with SmartSim through <a class="reference external" href="http://onnx.ai/sklearn-onnx/auto_examples/plot_convert_syntax.html">skl2onnx.to_onnx</a></p>
+<p>Since the KMeans model returns two outputs, we provide the <code class="docutils literal notranslate"><span class="pre">client.run_model</span></code> call with two <code class="docutils literal notranslate"><span class="pre">output</span></code> key names.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">skl2onnx</span> <span class="kn">import</span> <span class="n">to_onnx</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><br/><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">tr</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">tr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+<span class="c1"># save the trained k-means model in memory with skl2onnx</span>
+<span class="n">kmeans</span> <span class="o">=</span> <span class="n">to_onnx</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">target_opset</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">()</span>
+
+<span class="c1"># random input data</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># use the same client from TensorFlow and Pytorch examples.</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">sample</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_model</span><span class="p">(</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;ONNX&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;labels&quot;</span><span class="p">,</span> <span class="s2">&quot;transform&quot;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[1 1 1 1 1 0 0 0 0 0]
+</pre></div></div>
+</div>
+</section>
+<section id="Scikit-Learn-Random-Forest">
+<h3>Scikit-Learn Random Forest<a class="headerlink" href="#Scikit-Learn-Random-Forest" title="Permalink to this heading">#</a></h3>
+<p>The Random Forest example uses the Iris dataset from Scikit Learn to train a RandomForestRegressor. As with the other examples, the skl2onnx function <code class="docutils literal notranslate"><span class="pre">skl2onnx.to_onnx</span></code> is used to convert the model to ONNX format.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_iris</span>
+<span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">iris</span> <span class="o">=</span> <span class="n">load_iris</span><span class="p">()</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">iris</span><span class="o">.</span><span class="n">target</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">clr</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">clr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+<span class="n">rf_model</span> <span class="o">=</span> <span class="n">to_onnx</span><span class="p">(</span><span class="n">clr</span><span class="p">,</span> <span class="n">X_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">target_opset</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+
+<span class="n">sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">6.4</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">,</span> <span class="mf">5.6</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">]])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">rf_model</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">()</span>
+
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">sample</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_model</span><span class="p">(</span><span class="s2">&quot;rf_regressor&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;ONNX&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s2">&quot;rf_regressor&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="s2">&quot;output&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;output&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[1.9999987]]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+23:56:50 C02G13RYMD6N SmartSim[33744] INFO Stopping model orchestrator_0 with job name orchestrator_0-CVIG02IVGHO0
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;html&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<table>
+<thead>
+<tr><th>  </th><th>Name          </th><th>Entity-Type  </th><th>JobID  </th><th>RunID  </th><th>Time   </th><th>Status   </th><th>Returncode  </th></tr>
+</thead>
+<tbody>
+<tr><td>0 </td><td>orchestrator_0</td><td>DBNode       </td><td>35628  </td><td>0      </td><td>29.7008</td><td>Cancelled</td><td>-9          </td></tr>
+</tbody>
+</table></div>
+</div>
+</section>
+</section>
+</section>
+<section id="Colocated-Deployment">
+<h1>Colocated Deployment<a class="headerlink" href="#Colocated-Deployment" title="Permalink to this heading">#</a></h1>
+<p>A colocated Orchestrator is a special type of Orchestrator that is deployed on the same compute hosts an a Model instance defined by the user. In this deployment, the database is not connected together in a cluster and each shard of the database is addressed individually by the processes running on that compute host. This is particularly important for GPU-intensive workloads which require frequent communication with the database.</p>
+<p><img alt="lattice" class="no-scaled-link" src="https://www.craylabs.org/docs/_images/co-located-orc-diagram.png" style="width: 600px;" /></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create colocated model</span>
+<span class="n">colo_settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span>
+    <span class="n">exe</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+    <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;./colo-db-torch-example.py&quot;</span>
+<span class="p">)</span>
+
+<span class="n">colo_model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;colocated_model&quot;</span><span class="p">,</span> <span class="n">colo_settings</span><span class="p">)</span>
+<span class="n">colo_model</span><span class="o">.</span><span class="n">colocate_db_tcp</span><span class="p">(</span>
+    <span class="n">port</span><span class="o">=</span><span class="mi">6780</span><span class="p">,</span>
+    <span class="n">db_cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">ifname</span><span class="o">=</span><span class="s2">&quot;lo&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">colo_model</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+23:56:50 C02G13RYMD6N SmartSim[33744] INFO
+
+=== Launch Summary ===
+Experiment: Inference-Tutorial
+Experiment Path: /Users/mrdro/repos/ssimdev/ss/tutorials/ml_inference/Inference-Tutorial
+Launcher: local
+Models: 1
+Database Status: inactive
+
+=== Models ===
+colocated_model
+Executable: /Users/mrdro/miniconda3/envs/smartsim/bin/python
+Executable Arguments: ./colo-db-torch-example.py
+Co-located Database: True
+
+
+
+23:56:52 C02G13RYMD6N SmartSim[33744] INFO colocated_model(35666): Completed
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;html&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<table>
+<thead>
+<tr><th>  </th><th>Name           </th><th>Entity-Type  </th><th>JobID  </th><th>RunID  </th><th>Time   </th><th>Status   </th><th>Returncode  </th></tr>
+</thead>
+<tbody>
+<tr><td>0 </td><td>orchestrator_0 </td><td>DBNode       </td><td>35628  </td><td>0      </td><td>29.7008</td><td>Cancelled</td><td>-9          </td></tr>
+<tr><td>1 </td><td>colocated_model</td><td>Model        </td><td>35666  </td><td>0      </td><td>2.1590 </td><td>Completed</td><td>0           </td></tr>
+</tbody>
+</table></div>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../online_analysis/lattice/online_analysis.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Online Analysis</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../ml_training/surrogate/train_surrogate.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Online Training</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Online Inference</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Installing-the-ML-backends">Installing the ML backends</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Starting-the-Database-for-Inference">Starting the Database for Inference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-PyTorch">Using PyTorch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-TorchScript">Using TorchScript</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Setting-TensorFlow-and-Keras-Models">Setting TensorFlow and Keras Models</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-ONNX">Using ONNX</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Scikit-Learn-K-means-Cluster">Scikit-Learn K-means Cluster</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Scikit-Learn-Random-Forest">Scikit-Learn Random Forest</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#Colocated-Deployment">Colocated Deployment</a></li>
+</ul>
+
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2023, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

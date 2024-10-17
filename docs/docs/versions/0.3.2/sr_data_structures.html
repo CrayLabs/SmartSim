@@ -1,0 +1,769 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Data Structures &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Runtime Requirements" href="sr_runtime.html" />
+    <link rel="prev" title="SmartRedis" href="smartredis.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data Structures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tensor">Tensor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sending">Sending</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retrieving">Retrieving</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dataset">Dataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Sending</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Retrieving</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#model">Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Sending</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Retrieving</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#executing">Executing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#script">Script</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Sending</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Retrieving</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Executing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Data Structures</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/sr_data_structures.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="data-structures">
+<h1>Data Structures<a class="headerlink" href="#data-structures" title="Permalink to this headline">¶</a></h1>
+<p>RedisAI defines three new data structures to be
+used in redis databases: tensor, model, and script.
+In addition, SmartRedis defines an additional data
+structure <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>.  In this section, the SmartRedis
+API for interacting with these data structures
+will be described, and when applicable,
+comments on performance and best practices will be made.</p>
+<p>In general, concepts and capabilities will be
+demonstrated for the Python and C++ API.
+The C and Fortran function signatures closely
+resemble the C++ API, and as a result,
+they are not discussed in detail in the interest
+of brevity.  For more detailed explanations of the C
+and Fortran API, refer to the documentation pages for those
+clients.</p>
+<div class="section" id="tensor">
+<span id="data-structures-tensor"></span><h2>Tensor<a class="headerlink" href="#tensor" title="Permalink to this headline">¶</a></h2>
+<p>An n-dimensional tensor is used by RedisAI to store and
+manipulate numerical data. SmartRedis provides functions to
+put a key and tensor pair into the Redis database and retrieve
+a tensor associated with a key from the database.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When utilizing SmartRedis with SmartSim ensemble functionality,
+the key provided by the user may be manipulated before placement
+in or retrieval from the database in order to avoid key collisions
+between ensemble members.  Therefore, when using SmartSim ensemble
+functionality, retrieval of a tensor using the Redis command line
+interface (CLI) will require adapting the expected key.</p>
+</div>
+<div class="section" id="sending">
+<h3>Sending<a class="headerlink" href="#sending" title="Permalink to this headline">¶</a></h3>
+<p>In Python, the <code class="docutils literal notranslate"><span class="pre">Client</span></code> infers the type and dimensions of the
+tensor from the NumPy array data structure, and as a result,
+only the key and NumPy array are needed to place a key and tensor
+pair in the database.  Currently, only NumPy arrays
+are supported as inputs and outputs of Python <code class="docutils literal notranslate"><span class="pre">Client</span></code>
+tensor functions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Python put_tensor() interface</span>
+<span class="n">put_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the compiled clients, more information is needed to inform the
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> about the tensor properties.  In the C++ API,
+the dimensions of the tensor are provided via a
+<code class="docutils literal notranslate"><span class="pre">std::vector&lt;size_t&gt;</span></code> input parameter.  Additionally, the type
+associated with the tensor data (e.g. <code class="docutils literal notranslate"><span class="pre">double</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>)
+is specified with a <code class="docutils literal notranslate"><span class="pre">SmartRedis::TensorType</span></code> enum.
+Finally, the <code class="docutils literal notranslate"><span class="pre">Client</span></code> must know the memory
+layout of the provided tensor data in order to traverse the
+tensor data to generate a tensor data buffer. In C++, tensor
+data can either be in a contiguous memory layout or in a nested,
+non-contiguous memory layout (i.e. nested pointer arrays to
+underlying allocated memory). The memory layout of the tensor
+data to place in the database is specified
+with a <code class="docutils literal notranslate"><span class="pre">SmartRedis::MemoryLayout</span></code> enum input parameter.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// C++ put_tensor interface</span>
+<span class="kt">void</span> <span class="nf">put_tensor</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
+                <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span>
+                <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&amp;</span> <span class="n">dims</span><span class="p">,</span>
+                <span class="k">const</span> <span class="n">TensorType</span> <span class="n">type</span><span class="p">,</span>
+                <span class="k">const</span> <span class="n">MemoryLayout</span> <span class="n">mem_layout</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>C and Fortran have similar function prototypes compared
+to the C++ client, except the C client uses only C data
+types and the Fortran client does not require the
+specification of the tensor memory layout because it is
+assumed that Fortran array memory is allocated in a column-major,
+contiguous manner.</p>
+</div>
+<div class="section" id="retrieving">
+<h3>Retrieving<a class="headerlink" href="#retrieving" title="Permalink to this headline">¶</a></h3>
+<p>The C++, C, and Fortran clients provide two methods for retrieving
+tensors from the Redis database. The first method is referred to
+as <em>unpacking</em> a tensor.  When a tensor is retrieved via
+<code class="docutils literal notranslate"><span class="pre">unpack_tensor()</span></code>, the memory space to store the retrieved
+tensor data is provided by the user. This has the advantage
+of giving the user the ability to manage the scope of the retrieved
+tensor allocated memory and reuse application memory.</p>
+<p>The C++ function signature for <code class="docutils literal notranslate"><span class="pre">unpack_tensor()</span></code> is shown below.
+In the case of <code class="docutils literal notranslate"><span class="pre">unpack_tensor()</span></code> the parameters <code class="docutils literal notranslate"><span class="pre">dims</span></code>,
+<code class="docutils literal notranslate"><span class="pre">type</span></code>, and <code class="docutils literal notranslate"><span class="pre">mem_layout</span></code> are used to specify the
+characteristics of the user-provided memory space.
+The type and dimensions are compared to the tensor that is retrieved
+from the database, and if the type does not match or if the
+allocated space is insufficient,
+an error will be thrown.  Otherwise, the memory space pointed
+to by the <code class="docutils literal notranslate"><span class="pre">data</span></code> pointer will be filled consistent with the
+specified memory layout.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// C++ unpack_tensor() interface</span>
+<span class="kt">void</span> <span class="nf">unpack_tensor</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
+                   <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span>
+                   <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&amp;</span> <span class="n">dims</span><span class="p">,</span>
+                   <span class="k">const</span> <span class="n">TensorType</span> <span class="n">type</span><span class="p">,</span>
+                   <span class="k">const</span> <span class="n">MemoryLayout</span> <span class="n">mem_layout</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When using <code class="docutils literal notranslate"><span class="pre">unpack_tensor()</span></code> with a user-provided
+<code class="docutils literal notranslate"><span class="pre">MemoryLayout::contiguous</span></code> memory space,
+the provided dimensions should be a
+<code class="docutils literal notranslate"><span class="pre">std::vector&lt;size_t&gt;</span></code> with a single value
+equal the total number of allocated
+values in the memory space, not the expected
+dimensions of the retrieved tensor.</p>
+</div>
+<p>The other option for retrieving a tensor with the
+C++, C, and Fortran clients is <code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code>.
+With <code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code>, it is assumed that the user does not
+know the dimensions or type of the tensor, and as a result, the
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> allocates and manages memory necessary for the retrieved
+tensor data.  The C++ function signature for <code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code> is shown
+below.  Note that a pointer to the newly allocated data, tensor
+dimensions, and tensor type are returned to the user via
+modifying referenced variables that the user declares before the
+<code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code> call.  This is done to provide a similar
+experience across the C++, C, and Fortran clients.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// C++ get_tensor interface</span>
+<span class="kt">void</span> <span class="nf">get_tensor</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
+                <span class="kt">void</span><span class="o">*&amp;</span> <span class="n">data</span><span class="p">,</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&amp;</span> <span class="n">dims</span><span class="p">,</span>
+                <span class="n">TensorType</span><span class="o">&amp;</span> <span class="n">type</span><span class="p">,</span>
+                <span class="k">const</span> <span class="n">MemoryLayout</span> <span class="n">mem_layout</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Memory allocated by C++, C, and Fortran
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> during a <code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code>
+call will be valid and not freed until the <code class="docutils literal notranslate"><span class="pre">Client</span></code>
+object is destroyed.  Therefore, if the type and dimensions
+of the tensor are known, it is recommended that
+<code class="docutils literal notranslate"><span class="pre">unpack_tensor()</span></code> is used in memory-constrained situations.</p>
+</div>
+<p>The Python client currently only offers a <code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code> option for
+retrieving tensors.  In this methodology, a NumPy array is returned
+to the user, and the only required input to the function is the
+name of the tensor to retrieve because its type and dimensions
+are embedded in the NumPy array object. The Python interface for
+<code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code> is shown below.  In the Python implementation of
+<code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code>, the memory associated with the retrieved tensor
+will be freed when the NumPy array goes out of scope or is deleted.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Python get_tensor() interface</span>
+<span class="n">get_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+</pre></div>
+</div>
+<p>Note that all of the client <code class="docutils literal notranslate"><span class="pre">get_tensor()</span></code> functions will internally
+modify the provided tensor name if the client is being used with
+SmartSim ensemble capabilities.</p>
+</div>
+</div>
+<div class="section" id="dataset">
+<span id="data-structures-dataset"></span><h2>Dataset<a class="headerlink" href="#dataset" title="Permalink to this headline">¶</a></h2>
+<p>In many situations, a <code class="docutils literal notranslate"><span class="pre">Client</span></code>  might be tasked with sending a
+group of tensors and metadata which are closely related and
+naturally grouped into a collection for future retrieval.
+The <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> object stages these items so that they can be
+more efficiently placed in the redis database and can later be
+retrieved with a single key.</p>
+<p>Listed below are the supported tensor and metadata types.
+In the following sections, building, sending, and retrieving
+a <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> will be described.</p>
+<table class="colwidths-given docutils align-center" id="id8">
+<caption><span class="caption-text">Supported Data Types</span><a class="headerlink" href="#id8" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Data Type</p></th>
+<th class="head"><p>Tensor (n-dim arrays)</p></th>
+<th class="head"><p>Metadata (1-D arrays)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Float</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Double</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Int64</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Int32</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Int16</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Int8</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>UInt64</p></td>
+<td></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>UInt32</p></td>
+<td></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>UInt16</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>UInt8</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>String</p></td>
+<td></td>
+<td><p>X</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="id1">
+<h3>Sending<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>When building a <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> to be stored in the database,
+a user can add any combination of tensors and metadata.
+To add a tensor to the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>, the user simply uses
+the <code class="docutils literal notranslate"><span class="pre">DataSet.add_tensor()</span></code> function defined in
+each language.  The <code class="docutils literal notranslate"><span class="pre">DataSet.add_tensor()</span></code> parameters are the same
+as <code class="docutils literal notranslate"><span class="pre">Client.put_tensor()</span></code>, and as a result, details of the function
+signatures will not be reiterated here.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">DataSet.add_tensor()</span></code> copies the tensor data
+provided by the user to eliminate errors from user-provided
+data being cleared or deallocated. This additional memory
+will be freed when the DataSet
+object is destroyed.</p>
+</div>
+<p>Metadata can be added to the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> with the
+<code class="docutils literal notranslate"><span class="pre">DataSet.add_meta_scalar()</span></code> and <code class="docutils literal notranslate"><span class="pre">DataSet.add_meta_string()</span></code>
+functions.  As the aforementioned function names suggest,
+there are separate functions to add metadata that is a scalar
+(e.g. double) and a string. For both functions, the first
+function input is the name of the metadata field.  This field
+name is an internal <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> identifier for the metadata
+value(s) that is used for future retrieval, and because it
+is an internal identifier, the user does not have to worry
+about any key conflicts in the database (i.e. multiple <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>
+can have the same metadata field names).  To clarify these
+and future descriptions, the C++ interface for adding
+metadata is shown below:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// C++ add_meta_scalar() interface</span>
+<span class="kt">void</span> <span class="nf">add_meta_scalar</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span>
+                     <span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span>
+                     <span class="k">const</span> <span class="n">MetaDataType</span> <span class="n">type</span><span class="p">);</span>
+
+<span class="c1">// C++ add_meta_string() interface</span>
+<span class="kt">void</span> <span class="nf">add_meta_string</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span>
+                     <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>When adding a scalar or string metadata value, the value
+is copied by the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>, and as a result, the user
+does not need to ensure that the metadata values provided
+are still in memory after they have been added.
+Additionally, multiple metadata values can be added to a
+single field, and the default behavior is to append the value to the
+existing field.  In this way, the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> metadata supports
+one-dimensional arrays, but the entries in the array must be added
+iteratively by the user.  Also, note that in the above C++ example,
+the metadata scalar type must be specified with a
+<code class="docutils literal notranslate"><span class="pre">SmartRedis::MetaDataType</span></code> enum value, and similar
+requirements exist for C and Fortran <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> implementations.</p>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> object is sent to the database using the
+<code class="docutils literal notranslate"><span class="pre">Client.put_dataset()</span></code> function, which is uniform across all clients.</p>
+</div>
+<div class="section" id="id2">
+<h3>Retrieving<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>In all clients, the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> is retrieved with a single
+function call to <code class="docutils literal notranslate"><span class="pre">Client.get_dataset()</span></code>, which requires
+only the name of the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> (i.e. the name used
+in the constructor of the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> when it was
+built and placed in the database).  <code class="docutils literal notranslate"><span class="pre">Client.get_dataset()</span></code>
+returns to the user a DataSet object or a pointer to a
+DataSet object that can be used to access all of the
+dataset tensors and metadata.</p>
+<p>The functions for retrieving tensors from <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>
+are identical to the functions provided by <code class="docutils literal notranslate"><span class="pre">Client</span></code>,
+and the same return values and memory management
+paradigm is followed.  As a result, please refer to
+the previous section for details on tensor retrieve
+function calls.</p>
+<p>There are two functions for retrieving metadata:
+<code class="docutils literal notranslate"><span class="pre">get_meta_scalars()</span></code> and <code class="docutils literal notranslate"><span class="pre">get_meta_strings()</span></code>.
+As the names suggest, the first function
+is used for retrieving numerical metadata values,
+and the second is for retrieving metadata string
+values.  The metadata retrieval function prototypes
+vary across the clients based on programming language constraints,
+and as a result, please refer to the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> API documentation
+for a description of input parameters and memory management.  It is
+important to note, however, that all functions require the name of the
+metadata field to be retrieved, and this name is the same name that
+was used when constructing the metadata field with
+<code class="docutils literal notranslate"><span class="pre">add_meta_scalar()</span></code> and <code class="docutils literal notranslate"><span class="pre">add_meta_string()</span></code> functions.</p>
+</div>
+</div>
+<div class="section" id="model">
+<h2>Model<a class="headerlink" href="#model" title="Permalink to this headline">¶</a></h2>
+<p>Like tensors, the RedisAI model data structure is exposed to users
+through <code class="docutils literal notranslate"><span class="pre">Client</span></code> function calls to place a model in the database,
+retrieve a model from the database, and run a model.  Note that
+RedisAI supports PyTorch, TensorFlow, TensorFlow Lite, and ONNX
+backends, and specifying the backend to be used is done
+through the <code class="docutils literal notranslate"><span class="pre">Client</span></code> function calls.</p>
+<div class="section" id="id3">
+<h3>Sending<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>A model is placed in the database through the <code class="docutils literal notranslate"><span class="pre">Client.set_model()</span></code>
+function.  While data types may differ, the function parameters
+are uniform across all SmartRedis clients, and as an example, the C++
+<code class="docutils literal notranslate"><span class="pre">set_model()</span></code> function is shown below.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp"># C++ set_model interface</span>
+<span class="kt">void</span> <span class="nf">set_model</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
+               <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="o">&amp;</span> <span class="n">model</span><span class="p">,</span>
+               <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">backend</span><span class="p">,</span>
+               <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">device</span><span class="p">,</span>
+               <span class="kt">int</span> <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+               <span class="kt">int</span> <span class="n">min_batch_size</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+               <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">tag</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+               <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&amp;</span> <span class="n">inputs</span>
+                   <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(),</span>
+               <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&amp;</span> <span class="n">outputs</span>
+                   <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>All of the parameters in <code class="docutils literal notranslate"><span class="pre">set_model()</span></code> follow the RedisAI
+API for the the RedisAI <code class="docutils literal notranslate"><span class="pre">AI.MODELSET</span></code> command, and as a result,
+the reader is encouraged to read the SmartRedis client code
+documentation or the RedisAI documentation for a description
+of each parameter.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>With a Redis cluster configuration, <code class="docutils literal notranslate"><span class="pre">Client.set_model()</span></code>
+will distribute a copy of the model to each database node in the
+cluster.  As a result, the model that has been
+placed in the cluster with <code class="docutils literal notranslate"><span class="pre">Client.set_model()</span></code>
+will not be addressable directly with the Redis CLI because
+of key manipulation that is required to accomplish
+this distribution.  Despite the internal key
+manipulation, models in a Redis cluster that have been
+set through the SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> can be accessed
+and run through the SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> API
+using the key provided to <code class="docutils literal notranslate"><span class="pre">set_model()</span></code>.  The user
+does not need any knowledge of the cluster model distribution
+to perform RedisAI model actions.  Moreover,
+a model set by one SmartRedis client (e.g. Python) on a Redis
+cluster is addressable with the same key through another
+client (e.g. C++).</p>
+</div>
+<p>Finally, there is a similar function in each client,
+<code class="docutils literal notranslate"><span class="pre">Client.set_model_from_file()</span></code>, that will read a
+model from file and set it in the database.</p>
+</div>
+<div class="section" id="id4">
+<h3>Retrieving<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>A model can be retrieved from the database using the
+<code class="docutils literal notranslate"><span class="pre">Client.get_model()</span></code> function.  While the return
+type varies between languages, only the model key
+that was used with <code class="docutils literal notranslate"><span class="pre">Client.set_model()</span></code> is needed
+to reference the model in the database.  Note that
+in a Redis cluster configuration, only one copy of the
+model is returned to the user.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">Client.get_model()</span></code> will allocate memory to retrieve
+the model from the database, and this memory will not
+be freed until the Client object is destroyed.</p>
+</div>
+</div>
+<div class="section" id="executing">
+<h3>Executing<a class="headerlink" href="#executing" title="Permalink to this headline">¶</a></h3>
+<p>A model can be executed using the <code class="docutils literal notranslate"><span class="pre">Client.run_model()</span></code> function.
+The only required inputs to execute a model are the model key,
+a list of input tensor names, and a list of output tensor names.
+If using a Redis cluster configuration, a copy of the model
+referenced by the provided key will be chosen based on data locality.
+It is worth noting that the names of input and output tensors will be
+altered with ensemble member identifications if the SmartSim
+ensemble compatibility features are used.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>DataSet tensors can be used as <code class="docutils literal notranslate"><span class="pre">run_model()</span></code> input tensors,
+but the key provided to <code class="docutils literal notranslate"><span class="pre">run_model()</span></code> must be prefixed with
+the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> name in the pattern <code class="docutils literal notranslate"><span class="pre">{dataset_name}.tensor_name</span></code>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="script">
+<h2>Script<a class="headerlink" href="#script" title="Permalink to this headline">¶</a></h2>
+<p>Data processing is an essential step in most machine
+learning workflows.  For this reason, RedisAI provides
+the ability to evaluate PyTorch programs using the hardware
+co-located with the Redis database (either CPU or GPU).
+The SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> provides functions for users to
+place a script in the database, retrieve a script from the
+database, and run a script.</p>
+<div class="section" id="id5">
+<h3>Sending<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>A script is placed in the database through the <code class="docutils literal notranslate"><span class="pre">Client.set_script()</span></code>
+function.  While data types may differ, the function parameters
+are uniform across all SmartRedis clients, and as an example, the C++
+<code class="docutils literal notranslate"><span class="pre">set_script()</span></code> function is shown below.  The function signature
+is quite simple for placing a script in the database, only
+a name for the script, hardware for execution, and the script text
+need to be provided by the user.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">set_script</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
+                <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">device</span><span class="p">,</span>
+                <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="o">&amp;</span> <span class="n">script</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>With a Redis cluster configuration, <code class="docutils literal notranslate"><span class="pre">Client.set_script()</span></code>
+will distribute a copy of the script to each database node in the
+cluster.  As a result, the script that has been
+placed in the cluster with <code class="docutils literal notranslate"><span class="pre">Client.set_script()</span></code>
+will not be addressable directly with the Redis CLI because
+of key manipulation that is required to accomplish
+this distribution.  Despite the internal key
+manipulation, scripts in a Redis cluster that have been
+set through the SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> can be accessed
+and run through the SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> API
+using the key provided to <code class="docutils literal notranslate"><span class="pre">set_script()</span></code>.  The user
+does not need any knowledge of the cluster script distribution
+to perform RedisAI script actions.  Moreover,
+a script set by one SmartRedis client (e.g. Python) on a Redis
+cluster is addressable with the same key through another
+client (e.g. C++).</p>
+</div>
+<p>Finally, there is a similar function in each client,
+<code class="docutils literal notranslate"><span class="pre">Client.set_script_from_file()</span></code>, that will read a
+script from file and set it in the database.</p>
+</div>
+<div class="section" id="id6">
+<h3>Retrieving<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>A script can be retrieved from the database using the
+<code class="docutils literal notranslate"><span class="pre">Client.get_script()</span></code> function.  While the return
+type varies between languages, only the script key
+that was used with <code class="docutils literal notranslate"><span class="pre">Client.set_script()</span></code> is needed
+to reference the script in the database.  Note that
+in a Redis cluster configuration, only one copy of the
+script is returned to the user.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">Client.get_script()</span></code> will allocate memory to retrieve
+the script from the database, and this memory will not
+be freed until the Client object is destroyed.</p>
+</div>
+</div>
+<div class="section" id="id7">
+<h3>Executing<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>A script can be executed using the <code class="docutils literal notranslate"><span class="pre">Client.run_script()</span></code> function.
+The only required inputs to execute a script are the script key,
+the name of the function in the script to execute, a list of input
+tensor names, and a list of output tensor names.
+If using a Redis cluster configuration, a copy of the script
+referenced by the provided key will be chosen based on data locality.
+It is worth noting that the names of input and output tensors will be
+altered with ensemble member identifications if the SmartSim
+ensemble compatibility features are used.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>DataSet tensors can be used as <code class="docutils literal notranslate"><span class="pre">run_script()</span></code> input tensors,
+but the key provided to <code class="docutils literal notranslate"><span class="pre">run_script()</span></code> must be prefixed with
+the <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> name in the pattern <code class="docutils literal notranslate"><span class="pre">{dataset_name}.tensor_name</span></code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sr_runtime.html" class="btn btn-neutral float-right" title="Runtime Requirements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="smartredis.html" class="btn btn-neutral float-left" title="SmartRedis" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,448 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Online Analysis &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Machine Learning" href="inference.html" />
+    <link rel="prev" title="Using SmartRedis Clients" href="using_clients.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Online Analysis</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#lattice-boltzmann-simulation">3.1 Lattice Boltzmann Simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#integrating-smartredis">3.2 Integrating SmartRedis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-the-analysis-driver">3.2 Creating the Analysis Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-the-example">3.4 Running the Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Online Analysis</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/tutorials/lattice_boltz_analysis.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="online-analysis">
+<h1>Online Analysis<a class="headerlink" href="#online-analysis" title="Permalink to this headline">¶</a></h1>
+<p>Being able to visualize and interpret simulation data in real time is
+invaluable for understanding the behavior of a physical system.</p>
+<p>SmartSim can be used to stream data from Fortran, C, and C++ simulations
+to Python where visualization is significantly easier and more interactive.</p>
+<div class="section" id="lattice-boltzmann-simulation">
+<h2>3.1 Lattice Boltzmann Simulation<a class="headerlink" href="#lattice-boltzmann-simulation" title="Permalink to this headline">¶</a></h2>
+<p>This example was adapted from Philip Mocz’s <a class="reference external" href="https://github.com/pmocz/latticeboltzmann-python">implementation</a>.
+of the lattice Boltzmann method in Python. Since that example is licensed under GPL, so is this example.</p>
+<p>Philip also wrote a great medium <a class="reference external" href="https://medium.com/swlh/create-your-own-lattice-boltzmann-simulation-with-python-8759e8b53b1c">article</a> explaining the simulation in detail.</p>
+<p><a class="reference internal" href="../_images/latticeboltzmann.png"><img alt="simulation" src="../_images/latticeboltzmann.png" style="width: 700px;" /></a></p>
+</div>
+<div class="section" id="integrating-smartredis">
+<h2>3.2 Integrating SmartRedis<a class="headerlink" href="#integrating-smartredis" title="Permalink to this headline">¶</a></h2>
+<p>Typically HPC simulations are written in C, C++, Fortran or other high performance
+languages. Embedding the SmartRedis client usually involves compiling in the
+SmartRedis library into the simulation.</p>
+<p>Because this simulation is written in Python, we can use the SmartRedis
+Python client to stream data to the database.</p>
+<p>To make the visualization easier, we use the SmartRedis <a class="reference external" href="https://www.craylabs.org/docs/sr_data_structures.html#dataset">Dataset</a> object
+to hold two 2D NumPy arrays. A convenience function is provided to convert
+the fields into a dataset object.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">Dataset</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span> <span class="c1"># Addresses passed to job through SmartSim launch</span>
+
+<span class="c1"># send cylinder location only once</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;cylinder&quot;</span><span class="p">,</span> <span class="n">cylinder</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">time_steps</span><span class="p">):</span>
+    <span class="c1"># send every 5 time_step to reduce memory consumption</span>
+    <span class="k">if</span> <span class="n">time_step</span> <span class="o">%</span> <span class="mi">5</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">create_dataset</span><span class="p">(</span><span class="n">time_step</span><span class="p">,</span> <span class="n">ux</span><span class="p">,</span> <span class="n">uy</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">put_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">create_dataset</span><span class="p">(</span><span class="n">time_step</span><span class="p">,</span> <span class="n">ux</span><span class="p">,</span> <span class="n">uy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create SmartRedis Dataset containing multiple NumPy arrays</span>
+<span class="sd">    to be stored at a single key within the database&quot;&quot;&quot;</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data_</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">time_step</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s2">&quot;ux&quot;</span><span class="p">,</span> <span class="n">ux</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s2">&quot;uy&quot;</span><span class="p">,</span> <span class="n">uy</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dataset</span>
+</pre></div>
+</div>
+<p>This is all the SmartRedis code needed to stream the simulation data. Note that
+the client does not need to have an address explicitly stated because we
+are going to be launching the simulation through SmartSim.</p>
+<p>The full simulation code can be found here # PUT IN LINK</p>
+</div>
+<div class="section" id="creating-the-analysis-driver">
+<h2>3.2 Creating the Analysis Driver<a class="headerlink" href="#creating-the-analysis-driver" title="Permalink to this headline">¶</a></h2>
+<p>SmartSim, the infrastructure library, is used here to launch both the
+database and the simulation locally, but in separate processes. The example
+is designed to run on laptops, so the local launcher is used.</p>
+<p>First the necessary libraries are imported and an <cite>Experiment</cite> instance is created.
+Also defined is an <cite>Orchestrator</cite> which is the reference to the in-memory database
+to be launched and used to stage data between the simulation and analysis code.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">smartsim.database</span> <span class="kn">import</span> <span class="n">Orchestrator</span>
+<span class="kn">from</span> <span class="nn">smartsim.settings</span> <span class="kn">import</span> <span class="n">RunSettings</span>
+
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;finite_volume_simulation&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6780</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The reference to the simulation is created through a call to <cite>Experiment.create_model()</cite>.
+The python script is “attached” to the model, such that when run directories are
+created for it, the python script will be placed in that run directory.</p>
+<p>Executable arguments are used to pass the simulation parameters to the simulation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># simulation parameters and plot settings</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">6</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+<span class="n">time_steps</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="mi">3000</span><span class="p">,</span> <span class="mi">42</span>
+
+<span class="c1"># define how simulation should be executed</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fv_sim.py&quot;</span><span class="p">,</span>
+                                        <span class="sa">f</span><span class="s2">&quot;--seed=</span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                        <span class="sa">f</span><span class="s2">&quot;--steps=</span><span class="si">{</span><span class="n">time_steps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;fv_simulation&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+
+<span class="c1"># tell exp.generate to include this file in the created run directory</span>
+<span class="n">model</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="s2">&quot;fv_sim.py&quot;</span><span class="p">)</span>
+
+<span class="c1"># generate directories for output, error and results</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The next portion starts the database and immediately connects
+a client to it so that data can be retrieved by the analysis
+code and plotted.</p>
+<p>The simulation is started with <cite>block=False</cite>, so that the data
+being streamed from the simulation can be analyzed in real time.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># start the database and connect client to get data</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;127.0.0.1:6780&quot;</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># start simulation without blocking so data can be analyzed in real time</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>SmartRedis is used to pull the Datasets created by
+the simulation and use matplotlib to plot the results.</p>
+<p>Another <cite>Model</cite> could have been created to plot the results and launched
+in a similar manner to the simulation.</p>
+<p>Doing so would enable the analysis application to be executed on different
+resources such as GPU enabled nodes, or distributed across nodes.</p>
+<p>This version, where the driver and analysis code coexist in the same
+script, is shown for simplicity.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># poll until data is available</span>
+<span class="n">client</span><span class="o">.</span><span class="n">poll_key</span><span class="p">(</span><span class="s2">&quot;cylinder&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">cylinder</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;cylinder&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">time_steps</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span> <span class="c1"># plot every 5th timestep</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">poll_key</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data_</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data_</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">ux</span><span class="p">,</span> <span class="n">uy</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;ux&quot;</span><span class="p">),</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;uy&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
+    <span class="n">ux</span><span class="p">[</span><span class="n">cylinder</span><span class="p">],</span> <span class="n">uy</span><span class="p">[</span><span class="n">cylinder</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="n">vorticity</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">ux</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">ux</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">uy</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">uy</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">vorticity</span><span class="p">[</span><span class="n">cylinder</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s2">&quot;bwr&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">cmap</span><span class="o">.</span><span class="n">set_bad</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">vorticity</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">clim</span><span class="p">(</span><span class="o">-</span><span class="mf">.1</span><span class="p">,</span> <span class="mf">.1</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">get_yaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.001</span><span class="p">)</span>
+
+<span class="c1"># Save figure</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;latticeboltzmann.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">240</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The database is stopped when the simulation is done, but could persist if
+the user would like to continue analyzing the data.</p>
+<p>If the Python session dies and the user does not have access to
+the <cite>Experiment</cite> object, the following can be called to stop any database instance.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># be sure to be in Python environment where SmartSim is installed</span>
+<span class="k">$(</span>smart --dbcli<span class="k">)</span> -h <span class="m">127</span>.0.0.1 -p <span class="m">6780</span> shutdown
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>3.4 Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<p>To run the example, be sure to have SmartSim and SmartRedis installed on your system.
+In addition, Matplotlib and NumPy are required.</p>
+<p>Before running, ensure your system has enough memory to hold the states of the simulation.
+As it is setup right now, the database will consume just under 1Gb of memory.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># (optional) activate python environment</span>
+python driver.py
+</pre></div>
+</div>
+<p>Matplotlib will interativly plot the state of the simulation while
+the simulation is running. After the window is closed, SmartSim will
+shutdown the database.</p>
+<p>The following output files are created as a result of running the
+online analysis example</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>finite_volume_simulation
+├── database
+│   ├── orchestrator_0.err
+│   ├── orchestrator_0.out
+│   └── smartsim_db.dat
+└── fv_simulation
+    ├── fv_sim.py
+    ├── fv_simulation.err
+    └── fv_simulation.out
+
+2 directories, 6 files
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="inference.html" class="btn btn-neutral float-right" title="Machine Learning" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="using_clients.html" class="btn btn-neutral float-left" title="Using SmartRedis Clients" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

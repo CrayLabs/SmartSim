@@ -1,0 +1,712 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>smartsim.experiment &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.experiment</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.experiment</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">osp</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">getcwd</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pformat</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
+
+<span class="kn">from</span> <span class="nn">smartsim.control.manifest</span> <span class="kn">import</span> <span class="n">Manifest</span>
+
+<span class="kn">from</span> <span class="nn">.control</span> <span class="kn">import</span> <span class="n">Controller</span><span class="p">,</span> <span class="n">Manifest</span>
+<span class="kn">from</span> <span class="nn">.entity</span> <span class="kn">import</span> <span class="n">Ensemble</span><span class="p">,</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">.error</span> <span class="kn">import</span> <span class="n">SmartSimError</span>
+<span class="kn">from</span> <span class="nn">.generation</span> <span class="kn">import</span> <span class="n">Generator</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">.utils.helpers</span> <span class="kn">import</span> <span class="n">colorize</span><span class="p">,</span> <span class="n">init_default</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Experiment"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment">[docs]</a><span class="k">class</span> <span class="nc">Experiment</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Experiments are the main user interface in SmartSim.</span>
+
+<span class="sd">    Experiments can create instances to launch called ``Model``</span>
+<span class="sd">    and ``Ensemble``. Through the ``Experiment`` interface, users</span>
+<span class="sd">    can programmatically create, configure, start, stop, poll and</span>
+<span class="sd">    query the instances they create.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">exp_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Example initialization</span>
+
+<span class="sd">        .. highlight:: python</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            exp = Experiment(name=&quot;my_exp&quot;, launcher=&quot;local&quot;)</span>
+
+<span class="sd">        :param name: name for the ``Experiment``</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param exp_path: path to location of ``Experiment`` directory if generated</span>
+<span class="sd">        :type exp_path: str, optional</span>
+<span class="sd">        :param launcher: type of launcher being used, options are &quot;slurm&quot;, &quot;pbs&quot;,</span>
+<span class="sd">                         &quot;cobalt&quot;, &quot;lsf&quot;, or &quot;local&quot;. Defaults to &quot;local&quot;</span>
+<span class="sd">        :type launcher: str, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">exp_path</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exp_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;exp_path argument was not of type str&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">exp_path</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">NotADirectoryError</span><span class="p">(</span><span class="s2">&quot;Experiment path provided does not exist&quot;</span><span class="p">)</span>
+            <span class="n">exp_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">exp_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_path</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">name</span><span class="p">),</span> <span class="n">exp_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span> <span class="o">=</span> <span class="n">Controller</span><span class="p">(</span><span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Experiment.start"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Launch instances passed as arguments</span>
+
+<span class="sd">        Start the ``Experiment`` by turning specified instances into jobs</span>
+<span class="sd">        for the underlying launcher and launching them.</span>
+
+<span class="sd">        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``</span>
+<span class="sd">        can all be passed as arguments to the start method.</span>
+<span class="sd">        Passing more than one ``Orchestrator`` as arguments is forbidden.</span>
+
+<span class="sd">        :param block: block execution until all non-database</span>
+<span class="sd">                      jobs are finished, defaults to True</span>
+<span class="sd">        :type block: bool, optional</span>
+<span class="sd">        :param summary: print a launch summary prior to launch,</span>
+<span class="sd">                        defaults to False</span>
+<span class="sd">        :type summary: bool, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_manifest</span> <span class="o">=</span> <span class="n">Manifest</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">summary</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launch_summary</span><span class="p">(</span><span class="n">start_manifest</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">manifest</span><span class="o">=</span><span class="n">start_manifest</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.stop"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stop specific instances launched by this ``Experiment``</span>
+
+<span class="sd">        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``</span>
+<span class="sd">        can all be passed as arguments to the stop method.</span>
+
+<span class="sd">        :raises TypeError: if wrong type</span>
+<span class="sd">        :raises SmartSimError: if stop request fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stop_manifest</span> <span class="o">=</span> <span class="n">Manifest</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">stop_manifest</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">stop_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">entity_list</span> <span class="ow">in</span> <span class="n">stop_manifest</span><span class="o">.</span><span class="n">ensembles</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">stop_entity_list</span><span class="p">(</span><span class="n">entity_list</span><span class="p">)</span>
+            <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">stop_manifest</span><span class="o">.</span><span class="n">db</span>
+            <span class="k">if</span> <span class="n">orchestrator</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">stop_entity_list</span><span class="p">(</span><span class="n">orchestrator</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.generate"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the file structure for an ``Experiment``</span>
+
+<span class="sd">        ``Experiment.generate`` creates directories for each instance</span>
+<span class="sd">        passed to organize Experiments that launch many instances</span>
+
+<span class="sd">        If files or directories are attached to ``Model`` objects</span>
+<span class="sd">        using ``Model.attach_generator_files()``, those files or</span>
+<span class="sd">        directories will be symlinked, copied, or configured and</span>
+<span class="sd">        written into the created directory for that instance.</span>
+
+<span class="sd">        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``</span>
+<span class="sd">        can all be passed as arguments to the generate method.</span>
+
+<span class="sd">        :param tag: tag used in `to_configure` generator files</span>
+<span class="sd">        :type tag: str, optional</span>
+<span class="sd">        :param overwrite: overwrite existing folders and contents,</span>
+<span class="sd">               defaults to False</span>
+<span class="sd">        :type overwrite: bool, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">generator</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tag</span><span class="p">:</span>
+                <span class="n">generator</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+            <span class="n">generator</span><span class="o">.</span><span class="n">generate_experiment</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.poll"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Monitor jobs through logging to stdout.</span>
+
+<span class="sd">        This method should only be used if jobs were launched</span>
+<span class="sd">        with ``Experiment.start(block=False)``</span>
+
+<span class="sd">        :param interval: frequency (in seconds) of logging to stdout,</span>
+<span class="sd">                         defaults to 10 seconds</span>
+<span class="sd">        :type interval: int, optional</span>
+<span class="sd">        :param verbose: set verbosity, defaults to True</span>
+<span class="sd">        :type verbose: bool, optional</span>
+<span class="sd">        :raises SmartSimError:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.finished"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.finished">[docs]</a>    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query if a job has completed</span>
+
+<span class="sd">        An instance of ``Model`` or ``Ensemble`` can be passed</span>
+<span class="sd">        as an argument.</span>
+
+<span class="sd">        :param entity: object launched by this ``Experiment``</span>
+<span class="sd">        :type entity: Model | Ensemble</span>
+<span class="sd">        :returns: True if job has completed, False otherwise</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises SmartSimError: if entity has not been launched</span>
+<span class="sd">                               by this ``Experiment``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.get_status"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.get_status">[docs]</a>    <span class="k">def</span> <span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query the status of the specific job(s)</span>
+
+<span class="sd">        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``</span>
+<span class="sd">        can all be passed as arguments to ``Experiment.get_status()``</span>
+
+<span class="sd">        :returns: status of the specific job(s)</span>
+<span class="sd">        :rtype: list[str]</span>
+<span class="sd">        :raises SmartSimError: if status retrieval fails</span>
+<span class="sd">        :raises TypeError:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">Manifest</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">statuses</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+                <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_entity_status</span><span class="p">(</span><span class="n">entity</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">entity_list</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">ensembles</span><span class="p">:</span>
+                <span class="n">statuses</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_entity_list_status</span><span class="p">(</span><span class="n">entity_list</span><span class="p">))</span>
+            <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">db</span>
+            <span class="k">if</span> <span class="n">orchestrator</span><span class="p">:</span>
+                <span class="n">statuses</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_entity_list_status</span><span class="p">(</span><span class="n">orchestrator</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">statuses</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.create_ensemble"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.create_ensemble">[docs]</a>    <span class="k">def</span> <span class="nf">create_ensemble</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">run_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">replicas</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">perm_strategy</span><span class="o">=</span><span class="s2">&quot;all_perm&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an ``Ensemble`` of ``Model`` instances</span>
+
+<span class="sd">        Ensembles can be launched sequentially or as a batch</span>
+<span class="sd">        if using a non-local launcher. e.g. slurm</span>
+
+<span class="sd">        Ensembles require one of the following combinations</span>
+<span class="sd">        of arguments</span>
+
+<span class="sd">            - ``run_settings`` and ``params``</span>
+<span class="sd">            - ``run_settings`` and ``replicas``</span>
+<span class="sd">            - ``batch_settings``</span>
+<span class="sd">            - ``batch_settings``, ``run_settings``, and ``params``</span>
+<span class="sd">            - ``batch_settings``, ``run_settings``, and ``replicas``</span>
+
+<span class="sd">        If given solely batch settings, an empty ensemble</span>
+<span class="sd">        will be created that models can be added to manually</span>
+<span class="sd">        through ``Ensemble.add_model()``.</span>
+<span class="sd">        The entire ensemble will launch as one batch.</span>
+
+<span class="sd">        Provided batch and run settings, either ``params``</span>
+<span class="sd">        or ``replicas`` must be passed and the entire ensemble</span>
+<span class="sd">        will launch as a single batch.</span>
+
+<span class="sd">        Provided solely run settings, either ``params``</span>
+<span class="sd">        or ``replicas`` must be passed and the ensemble members</span>
+<span class="sd">        will each launch sequentially.</span>
+
+<span class="sd">        The kwargs argument can be used to pass custom input</span>
+<span class="sd">        parameters to the permutation strategy.</span>
+
+<span class="sd">        :param name: name of the ensemble</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param params: parameters to expand into ``Model`` members</span>
+<span class="sd">        :type params: dict[str, Any]</span>
+<span class="sd">        :param batch_settings: describes settings for ``Ensemble`` as batch workload</span>
+<span class="sd">        :type batch_settings: BatchSettings</span>
+<span class="sd">        :param run_settings: describes how each ``Model`` should be executed</span>
+<span class="sd">        :type run_settings: RunSettings</span>
+<span class="sd">        :param replicas: number of replicas to create</span>
+<span class="sd">        :type replicas: int</span>
+<span class="sd">        :param perm_strategy: strategy for expanding ``params`` into</span>
+<span class="sd">                              ``Model`` instances from params argument</span>
+<span class="sd">                              options are &quot;all_perm&quot;, &quot;stepped&quot;, &quot;random&quot;</span>
+<span class="sd">                              or a callable function. Default is &quot;all_perm&quot;.</span>
+<span class="sd">        :type perm_strategy: str, optional</span>
+<span class="sd">        :raises SmartSimError: if initialization fails</span>
+<span class="sd">        :return: ``Ensemble`` instance</span>
+<span class="sd">        :rtype: Ensemble</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">new_ensemble</span> <span class="o">=</span> <span class="n">Ensemble</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
+                <span class="n">batch_settings</span><span class="o">=</span><span class="n">batch_settings</span><span class="p">,</span>
+                <span class="n">run_settings</span><span class="o">=</span><span class="n">run_settings</span><span class="p">,</span>
+                <span class="n">perm_strat</span><span class="o">=</span><span class="n">perm_strategy</span><span class="p">,</span>
+                <span class="n">replicas</span><span class="o">=</span><span class="n">replicas</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_ensemble</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.create_model"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.create_model">[docs]</a>    <span class="k">def</span> <span class="nf">create_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enable_key_prefixing</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a ``Model``</span>
+<span class="sd">        By default, all ``Model`` instances start with the cwd</span>
+<span class="sd">        as their path unless specified. Regardless of if path is</span>
+<span class="sd">        specified, upon user passing the instance to</span>
+<span class="sd">        ``Experiment.generate()``, the ``Model`` path will be</span>
+<span class="sd">        overwritten and replaced with the created directory for the ``Model``</span>
+
+<span class="sd">        :param name: name of the model</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param run_settings: defines how ``Model`` should be run,</span>
+<span class="sd">        :type run_settings: RunSettings</span>
+<span class="sd">        :param params: model parameters for writing into configuration files</span>
+<span class="sd">        :type params: dict, optional</span>
+<span class="sd">        :param path: path to where the model should be executed at runtime</span>
+<span class="sd">        :type path: str, optional</span>
+<span class="sd">        :param enable_key_prefixing: If True, data sent to the Orchestrator</span>
+<span class="sd">                                     using SmartRedis from this ``Model`` will</span>
+<span class="sd">                                     be prefixed with the ``Model`` name.</span>
+<span class="sd">                                     Default is True.</span>
+<span class="sd">        :type enable_key_prefixing: bool, optional</span>
+<span class="sd">        :raises SmartSimError: if initialization fails</span>
+<span class="sd">        :return: the created ``Model``</span>
+<span class="sd">        :rtype: Model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">path</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">new_model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">enable_key_prefixing</span><span class="p">:</span>
+                <span class="n">new_model</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">new_model</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.reconnect_orchestrator"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.reconnect_orchestrator">[docs]</a>    <span class="k">def</span> <span class="nf">reconnect_orchestrator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reconnect to a running ``Orchestrator``</span>
+
+<span class="sd">        This method can be used to connect to a Redis deployment</span>
+<span class="sd">        that was launched by a previous ``Experiment``. This way</span>
+<span class="sd">        users can run many experiments utilizing the same Redis</span>
+<span class="sd">        deployment</span>
+
+<span class="sd">        :param checkpoint: the `smartsim_db.dat` file created</span>
+<span class="sd">                           when an ``Orchestrator`` is launched</span>
+<span class="sd">        :type checkpoint: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">orc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">reload_saved_db</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">orc</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.summary"><a class="viewcode-back" href="../../api/smartsim_api.html#smartsim.experiment.Experiment.summary">[docs]</a>    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a summary of the ``Experiment``</span>
+
+<span class="sd">        The summary will show each instance that has been</span>
+<span class="sd">        launched and completed in this ``Experiment``</span>
+
+<span class="sd">        :return: pandas Dataframe of ``Experiment`` history</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Name&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Entity-Type&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;JobID&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RunID&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Time&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Status&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Returncode&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># TODO should this include running jobs?</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">completed</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">runs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">jids</span><span class="p">[</span><span class="n">run</span><span class="p">],</span>
+                    <span class="n">run</span><span class="p">,</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">job_times</span><span class="p">[</span><span class="n">run</span><span class="p">],</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">statuses</span><span class="p">[</span><span class="n">run</span><span class="p">],</span>
+                    <span class="n">job</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="n">run</span><span class="p">],</span>
+                <span class="p">]</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+    <span class="k">def</span> <span class="nf">_launch_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manifest</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Experiment pre-launch summary of entities that will be launched</span>
+<span class="sd">        :param manifest: Manifest of deployables.</span>
+<span class="sd">        :type manifest: Manifest</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">sprint</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">sprint</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">models</span>
+        <span class="n">ensembles</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">ensembles</span>
+        <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">db</span>
+
+        <span class="n">header</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;=== LAUNCH SUMMARY ===&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;cyan&quot;</span><span class="p">,</span> <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">exname</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;Experiment: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span> <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">expath</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;Experiment Path: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_path</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+        <span class="n">launch</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span>
+            <span class="s2">&quot;Launching with: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">_launcher</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span>
+        <span class="p">)</span>
+        <span class="n">numens</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;# of Ensembles: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ensembles</span><span class="p">)),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+        <span class="n">numods</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;# of Models: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">models</span><span class="p">)),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+        <span class="n">has_orc</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span> <span class="k">if</span> <span class="n">orchestrator</span> <span class="k">else</span> <span class="s2">&quot;no&quot;</span>
+        <span class="n">orches</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;Database: &quot;</span> <span class="o">+</span> <span class="n">has_orc</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+
+        <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">header</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">exname</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">expath</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">launch</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">numens</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">numods</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">orches</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ensembles</span><span class="p">:</span>
+            <span class="n">sprint</span><span class="p">(</span><span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;=== ENSEMBLES ===&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;cyan&quot;</span><span class="p">,</span> <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">ens</span> <span class="ow">in</span> <span class="n">ensembles</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="n">ens</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span> <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">num_models</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span>
+                    <span class="s2">&quot;# of models in ensemble: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ens</span><span class="p">)),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span>
+                <span class="p">)</span>
+                <span class="n">batch_settings</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span>
+                    <span class="s2">&quot;Batch Settings: </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ens</span><span class="o">.</span><span class="n">batch_settings</span><span class="p">),</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">run_settng</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span>
+                    <span class="s2">&quot;Run Settings: </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ens</span><span class="o">.</span><span class="n">run_settings</span><span class="p">),</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Launching as batch: </span><span class="si">{</span><span class="n">ens</span><span class="o">.</span><span class="n">batch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+
+                <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num_models</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">batch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ens</span><span class="o">.</span><span class="n">batch</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">batch_settings</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">run_settng</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sprint</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">models</span><span class="p">:</span>
+            <span class="n">sprint</span><span class="p">(</span><span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;=== MODELS ===&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;cyan&quot;</span><span class="p">,</span> <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+                <span class="n">model_name</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span> <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">parameters</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span>
+                    <span class="s2">&quot;Model Parameters: </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">pformat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">params</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span>
+                <span class="p">)</span>
+                <span class="n">run_settng</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span>
+                    <span class="s2">&quot;Model Run Settings: </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">run_settings</span><span class="p">),</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parameters</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">run_settng</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sprint</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">orchestrator</span><span class="p">:</span>
+            <span class="n">sprint</span><span class="p">(</span><span class="n">colorize</span><span class="p">(</span><span class="s2">&quot;=== DATABASE ===&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;cyan&quot;</span><span class="p">,</span> <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span>
+                <span class="s2">&quot;# of database shards: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">orchestrator</span><span class="o">.</span><span class="n">num_shards</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span>
+            <span class="p">)</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Launching as batch: </span><span class="si">{</span><span class="n">orchestrator</span><span class="o">.</span><span class="n">batch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+            <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">batch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">sprint</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">wait</span><span class="p">,</span> <span class="n">steps</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span>
+        <span class="n">prog_bar</span> <span class="o">=</span> <span class="n">trange</span><span class="p">(</span>
+            <span class="n">steps</span><span class="p">,</span>
+            <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Launching in...&quot;</span><span class="p">,</span>
+            <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">ncols</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+            <span class="n">mininterval</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+            <span class="n">bar_format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{desc}</span><span class="s2">: </span><span class="si">{bar}</span><span class="s2">| </span><span class="si">{remaining}</span><span class="s2"> </span><span class="si">{elapsed}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">prog_bar</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">wait</span> <span class="o">/</span> <span class="n">steps</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

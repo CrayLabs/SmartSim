@@ -1,0 +1,962 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>C++ &#8212; SmartSim 0.4.1 documentation</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Fortran" href="sr_fortran_walkthrough.html" />
+    <link rel="prev" title="Python" href="sr_python_walkthrough.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="community.html">
+   Community
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="contributing_examples.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/sr_cpp_walkthrough.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fsr_cpp_walkthrough.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#tensors">
+   Tensors
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#datasets">
+   DataSets
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#models">
+   Models
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#scripts">
+   Scripts
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#parallel-mpi-execution">
+   Parallel (MPI) execution
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>C++</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#tensors">
+   Tensors
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#datasets">
+   DataSets
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#models">
+   Models
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#scripts">
+   Scripts
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#parallel-mpi-execution">
+   Parallel (MPI) execution
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <section id="c">
+<h1>C++<a class="headerlink" href="#c" title="Permalink to this headline">¶</a></h1>
+<p>This section presents examples that use the SmartRedis C++ API to
+interact with the RedisAI tensor, model, and script data types.
+Additionally, this section demonstrates an example of utilizing
+the SmartRedis <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> API.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The C++ API examples rely on the <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment
+variable being set to the address and port of the Redis database.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The C++ API examples are written to connect to a clustered database
+or clustered SmartSim Orchestrator.
+Update the <code class="docutils literal notranslate"><span class="pre">Client</span></code> constructor <code class="docutils literal notranslate"><span class="pre">cluster</span></code> flag to <cite>false</cite>
+to connect to a single shard (single compute host) database.</p>
+</div>
+<section id="tensors">
+<h2>Tensors<a class="headerlink" href="#tensors" title="Permalink to this headline">¶</a></h2>
+<p>The following example shows how to send and receive a tensor using the
+SmartRedis C++ client API.</p>
+<div class="highlight-C++ notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="cm">/*</span>
+<span class="linenos"> 2</span><span class="cm"> * BSD 2-Clause License</span>
+<span class="linenos"> 3</span><span class="cm"> *</span>
+<span class="linenos"> 4</span><span class="cm"> * Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos"> 5</span><span class="cm"> * All rights reserved.</span>
+<span class="linenos"> 6</span><span class="cm"> *</span>
+<span class="linenos"> 7</span><span class="cm"> * Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos"> 8</span><span class="cm"> * modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos"> 9</span><span class="cm"> *</span>
+<span class="linenos">10</span><span class="cm"> * 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos">11</span><span class="cm"> *    list of conditions and the following disclaimer.</span>
+<span class="linenos">12</span><span class="cm"> *</span>
+<span class="linenos">13</span><span class="cm"> * 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="linenos">14</span><span class="cm"> *    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos">15</span><span class="cm"> *    and/or other materials provided with the distribution.</span>
+<span class="linenos">16</span><span class="cm"> *</span>
+<span class="linenos">17</span><span class="cm"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos">18</span><span class="cm"> * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos">19</span><span class="cm"> * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos">20</span><span class="cm"> * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos">21</span><span class="cm"> * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos">22</span><span class="cm"> * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos">23</span><span class="cm"> * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos">24</span><span class="cm"> * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos">25</span><span class="cm"> * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos">26</span><span class="cm"> * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="linenos">27</span><span class="cm"> */</span><span class="w"></span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="linenos">30</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<span class="linenos">31</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string&gt;</span><span class="cp"></span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">    </span><span class="c1">// Initialize tensor dimensions</span>
+<span class="linenos">36</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">37</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dim2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">38</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dim3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">39</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">dims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">};</span><span class="w"></span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="w">    </span><span class="c1">// Initialize a tensor to random values.  Note that a dynamically</span>
+<span class="linenos">42</span><span class="w">    </span><span class="c1">// allocated tensor via malloc is also useable with the client</span>
+<span class="linenos">43</span><span class="w">    </span><span class="c1">// API.  The std::vector is used here for brevity.</span>
+<span class="linenos">44</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n_values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dim1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dim2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dim3</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">45</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">input_tensor</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">46</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">47</span><span class="w">        </span><span class="n">input_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="o">*</span><span class="n">rand</span><span class="p">()</span><span class="o">/</span><span class="n">RAND_MAX</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="w">    </span><span class="c1">// Initialize a SmartRedis client</span>
+<span class="linenos">50</span><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">cluster_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"> </span><span class="c1">// Set to false if not using a clustered database</span>
+<span class="linenos">51</span><span class="w">    </span><span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span><span class="w"> </span><span class="n">client</span><span class="p">(</span><span class="n">cluster_mode</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">52</span>
+<span class="linenos">53</span><span class="w">    </span><span class="c1">// Put the tensor in the database</span>
+<span class="linenos">54</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;3d_tensor&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">55</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">input_tensor</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">dims</span><span class="p">,</span><span class="w"></span>
+<span class="linenos">56</span><span class="w">                      </span><span class="n">SRTensorTypeDouble</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">57</span>
+<span class="linenos">58</span><span class="w">    </span><span class="c1">// Retrieve the tensor from the database using the unpack feature.</span>
+<span class="linenos">59</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">60</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">unpack_tensor</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="p">{</span><span class="n">n_values</span><span class="p">},</span><span class="w"></span>
+<span class="linenos">61</span><span class="w">                        </span><span class="n">SRTensorTypeDouble</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">62</span>
+<span class="linenos">63</span><span class="w">    </span><span class="c1">// Print the values retrieved with the unpack feature</span>
+<span class="linenos">64</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Comparison of the sent and &quot;</span>\
+<span class="linenos">65</span><span class="w">                </span><span class="s">&quot;retrieved (via unpack) values: &quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">66</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">67</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Sent: &quot;</span><span class="o">&lt;&lt;</span><span class="n">input_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &quot;</span><span class="w"></span>
+<span class="linenos">68</span><span class="w">                 </span><span class="o">&lt;&lt;</span><span class="s">&quot;Received: &quot;</span><span class="o">&lt;&lt;</span><span class="n">unpack_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">69</span>
+<span class="linenos">70</span>
+<span class="linenos">71</span><span class="w">    </span><span class="c1">// Retrieve the tensor from the database using the get feature.</span>
+<span class="linenos">72</span><span class="w">    </span><span class="n">SRTensorType</span><span class="w"> </span><span class="n">get_type</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">73</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">get_dims</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">74</span><span class="w">    </span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">get_tensor</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">75</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">get_tensor</span><span class="p">,</span><span class="w"> </span><span class="n">get_dims</span><span class="p">,</span><span class="w"> </span><span class="n">get_type</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutNested</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">76</span>
+<span class="linenos">77</span><span class="w">    </span><span class="c1">// Print the values retrieved with the unpack feature</span>
+<span class="linenos">78</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Comparison of the sent and &quot;</span>\
+<span class="linenos">79</span><span class="w">                </span><span class="s">&quot;retrieved (via get) values: &quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">80</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">81</span><span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">&lt;</span><span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">82</span><span class="w">            </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">&lt;</span><span class="n">dims</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos">83</span><span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Sent: &quot;</span><span class="o">&lt;&lt;</span><span class="n">input_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &quot;</span><span class="w"></span>
+<span class="linenos">84</span><span class="w">                         </span><span class="o">&lt;&lt;</span><span class="s">&quot;Received: &quot;</span><span class="w"></span>
+<span class="linenos">85</span><span class="w">                         </span><span class="o">&lt;&lt;</span><span class="p">((</span><span class="kt">double</span><span class="o">***</span><span class="p">)</span><span class="n">get_tensor</span><span class="p">)[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">86</span><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="linenos">87</span>
+<span class="linenos">88</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">89</span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</section>
+<section id="datasets">
+<h2>DataSets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h2>
+<p>The C++ client can store and retrieve tensors and metadata in datasets.
+For further information about datasets, please refer to the <a class="reference internal" href="sr_data_structures.html#data-structures-dataset"><span class="std std-ref">Dataset
+section of the Data Structures documentation page</span></a>.</p>
+<p>The code below shows how to store and retrieve tensors and metadata
+that belong to a <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>.</p>
+<div class="highlight-C++ notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="cm">/*</span>
+<span class="linenos">  2</span><span class="cm"> * BSD 2-Clause License</span>
+<span class="linenos">  3</span><span class="cm"> *</span>
+<span class="linenos">  4</span><span class="cm"> * Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos">  5</span><span class="cm"> * All rights reserved.</span>
+<span class="linenos">  6</span><span class="cm"> *</span>
+<span class="linenos">  7</span><span class="cm"> * Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos">  8</span><span class="cm"> * modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos">  9</span><span class="cm"> *</span>
+<span class="linenos"> 10</span><span class="cm"> * 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos"> 11</span><span class="cm"> *    list of conditions and the following disclaimer.</span>
+<span class="linenos"> 12</span><span class="cm"> *</span>
+<span class="linenos"> 13</span><span class="cm"> * 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="linenos"> 14</span><span class="cm"> *    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos"> 15</span><span class="cm"> *    and/or other materials provided with the distribution.</span>
+<span class="linenos"> 16</span><span class="cm"> *</span>
+<span class="linenos"> 17</span><span class="cm"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos"> 18</span><span class="cm"> * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos"> 19</span><span class="cm"> * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos"> 20</span><span class="cm"> * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos"> 21</span><span class="cm"> * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos"> 22</span><span class="cm"> * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos"> 23</span><span class="cm"> * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos"> 24</span><span class="cm"> * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos"> 25</span><span class="cm"> * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos"> 26</span><span class="cm"> * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="linenos"> 27</span><span class="cm"> */</span><span class="w"></span>
+<span class="linenos"> 28</span>
+<span class="linenos"> 29</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="linenos"> 30</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<span class="linenos"> 31</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string&gt;</span><span class="cp"></span>
+<span class="linenos"> 32</span>
+<span class="linenos"> 33</span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos"> 34</span>
+<span class="linenos"> 35</span><span class="w">    </span><span class="c1">// Initialize tensor dimensions</span>
+<span class="linenos"> 36</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 37</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dim2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 38</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">dim3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 39</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n_values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dim1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dim2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dim3</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 40</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">dims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">};</span><span class="w"></span>
+<span class="linenos"> 41</span>
+<span class="linenos"> 42</span><span class="w">    </span><span class="c1">// Initialize two tensors to random values</span>
+<span class="linenos"> 43</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">tensor_1</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 44</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">tensor_2</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 45</span>
+<span class="linenos"> 46</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos"> 47</span><span class="w">        </span><span class="n">tensor_1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="o">*</span><span class="n">rand</span><span class="p">()</span><span class="o">/</span><span class="n">RAND_MAX</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 48</span><span class="w">        </span><span class="n">tensor_2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rand</span><span class="p">();</span><span class="w"></span>
+<span class="linenos"> 49</span><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="linenos"> 50</span>
+<span class="linenos"> 51</span><span class="w">    </span><span class="c1">// Initialize three metadata values we will add</span>
+<span class="linenos"> 52</span><span class="w">    </span><span class="c1">// to the DataSet</span>
+<span class="linenos"> 53</span><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">meta_scalar_1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 54</span><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">meta_scalar_2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 55</span><span class="w">    </span><span class="kt">int64_t</span><span class="w"> </span><span class="n">meta_scalar_3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 56</span>
+<span class="linenos"> 57</span><span class="w">    </span><span class="c1">// Initialize a SmartRedis client</span>
+<span class="linenos"> 58</span><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">cluster_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"> </span><span class="c1">// Set to false if not using a clustered database</span>
+<span class="linenos"> 59</span><span class="w">    </span><span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span><span class="w"> </span><span class="n">client</span><span class="p">(</span><span class="n">cluster_mode</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 60</span>
+<span class="linenos"> 61</span><span class="w">    </span><span class="c1">// Create a DataSet</span>
+<span class="linenos"> 62</span><span class="w">    </span><span class="n">SmartRedis</span><span class="o">::</span><span class="n">DataSet</span><span class="w"> </span><span class="n">dataset</span><span class="p">(</span><span class="s">&quot;example_dataset&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 63</span>
+<span class="linenos"> 64</span><span class="w">    </span><span class="c1">// Add tensors to the DataSet</span>
+<span class="linenos"> 65</span><span class="w">    </span><span class="n">dataset</span><span class="p">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s">&quot;tensor_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">tensor_1</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">dims</span><span class="p">,</span><span class="w"></span>
+<span class="linenos"> 66</span><span class="w">                       </span><span class="n">SRTensorTypeDouble</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 67</span>
+<span class="linenos"> 68</span><span class="w">    </span><span class="n">dataset</span><span class="p">.</span><span class="n">add_tensor</span><span class="p">(</span><span class="s">&quot;tensor_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">tensor_2</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">dims</span><span class="p">,</span><span class="w"></span>
+<span class="linenos"> 69</span><span class="w">                       </span><span class="n">SRTensorTypeInt64</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 70</span>
+<span class="linenos"> 71</span><span class="w">    </span><span class="c1">// Add metadata scalar values to the DataSet</span>
+<span class="linenos"> 72</span><span class="w">    </span><span class="n">dataset</span><span class="p">.</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="s">&quot;meta_field_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">meta_scalar_1</span><span class="p">,</span><span class="w"> </span><span class="n">SRMetadataTypeUint32</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 73</span><span class="w">    </span><span class="n">dataset</span><span class="p">.</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="s">&quot;meta_field_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">meta_scalar_2</span><span class="p">,</span><span class="w"> </span><span class="n">SRMetadataTypeUint32</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 74</span><span class="w">    </span><span class="n">dataset</span><span class="p">.</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="s">&quot;meta_field_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">meta_scalar_3</span><span class="p">,</span><span class="w"> </span><span class="n">SRMetadataTypeInt64</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 75</span>
+<span class="linenos"> 76</span>
+<span class="linenos"> 77</span><span class="w">    </span><span class="c1">// Put the DataSet in the database</span>
+<span class="linenos"> 78</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">put_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 79</span>
+<span class="linenos"> 80</span><span class="w">    </span><span class="c1">// Retrieve the DataSet from the database</span>
+<span class="linenos"> 81</span><span class="w">    </span><span class="n">SmartRedis</span><span class="o">::</span><span class="n">DataSet</span><span class="w"> </span><span class="n">retrieved_dataset</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="linenos"> 82</span><span class="w">        </span><span class="n">client</span><span class="p">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="s">&quot;example_dataset&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 83</span>
+<span class="linenos"> 84</span><span class="w">    </span><span class="c1">// Retrieve one of the tensors</span>
+<span class="linenos"> 85</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">unpack_dataset_tensor</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 86</span><span class="w">    </span><span class="n">retrieved_dataset</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="s">&quot;tensor_2&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="linenos"> 87</span><span class="w">                                    </span><span class="n">unpack_dataset_tensor</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"></span>
+<span class="linenos"> 88</span><span class="w">                                    </span><span class="p">{</span><span class="n">n_values</span><span class="p">},</span><span class="w"></span>
+<span class="linenos"> 89</span><span class="w">                                    </span><span class="n">SRTensorTypeInt64</span><span class="p">,</span><span class="w"></span>
+<span class="linenos"> 90</span><span class="w">                                    </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span><span class="w">    </span><span class="c1">// Print out the retrieved values</span>
+<span class="linenos"> 93</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Comparing sent and received &quot;</span>\
+<span class="linenos"> 94</span><span class="w">               </span><span class="s">&quot;values for tensor_2: &quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 95</span>
+<span class="linenos"> 96</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">n_values</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Sent: &quot;</span><span class="o">&lt;&lt;</span><span class="n">tensor_2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &quot;</span><span class="w"></span>
+<span class="linenos"> 98</span><span class="w">                 </span><span class="o">&lt;&lt;</span><span class="s">&quot;Received: &quot;</span><span class="w"></span>
+<span class="linenos"> 99</span><span class="w">                 </span><span class="o">&lt;&lt;</span><span class="n">unpack_dataset_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">100</span>
+<span class="linenos">101</span><span class="w">    </span><span class="c1">//Retrieve a metadata field</span>
+<span class="linenos">102</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">get_n_meta_values</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">103</span><span class="w">    </span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">get_meta_values</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">104</span><span class="w">    </span><span class="n">SRMetaDataType</span><span class="w"> </span><span class="n">get_type</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">105</span><span class="w">    </span><span class="n">dataset</span><span class="p">.</span><span class="n">get_meta_scalars</span><span class="p">(</span><span class="s">&quot;meta_field_1&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="linenos">106</span><span class="w">                             </span><span class="n">get_meta_values</span><span class="p">,</span><span class="w"></span>
+<span class="linenos">107</span><span class="w">                             </span><span class="n">get_n_meta_values</span><span class="p">,</span><span class="w"></span>
+<span class="linenos">108</span><span class="w">                             </span><span class="n">get_type</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">109</span>
+<span class="linenos">110</span><span class="w">    </span><span class="c1">// Print out the metadata field values</span>
+<span class="linenos">111</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">get_n_meta_values</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">112</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;meta_field_1 value &quot;</span><span class="o">&lt;&lt;</span><span class="n">i</span><span class="o">&lt;&lt;</span><span class="s">&quot; = &quot;</span><span class="w"></span>
+<span class="linenos">113</span><span class="w">                 </span><span class="o">&lt;&lt;</span><span class="p">((</span><span class="kt">uint32_t</span><span class="o">*</span><span class="p">)</span><span class="n">get_meta_values</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">114</span>
+<span class="linenos">115</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">116</span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</section>
+<section id="models">
+<span id="sr-cpp-models"></span><h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
+<p>The following example shows how to store and use a DL model
+in the database with the C++ Client.  The model is stored as a file
+in the <code class="docutils literal notranslate"><span class="pre">../../../common/mnist_data/</span></code> path relative to the
+compiled executable.  Note that this example also sets and
+executes a preprocessing script.</p>
+<div class="highlight-C++ notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="cm">/*</span>
+<span class="linenos"> 2</span><span class="cm"> * BSD 2-Clause License</span>
+<span class="linenos"> 3</span><span class="cm"> *</span>
+<span class="linenos"> 4</span><span class="cm"> * Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos"> 5</span><span class="cm"> * All rights reserved.</span>
+<span class="linenos"> 6</span><span class="cm"> *</span>
+<span class="linenos"> 7</span><span class="cm"> * Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos"> 8</span><span class="cm"> * modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos"> 9</span><span class="cm"> *</span>
+<span class="linenos">10</span><span class="cm"> * 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos">11</span><span class="cm"> *    list of conditions and the following disclaimer.</span>
+<span class="linenos">12</span><span class="cm"> *</span>
+<span class="linenos">13</span><span class="cm"> * 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="linenos">14</span><span class="cm"> *    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos">15</span><span class="cm"> *    and/or other materials provided with the distribution.</span>
+<span class="linenos">16</span><span class="cm"> *</span>
+<span class="linenos">17</span><span class="cm"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos">18</span><span class="cm"> * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos">19</span><span class="cm"> * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos">20</span><span class="cm"> * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos">21</span><span class="cm"> * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos">22</span><span class="cm"> * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos">23</span><span class="cm"> * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos">24</span><span class="cm"> * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos">25</span><span class="cm"> * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos">26</span><span class="cm"> * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="linenos">27</span><span class="cm"> */</span><span class="w"></span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="linenos">30</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<span class="linenos">31</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fstream&gt;</span><span class="cp"></span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">    </span><span class="c1">// Initialize a vector that will hold input image tensor</span>
+<span class="linenos">36</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n_values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="o">*</span><span class="mi">1</span><span class="o">*</span><span class="mi">28</span><span class="o">*</span><span class="mi">28</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">37</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">img</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">38</span>
+<span class="linenos">39</span><span class="w">    </span><span class="c1">// Load the mnist image from a file</span>
+<span class="linenos">40</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">image_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;../../../common/mnist_data/one.raw&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">41</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">ifstream</span><span class="w"> </span><span class="n">fin</span><span class="p">(</span><span class="n">image_file</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">ios</span><span class="o">::</span><span class="n">binary</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">42</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">ostringstream</span><span class="w"> </span><span class="n">ostream</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">43</span><span class="w">    </span><span class="n">ostream</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">fin</span><span class="p">.</span><span class="n">rdbuf</span><span class="p">();</span><span class="w"></span>
+<span class="linenos">44</span><span class="w">    </span><span class="n">fin</span><span class="p">.</span><span class="n">close</span><span class="p">();</span><span class="w"></span>
+<span class="linenos">45</span>
+<span class="linenos">46</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ostream</span><span class="p">.</span><span class="n">str</span><span class="p">();</span><span class="w"></span>
+<span class="linenos">47</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">memcpy</span><span class="p">(</span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">tmp</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span><span class="w"></span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="w">    </span><span class="c1">// Initialize a SmartRedis client to connect to the Redis database</span>
+<span class="linenos">50</span><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">cluster_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"> </span><span class="c1">// Set to false if not using a clustered database</span>
+<span class="linenos">51</span><span class="w">    </span><span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span><span class="w"> </span><span class="n">client</span><span class="p">(</span><span class="n">cluster_mode</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">52</span>
+<span class="linenos">53</span><span class="w">    </span><span class="c1">// Use the client to set a model in the database from a file</span>
+<span class="linenos">54</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">model_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_model&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">55</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">model_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;../../../common/mnist_data/mnist_cnn.pt&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">56</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span><span class="w"> </span><span class="n">model_file</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;TORCH&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;CPU&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">57</span>
+<span class="linenos">58</span><span class="w">    </span><span class="c1">// Use the client to set a script from the database form a file</span>
+<span class="linenos">59</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">script_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_script&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">60</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">script_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;../../../common/mnist_data/data_processing_script.txt&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">61</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;CPU&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">script_file</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">62</span>
+<span class="linenos">63</span><span class="w">    </span><span class="c1">// Declare keys that we will use in forthcoming client commands</span>
+<span class="linenos">64</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">in_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_input&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">65</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_processed_input&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">66</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_output&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">67</span>
+<span class="linenos">68</span><span class="w">    </span><span class="c1">// Put the tensor into the database that was loaded from file</span>
+<span class="linenos">69</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span><span class="w"> </span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">},</span><span class="w"></span>
+<span class="linenos">70</span><span class="w">                      </span><span class="n">SRTensorTypeFloat</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">71</span>
+<span class="linenos">72</span>
+<span class="linenos">73</span><span class="w">    </span><span class="c1">// Run the preprocessing script on the input tensor</span>
+<span class="linenos">74</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">run_script</span><span class="p">(</span><span class="s">&quot;mnist_script&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;pre_process&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">in_key</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="n">script_out_key</span><span class="p">});</span><span class="w"></span>
+<span class="linenos">75</span>
+<span class="linenos">76</span><span class="w">    </span><span class="c1">// Run the model using the output of the preprocessing script</span>
+<span class="linenos">77</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">run_model</span><span class="p">(</span><span class="s">&quot;mnist_model&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">script_out_key</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="n">out_key</span><span class="p">});</span><span class="w"></span>
+<span class="linenos">78</span>
+<span class="linenos">79</span><span class="w">    </span><span class="c1">// Retrieve the output of the model</span>
+<span class="linenos">80</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">81</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="p">{</span><span class="mi">10</span><span class="p">},</span><span class="w"></span>
+<span class="linenos">82</span><span class="w">                         </span><span class="n">SRTensorTypeFloat</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">83</span>
+<span class="linenos">84</span><span class="w">    </span><span class="c1">// Print out the results of the model evaluation</span>
+<span class="linenos">85</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">result</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos">86</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Result[&quot;</span><span class="o">&lt;&lt;</span><span class="n">i</span><span class="o">&lt;&lt;</span><span class="s">&quot;] = &quot;</span><span class="o">&lt;&lt;</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">87</span><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="linenos">88</span>
+<span class="linenos">89</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">90</span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</section>
+<section id="scripts">
+<span id="sr-cpp-scripts"></span><h2>Scripts<a class="headerlink" href="#scripts" title="Permalink to this headline">¶</a></h2>
+<p>The example in <a class="reference internal" href="#sr-cpp-models"><span class="std std-ref">Models</span></a> shows how to store and use
+a PyTorch script in the database with the C++ Client.
+The script is stored as a file
+in the <code class="docutils literal notranslate"><span class="pre">../../../common/mnist_data/</span></code> path relative to the
+compiled executable.  Note that this example also sets and
+executes a PyTorch model.</p>
+</section>
+<section id="parallel-mpi-execution">
+<span id="sr-cpp-parallel-mpi"></span><h2>Parallel (MPI) execution<a class="headerlink" href="#parallel-mpi-execution" title="Permalink to this headline">¶</a></h2>
+<p>In this example, the example shown in <a class="reference internal" href="#sr-cpp-models"><span class="std std-ref">Models</span></a> and
+<a class="reference internal" href="#sr-cpp-scripts"><span class="std std-ref">Scripts</span></a> is adapted to run in parallel using MPI.
+This example has the same functionality, however,
+it shows how keys can be prefixed to prevent key
+collisions across MPI ranks.  Note that only one
+model and script are set, which is shared across
+all ranks.</p>
+<p>For completeness, the pre-processing script
+source code is also shown.</p>
+<p><strong>C++ program</strong></p>
+<div class="highlight-C++ notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="cm">/*</span>
+<span class="linenos">  2</span><span class="cm"> * BSD 2-Clause License</span>
+<span class="linenos">  3</span><span class="cm"> *</span>
+<span class="linenos">  4</span><span class="cm"> * Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos">  5</span><span class="cm"> * All rights reserved.</span>
+<span class="linenos">  6</span><span class="cm"> *</span>
+<span class="linenos">  7</span><span class="cm"> * Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos">  8</span><span class="cm"> * modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos">  9</span><span class="cm"> *</span>
+<span class="linenos"> 10</span><span class="cm"> * 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos"> 11</span><span class="cm"> *    list of conditions and the following disclaimer.</span>
+<span class="linenos"> 12</span><span class="cm"> *</span>
+<span class="linenos"> 13</span><span class="cm"> * 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="linenos"> 14</span><span class="cm"> *    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos"> 15</span><span class="cm"> *    and/or other materials provided with the distribution.</span>
+<span class="linenos"> 16</span><span class="cm"> *</span>
+<span class="linenos"> 17</span><span class="cm"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos"> 18</span><span class="cm"> * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos"> 19</span><span class="cm"> * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos"> 20</span><span class="cm"> * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos"> 21</span><span class="cm"> * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos"> 22</span><span class="cm"> * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos"> 23</span><span class="cm"> * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos"> 24</span><span class="cm"> * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos"> 25</span><span class="cm"> * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos"> 26</span><span class="cm"> * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="linenos"> 27</span><span class="cm"> */</span><span class="w"></span>
+<span class="linenos"> 28</span>
+<span class="linenos"> 29</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;client.h&quot;</span><span class="cp"></span>
+<span class="linenos"> 30</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mpi.h&gt;</span><span class="cp"></span>
+<span class="linenos"> 31</span>
+<span class="linenos"> 32</span><span class="kt">void</span><span class="w"> </span><span class="nf">run_mnist</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">model_name</span><span class="p">,</span><span class="w"></span>
+<span class="linenos"> 33</span><span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">script_name</span><span class="p">,</span><span class="w"></span>
+<span class="linenos"> 34</span><span class="w">               </span><span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span><span class="o">&amp;</span><span class="w"> </span><span class="n">client</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 35</span><span class="p">{</span><span class="w"></span>
+<span class="linenos"> 36</span><span class="w">    </span><span class="c1">// Get the MPI rank</span>
+<span class="linenos"> 37</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">rank</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 38</span><span class="w">    </span><span class="n">MPI_Comm_rank</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rank</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 39</span>
+<span class="linenos"> 40</span><span class="w">    </span><span class="c1">// Initialize a vector that will hold input image tensor</span>
+<span class="linenos"> 41</span><span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n_values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="o">*</span><span class="mi">1</span><span class="o">*</span><span class="mi">28</span><span class="o">*</span><span class="mi">28</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 42</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">img</span><span class="p">(</span><span class="n">n_values</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 43</span>
+<span class="linenos"> 44</span><span class="w">    </span><span class="c1">// Load the mnist image from a file using MPI rank 0</span>
+<span class="linenos"> 45</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rank</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos"> 46</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">image_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;../../../common/mnist_data/one.raw&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 47</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">ifstream</span><span class="w"> </span><span class="n">fin</span><span class="p">(</span><span class="n">image_file</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">ios</span><span class="o">::</span><span class="n">binary</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 48</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">ostringstream</span><span class="w"> </span><span class="n">ostream</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 49</span><span class="w">        </span><span class="n">ostream</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">fin</span><span class="p">.</span><span class="n">rdbuf</span><span class="p">();</span><span class="w"></span>
+<span class="linenos"> 50</span><span class="w">        </span><span class="n">fin</span><span class="p">.</span><span class="n">close</span><span class="p">();</span><span class="w"></span>
+<span class="linenos"> 51</span>
+<span class="linenos"> 52</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ostream</span><span class="p">.</span><span class="n">str</span><span class="p">();</span><span class="w"></span>
+<span class="linenos"> 53</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">memcpy</span><span class="p">(</span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">tmp</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span><span class="w"></span>
+<span class="linenos"> 54</span><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="linenos"> 55</span>
+<span class="linenos"> 56</span><span class="w">    </span><span class="c1">// Broadcast the image to all MPI ranks.  This is more efficient</span>
+<span class="linenos"> 57</span><span class="w">    </span><span class="c1">// thank all ranks loading the same file.  This is specific</span>
+<span class="linenos"> 58</span><span class="w">    </span><span class="c1">// to this example.</span>
+<span class="linenos"> 59</span><span class="w">    </span><span class="n">MPI_Bcast</span><span class="p">(</span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="mi">28</span><span class="o">*</span><span class="mi">28</span><span class="p">,</span><span class="w"> </span><span class="n">MPI_FLOAT</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 60</span><span class="w">    </span><span class="n">MPI_Barrier</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 61</span>
+<span class="linenos"> 62</span><span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">rank</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 63</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;All ranks have MNIST image&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 64</span>
+<span class="linenos"> 65</span><span class="w">    </span><span class="c1">// Declare keys that we will use in forthcoming client commands</span>
+<span class="linenos"> 66</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">in_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_input_rank_&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">rank</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 67</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_processed_input_rank_&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"></span>
+<span class="linenos"> 68</span><span class="w">                                 </span><span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">rank</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 69</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_output_rank_&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">rank</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 70</span>
+<span class="linenos"> 71</span><span class="w">    </span><span class="c1">// Put the image tensor on the database</span>
+<span class="linenos"> 72</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span><span class="w"> </span><span class="n">img</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">},</span><span class="w"></span>
+<span class="linenos"> 73</span><span class="w">                      </span><span class="n">SRTensorTypeFloat</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span><span class="w">    </span><span class="c1">// Run the preprocessing script</span>
+<span class="linenos"> 76</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">run_script</span><span class="p">(</span><span class="n">script_name</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;pre_process&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="linenos"> 77</span><span class="w">                      </span><span class="p">{</span><span class="n">in_key</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="n">script_out_key</span><span class="p">});</span><span class="w"></span>
+<span class="linenos"> 78</span>
+<span class="linenos"> 79</span><span class="w">    </span><span class="c1">// Run the model</span>
+<span class="linenos"> 80</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">run_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">script_out_key</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="n">out_key</span><span class="p">});</span><span class="w"></span>
+<span class="linenos"> 81</span>
+<span class="linenos"> 82</span><span class="w">    </span><span class="c1">// Get the result of the model</span>
+<span class="linenos"> 83</span><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="mi">10</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 84</span><span class="w">    </span><span class="n">client</span><span class="p">.</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="p">{</span><span class="mi">10</span><span class="p">},</span><span class="w"></span>
+<span class="linenos"> 85</span><span class="w">                         </span><span class="n">SRTensorTypeFloat</span><span class="p">,</span><span class="w"> </span><span class="n">SRMemLayoutContiguous</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 86</span>
+<span class="linenos"> 87</span><span class="w">    </span><span class="c1">// Print out the results of the model for Rank 0</span>
+<span class="linenos"> 88</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rank</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 89</span><span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">result</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 90</span><span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Rank 0: Result[&quot;</span><span class="o">&lt;&lt;</span><span class="n">i</span><span class="o">&lt;&lt;</span><span class="s">&quot;] = &quot;</span><span class="o">&lt;&lt;</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span><span class="w">    </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="linenos"> 93</span><span class="p">}</span><span class="w"></span>
+<span class="linenos"> 94</span>
+<span class="linenos"> 95</span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span><span class="w">    </span><span class="c1">// Initialize the MPI comm world</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="n">MPI_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">argv</span><span class="p">);</span><span class="w"></span>
+<span class="linenos"> 99</span>
+<span class="linenos">100</span><span class="w">    </span><span class="c1">// Retrieve the MPI rank</span>
+<span class="linenos">101</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">rank</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">102</span><span class="w">    </span><span class="n">MPI_Comm_rank</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rank</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">103</span>
+<span class="linenos">104</span><span class="w">    </span><span class="c1">// Initialize a Client object</span>
+<span class="linenos">105</span><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">cluster_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"> </span><span class="c1">// Set to false if not using a clustered database</span>
+<span class="linenos">106</span><span class="w">    </span><span class="n">SmartRedis</span><span class="o">::</span><span class="n">Client</span><span class="w"> </span><span class="n">client</span><span class="p">(</span><span class="n">cluster_mode</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">107</span>
+<span class="linenos">108</span><span class="w">    </span><span class="c1">// Set the model and script that will be used by all ranks</span>
+<span class="linenos">109</span><span class="w">    </span><span class="c1">// from MPI rank 0.</span>
+<span class="linenos">110</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rank</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="linenos">111</span><span class="w">        </span><span class="c1">// Build model key, file name, and then set model</span>
+<span class="linenos">112</span><span class="w">        </span><span class="c1">// from file using client API</span>
+<span class="linenos">113</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">model_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_model&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">114</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">model_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;../../../&quot;</span>\
+<span class="linenos">115</span><span class="w">                                 </span><span class="s">&quot;common/mnist_data/mnist_cnn.pt&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">116</span><span class="w">        </span><span class="n">client</span><span class="p">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span><span class="w"> </span><span class="n">model_file</span><span class="p">,</span><span class="w"></span>
+<span class="linenos">117</span><span class="w">                                </span><span class="s">&quot;TORCH&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;CPU&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">118</span>
+<span class="linenos">119</span><span class="w">        </span><span class="c1">// Build script key, file name, and then set script</span>
+<span class="linenos">120</span><span class="w">        </span><span class="c1">// from file using client API</span>
+<span class="linenos">121</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">script_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mnist_script&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">122</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">script_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;../../../common/mnist_data/&quot;</span><span class="w"></span>
+<span class="linenos">123</span><span class="w">                                </span><span class="s">&quot;data_processing_script.txt&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">124</span><span class="w">        </span><span class="n">client</span><span class="p">.</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;CPU&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">script_file</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">125</span>
+<span class="linenos">126</span><span class="w">        </span><span class="c1">// Get model and script to illustrate client API</span>
+<span class="linenos">127</span><span class="w">        </span><span class="c1">// functionality, but this is not necessary for this example.</span>
+<span class="linenos">128</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">model_key</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">129</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="w"> </span><span class="n">script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">get_script</span><span class="p">(</span><span class="n">script_key</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">130</span><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="linenos">131</span>
+<span class="linenos">132</span><span class="w">    </span><span class="c1">// Run the MNIST model</span>
+<span class="linenos">133</span><span class="w">    </span><span class="n">MPI_Barrier</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">134</span><span class="w">    </span><span class="n">run_mnist</span><span class="p">(</span><span class="s">&quot;mnist_model&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;mnist_script&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">client</span><span class="p">);</span><span class="w"></span>
+<span class="linenos">135</span>
+<span class="linenos">136</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rank</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">137</span><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Finished SmartRedis MNIST example.&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">138</span>
+<span class="linenos">139</span><span class="w">    </span><span class="c1">// Finalize MPI Comm World</span>
+<span class="linenos">140</span><span class="w">    </span><span class="n">MPI_Finalize</span><span class="p">();</span><span class="w"></span>
+<span class="linenos">141</span>
+<span class="linenos">142</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="linenos">143</span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p><strong>Python Pre-Processing</strong></p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span> <span class="nf">pre_process</span><span class="p">(</span><span class="n">inp</span><span class="p">):</span>
+<span class="linenos">2</span>    <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inp</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="linenos">3</span>    <span class="n">mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="linenos">4</span>    <span class="n">temp</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">*</span> <span class="n">mean</span>
+<span class="linenos">5</span>    <span class="k">return</span> <span class="n">temp</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="sr_python_walkthrough.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Python</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="sr_fortran_walkthrough.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Fortran</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

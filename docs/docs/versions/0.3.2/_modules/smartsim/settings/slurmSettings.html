@@ -1,0 +1,496 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>smartsim.settings.slurmSettings &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.settings.slurmSettings</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.settings.slurmSettings</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">.settings</span> <span class="kn">import</span> <span class="n">BatchSettings</span><span class="p">,</span> <span class="n">RunSettings</span>
+
+
+<div class="viewcode-block" id="SrunSettings"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings">[docs]</a><span class="k">class</span> <span class="nc">SrunSettings</span><span class="p">(</span><span class="n">RunSettings</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_vars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alloc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize run parameters for a slurm job with ``srun``</span>
+
+<span class="sd">        ``SrunSettings`` should only be used on Slurm based systems.</span>
+
+<span class="sd">        If an allocation is specified, the instance receiving these run</span>
+<span class="sd">        parameters will launch on that allocation.</span>
+
+<span class="sd">        :param exe: executable to run</span>
+<span class="sd">        :type exe: str</span>
+<span class="sd">        :param exe_args: executable arguments, defaults to Noe</span>
+<span class="sd">        :type exe_args: list[str] | str, optional</span>
+<span class="sd">        :param run_args: srun arguments without dashes, defaults to None</span>
+<span class="sd">        :type run_args: dict[str, str | None], optional</span>
+<span class="sd">        :param env_vars: environment variables for job, defaults to None</span>
+<span class="sd">        :type env_vars: dict[str, str], optional</span>
+<span class="sd">        :param alloc: allocation ID if running on existing alloc, defaults to None</span>
+<span class="sd">        :type alloc: str, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="n">run_command</span><span class="o">=</span><span class="s2">&quot;srun&quot;</span><span class="p">,</span> <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="p">,</span> <span class="n">env_vars</span><span class="o">=</span><span class="n">env_vars</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alloc</span> <span class="o">=</span> <span class="n">alloc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mpmd</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="SrunSettings.set_nodes"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings.set_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">set_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the number of nodes</span>
+
+<span class="sd">        Effectively this is setting: ``srun --nodes &lt;num_nodes&gt;``</span>
+
+<span class="sd">        :param num_nodes: number of nodes to run with</span>
+<span class="sd">        :type num_nodes: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_args</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SrunSettings.set_hostlist"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings.set_hostlist">[docs]</a>    <span class="k">def</span> <span class="nf">set_hostlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Specify the hostlist for this job</span>
+
+<span class="sd">        :param host_list: hosts to launch on</span>
+<span class="sd">        :type host_list: str | list[str]</span>
+<span class="sd">        :raises TypeError: if not str or list of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">host_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">host_list</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be a list of strings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">host_list</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be list of strings&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_args</span><span class="p">[</span><span class="s2">&quot;nodelist&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">host_list</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SrunSettings.set_cpus_per_task"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings.set_cpus_per_task">[docs]</a>    <span class="k">def</span> <span class="nf">set_cpus_per_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_cpus</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the number of cpus to use per task</span>
+
+<span class="sd">        This sets ``--cpus-per-task``</span>
+
+<span class="sd">        :param num_cpus: number of cpus to use per task</span>
+<span class="sd">        :type num_cpus: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_args</span><span class="p">[</span><span class="s2">&quot;cpus-per-task&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_cpus</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SrunSettings.set_tasks"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings.set_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">set_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_tasks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the number of tasks for this job</span>
+
+<span class="sd">        This sets ``--ntasks``</span>
+
+<span class="sd">        :param num_tasks: number of tasks</span>
+<span class="sd">        :type num_tasks: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_args</span><span class="p">[</span><span class="s2">&quot;ntasks&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_tasks</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SrunSettings.set_tasks_per_node"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings.set_tasks_per_node">[docs]</a>    <span class="k">def</span> <span class="nf">set_tasks_per_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_tpn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the number of tasks for this job</span>
+
+<span class="sd">        This sets ``--ntasks-per-node``</span>
+
+<span class="sd">        :param num_tpn: number of tasks per node</span>
+<span class="sd">        :type num_tpn: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_args</span><span class="p">[</span><span class="s2">&quot;ntasks-per-node&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_tpn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SrunSettings.format_run_args"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings.format_run_args">[docs]</a>    <span class="k">def</span> <span class="nf">format_run_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return a list of slurm formatted run arguments</span>
+
+<span class="sd">        :return: list of slurm arguments for these settings</span>
+<span class="sd">        :rtype: list[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># add additional slurm arguments based on key length</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">opt</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">short_arg</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">opt</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span> <span class="k">if</span> <span class="n">short_arg</span> <span class="k">else</span> <span class="s2">&quot;--&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+                <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">short_arg</span><span class="p">:</span>
+                    <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;=&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)))]</span>
+        <span class="k">return</span> <span class="n">opts</span></div>
+
+<div class="viewcode-block" id="SrunSettings.format_env_vars"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SrunSettings.format_env_vars">[docs]</a>    <span class="k">def</span> <span class="nf">format_env_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build environment variable string for Slurm</span>
+
+<span class="sd">        Slurm takes exports in comma separated lists</span>
+<span class="sd">        the list starts with all as to not disturb the rest of the environment</span>
+<span class="sd">        for more information on this, see the slurm documentation for srun</span>
+
+<span class="sd">        :returns: the formatted string of environment variables</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO make these overridable by user</span>
+        <span class="n">presets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;PYTHONPATH&quot;</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">add_env_var</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">format_str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+                <span class="n">format_str</span> <span class="o">+=</span> <span class="s2">&quot;=&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">var</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span>
+                <span class="k">return</span> <span class="n">format_str</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">format_str</span>
+
+        <span class="n">format_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="c1"># add env var presets due to slurm weirdness</span>
+        <span class="k">for</span> <span class="n">preset</span> <span class="ow">in</span> <span class="n">presets</span><span class="p">:</span>
+            <span class="n">format_str</span> <span class="o">=</span> <span class="n">add_env_var</span><span class="p">(</span><span class="n">preset</span><span class="p">,</span> <span class="n">format_str</span><span class="p">)</span>
+
+        <span class="c1"># add user supplied variables</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_vars</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">format_str</span> <span class="o">+=</span> <span class="s2">&quot;=&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span>
+        <span class="k">return</span> <span class="n">format_str</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SbatchSettings"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SbatchSettings">[docs]</a><span class="k">class</span> <span class="nc">SbatchSettings</span><span class="p">(</span><span class="n">BatchSettings</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">account</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Specify run parameters for a Slurm batch job</span>
+
+<span class="sd">        Slurm `sbatch` arguments can be written into ``batch_args``</span>
+<span class="sd">        as a dictionary. e.g. {&#39;ntasks&#39;: 1}</span>
+
+<span class="sd">        If the argument doesn&#39;t have a parameter, put `None`</span>
+<span class="sd">        as the value. e.g. {&#39;exclusive&#39;: None}</span>
+
+<span class="sd">        Initialization values provided (nodes, time, account)</span>
+<span class="sd">        will overwrite the same arguments in ``batch_args`` if present</span>
+
+<span class="sd">        :param nodes: number of nodes, defaults to None</span>
+<span class="sd">        :type nodes: int, optional</span>
+<span class="sd">        :param time: walltime for job, e.g. &quot;10:00:00&quot; for 10 hours</span>
+<span class="sd">        :type time: str, optional</span>
+<span class="sd">        :param account: account for job, defaults to None</span>
+<span class="sd">        :type account: str, optional</span>
+<span class="sd">        :param batch_args: extra batch arguments, defaults to None</span>
+<span class="sd">        :type batch_args: dict[str, str], optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;sbatch&quot;</span><span class="p">,</span> <span class="n">batch_args</span><span class="o">=</span><span class="n">batch_args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_nodes</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">time</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_walltime</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">account</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_account</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SbatchSettings.set_walltime"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SbatchSettings.set_walltime">[docs]</a>    <span class="k">def</span> <span class="nf">set_walltime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walltime</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the walltime of the job</span>
+
+<span class="sd">        format = &quot;HH:MM:SS&quot;</span>
+
+<span class="sd">        :param walltime: wall time</span>
+<span class="sd">        :type walltime: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO check for errors here</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_args</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">walltime</span></div>
+
+<div class="viewcode-block" id="SbatchSettings.set_nodes"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SbatchSettings.set_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">set_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the number of nodes for this batch job</span>
+
+<span class="sd">        :param num_nodes: number of nodes</span>
+<span class="sd">        :type num_nodes: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_args</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SbatchSettings.set_account"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SbatchSettings.set_account">[docs]</a>    <span class="k">def</span> <span class="nf">set_account</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the account for this batch job</span>
+
+<span class="sd">        :param acct: account id</span>
+<span class="sd">        :type acct: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_args</span><span class="p">[</span><span class="s2">&quot;account&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acct</span></div>
+
+<div class="viewcode-block" id="SbatchSettings.set_partition"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SbatchSettings.set_partition">[docs]</a>    <span class="k">def</span> <span class="nf">set_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the partition for the batch job</span>
+
+<span class="sd">        :param partition: partition name</span>
+<span class="sd">        :type partition: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_args</span><span class="p">[</span><span class="s2">&quot;partition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">partition</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SbatchSettings.set_hostlist"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SbatchSettings.set_hostlist">[docs]</a>    <span class="k">def</span> <span class="nf">set_hostlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Specify the hostlist for this job</span>
+
+<span class="sd">        :param host_list: hosts to launch on</span>
+<span class="sd">        :type host_list: str | list[str]</span>
+<span class="sd">        :raises TypeError: if not str or list of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">host_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">host_list</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be a list of strings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">host_list</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be list of strings&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_args</span><span class="p">[</span><span class="s2">&quot;nodelist&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">host_list</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SbatchSettings.format_batch_args"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.settings.SbatchSettings.format_batch_args">[docs]</a>    <span class="k">def</span> <span class="nf">format_batch_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the formatted batch arguments for a preview</span>
+
+<span class="sd">        :return: batch arguments for Sbatch</span>
+<span class="sd">        :rtype: list[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># TODO add restricted here</span>
+        <span class="k">for</span> <span class="n">opt</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># attach &quot;-&quot; prefix if argument is 1 character otherwise &quot;--&quot;</span>
+            <span class="n">short_arg</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">opt</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span> <span class="k">if</span> <span class="n">short_arg</span> <span class="k">else</span> <span class="s2">&quot;--&quot;</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+                <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">short_arg</span><span class="p">:</span>
+                    <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;=&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">opt</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)))]</span>
+        <span class="k">return</span> <span class="n">opts</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
