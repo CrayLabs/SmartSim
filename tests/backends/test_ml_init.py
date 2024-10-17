@@ -28,6 +28,12 @@ import tempfile
 
 import pytest
 
+try:
+    import tensorflow
+    import torch
+except:
+    pytest.mark.skip("tensorflow or torch were not availalble")
+
 pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
 
