@@ -40,6 +40,18 @@
                     "source_file": "../package/libtorch/share/cmake/Caffe2/Caffe2Targets.cmake",
                     "regex": "/opt/rocm",
                     "replacement": "$ENV{ROCM_PATH}"
+                },
+                {
+                    "description": "Fix the type in a Tensorflow function signature",
+                    "source_file": "src/backends/tensorflow.c",
+                    "regex": "TF_Input inputs",
+                    "replacement": "TF_Output inputs"
+                },
+                {
+                    "description": "Fix the type in a Tensorflow function signature",
+                    "source_file": "src/backends/tensorflow.c",
+                    "regex": "TF_Input port",
+                    "replacement": "TF_Output port"
                 }
             ]
         }
