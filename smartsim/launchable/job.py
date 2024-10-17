@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import textwrap
 import typing as t
 from copy import deepcopy
 
@@ -191,3 +192,12 @@ class Record:
         :returns: A deep copy of the launched job.
         """
         return deepcopy(self._job)
+
+    def __str__(self) -> str:
+        return textwrap.dedent(f"""\
+            Launch Record:
+                Launched Job ID:
+                    {self.launched_id}
+                Laucnehd Job:
+            {textwrap.indent(str(self._job), "        ")}
+            """)
