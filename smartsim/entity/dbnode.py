@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import fileinput
 import itertools
 import json
@@ -37,8 +39,10 @@ from .._core.config import CONFIG
 from .._core.utils.helpers import expand_exe_path
 from ..error import SSDBFilesNotParseable
 from ..log import get_logger
-from ..settings import RunSettings
 from .entity import SmartSimEntity
+
+if t.TYPE_CHECKING:
+    from smartsim.settings import RunSettings
 
 logger = get_logger(__name__)
 

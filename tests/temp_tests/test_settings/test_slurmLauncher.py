@@ -27,7 +27,7 @@ import subprocess
 
 import pytest
 
-from smartsim._core.shell.shell_launcher import ShellLauncherCommand
+from smartsim._core.launcher_.slurm.slurm_launcher import SrunCommand
 from smartsim.settings import LaunchSettings
 from smartsim.settings.arguments.launch.slurm import (
     SlurmLaunchArguments,
@@ -291,108 +291,94 @@ def test_set_het_groups(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "args, expected",
+    "args, expected_srun_cmd_line_args",
     (
         pytest.param(
             {},
-            (
-                "srun",
-                "--output=output.txt",
-                "--error=error.txt",
-                "--",
-                "echo",
-                "hello",
-                "world",
-            ),
+            (),
             id="Empty Args",
         ),
         pytest.param(
             {"N": "1"},
             (
-                "srun",
                 "-N",
                 "1",
-                "--output=output.txt",
-                "--error=error.txt",
-                "--",
-                "echo",
-                "hello",
-                "world",
             ),
             id="Short Arg",
         ),
         pytest.param(
             {"nodes": "1"},
-            (
-                "srun",
-                "--nodes=1",
-                "--output=output.txt",
-                "--error=error.txt",
-                "--",
-                "echo",
-                "hello",
-                "world",
-            ),
+            ("--nodes=1",),
             id="Long Arg",
         ),
         pytest.param(
             {"v": None},
-            (
-                "srun",
-                "-v",
-                "--output=output.txt",
-                "--error=error.txt",
-                "--",
-                "echo",
-                "hello",
-                "world",
-            ),
+            ("-v",),
             id="Short Arg (No Value)",
         ),
         pytest.param(
             {"verbose": None},
-            (
-                "srun",
-                "--verbose",
-                "--output=output.txt",
-                "--error=error.txt",
-                "--",
-                "echo",
-                "hello",
-                "world",
-            ),
+            ("--verbose",),
             id="Long Arg (No Value)",
         ),
         pytest.param(
             {"nodes": "1", "n": "123"},
             (
-                "srun",
                 "--nodes=1",
                 "-n",
                 "123",
-                "--output=output.txt",
-                "--error=error.txt",
-                "--",
-                "echo",
-                "hello",
-                "world",
             ),
             id="Short and Long Args",
         ),
     ),
 )
-def test_formatting_launch_args(args, expected, test_dir):
-    shell_launch_cmd = _as_srun_command(
+@pytest.mark.parametrize(
+    "env, env_csv, extra_env",
+    (
+        pytest.param({}, None, {}, id="Empty Env"),
+        pytest.param(
+            {"SPAM": "eggs"}, "SPAM=eggs", {}, id="Env with no commas in var vals"
+        ),
+        pytest.param(
+            {"SPAM": "eggs,ham"},
+            "SPAM",
+            {"SPAM": "eggs,ham"},
+            id="Env with commas in var vals",
+        ),
+    ),
+)
+def test_formatting_launch_args(
+    test_dir, monkeypatch, args, expected_srun_cmd_line_args, env, env_csv, extra_env
+):
+    monkeypatch.setenv("SLURM_JOB_ID", "MOCK-JOB-ID")
+    monkeypatch.setattr(
+        "smartsim._core.utils.helpers.expand_exe_path",
+        lambda exe: f"/full/path/to/{exe}",
+    )
+    monkeypatch.setattr(
+        "smartsim._core.utils.helpers.create_short_id_str", lambda: "12345"
+    )
+    srun_cmd = _as_srun_command(
         args=SlurmLaunchArguments(args),
         exe=("echo", "hello", "world"),
         path=test_dir,
-        env={},
+        env=env,
         stdout_path="output.txt",
         stderr_path="error.txt",
     )
-    assert isinstance(shell_launch_cmd, ShellLauncherCommand)
-    assert shell_launch_cmd.command_tuple == expected
-    assert shell_launch_cmd.path == test_dir
-    assert shell_launch_cmd.env == {}
-    assert shell_launch_cmd.stdout == subprocess.DEVNULL
-    assert shell_launch_cmd.stderr == subprocess.DEVNULL
+    assert isinstance(srun_cmd, SrunCommand)
+    assert srun_cmd.as_command_line_args() == (
+        "/full/path/to/srun",
+        *expected_srun_cmd_line_args,
+        f"--chdir={test_dir}",
+        "--output=output.txt",
+        "--error=error.txt",
+        "--export=ALL" + (f",{env_csv}" if env_csv else ""),
+        "--job-name=echo-12345",
+        f"--jobid=MOCK-JOB-ID",
+        "--",
+        "echo",
+        "hello",
+        "world",
+    )
+    assert srun_cmd.env == extra_env

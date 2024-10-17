@@ -24,18 +24,24 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+from __future__ import annotations
+
 import os
 import shutil
 import typing as t
 from shlex import split as sh_split
 
-from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
-from ....settings import AprunSettings, RunSettings, Singularity
+from ....settings import Singularity
 from .step import Step, proxyable_launch_cmd
 
 logger = get_logger(__name__)
+
+if t.TYPE_CHECKING:
+    from smartsim.entity import Application, FSNode
+    from smartsim.settings import AprunSettings, RunSettings
 
 
 class AprunStep(Step):

@@ -32,7 +32,10 @@ import typing as t
 
 from smartsim._core.arguments.shell import ShellLaunchArguments
 from smartsim._core.dispatch import EnvironMappingType, dispatch
-from smartsim._core.shell.shell_launcher import ShellLauncher, ShellLauncherCommand
+from smartsim._core.launcher_.shell.shell_launcher import (
+    ShellLauncher,
+    ShellLauncherCommand,
+)
 from smartsim.log import get_logger
 
 from ...common import set_check_input
