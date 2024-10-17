@@ -32,9 +32,9 @@ try:
     import tensorflow
     import torch
 except:
-    pytest.mark.skip("tensorflow or torch were not availalble")
-
-pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
+    pytestmark = pytest.mark.skip("tensorflow or torch were not availalble")
+else:
+    pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
 
 def test_import_ss_ml(monkeypatch):
