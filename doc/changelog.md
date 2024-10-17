@@ -9,13 +9,12 @@ Jump to:
 
 ## SmartSim
 
-### develop
-
 To be released at some point in the future
 
 Description
 
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
+- Add instructions for installing SmartSim on PML's Scylla
 
 Detailed Notes
 
@@ -26,6 +25,12 @@ Detailed Notes
   Future versions of Tensorflow may fix this problem, but for now this seems to be
   the best workaround.
   ([SmartSim-PR738](https://github.com/CrayLabs/SmartSim/pull/738))
+- PML's Scylla is still under development. The usual SmartSim
+  build instructions do not apply because the GPU dependencies
+  have yet to be installed at a system-wide level. Scylla has
+  its own entry in the documentation.
+  ([SmartSim-PR733](https://github.com/CrayLabs/SmartSim/pull/733))
+
 
 ### 0.8.0
 
