@@ -37,8 +37,6 @@ from typing import Iterable
 
 from packaging.version import InvalidVersion, Version, parse
 
-DbEngine = t.Literal["REDIS", "KEYDB"]
-
 
 class SetupError(Exception):
     """A simple exception class for errors in _install.buildenv file.
@@ -132,6 +130,9 @@ def get_env(var: str, default: str) -> str:
     return os.environ.get(var, default)
 
 
+# TODO Add A Version class for the new backend
+
+
 class Versioner:
     """Versioner is responsible for managing all the versions
     within SmartSim including SmartSim itself.
@@ -160,25 +161,25 @@ class Versioner:
     SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.8.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
-    # Redis
-    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
-    REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git")
-    REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
+    # # Redis
+    # REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
+    # REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git")
+    # REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
-    # RedisAI
-    REDISAI = "1.2.7"
-    REDISAI_URL = get_env(
-        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git"
-    )
-    REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
+    # # RedisAI
+    # REDISAI = "1.2.7"
+    # REDISAI_URL = get_env(
+    #     "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git"
+    # )
+    # REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
 
-    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
-        pkg_map = {
-            "SMARTSIM": self.SMARTSIM,
-            db_name: self.REDIS,
-            "REDISAI": self.REDISAI,
-        }
-        return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
+    # def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
+    #     pkg_map = {
+    #         "SMARTSIM": self.SMARTSIM,
+    #         db_name: self.REDIS,
+    #         "REDISAI": self.REDISAI,
+    #     }
+    #     return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:
@@ -221,12 +222,7 @@ class BuildEnv:
     """Environment for building third-party dependencies
 
     BuildEnv provides a method for configuring how the third-party
-    dependencies within SmartSim are built, namely Redis/KeyDB
-    and RedisAI.
-
-    The environment variables listed here can be set to control the
-    Redis build in the pip wheel build as well as the Redis and RedisAI
-    build executed by the CLI.
+    dependencies within SmartSim are built.
 
     Build tools are also checked for here and if they are not found
     then a SetupError is raised.

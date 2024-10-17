@@ -31,28 +31,28 @@ from smartsim._core.types import Device
 
 from ..error import SSUnsupportedError
 
-__all__ = ["DBObject", "DBModel", "DBScript"]
+__all__ = ["FSObject", "FSModel", "FSScript"]
 
 
-_DBObjectFuncT = t.TypeVar("_DBObjectFuncT", str, bytes)
+_FSObjectFuncT = t.TypeVar("_FSObjectFuncT", str, bytes)
 
 
-class DBObject(t.Generic[_DBObjectFuncT]):
-    """Base class for ML objects residing on DB. Should not
+class FSObject(t.Generic[_FSObjectFuncT]):
+    """Base class for ML objects residing on FS. Should not
     be instantiated.
     """
 
     def __init__(
         self,
         name: str,
-        func: t.Optional[_DBObjectFuncT],
+        func: t.Optional[_FSObjectFuncT],
         file_path: t.Optional[str],
         device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
         self.name = name
-        self.func: t.Optional[_DBObjectFuncT] = func
+        self.func: t.Optional[_FSObjectFuncT] = func
         self.file: t.Optional[Path] = (
             None  # Need to have this explicitly to check on it
         )
@@ -108,9 +108,9 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         return device
 
     def _enumerate_devices(self) -> t.List[str]:
-        """Enumerate devices for a DBObject
+        """Enumerate devices for a FSObject
 
-        :param dbobject: DBObject to enumerate
+        :param FSObject: FSObject to enumerate
         :return: list of device names
         """
 
@@ -150,7 +150,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
             raise ValueError(msg)
 
 
-class DBScript(DBObject[str]):
+class FSScript(FSObject[str]):
     def __init__(
         self,
         name: str,
@@ -205,7 +205,7 @@ class DBScript(DBObject[str]):
         return desc_str
 
 
-class DBModel(DBObject[bytes]):
+class FSModel(FSObject[bytes]):
     def __init__(
         self,
         name: str,
@@ -222,7 +222,7 @@ class DBModel(DBObject[bytes]):
         inputs: t.Optional[t.List[str]] = None,
         outputs: t.Optional[t.List[str]] = None,
     ) -> None:
-        """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
+        """A TF, TF-lite, PT, or ONNX model to load into the FS at runtime
 
         One of either model (in memory representation) or model_path (file)
         must be provided

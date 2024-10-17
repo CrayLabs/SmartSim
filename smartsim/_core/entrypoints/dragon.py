@@ -40,8 +40,8 @@ import zmq
 import zmq.auth.thread
 
 from smartsim._core.config import get_config
-from smartsim._core.launcher.dragon import dragonSockets
-from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
+from smartsim._core.launcher.dragon import dragon_sockets
+from smartsim._core.launcher.dragon.dragon_backend import DragonBackend
 from smartsim._core.schemas import (
     DragonBootstrapRequest,
     DragonBootstrapResponse,
@@ -164,12 +164,12 @@ def run(
     dragon_pid: int,
 ) -> None:
     logger.debug(f"Opening socket {dragon_head_address}")
-    dragon_head_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REP, True)
+    dragon_head_socket = dragon_sockets.get_secure_socket(zmq_context, zmq.REP, True)
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
     backend_updater = start_updater(dragon_backend, None)
-    server = dragonSockets.as_server(dragon_head_socket)
+    server = dragon_sockets.as_server(dragon_head_socket)
 
     logger.debug(f"Listening to {dragon_head_address}")
 
@@ -236,14 +236,14 @@ def execute_entrypoint(args: DragonEntrypointArgs) -> int:
         else:
             dragon_head_address += ":5555"
 
-        zmq_authenticator = dragonSockets.get_authenticator(zmq_context, timeout=-1)
+        zmq_authenticator = dragon_sockets.get_authenticator(zmq_context, timeout=-1)
 
         logger.debug("Getting launcher socket")
-        launcher_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REQ, False)
+        launcher_socket = dragon_sockets.get_secure_socket(zmq_context, zmq.REQ, False)
 
         logger.debug(f"Connecting launcher socket to: {args.launching_address}")
         launcher_socket.connect(args.launching_address)
-        client = dragonSockets.as_client(launcher_socket)
+        client = dragon_sockets.as_client(launcher_socket)
 
         logger.debug(
             f"Sending bootstrap request to launcher_socket with {dragon_head_address}"
@@ -297,7 +297,7 @@ def cleanup() -> None:
 def register_signal_handlers() -> None:
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop
-    # the database process.
+    # the feature store process.
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 
