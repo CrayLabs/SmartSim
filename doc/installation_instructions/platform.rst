@@ -1,3 +1,5 @@
+.. _platform-installation:
+
 Platform Install Guide
 ======================
 
@@ -9,18 +11,10 @@ instructions, please feel free to contribute instructions for your own
 machine.
 
 .. include:: platform/frontier.rst
-
 .. include:: platform/perlmutter.rst
-
-.. include:: platform/cray.rst
-
 .. include:: platform/pml-scylla.rst
-
+.. include:: platform/cray.rst
 .. include:: platform/olcf-summit.rst
 
 .. _site_installation:
-
 .. include:: site-install.rst
-
-
-

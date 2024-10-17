@@ -1,0 +1,13 @@
+#%Module -*- tcl -*- ##
+## modulefile
+proc ModulesHelp { } {
+
+puts stderr "\tAdds CUDNN to your environment,"
+
+}
+
+module-whatis "CUDNN development libraries"
+
+set          CUDNN_ROOT         /path/to/cudnn
+set          cudnn_lib          $CUDNN_ROOT/lib
+setenv       CUDNN_INSTALL_PATH $CUDNN_ROOT

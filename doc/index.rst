@@ -12,8 +12,8 @@
 
    overview
    installation_instructions/basic
-   installation_instructions/install_notes
    installation_instructions/platform
+   installation_instructions/troubleshooting/troubleshooting
    contributing
    smartsim_zoo
 

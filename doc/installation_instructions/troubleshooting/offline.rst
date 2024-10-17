@@ -1,5 +1,5 @@
-Non-internet machines
----------------------
+Airgapped Systems
+-----------------
 
 SmartSim implictly assumes that dependencies can be retrieved via the Internet.
 The ``smart build`` step can be bypassed by transferring the build artifacts
@@ -28,8 +28,29 @@ target machine (referred to as Machine B) to ensure compatibility.
 
 .. code::
 
-    tar -cf smartsim_build_artifacts.tar -C <core_path> bin/ lib/
+    tar -cf smartsim_build_artifacts.tar -C <core-path> bin/ lib/
 
-**Step 3:** Copy the tarball to Machine B (method will vary by machine)
+**Step 3:** Copy the tarball, SmartSim wheel, SmartRedis wheel,
+SmartRedis libraries to Machine B (method will vary by machine)
 
-**Step 4:** pip install SmartSim on Machine B
+**Step 4:** Install SmartSim and SmartRedis on Machine B
+
+.. code::
+
+    pip install <smartsim-wheel> <smartredis-wheel>
+
+**Step 5:** Find the path to the core directory again with
+
+.. code::
+
+    smart info
+
+**Step 6:** Unpack the tarball to the core directory
+
+.. code::
+
+     tar -xf smartsim_build_artifacts.tar -C <core-path>
+
+**Step 7:** Install the python packages associated with the ML frameworks
+(for the default versions reference
+``smartsim/_core/_install/configs/mlpackages``)

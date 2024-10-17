@@ -1,5 +1,5 @@
-OLCF Frontier
-=============
+Frontier (OLCF)
+---------------
 
 Known limitations
 ^^^^^^^^^^^^^^^^^
@@ -63,7 +63,7 @@ these instructions, being sure to set the following variables
 
 .. code:: bash
 
-   smart build ^^device=rocm-6
+   smart build --device=rocm-6
 
 **Step 5:** Check that SmartSim has been installed and built correctly:
 
@@ -76,7 +76,7 @@ these instructions, being sure to set the following variables
    mkdir -p $MIOPEN_USER_DB_PATH
 
    # Run the install validation utility
-   smart validate ^^device gpu
+   smart validate --device gpu
 
 The following output indicates a successful install:
 
