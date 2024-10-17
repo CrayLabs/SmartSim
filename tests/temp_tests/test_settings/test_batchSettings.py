@@ -78,3 +78,84 @@ def test_env_vars_property():
     assert bs.env_vars == {"ENV": "VAR"}
     ref = bs.env_vars
     assert ref is bs.env_vars
+
+
+def test_type_batch_scheduler():
+    batch_scheduler = "invalid"
+    with pytest.raises(ValueError, match="Invalid scheduler type: invalid"):
+        BatchSettings(
+            batch_scheduler=batch_scheduler,
+            batch_args={"launch": "var"},
+            env_vars={"ENV": "VAR"},
+        )
+
+
+@pytest.mark.parametrize(
+    "batch_args",
+    [
+        pytest.param("invalid", id="invalid"),
+        pytest.param("", id="empty string"),
+        pytest.param(0, id="0"),
+        pytest.param([], id="empty list"),
+    ],
+)
+def test_type_batch_args(batch_args):
+    with pytest.raises(
+        TypeError, match="batch_args argument was not of type mapping of str and str"
+    ):
+        BatchSettings(
+            batch_scheduler="slurm",
+            batch_args=batch_args,
+            env_vars={"ENV": "VAR"},
+        )
+
+
+def test_type_env_vars():
+    env_vars = "invalid"
+    with pytest.raises(
+        TypeError, match="env_vars argument was not of type dic of str and str"
+    ):
+        BatchSettings(batch_scheduler="slurm", env_vars=env_vars)
+
+
+@pytest.mark.parametrize(
+    "scheduler",
+    [
+        pytest.param("slurm", id="slurm scheduler"),
+        pytest.param("lsf", id="bsub scheduler"),
+        pytest.param("pbs", id="qsub scheduler"),
+    ],
+)
+def test_batch_arguments_type_set_nodes(scheduler):
+    bs = BatchSettings(batch_scheduler=scheduler, env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="num_nodes argument was not of type int"):
+        bs.batch_args.set_nodes("invalid")
+
+
+@pytest.mark.parametrize(
+    "scheduler",
+    [
+        pytest.param("slurm", id="slurm scheduler"),
+        pytest.param("lsf", id="bsub scheduler"),
+        pytest.param("pbs", id="qsub scheduler"),
+    ],
+)
+def test_batch_arguments_type_set_account(scheduler):
+    bs = BatchSettings(batch_scheduler=scheduler, env_vars={"ENV": "VAR"})
+
+    with pytest.raises(TypeError, match="account argument was not of type str"):
+        bs.batch_args.set_account(27)
+
+
+@pytest.mark.parametrize(
+    "scheduler",
+    [
+        pytest.param("slurm", id="slurm scheduler"),
+        pytest.param("lsf", id="bsub scheduler"),
+        pytest.param("pbs", id="qsub scheduler"),
+    ],
+)
+def test_batch_arguments_type_set_queue(scheduler):
+    bs = BatchSettings(batch_scheduler=scheduler, env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="queue argument was not of type str"):
+        bs.batch_args.set_queue(27)

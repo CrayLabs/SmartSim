@@ -75,3 +75,33 @@ def test_create_bsub():
     lsfScheduler.batch_args.set_queue("default")
     args = lsfScheduler.format_batch_args()
     assert args == ["-core_isolation", "-nnodes", "1", "-W", "10:10", "-q", "default"]
+
+
+def test_batch_arguments_type_set_hostlist(scheduler):
+    bs = BatchSettings(batch_scheduler="lsf", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="host_list argument must be a list of strings"):
+        bs.batch_args.set_hostlist([25, 37])
+
+
+def test_batch_arguments_type_set_smts():
+    bs = BatchSettings(batch_scheduler="lsf", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="smts argument was not of type int"):
+        bs.batch_args.set_smts("invalid")
+
+
+def test_batch_arguments_type_set_project():
+    bs = BatchSettings(batch_scheduler="lsf", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="project argument was not of type str"):
+        bs.batch_args.set_project(27)
+
+
+def test_batch_arguments_type_set_tasks():
+    bs = BatchSettings(batch_scheduler="lsf", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="tasks argument was not of type int"):
+        bs.batch_args.set_tasks("invalid")
+
+
+def test_batch_arguments_type_set_walltime():
+    bs = BatchSettings(batch_scheduler="lsf", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="walltime argument was not of type str"):
+        bs.batch_args.set_walltime(27)

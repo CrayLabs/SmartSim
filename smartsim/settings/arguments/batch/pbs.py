@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import re
 import typing as t
 from copy import deepcopy
 
@@ -61,7 +62,10 @@ class QsubBatchArguments(BatchArguments):
         nodes here is sets the 'nodes' resource.
 
         :param num_nodes: number of nodes
+        :raises TypeError: if not an int
         """
+        if not isinstance(num_nodes, int):
+            raise TypeError("num_nodes argument was not of type int")
 
         self.set("nodes", str(num_nodes))
 
@@ -73,9 +77,10 @@ class QsubBatchArguments(BatchArguments):
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
-        if not isinstance(host_list, list):
-            raise TypeError("host_list argument must be a list of strings")
-        if not all(isinstance(host, str) for host in host_list):
+        if not (
+            isinstance(host_list, list)
+            and all(isinstance(item, str) for item in host_list)
+        ):
             raise TypeError("host_list argument must be a list of strings")
         self.set("hostname", ",".join(host_list))
 
@@ -89,15 +94,26 @@ class QsubBatchArguments(BatchArguments):
         this value will be overridden
 
         :param walltime: wall time
+        :raises ValueError: if walltime format is invalid
+        :raises TypeError: if not type str
         """
-        self.set("walltime", walltime)
+        if not isinstance(walltime, str):
+            raise TypeError("walltime argument was not of type str")
+        pattern = r"^\d{2}:\d{2}:\d{2}$"
+        if walltime and re.match(pattern, walltime):
+            self.set("walltime", walltime)
+        else:
+            raise ValueError("Invalid walltime format. Please use 'HH:MM:SS' format.")
 
     def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job
 
         :param queue: queue name
+        :raises TypeError: if not a str
         """
-        self.set("q", str(queue))
+        if not isinstance(queue, str):
+            raise TypeError("queue argument was not of type str")
+        self.set("q", queue)
 
     def set_ncpus(self, num_cpus: int) -> None:
         """Set the number of cpus obtained in each node.
@@ -107,15 +123,21 @@ class QsubBatchArguments(BatchArguments):
         this value will be overridden
 
         :param num_cpus: number of cpus per node in select
+        :raises TypeError: if not an int
         """
+        if not isinstance(num_cpus, int):
+            raise TypeError("num_cpus argument was not of type int")
         self.set("ppn", str(num_cpus))
 
     def set_account(self, account: str) -> None:
         """Set the account for this batch job
 
         :param acct: account id
+        :raises TypeError: if not a str
         """
-        self.set("A", str(account))
+        if not isinstance(account, str):
+            raise TypeError("account argument was not of type str")
+        self.set("A", account)
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview

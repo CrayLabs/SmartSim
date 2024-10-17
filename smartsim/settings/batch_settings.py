@@ -117,6 +117,15 @@ class BatchSettings(BaseSettings):
             """The scheduler type"""
         except ValueError:
             raise ValueError(f"Invalid scheduler type: {batch_scheduler}") from None
+
+        if batch_args is not None:
+            if not (
+                isinstance(batch_args, dict)
+                and all(isinstance(key, str) for key, val in batch_args.items())
+            ):
+                raise TypeError(
+                    "batch_args argument was not of type mapping of str and str"
+                )
         self._arguments = self._get_arguments(batch_args)
         """The BatchSettings child class based on scheduler type"""
         self.env_vars = env_vars or {}
@@ -140,6 +149,13 @@ class BatchSettings(BaseSettings):
     @env_vars.setter
     def env_vars(self, value: t.Dict[str, str | None]) -> None:
         """Set the environment variables."""
+
+        if not (
+            isinstance(value, t.Mapping)
+            and all(isinstance(key, str) for key, val in value.items())
+        ):
+            raise TypeError("env_vars argument was not of type dic of str and str")
+
         self._env_vars = copy.deepcopy(value)
 
     def _get_arguments(self, batch_args: StringArgument | None) -> BatchArguments:

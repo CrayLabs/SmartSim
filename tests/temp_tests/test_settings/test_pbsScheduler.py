@@ -86,3 +86,21 @@ def test_format_pbs_batch_args():
         "-A",
         "myproject",
     ]
+
+
+def test_batch_arguments_type_set_hostlist(scheduler):
+    bs = BatchSettings(batch_scheduler="pbs", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="host_list argument must be a list of strings"):
+        bs.batch_args.set_hostlist([25, 37])
+
+
+def test_batch_arguments_type_set_ncpus():
+    bs = BatchSettings(batch_scheduler="pbs", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="num_cpus argument was not of type int"):
+        bs.batch_args.set_ncpus("invalid")
+
+
+def test_batch_arguments_type_set_walltime():
+    bs = BatchSettings(batch_scheduler="pbs", env_vars={"ENV": "VAR"})
+    with pytest.raises(TypeError, match="walltime argument was not of type str"):
+        bs.batch_args.set_walltime(27)

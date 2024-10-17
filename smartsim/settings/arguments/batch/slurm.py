@@ -56,7 +56,11 @@ class SlurmBatchArguments(BatchArguments):
         format = "HH:MM:SS"
 
         :param walltime: wall time
+        :raises ValueError: if walltime format is invalid
+        :raises TypeError: if not str
         """
+        if not isinstance(walltime, str):
+            raise TypeError("walltime argument was not of type str")
         pattern = r"^\d{2}:\d{2}:\d{2}$"
         if walltime and re.match(pattern, walltime):
             self.set("time", str(walltime))
@@ -69,7 +73,10 @@ class SlurmBatchArguments(BatchArguments):
         This sets ``--nodes``.
 
         :param num_nodes: number of nodes
+        :raises TypeError: if not an int
         """
+        if not isinstance(num_nodes, int):
+            raise TypeError("num_nodes argument was not of type int")
         self.set("nodes", str(num_nodes))
 
     def set_account(self, account: str) -> None:
@@ -78,7 +85,10 @@ class SlurmBatchArguments(BatchArguments):
         This sets ``--account``.
 
         :param account: account id
+        :raises TypeError: if not a str
         """
+        if not isinstance(account, str):
+            raise TypeError("account argument was not of type str")
         self.set("account", account)
 
     def set_partition(self, partition: str) -> None:
@@ -87,8 +97,11 @@ class SlurmBatchArguments(BatchArguments):
         This sets ``--partition``.
 
         :param partition: partition name
+        :raises TypeError: if not a str
         """
-        self.set("partition", str(partition))
+        if not isinstance(partition, str):
+            raise TypeError("partition argument was not of type str")
+        self.set("partition", partition)
 
     def set_queue(self, queue: str) -> None:
         """alias for set_partition
@@ -96,7 +109,10 @@ class SlurmBatchArguments(BatchArguments):
         Sets the partition for the slurm batch job
 
         :param queue: the partition to run the batch job on
+        :raises TypeError: if not a str
         """
+        if not isinstance(queue, str):
+            raise TypeError("queue argument was not of type str")
         return self.set_partition(queue)
 
     def set_cpus_per_task(self, cpus_per_task: int) -> None:
@@ -105,7 +121,10 @@ class SlurmBatchArguments(BatchArguments):
         This sets ``--cpus-per-task``
 
         :param num_cpus: number of cpus to use per task
+        :raises TypeError: if not int
         """
+        if not isinstance(cpus_per_task, int):
+            raise TypeError("cpus_per_task argument was not of type int")
         self.set("cpus-per-task", str(cpus_per_task))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
@@ -118,10 +137,13 @@ class SlurmBatchArguments(BatchArguments):
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
-        if not isinstance(host_list, list):
+
+        if not (
+            isinstance(host_list, list)
+            and all(isinstance(item, str) for item in host_list)
+        ):
             raise TypeError("host_list argument must be a list of strings")
-        if not all(isinstance(host, str) for host in host_list):
-            raise TypeError("host_list argument must be list of strings")
+
         self.set("nodelist", ",".join(host_list))
 
     def format_batch_args(self) -> t.List[str]:
