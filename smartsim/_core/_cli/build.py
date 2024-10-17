@@ -27,8 +27,8 @@
 import argparse
 import importlib.metadata
 import operator
-import platform
 import os
+import platform
 import re
 import shutil
 import textwrap
@@ -44,19 +44,10 @@ from smartsim._core._cli.scripts.dragon_install import (
     display_post_install_logs,
     install_dragon,
 )
-from smartsim._core._cli.scripts.dragon_install import install_dragon
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, pip
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import (
-    BuildEnv,
-    SetupError,
-    Version_,
-    VersionConflictError,
-    Versioner,
-)
-from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
-from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
+from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner
+from smartsim._core._install.builder import BuildError
 from smartsim._core._install.mlpackages import (
     DEFAULT_MLPACKAGE_PATH,
     DEFAULT_MLPACKAGES,
@@ -78,6 +69,7 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
+
 
 def parse_requirement(
     requirement: str,
@@ -176,10 +168,6 @@ def execute(
     dragon_repo = args.dragon_repo
     dragon_version = args.dragon_version
 
-    if Path(CONFIG.build_path).exists():
-        logger.warning(f"Build path already exists, removing: {CONFIG.build_path}")
-        shutil.rmtree(CONFIG.build_path)
-
     # The user should never have to specify the OS and Architecture
     current_platform = Platform(
         OperatingSystem.autodetect(), Architecture.autodetect(), device
@@ -241,14 +229,6 @@ def execute(
             logger.info("Dragon installation not supported on platform")
         else:
             logger.warning("Dragon installation failed")
-
-    try:
-        if not args.only_python_packages:
-            ...
-
-    except (SetupError, BuildError) as e:
-        logger.error(str(e))
-        return os.EX_SOFTWARE
 
     backends = []
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
@@ -344,10 +324,4 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         default=False,
         help="Build KeyDB instead of Redis",
-    )
-    parser.add_argument(
-        "--no_torch_with_mkl",
-        dest="torch_with_mkl",
-        action="store_false",
-        help="Do not build Torch with Intel MKL",
     )

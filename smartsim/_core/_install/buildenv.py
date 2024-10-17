@@ -37,6 +37,8 @@ from typing import Iterable
 
 from packaging.version import InvalidVersion, Version, parse
 
+DbEngine = t.Literal["REDIS", "KEYDB"]
+
 
 class SetupError(Exception):
     """A simple exception class for errors in _install.buildenv file.
@@ -161,25 +163,25 @@ class Versioner:
     SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.8.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
-    # # Redis
-    # REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
-    # REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git")
-    # REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
+    # Redis
+    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
+    REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git")
+    REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
-    # # RedisAI
-    # REDISAI = "1.2.7"
-    # REDISAI_URL = get_env(
-    #     "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git"
-    # )
-    # REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
+    # RedisAI
+    REDISAI = "1.2.7"
+    REDISAI_URL = get_env(
+        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git"
+    )
+    REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
 
-    # def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
-    #     pkg_map = {
-    #         "SMARTSIM": self.SMARTSIM,
-    #         db_name: self.REDIS,
-    #         "REDISAI": self.REDISAI,
-    #     }
-    #     return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
+    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
+        pkg_map = {
+            "SMARTSIM": self.SMARTSIM,
+            db_name: self.REDIS,
+            "REDISAI": self.REDISAI,
+        }
+        return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:

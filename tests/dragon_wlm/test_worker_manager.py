@@ -195,9 +195,8 @@ def mock_messages(
         request_bytes = MessageHandler.serialize_request(request)
         fli: DragonFLIChannel = worker_queue
 
-        with fli._fli.sendh(timeout=None, stream_channel=fli._channel) as sendh:
-            sendh.send_bytes(request_bytes)
-            sendh.send_bytes(batch_bytes)
+        multipart_message = [request_bytes, batch_bytes]
+        fli.send_multiple(multipart_message)
 
         logger.info("published message")
 

@@ -34,7 +34,7 @@ import typing as t
 from types import TracebackType
 
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
-from smartsim._core._install.builder import Device
+from smartsim._core._install.platform import Device
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)

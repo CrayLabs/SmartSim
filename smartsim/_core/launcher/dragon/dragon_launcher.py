@@ -216,11 +216,10 @@ class DragonLauncher(WLMLauncher):
                         env=req_env,
                         output_file=out,
                         error_file=err,
-                        policy=policy,
                         hostlist=hosts,
-                    )
-                ),
-                DragonRunResponse,
+                    ),
+                    policy,
+                )
             )
         else:
             # pylint: disable-next=consider-using-with

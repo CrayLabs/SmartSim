@@ -27,10 +27,7 @@
 from __future__ import annotations
 
 import os
-import pathlib
 import socket
-import subprocess
-import sys
 import typing as t
 
 import pytest
@@ -38,63 +35,16 @@ import pytest
 dragon = pytest.importorskip("dragon")
 
 # isort: off
-import dragon.data.ddict.ddict as dragon_ddict
+
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.process as dragon_process
 
-from dragon.fli import FLInterface
-
 # isort: on
 
-from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
-from smartsim._core.mli.comm.channel.dragon_util import create_local
-from smartsim._core.mli.infrastructure.storage import dragon_util
-from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
-    BackboneFeatureStore,
-)
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
-
-
-@pytest.fixture(scope="module")
-def the_storage() -> dragon_ddict.DDict:
-    """Fixture to instantiate a dragon distributed dictionary."""
-    return dragon_util.create_ddict(1, 2, 32 * 1024**2)
-
-
-@pytest.fixture(scope="module")
-def the_worker_channel() -> DragonFLIChannel:
-    """Fixture to create a valid descriptor for a worker channel
-    that can be attached to."""
-    channel_ = create_local()
-    fli_ = FLInterface(main_ch=channel_, manager_ch=None)
-    comm_channel = DragonFLIChannel(fli_)
-    return comm_channel
-
-
-@pytest.fixture(scope="module")
-def the_backbone(
-    the_storage: t.Any, the_worker_channel: DragonFLIChannel
-) -> BackboneFeatureStore:
-    """Fixture to create a distributed dragon dictionary and wrap it
-    in a BackboneFeatureStore.
-
-    :param the_storage: The dragon storage engine to use
-    :param the_worker_channel: Pre-configured worker channel
-    """
-
-    backbone = BackboneFeatureStore(the_storage, allow_reserved_writes=True)
-    backbone[BackboneFeatureStore.MLI_WORKER_QUEUE] = the_worker_channel.descriptor
-
-    return backbone
-
-
-@pytest.fixture(scope="module")
-def backbone_descriptor(the_backbone: BackboneFeatureStore) -> str:
-    # create a shared backbone featurestore
-    return the_backbone.descriptor
 
 
 def function_as_dragon_proc(

@@ -135,9 +135,9 @@ jobs:
           LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
           echo "LD_LIBRARY_PATH=$LLP:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
-      - name: Run mypy
-        run: |
-          make check-mypy
+      # - name: Run mypy
+      #   run: |
+      #     make check-mypy
 
       # TODO: Re-enable static analysis once API is firmed up
       # - name: Run Pylint

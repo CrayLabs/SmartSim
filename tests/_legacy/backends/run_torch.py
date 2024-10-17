@@ -25,12 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import io
+import typing as t
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import typing as t
 from smartredis import Client
 
 

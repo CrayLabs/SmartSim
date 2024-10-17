@@ -6,9 +6,7 @@ import typing as t
 
 from tabulate import tabulate
 
-import smartsim._core._cli.utils as _utils
 import smartsim._core.utils.helpers as _helpers
-from smartsim._core._cli.scripts.dragon_install import dragon_pin
 from smartsim._core._install.buildenv import BuildEnv as _BuildEnv
 
 _MISSING_DEP = _helpers.colorize("Not Installed", "red")
@@ -30,7 +28,11 @@ def execute(
     )
 
     print("Dragon Installation:")
-    dragon_version = dragon_pin()
+    # dragon_version = dragon_pin()
+    # todo: fix dragon_pin removal
+    # note: smartsim/config/dragon/.env should have an env var
+    #  that we can take the version from
+    dragon_version = "0.10"
 
     fs_table = [["Version", str(dragon_version)]]
     print(tabulate(fs_table, tablefmt="fancy_outline"), end="\n\n")

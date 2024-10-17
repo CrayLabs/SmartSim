@@ -174,12 +174,12 @@ test-verbose:
 # help: test-debug                     - Run all tests with debug output
 .PHONY: test-debug
 test-debug:
-	@SMARTSIM_LOG_LEVEL=developer python -m pytest -s -o log_cli=true -vv --ignore=tests/full_wlm/ --ignore=tests/dragon
+	@SMARTSIM_LOG_LEVEL=developer python -m pytest -s -o log_cli=true -vv --ignore=tests/full_wlm/ --ignore=tests/dragon_wlm
 
 # help: test-cov                       - Run all tests with coverage
 .PHONY: test-cov
 test-cov:
-	@python -m pytest -vv --cov=./smartsim --cov-config=${COV_FILE} --ignore=tests/full_wlm/ --ignore=tests/dragon
+	@python -m pytest -vv --cov=./smartsim --cov-config=${COV_FILE} --ignore=tests/full_wlm/ --ignore=tests/dragon_wlm
 
 
 # help: test-full                      - Run all WLM tests with Python coverage (full test suite)
@@ -196,4 +196,4 @@ test-wlm:
 # help: test-dragon                   - Run dragon-specific tests
 .PHONY: test-dragon
 test-dragon:
-	@dragon pytest tests/dragon
+	@dragon pytest tests/dragon_wlm

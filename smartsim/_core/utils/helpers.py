@@ -34,7 +34,6 @@ import collections.abc
 import functools
 import itertools
 import os
-from pathlib import Path
 import signal
 import subprocess
 import sys
@@ -42,9 +41,10 @@ import typing as t
 import uuid
 import warnings
 from datetime import datetime
+from pathlib import Path
 from shutil import which
 
-import deprecated
+from deprecated import deprecated
 from typing_extensions import TypeAlias
 
 if t.TYPE_CHECKING:

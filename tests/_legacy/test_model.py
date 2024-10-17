@@ -24,22 +24,21 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 from uuid import uuid4
 
 import numpy as np
 import pytest
-import typing as t
 
 from smartsim import Experiment
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.launcher.step import SbatchStep, SrunStep
-
 from smartsim.builders import Ensemble
 from smartsim.entity import Application
-
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
-# from smartsim.settings.mpiSettings import 
+
+# from smartsim.settings.mpiSettings import
 
 _BaseMPISettings = t.Any
 
