@@ -51,7 +51,7 @@ def python_version() -> str:
 def dragon_pin() -> str:
     """Return a string indicating the pinned major/minor version of the dragon
     package to install"""
-    return "0.9"
+    return "0.10"
 
 
 def _platform_filter(asset_name: str) -> bool:
@@ -60,7 +60,7 @@ def _platform_filter(asset_name: str) -> bool:
 
     :param asset_name: A value to inspect for keywords indicating a Cray EX asset
     :returns: True if supplied value is correct for current platform"""
-    key = "crayex"
+    key = "hsn"
     is_cray = key in asset_name.lower()
     if is_crayex_platform():
         return is_cray
@@ -132,7 +132,6 @@ def filter_assets(assets: t.Collection[GitReleaseAsset]) -> t.Optional[GitReleas
 def retrieve_asset_info() -> GitReleaseAsset:
     """Find a release asset that meets all necessary filtering criteria
 
-    :param dragon_pin: identify the dragon version to install (e.g. dragon-0.8)
     :returns: A GitHub release asset"""
     assets = _get_release_assets()
     asset = filter_assets(assets)
