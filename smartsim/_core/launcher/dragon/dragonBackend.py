@@ -30,7 +30,6 @@ import itertools
 import time
 import typing as t
 from dataclasses import dataclass, field
-from enum import Enum
 from threading import RLock
 
 from tabulate import tabulate
