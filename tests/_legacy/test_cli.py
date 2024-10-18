@@ -446,7 +446,6 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
         pytest.param(   "build",    "build_execute",           "onnx mocked-build",           "--skip-onnx",      True,                             "",      "onnx",         True, id="Skip Onnx"),
         pytest.param(   "build",    "build_execute",     "config-dir mocked-build", "--config-dir /foo/bar",      True,                             "", "config-dir",   "/foo/bar", id="set torch dir"),
         pytest.param(   "build",    "build_execute", "bad-config-dir mocked-build",          "--config-dir",     False, "error: argument --config-dir",          "",           "", id="set config dir w/o path"),
-        pytest.param(   "build",    "build_execute",          "keydb mocked-build",               "--keydb",      True,                             "",     "keydb",         True, id="keydb on"),
         pytest.param(   "clean",    "clean_execute",     "clobbering mocked-clean",             "--clobber",      True,                             "",   "clobber",         True, id="clean w/clobber"),
         pytest.param("validate", "validate_execute",        "port mocked-validate",          "--port=12345",      True,                             "",      "port",        12345, id="validate w/ manual port"),
         pytest.param("validate", "validate_execute",  "abbrv port mocked-validate",              "-p 12345",      True,                             "",      "port",        12345, id="validate w/ manual abbreviated port"),

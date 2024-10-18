@@ -319,9 +319,3 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         type=str,
         help="Path to directory with JSON files describing platform and packages",
     )
-    parser.add_argument(
-        "--keydb",
-        action="store_true",
-        default=False,
-        help="Build KeyDB instead of Redis",
-    )
