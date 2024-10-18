@@ -28,10 +28,7 @@ def execute(
     )
 
     print("Dragon Installation:")
-    # dragon_version = dragon_pin()
-    # todo: fix dragon_pin removal
-    # note: smartsim/config/dragon/.env should have an env var
-    #  that we can take the version from
+    # TODO: Fix hardcoded dragon version
     dragon_version = "0.10"
 
     fs_table = [["Version", str(dragon_version)]]
