@@ -132,7 +132,6 @@ def filter_assets(assets: t.Collection[GitReleaseAsset]) -> t.Optional[GitReleas
 def retrieve_asset_info() -> GitReleaseAsset:
     """Find a release asset that meets all necessary filtering criteria
 
-    :param dragon_pin: identify the dragon version to install (e.g. dragon-0.8)
     :returns: A GitHub release asset"""
     assets = _get_release_assets()
     asset = filter_assets(assets)
