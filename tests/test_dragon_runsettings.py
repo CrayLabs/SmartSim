@@ -96,3 +96,122 @@ def test_dragon_runsettings_gpu_affinity():
     # ensure the value is not changed when we extend the list
     rs.run_args["gpu-affinity"] = "7,8,9"
     assert rs.run_args["gpu-affinity"] != ",".join(str(val) for val in exp_value)
+
+
+def test_dragon_runsettings_hostlist_null():
+    """Verify that passing a null hostlist is treated as a failure"""
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+
+    # baseline check that no host list exists
+    stored_list = rs.run_args.get("host-list", None)
+    assert stored_list is None
+
+    with pytest.raises(ValueError) as ex:
+        rs.set_hostlist(None)
+
+    assert "empty hostlist" in ex.value.args[0]
+
+
+def test_dragon_runsettings_hostlist_empty():
+    """Verify that passing an empty hostlist is treated as a failure"""
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+
+    # baseline check that no host list exists
+    stored_list = rs.run_args.get("host-list", None)
+    assert stored_list is None
+
+    with pytest.raises(ValueError) as ex:
+        rs.set_hostlist([])
+
+    assert "empty hostlist" in ex.value.args[0]
+
+
+@pytest.mark.parametrize("hostlist_csv", ["   ", " , ,     ,   ", ",", ",,,"])
+def test_dragon_runsettings_hostlist_whitespace_handling(hostlist_csv: str):
+    """Verify that passing a hostlist with emptystring host names is treated as a failure"""
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+
+    # baseline check that no host list exists
+    stored_list = rs.run_args.get("host-list", None)
+    assert stored_list is None
+
+    # empty string as hostname in list
+    with pytest.raises(ValueError) as ex:
+        rs.set_hostlist(hostlist_csv)
+
+    assert "invalid names" in ex.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "hostlist_csv", [["   "], [" ", "", "     ", "   "], ["", " "], ["", "", "", ""]]
+)
+def test_dragon_runsettings_hostlist_whitespace_handling_list(hostlist_csv: str):
+    """Verify that passing a hostlist with emptystring host names contained in a list
+    is treated as a failure"""
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+
+    # baseline check that no host list exists
+    stored_list = rs.run_args.get("host-list", None)
+    assert stored_list is None
+
+    # empty string as hostname in list
+    with pytest.raises(ValueError) as ex:
+        rs.set_hostlist(hostlist_csv)
+
+    assert "invalid names" in ex.value.args[0]
+
+
+def test_dragon_runsettings_hostlist_as_csv():
+    """Verify that a hostlist is stored properly when passing in a CSV string"""
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+
+    # baseline check that no host list exists
+    stored_list = rs.run_args.get("host-list", None)
+    assert stored_list is None
+
+    hostnames = ["host0", "host1", "host2", "host3", "host4"]
+
+    # set the host list with ideal comma separated values
+    input0 = ",".join(hostnames)
+
+    # set the host list with a string of comma separated values
+    # including extra whitespace
+    input1 = ", ".join(hostnames)
+
+    for hosts_input in [input0, input1]:
+        rs.set_hostlist(hosts_input)
+
+        stored_list = rs.run_args.get("host-list", None)
+        assert stored_list
+
+        # confirm that all values from the original list are retrieved
+        split_stored_list = stored_list.split(",")
+        assert set(hostnames) == set(split_stored_list)
+
+
+def test_dragon_runsettings_hostlist_as_csv():
+    """Verify that a hostlist is stored properly when passing in a CSV string"""
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+
+    # baseline check that no host list exists
+    stored_list = rs.run_args.get("host-list", None)
+    assert stored_list is None
+
+    hostnames = ["host0", "host1", "host2", "host3", "host4"]
+
+    # set the host list with ideal comma separated values
+    input0 = ",".join(hostnames)
+
+    # set the host list with a string of comma separated values
+    # including extra whitespace
+    input1 = ", ".join(hostnames)
+
+    for hosts_input in [input0, input1]:
+        rs.set_hostlist(hosts_input)
+
+        stored_list = rs.run_args.get("host-list", None)
+        assert stored_list
+
+        # confirm that all values from the original list are retrieved
+        split_stored_list = stored_list.split(",")
+        assert set(hostnames) == set(split_stored_list)

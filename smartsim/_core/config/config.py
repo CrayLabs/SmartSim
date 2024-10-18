@@ -40,19 +40,19 @@ from ..utils import expand_exe_path
 # These values can be set through environment variables to
 # override the default behavior of SmartSim.
 #
-# RAI_PATH
+# SMARTSIM_RAI_LIB
 #   - Path to the RAI shared library
 #   - Default: /smartsim/smartsim/_core/lib/redisai.so
 #
-# REDIS_CONF
+# SMARTSIM_REDIS_CONF
 #   - Path to the redis.conf file
 #   - Default: /SmartSim/smartsim/_core/config/redis.conf
 #
-# REDIS_PATH
+# SMARTSIM_REDIS_SERVER_EXE
 #   - Path to the redis-server executable
 #   - Default: /SmartSim/smartsim/_core/bin/redis-server
 #
-# REDIS_CLI_PATH
+# SMARTSIM_REDIS_CLI_EXE
 #   - Path to the redis-cli executable
 #   - Default: /SmartSim/smartsim/_core/bin/redis-cli
 #
@@ -120,20 +120,20 @@ class Config:
     @property
     def redisai(self) -> str:
         rai_path = self.lib_path / "redisai.so"
-        redisai = Path(os.environ.get("RAI_PATH", rai_path)).resolve()
+        redisai = Path(os.environ.get("SMARTSIM_RAI_LIB", rai_path)).resolve()
         if not redisai.is_file():
             raise SSConfigError(
                 "RedisAI dependency not found. Build with `smart` cli "
-                "or specify RAI_PATH"
+                "or specify SMARTSIM_RAI_LIB"
             )
         return str(redisai)
 
     @property
     def database_conf(self) -> str:
-        conf = Path(os.environ.get("REDIS_CONF", self.conf_path)).resolve()
+        conf = Path(os.environ.get("SMARTSIM_REDIS_CONF", self.conf_path)).resolve()
         if not conf.is_file():
             raise SSConfigError(
-                "Database configuration file at REDIS_CONF could not be found"
+                "Database configuration file at SMARTSIM_REDIS_CONF could not be found"
             )
         return str(conf)
 
@@ -141,24 +141,29 @@ class Config:
     def database_exe(self) -> str:
         try:
             database_exe = next(self.bin_path.glob("*-server"))
-            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            database = Path(
+                os.environ.get("SMARTSIM_REDIS_SERVER_EXE", database_exe)
+            ).resolve()
             exe = expand_exe_path(str(database))
             return exe
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError(
-                "Specified database binary at REDIS_PATH could not be used"
+                "Specified database binary at SMARTSIM_REDIS_SERVER_EXE "
+                "could not be used"
             ) from e
 
     @property
     def database_cli(self) -> str:
         try:
             redis_cli_exe = next(self.bin_path.glob("*-cli"))
-            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
+            redis_cli = Path(
+                os.environ.get("SMARTSIM_REDIS_CLI_EXE", redis_cli_exe)
+            ).resolve()
             exe = expand_exe_path(str(redis_cli))
             return exe
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError(
-                "Specified Redis binary at REDIS_CLI_PATH could not be used"
+                "Specified Redis binary at SMARTSIM_REDIS_CLI_EXE could not be used"
             ) from e
 
     @property
@@ -178,7 +183,7 @@ class Config:
     def dragon_server_path(self) -> t.Optional[str]:
         return os.getenv(
             "SMARTSIM_DRAGON_SERVER_PATH",
-            os.getenv("SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
+            os.getenv("_SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
         )
 
     @property
@@ -305,10 +310,6 @@ class Config:
         """
         default_path = Path.home() / ".smartsim" / "keys"
         return os.environ.get("SMARTSIM_KEY_PATH", str(default_path))
-
-    @property
-    def dragon_pin(self) -> str:
-        return "0.9"
 
 
 @lru_cache(maxsize=128, typed=False)
