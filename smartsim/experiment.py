@@ -42,7 +42,7 @@ from smartsim._core.control import preview_renderer
 from smartsim._core.control.launch_history import LaunchHistory as _LaunchHistory
 from smartsim._core.utils import helpers as _helpers
 from smartsim.error import errors
-from smartsim.launchable.job import Job
+from smartsim.launchable.job import Job, Record
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
 from ._core import Generator, Manifest
@@ -52,7 +52,6 @@ from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim.launchable.job import Job
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -158,26 +157,24 @@ class Experiment:
         experiment
         """
 
-    def start(self, *jobs: Job | t.Sequence[Job]) -> tuple[LaunchedJobID, ...]:
+    def start(self, *jobs: Job | t.Sequence[Job]) -> tuple[Record, ...]:
         """Execute a collection of `Job` instances.
 
         :param jobs: A collection of other job instances to start
-        :raises TypeError: If jobs provided are not the correct type
         :raises ValueError: No Jobs were provided.
-        :returns: A sequence of ids with order corresponding to the sequence of
-            jobs that can be used to query or alter the status of that
-            particular execution of the job.
+        :returns: A sequence of records with order corresponding to the
+            sequence of jobs that can be used to query or alter the status of
+            that particular execution of the job.
         """
 
         if not jobs:
             raise ValueError("No jobs provided to start")
 
-        # Create the run id
         jobs_ = list(_helpers.unpack(jobs))
-
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
         root = pathlib.Path(self.exp_path, run_id)
-        return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs_)
+        ids = self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs_)
+        return tuple(Record(id_, job) for id_, job in zip(ids, jobs_))
 
     def _dispatch(
         self,
@@ -233,15 +230,13 @@ class Experiment:
             execute_dispatch(generator, job, idx) for idx, job in enumerate(jobs, 1)
         )
 
-    def get_status(
-        self, *ids: LaunchedJobID
-    ) -> tuple[JobStatus | InvalidJobStatus, ...]:
-        """Get the status of jobs launched through the `Experiment` from their
-        launched job id returned when calling `Experiment.start`.
+    def get_status(self, *records: Record) -> tuple[JobStatus | InvalidJobStatus, ...]:
+        """Get the status of jobs launched through the `Experiment` from the
+        record returned when calling `Experiment.start`.
 
-        The `Experiment` will map the launched ID back to the launcher that
-        started the job and request a status update. The order of the returned
-        statuses exactly matches the order of the launched job ids.
+        The `Experiment` will map the launched id of the record back to the
+        launcher that started the job and request a status update. The order of
+        the returned statuses exactly matches the order of the records.
 
         If the `Experiment` cannot find any launcher that started the job
         associated with the launched job id, then a
@@ -252,16 +247,17 @@ class Experiment:
         launched job ids issued by user defined launcher are not sufficiently
         unique.
 
-        :param ids: A sequence of launched job ids issued by the experiment.
+        :param records: A sequence of records issued by the experiment.
         :raises TypeError: If ids provided are not the correct type
         :raises ValueError: No IDs were provided.
         :returns: A tuple of statuses with order respective of the order of the
             calling arguments.
         """
-        if not ids:
-            raise ValueError("No job ids provided to get status")
-        if not all(isinstance(id, str) for id in ids):
-            raise TypeError("ids argument was not of type LaunchedJobID")
+        if not records:
+            raise ValueError("No records provided to get status")
+        if not all(isinstance(record, Record) for record in records):
+            raise TypeError("record argument was not of type Record")
+        ids = tuple(record.launched_id for record in records)
 
         to_query = self._launch_history.group_by_launcher(
             set(ids), unknown_ok=True
@@ -272,39 +268,38 @@ class Experiment:
         return tuple(stats)
 
     def wait(
-        self, *ids: LaunchedJobID, timeout: float | None = None, verbose: bool = True
+        self, *records: Record, timeout: float | None = None, verbose: bool = True
     ) -> None:
         """Block execution until all of the provided launched jobs, represented
         by an ID, have entered a terminal status.
 
-        :param ids: The ids of the launched jobs to wait for.
+        :param records: The records of the launched jobs to wait for.
         :param timeout: The max time to wait for all of the launched jobs to end.
         :param verbose: Whether found statuses should be displayed in the console.
         :raises TypeError: If IDs provided are not the correct type
         :raises ValueError: No IDs were provided.
         """
-        if ids:
-            if not all(isinstance(id, str) for id in ids):
-                raise TypeError("ids argument was not of type LaunchedJobID")
-        else:
-            raise ValueError("No job ids to wait on provided")
+        if not records:
+            raise ValueError("No records to wait on provided")
+        if not all(isinstance(record, Record) for record in records):
+            raise TypeError("record argument was not of type Record")
         self._poll_for_statuses(
-            ids, TERMINAL_STATUSES, timeout=timeout, verbose=verbose
+            records, TERMINAL_STATUSES, timeout=timeout, verbose=verbose
         )
 
     def _poll_for_statuses(
         self,
-        ids: t.Sequence[LaunchedJobID],
+        records: t.Sequence[Record],
         statuses: t.Collection[JobStatus],
         timeout: float | None = None,
         interval: float = 5.0,
         verbose: bool = True,
-    ) -> dict[LaunchedJobID, JobStatus | InvalidJobStatus]:
+    ) -> dict[Record, JobStatus | InvalidJobStatus]:
         """Poll the experiment's launchers for the statuses of the launched
         jobs with the provided ids, until the status of the changes to one of
         the provided statuses.
 
-        :param ids: The ids of the launched jobs to wait for.
+        :param records: The records of the launched jobs to wait for.
         :param statuses: A collection of statuses to poll for.
         :param timeout: The minimum amount of time to spend polling all jobs to
             reach one of the supplied statuses. If not supplied or `None`, the
@@ -320,12 +315,10 @@ class Experiment:
         log = logger.info if verbose else lambda *_, **__: None
         method_timeout = _interval.SynchronousTimeInterval(timeout)
         iter_timeout = _interval.SynchronousTimeInterval(interval)
-        final: dict[LaunchedJobID, JobStatus | InvalidJobStatus] = {}
+        final: dict[Record, JobStatus | InvalidJobStatus] = {}
 
-        def is_finished(
-            id_: LaunchedJobID, status: JobStatus | InvalidJobStatus
-        ) -> bool:
-            job_title = f"Job({id_}): "
+        def is_finished(record: Record, status: JobStatus | InvalidJobStatus) -> bool:
+            job_title = f"Job({record.launched_id}, {record.job.name}): "
             if done := status in terminal:
                 log(f"{job_title}Finished with status '{status.value}'")
             else:
@@ -334,22 +327,22 @@ class Experiment:
 
         if iter_timeout.infinite:
             raise ValueError("Polling interval cannot be infinite")
-        while ids and not method_timeout.expired:
+        while records and not method_timeout.expired:
             iter_timeout = iter_timeout.new_interval()
-            stats = zip(ids, self.get_status(*ids))
+            stats = zip(records, self.get_status(*records))
             is_done = _helpers.group_by(_helpers.pack_params(is_finished), stats)
             final |= dict(is_done.get(True, ()))
-            ids = tuple(id_ for id_, _ in is_done.get(False, ()))
-            if ids:
+            records = tuple(rec for rec, _ in is_done.get(False, ()))
+            if records:
                 (
                     iter_timeout
                     if iter_timeout.remaining < method_timeout.remaining
                     else method_timeout
                 ).block()
-        if ids:
+        if records:
             raise TimeoutError(
-                f"Job ID(s) {', '.join(map(str, ids))} failed to reach "
-                "terminal status before timeout"
+                f"Job ID(s) {', '.join(rec.launched_id for rec in records)} "
+                "failed to reach terminal status before timeout"
             )
         return final
 
@@ -445,20 +438,20 @@ class Experiment:
             disable_numparse=True,
         )
 
-    def stop(self, *ids: LaunchedJobID) -> tuple[JobStatus | InvalidJobStatus, ...]:
+    def stop(self, *records: Record) -> tuple[JobStatus | InvalidJobStatus, ...]:
         """Cancel the execution of a previously launched job.
 
-        :param ids: The ids of the launched jobs to stop.
+        :param records: The records of the launched jobs to stop.
         :raises TypeError: If ids provided are not the correct type
         :raises ValueError: No job ids were provided.
         :returns: A tuple of job statuses upon cancellation with order
             respective of the order of the calling arguments.
         """
-        if ids:
-            if not all(isinstance(id, str) for id in ids):
-                raise TypeError("ids argument was not of type LaunchedJobID")
-        else:
-            raise ValueError("No job ids provided")
+        if not records:
+            raise ValueError("No records provided")
+        if not all(isinstance(record, Record) for record in records):
+            raise TypeError("record argument was not of type Record")
+        ids = tuple(record.launched_id for record in records)
         by_launcher = self._launch_history.group_by_launcher(set(ids), unknown_ok=True)
         id_to_stop_stat = (
             launcher.stop_jobs(*launched).items()
