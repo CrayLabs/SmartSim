@@ -98,8 +98,8 @@ class DragonFeatureStore(FeatureStore):
         """Remove the value from the dictionary and return the value.
 
         :param key: Dictionary key to retrieve
-        :returns: The value held at the key if it exists, otherwise `None
-        `"""
+        :returns: The value held at the key if it exists, otherwise `None`
+        """
         try:
             return self._storage.pop(key)
         except dragon_ddict.DDictError:

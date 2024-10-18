@@ -39,6 +39,7 @@
    ml_features
    dragon
    api/smartsim_api
+   api/mli_api
 
 .. toctree::
    :maxdepth: 2
