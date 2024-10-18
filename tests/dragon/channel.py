@@ -54,6 +54,16 @@ class FileSystemCommChannel(CommChannelBase):
 
         self._file_path.touch()
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "_lock" in state:
+            del state["_lock"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._lock = threading.RLock()
+
     def send(self, value: bytes, timeout: float = 0) -> None:
         """Send a message throuh the underlying communication channel.
 

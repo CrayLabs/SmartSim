@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
 import typing as t
 from unittest.mock import MagicMock
 
@@ -125,7 +126,7 @@ def setup_worker_manager_model_bytes(
 
     inf_request = InferenceRequest(
         model_key=None,
-        callback=None,
+        callback=FileSystemCommChannel(pathlib.Path(test_dir) / "callback"),
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -136,10 +137,10 @@ def setup_worker_manager_model_bytes(
 
     model_id = ModelKey(key="key", descriptor=app_feature_store.descriptor)
 
-    request_batch = RequestBatch(
+    request_batch = RequestBatch.from_requests(
         [inf_request],
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_id,
+        model_id,
     )
 
     dispatcher_task_queue.put(request_batch)
@@ -184,7 +185,7 @@ def setup_worker_manager_model_key(
 
     request = InferenceRequest(
         model_key=model_id,
-        callback=None,
+        callback=FileSystemCommChannel(pathlib.Path(test_dir) / "callback"),
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -192,10 +193,10 @@ def setup_worker_manager_model_key(
         raw_model=b"model",
         batch_size=0,
     )
-    request_batch = RequestBatch(
+    request_batch = RequestBatch.from_requests(
         [request],
         TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_id,
+        model_id,
     )
 
     dispatcher_task_queue.put(request_batch)

@@ -172,7 +172,7 @@ class BatchQueue(Queue[InferenceRequest]):
         """
         return self.empty() and self._disposable
 
-    def flush(self) -> list[t.Any]:
+    def flush(self) -> list[InferenceRequest]:
         """Get all requests from queue.
 
         :returns: Requests waiting to be executed
@@ -493,10 +493,8 @@ class RequestDispatcher(Service):
                 if queue.ready:
                     self._perf_timer.measure_time("find_queue")
                     try:
-                        batch = RequestBatch(
-                            requests=queue.flush(),
-                            inputs=None,
-                            model_id=queue.model_id,
+                        batch = RequestBatch.from_requests(
+                            queue.flush(), None, queue.model_id
                         )
                     finally:
                         self._perf_timer.measure_time("flush_requests")
@@ -528,9 +526,6 @@ class RequestDispatcher(Service):
 
                     self._perf_timer.measure_time("transform_input")
                     batch.inputs = transformed_inputs
-                    for request in batch.requests:
-                        request.raw_inputs = []
-                        request.input_meta = []
 
                     try:
                         self._outgoing_queue.put(batch)
