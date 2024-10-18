@@ -51,7 +51,7 @@ def python_version() -> str:
 def dragon_pin() -> str:
     """Return a string indicating the pinned major/minor version of the dragon
     package to install"""
-    return "0.9"
+    return "0.10"
 
 
 def _platform_filter(asset_name: str) -> bool:
@@ -60,7 +60,7 @@ def _platform_filter(asset_name: str) -> bool:
 
     :param asset_name: A value to inspect for keywords indicating a Cray EX asset
     :returns: True if supplied value is correct for current platform"""
-    key = "crayex"
+    key = "hsn"
     is_cray = key in asset_name.lower()
     if is_crayex_platform():
         return is_cray
