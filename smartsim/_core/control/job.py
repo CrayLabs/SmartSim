@@ -29,8 +29,10 @@ import time
 import typing as t
 from dataclasses import dataclass
 
-from ...entity import EntitySequence, SmartSimEntity
-from ...status import SmartSimStatus
+from smartsim.entity._mock import Mock
+
+from ...entity import SmartSimEntity
+from ...status import JobStatus
 
 
 @dataclass(frozen=True)
@@ -47,8 +49,7 @@ class _JobKey:
 
 class JobEntity:
     """An entity containing run-time SmartSimEntity metadata. The run-time metadata
-    is required to perform telemetry collection. The `JobEntity` satisfies the core
-    API necessary to use a `JobManager` to manage retrieval of managed step updates.
+    is required to perform telemetry collection.
     """
 
     def __init__(self) -> None:
@@ -76,9 +77,9 @@ class JobEntity:
         """Flag indicating if the entity has completed execution"""
 
     @property
-    def is_db(self) -> bool:
-        """Returns `True` if the entity represents a database or database shard"""
-        return self.type in ["orchestrator", "dbnode"]
+    def is_fs(self) -> bool:
+        """Returns `True` if the entity represents a feature store or feature store shard"""
+        return self.type in ["featurestore", "fsnode"]
 
     @property
     def is_managed(self) -> bool:
@@ -112,13 +113,13 @@ class JobEntity:
             self._is_complete = True
 
     @staticmethod
-    def _map_db_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
-        """Map DB-specific properties from a runtime manifest onto a `JobEntity`
+    def _map_fs_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
+        """Map FS-specific properties from a runtime manifest onto a `JobEntity`
 
         :param entity_dict: The raw dictionary deserialized from manifest JSON
         :param entity: The entity instance to modify
         """
-        if entity.is_db:
+        if entity.is_fs:
             # add collectors if they're configured to be enabled in the manifest
             entity.collectors = {
                 "client": entity_dict.get("client_file", ""),
@@ -184,47 +185,42 @@ class JobEntity:
         cls._map_standard_metadata(
             entity_type, entity_dict, entity, exp_dir, raw_experiment
         )
-        cls._map_db_metadata(entity_dict, entity)
+        cls._map_fs_metadata(entity_dict, entity)
 
         return entity
 
 
 class Job:
-    """Keep track of various information for the controller.
-    In doing so, continuously add various fields of information
-    that is queryable by the user through interface methods in
-    the controller class.
+    """Keep track of various information.
+    In doing so, continuously add various fields of information.
     """
 
     def __init__(
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
+        entity: t.Union[SmartSimEntity, JobEntity],
         launcher: str,
-        is_task: bool,
     ) -> None:
         """Initialize a Job.
 
         :param job_name: Name of the job step
         :param job_id: The id associated with the job
-        :param entity: The SmartSim entity(list) associated with the job
+        :param entity: The SmartSim entity associated with the job
         :param launcher: Launcher job was started with
-        :param is_task: process monitored by TaskManager (True) or the WLM (True)
         """
         self.name = job_name
         self.jid = job_id
         self.entity = entity
-        self.status = SmartSimStatus.STATUS_NEW
+        self.status = JobStatus.NEW
         # status before smartsim status mapping is applied
         self.raw_status: t.Optional[str] = None
         self.returncode: t.Optional[int] = None
         # output is only populated if it's system related (e.g. cmd failed immediately)
         self.output: t.Optional[str] = None
         self.error: t.Optional[str] = None  # same as output
-        self.hosts: t.List[str] = []  # currently only used for DB jobs
+        self.hosts: t.List[str] = []  # currently only used for FS jobs
         self.launched_with = launcher
-        self.is_task = is_task
         self.start_time = time.time()
         self.history = History()
 
@@ -235,7 +231,7 @@ class Job:
 
     def set_status(
         self,
-        new_status: SmartSimStatus,
+        new_status: JobStatus,
         raw_status: str,
         returncode: t.Optional[int],
         error: t.Optional[str] = None,
@@ -263,23 +259,19 @@ class Job:
         """Record the launching history of a job."""
         self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
-    def reset(
-        self, new_job_name: str, new_job_id: t.Optional[str], is_task: bool
-    ) -> None:
+    def reset(self, new_job_name: str, new_job_id: t.Optional[str]) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
         :param new_job_id: new job id to launch under
-        :param is_task: process monitored by TaskManager (True) or the WLM (True)
         """
         self.name = new_job_name
         self.jid = new_job_id
-        self.status = SmartSimStatus.STATUS_NEW
+        self.status = JobStatus.NEW
         self.returncode = None
         self.output = None
         self.error = None
         self.hosts = []
-        self.is_task = is_task
         self.start_time = time.time()
         self.history.new_run()
 
@@ -299,7 +291,7 @@ class Job:
         warning += f"Job status at failure: {self.status} \n"
         warning += f"Launcher status at failure: {self.raw_status} \n"
         warning += f"Job returncode: {self.returncode} \n"
-        warning += f"Error and output file located at: {self.entity.path}"
+        # warning += f"Error and output file located at: {self.entity.path}"
         return warning
 
     def __str__(self) -> str:
@@ -327,14 +319,14 @@ class History:
         """
         self.runs = runs
         self.jids: t.Dict[int, t.Optional[str]] = {}
-        self.statuses: t.Dict[int, SmartSimStatus] = {}
+        self.statuses: t.Dict[int, JobStatus] = {}
         self.returns: t.Dict[int, t.Optional[int]] = {}
         self.job_times: t.Dict[int, float] = {}
 
     def record(
         self,
         job_id: t.Optional[str],
-        status: SmartSimStatus,
+        status: JobStatus,
         returncode: t.Optional[int],
         job_time: float,
     ) -> None:

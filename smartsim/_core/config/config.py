@@ -40,22 +40,6 @@ from ..utils import expand_exe_path
 # These values can be set through environment variables to
 # override the default behavior of SmartSim.
 #
-# SMARTSIM_RAI_LIB
-#   - Path to the RAI shared library
-#   - Default: /smartsim/smartsim/_core/lib/redisai.so
-#
-# SMARTSIM_REDIS_CONF
-#   - Path to the redis.conf file
-#   - Default: /SmartSim/smartsim/_core/config/redis.conf
-#
-# SMARTSIM_REDIS_SERVER_EXE
-#   - Path to the redis-server executable
-#   - Default: /SmartSim/smartsim/_core/bin/redis-server
-#
-# SMARTSIM_REDIS_CLI_EXE
-#   - Path to the redis-cli executable
-#   - Default: /SmartSim/smartsim/_core/bin/redis-cli
-#
 # SMARTSIM_LOG_LEVEL
 #   - Log level for SmartSim
 #   - Default: info
@@ -94,77 +78,13 @@ class Config:
     def __init__(self) -> None:
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
-        # TODO: Turn this into a property. Need to modify the configuration
-        # of KeyDB vs Redis at build time
-        self.conf_dir = self.core_path / "config"
-        self.conf_path = self.conf_dir / "redis.conf"
 
-    @property
-    def dependency_path(self) -> Path:
-        return Path(
-            os.environ.get("SMARTSIM_DEP_INSTALL_PATH", str(self.core_path))
-        ).resolve()
+        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", self.core_path)
 
-    @property
-    def lib_path(self) -> Path:
-        return Path(self.dependency_path, "lib")
-
-    @property
-    def bin_path(self) -> Path:
-        return Path(self.dependency_path, "bin")
-
-    @property
-    def build_path(self) -> Path:
-        return Path(self.dependency_path, "build")
-
-    @property
-    def redisai(self) -> str:
-        rai_path = self.lib_path / "redisai.so"
-        redisai = Path(os.environ.get("SMARTSIM_RAI_LIB", rai_path)).resolve()
-        if not redisai.is_file():
-            raise SSConfigError(
-                "RedisAI dependency not found. Build with `smart` cli "
-                "or specify SMARTSIM_RAI_LIB"
-            )
-        return str(redisai)
-
-    @property
-    def database_conf(self) -> str:
-        conf = Path(os.environ.get("SMARTSIM_REDIS_CONF", self.conf_path)).resolve()
-        if not conf.is_file():
-            raise SSConfigError(
-                "Database configuration file at SMARTSIM_REDIS_CONF could not be found"
-            )
-        return str(conf)
-
-    @property
-    def database_exe(self) -> str:
-        try:
-            database_exe = next(self.bin_path.glob("*-server"))
-            database = Path(
-                os.environ.get("SMARTSIM_REDIS_SERVER_EXE", database_exe)
-            ).resolve()
-            exe = expand_exe_path(str(database))
-            return exe
-        except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError(
-                "Specified database binary at SMARTSIM_REDIS_SERVER_EXE "
-                "could not be used"
-            ) from e
-
-    @property
-    def database_cli(self) -> str:
-        try:
-            redis_cli_exe = next(self.bin_path.glob("*-cli"))
-            redis_cli = Path(
-                os.environ.get("SMARTSIM_REDIS_CLI_EXE", redis_cli_exe)
-            ).resolve()
-            exe = expand_exe_path(str(redis_cli))
-            return exe
-        except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError(
-                "Specified Redis binary at SMARTSIM_REDIS_CLI_EXE could not be used"
-            ) from e
+        self.lib_path = Path(dependency_path, "lib").resolve()
+        self.bin_path = Path(dependency_path, "bin").resolve()
+        self.conf_path = Path(dependency_path, "config")
+        self.conf_dir = Path(self.core_path, "config")
 
     @property
     def database_file_parse_trials(self) -> int:

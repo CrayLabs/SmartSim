@@ -35,6 +35,7 @@ import typing as t
 from pathlib import Path
 from subprocess import SubprocessError
 
+from smartsim._core._install.platform import Architecture, OperatingSystem, Platform
 from smartsim._core._install.utils import retrieve
 from smartsim._core.utils import expand_exe_path
 
@@ -167,98 +168,3 @@ class Builder:
                 raise BuildError(error)
         except (OSError, SubprocessError) as e:
             raise BuildError(e) from e
-
-
-class DatabaseBuilder(Builder):
-    """Class to build Redis or KeyDB from Source
-    Supported build methods:
-     - from git
-    See buildenv.py for buildtime configuration of Redis/KeyDB
-    version and url.
-    """
-
-    def __init__(
-        self,
-        build_env: t.Optional[t.Dict[str, str]] = None,
-        malloc: str = "libc",
-        jobs: int = 1,
-        verbose: bool = False,
-    ) -> None:
-        super().__init__(
-            build_env or {},
-            jobs=jobs,
-            verbose=verbose,
-        )
-        self.malloc = malloc
-
-    @property
-    def is_built(self) -> bool:
-        """Check if Redis or KeyDB is built"""
-        bin_files = {file.name for file in self.bin_path.iterdir()}
-        redis_files = {"redis-server", "redis-cli"}
-        keydb_files = {"keydb-server", "keydb-cli"}
-        return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
-
-    def build_from_git(self, git_url: str, branch: str) -> None:
-        """Build Redis from git
-        :param git_url: url from which to retrieve Redis
-        :param branch: branch to checkout
-        """
-        # pylint: disable=too-many-locals
-        database_name = "keydb" if "KeyDB" in git_url else "redis"
-        database_build_path = Path(self.build_dir, database_name.lower())
-
-        # remove git directory if it exists as it should
-        # really never exist as we delete after build
-        redis_build_path = Path(self.build_dir, "redis")
-        keydb_build_path = Path(self.build_dir, "keydb")
-        if redis_build_path.is_dir():
-            shutil.rmtree(str(redis_build_path))
-        if keydb_build_path.is_dir():
-            shutil.rmtree(str(keydb_build_path))
-
-        # Check database URL
-        if not self.is_valid_url(git_url):
-            raise BuildError(f"Malformed {database_name} URL: {git_url}")
-
-        retrieve(git_url, self.build_dir / database_name, branch=branch, depth=1)
-        # build Redis
-        build_cmd = [
-            self.binary_path("make"),
-            "-j",
-            str(self.jobs),
-            f"MALLOC={self.malloc}",
-        ]
-        self.run_command(build_cmd, cwd=str(database_build_path))
-
-        # move redis binaries to smartsim/smartsim/_core/bin
-        database_src_dir = database_build_path / "src"
-        server_source = database_src_dir / (database_name.lower() + "-server")
-        server_destination = self.bin_path / (database_name.lower() + "-server")
-        cli_source = database_src_dir / (database_name.lower() + "-cli")
-        cli_destination = self.bin_path / (database_name.lower() + "-cli")
-        self.copy_file(server_source, server_destination, set_exe=True)
-        self.copy_file(cli_source, cli_destination, set_exe=True)
-
-        # validate install -- redis-server
-        core_path = Path(os.path.abspath(__file__)).parent.parent
-        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", core_path)
-        bin_path = Path(dependency_path, "bin").resolve()
-        try:
-            database_exe = next(bin_path.glob("*-server"))
-            database = Path(
-                os.environ.get("SMARTSIM_REDIS_SERVER_EXE", database_exe)
-            ).resolve()
-            _ = expand_exe_path(str(database))
-        except (TypeError, FileNotFoundError) as e:
-            raise BuildError("Installation of redis-server failed!") from e
-
-        # validate install -- redis-cli
-        try:
-            redis_cli_exe = next(bin_path.glob("*-cli"))
-            redis_cli = Path(
-                os.environ.get("SMARTSIM_REDIS_CLI_EXE", redis_cli_exe)
-            ).resolve()
-            _ = expand_exe_path(str(redis_cli))
-        except (TypeError, FileNotFoundError) as e:
-            raise BuildError("Installation of redis-cli failed!") from e

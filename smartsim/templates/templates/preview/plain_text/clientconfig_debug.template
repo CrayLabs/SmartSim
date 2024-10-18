@@ -1,12 +1,12 @@
 
-          {%- for db in manifest.dbs %}
-          {%- if db.name %}
-          Database Identifier: {{ db.name }}
+          {%- for fs in manifest.fss %}
+          {%- if fs.name %}
+          Feature StoreIdentifier: {{ fs.name }}
             {%- endif %}
           {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
-            Database Backend: {{ config.database_cli | get_dbtype }}
+            Feature Store Backend: {{ config.database_cli | get_fstype }}
             TCP/IP Port(s):
-            {%- for port in db.ports %}
+            {%- for port in fs.ports %}
               {{ port }}
             {%- endfor %}
             Type: Standalone

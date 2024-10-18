@@ -31,7 +31,7 @@ from shutil import which
 
 from smartsim.error.errors import LauncherError, SmartSimError
 
-from .._core.launcher.pbs.pbsCommands import qstat
+from .._core.launcher.pbs.pbs_commands import qstat
 
 
 def get_hosts() -> t.List[str]:

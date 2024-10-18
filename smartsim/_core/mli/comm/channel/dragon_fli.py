@@ -25,7 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # isort: off
-from dragon import fli
+
+import dragon
+import dragon.fli as fli
 from dragon.channels import Channel
 
 # isort: on

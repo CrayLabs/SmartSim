@@ -24,32 +24,65 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .alpsSettings import AprunSettings
-from .base import RunSettings, SettingsBase
-from .containers import Container, Singularity
-from .dragonRunSettings import DragonRunSettings
-from .lsfSettings import BsubBatchSettings, JsrunSettings
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
-from .palsSettings import PalsMpiexecSettings
-from .pbsSettings import QsubBatchSettings
-from .sgeSettings import SgeQsubBatchSettings
-from .slurmSettings import SbatchSettings, SrunSettings
+import typing as t
 
-__all__ = [
-    "AprunSettings",
-    "BsubBatchSettings",
-    "JsrunSettings",
-    "MpirunSettings",
-    "MpiexecSettings",
-    "OrterunSettings",
-    "QsubBatchSettings",
-    "RunSettings",
-    "SettingsBase",
-    "SbatchSettings",
-    "SgeQsubBatchSettings",
-    "SrunSettings",
-    "PalsMpiexecSettings",
-    "DragonRunSettings",
-    "Container",
-    "Singularity",
-]
+from .base_settings import BaseSettings
+from .batch_settings import BatchSettings
+from .launch_settings import LaunchSettings
+
+__all__ = ["LaunchSettings", "BaseSettings", "BatchSettings"]
+
+
+# TODO Mock imports for compiling tests
+class SettingsBase:
+    def __init__(self, *_: t.Any, **__: t.Any) -> None: ...
+    def __getattr__(self, _: str) -> t.Any: ...
+
+
+class QsubBatchSettings(SettingsBase): ...
+
+
+class SgeQsubBatchSettings(SettingsBase): ...
+
+
+class SbatchSettings(SettingsBase): ...
+
+
+class Singularity: ...
+
+
+class AprunSettings(SettingsBase): ...
+
+
+class RunSettings(SettingsBase): ...
+
+
+class DragonRunSettings(RunSettings): ...
+
+
+class OrterunSettings(RunSettings): ...
+
+
+class MpirunSettings(RunSettings): ...
+
+
+class MpiexecSettings(RunSettings): ...
+
+
+class JsrunSettings(RunSettings): ...
+
+
+class BsubBatchSettings(RunSettings): ...
+
+
+class PalsMpiexecSettings(RunSettings): ...
+
+
+class SrunSettings(RunSettings): ...
+
+
+class Container: ...
+
+
+def create_batch_settings(*_: t.Any, **__: t.Any) -> t.Any: ...
+def create_run_settings(*_: t.Any, **__: t.Any) -> t.Any: ...

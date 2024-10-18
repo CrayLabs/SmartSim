@@ -22,7 +22,7 @@ from smartsim.log import get_logger
 logger = get_logger(__name__)
 
 DEFAULT_DRAGON_REPO = "DragonHPC/dragon"
-DEFAULT_DRAGON_VERSION = "0.9"
+DEFAULT_DRAGON_VERSION = "0.10"
 DEFAULT_DRAGON_VERSION_TAG = f"v{DEFAULT_DRAGON_VERSION}"
 _GH_TOKEN = "SMARTSIM_DRAGON_TOKEN"
 

@@ -23,7 +23,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
 import typing as t
 from os import path
 
@@ -32,16 +31,16 @@ from tabulate import tabulate
 
 class EntityFiles:
     """EntityFiles are the files a user wishes to have available to
-    models and nodes within SmartSim. Each entity has a method
+    applications and nodes within SmartSim. Each entity has a method
     `entity.attach_generator_files()` that creates one of these
     objects such that at generation time, each file type will be
-    present within the generated model or node directory.
+    present within the generated application or node directory.
 
-    Tagged files are the configuration files for a model that
-    can be searched through and edited by the ModelWriter.
+    Tagged files are the configuration files for a application that
+    can be searched through and edited by the ApplicationWriter.
 
     Copy files are files that a user wants to copy into the
-    model or node directory without searching through and
+    application or node directory without searching through and
     editing them for tags.
 
     Lastly, symlink can be used for big datasets or input
@@ -57,16 +56,15 @@ class EntityFiles:
     ) -> None:
         """Initialize an EntityFiles instance
 
-        :param tagged: tagged files for model configuration
-        :param copy: files or directories to copy into model
+        :param tagged: tagged files for application configuration
+        :param copy: files or directories to copy into application
                      or node directories
-        :param symlink: files to symlink into model or node
+        :param symlink: files to symlink into application or node
                         directories
         """
         self.tagged = tagged or []
         self.copy = copy or []
         self.link = symlink or []
-        self.tagged_hierarchy = None
         self._check_files()
 
     def _check_files(self) -> None:
@@ -81,10 +79,6 @@ class EntityFiles:
         self.tagged = self._type_check_files(self.tagged, "Tagged")
         self.copy = self._type_check_files(self.copy, "Copyable")
         self.link = self._type_check_files(self.link, "Symlink")
-
-        self.tagged_hierarchy = TaggedFilesHierarchy.from_list_paths(
-            self.tagged, dir_contents_to_base=True
-        )
 
         for i, value in enumerate(self.copy):
             self.copy[i] = self._check_path(value)
@@ -147,142 +141,3 @@ class EntityFiles:
             return "No file attached to this entity."
 
         return tabulate(values, headers=["Strategy", "Files"], tablefmt="grid")
-
-
-class TaggedFilesHierarchy:
-    """The TaggedFilesHierarchy represents a directory
-    containing potentially tagged files and subdirectories.
-
-    TaggedFilesHierarchy.base is the directory path from
-    the the root of the generated file structure
-
-    TaggedFilesHierarchy.files is a collection of paths to
-    files that need to be copied to directory that the
-    TaggedFilesHierarchy represents
-
-    TaggedFilesHierarchy.dirs is a collection of child
-    TaggedFilesHierarchy, each representing a subdirectory
-    that needs to generated
-
-    By performing a depth first search over the entire
-    hierarchy starting at the root directory structure, the
-    tagged file directory structure can be replicated
-    """
-
-    def __init__(self, parent: t.Optional[t.Any] = None, subdir_name: str = "") -> None:
-        """Initialize a TaggedFilesHierarchy
-
-        :param parent: The parent hierarchy of the new hierarchy,
-                       must be None if creating a root hierarchy,
-                       must be provided if creating a subhierachy
-        :param subdir_name: Name of subdirectory representd by the new hierarchy,
-                            must be "" if creating a root hierarchy,
-                            must be any valid dir name if subhierarchy,
-                            invalid names are ".", ".." or contain path seperators
-        :raises ValueError: if given a subdir_name without a parent,
-                            if given a parent without a subdir_name,
-                            or if the subdir_name is invalid
-        """
-        if parent is None and subdir_name:
-            raise ValueError(
-                "TaggedFilesHierarchies should not have a subdirectory name without a"
-                + " parent"
-            )
-        if parent is not None and not subdir_name:
-            raise ValueError(
-                "Child TaggedFilesHierarchies must have a subdirectory name"
-            )
-        if subdir_name in {".", ".."} or path.sep in subdir_name:
-            raise ValueError(
-                "Child TaggedFilesHierarchies subdirectory names must not contain"
-                + " path seperators or be reserved dirs '.' or '..'"
-            )
-
-        if parent:
-            parent.dirs.add(self)
-
-        self._base: str = path.join(parent.base, subdir_name) if parent else ""
-        self.parent: t.Any = parent
-        self.files: t.Set[str] = set()
-        self.dirs: t.Set[TaggedFilesHierarchy] = set()
-
-    @property
-    def base(self) -> str:
-        """Property to ensure that self.base is read-only"""
-        return self._base
-
-    @classmethod
-    def from_list_paths(
-        cls, path_list: t.List[str], dir_contents_to_base: bool = False
-    ) -> t.Any:
-        """Given a list of absolute paths to files and dirs, create and return
-        a TaggedFilesHierarchy instance representing the file hierarchy of
-        tagged files. All files in the path list will be placed in the base of
-        the file hierarchy.
-
-        :param path_list: list of absolute paths to tagged files or dirs
-                          containing tagged files
-        :param dir_contents_to_base: When a top level dir is encountered, if
-                                     this value is truthy, files in the dir are
-                                     put into the base hierarchy level.
-                                     Otherwise, a new sub level is created for
-                                     the dir
-        :return: A built tagged file hierarchy for the given files
-        """
-        tagged_file_hierarchy = cls()
-        if dir_contents_to_base:
-            new_paths = []
-            for tagged_path in path_list:
-                if os.path.isdir(tagged_path):
-                    new_paths += [
-                        os.path.join(tagged_path, file)
-                        for file in os.listdir(tagged_path)
-                    ]
-                else:
-                    new_paths.append(tagged_path)
-            path_list = new_paths
-        tagged_file_hierarchy._add_paths(path_list)
-        return tagged_file_hierarchy
-
-    def _add_file(self, file: str) -> None:
-        """Add a file to the current level in the file hierarchy
-
-        :param file: absoute path to a file to add to the hierarchy
-        """
-        self.files.add(file)
-
-    def _add_dir(self, dir_path: str) -> None:
-        """Add a dir contianing tagged files by creating a new sub level in the
-        tagged file hierarchy. All paths within the directroy are added to the
-        the new level sub level tagged file hierarchy
-
-        :param dir: absoute path to a dir to add to the hierarchy
-        """
-        tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir_path))
-        # pylint: disable-next=protected-access
-        tagged_file_hierarchy._add_paths(
-            [path.join(dir_path, file) for file in os.listdir(dir_path)]
-        )
-
-    def _add_paths(self, paths: t.List[str]) -> None:
-        """Takes a list of paths and iterates over it, determining if each
-        path is to a file or a dir and then appropriatly adding it to the
-        TaggedFilesHierarchy.
-
-        :param paths: list of paths to files or dirs to add to the hierarchy
-        :raises ValueError: if link to dir is found
-        :raises FileNotFoundError: if path does not exist
-        """
-        for candidate in paths:
-            candidate = os.path.abspath(candidate)
-            if os.path.isdir(candidate):
-                if os.path.islink(candidate):
-                    raise ValueError(
-                        "Tagged directories and thier subdirectories cannot be links"
-                        + " to prevent circular directory structures"
-                    )
-                self._add_dir(candidate)
-            elif os.path.isfile(candidate):
-                self._add_file(candidate)
-            else:
-                raise FileNotFoundError(f"File or Directory {candidate} not found")

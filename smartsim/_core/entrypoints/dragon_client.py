@@ -37,7 +37,7 @@ from types import FrameType
 
 import zmq
 
-from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
+from smartsim._core.launcher.dragon.dragon_connector import DragonConnector
 from smartsim._core.schemas import (
     DragonHandshakeRequest,
     DragonRequest,
