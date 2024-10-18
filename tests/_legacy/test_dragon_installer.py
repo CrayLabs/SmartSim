@@ -434,7 +434,7 @@ def test_install_package_no_wheel(test_dir: str, extraction_dir: pathlib.Path):
 
 
 def test_install_macos(monkeypatch: pytest.MonkeyPatch, extraction_dir: pathlib.Path):
-    """Verify that installation exits cleanly if installing on unsupported platform"""
+    """Verify that installation exits cleanly if installing on unsupported platform."""
     with monkeypatch.context() as ctx:
         ctx.setattr(sys, "platform", "darwin")
 
@@ -442,6 +442,36 @@ def test_install_macos(monkeypatch: pytest.MonkeyPatch, extraction_dir: pathlib.
 
         result = install_dragon(request)
         assert result == 1
+
+
+@pytest.mark.parametrize(
+    "version, exp_result",
+    [
+        pytest.param("0.9", 2, id="0.9 DNE In Public Repo"),
+        pytest.param("0.91", 2, id="0.91 DNE In Public Repo"),
+        pytest.param("0.10", 0, id="0.10 Exists In Public Repo"),
+        pytest.param("0.19", 2, id="0.19 DNE In Public Repo"),
+    ],
+)
+def test_install_specify_asset_version(
+    monkeypatch: pytest.MonkeyPatch,
+    extraction_dir: pathlib.Path,
+    version: str,
+    exp_result: int,
+):
+    """Verify that installation completes as expected when fed a variety of
+    version numbers that can or cannot be found on release assets of the
+    public dragon repository.
+
+    :param extraction_dir: file system path where the dragon package should
+    be downloaded and extracted
+    :param version: Dragon version number to attempt to install
+    :param exp_result: Expected return code from the call to `install_dragon`
+    """
+    request = DragonInstallRequest(extraction_dir, version=version)
+
+    result = install_dragon(request)
+    assert result == exp_result
 
 
 def test_create_dotenv(monkeypatch: pytest.MonkeyPatch, test_dir: str):
