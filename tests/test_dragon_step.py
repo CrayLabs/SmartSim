@@ -73,12 +73,18 @@ def dragon_batch_step(test_dir: str) -> DragonBatchStep:
     cpu_affinities = [[], [0, 1, 2], [], [3, 4, 5, 6]]
     gpu_affinities = [[], [], [0, 1, 2], [3, 4, 5, 6]]
 
+    # specify 3 hostnames to select from but require only 2 nodes
+    num_nodes = 2
+    hostnames = ["host1", "host2", "host3"]
+
     # assign some unique affinities to each run setting instance
     for index, rs in enumerate(settings):
         if gpu_affinities[index]:
             rs.set_node_feature("gpu")
         rs.set_cpu_affinity(cpu_affinities[index])
         rs.set_gpu_affinity(gpu_affinities[index])
+        rs.set_hostlist(hostnames)
+        rs.set_nodes(num_nodes)
 
     steps = list(
         DragonStep(name_, test_dir, rs_) for name_, rs_ in zip(names, settings)
@@ -374,6 +380,11 @@ def test_dragon_batch_step_write_request_file(
     cpu_affinities = [[], [0, 1, 2], [], [3, 4, 5, 6]]
     gpu_affinities = [[], [], [0, 1, 2], [3, 4, 5, 6]]
 
+    hostnames = ["host1", "host2", "host3"]
+    num_nodes = 2
+
+    # parse requests file path from  the launch command
+    # e.g. dragon python <batch-script-path>
     launch_cmd = dragon_batch_step.get_launch_cmd()
     requests_file = get_request_path_from_batch_script(launch_cmd)
 
@@ -392,3 +403,5 @@ def test_dragon_batch_step_write_request_file(
         assert run_request
         assert run_request.policy.cpu_affinity == cpu_affinities[index]
         assert run_request.policy.gpu_affinity == gpu_affinities[index]
+        assert run_request.nodes == num_nodes
+        assert run_request.hostlist == ",".join(hostnames)

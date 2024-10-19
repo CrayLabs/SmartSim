@@ -119,6 +119,7 @@ smartsim_version = versions.write_version(setup_path)
 class BuildError(Exception):
     pass
 
+
 # Define needed dependencies for the installation
 
 extras_require = {
@@ -176,6 +177,7 @@ setup(
         "GitPython<=3.1.43",
         "protobuf<=3.20.3",
         "jinja2>=3.1.2",
+        "pycapnp==2.0.0",
         "watchdog>4,<5",
         "pydantic>2",
         "pyzmq>=25.1.2",

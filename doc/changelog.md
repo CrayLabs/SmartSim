@@ -9,6 +9,39 @@ Jump to:
 
 ## SmartSim
 
+### MLI branch
+
+Description
+
+- Implement asynchronous notifications for shared data
+- Quick bug fix in _validate
+- Add helper methods to MLI classes
+- Update error handling for consistency
+- Parameterize installation of dragon package with `smart build`
+- Update docstrings
+- Filenames conform to snake case
+- Update SmartSim environment variables using new naming convention
+- Refactor `exception_handler`
+- Add RequestDispatcher and the possibility of batching inference requests
+- Enable hostname selection for dragon tasks
+- Remove pydantic dependency from MLI code
+- Update MLI environment variables using new naming convention
+- Reduce a copy by using torch.from_numpy instead of torch.tensor
+- Enable dynamic feature store selection
+- Fix dragon package installation bug
+- Adjust schemas for better performance
+- Add TorchWorker first implementation and mock inference app example
+- Add error handling in Worker Manager pipeline
+- Add EnvironmentConfigLoader for ML Worker Manager
+- Add Model schema with model metadata included
+- Removed device from schemas, MessageHandler and tests
+- Add ML worker manager, sample worker, and feature store
+- Add schemas and MessageHandler class for de/serialization of
+  inference requests and response messages
+
+
+### Develop
+
 To be released at some point in the future
 
 Description
