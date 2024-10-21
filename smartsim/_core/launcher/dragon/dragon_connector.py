@@ -97,7 +97,7 @@ class DragonConnector:
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
         """Process ID of the process executing the DragonBackend"""
-        self._dragon_server_path = _resolve_dragon_path(path)
+        self._dragon_server_path = config.dragon_server_path
         """Path to a dragon installation"""
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         self._env_vars: t.Dict[str, str] = {}
@@ -125,7 +125,7 @@ class DragonConnector:
         :param address: The address of the head node socket to initiate a
         handhake with
         """
-        self._dragon_head_socket = dragon_sockets.get_secure_socket(
+        self._dragon_head_socket = dragonSockets.get_secure_socket(
             self._context, zmq.REQ, False
         )
         self._dragon_head_socket.connect(address)
