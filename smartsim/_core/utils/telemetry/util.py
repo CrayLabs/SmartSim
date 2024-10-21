@@ -30,8 +30,8 @@ import os
 import pathlib
 import typing as t
 
-from smartsim._core.launcher.stepInfo import StepInfo
-from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
+from smartsim._core.launcher.step_info import StepInfo
+from smartsim.status import TERMINAL_STATUSES, JobStatus
 
 _EventClass = t.Literal["start", "stop", "timestep"]
 
@@ -55,7 +55,7 @@ def write_event(
     :param task_id: the task_id of a managed task
     :param step_id: the step_id of an unmanaged task
     :param entity_type: the SmartSimEntity subtype
-        (e.g. `orchestrator`, `ensemble`, `model`, `dbnode`, ...)
+        (e.g. `featurestore`, `ensemble`, `application`, `fsnode`, ...)
     :param event_type: the event subtype
     :param status_dir: path where the SmartSimEntity outputs are written
     :param detail: (optional) additional information to write with the event
@@ -106,8 +106,6 @@ def map_return_code(step_info: StepInfo) -> t.Optional[int]:
     :return: a return code if the step is finished, otherwise None
     """
     rc_map = {s: 1 for s in TERMINAL_STATUSES}  # return `1` for all terminal statuses
-    rc_map.update(
-        {SmartSimStatus.STATUS_COMPLETED: os.EX_OK}
-    )  # return `0` for full success
+    rc_map.update({JobStatus.COMPLETED: os.EX_OK})  # return `0` for full success
 
     return rc_map.get(step_info.status, None)  # return `None` when in-progress

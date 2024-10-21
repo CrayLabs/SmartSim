@@ -69,6 +69,14 @@ jobs:
         with:
           python-version: ${{ matrix.py_v }}
 
+      - name: Check Test Files are Marked
+        run: |
+          diff <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | xargs grep -l 'pytestmark' \
+                 | sort) \
+               <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | sort)
+
       - name: Install build-essentials for Ubuntu
         if: contains( matrix.os, 'ubuntu' )
         run: |
@@ -127,12 +135,13 @@ jobs:
           LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
           echo "LD_LIBRARY_PATH=$LLP:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
-      - name: Run mypy
-        run: |
-          make check-mypy
+      # - name: Run mypy
+      #   run: |
+      #     make check-mypy
 
-      - name: Run Pylint
-        run: make check-lint
+      # TODO: Re-enable static analysis once API is firmed up
+      # - name: Run Pylint
+      #   run: make check-lint
 
       # Run isort/black style check
       - name: Run isort
@@ -163,7 +172,7 @@ jobs:
         run: |
           echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
           py.test -s --import-mode=importlib -o log_cli=true --cov=$(smart site) --cov-report=xml --cov-config=./tests/test_configs/cov/local_cov.cfg --ignore=tests/full_wlm/ -m ${{ matrix.subset }} ./tests
-
+    
       # Upload artifacts on failure, ignoring binary files
       - name: Upload Artifact
         if: failure()

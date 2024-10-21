@@ -28,9 +28,21 @@ import typing as t
 
 import numpy as np
 import torch
-from smartredis import Client, Dataset
 
+from smartsim.entity._mock import Mock
 from smartsim.ml.data import DataDownloader
+
+
+class Client(Mock):
+    """Mock Client"""
+
+    pass
+
+
+class Dataset(Mock):
+    """Mock Dataset"""
+
+    pass
 
 
 class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDataset):

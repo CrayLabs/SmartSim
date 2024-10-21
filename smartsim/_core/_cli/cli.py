@@ -108,7 +108,7 @@ def default_cli() -> SmartCli:
     menu = [
         MenuItemConfig(
             "build",
-            "Build SmartSim dependencies (Redis, RedisAI, Dragon, ML runtimes)",
+            "Build SmartSim dependencies (Dragon, ML runtimes)",
             build_execute,
             build_parser,
         ),

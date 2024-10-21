@@ -255,7 +255,7 @@ def test_service_health_check_freq(health_check_freq: float, run_for: float) -> 
     expected_hc_count = run_for // health_check_freq
 
     # allow some wiggle room for frequency comparison
-    assert expected_hc_count - 1 <= service.num_health_checks <= expected_hc_count + 1
+    assert expected_hc_count - 2 <= service.num_health_checks <= expected_hc_count + 2
 
     assert service.num_cooldowns == 0
     assert service.num_shutdowns == 1

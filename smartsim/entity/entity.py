@@ -24,11 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import abc
 import typing as t
 
+from smartsim.launchable.job_group import JobGroup
+
 if t.TYPE_CHECKING:
-    # pylint: disable-next=unused-import
-    import smartsim.settings.base
+    from smartsim.launchable.job import Job
+    from smartsim.settings.launch_settings import LaunchSettings
 
 
 class TelemetryConfiguration:
@@ -89,34 +94,47 @@ class TelemetryConfiguration:
         to perform actions when attempts to change configuration are made"""
 
 
-class SmartSimEntity:
+class SmartSimEntity(abc.ABC):
     def __init__(
-        self, name: str, path: str, run_settings: "smartsim.settings.base.RunSettings"
+        self,
+        name: str,
     ) -> None:
         """Initialize a SmartSim entity.
 
-        Each entity must have a name, path, and
-        run_settings. All entities within SmartSim
+        Each entity must have a name and path. All entities within SmartSim
         share these attributes.
 
         :param name: Name of the entity
-        :param path: path to output, error, and configuration files
-        :param run_settings: Launcher settings specified in the experiment
-                             entity
         """
         self.name = name
-        self.run_settings = run_settings
-        self.path = path
+        """The name of the application"""
+
+    @abc.abstractmethod
+    def as_executable_sequence(self) -> t.Sequence[str]:
+        """Converts the executable and its arguments into a sequence of program arguments.
+
+        :return: a sequence of strings representing the executable and its arguments
+        """
 
     @property
     def type(self) -> str:
         """Return the name of the class"""
         return type(self).__name__
 
-    def set_path(self, path: str) -> None:
-        if not isinstance(path, str):
-            raise TypeError("path argument must be a string")
-        self.path = path
-
     def __repr__(self) -> str:
         return self.name
+
+
+class CompoundEntity(abc.ABC):
+    """An interface to create different types of collections of launchables
+    from a single set of launch settings.
+
+    Objects that implement this interface describe how to turn their entities
+    into a collection of jobs and this interface will handle coercion into
+    other collections for jobs with slightly different launching behavior.
+    """
+
+    @abc.abstractmethod
+    def build_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
+    def as_job_group(self, settings: LaunchSettings) -> JobGroup:
+        return JobGroup(list(self.build_jobs(settings)))
