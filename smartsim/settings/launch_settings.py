@@ -129,11 +129,14 @@ class LaunchSettings(BaseSettings):
 
         if launch_args is not None:
             if not (
-                isinstance(launch_args, t.Mapping)
-                and all(isinstance(key, str) for key, val in launch_args.items())
+                isinstance(launch_args, t.Dict)
+                and all(
+                    isinstance(key, str) and isinstance(val, (str, type(None)))
+                    for key, val in launch_args.items()
+                )
             ):
                 raise TypeError(
-                    "batch_args argument was not of type mapping of str and str"
+                    "launch_args argument was not of type dict of str and str or None"
                 )
         self._arguments = self._get_arguments(launch_args)
         """The LaunchSettings child class based on launcher type"""
@@ -176,9 +179,12 @@ class LaunchSettings(BaseSettings):
         """
         if not (
             isinstance(value, dict)
-            and all(isinstance(key, str) for key, val in value.items())
+            and all(
+                isinstance(key, str) and isinstance(val, (str, type(None)))
+                for key, val in value.items()
+            )
         ):
-            raise TypeError("env_vars argument was not of type dic of str and str")
+            raise TypeError("env_vars argument was not of type dict of str and str")
 
         self._env_vars = copy.deepcopy(value)
 

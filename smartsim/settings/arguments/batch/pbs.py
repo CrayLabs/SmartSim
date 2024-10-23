@@ -63,9 +63,12 @@ class QsubBatchArguments(BatchArguments):
 
         :param num_nodes: number of nodes
         :raises TypeError: if not an int
+        :raises ValueError: if not positive int
         """
         if not isinstance(num_nodes, int):
             raise TypeError("num_nodes argument was not of type int")
+        if num_nodes <= 0:
+            raise ValueError("Number of nodes must be a positive value")
 
         self.set("nodes", str(num_nodes))
 
@@ -124,9 +127,12 @@ class QsubBatchArguments(BatchArguments):
 
         :param num_cpus: number of cpus per node in select
         :raises TypeError: if not an int
+        :raises ValueError: if not positive int
         """
         if not isinstance(num_cpus, int):
             raise TypeError("num_cpus argument was not of type int")
+        if num_cpus <= 0:
+            raise ValueError("Number of CPUs must be a positive value")
         self.set("ppn", str(num_cpus))
 
     def set_account(self, account: str) -> None:

@@ -97,11 +97,13 @@ def test_type_batch_scheduler():
         pytest.param("", id="empty string"),
         pytest.param(0, id="0"),
         pytest.param([], id="empty list"),
+        pytest.param({"valid": 1}, id="value not str or None"),
     ],
 )
 def test_type_batch_args(batch_args):
     with pytest.raises(
-        TypeError, match="batch_args argument was not of type mapping of str and str"
+        TypeError,
+        match="batch_args argument was not of type dict of str and str or None",
     ):
         BatchSettings(
             batch_scheduler="slurm",
@@ -113,7 +115,7 @@ def test_type_batch_args(batch_args):
 def test_type_env_vars():
     env_vars = "invalid"
     with pytest.raises(
-        TypeError, match="env_vars argument was not of type dic of str and str"
+        TypeError, match="env_vars argument was not of type dict of str and str"
     ):
         BatchSettings(batch_scheduler="slurm", env_vars=env_vars)
 

@@ -121,10 +121,13 @@ class BatchSettings(BaseSettings):
         if batch_args is not None:
             if not (
                 isinstance(batch_args, dict)
-                and all(isinstance(key, str) for key, val in batch_args.items())
+                and all(
+                    isinstance(key, str) and isinstance(val, (str, type(None)))
+                    for key, val in batch_args.items()
+                )
             ):
                 raise TypeError(
-                    "batch_args argument was not of type mapping of str and str"
+                    "batch_args argument was not of type dict of str and str or None"
                 )
         self._arguments = self._get_arguments(batch_args)
         """The BatchSettings child class based on scheduler type"""
@@ -151,10 +154,13 @@ class BatchSettings(BaseSettings):
         """Set the environment variables."""
 
         if not (
-            isinstance(value, t.Mapping)
-            and all(isinstance(key, str) for key, val in value.items())
+            isinstance(value, t.Dict)
+            and all(
+                isinstance(key, str) and isinstance(val, (str, type(None)))
+                for key, val in value.items()
+            )
         ):
-            raise TypeError("env_vars argument was not of type dic of str and str")
+            raise TypeError("env_vars argument was not of type dict of str and str")
 
         self._env_vars = copy.deepcopy(value)
 

@@ -76,9 +76,12 @@ class BsubBatchArguments(BatchArguments):
 
         :param smts: SMT (e.g on Summit: 1, 2, or 4)
         :raises TypeError: if not an int
+        :raises ValueError: if not positive int
         """
         if not isinstance(smts, int):
             raise TypeError("smts argument was not of type int")
+        if smts <= 0:
+            raise ValueError("smts must be a positive value")
         self.set("alloc_flags", str(smts))
 
     def set_project(self, project: str) -> None:
@@ -112,9 +115,12 @@ class BsubBatchArguments(BatchArguments):
 
         :param nodes: number of nodes
         :raises TypeError: if not an int
+        :raises ValueError: if not positive int
         """
         if not isinstance(num_nodes, int):
             raise TypeError("num_nodes argument was not of type int")
+        if num_nodes <= 0:
+            raise ValueError("Number of nodes must be a positive value")
         self.set("nnodes", str(num_nodes))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
@@ -139,9 +145,12 @@ class BsubBatchArguments(BatchArguments):
 
         :param tasks: number of tasks
         :raises TypeError: if not an int
+        :raises ValueError: if not positive int
         """
         if not isinstance(tasks, int):
             raise TypeError("tasks argument was not of type int")
+        if tasks <= 0:
+            raise ValueError("Number of tasks must be a positive value")
         self.set("n", str(tasks))
 
     def set_queue(self, queue: str) -> None:

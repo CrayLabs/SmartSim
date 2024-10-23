@@ -104,11 +104,13 @@ def test_type_launcher():
         pytest.param("", id="empty string"),
         pytest.param(0, id="0"),
         pytest.param([], id="empty list"),
+        pytest.param({"valid", 2}, id="val not str or None"),
     ],
 )
 def test_type_launch_args(launch_args):
     with pytest.raises(
-        TypeError, match="batch_args argument was not of type mapping of str and str"
+        TypeError,
+        match="launch_args argument was not of type dict of str and str or None",
     ):
         LaunchSettings(
             launcher="local", launch_args=launch_args, env_vars={"ENV": "VAR"}
@@ -118,6 +120,6 @@ def test_type_launch_args(launch_args):
 def test_type_env_vars():
     env_vars = "invalid"
     with pytest.raises(
-        TypeError, match="env_vars argument was not of type dic of str and str"
+        TypeError, match="env_vars argument was not of type dict of str and str"
     ):
         LaunchSettings(launcher="local", env_vars=env_vars)

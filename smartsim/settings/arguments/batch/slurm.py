@@ -74,9 +74,12 @@ class SlurmBatchArguments(BatchArguments):
 
         :param num_nodes: number of nodes
         :raises TypeError: if not an int
+        :raises ValueError: if not positive int
         """
         if not isinstance(num_nodes, int):
             raise TypeError("num_nodes argument was not of type int")
+        if num_nodes <= 0:
+            raise ValueError("Number of nodes must be a positive value")
         self.set("nodes", str(num_nodes))
 
     def set_account(self, account: str) -> None:
@@ -122,9 +125,12 @@ class SlurmBatchArguments(BatchArguments):
 
         :param num_cpus: number of cpus to use per task
         :raises TypeError: if not int
+        :raises ValueError: if not positive int
         """
         if not isinstance(cpus_per_task, int):
             raise TypeError("cpus_per_task argument was not of type int")
+        if cpus_per_task <= 0:
+            raise ValueError("CPUs per task must be a positive value")
         self.set("cpus-per-task", str(cpus_per_task))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
