@@ -31,7 +31,7 @@ Experiment
 Settings
 ========
 
-.. currentmodule:: smartsim
+.. currentmodule:: smartsim.settings
 
 Settings are provided to ``Application`` and ``Ensemble`` objects
 to provide parameters for how a job should be executed. Some
@@ -45,22 +45,21 @@ Types of Settings:
 
 .. autosummary::
 
-    settings.LaunchSettings
-    settings.arguments.launch.slurm.SlurmLaunchArguments
-    settings.arguments.launch.dragon.DragonLaunchArguments
-    settings.arguments.launch.pals.PalsMpiexecLaunchArguments
-    settings.arguments.launch.alps.AprunLaunchArguments
-    settings.arguments.launch.local.LocalLaunchArguments
-    settings.arguments.launch.mpi.MpiexecLaunchArguments
-    settings.arguments.launch.mpi.MpirunLaunchArguments
-    settings.arguments.launch.mpi.OrterunLaunchArguments
-    settings.arguments.launch.lsf.JsrunLaunchArguments
-    batch_settings.BatchSettings
-    settings.arguments.batch.slurm.SlurmBatchArguments
-    settings.arguments.batch.lsf.BsubBatchArguments
-    settings.arguments.batch.pbs.QsubBatchArguments
-    settings.sge_settings.SgeQsubBatchSettings
+    LaunchSettings
+    arguments.launch.slurm.SlurmLaunchArguments
+    arguments.launch.dragon.DragonLaunchArguments
+    arguments.launch.pals.PalsMpiexecLaunchArguments
+    arguments.launch.alps.AprunLaunchArguments
+    arguments.launch.local.LocalLaunchArguments
+    arguments.launch.mpi.MpiexecLaunchArguments
+    arguments.launch.mpi.MpirunLaunchArguments
+    arguments.launch.mpi.OrterunLaunchArguments
+    arguments.launch.lsf.JsrunLaunchArguments
    
+    arguments.batch.slurm.SlurmBatchArguments
+    arguments.batch.lsf.BsubBatchArguments
+    arguments.batch.pbs.QsubBatchArguments
+    .. batch_settings.BatchSettings
 
 Settings objects can accept a container object that defines a container
 runtime, image, and arguments to use for the workload. Below is a list of
@@ -94,6 +93,8 @@ launches that utilize a parallel launch binary like
 
 
 .. _srun_api:
+
+.. currentmodule:: smartsim.settings.arguments.launch.slurm
 
 SlurmLaunchArguments
 --------------------
@@ -136,6 +137,8 @@ steps to a batch.
 
 .. _aprun_api:
 
+.. currentmodule:: smartsim.settings.arguments.launch.alps
+
 AprunLaunchArguments
 --------------------
 
@@ -174,6 +177,8 @@ and within batch launches (e.g., ``QsubBatchSettings``)
 
 .. _dragonsettings_api:
 
+.. currentmodule:: smartsim.settings.arguments.launch.dragon
+
 DragonLaunchArguments
 ---------------------
 
@@ -203,6 +208,8 @@ for Slurm and PBS sessions, respectively).
 
 .. _jsrun_api:
 
+.. currentmodule:: smartsim.settings.arguments.launch.lsf
+
 JsrunLaunchArguments
 --------------------
 
@@ -231,6 +238,8 @@ and within batch launches (i.e. ``BsubBatchSettings``)
 
 .. _palsmpiexec_api:
 
+.. currentmodule:: smartsim.settings.arguments.launch.pals
+
 PalsMpiexecLaunchArguments
 --------------------------
 
@@ -258,6 +267,8 @@ PalsMpiexecLaunchArguments
 
 
 .. _openmpi_run_api:
+
+.. currentmodule:: smartsim.settings.arguments.launch.mpi
 
 MpirunLaunchArguments
 ---------------------
@@ -292,6 +303,8 @@ supported on Slurm and PBSpro.
 
 .. _openmpi_exec_api:
 
+.. currentmodule:: smartsim.settings.arguments.launch.mpi
+
 MpiexecLaunchArguments
 ----------------------
 
@@ -325,6 +338,8 @@ supported on Slurm and PBSpro.
     :members:
 
 .. _openmpi_orte_api:
+
+.. currentmodule:: smartsim.settings.arguments.launch.mpi
 
 OrterunLaunchArguments
 ----------------------
@@ -363,6 +378,8 @@ supported on Slurm and PBSpro.
 
 .. _sbatch_api:
 
+.. currentmodule:: smartsim.settings.arguments.batch.slurm
+
 SlurmBatchArguments
 -------------------
 
@@ -391,6 +408,8 @@ WLM systems.
     :members:
 
 .. _qsub_api:
+
+.. currentmodule:: smartsim.settings.arguments.batch.pbs
 
 QsubBatchArguments
 ------------------
@@ -421,9 +440,10 @@ be launched as a batch on PBSPro systems.
 
 .. _bsub_api:
 
+.. currentmodule:: smartsim.settings.arguments.batch.lsf
+
 BsubBatchArguments
 ------------------
-
 
 ``BsubBatchArguments`` are used to configure jobs that should
 be launched as a batch on LSF systems.
