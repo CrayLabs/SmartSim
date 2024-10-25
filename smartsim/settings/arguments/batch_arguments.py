@@ -51,7 +51,6 @@ class BatchArguments(ABC):
     @abstractmethod
     def scheduler_str(self) -> str:
         """Get the string representation of the launcher"""
-        pass
 
     @abstractmethod
     def set_account(self, account: str) -> None:
@@ -59,7 +58,6 @@ class BatchArguments(ABC):
 
         :param account: account id
         """
-        pass
 
     @abstractmethod
     def set_queue(self, queue: str) -> None:
@@ -69,7 +67,6 @@ class BatchArguments(ABC):
 
         :param queue: the partition to run the batch job on
         """
-        pass
 
     @abstractmethod
     def set_walltime(self, walltime: str) -> None:
@@ -77,7 +74,6 @@ class BatchArguments(ABC):
 
         :param walltime: wall time
         """
-        pass
 
     @abstractmethod
     def set_nodes(self, num_nodes: int) -> None:
@@ -85,7 +81,6 @@ class BatchArguments(ABC):
 
         :param num_nodes: number of nodes
         """
-        pass
 
     @abstractmethod
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
@@ -94,7 +89,6 @@ class BatchArguments(ABC):
         :param host_list: hosts to launch on
         :raises TypeError: if not str or list of str
         """
-        pass
 
     @abstractmethod
     def format_batch_args(self) -> t.List[str]:
@@ -102,7 +96,6 @@ class BatchArguments(ABC):
 
         :return: batch arguments for Sbatch
         """
-        pass
 
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nScheduler Arguments:\n{fmt_dict(self._batch_args)}"

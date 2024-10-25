@@ -28,12 +28,14 @@ from __future__ import annotations
 
 import collections
 import copy
+import itertools
+import sys
 import textwrap
 import typing as t
-from os import path as osp
+import warnings
 
 from .._core.generation.operations.operations import FileSysOperationSet
-from .._core.utils.helpers import expand_exe_path
+from .._core.utils.helpers import _stringify_id, expand_exe_path
 from ..log import get_logger
 from .entity import SmartSimEntity
 
@@ -217,9 +219,11 @@ class Application(SmartSimEntity):
         self.key_prefixing_enabled = copy.deepcopy(value)
 
     def as_executable_sequence(self) -> t.Sequence[str]:
-        """Converts the executable and its arguments into a sequence of program arguments.
+        """Converts the executable and its arguments into a sequence
+        of program arguments.
 
-        :return: a sequence of strings representing the executable and its arguments
+        :return: a sequence of strings representing the executable and
+        its arguments
         """
         return [self.exe, *self.exe_args]
 
@@ -247,10 +251,55 @@ class Application(SmartSimEntity):
 
         return list(exe_args)
 
+    @staticmethod
+    def _create_pinning_string(
+        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
+    ) -> t.Optional[str]:
+        """Create a comma-separated string of CPU ids. By default, ``None``
+        returns 0,1,...,cpus-1; an empty iterable will disable pinning
+        altogether, and an iterable constructs a comma separated string of
+        integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
+
+        :params pin_ids: CPU ids
+        :params cpu: number of CPUs
+        :raises TypeError: if pin id is not an iterable of ints
+        :returns: a comma separated string of CPU ids
+        """
+
+        try:
+            pin_ids = tuple(pin_ids) if pin_ids is not None else None
+        except TypeError:
+            raise TypeError(
+                "Expected a cpu pinning specification of type iterable of ints or "
+                f"iterables of ints. Instead got type `{type(pin_ids)}`"
+            ) from None
+
+        # Deal with MacOSX limitations first. The "None" (default) disables pinning
+        # and is equivalent to []. The only invalid option is a non-empty pinning
+        if sys.platform == "darwin":
+            if pin_ids:
+                warnings.warn(
+                    "CPU pinning is not supported on MacOSX. Ignoring pinning "
+                    "specification.",
+                    RuntimeWarning,
+                )
+            return None
+
+        # Flatten the iterable into a list and check to make sure that the resulting
+        # elements are all ints
+        if pin_ids is None:
+            return ",".join(_stringify_id(i) for i in range(cpus))
+        if not pin_ids:
+            return None
+        pin_ids = ((x,) if isinstance(x, int) else x for x in pin_ids)
+        to_fmt = itertools.chain.from_iterable(pin_ids)
+        return ",".join(sorted({_stringify_id(x) for x in to_fmt}))
+
     def __str__(self) -> str:  # pragma: no cover
         exe_args_str = "\n".join(self.exe_args)
         entities_str = "\n".join(str(entity) for entity in self.incoming_entities)
-        return textwrap.dedent(f"""\
+        return textwrap.dedent(
+            f"""\
             Name: {self.name}
             Type: {self.type}
             Executable:
@@ -260,4 +309,5 @@ class Application(SmartSimEntity):
             Incoming Entities:
             {entities_str}
             Key Prefixing Enabled: {self.key_prefixing_enabled}
-            """)
+            """
+        )

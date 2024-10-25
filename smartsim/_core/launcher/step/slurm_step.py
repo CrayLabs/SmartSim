@@ -29,7 +29,6 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
-from ....builders import Ensemble
 from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
@@ -211,9 +210,9 @@ class SrunStep(Step):
         args = self._get_exe_args_list(self.entity)
         return exe + args
 
-    # There is an issue here, exe and exe_args are no longer attached to the runsettings
-    # This functions is looping through the list of run_settings.mpmd and build the variable
-    # cmd
+    # There is an issue here, exe and exe_args are no longer attached to the
+    # runsettings. This functions is looping through the list of run_settings.mpmd
+    # and build the variable cmd
     def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.entity.exe

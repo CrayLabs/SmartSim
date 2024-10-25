@@ -32,7 +32,6 @@ import typing as t
 from smartsim.log import get_logger
 
 from ...batch_command import BatchSchedulerType
-from ...common import StringArgument
 from ..batch_arguments import BatchArguments
 
 logger = get_logger(__name__)
@@ -48,7 +47,7 @@ class SlurmBatchArguments(BatchArguments):
 
         :returns: The string representation of the scheduler
         """
-        return BatchSchedulerType.Slurm.value
+        return BatchSchedulerType.SLURM.value
 
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job

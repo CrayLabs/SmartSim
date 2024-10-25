@@ -33,7 +33,7 @@ from smartsim._core.dispatch import dispatch
 from smartsim._core.shell.shell_launcher import ShellLauncher, make_shell_format_fn
 from smartsim.log import get_logger
 
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launch_command import LauncherType
 
 logger = get_logger(__name__)
@@ -47,7 +47,7 @@ class LocalLaunchArguments(ShellLaunchArguments):
 
         :returns: The string representation of the launcher
         """
-        return LauncherType.Local.value
+        return LauncherType.LOCAL.value
 
     def format_env_vars(self, env_vars: t.Mapping[str, str | None]) -> list[str]:
         """Build bash compatible sequence of strings to specify an environment
@@ -74,14 +74,14 @@ class LocalLaunchArguments(ShellLaunchArguments):
             formatted.append(str(value))
         return formatted
 
-    def set(self, key: str, value: str | None) -> None:
+    def set(self, arg: str, val: str | None) -> None:
         """Set an arbitrary launch argument
 
-        :param key: The launch argument
-        :param value: A string representation of the value for the launch
+        :param arg: The launch argument
+        :param val: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
-        set_check_input(key, value)
-        if key in self._launch_args and key != self._launch_args[key]:
-            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
-        self._launch_args[key] = value
+        set_check_input(arg, val)
+        if arg in self._launch_args and arg != self._launch_args[arg]:
+            logger.warning(f"Overwritting argument '{arg}' with value '{val}'")
+        self._launch_args[arg] = val

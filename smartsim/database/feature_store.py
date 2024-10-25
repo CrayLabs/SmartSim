@@ -26,6 +26,11 @@
 
 # pylint: disable=too-many-lines
 
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+# pylint: disable=no-member,too-many-function-args,assignment-from-no-return,abstract-class-instantiated,no-value-for-parameter,unused-argument
+
 import itertools
 import os.path as osp
 import shutil
@@ -361,8 +366,8 @@ class FeatureStore:
     def remove_stale_files(self) -> None:
         """Can be used to remove feature store files of a previous launch"""
 
-        for fs in self.entities:
-            fs.remove_stale_fsnode_files()
+        for feature_store in self.entities:
+            feature_store.remove_stale_fsnode_files()
 
     def get_address(self) -> t.List[str]:
         """Return feature store addresses
@@ -420,10 +425,10 @@ class FeatureStore:
                     if hasattr(self.batch_settings, "set_cpus_per_task"):
                         self.batch_settings.set_cpus_per_task(num_cpus)
 
-        for fs in self.entities:
-            fs.run_settings.set_cpus_per_task(num_cpus)
-            if fs.is_mpmd and hasattr(fs.run_settings, "mpmd"):
-                for mpmd in fs.run_settings.mpmd:
+        for feature_store in self.entities:
+            feature_store.run_settings.set_cpus_per_task(num_cpus)
+            if feature_store.is_mpmd and hasattr(feature_store.run_settings, "mpmd"):
+                for mpmd in feature_store.run_settings.mpmd:
                     mpmd.set_cpus_per_task(num_cpus)
 
     def set_walltime(self, walltime: str) -> None:
@@ -458,8 +463,8 @@ class FeatureStore:
             self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
-            for fs in self.entities:
-                fs.set_hosts(host_list)
+            for feature_store in self.entities:
+                feature_store.set_hosts(host_list)
         elif (
             self.launcher == "pals"
             and isinstance(self.entities[0].run_settings, PalsMpiexecSettings)
@@ -468,15 +473,19 @@ class FeatureStore:
             # In this case, --hosts is a global option, set it to first run command
             self.entities[0].run_settings.set_hostlist(host_list)
         else:
-            for host, fs in zip(host_list, self.entities):
-                if isinstance(fs.run_settings, AprunSettings):
+            for host, feature_store in zip(host_list, self.entities):
+                if isinstance(feature_store.run_settings, AprunSettings):
                     if not self.batch:
-                        fs.run_settings.set_hostlist([host])
+                        feature_store.run_settings.set_hostlist([host])
                 else:
-                    fs.run_settings.set_hostlist([host])
+                    feature_store.run_settings.set_hostlist([host])
 
-                if fs.is_mpmd and hasattr(fs.run_settings, "mpmd"):
-                    for i, mpmd_runsettings in enumerate(fs.run_settings.mpmd, 1):
+                if feature_store.is_mpmd and hasattr(
+                    feature_store.run_settings, "mpmd"
+                ):
+                    for i, mpmd_runsettings in enumerate(
+                        feature_store.run_settings.mpmd, 1
+                    ):
                         mpmd_runsettings.set_hostlist(host_list[i])
 
     def set_batch_arg(self, arg: str, value: t.Optional[str] = None) -> None:
@@ -517,10 +526,12 @@ class FeatureStore:
                 "it is a reserved keyword in FeatureStore"
             )
         else:
-            for fs in self.entities:
-                fs.run_settings.run_args[arg] = value
-                if fs.is_mpmd and hasattr(fs.run_settings, "mpmd"):
-                    for mpmd in fs.run_settings.mpmd:
+            for feature_store in self.entities:
+                feature_store.run_settings.run_args[arg] = value
+                if feature_store.is_mpmd and hasattr(
+                    feature_store.run_settings, "mpmd"
+                ):
+                    for mpmd in feature_store.run_settings.mpmd:
                         mpmd.run_args[arg] = value
 
     def enable_checkpoints(self, frequency: int) -> None:
@@ -854,11 +865,11 @@ class FeatureStore:
 
     def _get_fs_hosts(self) -> t.List[str]:
         hosts = []
-        for fs in self.entities:
-            if not fs.is_mpmd:
-                hosts.append(fs.host)
+        for feature_store in self.entities:
+            if not feature_store.is_mpmd:
+                hosts.append(feature_store.host)
             else:
-                hosts.extend(fs.hosts)
+                hosts.extend(feature_store.hosts)
         return hosts
 
     def _check_network_interface(self) -> None:

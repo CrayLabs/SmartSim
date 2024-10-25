@@ -83,7 +83,8 @@ class CommandList(MutableSequence[Command]):
                 isinstance(item, str) for item in sublist.command
             ):
                 raise TypeError(
-                    "Value sublists must be a list of Commands when assigning to a slice"
+                    "Value sublists must be a list of Commands when \
+assigning to a slice"
                 )
         self._commands[idx] = (deepcopy(val) for val in value)
 
@@ -95,9 +96,9 @@ class CommandList(MutableSequence[Command]):
         """Get the length of the Command list."""
         return len(self._commands)
 
-    def insert(self, idx: int, value: Command) -> None:
+    def insert(self, index: int, value: Command) -> None:
         """Insert a Command at the specified index."""
-        self._commands.insert(idx, value)
+        self._commands.insert(index, value)
 
     def __str__(self) -> str:  # pragma: no cover
         string = "\n\nCommand List:\n\n"

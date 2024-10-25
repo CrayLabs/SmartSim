@@ -48,14 +48,13 @@ class BaseJobGroup(Launchable, MutableSequence[BaseJob], ABC):
         It represents the collection of jobs associated with an
         instance of the BaseJobGroup abstract class.
         """
-        pass
 
-    def insert(self, idx: int, value: BaseJob) -> None:
+    def insert(self, index: int, value: BaseJob) -> None:
         """Inserts the given value at the specified index (idx) in
         the list of jobs. If the index is out of bounds, the method
         prints an error message.
         """
-        self.jobs.insert(idx, value)
+        self.jobs.insert(index, value)
 
     def __iter__(self) -> t.Iterator[BaseJob]:
         """Allows iteration over the jobs in the collection."""

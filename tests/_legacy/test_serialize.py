@@ -36,7 +36,7 @@ from smartsim import Experiment
 from smartsim._core._cli import utils
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.utils import serialize
-from smartsim.database.orchestrator import FeatureStore
+from smartsim.database.feature_store import FeatureStore
 
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 

@@ -27,14 +27,12 @@
 import argparse
 import os
 import platform
-import sys
 import typing as t
-from pathlib import Path
 
 from tabulate import tabulate
 
 from smartsim._core._cli.scripts.dragon_install import install_dragon
-from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
+from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, pip
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
     BuildEnv,
@@ -45,10 +43,14 @@ from smartsim._core._install.buildenv import (
 )
 from smartsim._core._install.builder import BuildError, Device
 from smartsim._core.config import CONFIG
-from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
+
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+# pylint: disable=too-many-statements,unused-variable,no-value-for-parameter,no-member,invalid-name,condition-evals-to-constant,unused-variable
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.

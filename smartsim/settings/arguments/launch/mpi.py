@@ -37,6 +37,12 @@ from ...common import set_check_input
 from ...launch_command import LauncherType
 
 logger = get_logger(__name__)
+
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+# pylint: disable=no-self-use
+
 _as_mpirun_command = make_shell_format_fn("mpirun")
 _as_mpiexec_command = make_shell_format_fn("mpiexec")
 _as_orterun_command = make_shell_format_fn("orterun")
@@ -204,25 +210,25 @@ class _BaseMPILaunchArguments(ShellLaunchArguments):
                 args += [prefix + opt, str(value)]
         return args
 
-    def set(self, key: str, value: str | None) -> None:
+    def set(self, arg: str, val: str | None) -> None:
         """Set an arbitrary launch argument
 
-        :param key: The launch argument
-        :param value: A string representation of the value for the launch
+        :param arg: The launch argument
+        :param val: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
-        set_check_input(key, value)
-        if key in self._reserved_launch_args():
+        set_check_input(arg, val)
+        if arg in self._reserved_launch_args():
             logger.warning(
                 (
-                    f"Could not set argument '{key}': "
+                    f"Could not set argument '{arg}': "
                     f"it is a reserved argument of '{type(self).__name__}'"
                 )
             )
             return
-        if key in self._launch_args and key != self._launch_args[key]:
-            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
-        self._launch_args[key] = value
+        if arg in self._launch_args and arg != self._launch_args[arg]:
+            logger.warning(f"Overwritting argument '{arg}' with value '{val}'")
+        self._launch_args[arg] = val
 
 
 @dispatch(with_format=_as_mpirun_command, to_launcher=ShellLauncher)
@@ -232,7 +238,7 @@ class MpirunLaunchArguments(_BaseMPILaunchArguments):
 
         :returns: The string representation of the launcher
         """
-        return LauncherType.Mpirun.value
+        return LauncherType.MPIRUN.value
 
 
 @dispatch(with_format=_as_mpiexec_command, to_launcher=ShellLauncher)
@@ -242,7 +248,7 @@ class MpiexecLaunchArguments(_BaseMPILaunchArguments):
 
         :returns: The string representation of the launcher
         """
-        return LauncherType.Mpiexec.value
+        return LauncherType.MPIEXEC.value
 
 
 @dispatch(with_format=_as_orterun_command, to_launcher=ShellLauncher)
@@ -252,4 +258,4 @@ class OrterunLaunchArguments(_BaseMPILaunchArguments):
 
         :returns: The string representation of the launcher
         """
-        return LauncherType.Orterun.value
+        return LauncherType.ORTERUN.value

@@ -29,8 +29,6 @@ import pathlib
 import typing as t
 from dataclasses import dataclass, field
 
-from smartsim.entity._mock import Mock
-
 from ...builders import Ensemble
 from ...database import FeatureStore
 from ...entity import Application, FSNode, SmartSimEntity

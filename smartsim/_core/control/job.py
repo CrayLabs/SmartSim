@@ -29,8 +29,6 @@ import time
 import typing as t
 from dataclasses import dataclass
 
-from smartsim.entity._mock import Mock
-
 from ...entity import SmartSimEntity
 from ...status import JobStatus
 
@@ -78,7 +76,8 @@ class JobEntity:
 
     @property
     def is_fs(self) -> bool:
-        """Returns `True` if the entity represents a feature store or feature store shard"""
+        """Returns `True` if the entity represents a feature store or
+        feature store shard"""
         return self.type in ["featurestore", "fsnode"]
 
     @property

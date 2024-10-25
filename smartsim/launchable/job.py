@@ -57,8 +57,9 @@ class Job(BaseJob):
     ):
         """Initialize a ``Job``
 
-        Jobs require a SmartSimEntity and a LaunchSettings. Optionally, users may provide
-        a name. To create a simple Job that echos `Hello World!`, consider the example below:
+        Jobs require a SmartSimEntity and a LaunchSettings. Optionally,
+        users may provide a name. To create a simple Job that echos `Hello World!`,
+        consider the example below:
 
         .. highlight:: python
         .. code-block:: python
@@ -118,6 +119,7 @@ class Job(BaseJob):
         :param value: the SmartSimEntity
         :raises Type Error: if entity is not SmartSimEntity
         """
+        # pylint: disable=import-outside-toplevel
         from smartsim.entity.entity import SmartSimEntity
 
         if not isinstance(value, SmartSimEntity):

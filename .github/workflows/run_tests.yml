@@ -132,8 +132,8 @@ jobs:
           make check-mypy
 
       # TODO: Re-enable static analysis once API is firmed up
-      # - name: Run Pylint
-      #   run: make check-lint
+       - name: Run Pylint
+        run: make check-lint
 
       # Run isort/black style check
       - name: Run isort

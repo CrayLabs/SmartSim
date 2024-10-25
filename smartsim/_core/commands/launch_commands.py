@@ -40,11 +40,9 @@ class LaunchCommands:
 
     def __str__(self) -> str:  # pragma: no cover
         string = "\n\nPrelaunch Command List:\n"
-        for pre_cmd in self.prelaunch_command:
-            string += f"{pre_cmd}\n"
+        string += f"\n{' '.join(str(pre_cmd) for pre_cmd in self.prelaunch_command)}"
         string += "\n\nLaunch Command List:\n"
-        for launch_cmd in self.launch_command:
-            string += f"{launch_cmd}\n"
+        string += f"\n{' '.join(str(launch_cmd) for launch_cmd in self.launch_command)}"
         string += "\n\nPostlaunch Command List:\n"
         for post_cmd in self.postlaunch_command:
             string += f"{post_cmd}\n"

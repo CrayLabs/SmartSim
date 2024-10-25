@@ -48,6 +48,7 @@ from .step import Step
 logger = get_logger(__name__)
 
 
+# pylint: disable=too-many-function-args
 class DragonStep(Step):
     def __init__(self, name: str, cwd: str, run_settings: DragonRunSettings) -> None:
         """Initialize a srun job step

@@ -26,11 +26,17 @@
 
 import typing as t
 
+from smartsim.settings.batch_settings import BatchSettings
+
 from ..error import LauncherUnsupportedFeature, SSConfigError
 from ..log import get_logger
-from .base import BatchSettings
 
 logger = get_logger(__name__)
+
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+# pylint: disable=no-self-use
 
 
 class SgeQsubBatchSettings(BatchSettings):
@@ -55,7 +61,10 @@ class SgeQsubBatchSettings(BatchSettings):
         :param resources: overrides for resource arguments
         :param batch_args: overrides for SGE batch arguments
         """
-
+        if batch_args is None:
+            batch_args = {}
+        self.account = account
+        self.time = time
         if "nodes" in kwargs:
             kwargs["nodes"] = 0
 
@@ -70,8 +79,6 @@ class SgeQsubBatchSettings(BatchSettings):
         super().__init__(
             "qsub",
             batch_args=batch_args,
-            account=account,
-            time=time,
             **kwargs,
         )
 

@@ -28,11 +28,7 @@
 class SmartSimObject:
     """Base Class for SmartSim Objects"""
 
-    ...
-
 
 class Launchable(SmartSimObject):
     """Base Class for anything than can be passed
     into Experiment.start()"""
-
-    ...

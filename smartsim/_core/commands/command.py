@@ -89,9 +89,9 @@ class Command(MutableSequence[str]):
         """Get the length of the command list."""
         return len(self._command)
 
-    def insert(self, idx: int, value: str) -> None:
+    def insert(self, index: int, value: str) -> None:
         """Insert a command at the specified index."""
-        self._command.insert(idx, value)
+        self._command.insert(index, value)
 
     def __str__(self) -> str:  # pragma: no cover
         string = f"\nCommand: {' '.join(str(cmd) for cmd in self.command)}"

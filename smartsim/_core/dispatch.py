@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import dataclasses
-import os
 import pathlib
 import typing as t
 

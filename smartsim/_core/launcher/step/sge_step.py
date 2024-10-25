@@ -33,6 +33,9 @@ from .step import Step
 logger = get_logger(__name__)
 
 
+# pylint: disable=too-many-function-args
+
+
 class SgeQsubBatchStep(Step):
     def __init__(
         self, name: str, cwd: str, batch_settings: SgeQsubBatchSettings

@@ -40,6 +40,11 @@ from ...launch_command import LauncherType
 
 logger = get_logger(__name__)
 
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+# pylint: disable=no-self-use
+
 
 def _as_jsrun_command(
     args: ShellLaunchArguments,
@@ -69,7 +74,7 @@ class JsrunLaunchArguments(ShellLaunchArguments):
 
         :returns: The string representation of the launcher
         """
-        return LauncherType.Lsf.value
+        return LauncherType.LSF.value
 
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments.
@@ -131,22 +136,22 @@ class JsrunLaunchArguments(ShellLaunchArguments):
                     args += ["=".join((prefix + opt, str(value)))]
         return args
 
-    def set(self, key: str, value: str | None) -> None:
+    def set(self, arg: str, val: str | None) -> None:
         """Set an arbitrary launch argument
 
-        :param key: The launch argument
-        :param value: A string representation of the value for the launch
+        :param arg: The launch argument
+        :param val: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
-        set_check_input(key, value)
-        if key in self._reserved_launch_args():
+        set_check_input(arg, val)
+        if arg in self._reserved_launch_args():
             logger.warning(
                 (
-                    f"Could not set argument '{key}': "
+                    f"Could not set argument '{arg}': "
                     f"it is a reserved argument of '{type(self).__name__}'"
                 )
             )
             return
-        if key in self._launch_args and key != self._launch_args[key]:
-            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
-        self._launch_args[key] = value
+        if arg in self._launch_args and arg != self._launch_args[arg]:
+            logger.warning(f"Overwritting argument '{arg}' with value '{val}'")
+        self._launch_args[arg] = val

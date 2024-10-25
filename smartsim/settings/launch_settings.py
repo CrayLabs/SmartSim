@@ -114,8 +114,8 @@ class LaunchSettings(BaseSettings):
         :param launcher: The type of launcher to initialize (e.g., Dragon, Slurm,
             PALS, ALPS, Local, Mpiexec, Mpirun, Orterun, LSF)
         :param launch_args: A dictionary of arguments for the launcher, where the keys
-            are strings and the values can be either strings or None. This argument is optional
-            and defaults to None.
+            are strings and the values can be either strings or None.
+            This argument is optional and defaults to None.
         :param env_vars: Environment variables for the launch settings, where the keys
             are strings and the values can be either strings or None. This argument is
             also optional and defaults to None.
@@ -124,8 +124,8 @@ class LaunchSettings(BaseSettings):
         try:
             self._launcher = LauncherType(launcher)
             """The launcher type"""
-        except ValueError:
-            raise ValueError(f"Invalid launcher type: {launcher}")
+        except ValueError as exc:
+            raise ValueError(f"Invalid launcher type: {launcher}") from exc
         self._arguments = self._get_arguments(launch_args)
         """The LaunchSettings child class based on launcher type"""
         self.env_vars = env_vars or {}
@@ -176,26 +176,25 @@ class LaunchSettings(BaseSettings):
         :returns: The appropriate type for the settings instance.
         :raises ValueError: An invalid launcher type was provided.
         """
-        if self._launcher == LauncherType.Slurm:
+        if self._launcher == LauncherType.SLURM:
             return SlurmLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Mpiexec:
+        if self._launcher == LauncherType.MPIEXEC:
             return MpiexecLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Mpirun:
+        if self._launcher == LauncherType.MPIRUN:
             return MpirunLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Orterun:
+        if self._launcher == LauncherType.ORTERUN:
             return OrterunLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Alps:
+        if self._launcher == LauncherType.ALPS:
             return AprunLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Lsf:
+        if self._launcher == LauncherType.LSF:
             return JsrunLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Pals:
+        if self._launcher == LauncherType.PALS:
             return PalsMpiexecLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Dragon:
+        if self._launcher == LauncherType.DRAGON:
             return DragonLaunchArguments(launch_args)
-        elif self._launcher == LauncherType.Local:
+        if self._launcher == LauncherType.LOCAL:
             return LocalLaunchArguments(launch_args)
-        else:
-            raise ValueError(f"Invalid launcher type: {self._launcher}")
+        raise ValueError(f"Invalid launcher type: {self._launcher}")
 
     def update_env(self, env_vars: t.Dict[str, str | None]) -> None:
         """Update the job environment variables

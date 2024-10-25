@@ -38,6 +38,12 @@ if t.TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+
+# pylint: disable=unsubscriptable-object
+
 
 def form_name(*args: t.Any) -> str:
     return "_".join(str(arg) for arg in args if arg is not None)
@@ -81,7 +87,6 @@ class DataInfo:
 
         :param client: Client to connect to Feature Store
         """
-        ...
 
     def download(self) -> None:
         """Download DataInfo information from FeatureStore
@@ -128,6 +133,7 @@ class TrainingDataUploader:
 
     """
 
+    # pylint: disable=unused-argument,unsubscriptable-object
     def __init__(
         self,
         list_name: str = "training_data",
@@ -187,7 +193,7 @@ class TrainingDataUploader:
 
         if self.verbose:
             logger.info(f"Added dataset to list {self.list_name}")
-            logger.info(f"List length")
+            logger.info("List length")
 
         self.batch_idx += 1
 

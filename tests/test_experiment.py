@@ -40,7 +40,7 @@ import pytest
 
 from smartsim._core import dispatch
 from smartsim._core.control.launch_history import LaunchHistory
-from smartsim._core.generation.generator import Job_Path
+from smartsim._core.generation.generator import JobPath
 from smartsim._core.utils.launcher import LauncherProtocol, create_job_id
 from smartsim.builders.ensemble import Ensemble
 from smartsim.entity import entity
@@ -72,7 +72,7 @@ def experiment(monkeypatch, test_dir, dispatcher):
     monkeypatch.setattr(
         exp,
         "_generate",
-        lambda generator, job, idx: Job_Path(
+        lambda generator, job, idx: JobPath(
             "/tmp/job", "/tmp/job/out.txt", "/tmp/job/err.txt"
         ),
     )

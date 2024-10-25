@@ -30,6 +30,6 @@ from enum import Enum
 class BatchSchedulerType(Enum):
     """Schedulers supported by SmartSim."""
 
-    Slurm = "slurm"
-    Pbs = "pbs"
-    Lsf = "lsf"
+    SLURM = "slurm"
+    PBS = "pbs"
+    LSF = "lsf"

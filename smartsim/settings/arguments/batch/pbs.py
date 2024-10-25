@@ -33,7 +33,6 @@ from smartsim.log import get_logger
 
 from ....error import SSConfigError
 from ...batch_command import BatchSchedulerType
-from ...common import StringArgument
 from ..batch_arguments import BatchArguments
 
 logger = get_logger(__name__)
@@ -49,7 +48,7 @@ class QsubBatchArguments(BatchArguments):
 
         :returns: The string representation of the scheduler
         """
-        return BatchSchedulerType.Pbs.value
+        return BatchSchedulerType.PBS.value
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job

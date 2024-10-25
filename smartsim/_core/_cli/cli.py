@@ -35,7 +35,6 @@ from smartsim._core._cli.build import execute as build_execute
 from smartsim._core._cli.clean import configure_parser as clean_parser
 from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
-from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.info import execute as info_execute
 from smartsim._core._cli.plugin import plugins
 from smartsim._core._cli.site import execute as site_execute

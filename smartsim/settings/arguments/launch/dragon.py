@@ -45,7 +45,7 @@ class DragonLaunchArguments(LaunchArguments):
 
         :returns: The string representation of the launcher
         """
-        return LauncherType.Dragon.value
+        return LauncherType.DRAGON.value
 
     def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes
@@ -62,17 +62,17 @@ class DragonLaunchArguments(LaunchArguments):
         self.set("tasks_per_node", str(tasks_per_node))
 
     @override
-    def set(self, key: str, value: str | None) -> None:
+    def set(self, arg: str, val: str | None) -> None:
         """Set an arbitrary launch argument
 
-        :param key: The launch argument
-        :param value: A string representation of the value for the launch
+        :param arg: The launch argument
+        :param val: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
-        set_check_input(key, value)
-        if key in self._launch_args and key != self._launch_args[key]:
-            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
-        self._launch_args[key] = value
+        set_check_input(arg, val)
+        if arg in self._launch_args and arg != self._launch_args[arg]:
+            logger.warning(f"Overwritting argument '{arg}' with value '{val}'")
+        self._launch_args[arg] = val
 
     def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
         """Specify the node feature for this job

@@ -26,7 +26,6 @@
 
 # pylint: disable=too-many-lines
 
-import concurrent.futures
 import enum
 import fileinput
 import itertools
@@ -36,7 +35,6 @@ import re
 import shutil
 import stat
 import subprocess
-import sys
 import tarfile
 import tempfile
 import typing as t
@@ -117,6 +115,7 @@ class Platform(t.NamedTuple):
     architecture: Architecture
 
 
+# TODO: Add FeatureStoreBuilder member
 class Builder:
     """Base class for building third-party libraries"""
 

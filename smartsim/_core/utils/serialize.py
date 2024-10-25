@@ -37,10 +37,11 @@ import smartsim.log
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.builders import Ensemble
-    from smartsim.database.orchestrator import FeatureStore
+    from smartsim.database.feature_store import FeatureStore
     from smartsim.entity import Application, FSNode
     from smartsim.entity.dbobject import FSModel, FSScript
-    from smartsim.settings.base import BatchSettings, RunSettings
+    from smartsim.settings.batch_settings import BatchSettings
+    from smartsim.settings.launch_settings import LaunchSettings
 
 
 TStepLaunchMetaData = t.Tuple[
@@ -50,6 +51,11 @@ TStepLaunchMetaData = t.Tuple[
 MANIFEST_FILENAME: t.Final[str] = "manifest.json"
 
 _LOGGER = smartsim.log.get_logger(__name__)
+
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+# pylint: disable=assignment-from-none
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
@@ -193,7 +199,7 @@ def _dictify_ensemble(
     }
 
 
-def _dictify_run_settings(run_settings: RunSettings) -> t.Dict[str, t.Any]:
+def _dictify_run_settings(run_settings: LaunchSettings) -> t.Dict[str, t.Any]:
     # TODO: remove this downcast
     if hasattr(run_settings, "mpmd") and run_settings.mpmd:
         _LOGGER.warning(
@@ -219,7 +225,7 @@ def _dictify_batch_settings(batch_settings: BatchSettings) -> t.Dict[str, t.Any]
 
 
 def _dictify_fs(
-    fs: FeatureStore,
+    feature_store: FeatureStore,
     nodes: t.Sequence[t.Tuple[FSNode, TStepLaunchMetaData]],
 ) -> t.Dict[str, t.Any]:
     fs_path = _utils.get_fs_path()
@@ -229,9 +235,9 @@ def _dictify_fs(
         fs_type = "Unknown"
 
     return {
-        "name": fs.name,
+        "name": feature_store.name,
         "type": fs_type,
-        "interface": fs._interfaces,  # pylint: disable=protected-access
+        "interface": feature_store._interfaces,  # pylint: disable=protected-access
         "shards": [
             {
                 **shard.to_dict(),
@@ -239,14 +245,18 @@ def _dictify_fs(
                 "out_file": out_file,
                 "err_file": err_file,
                 "memory_file": (
-                    str(status_dir / "memory.csv") if fs.telemetry.is_enabled else ""
+                    str(status_dir / "memory.csv")
+                    if feature_store.telemetry.is_enabled
+                    else ""
                 ),
                 "client_file": (
-                    str(status_dir / "client.csv") if fs.telemetry.is_enabled else ""
+                    str(status_dir / "client.csv")
+                    if feature_store.telemetry.is_enabled
+                    else ""
                 ),
                 "client_count_file": (
                     str(status_dir / "client_count.csv")
-                    if fs.telemetry.is_enabled
+                    if feature_store.telemetry.is_enabled
                     else ""
                 ),
                 "telemetry_metadata": {

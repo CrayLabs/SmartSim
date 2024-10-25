@@ -32,9 +32,6 @@ from pathlib import Path
 
 import psutil
 
-from ...error import SSConfigError
-from ..utils.helpers import expand_exe_path
-
 # Configuration Values
 #
 # These values can be set through environment variables to

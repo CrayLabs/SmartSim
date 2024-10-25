@@ -46,13 +46,12 @@ from smartsim.launchable.job import Job
 from smartsim.status import TERMINAL_STATUSES, InvalidJobStatus, JobStatus
 
 from ._core import Generator, Manifest
-from ._core.generation.generator import Job_Path
+from ._core.generation.generator import JobPath
 from .entity import TelemetryConfiguration
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
-    from smartsim.launchable.job import Job
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -203,18 +202,18 @@ class Experiment:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             exe = job.entity.as_executable_sequence()
-            dispatch = dispatcher.get_dispatch(args)
+            dispatch_instance = dispatcher.get_dispatch(args)
             try:
                 # Check to see if one of the existing launchers can be
                 # configured to handle the launch arguments ...
-                launch_config = dispatch.configure_first_compatible_launcher(
+                launch_config = dispatch_instance.configure_first_compatible_launcher(
                     from_available_launchers=self._launch_history.iter_past_launchers(),
                     with_arguments=args,
                 )
             except errors.LauncherNotFoundError:
                 # ... otherwise create a new launcher that _can_ handle the
                 # launch arguments and configure _that_ one
-                launch_config = dispatch.create_new_launcher_configuration(
+                launch_config = dispatch_instance.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
             # Generate the job directory and return the generated job path
@@ -354,7 +353,7 @@ class Experiment:
         return final
 
     @_contextualize
-    def _generate(self, generator: Generator, job: Job, job_index: int) -> Job_Path:
+    def _generate(self, generator: Generator, job: Job, job_index: int) -> JobPath:
         """Generate the directory structure and files for a ``Job``
 
         If files or directories are attached to an ``Application`` object
@@ -483,9 +482,9 @@ class Experiment:
         """Check if fs_identifier already exists when calling create_feature_store"""
         if fs_identifier in self._fs_identifiers:
             logger.warning(
-                f"A feature store with the identifier {fs_identifier} has already been made "
-                "An error will be raised if multiple Feature Stores are started "
-                "with the same identifier"
+                f"A feature store with the identifier {fs_identifier} has already "
+                "been made. An error will be raised if multiple Feature Stores "
+                "are started with the same identifier"
             )
         # Otherwise, add
         self._fs_identifiers.add(fs_identifier)

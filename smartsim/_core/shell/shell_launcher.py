@@ -40,7 +40,6 @@ from smartsim._core.utils import helpers
 from smartsim._core.utils.launcher import create_job_id
 from smartsim.error import errors
 from smartsim.log import get_logger
-from smartsim.settings.arguments.launch_arguments import LaunchArguments
 from smartsim.status import JobStatus
 from smartsim.types import LaunchedJobID
 
@@ -111,13 +110,14 @@ def make_shell_format_fn(
             else exe
         )
         # pylint: disable-next=consider-using-with
-        return ShellLauncherCommand(
+        return ShellLauncherCommand(  # pylint: disable-next=unspecified-encoding
             env, pathlib.Path(path), open(stdout_path), open(stderr_path), command_tuple
         )
 
     return impl
 
 
+# pylint: disable=no-self-use
 class ShellLauncher:
     """A launcher for launching/tracking local shell commands"""
 

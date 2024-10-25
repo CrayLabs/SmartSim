@@ -28,7 +28,6 @@ import json
 import logging
 import os
 import pathlib
-import threading
 import typing as t
 
 from watchdog.events import (

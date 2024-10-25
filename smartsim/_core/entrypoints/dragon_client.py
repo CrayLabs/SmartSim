@@ -148,6 +148,7 @@ def execute_entrypoint(args: DragonClientEntrypointArgs) -> int:
 
     requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=True))
 
+    # TODO: DragonConnector constructor needs a path
     connector = DragonConnector()
 
     for request in requests:
