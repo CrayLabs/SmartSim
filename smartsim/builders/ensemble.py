@@ -113,6 +113,7 @@ class Ensemble(entity.CompoundEntity):
             ensemble = Ensemble(name="name",exe="python",exe_arg_parameters=exe_arg_parameters,
                         file_parameters=file_params,permutation_strategy="step", replicas=2)
 
+
         This configuration will result in each ParamSet being replicated, effectively doubling
         the number of Applications created.
 
