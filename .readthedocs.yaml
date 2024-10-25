@@ -27,7 +27,7 @@ build:
       - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
     # post_create_environment:
       - pwd
-      - python -m pip install .[dev,docs]
+      - python -m pip install -e .[dev,docs]
       - cd smartredis; python -m pip install .
       - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
       - ln -s smartredis/examples ./examples
@@ -35,7 +35,7 @@ build:
       - smart build --device cpu --dragon -v
       - find / -name "libdragon.so*"
       - |
-        export LD_LIBRARY_PATH=$PWD/smartsim/_core/.dragon/dragon-0.9/lib/:$LD_LIBRARY_PATH &&
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(dirname $(find $PWD -name "libdragon.so")) &&
         make docs &&
         mkdir -p _readthedocs/ &&
         cp -r doc/_build/html/ _readthedocs/
