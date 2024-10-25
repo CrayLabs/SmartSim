@@ -53,4 +53,4 @@ as Zoom, Teams, Google Meet, etc.
   it is human to err and blaming each other does not get us anywhere. Rather,
   offer to help resolve issues and to help learn from mistakes.
 
-Original text courtesy of the `Speak Up! project <http://web.archive.org/web/20141109123859/http://speakup.io/coc.html>`_.
+Original text courtesy of the `Speak Up! project <https://web.archive.org/web/20141109123859/http://speakup.io/coc.html>`_.

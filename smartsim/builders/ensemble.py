@@ -105,6 +105,7 @@ class Ensemble(entity.CompoundEntity):
         example, we can double our Application output:
 
         .. highlight:: python
+
         .. code-block:: python
 
             file_params={"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
