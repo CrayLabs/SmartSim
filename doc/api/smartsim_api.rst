@@ -194,13 +194,13 @@ for Slurm and PBS sessions, respectively).
 
     DragonLaunchArguments.launcher_str
     DragonLaunchArguments.set_nodes
-    DragonRunSettings.set_tasks_per_node
+    DragonLaunchArguments.set_tasks_per_node
     DragonLaunchArguments.set
     DragonLaunchArguments.set_node_feature
     DragonLaunchArguments.set_cpu_affinity
     DragonLaunchArguments.set_gpu_affinity
 
-.. autoclass:: DragonRunSettings
+.. autoclass:: DragonLaunchArguments
     :inherited-members:
     :undoc-members:
     :members:
@@ -230,7 +230,7 @@ and within batch launches (i.e. ``BsubBatchSettings``)
     JsrunLaunchArguments.format_launch_args
     JsrunLaunchArguments.set
 
-.. autoclass:: JsrunSettings
+.. autoclass:: JsrunLaunchArguments
     :inherited-members:
     :undoc-members:
     :members:
@@ -367,7 +367,7 @@ supported on Slurm and PBSpro.
     OrterunLaunchArguments.format_launch_args
     OrterunLaunchArguments.set
 
-.. autoclass:: OrterunSettings
+.. autoclass:: OrterunLaunchArguments
     :inherited-members:
     :undoc-members:
     :members:
