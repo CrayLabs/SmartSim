@@ -247,7 +247,7 @@ def test_retrieve_asset_info(
         )
         ctx.setattr(
             smartsim._core._cli.scripts.dragon_install,
-            "is_crayex_platform",
+            "is_hsn_platform",
             lambda: is_hsn,
         )
         ctx.setattr(
@@ -310,7 +310,7 @@ def test_is_hsn_missing_ldconfig(monkeypatch: pytest.MonkeyPatch) -> None:
             mock_util_check,
         )
 
-        assert not helpers.is_crayex_platform()
+        assert not helpers.is_hsn_platform()
 
 
 def test_is_hsn_missing_fi_info(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -330,7 +330,7 @@ def test_is_hsn_missing_fi_info(monkeypatch: pytest.MonkeyPatch) -> None:
             mock_util_check,
         )
 
-        assert not helpers.is_crayex_platform()
+        assert not helpers.is_hsn_platform()
 
 
 @pytest.mark.parametrize(
@@ -367,7 +367,7 @@ def test_is_hsn(
             lambda x: (output, return_code),
         )
 
-        platform_result = helpers.is_crayex_platform()
+        platform_result = helpers.is_hsn_platform()
         assert is_hsn == platform_result
 
 

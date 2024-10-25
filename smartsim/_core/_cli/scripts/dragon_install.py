@@ -9,7 +9,7 @@ from github.GitReleaseAsset import GitReleaseAsset
 from smartsim._core._cli.utils import pip
 from smartsim._core._install.utils import retrieve
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import check_platform, is_crayex_platform
+from smartsim._core.utils.helpers import check_platform, is_hsn_platform
 from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import get_logger
 
@@ -62,7 +62,7 @@ def _platform_filter(asset_name: str) -> bool:
     :returns: True if supplied value is correct for current platform"""
     key = "hsn"
     is_cray = key in asset_name.lower()
-    if is_crayex_platform():
+    if is_hsn_platform():
         return is_cray
     return not is_cray
 
@@ -137,7 +137,7 @@ def retrieve_asset_info() -> GitReleaseAsset:
     asset = filter_assets(assets)
 
     platform_result = check_platform()
-    if not platform_result.is_cray:
+    if not platform_result.is_hsn:
         logger.warning("Installing Dragon without HSTA support")
         for msg in platform_result.failures:
             logger.warning(msg)

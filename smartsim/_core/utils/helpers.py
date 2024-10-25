@@ -250,7 +250,6 @@ def installed_redisai_backends(
     :param backends_path: path containing backends
     :return: list of installed RedisAI backends
     """
-    # import here to avoid circular import
     base_path = redis_install_base(backends_path)
     backends: t.Set[_TRedisAIBackendStr] = {
         "tensorflow",
@@ -318,7 +317,7 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
     return process.stdout.decode("utf-8"), process.returncode
 
 
-class CrayExPlatformResult:
+class HSNPlatformResult:
     locate_msg = "Unable to locate `{0}`."
 
     def __init__(self, ldconfig: t.Optional[str], fi_info: t.Optional[str]) -> None:
@@ -337,7 +336,7 @@ class CrayExPlatformResult:
         return bool(self.fi_info)
 
     @property
-    def is_cray(self) -> bool:
+    def is_hsn(self) -> bool:
         return all(
             (
                 self.has_ldconfig,
@@ -370,11 +369,12 @@ class CrayExPlatformResult:
         return failure_messages
 
 
-def check_platform() -> CrayExPlatformResult:
-    """Returns True if the current platform is identified as Cray EX and
-    HSTA-aware dragon package can be installed, False otherwise.
+def check_platform() -> HSNPlatformResult:
+    """Queries the platform for system libraries to determine if the platform
+    has a compatible high speed network and an HSTA-aware dragon package can be
+    utilized.
 
-    :returns: True if current platform is Cray EX, False otherwise"""
+    :returns: A populated platform result"""
 
     # ldconfig -p | grep cray | grep pmi.so &&
     # ldconfig -p | grep cray | grep pmi2.so &&
@@ -383,7 +383,7 @@ def check_platform() -> CrayExPlatformResult:
     ldconfig = check_for_utility("ldconfig")
     fi_info = check_for_utility("fi_info")
 
-    result = CrayExPlatformResult(ldconfig, fi_info)
+    result = HSNPlatformResult(ldconfig, fi_info)
     if not all((result.has_ldconfig, result.has_fi_info)):
         return result
 
@@ -403,13 +403,14 @@ def check_platform() -> CrayExPlatformResult:
     return result
 
 
-def is_crayex_platform() -> bool:
-    """Returns True if the current platform is identified as Cray EX and
-    HSTA-aware dragon package can be installed, False otherwise.
+def is_hsn_platform() -> bool:
+    """Returns True if the current platform is identified as having a high
+    speed network and HSTA-aware dragon package can be installed, False
+    otherwise.
 
-    :returns: True if current platform is Cray EX, False otherwise"""
+    :returns: True if current platform is HSN compatible, False otherwise"""
     result = check_platform()
-    return result.is_cray
+    return result.is_hsn
 
 
 @t.final
