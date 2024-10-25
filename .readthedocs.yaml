@@ -29,11 +29,9 @@ build:
       - ln -s smartredis/examples ./examples
       - cd smartdashboard; python -m pip install .
     pre_build:
-      - export VAR="meep"
-      - echo "VAR = $VAR"
       - pip install typing_extensions==4.8.0
       - pip install pydantic==1.10.13
-      - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
+      - export VAR="meep" && echo "VAR = $VAR" && python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
