@@ -110,8 +110,7 @@ class Ensemble(entity.CompoundEntity):
 
             file_params={"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
             exe_arg_parameters = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
-            ensemble = Ensemble(name="name",exe="python",exe_arg_parameters=exe_arg_parameters,
-                        file_parameters=file_params,permutation_strategy="step", replicas=2)
+            ensemble = Ensemble(name="name",exe="python",exe_arg_parameters=exe_arg_parameters,file_parameters=file_params,permutation_strategy="step", replicas=2)
 
 
         This configuration will result in each ParamSet being replicated, effectively doubling
