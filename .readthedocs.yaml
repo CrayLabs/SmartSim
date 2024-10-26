@@ -33,7 +33,6 @@ build:
       - ln -s smartredis/examples ./examples
       - cd smartdashboard; python -m pip install .
       - smart build --device cpu --dragon -v
-      - find / -name "libdragon.so*"
       - |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(dirname $(find $PWD -name "libdragon.so")) &&
         make docs &&
