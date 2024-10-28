@@ -24,10 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
 import typing as t
 from unittest.mock import MagicMock
 
 import pytest
+
+from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 
 dragon = pytest.importorskip("dragon")
 
@@ -123,9 +126,13 @@ def setup_worker_manager_model_bytes(
     tensor_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
     output_key = MessageHandler.build_tensor_key("key", app_feature_store.descriptor)
 
+    callback_descriptor = FileSystemCommChannel(
+        pathlib.Path(test_dir) / "callback1"
+    ).descriptor
+
     inf_request = InferenceRequest(
         model_key=None,
-        callback=None,
+        callback_desc=callback_descriptor,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -136,10 +143,13 @@ def setup_worker_manager_model_bytes(
 
     model_id = ModelKey(key="key", descriptor=app_feature_store.descriptor)
 
-    request_batch = RequestBatch(
+    request_batch = RequestBatch.from_requests(
         [inf_request],
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_id,
+        model_id,
+    )
+
+    request_batch.inputs = TransformInputResult(
+        b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]
     )
 
     dispatcher_task_queue.put(request_batch)
@@ -182,9 +192,13 @@ def setup_worker_manager_model_key(
     output_key = TensorKey(key="key", descriptor=app_feature_store.descriptor)
     model_id = ModelKey(key="model key", descriptor=app_feature_store.descriptor)
 
+    callback_descriptor = FileSystemCommChannel(
+        pathlib.Path(test_dir) / "callback2"
+    ).descriptor
+
     request = InferenceRequest(
         model_key=model_id,
-        callback=None,
+        callback_desc=callback_descriptor,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -192,10 +206,13 @@ def setup_worker_manager_model_key(
         raw_model=b"model",
         batch_size=0,
     )
-    request_batch = RequestBatch(
+    request_batch = RequestBatch.from_requests(
         [request],
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_id,
+        model_id,
+    )
+
+    request_batch.inputs = TransformInputResult(
+        b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]
     )
 
     dispatcher_task_queue.put(request_batch)

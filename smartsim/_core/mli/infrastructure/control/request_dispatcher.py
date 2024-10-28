@@ -172,7 +172,7 @@ class BatchQueue(Queue[InferenceRequest]):
         """
         return self.empty() and self._disposable
 
-    def flush(self) -> list[t.Any]:
+    def flush(self) -> list[InferenceRequest]:
         """Get all requests from queue.
 
         :returns: Requests waiting to be executed
@@ -334,7 +334,7 @@ class RequestDispatcher(Service):
         :param request: The request to validate
         :returns: False if callback validation fails for the request, True otherwise
         """
-        if request.callback:
+        if request.callback_desc:
             return True
 
         logger.error("No callback channel provided in request")
@@ -376,9 +376,7 @@ class RequestDispatcher(Service):
             tensor_bytes_list = bytes_list[1:]
             self._perf_timer.start_timings()
 
-            request = self._worker.deserialize_message(
-                request_bytes, self._callback_factory
-            )
+            request = self._worker.deserialize_message(request_bytes)
             if request.has_input_meta and tensor_bytes_list:
                 request.raw_inputs = tensor_bytes_list
 
@@ -387,7 +385,11 @@ class RequestDispatcher(Service):
             if not self._validate_request(request):
                 exception_handler(
                     ValueError("Error validating the request"),
-                    request.callback,
+                    (
+                        self._callback_factory(request.callback_desc)
+                        if request.callback_desc
+                        else None
+                    ),
                     None,
                 )
                 self._perf_timer.measure_time("validate_request")
@@ -493,10 +495,8 @@ class RequestDispatcher(Service):
                 if queue.ready:
                     self._perf_timer.measure_time("find_queue")
                     try:
-                        batch = RequestBatch(
-                            requests=queue.flush(),
-                            inputs=None,
-                            model_id=queue.model_id,
+                        batch = RequestBatch.from_requests(
+                            queue.flush(), queue.model_id
                         )
                     finally:
                         self._perf_timer.measure_time("flush_requests")
@@ -528,9 +528,6 @@ class RequestDispatcher(Service):
 
                     self._perf_timer.measure_time("transform_input")
                     batch.inputs = transformed_inputs
-                    for request in batch.requests:
-                        request.raw_inputs = []
-                        request.input_meta = []
 
                     try:
                         self._outgoing_queue.put(batch)

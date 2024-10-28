@@ -26,6 +26,8 @@
 
 import gc
 import os
+import pathlib
+import subprocess as sp
 import time
 import typing as t
 from queue import Empty
@@ -33,29 +35,27 @@ from queue import Empty
 import numpy as np
 import pytest
 
+from . import conftest
+from .utils import msg_pump
+
 pytest.importorskip("dragon")
 
 
 # isort: off
 import dragon
-
-from dragon.fli import FLInterface
-from dragon.data.ddict.ddict import DDict
-from dragon.managed_memory import MemoryAlloc
-
 import multiprocessing as mp
 
 import torch
 
 # isort: on
 
+from dragon import fli
+from dragon.data.ddict.ddict import DDict
+from dragon.managed_memory import MemoryAlloc
 
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
-from smartsim._core.mli.infrastructure.control.dragon_util import (
-    function_as_dragon_proc,
-)
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestBatch,
     RequestDispatcher,
@@ -69,10 +69,12 @@ from smartsim._core.mli.infrastructure.storage.backbone_feature_store import (
 from smartsim._core.mli.infrastructure.storage.dragon_feature_store import (
     DragonFeatureStore,
 )
+from smartsim._core.mli.infrastructure.storage.feature_store import ModelKey, TensorKey
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
+from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest, TensorMeta
+from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
-
-from .utils.msg_pump import mock_messages
+from tests.dragon.utils.channel import FileSystemCommChannel
 
 logger = get_logger(__name__)
 
@@ -86,7 +88,6 @@ except Exception:
     pass
 
 
-@pytest.mark.skip("TODO: Fix issue unpickling messages")
 @pytest.mark.parametrize("num_iterations", [4])
 def test_request_dispatcher(
     num_iterations: int,
@@ -100,7 +101,7 @@ def test_request_dispatcher(
     """
 
     to_worker_channel = create_local()
-    to_worker_fli = FLInterface(main_ch=to_worker_channel, manager_ch=None)
+    to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=None)
     to_worker_fli_comm_ch = DragonFLIChannel(to_worker_fli)
 
     backbone_fs = BackboneFeatureStore(the_storage, allow_reserved_writes=True)
@@ -147,8 +148,8 @@ def test_request_dispatcher(
         callback_channel = DragonCommChannel.from_local()
         channels.append(callback_channel)
 
-        process = function_as_dragon_proc(
-            mock_messages,
+        process = conftest.function_as_dragon_proc(
+            msg_pump.mock_messages,
             [
                 worker_queue.descriptor,
                 backbone_fs.descriptor,
@@ -161,7 +162,6 @@ def test_request_dispatcher(
         processes.append(process)
         process.start()
         assert process.returncode is None, "The message pump failed to start"
-
         # give dragon some time to populate the message queues
         for i in range(15):
             try:
@@ -177,7 +177,7 @@ def test_request_dispatcher(
                 raise exc
 
         assert batch is not None
-        assert batch.has_valid_requests
+        assert batch.has_callbacks
 
         model_key = batch.model_id.key
 
@@ -200,7 +200,7 @@ def test_request_dispatcher(
                     )
                 )
 
-            assert len(batch.requests) == 2
+            assert len(batch.callback_descriptors) == 2
             assert batch.model_id.key == model_key
             assert model_key in request_dispatcher._queues
             assert model_key in request_dispatcher._active_queues
@@ -235,3 +235,88 @@ def test_request_dispatcher(
     # Try to remove the dispatcher and free the memory
     del request_dispatcher
     gc.collect()
+
+
+def test_request_batch(test_dir: str) -> None:
+    """Test the RequestBatch.from_requests instantiates properly"""
+    tensor_key = TensorKey(key="key", descriptor="desc1")
+    tensor_key2 = TensorKey(key="key2", descriptor="desc1")
+    output_key = TensorKey(key="key", descriptor="desc2")
+    output_key2 = TensorKey(key="key2", descriptor="desc2")
+    model_id1 = ModelKey(key="model key", descriptor="model desc")
+    model_id2 = ModelKey(key="model key2", descriptor="model desc")
+    tensor_desc = MessageHandler.build_tensor_descriptor("c", "float32", [1, 2])
+    req_batch_model_id = ModelKey(key="req key", descriptor="desc")
+
+    callback1 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback1").descriptor
+    callback2 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback2").descriptor
+    callback3 = FileSystemCommChannel(pathlib.Path(test_dir) / "callback3").descriptor
+
+    request1 = InferenceRequest(
+        model_key=model_id1,
+        callback_desc=callback1,
+        raw_inputs=[b"input data"],
+        input_keys=[tensor_key],
+        input_meta=[tensor_desc],
+        output_keys=[output_key],
+        raw_model=b"model",
+        batch_size=0,
+    )
+
+    request2 = InferenceRequest(
+        model_key=model_id2,
+        callback_desc=callback2,
+        raw_inputs=None,
+        input_keys=None,
+        input_meta=None,
+        output_keys=[output_key, output_key2],
+        raw_model=b"model",
+        batch_size=0,
+    )
+
+    request3 = InferenceRequest(
+        model_key=model_id2,
+        callback_desc=callback3,
+        raw_inputs=None,
+        input_keys=[tensor_key, tensor_key2],
+        input_meta=[tensor_desc],
+        output_keys=None,
+        raw_model=b"model",
+        batch_size=0,
+    )
+
+    request_batch = RequestBatch.from_requests(
+        [request1, request2, request3], req_batch_model_id
+    )
+
+    assert len(request_batch.callback_descriptors) == 3
+    for callback in request_batch.callback_descriptors:
+        assert isinstance(callback, str)
+    assert len(request_batch.output_key_refs.keys()) == 2
+    assert request_batch.has_callbacks
+    assert request_batch.model_id == req_batch_model_id
+    assert request_batch.inputs == None
+    assert request_batch.raw_model == b"model"
+    assert request_batch.raw_inputs == [[b"input data"]]
+    assert request_batch.input_meta == [
+        [TensorMeta([1, 2], "c", "float32")],
+        [TensorMeta([1, 2], "c", "float32")],
+    ]
+    assert request_batch.input_keys == [
+        [tensor_key],
+        [tensor_key, tensor_key2],
+    ]
+    assert request_batch.output_key_refs == {
+        callback1: [output_key],
+        callback2: [output_key, output_key2],
+    }
+
+
+def test_request_batch_has_no_callbacks():
+    """Verify that a request batch with no callbacks is correctly identified"""
+    request1 = InferenceRequest()
+    request2 = InferenceRequest()
+
+    batch = RequestBatch.from_requests([request1, request2], ModelKey("model", "desc"))
+
+    assert not batch.has_callbacks
