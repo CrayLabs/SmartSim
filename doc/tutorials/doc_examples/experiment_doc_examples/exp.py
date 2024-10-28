@@ -1,5 +1,5 @@
 from smartsim import Experiment
-from smartsim._core.control.previewrenderer import Verbosity
+from smartsim._core.control.preview_renderer import Verbosity
 from smartsim.log import get_logger
 
 # Initialize an Experiment

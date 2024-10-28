@@ -26,12 +26,13 @@
 
 import typing as t
 
+from ....entity import SmartSimEntity
 from ....settings import RunSettings, SettingsBase
 from ..launcher import Launcher
 from ..step import LocalStep, Step
-from ..stepInfo import StepInfo, UnmanagedStepInfo
-from ..stepMapping import StepMapping
-from ..taskManager import TaskManager
+from ..step_info import StepInfo, UnmanagedStepInfo
+from ..step_mapping import StepMapping
+from ..task_manager import TaskManager
 
 
 class LocalLauncher(Launcher):
@@ -41,17 +42,18 @@ class LocalLauncher(Launcher):
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
-    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
+    def create_step(self, entity: SmartSimEntity, step_settings: SettingsBase) -> Step:
         """Create a job step to launch an entity locally
 
         :return: Step object
         """
+        # probably need to instead change this to exe and exe_args
         if not isinstance(step_settings, RunSettings):
             raise TypeError(
                 "Local Launcher only supports entities with RunSettings, "
                 f"not {type(step_settings)}"
             )
-        return LocalStep(name, cwd, step_settings)
+        return LocalStep(entity, step_settings)
 
     def get_step_update(
         self, step_names: t.List[str]

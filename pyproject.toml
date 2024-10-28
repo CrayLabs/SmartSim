@@ -58,6 +58,13 @@ force-exclude = '''
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "debug"
+testpaths = [
+    "tests"
+]
+norecursedirs = [
+    "tests/test_configs",
+    "tests/_legacy",
+]
 markers = [
   "group_a: fast test subset a",
   "group_b: fast test subset b",
@@ -134,6 +141,31 @@ module = [
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
   "watchdog",
   "dragon.*",
+
+  # Ignore these modules while the core refactor is on going. Uncomment as
+  # needed for gradual typing
+  #
+  # FIXME: DO NOT MERGE THIS INTO DEVELOP BRANCH UNLESS THESE ARE PASSING OR
+  #        REMOVED!!
+  "smartsim._core._cli.*",
+  "smartsim._core.control.manifest",
+  "smartsim._core.entrypoints.dragon_client",
+  "smartsim._core.launcher.launcher",
+  "smartsim._core.launcher.local.*",
+  "smartsim._core.launcher.lsf.*",
+  "smartsim._core.launcher.pbs.*",
+  "smartsim._core.launcher.sge.*",
+  "smartsim._core.launcher.slurm.*",
+  "smartsim._core.launcher.step.*",
+  "smartsim._core.launcher.step_info",
+  "smartsim._core.launcher.step_mapping",
+  "smartsim._core.launcher.task_manager",
+  "smartsim._core.utils.serialize",
+  "smartsim._core.utils.telemetry.*",
+  "smartsim.database.*",
+  "smartsim.settings.sge_settings",
+  "smartsim._core.control.controller_utils",
+  "smartsim.entity.dbnode",
 ]
 ignore_missing_imports = true
 ignore_errors = true
