@@ -91,6 +91,7 @@ class Ensemble(entity.CompoundEntity):
 
         .. highlight:: python
         .. code-block:: python
+
             [ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
              ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']})]
 
