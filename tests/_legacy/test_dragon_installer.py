@@ -582,36 +582,40 @@ def test_create_dotenv_format(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
 
 @pytest.mark.parametrize(
-    "_platform_filter_return,asset_name,returned_asset_bool",
+    "_platform_filter_return,is_cray_platform_return,returned_asset_bool",
     [
         pytest.param(
             True,
-            "dragon-0.10-py3.9.4.1-CRAYEX.tar.gz",
             True,
-            id="cray platform, crayex in name",
+            True,
+            id="cray platform, crayex asset",
         ),
         pytest.param(
             False,
-            "dragon-0.10-py3.9.4.1-CRAYEX.tar.gz",
             False,
-            id="non cray platform, crayex in name",
+            False,
+            id="non cray platform, crayex asset",
         ),
         pytest.param(
             False,
-            "dragon-0.10-py3.9.4.1-.tar.gz",
             True,
-            id="cray platform, crayex not in name",
+            True,
+            id="cray platform, non crayex asset",
         ),
         pytest.param(
             True,
-            "dragon-0.10-py3.9.4.1-.tar.gz",
+            False,
             True,
-            id="non cray platform, crayex not in name",
+            id="non cray platform, non crayex asset",
         ),
     ],
 )
 def test_filter_assets(
-    monkeypatch, test_dir, _platform_filter_return, asset_name, returned_asset_bool
+    monkeypatch,
+    test_dir,
+    _platform_filter_return,
+    is_cray_platform_return,
+    returned_asset_bool,
 ):
     request = DragonInstallRequest(test_dir, version="0.10")
     monkeypatch.setattr(
@@ -626,8 +630,11 @@ def test_filter_assets(
         "smartsim._core._cli.scripts.dragon_install._pin_filter",
         MagicMock(return_value=True),
     )
+    monkeypatch.setattr(
+        "smartsim._core._cli.scripts.dragon_install.is_crayex_platform",
+        MagicMock(return_value=is_cray_platform_return),
+    )
     mocked_asset = MagicMock()
-    mocked_asset.name = asset_name
     asset = filter_assets(request, [mocked_asset])
     if returned_asset_bool:
         assert asset is not None
