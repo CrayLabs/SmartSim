@@ -115,6 +115,31 @@ def test_job_init_deepcopy():
     assert job.launch_settings.launcher is not test
 
 
+def test_job_type_entity():
+    entity = "invalid"
+    settings = LaunchSettings("slurm")
+    with pytest.raises(
+        TypeError,
+        match="entity argument was not of type SmartSimEntity",
+    ):
+        Job(entity, settings)
+
+
+def test_job_type_launch_settings():
+    entity = Application(
+        "test_name",
+        exe="echo",
+        exe_args=["spam", "eggs"],
+    )
+    settings = "invalid"
+
+    with pytest.raises(
+        TypeError,
+        match="launch_settings argument was not of type LaunchSettings",
+    ):
+        Job(entity, settings)
+
+
 def test_add_mpmd_pair():
     entity = EchoHelloWorldEntity()
 

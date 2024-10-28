@@ -22,8 +22,8 @@
     language: Python
 
     release:
-      version: 0.7.0
-      date: 2024-05-14
+      version: 0.8.0
+      date: 2024-09-25
 
     documentation:
       general: https://www.craylabs.org/docs/overview.html

@@ -32,10 +32,10 @@ import textwrap
 import typing as t
 from os import path as osp
 
+from .._core.generation.operations.operations import FileSysOperationSet
 from .._core.utils.helpers import expand_exe_path
 from ..log import get_logger
 from .entity import SmartSimEntity
-from .files import EntityFiles
 
 logger = get_logger(__name__)
 
@@ -59,8 +59,9 @@ class Application(SmartSimEntity):
         name: str,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.Sequence[str]]] = None,
-        files: t.Optional[EntityFiles] = None,
-        file_parameters: t.Mapping[str, str] | None = None,
+        file_parameters: (
+            t.Mapping[str, str] | None
+        ) = None,  # TODO remove when Ensemble is addressed
     ) -> None:
         """Initialize an ``Application``
 
@@ -77,10 +78,6 @@ class Application(SmartSimEntity):
         :param name: name of the application
         :param exe: executable to run
         :param exe_args: executable arguments
-        :param files: files to be copied, symlinked, and/or configured prior to
-                      execution
-        :param file_parameters: parameters and values to be used when configuring
-                                files
         """
         super().__init__(name)
         """The name of the application"""
@@ -88,12 +85,13 @@ class Application(SmartSimEntity):
         """The executable to run"""
         self._exe_args = self._build_exe_args(exe_args) or []
         """The executable arguments"""
-        self._files = copy.deepcopy(files) if files else None
-        """Files to be copied, symlinked, and/or configured prior to execution"""
+        self.files = FileSysOperationSet([])
+        """Attach files"""
         self._file_parameters = (
             copy.deepcopy(file_parameters) if file_parameters else {}
         )
-        """Parameters and values to be used when configuring files"""
+        """TODO MOCK until Ensemble is implemented"""
+        """Files to be copied, symlinked, and/or configured prior to execution"""
         self._incoming_entities: t.List[SmartSimEntity] = []
         """Entities for which the prefix will have to be known by other entities"""
         self._key_prefixing_enabled = False
@@ -112,8 +110,16 @@ class Application(SmartSimEntity):
         """Set the executable.
 
         :param value: the executable
+        :raises TypeError: exe argument is not int
+
         """
-        self._exe = copy.deepcopy(value)
+        if not isinstance(value, str):
+            raise TypeError("exe argument was not of type str")
+
+        if value == "":
+            raise ValueError("exe cannot be an empty str")
+
+        self._exe = value
 
     @property
     def exe_args(self) -> t.MutableSequence[str]:
@@ -140,24 +146,6 @@ class Application(SmartSimEntity):
         self._exe_args.extend(args)
 
     @property
-    def files(self) -> t.Union[EntityFiles, None]:
-        """Return attached EntityFiles object.
-
-        :return: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        """
-        return self._files
-
-    @files.setter
-    def files(self, value: t.Optional[EntityFiles]) -> None:
-        """Set the EntityFiles object.
-
-        :param value: the EntityFiles object of files to be copied, symlinked,
-            and/or configured prior to execution
-        """
-        self._files = copy.deepcopy(value)
-
-    @property
     def file_parameters(self) -> t.Mapping[str, str]:
         """Return file parameters.
 
@@ -170,7 +158,18 @@ class Application(SmartSimEntity):
         """Set the file parameters.
 
         :param value: the file parameters
+        :raises TypeError: file_parameters argument is not a mapping of str and str
         """
+        if not (
+            isinstance(value, t.Mapping)
+            and all(
+                isinstance(key, str) and isinstance(val, str)
+                for key, val in value.items()
+            )
+        ):
+            raise TypeError(
+                "file_parameters argument was not of type mapping of str and str"
+            )
         self._file_parameters = copy.deepcopy(value)
 
     @property
@@ -186,7 +185,15 @@ class Application(SmartSimEntity):
         """Set the incoming entities.
 
         :param value: incoming entities
+        :raises TypeError: incoming_entities argument is not a list of SmartSimEntity
         """
+        if not isinstance(value, list) or not all(
+            isinstance(x, SmartSimEntity) for x in value
+        ):
+            raise TypeError(
+                "incoming_entities argument was not of type list of SmartSimEntity"
+            )
+
         self._incoming_entities = copy.copy(value)
 
     @property
@@ -202,7 +209,11 @@ class Application(SmartSimEntity):
         """Set whether key prefixing is enabled for the application.
 
         :param value: key prefixing enabled
+        :raises TypeError: key prefixings enabled argument was not of type bool
         """
+        if not isinstance(value, bool):
+            raise TypeError("key_prefixing_enabled argument was not of type bool")
+
         self.key_prefixing_enabled = copy.deepcopy(value)
 
     def as_executable_sequence(self) -> t.Sequence[str]:
@@ -211,62 +222,6 @@ class Application(SmartSimEntity):
         :return: a sequence of strings representing the executable and its arguments
         """
         return [self.exe, *self.exe_args]
-
-    def attach_generator_files(
-        self,
-        to_copy: t.Optional[t.List[str]] = None,
-        to_symlink: t.Optional[t.List[str]] = None,
-        to_configure: t.Optional[t.List[str]] = None,
-    ) -> None:
-        """Attach files to an entity for generation
-
-        Attach files needed for the entity that, upon generation,
-        will be located in the path of the entity.  Invoking this method
-        after files have already been attached will overwrite
-        the previous list of entity files.
-
-        During generation, files "to_copy" are copied into
-        the path of the entity, and files "to_symlink" are
-        symlinked into the path of the entity.
-
-        Files "to_configure" are text based application input files where
-        parameters for the application are set. Note that only applications
-        support the "to_configure" field. These files must have
-        fields tagged that correspond to the values the user
-        would like to change. The tag is settable but defaults
-        to a semicolon e.g. THERMO = ;10;
-
-        :param to_copy: files to copy
-        :param to_symlink: files to symlink
-        :param to_configure: input files with tagged parameters
-        :raises ValueError: if the generator file already exists
-        """
-        to_copy = to_copy or []
-        to_symlink = to_symlink or []
-        to_configure = to_configure or []
-
-        # Check that no file collides with the parameter file written
-        # by Generator. We check the basename, even though it is more
-        # restrictive than what we need (but it avoids relative path issues)
-        for strategy in [to_copy, to_symlink, to_configure]:
-            if strategy is not None and any(
-                osp.basename(filename) == "smartsim_params.txt" for filename in strategy
-            ):
-                raise ValueError(
-                    "`smartsim_params.txt` is a file automatically "
-                    + "generated by SmartSim and cannot be ovewritten."
-                )
-        self.files = EntityFiles(to_configure, to_copy, to_symlink)
-
-    @property
-    def attached_files_table(self) -> str:
-        """Return a list of attached files as a plain text table
-
-        :return: String version of table
-        """
-        if not self.files:
-            return "No file attached to this application."
-        return str(self.files)
 
     @staticmethod
     def _build_exe_args(exe_args: t.Union[str, t.Sequence[str], None]) -> t.List[str]:
@@ -292,23 +247,19 @@ class Application(SmartSimEntity):
 
         return list(exe_args)
 
-    def print_attached_files(self) -> None:
-        """Print a table of the attached files on std out"""
-        print(self.attached_files_table)
-
     def __str__(self) -> str:  # pragma: no cover
         exe_args_str = "\n".join(self.exe_args)
         entities_str = "\n".join(str(entity) for entity in self.incoming_entities)
-        return textwrap.dedent(f"""\
+        return textwrap.dedent(
+            f"""\
             Name: {self.name}
             Type: {self.type}
             Executable:
             {self.exe}
             Executable Arguments:
             {exe_args_str}
-            Entity Files: {self.files}
-            File Parameters: {self.file_parameters}
             Incoming Entities:
             {entities_str}
             Key Prefixing Enabled: {self.key_prefixing_enabled}
-            """)
+            """
+        )

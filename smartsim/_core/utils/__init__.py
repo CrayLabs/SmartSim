@@ -29,5 +29,6 @@ from .helpers import (
     colorize,
     delete_elements,
     execute_platform_cmd,
+    expand_exe_path,
     is_crayex_platform,
 )

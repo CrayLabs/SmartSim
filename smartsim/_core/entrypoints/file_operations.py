@@ -154,9 +154,9 @@ def copy(parsed_args: argparse.Namespace) -> None:
     /absolute/file/dest/path: Path to destination directory or path to
         destination file
     --dirs_exist_ok: if the flag is included, the copying operation will 
-        continue if the destination directory and files alrady exist, 
+        continue if the destination directory and files already exist, 
         and will be overwritten by corresponding files. If the flag is 
-        not includedm and the destination file already exists, a
+        not included and the destination file already exists, a
         FileExistsError will be raised
     """
     if os.path.isdir(parsed_args.source):
@@ -226,7 +226,6 @@ def configure(parsed_args: argparse.Namespace) -> None:
             for file_name in filenames:
                 src_file = os.path.join(dirpath, file_name)
                 dst_file = os.path.join(new_dir_dest, file_name)
-                print(type(substitutions))
                 _process_file(substitutions, src_file, dst_file)
     else:
         dst_file = parsed_args.dest / os.path.basename(parsed_args.source)

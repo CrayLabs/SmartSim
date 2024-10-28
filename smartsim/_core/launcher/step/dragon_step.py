@@ -169,6 +169,7 @@ class DragonBatchStep(Step):
             env = run_settings.env_vars
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
+            hosts_csv = run_args.get("host-list", None)
 
             policy = DragonRunPolicy.from_run_args(run_args)
 
@@ -187,6 +188,7 @@ class DragonBatchStep(Step):
                 output_file=out,
                 error_file=err,
                 policy=policy,
+                hostlist=hosts_csv,
             )
             requests.append(request_registry.to_string(request))
         with open(request_file, "w", encoding="utf-8") as script_file:

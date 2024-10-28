@@ -33,7 +33,7 @@ from pathlib import Path
 import psutil
 
 from ...error import SSConfigError
-from ..utils.helpers import expand_exe_path
+from ..utils import expand_exe_path
 
 # Configuration Values
 #
@@ -97,11 +97,14 @@ class Config:
     @property
     def dragon_dotenv(self) -> Path:
         """Returns the path to a .env file containing dragon environment variables"""
-        return self.conf_dir / "dragon" / ".env"
+        return Path(self.conf_dir / "dragon" / ".env")
 
     @property
     def dragon_server_path(self) -> t.Optional[str]:
-        return os.getenv("SMARTSIM_DRAGON_SERVER_PATH", None)
+        return os.getenv(
+            "SMARTSIM_DRAGON_SERVER_PATH",
+            os.getenv("_SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
+        )
 
     @property
     def dragon_server_timeout(self) -> int:
@@ -227,10 +230,6 @@ class Config:
         """
         default_path = Path.home() / ".smartsim" / "keys"
         return os.environ.get("SMARTSIM_KEY_PATH", str(default_path))
-
-    @property
-    def dragon_pin(self) -> str:
-        return "0.9"
 
 
 @lru_cache(maxsize=128, typed=False)

@@ -26,6 +26,7 @@
 
 import argparse
 import contextlib
+import io
 import os
 import os.path
 import tempfile
@@ -33,7 +34,7 @@ import typing as t
 from types import TracebackType
 
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
-from smartsim._core._install.builder import Device
+from smartsim._core._install.platform import Device
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
@@ -69,7 +70,9 @@ class _VerificationTempDir(_TemporaryDirectory):
             self._finalizer.detach()  # type: ignore[attr-defined]
 
 
-def execute(args: argparse.Namespace) -> int:
+def execute(
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None
+) -> int:
     """Validate the SmartSim installation works as expected given a
     simple experiment
     """

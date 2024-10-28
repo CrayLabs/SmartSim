@@ -252,16 +252,21 @@ class LowPassFilter(logging.Filter):
         return record.levelno <= level_no
 
 
-def log_to_file(filename: str, log_level: str = "debug") -> None:
+def log_to_file(
+    filename: str, log_level: str = "debug", logger: t.Optional[logging.Logger] = None
+) -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
 
-    :param filename: the name of the desired log file.
-    :param log_level: as defined in get_logger.  Can be specified
+    :param filename: The name of the desired log file.
+    :param log_level: As defined in get_logger.  Can be specified
                       to allow the file to store more or less verbose
                       logging information.
+    :param logger: If supplied, a logger to add the file stream logging
+    behavior to. By default, a new logger is instantiated.
     """
-    logger = logging.getLogger("SmartSim")
+    if logger is None:
+        logger = logging.getLogger("SmartSim")
     stream = open(  # pylint: disable=consider-using-with
         filename, "w+", encoding="utf-8"
     )

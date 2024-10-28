@@ -201,6 +201,8 @@ class DragonLauncher(WLMLauncher):
             self._connector.load_persisted_env()
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
+            hosts = run_args.get("host-list", None)
+
             policy = DragonRunPolicy.from_run_args(run_args)
             step_id = self.start(
                 (
@@ -214,6 +216,7 @@ class DragonLauncher(WLMLauncher):
                         env=req_env,
                         output_file=out,
                         error_file=err,
+                        hostlist=hosts,
                     ),
                     policy,
                 )
@@ -397,11 +400,6 @@ def _as_run_request_args_and_policy(
         DragonRunRequestView(
             exe=exe_,
             exe_args=args,
-            # FIXME: Currently this is hard coded because the schema requires
-            #        it, but in future, it is almost certainly necessary that
-            #        this will need to be injected by the user or by us to have
-            #        the command execute next to any generated files. A similar
-            #        problem exists for the other settings.
             path=path,
             env=env,
             # TODO: Not sure how this info is injected

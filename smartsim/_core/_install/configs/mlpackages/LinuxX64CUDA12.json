@@ -1,0 +1,76 @@
+{
+    "platform": {
+        "operating_system":"linux",
+        "architecture":"x86_64",
+        "device":"cuda-12"
+    },
+    "ml_packages": [
+        {
+            "name": "dlpack",
+            "version": "v0.5_RAI",
+            "pip_index": "",
+            "python_packages": [],
+            "lib_source": "https://github.com/RedisAI/dlpack.git"
+        },
+        {
+            "name": "libtorch",
+            "version": "2.3.1",
+            "pip_index": "https://download.pytorch.org/whl/cu121",
+            "python_packages": [
+                "torch==2.3.1+cu121",
+                "torchvision==0.18.1+cu121",
+                "torchaudio==2.3.1+cu121"
+            ],
+            "lib_source": "https://download.pytorch.org/libtorch/cu121/libtorch-cxx11-abi-shared-with-deps-2.3.1%2Bcu121.zip",
+            "rai_patches": [
+                {
+                    "description": "Patch RedisAI module to require C++17 standard instead of C++14",
+                    "source_file": "src/backends/libtorch_c/CMakeLists.txt",
+                    "regex": "set_property\\(TARGET\\storch_c\\sPROPERTY\\sCXX_STANDARD\\s(98|11|14)\\)",
+                    "replacement": "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)"
+                },
+                {
+                    "description": "Fix the type in a Tensorflow function signature",
+                    "source_file": "src/backends/tensorflow.c",
+                    "regex": "TF_Input inputs",
+                    "replacement": "TF_Output inputs"
+                },
+                {
+                    "description": "Fix the type in a Tensorflow function signature",
+                    "source_file": "src/backends/tensorflow.c",
+                    "regex": "TF_Input port",
+                    "replacement": "TF_Output port"
+                }
+            ]
+        },
+        {
+            "name": "libtensorflow",
+            "version": "2.15",
+            "pip_index": "",
+            "python_packages": [
+                "tensorflow==2.15"
+            ],
+            "lib_source": "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-gpu-linux-x86_64-2.15.0.tar.gz",
+            "rai_patches": [
+                {
+                    "description": "Patch RedisAI to point to correct tsl directory",
+                    "source_file": "CMakeLists.txt",
+                    "regex": "INCLUDE_DIRECTORIES\\(\\$\\{depsAbs\\}/libtensorflow/include\\)",
+                    "replacement": "INCLUDE_DIRECTORIES(${depsAbs}/libtensorflow/include ${depsAbs}/libtensorflow/include/external/local_tsl)"
+                }
+            ]
+        },
+        {
+            "name": "onnxruntime",
+            "version": "1.17.3",
+            "pip_index": "",
+            "python_packages": [
+                "onnx==1.15",
+                "skl2onnx",
+                "scikit-learn",
+                "onnxmltools"
+            ],
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-linux-x64-gpu-cuda12-1.17.3.tgz"
+        }
+    ]
+}

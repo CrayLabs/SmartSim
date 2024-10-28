@@ -77,9 +77,9 @@ class Job(BaseJob):
         """
         super().__init__()
         """Initialize the parent class BaseJob"""
-        self._entity = deepcopy(entity)
+        self.entity = entity
         """Deepcopy of the SmartSimEntity object"""
-        self._launch_settings = deepcopy(launch_settings)
+        self.launch_settings = launch_settings
         """Deepcopy of the LaunchSettings object"""
         self._name = name if name else entity.name
         """Name of the Job"""
@@ -116,7 +116,13 @@ class Job(BaseJob):
         """Set the Job entity.
 
         :param value: the SmartSimEntity
+        :raises Type Error: if entity is not SmartSimEntity
         """
+        from smartsim.entity.entity import SmartSimEntity
+
+        if not isinstance(value, SmartSimEntity):
+            raise TypeError("entity argument was not of type SmartSimEntity")
+
         self._entity = deepcopy(value)
 
     @property
@@ -132,7 +138,11 @@ class Job(BaseJob):
         """Set the Jobs LaunchSettings.
 
         :param value: the LaunchSettings
+        :raises Type Error: if launch_settings is not a LaunchSettings
         """
+        if not isinstance(value, LaunchSettings):
+            raise TypeError("launch_settings argument was not of type LaunchSettings")
+
         self._launch_settings = deepcopy(value)
 
     def get_launch_steps(self) -> LaunchCommands:

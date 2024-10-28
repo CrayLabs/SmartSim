@@ -29,8 +29,6 @@ import time
 import typing as t
 from dataclasses import dataclass
 
-from smartsim.entity._mock import Mock
-
 from ...entity import SmartSimEntity
 from ...status import JobStatus
 

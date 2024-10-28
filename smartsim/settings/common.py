@@ -44,6 +44,6 @@ def set_check_input(key: str, value: t.Optional[str]) -> None:
     if key.startswith("-"):
         key = key.lstrip("-")
         logger.warning(
-            "One or more leading `-` characters were provided to the run argument. \
-            Leading dashes were stripped and the arguments were passed to the run_command."
+            "One or more leading `-` characters were provided to the run argument.\n"
+            "Leading dashes were stripped and the arguments were passed to the run_command."
         )

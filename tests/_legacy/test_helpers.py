@@ -30,10 +30,30 @@ import signal
 import pytest
 
 from smartsim._core.utils import helpers
-from smartsim._core.utils.helpers import cat_arg_and_value
+from smartsim._core.utils.helpers import cat_arg_and_value, unpack
+from smartsim.entity.application import Application
+from smartsim.launchable.job import Job
+from smartsim.settings.launch_settings import LaunchSettings
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
+
+
+def test_unpack_iterates_over_nested_jobs_in_expected_order(wlmutils):
+    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
+    app = Application("app_name", exe="python")
+    job_1 = Job(app, launch_settings)
+    job_2 = Job(app, launch_settings)
+    job_3 = Job(app, launch_settings)
+    job_4 = Job(app, launch_settings)
+    job_5 = Job(app, launch_settings)
+
+    assert (
+        [job_1, job_2, job_3, job_4, job_5]
+        == list(unpack([job_1, [job_2, job_3], job_4, [job_5]]))
+        == list(unpack([job_1, job_2, [job_3, job_4], job_5]))
+        == list(unpack([job_1, [job_2, [job_3, job_4], job_5]]))
+    )
 
 
 def test_double_dash_concat():

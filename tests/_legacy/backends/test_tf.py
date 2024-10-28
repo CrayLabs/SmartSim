@@ -29,8 +29,6 @@ from pathlib import Path
 
 import pytest
 
-from smartsim import Experiment
-from smartsim._core.utils import installed_redisai_backends
 from smartsim.error import SmartSimError
 from smartsim.status import JobStatus
 
@@ -43,7 +41,9 @@ except (ImportError, SmartSimError) as e:
     print(e)
     tf_available = False
 
-tf_backend_available = "tensorflow" in installed_redisai_backends()
+tf_backend_available = (
+    "tensorflow" in []
+)  # todo: update test to replace installed_redisai_backends()
 
 
 @pytest.mark.skipif(

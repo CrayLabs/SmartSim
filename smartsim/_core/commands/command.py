@@ -35,6 +35,10 @@ class Command(MutableSequence[str]):
     """Basic container for command information"""
 
     def __init__(self, command: t.List[str]) -> None:
+        if not command:
+            raise TypeError("Command list cannot be empty")
+        if not all(isinstance(item, str) for item in command):
+            raise TypeError("All items in the command list must be strings")
         """Command constructor"""
         self._command = command
 
@@ -66,7 +70,7 @@ class Command(MutableSequence[str]):
         """Set the command at the specified index."""
         if isinstance(idx, int):
             if not isinstance(value, str):
-                raise ValueError(
+                raise TypeError(
                     "Value must be of type `str` when assigning to an index"
                 )
             self._command[idx] = deepcopy(value)
@@ -74,9 +78,7 @@ class Command(MutableSequence[str]):
         if not isinstance(value, list) or not all(
             isinstance(item, str) for item in value
         ):
-            raise ValueError(
-                "Value must be a list of strings when assigning to a slice"
-            )
+            raise TypeError("Value must be a list of strings when assigning to a slice")
         self._command[idx] = (deepcopy(val) for val in value)
 
     def __delitem__(self, idx: t.Union[int, slice]) -> None:

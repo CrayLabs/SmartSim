@@ -29,6 +29,7 @@ from os import path
 from tabulate import tabulate
 
 
+# TODO remove when Ensemble is addressed
 class EntityFiles:
     """EntityFiles are the files a user wishes to have available to
     applications and nodes within SmartSim. Each entity has a method
