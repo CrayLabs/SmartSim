@@ -251,10 +251,10 @@ def filter_assets(
         asset = next((asset for asset in assets if _platform_filter(asset.name)), None)
 
     if not asset and not is_crayex_platform():
-        # non-Cray platform, Cray EX asset
-        logger.warning(f"Platform does not support Cray EX assets")
+        # non-Cray platform, HSN asset
+        logger.warning(f"Platform does not support HSN assets")
     elif not asset and is_crayex_platform():
-        # Cray platform, non Cray EX asset
+        # Cray platform, non HSN asset
         asset = assets[0]
         logger.warning(f"Platform-specific package not found. Using {asset.name}")
 
