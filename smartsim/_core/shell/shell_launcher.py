@@ -50,6 +50,8 @@ if t.TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# pylint: disable=unspecified-encoding
+
 
 class ShellLauncherCommand(t.NamedTuple):
     env: EnvironMappingType
@@ -110,14 +112,13 @@ def make_shell_format_fn(
             else exe
         )
         # pylint: disable-next=consider-using-with
-        return ShellLauncherCommand(  # pylint: disable-next=unspecified-encoding
+        return ShellLauncherCommand(
             env, pathlib.Path(path), open(stdout_path), open(stderr_path), command_tuple
         )
 
     return impl
 
 
-# pylint: disable=no-self-use
 class ShellLauncher:
     """A launcher for launching/tracking local shell commands"""
 

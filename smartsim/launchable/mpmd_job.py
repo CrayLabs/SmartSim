@@ -60,7 +60,7 @@ def _check_entity(mpmd_pairs: t.List[MPMDPair]) -> None:
     ret: SmartSimEntity | None = None
     for mpmd_pair in mpmd_pairs:
         if flag == 1:
-            if isinstance(ret, type(mpmd_pair.entity)):
+            if type(ret) == type(mpmd_pair.entity):
                 flag = 0
             else:
                 raise SSUnsupportedError(
@@ -108,7 +108,6 @@ class MPMDJob(BaseJob):
         # TODO: return MPMDJobWarehouseRunner.run(self)
         raise NotImplementedError
 
-    # pylint: disable=unnecessary-lambda-assignment
     def __str__(self) -> str:  # pragma: no cover
         """returns A user-readable string of a MPMD Job"""
         fmt = lambda mpmd_pair: textwrap.dedent(

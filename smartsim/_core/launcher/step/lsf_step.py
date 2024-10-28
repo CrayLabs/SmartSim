@@ -217,7 +217,7 @@ class JsrunStep(Step):
         :return: executable list
         """
         exe = self.entity.exe
-        args = self.entity.exe_args  # pylint: disable=protected-access
+        args = self.entity.exe_args
 
         if self._get_mpmd():
             erf_file = self.get_step_file(ending=".mpmd")

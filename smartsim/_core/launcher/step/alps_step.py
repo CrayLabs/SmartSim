@@ -126,14 +126,14 @@ class AprunStep(Step):
             return self._make_mpmd()
 
         exe = self.entity.exe
-        args = self.entity.exe_args  # pylint: disable=protected-access
+        args = self.entity.exe_args
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build Aprun (MPMD) executable"""
 
         exe = self.entity.exe
-        exe_args = self.entity._exe_args  # pylint: disable=protected-access
+        exe_args = self.entity.exe_args
         cmd = exe + exe_args
 
         for mpmd in self._get_mpmd():

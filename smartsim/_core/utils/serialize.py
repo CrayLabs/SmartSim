@@ -33,6 +33,8 @@ from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
 import smartsim.log
+from smartsim.settings.batch_settings import BatchSettings
+from smartsim.settings.launch_settings import LaunchSettings
 
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
@@ -40,8 +42,6 @@ if t.TYPE_CHECKING:
     from smartsim.database.feature_store import FeatureStore
     from smartsim.entity import Application, FSNode
     from smartsim.entity.dbobject import FSModel, FSScript
-    from smartsim.settings.batch_settings import BatchSettings
-    from smartsim.settings.launch_settings import LaunchSettings
 
 
 TStepLaunchMetaData = t.Tuple[
@@ -235,7 +235,7 @@ def _dictify_fs(
         fs_type = "Unknown"
 
     return {
-        "name": feature_store.name,
+        "name": feature_store.fs_identifier,
         "type": fs_type,
         "interface": feature_store._interfaces,  # pylint: disable=protected-access
         "shards": [

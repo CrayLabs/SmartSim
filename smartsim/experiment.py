@@ -157,6 +157,13 @@ class Experiment:
         experiment
         """
 
+    def _set_dragon_server_path(self) -> None:
+        """Set path for dragon server through environment varialbes"""
+        if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
+            environ["_SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
+                self.exp_path, CONFIG.dragon_default_subdir
+            )
+
     def start(self, *jobs: Job | t.Sequence[Job]) -> tuple[LaunchedJobID, ...]:
         """Execute a collection of `Job` instances.
 
@@ -175,7 +182,7 @@ class Experiment:
         jobs_ = list(_helpers.unpack(jobs))
 
         run_id = datetime.datetime.now().replace(microsecond=0).isoformat()
-        root = pathlib.Path(self.exp_path, run_id)
+        root = pathlib.Path(self.exp_path, run_id.replace(":", "."))
         return self._dispatch(Generator(root), dispatch.DEFAULT_DISPATCHER, *jobs_)
 
     def _dispatch(
@@ -202,18 +209,18 @@ class Experiment:
             args = job.launch_settings.launch_args
             env = job.launch_settings.env_vars
             exe = job.entity.as_executable_sequence()
-            dispatch_instance = dispatcher.get_dispatch(args)
+            dispatch_item = dispatcher.get_dispatch(args)
             try:
                 # Check to see if one of the existing launchers can be
                 # configured to handle the launch arguments ...
-                launch_config = dispatch_instance.configure_first_compatible_launcher(
+                launch_config = dispatch_item.configure_first_compatible_launcher(
                     from_available_launchers=self._launch_history.iter_past_launchers(),
                     with_arguments=args,
                 )
             except errors.LauncherNotFoundError:
                 # ... otherwise create a new launcher that _can_ handle the
                 # launch arguments and configure _that_ one
-                launch_config = dispatch_instance.create_new_launcher_configuration(
+                launch_config = dispatch_item.create_new_launcher_configuration(
                     for_experiment=self, with_arguments=args
                 )
             # Generate the job directory and return the generated job path
@@ -483,8 +490,8 @@ class Experiment:
         if fs_identifier in self._fs_identifiers:
             logger.warning(
                 f"A feature store with the identifier {fs_identifier} has already "
-                "been made. An error will be raised if multiple Feature Stores "
-                "are started with the same identifier"
+                "been made. An error will be raised if multiple Feature Stores are "
+                "with the same identifier"
             )
         # Otherwise, add
         self._fs_identifiers.add(fs_identifier)

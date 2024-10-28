@@ -76,8 +76,8 @@ class JobEntity:
 
     @property
     def is_fs(self) -> bool:
-        """Returns `True` if the entity represents a feature store or
-        feature store shard"""
+        """Returns `True` if the entity represents a feature store or feature
+        store shard"""
         return self.type in ["featurestore", "fsnode"]
 
     @property

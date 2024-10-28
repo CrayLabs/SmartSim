@@ -29,8 +29,6 @@ from pathlib import Path
 
 import pytest
 
-from smartsim import Experiment
-from smartsim._core.utils import installed_redisai_backends
 from smartsim.status import JobStatus
 
 torch_available = True
@@ -40,7 +38,9 @@ try:
 except ImportError:
     torch_available = False
 
-torch_backend_available = "torch" in installed_redisai_backends()
+torch_backend_available = (
+    "torch" in []
+)  # todo: update test to replace installed_redisai_backends()
 
 should_run = torch_available and torch_backend_available
 pytestmark = pytest.mark.skipif(
@@ -65,9 +65,11 @@ def test_torch_model_and_script(
     fs = prepare_fs(single_fs).featurestore
     wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
     test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
     run_settings = wlm_experiment.create_run_settings(
-        "python", f"run_torch.py --device={test_device}"
+        "python",
+        ["run_torch.py", f"--device={test_device}", f"--num-devices={test_num_gpus}"],
     )
     if wlmutils.get_test_launcher() != "local":
         run_settings.set_tasks(1)

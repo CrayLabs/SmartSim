@@ -65,7 +65,8 @@ class BatchSettings(BaseSettings):
     def __init__(
         self,
         batch_scheduler: t.Union[BatchSchedulerType, str],
-        batch_args: StringArgument = None,
+        batch_args: StringArgument | None = None,
+        # batch_args: StringArgument = None,
         env_vars: StringArgument | None = None,
     ) -> None:
         """Initialize a BatchSettings instance.
@@ -82,9 +83,9 @@ class BatchSettings(BaseSettings):
             # OR
             sbatch_settings = BatchSettings(batch_scheduler=BatchSchedulerType.Slurm)
 
-        This will assign a SlurmBatchArguments object to ``sbatch_settings.batch_args``.
-        Using the object, users may access the child class functions to set
-        batch configurations. For example:
+        This will assign a SlurmBatchArguments object to
+        ``sbatch_settings.batch_args``. Using the object, users may access the child
+        class functions to set batch configurations. For example:
 
         .. highlight:: python
         .. code-block:: python
@@ -105,9 +106,9 @@ class BatchSettings(BaseSettings):
 
         :param batch_scheduler: The type of scheduler to initialize
             (e.g., Slurm, PBS, LSF)
-        :param batch_args: A dictionary of arguments for the scheduler, where the keys
-            are strings and the values can be either strings or None. This argument is
-            optional and defaults to None.
+        :param batch_args: A dictionary of arguments for the scheduler, where
+            the keys are strings and the values can be either strings or None.
+            This argument is optional and defaults to None.
         :param env_vars: Environment variables for the batch settings, where the keys
             are strings and the values can be either strings or None. This argument is
             also optional and defaults to None.
@@ -122,7 +123,6 @@ class BatchSettings(BaseSettings):
         """The BatchSettings child class based on scheduler type"""
         self.env_vars = env_vars or {}
         """The environment configuration"""
-        self.batch_args = batch_args or {}
 
     @property
     def batch_scheduler(self) -> str:

@@ -83,8 +83,8 @@ class CommandList(MutableSequence[Command]):
                 isinstance(item, str) for item in sublist.command
             ):
                 raise TypeError(
-                    "Value sublists must be a list of Commands when \
-assigning to a slice"
+                    "Value sublists must be a list of Commands when assigning \
+to a slice"
                 )
         self._commands[idx] = (deepcopy(val) for val in value)
 

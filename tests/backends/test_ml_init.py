@@ -28,7 +28,13 @@ import tempfile
 
 import pytest
 
-pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
+try:
+    import tensorflow
+    import torch
+except:
+    pytestmark = pytest.mark.skip("tensorflow or torch were not availalble")
+else:
+    pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
 
 def test_import_ss_ml(monkeypatch):

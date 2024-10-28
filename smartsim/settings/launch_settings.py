@@ -114,8 +114,8 @@ class LaunchSettings(BaseSettings):
         :param launcher: The type of launcher to initialize (e.g., Dragon, Slurm,
             PALS, ALPS, Local, Mpiexec, Mpirun, Orterun, LSF)
         :param launch_args: A dictionary of arguments for the launcher, where the keys
-            are strings and the values can be either strings or None.
-            This argument is optional and defaults to None.
+            are strings and the values can be either strings or None. This argument is
+            optional and defaults to None.
         :param env_vars: Environment variables for the launch settings, where the keys
             are strings and the values can be either strings or None. This argument is
             also optional and defaults to None.

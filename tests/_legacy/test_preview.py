@@ -359,7 +359,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert hw_rs == hello_world_model.run_settings.exe_args[0]
     assert None == hello_world_model.batch_settings
     assert "port" in list(hello_world_model.params.items())[0]
-    assert hw_port in list(hello_world_model.params.items())[0]
+    assert str(hw_port) in list(hello_world_model.params.items())[0]
     assert "password" in list(hello_world_model.params.items())[1]
     assert hw_password in list(hello_world_model.params.items())[1]
 
@@ -983,7 +983,7 @@ def test_preview_active_infrastructure_feature_store_error(
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     monkeypatch.setattr(
-        smartsim.database.orchestrator.FeatureStore, "is_active", lambda x: True
+        smartsim.database.feature_store.FeatureStore, "is_active", lambda x: True
     )
 
     orc = exp.create_feature_store(

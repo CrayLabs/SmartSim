@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 # ***************************************
 # TODO: Remove pylint disable after merge
 # ***************************************
-# pylint: disable=no-self-use
+# pylint: disable=no-self-use,no-member
 
 
 class SgeQsubBatchSettings(BatchSettings):

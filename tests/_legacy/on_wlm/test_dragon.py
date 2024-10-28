@@ -56,7 +56,7 @@ def test_dragon_global_path(global_dragon_teardown, wlmutils, test_dir, monkeypa
 
 def test_dragon_exp_path(global_dragon_teardown, wlmutils, test_dir, monkeypatch):
     monkeypatch.delenv("SMARTSIM_DRAGON_SERVER_PATH", raising=False)
-    monkeypatch.delenv("SMARTSIM_DRAGON_SERVER_PATH_EXP", raising=False)
+    monkeypatch.delenv("_SMARTSIM_DRAGON_SERVER_PATH_EXP", raising=False)
     exp: Experiment = Experiment(
         "test_dragon_connection",
         exp_path=test_dir,

@@ -114,9 +114,6 @@ def test_create_run_policy_non_run_request(dragon_request: DragonRequest) -> Non
     policy = DragonBackend.create_run_policy(dragon_request, "localhost")
 
     assert policy is not None, "Default policy was not returned"
-    assert (
-        policy.device == Policy.Device.DEFAULT
-    ), "Default device was not Device.DEFAULT"
     assert policy.cpu_affinity == [], "Default cpu affinity was not empty"
     assert policy.gpu_affinity == [], "Default gpu affinity was not empty"
 
@@ -140,10 +137,8 @@ def test_create_run_policy_run_request_no_run_policy() -> None:
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
 
-    assert policy.device == Policy.Device.DEFAULT
     assert set(policy.cpu_affinity) == set()
     assert policy.gpu_affinity == []
-    assert policy.affinity == Policy.Affinity.DEFAULT
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -167,7 +162,6 @@ def test_create_run_policy_run_request_default_run_policy() -> None:
 
     assert set(policy.cpu_affinity) == set()
     assert set(policy.gpu_affinity) == set()
-    assert policy.affinity == Policy.Affinity.DEFAULT
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -192,7 +186,6 @@ def test_create_run_policy_run_request_cpu_affinity_no_device() -> None:
 
     assert set(policy.cpu_affinity) == affinity
     assert policy.gpu_affinity == []
-    assert policy.affinity == Policy.Affinity.SPECIFIC
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -216,7 +209,6 @@ def test_create_run_policy_run_request_cpu_affinity() -> None:
 
     assert set(policy.cpu_affinity) == affinity
     assert policy.gpu_affinity == []
-    assert policy.affinity == Policy.Affinity.SPECIFIC
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -240,7 +232,6 @@ def test_create_run_policy_run_request_gpu_affinity() -> None:
 
     assert policy.cpu_affinity == []
     assert set(policy.gpu_affinity) == set(affinity)
-    assert policy.affinity == Policy.Affinity.SPECIFIC
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")

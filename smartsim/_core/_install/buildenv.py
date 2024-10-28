@@ -53,30 +53,6 @@ class SetupError(Exception):
     """
 
 
-class VersionConflictError(SetupError):
-    """An error for when version numbers of some library/package/program/etc
-    do not match and build may not be able to continue
-    """
-
-    def __init__(
-        self,
-        name: str,
-        current_version: "Version_",
-        target_version: "Version_",
-        msg: t.Optional[str] = None,
-    ) -> None:
-        if msg is None:
-            msg = (
-                f"Incompatible version for {name} detected: "
-                f"{name} {target_version} requested but {name} {current_version} "
-                "installed."
-            )
-        super().__init__(msg)
-        self.name = name
-        self.current_version = current_version
-        self.target_version = target_version
-
-
 # so as to not conflict with pkg_resources.packaging.version.Version
 # pylint: disable-next=invalid-name
 class Version_(str):
@@ -183,57 +159,28 @@ class Versioner:
     PYTHON_MIN = Version_("3.9.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.7.0"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.8.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
-    # ML/DL
-    # torch can be set by the user because we download that for them
-    TORCH = Version_(get_env("SMARTSIM_TORCH", "2.0.1"))
-    TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", "0.15.2"))
-    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", "+cpu"))
-    TORCH_CUDA_SUFFIX = Version_(get_env("TORCH_CUDA_SUFFIX", "+cu117"))
+    # Redis
+    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
+    REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git")
+    REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
-    # TensorFlow and ONNX only use the defaults
+    # RedisAI
+    REDISAI = "1.2.7"
+    REDISAI_URL = get_env(
+        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git"
+    )
+    REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
 
-    TENSORFLOW = Version_("2.13.1")
-    ONNX = Version_("1.14.1")
-
-    def as_dict(self) -> t.Dict[str, t.Tuple[str, ...]]:
+    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
         pkg_map = {
             "SMARTSIM": self.SMARTSIM,
-            "TORCH": self.TORCH,
-            "TENSORFLOW": self.TENSORFLOW,
-            "ONNX": self.ONNX,
+            db_name: self.REDIS,
+            "REDISAI": self.REDISAI,
         }
         return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
-
-    # TODO add a backend for ml libraries
-    def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
-        """Optional ML/DL dependencies we suggest for the user."""
-        ml_defaults = {
-            "torch": self.TORCH,
-            "tensorflow": self.TENSORFLOW,
-            "onnx": self.ONNX,
-            "skl2onnx": "1.16.0",
-            "onnxmltools": "1.12.0",
-            "scikit-learn": "1.3.2",
-            "torchvision": "0.15.2",
-            "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu117",
-        }
-
-        # remove torch-related fields as they are subject to change
-        # by having the user change hardware (cpu/gpu)
-        _torch_fields = [
-            "torch",
-            "torchvision",
-            "torch_cpu_suffix",
-            "torch_cuda_suffix",
-        ]
-        for field in _torch_fields:
-            ml_defaults.pop(field)
-
-        return {"ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]}
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:
@@ -304,7 +251,7 @@ class BuildEnv:
             self.check_dependencies()
 
     def check_dependencies(self) -> None:
-        deps = ["git", "git-lfs", "make", "wget", "cmake", self.CC, self.CXX]
+        deps = ["git", "make", "wget", "cmake", self.CC, self.CXX]
         if int(self.CHECKS) == 0:
             for dep in deps:
                 self.check_build_dependency(dep)
@@ -416,23 +363,6 @@ class BuildEnv:
             )
         except OSError:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
-
-    @classmethod
-    def check_installed(
-        cls, package: str, version: t.Optional[Version_] = None
-    ) -> bool:
-        """Check if a package is installed. If version is provided, check if
-        it's a compatible version. (major and minor the same)
-        """
-        try:
-            installed = cls.get_py_package_version(package)
-        except importlib.metadata.PackageNotFoundError:
-            return False
-        if version:
-            # detect if major or minor versions differ
-            if installed.major != version.major or installed.minor != version.minor:
-                raise VersionConflictError(package, installed, version)
-        return True
 
     @staticmethod
     def get_py_package_version(package: str) -> Version_:

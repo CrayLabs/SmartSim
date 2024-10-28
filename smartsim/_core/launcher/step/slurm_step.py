@@ -211,8 +211,9 @@ class SrunStep(Step):
         return exe + args
 
     # There is an issue here, exe and exe_args are no longer attached to the
-    # runsettings. This functions is looping through the list of run_settings.mpmd
-    # and build the variable cmd
+    # runsettings
+    # This functions is looping through the list of run_settings.mpmd and
+    # build the variable cmd
     def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.entity.exe

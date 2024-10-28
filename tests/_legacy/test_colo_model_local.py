@@ -29,7 +29,7 @@ import sys
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Application
+from smartsim._core.utils.helpers import _create_pinning_string
 from smartsim.error import SSUnsupportedError
 from smartsim.status import JobStatus
 
@@ -116,7 +116,7 @@ def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinni
     ],
 )
 def test_create_pinning_string(pin_list, num_cpus, expected):
-    assert Application._create_pinning_string(pin_list, num_cpus) == expected
+    assert _create_pinning_string(pin_list, num_cpus) == expected
 
 
 @pytest.mark.parametrize("fs_type", supported_fss)
