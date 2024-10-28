@@ -84,24 +84,38 @@ class ProcessGroupInfo:
 
     @property
     def puids(self) -> t.List[int]:
-        """List of Process UIDS belonging to the ProcessGroup"""
+        """List of Process IDs belonging to the ProcessGroup.
+
+        :returns: List of Process IDs belonging to the ProcessGroup.
+        """
         return list(set(itertools.chain(self.active_puids, self.inactive_puids)))
 
     @property
     def active_puids(self) -> t.List[int]:
+        """List of process IDs that are running.
+
+        :returns: List of process IDs that are running.
+        """
         if self.process_group is None:
             return []
         return list(self.process_group.puids)
 
     @property
     def inactive_puids(self) -> t.List[int]:
+        """List of process IDs that have completed.
+
+        :returns: List of process IDs that have completed.
+        """
         if self.process_group is None:
             return []
         return [puid for puid, _ in self.process_group.inactive_puids]
 
     @property
     def return_codes(self) -> t.List[int]:
-        """List of return codes of completed processes"""
+        """List of return codes of completed processes.
+
+        :returns: List of return codes of completed processes.
+        """
         if self.process_group is None:
             return [-1]
         if self.status == SmartSimStatus.STATUS_CANCELLED:
