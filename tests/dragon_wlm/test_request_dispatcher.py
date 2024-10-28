@@ -74,7 +74,7 @@ from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest, TensorMeta
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
-from tests.dragon.utils.channel import FileSystemCommChannel
+from .utils.channel import FileSystemCommChannel
 
 logger = get_logger(__name__)
 
