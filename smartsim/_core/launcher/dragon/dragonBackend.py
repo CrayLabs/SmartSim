@@ -80,6 +80,10 @@ class ProcessGroupInfo:
     """List of hosts on which the Process Group """
     redir_workers: t.Optional[dragon_process_group.ProcessGroup] = None
     """Workers used to redirect stdout and stderr to file"""
+    _final_return_codes: t.Optional[t.List[int]] = field(default=None, init=False)
+    """Field to cache final statuses when a process group info is marked as
+    completed so that the underlying process group can be released.
+    """
 
     @property
     def smartsim_info(self) -> t.Tuple[SmartSimStatus, t.List[int]]:
@@ -120,6 +124,8 @@ class ProcessGroupInfo:
 
         :returns: List of return codes of completed processes.
         """
+        if self._final_return_codes is not None:
+            return self._final_return_codes
         if self.process_group is None:
             return _RETURN_CODES_NO_PROCESS_GROUP
         if self.status == SmartSimStatus.STATUS_CANCELLED:
@@ -140,6 +146,14 @@ class ProcessGroupInfo:
             msg.append(f"{self.return_codes}")
 
         return ", ".join(msg)
+
+    def mark_complete(self) -> None:
+        """Cached the final return codes and release any underlying dragon
+        process groups.
+        """
+        self._final_return_codes = self.return_codes
+        self.process_group = None
+        self.redir_workers = None
 
 
 # Thanks to Colin Wahl from HPE HPC Dragon Team
@@ -624,8 +638,7 @@ class DragonBackend:
                         except KeyError:
                             logger.error(f"Tried to free a non-allocated host: {host}")
                         self._free_hosts.append(host)
-                    # group_info.process_group = None
-                    group_info.redir_workers = None
+                    group_info.mark_complete()
 
     def _update_shutdown_status(self) -> None:
         self._heartbeat()
