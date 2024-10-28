@@ -25,22 +25,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pathlib
-import typing as t
 
 import pytest
 import torch
-
-# import smartsim.error as sse
-# from smartsim._core.mli.infrastructure.control import workermanager as mli
-# from smartsim._core.mli.message_handler import MessageHandler
-from smartsim._core.utils import installed_redisai_backends
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
 
 # retrieved from pytest fixtures
 is_dragon = pytest.test_launcher == "dragon"
-torch_available = "torch" in installed_redisai_backends()
+torch_available = (
+    "torch" in []
+)  # todo: update test to replace installed_redisai_backends()
 
 
 @pytest.fixture

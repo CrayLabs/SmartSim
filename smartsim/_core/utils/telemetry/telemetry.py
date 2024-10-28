@@ -41,14 +41,13 @@ from watchdog.observers.api import BaseObserver
 
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
-from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
+from smartsim._core.launcher.dragon.dragon_launcher import DragonLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
-from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
-from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
-from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
-from smartsim._core.launcher.stepInfo import StepInfo
+from smartsim._core.launcher.lsf.lsf_launcher import LSFLauncher
+from smartsim._core.launcher.pbs.pbs_launcher import PBSLauncher
+from smartsim._core.launcher.slurm.slurm_launcher import SlurmLauncher
+from smartsim._core.launcher.step_info import StepInfo
 from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim._core.utils.telemetry.collector import CollectorManager
@@ -95,7 +94,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._tracked_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._launcher: t.Optional[Launcher] = None
-        self.job_manager: JobManager = JobManager(threading.RLock())
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
@@ -132,14 +130,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         raise ValueError("Launcher type not supported: " + launcher)
 
-    def init_job_manager(self) -> None:
-        """Initialize the job manager instance"""
-        if not self._launcher:
-            raise TypeError("self._launcher must be initialized")
-
-        self.job_manager.set_launcher(self._launcher)
-        self.job_manager.start()
-
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment
         :param launcher_type: the name of the workload manager used by the experiment
@@ -148,9 +138,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         if self._launcher is None:
             raise SmartSimError("Launcher init failed")
-
-        self.job_manager.set_launcher(self._launcher)
-        self.job_manager.start()
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the manifest for the experiment. Process the
@@ -210,14 +197,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 )
 
                 if entity.is_managed:
-                    # Tell JobManager the task is unmanaged. This collects
-                    # status updates but does not try to start a new copy
-                    self.job_manager.add_job(
-                        entity.name,
-                        entity.step_id,
-                        entity,
-                        False,
-                    )
                     # Tell the launcher it's managed so it doesn't attempt
                     # to look for a PID that may no longer exist
                     self._launcher.step_mapping.add(
@@ -263,9 +242,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         # remove all the registered collectors for the completed entity
         await self._collector_mgr.remove(entity)
-
-        job = self.job_manager[entity.name]
-        self.job_manager.move_to_completed(job)
 
         status_clause = f"status: {step_info.status}"
         error_clause = f", error: {step_info.error}" if step_info.error else ""
@@ -432,8 +408,7 @@ class TelemetryMonitor:
     """The telemetry monitor is a standalone process managed by SmartSim to perform
     long-term retrieval of experiment status updates and resource usage
     metrics. Note that a non-blocking driver script is likely to complete before
-    the SmartSim entities complete. Also, the JobManager performs status updates
-    only as long as the driver is running. This telemetry monitor entrypoint is
+    the SmartSim entities complete. This telemetry monitor entrypoint is
     started automatically when a SmartSim experiment calls the `start` method
     on resources. The entrypoint runs until it has no resources to monitor."""
 
@@ -458,33 +433,29 @@ class TelemetryMonitor:
     def _can_shutdown(self) -> bool:
         """Determines if the telemetry monitor can perform shutdown. An
         automatic shutdown will occur if there are no active jobs being monitored.
-        Managed jobs and databases are considered separately due to the way they
+        Managed jobs and feature stores are considered separately due to the way they
         are stored in the job manager
 
         :return: return True if capable of automatically shutting down
         """
-        managed_jobs = (
-            list(self._action_handler.job_manager.jobs.values())
-            if self._action_handler
-            else []
-        )
+        managed_jobs = []
         unmanaged_jobs = (
             list(self._action_handler.tracked_jobs) if self._action_handler else []
         )
-        # get an individual count of databases for logging
-        n_dbs: int = len(
+        # get an individual count of feature stores for logging
+        n_fss: int = len(
             [
                 job
                 for job in managed_jobs + unmanaged_jobs
-                if isinstance(job, JobEntity) and job.is_db
+                if isinstance(job, JobEntity) and job.is_fs
             ]
         )
 
         # if we have no jobs currently being monitored we can shutdown
-        n_jobs = len(managed_jobs) + len(unmanaged_jobs) - n_dbs
-        shutdown_ok = n_jobs + n_dbs == 0
+        n_jobs = len(managed_jobs) + len(unmanaged_jobs) - n_fss
+        shutdown_ok = n_jobs + n_fss == 0
 
-        logger.debug(f"{n_jobs} active job(s), {n_dbs} active db(s)")
+        logger.debug(f"{n_jobs} active job(s), {n_fss} active fs(s)")
         return shutdown_ok
 
     async def monitor(self) -> None:

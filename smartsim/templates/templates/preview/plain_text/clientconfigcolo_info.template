@@ -1,16 +1,16 @@
 
-          {%- if model.run_settings.colocated_db_settings.db_identifier %}
-          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+          {%- if model.run_settings.colocated_fs_settings.fs_identifier %}
+          Feature Store Identifier: {{ model.run_settings.colocated_fs_settings.fs_identifier }}
           {%- endif %}
-            Database Backend: {{ config.database_cli | get_dbtype }}
-            {%- if model.run_settings.colocated_db_settings.port %}
+            Feature Store Backend: {{ config.database_cli | get_fstype }}
+            {%- if model.run_settings.colocated_fs_settings.port %}
             Connection Type: TCP
             TCP/IP Port(s):
-              {{ model.run_settings.colocated_db_settings.port }}
+              {{ model.run_settings.colocated_fs_settings.port }}
             {%- endif %}
-            {%- if model.run_settings.colocated_db_settings.unix_socket %}
+            {%- if model.run_settings.colocated_fs_settings.unix_socket %}
             Connection Type: UDS
-            Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+            Unix Socket: {{ model.run_settings.colocated_fs_settings.unix_socket }}
             {%- endif %}
             Type: Colocated
             {%- if model.query_key_prefixing() %}

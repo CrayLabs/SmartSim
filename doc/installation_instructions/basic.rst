@@ -45,14 +45,14 @@ ML Library Support
 ==================
 
 We currently support both Nvidia and AMD GPUs when using RedisAI for GPU inference. The support
-for these GPUs often depends on the version of the CUDA or ROCm stack that is availble on your
-machine. In _most_ cases, the versions backwards compatible. If you encounter problems, please
+for these GPUs often depends on the version of the CUDA or ROCm stack that is available on your
+machine. In _most_ cases, the versions are backwards compatible. If you encounter problems, please
 contact us and we can build the backend libraries for your desired version of CUDA and ROCm.
 
 CPU backends are provided for Apple (both Intel and Apple Silicon) and Linux (x86_64).
 
 Be sure to reference the table below to find which versions of the ML libraries are supported for
-your particular platform. Additional, see :ref:`installation notes <install-notes>` for helpful
+your particular platform. Additionally, see :ref:`installation notes <install-notes>` for helpful
 information regarding various system types before installation.
 
 Linux
@@ -175,7 +175,7 @@ MacOSX
 
 .. note::
 
-    Users have succesfully run SmartSim on Windows using Windows Subsystem for Linux
+    Users have successfully run SmartSim on Windows using Windows Subsystem for Linux
     with Nvidia support. Generally, users should follow the Linux instructions here,
     however we make no guarantee or offer of support.
 
@@ -387,7 +387,7 @@ source remains at the site of the clone instead of in site-packages.
   pip install -e ".[dev]"  # for zsh users
 
 Use the now installed ``smart`` cli to install the machine learning runtimes and
-dragon. Referring to "Step 2: Build SmartSim above".
+dragon. Referring to "Step 2: Build SmartSim" above.
 
 Build the SmartRedis library
 ============================

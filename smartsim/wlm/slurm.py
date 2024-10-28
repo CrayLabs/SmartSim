@@ -24,13 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
 import os
 import typing as t
 from shutil import which
 
-from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
-from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
-from .._core.launcher.util.launcherUtil import ComputeNode, Partition
+from .._core.launcher.slurm.slurm_commands import salloc, scancel, scontrol, sinfo
+from .._core.launcher.slurm.slurm_parser import parse_salloc, parse_salloc_error
+from .._core.launcher.util.launcher_util import ComputeNode, Partition
 from ..error import (
     AllocationError,
     LauncherError,
@@ -38,7 +39,21 @@ from ..error import (
     SSReservedKeywordError,
 )
 from ..log import get_logger
-from ..settings.slurmSettings import fmt_walltime
+
+
+def fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
+    """Helper function walltime format conversion
+
+    Converts time to format HH:MM:SS
+
+    :param hours: number of hours to run job
+    :param minutes: number of minutes to run job
+    :param seconds: number of seconds to run job
+    :returns: Formatted walltime
+    """
+    delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    return f"0{delta}" if delta.seconds // 3600 < 10 else str(delta)
+
 
 logger = get_logger(__name__)
 
