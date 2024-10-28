@@ -29,6 +29,7 @@ import sys
 import tarfile
 import typing as t
 from collections import namedtuple
+from unittest.mock import MagicMock
 
 import pytest
 from github.GitRelease import GitRelease
@@ -44,6 +45,7 @@ from smartsim._core._cli.scripts.dragon_install import (
     DragonInstallRequest,
     cleanup,
     create_dotenv,
+    filter_assets,
     install_dragon,
     install_package,
     retrieve_asset,
@@ -577,3 +579,64 @@ def test_create_dotenv_format(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         for line in lines:
             line_split = line.split("=")
             assert len(line_split) == 2
+
+
+@pytest.mark.parametrize(
+    "_platform_filter_return,is_cray_platform_return,returned_asset_bool",
+    [
+        pytest.param(
+            True,
+            True,
+            True,
+            id="cray platform, hsn asset",
+        ),
+        pytest.param(
+            False,
+            False,
+            False,
+            id="non cray platform, hsn asset",
+        ),
+        pytest.param(
+            False,
+            True,
+            True,
+            id="cray platform, non hsn asset",
+        ),
+        pytest.param(
+            True,
+            False,
+            True,
+            id="non cray platform, non hsn asset",
+        ),
+    ],
+)
+def test_filter_assets(
+    monkeypatch,
+    test_dir,
+    _platform_filter_return,
+    is_cray_platform_return,
+    returned_asset_bool,
+):
+    request = DragonInstallRequest(test_dir, version="0.10")
+    monkeypatch.setattr(
+        "smartsim._core._cli.scripts.dragon_install._platform_filter",
+        MagicMock(return_value=_platform_filter_return),
+    )
+    monkeypatch.setattr(
+        "smartsim._core._cli.scripts.dragon_install._version_filter",
+        MagicMock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "smartsim._core._cli.scripts.dragon_install._pin_filter",
+        MagicMock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "smartsim._core._cli.scripts.dragon_install.is_crayex_platform",
+        MagicMock(return_value=is_cray_platform_return),
+    )
+    mocked_asset = MagicMock()
+    asset = filter_assets(request, [mocked_asset])
+    if returned_asset_bool:
+        assert asset is not None
+    else:
+        assert asset is None

@@ -250,7 +250,11 @@ def filter_assets(
     if len(assets) > 0:
         asset = next((asset for asset in assets if _platform_filter(asset.name)), None)
 
-    if not asset:
+    if not asset and not is_crayex_platform():
+        # non-Cray platform, HSN asset
+        logger.warning(f"Platform does not support HSN assets")
+    elif not asset and is_crayex_platform():
+        # Cray platform, non HSN asset
         asset = assets[0]
         logger.warning(f"Platform-specific package not found. Using {asset.name}")
 
@@ -267,9 +271,9 @@ def retrieve_asset_info(request: DragonInstallRequest) -> GitReleaseAsset:
 
     platform_result = check_platform()
     if not platform_result.is_cray:
-        logger.warning("Installing Dragon without HSTA support")
         for msg in platform_result.failures:
             logger.warning(msg)
+        logger.warning("Installing Dragon without HSTA support")
 
     if asset is None:
         raise SmartSimCLIActionCancelled("No dragon runtime asset available to install")
