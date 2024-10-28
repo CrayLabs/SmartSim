@@ -148,7 +148,7 @@ class ProcessGroupInfo:
         return ", ".join(msg)
 
     def mark_complete(self) -> None:
-        """Cached the final return codes and release any underlying dragon
+        """Cache the final return codes and release any underlying dragon
         process groups.
         """
         self._final_return_codes = self.return_codes
