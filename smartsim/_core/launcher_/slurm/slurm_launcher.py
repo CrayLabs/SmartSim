@@ -52,9 +52,8 @@ logger = get_logger(__name__)
 
 
 class SrunCommand:
-    """A type to inject job important information such as the job name and ID
-    into an `srun` command so that it may be utilized to track the status of
-    the job.
+    """Produces a properly formatted `srun` command from raw job information.
+    Ensures the job status can be tracked using the supplied name.
     """
 
     def __init__(
@@ -194,9 +193,9 @@ class SlurmLauncher:
         """Take a collection of job ids and return the status of the
         corresponding slrum processes started by the slurm launcher.
 
-        :param ids: A collection of ids of the launched jobs to get the
-            statuses of.
-        :returns: A mapping of ids for jobs to stop to their reported status.
+        :param ids: The collection of ids of launched jobs to query for current
+            status.
+        :returns: A mapping of launched ids to their current status.
         """
         id_to_info = {id_: self._get_slurm_info_from_job_id(id_) for id_ in ids}
 
