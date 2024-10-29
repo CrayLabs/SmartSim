@@ -709,7 +709,7 @@ def test_type_wait_parameter(test_dir):
 
 def test_type_stop_parameter(test_dir):
     exp = Experiment(name="exp_name", exp_path=test_dir)
-    with pytest.raises(TypeError, match="record argument was not of type Record"):
+    with pytest.raises(TypeError, match="Record argument was not of type `Record`"):
         exp.stop(2)
 
 

@@ -234,9 +234,9 @@ class Experiment:
         """Get the status of jobs launched through the `Experiment` from the
         record returned when calling `Experiment.start`.
 
-        The `Experiment` will map the launched id of the record back to the
+        The `Experiment` will map the record id of the record back to the
         launcher that started the job and request a status update. The order of
-        the returned statuses exactly matches the order of the records.
+        the returned statuses matches the order of the records.
 
         If the `Experiment` cannot find any launcher that started the job
         associated with the launched job id, then a
@@ -448,9 +448,9 @@ class Experiment:
             respective of the order of the calling arguments.
         """
         if not records:
-            raise ValueError("No records provided")
+            raise ValueError("No records provided. No jobs will be stopped.")
         if not all(isinstance(record, Record) for record in records):
-            raise TypeError("record argument was not of type Record")
+            raise TypeError("Record argument was not of type `Record`.")
         ids = tuple(record.launched_id for record in records)
         by_launcher = self._launch_history.group_by_launcher(set(ids), unknown_ok=True)
         id_to_stop_stat = (
