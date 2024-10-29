@@ -6,9 +6,7 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10"
-  # jobs:
   commands:
-    # post_checkout:
       # Cancel building pull requests when there aren't changed in the docs directory or YAML file.
       # You can add any other files or directories that you'd like here as well,
       # like your docs requirements file, or other files that will change your docs build.
@@ -20,12 +18,8 @@ build:
         then
           exit 183;
         fi
-      # - su && touch /usr/lib/foo
-      # - su && ls /usr/lib/foo
-    # pre_create_environment:
       - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
       - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
-    # post_create_environment:
       - pwd
       - python -m pip install -e .[dev,docs]
       - cd smartredis; python -m pip install .
@@ -39,31 +33,9 @@ build:
         make docs &&
         mkdir -p _readthedocs/ &&
         cp -r doc/_build/html/ _readthedocs/
-      
-
-
-      # - smart build --device cpu --dragon -v
-      # - cp ./smartsim/_core/.dragon/dragon-0.9/lib/libdragon.so /usr/lib/
-      
-
-  
-
-      # - export $(cat /home/docs/checkouts/readthedocs.org/user_builds/smartsim/envs/755/lib/python3.10/site-packages/smartsim/_core/.dragon/.env | grep DRAGON_INCLUDE_DIR)
-      # - export LD_LIBRARY_PATH=$DRAGON_INCLUDE_DIR:$LD_LIBRARY_PATH
-      # - echo $DRAGON_INCLUDE_DIR
-      # - echo $LD_LIBRARY_PATH
-      # - ls
-      # - pwd
-      # - find /home/docs/checkouts/readthedocs.org/user_builds/smartsim/envs/755/lib/python3.10/site-packages/smartsim/_core/.dragon -name ".env"
-      # - which smart
-      # - smart site
-      
-    # pre_build:
       - pip install typing_extensions==4.8.0
       - pip install pydantic==1.10.13
       - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
-
-    # build: 
       
 
 # Build documentation in the "docs/" directory with Sphinx
