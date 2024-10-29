@@ -35,6 +35,7 @@ build:
       - smart build --device cpu --dragon -v
       - |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(dirname $(find $PWD -name "libdragon.so")) &&
+        echo $LD_LIBRARY_PATH &&
         make docs &&
         mkdir -p _readthedocs/ &&
         cp -r doc/_build/html/ _readthedocs/
