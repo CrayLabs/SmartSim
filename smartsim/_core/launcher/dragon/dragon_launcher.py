@@ -381,6 +381,20 @@ from smartsim._core.dispatch import dispatch
 from smartsim.settings.arguments.launch.dragon import DragonLaunchArguments
 
 
+def _host_list_from_run_args(
+    run_args: t.Dict[str, "int | str | float | None"]
+) -> t.Optional[str]:
+    """Extract a host list from a run args dictionary.
+
+    :param run_args: Dictionary containing available run arguments
+    :returns: a CSV string containing host names or None
+    """
+    hosts: t.Optional[str] = None
+    if host_arg := run_args.get("host-list", None):
+        hosts = str(host_arg)
+    return hosts
+
+
 def _as_run_request_args_and_policy(
     run_req_args: DragonLaunchArguments,
     exe: t.Sequence[str],
@@ -396,13 +410,14 @@ def _as_run_request_args_and_policy(
     exe_, *args = exe
     run_args = dict[str, "int | str | float | None"](run_req_args._launch_args)
     policy = DragonRunPolicy.from_run_args(run_args)
+    hosts = _host_list_from_run_args(run_args)
     return (
         DragonRunRequestView(
             exe=exe_,
             exe_args=args,
             path=path,
             env=env,
-            # TODO: Not sure how this info is injected
+            hostlist=hosts,
             name=None,
             output_file=stdout_path,
             error_file=stderr_path,
