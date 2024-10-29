@@ -53,9 +53,6 @@ import torch
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
-from smartsim._core.mli.infrastructure.control.dragon_util import (
-    function_as_dragon_proc,
-)
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestBatch,
     RequestDispatcher,
@@ -75,8 +72,9 @@ from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest, Te
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
+from . import conftest
+from .utils import msg_pump
 from .utils.channel import FileSystemCommChannel
-from .utils.msg_pump import mock_messages
 
 logger = get_logger(__name__)
 
@@ -150,8 +148,8 @@ def test_request_dispatcher(
         callback_channel = DragonCommChannel.from_local()
         channels.append(callback_channel)
 
-        process = function_as_dragon_proc(
-            mock_messages,
+        process = conftest.function_as_dragon_proc(
+            msg_pump.mock_messages,
             [
                 worker_queue.descriptor,
                 backbone_fs.descriptor,
