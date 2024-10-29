@@ -110,7 +110,7 @@ def get_request() -> InferenceRequest:
 
     return InferenceRequest(
         model_key=ModelKey(key="model", descriptor="xyz"),
-        callback=None,
+        callback_desc=None,
         raw_inputs=tensor_numpy,
         input_keys=None,
         input_meta=serialized_tensors_descriptors,
@@ -121,10 +121,13 @@ def get_request() -> InferenceRequest:
 
 
 def get_request_batch_from_request(
-    request: InferenceRequest, inputs: t.Optional[TransformInputResult] = None
+    request: InferenceRequest,
 ) -> RequestBatch:
 
-    return RequestBatch([request], inputs, request.model_key)
+    return RequestBatch.from_requests(
+        [request],
+        request.model_key,
+    )
 
 
 sample_request: InferenceRequest = get_request()
@@ -146,13 +149,13 @@ def test_load_model(mlutils) -> None:
 
 def test_transform_input(mlutils) -> None:
     fetch_input_result = FetchInputResult(
-        sample_request.raw_inputs, sample_request.input_meta
+        sample_request_batch.raw_inputs, sample_request_batch.input_meta
     )
 
     mem_pool = MemoryPool.attach(dragon_gs_pool.create(1024**2).sdesc)
 
     transform_input_result = worker.transform_input(
-        sample_request_batch, [fetch_input_result], mem_pool
+        sample_request_batch, fetch_input_result, mem_pool
     )
 
     batch = get_batch().numpy()
@@ -184,15 +187,15 @@ def test_execute(mlutils) -> None:
         Net().to(torch_device[mlutils.get_test_device().lower()])
     )
     fetch_input_result = FetchInputResult(
-        sample_request.raw_inputs, sample_request.input_meta
+        sample_request_batch.raw_inputs, sample_request_batch.input_meta
     )
 
-    request_batch = get_request_batch_from_request(sample_request, fetch_input_result)
+    request_batch = get_request_batch_from_request(sample_request)
 
     mem_pool = MemoryPool.attach(dragon_gs_pool.create(1024**2).sdesc)
 
     transform_result = worker.transform_input(
-        request_batch, [fetch_input_result], mem_pool
+        request_batch, fetch_input_result, mem_pool
     )
 
     execute_result = worker.execute(

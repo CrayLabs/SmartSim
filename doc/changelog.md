@@ -14,6 +14,8 @@ Jump to:
 Description
 
 - Fix symlink operation
+- RequestBatch rewrite
+- Fix regression on hostlist param to DragonRunRequest
 - Fix dragon build logging bug
 - Merge core refactor into MLI feature branch
 - Implement asynchronous notifications for shared data
