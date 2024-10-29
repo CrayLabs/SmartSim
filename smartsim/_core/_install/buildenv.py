@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=invalid-name
 
 import importlib.metadata
 import os
@@ -36,6 +35,8 @@ from pathlib import Path
 from typing import Iterable
 
 from packaging.version import InvalidVersion, Version, parse
+
+DbEngine = t.Literal["REDIS", "KEYDB"]
 
 
 class SetupError(Exception):
