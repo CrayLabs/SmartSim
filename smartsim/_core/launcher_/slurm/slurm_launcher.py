@@ -275,9 +275,8 @@ class SlurmLauncher:
         :returns: A mapping of ids to their reported status after attempting to
             stop them.
         """
-        slurm_infos = tuple(map(self._get_slurm_info_from_job_id, ids))
-        for info in slurm_infos:
-            self._stop_job(info)
+        slurm_infos = map(self._get_slurm_info_from_job_id, ids)
+        helpers.threaded_map(self._stop_job, slurm_infos)
         return self.get_status(*ids)
 
     @staticmethod

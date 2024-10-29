@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import base64
 import collections.abc
+import concurrent.futures
 import functools
 import itertools
 import os
@@ -57,6 +58,7 @@ if t.TYPE_CHECKING:
 
 _TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime"]
 _T = t.TypeVar("_T")
+_R = t.TypeVar("_R")
 _HashableT = t.TypeVar("_HashableT", bound=t.Hashable)
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
@@ -525,6 +527,20 @@ def pack_params(
         return fn(*args)
 
     return packed
+
+
+def threaded_map(
+    fn: t.Callable[[_T], _R], iterable: t.Iterable[_T], /
+) -> tuple[_R, ...]:
+    """Map a function over an iterable with each call being executed in a
+    separate concurrent thread.
+
+    :param fn: The function to map over the sequence
+    :param iterable: The iterable over which the function is mapped
+    :returns: The results of the mapped function
+    """
+    with concurrent.futures.ThreadPoolExecutor() as pool:
+        return tuple(pool.map(fn, iterable))
 
 
 @t.final

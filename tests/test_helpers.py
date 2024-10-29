@@ -26,6 +26,7 @@
 
 import collections
 import signal
+import time
 
 import pytest
 
@@ -91,6 +92,25 @@ def test_encode_raises_on_empty():
 def test_decode_raises_on_empty():
     with pytest.raises(ValueError):
         helpers.decode_cmd("")
+
+
+def test_threaded_map():
+    assert (0, 1, 4, 9, 16) == tuple(helpers.threaded_map(lambda x: x * x, range(5)))
+
+
+def test_threaded_map_is_async():
+    sleep_time = 1
+    seq = range(5)
+
+    def some_long_io_op(x):
+        time.sleep(sleep_time)
+        return x + x
+
+    start = time.perf_counter()
+    res = helpers.threaded_map(some_long_io_op, seq)
+    end = time.perf_counter()
+    assert (0, 2, 4, 6, 8) == tuple(res)
+    assert end - start < (sleep_time * len(seq)) / 2
 
 
 class MockSignal:
