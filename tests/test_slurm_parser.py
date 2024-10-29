@@ -268,3 +268,28 @@ def test_parse_sacct_status(output, job_id, status):
     """
     parsed_status = slurm_parser.parse_sacct(output, job_id)
     assert status == parsed_status
+
+
+# -- utils ---------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "step_id, expected",
+    [
+        pytest.param("12345", False),
+        pytest.param("12345+1.0", True),
+    ],
+)
+def test_is_substep(step_id, expected):
+    assert slurm_parser.is_substep(step_id) == expected
+
+
+@pytest.mark.parametrize(
+    "step_id, expected",
+    [
+        pytest.param("12345", "12345"),
+        pytest.param("12345+1.0", "12345"),
+    ],
+)
+def test_get_step_id_from_substep(step_id, expected):
+    assert slurm_parser.get_step_id_from_substep_id(step_id) == expected

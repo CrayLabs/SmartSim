@@ -139,3 +139,28 @@ def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[StepID]:
             if sacct_string[0] == step_name:
                 step_id = sacct_string[1]
     return StepID(step_id) if step_id is not None else None
+
+
+def is_substep(step_id: StepID) -> bool:
+    """Check if `step_id` is part of colon-separated run, this is reflected in a
+    `+` in the step id, so that the format becomes `12345+1.0`.
+
+    If we find a `+` in the step ID, it traditionally can mean two things: a
+    MPMD srun command, or a heterogeneous job.
+
+    :param step_id: A step id to check to see if it is a substep.
+    :returns: Whether or not the step ID is a substep
+    """
+    return step_id != get_step_id_from_substep_id(step_id)
+
+
+def get_step_id_from_substep_id(substep: StepID) -> StepID:
+    """Parse the base step ID from a substep. In the case where a step ID is
+    provided that is not referenceing a substep, return the original step ID
+    without change.
+
+    :param step_id: A substep step ID.
+    :returns: The parent step ID of the provided substep ID.
+    """
+    step_id, *_ = substep.split("+", maxsplit=1)
+    return StepID(step_id)

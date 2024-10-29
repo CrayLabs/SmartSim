@@ -289,21 +289,19 @@ class SlurmLauncher:
             to kill.
         """
         step_id = job_info.slurm_id
-        # Check if step_id is part of colon-separated run, this is reflected in
-        # a '+' in the step id, so that the format becomes 12345+1.0.  If we
-        # find it it can mean two things: a MPMD srun command, or a
-        # heterogeneous job.  If it is a MPMD srun, then stop parent step
-        # because sub-steps cannot be stopped singularly.
-        is_sub_step = "+" in step_id
         is_het_job = os.getenv("SLURM_HET_SIZE") is not None
-        # If it is a heterogeneous job, we can stop them like this. Slurm will
-        # throw an error, but will actually kill steps correctly.
-        if is_sub_step and not is_het_job:
-            step_id_, *_ = step_id.split("+", maxsplit=1)
-            step_id = parser.StepID(step_id_)  # Ugly cast for type check
+        # If the step is a substep and not part of a heterogenous job, it is a
+        # MPMD srun. We need to stop parent step because sub-steps of MPMD jobs
+        # cannot be stopped singularly.
+        if not is_het_job and parser.is_substep(step_id):
+            step_id = parser.get_step_id_from_substep_id(step_id)
+        # If it is a heterogeneous job, we can stop them like a normal step.
+        # Slurm will throw an error, but will actually kill steps correctly.
         ret_code, _, err = commands.scancel([step_id])
         if ret_code != 0:
             if is_het_job:
+                # However, in the case of a heterogenous job, we do need to
+                # manually mark the step as 'cancelled'.
                 msg = (
                     "SmartSim received a non-zero exit code while canceling"
                     f" a heterogeneous job step {job_info.name}!\n"
