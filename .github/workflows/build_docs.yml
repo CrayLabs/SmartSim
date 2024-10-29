@@ -32,6 +32,8 @@ on:
   push:
     branches:
       - develop
+    branches-ignore:
+      - smartsim-refactor
 
 jobs:
   build_docs:

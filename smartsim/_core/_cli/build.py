@@ -28,18 +28,22 @@ import argparse
 import importlib.metadata
 import operator
 import os
+from pathlib import Path
 import re
-import shutil
 import textwrap
 import typing as t
-from pathlib import Path
 
 from tabulate import tabulate
 
-from smartsim._core._cli.scripts.dragon_install import install_dragon
+from smartsim._core._cli.scripts.dragon_install import (
+    DEFAULT_DRAGON_REPO,
+    DEFAULT_DRAGON_VERSION,
+    DragonInstallRequest,
+    display_post_install_logs,
+    install_dragon,
+)
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
-from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, DbEngine, Version_, Versioner
+from smartsim._core._install.buildenv import BuildEnv, Version_, Versioner
 from smartsim._core._install.mlpackages import (
     DEFAULT_MLPACKAGE_PATH,
     DEFAULT_MLPACKAGES,
@@ -52,89 +56,19 @@ from smartsim._core._install.platform import (
     OperatingSystem,
     Platform,
 )
-from smartsim._core._install.redisaiBuilder import RedisAIBuilder
+
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import installed_redisai_backends
-from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
+# ***************************************
+# TODO: Remove pylint disable after merge
+# ***************************************
+# pylint: disable=too-many-statements,unused-variable,no-value-for-parameter,no-member,invalid-name,condition-evals-to-constant,unused-variable
+
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
-
-
-def check_backends_install() -> bool:
-    """Checks if backends have already been installed.
-    Logs details on how to proceed forward
-    if the RAI_PATH environment variable is set or if
-    backends have already been installed.
-    """
-    rai_path = os.environ.get("RAI_PATH", "")
-    installed = installed_redisai_backends()
-    msg = ""
-
-    if rai_path and installed:
-        msg = (
-            f"There is no need to build. backends are already built and "
-            f"specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
-        )
-    elif rai_path and not installed:
-        msg = (
-            "Before running 'smart build', unset your RAI_PATH environment "
-            "variable with 'unset RAI_PATH'."
-        )
-    elif not rai_path and installed:
-        msg = (
-            "If you wish to re-run `smart build`, you must first run `smart clean`."
-            " The following backend(s) must be removed: " + ", ".join(installed)
-        )
-
-    if msg:
-        logger.error(msg)
-
-    return not bool(msg)
-
-
-def build_database(
-    build_env: BuildEnv, versions: Versioner, keydb: bool, verbose: bool
-) -> None:
-    # check database installation
-    database_name = "KeyDB" if keydb else "Redis"
-    database_builder = builder.DatabaseBuilder(
-        build_env(),
-        jobs=build_env.JOBS,
-        malloc=build_env.MALLOC,
-        verbose=verbose,
-    )
-    if not database_builder.is_built:
-        logger.info(
-            f"Building {database_name} version {versions.REDIS} "
-            f"from {versions.REDIS_URL}"
-        )
-        database_builder.build_from_git(
-            versions.REDIS_URL, branch=versions.REDIS_BRANCH
-        )
-        database_builder.cleanup()
-        logger.info(f"{database_name} build complete!")
-    else:
-        logger.warning(
-            f"{database_name} was previously built, run 'smart clobber' to rebuild"
-        )
-
-
-def build_redis_ai(
-    platform: Platform,
-    mlpackages: MLPackageCollection,
-    build_env: BuildEnv,
-    verbose: bool,
-) -> None:
-    logger.info("Building RedisAI and backends...")
-    rai_builder = RedisAIBuilder(
-        platform, mlpackages, build_env, CONFIG.build_path, verbose
-    )
-    rai_builder.build()
-    rai_builder.cleanup_build()
 
 
 def parse_requirement(
@@ -209,7 +143,8 @@ def _format_incompatible_python_env_message(
     conflict_str = fmt_list("Conflicting", conflicting)
     sep = "\n" if missing_str and conflict_str else ""
 
-    return textwrap.dedent(f"""\
+    return textwrap.dedent(
+        f"""\
         Python Package Warning:
 
         Requested packages are missing or have a version mismatch with
@@ -219,20 +154,8 @@ def _format_incompatible_python_env_message(
 
         Consider uninstalling any conflicting packages and rerunning
         `smart build` if you encounter issues.
-        """)
-
-
-def _configure_keydb_build(versions: Versioner) -> None:
-    """Configure the redis versions to be used during the build operation"""
-    versions.REDIS = Version_("6.2.0")
-    versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB.git"
-    versions.REDIS_BRANCH = "v6.2.0"
-
-    CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
-    if not CONFIG.conf_path.resolve().is_file():
-        raise SSConfigError(
-            "Database configuration file at REDIS_CONF could not be found"
-        )
+        """
+    )
 
 
 # pylint: disable-next=too-many-statements
@@ -242,13 +165,10 @@ def execute(
 
     # Unpack various arguments
     verbose = args.v
-    keydb = args.keydb
-    device = Device.from_str(args.device.lower())
+    device = Device(args.device.lower())
     is_dragon_requested = args.dragon
-
-    if Path(CONFIG.build_path).exists():
-        logger.warning(f"Build path already exists, removing: {CONFIG.build_path}")
-        shutil.rmtree(CONFIG.build_path)
+    dragon_repo = args.dragon_repo
+    dragon_version = args.dragon_version
 
     # The user should never have to specify the OS and Architecture
     current_platform = Platform(
@@ -281,41 +201,38 @@ def execute(
         env_vars = list(env.keys())
         print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
 
-    if keydb:
-        _configure_keydb_build(versions)
-
     if verbose:
-        db_name: DbEngine = "KEYDB" if keydb else "REDIS"
         logger.info("Version Information:")
-        vers = versions.as_dict(db_name=db_name)
+        vers = versions.as_dict()
         version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     logger.info("ML Packages")
     print(mlpackages)
 
-    if is_dragon_requested:
+    if is_dragon_requested or dragon_repo or dragon_version:
         install_to = CONFIG.core_path / ".dragon"
-        return_code = install_dragon(install_to)
+
+        try:
+            request = DragonInstallRequest(
+                install_to,
+                dragon_repo,
+                dragon_version,
+            )
+            return_code = install_dragon(request)
+        except ValueError as ex:
+            return_code = 2
+            logger.error(" ".join(ex.args))
 
         if return_code == 0:
-            logger.info("Dragon installation complete")
+            display_post_install_logs()
+
         elif return_code == 1:
             logger.info("Dragon installation not supported on platform")
         else:
             logger.warning("Dragon installation failed")
 
-    # REDIS/KeyDB
-    build_database(build_env, versions, keydb, verbose)
-
-    if (CONFIG.lib_path / "redisai.so").exists():
-        logger.warning("RedisAI was previously built, run 'smart clean' to rebuild")
-    elif not args.skip_backends:
-        build_redis_ai(current_platform, mlpackages, build_env, verbose)
-    else:
-        logger.info("Skipping compilation of RedisAI and backends")
-
-    backends = installed_redisai_backends()
+    backends = []
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) available")
 
@@ -359,6 +276,21 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Install the dragon runtime",
     )
     parser.add_argument(
+        "--dragon-repo",
+        default=None,
+        type=str,
+        help=(
+            "Specify a git repo containing dragon release assets "
+            f"(e.g. {DEFAULT_DRAGON_REPO})"
+        ),
+    )
+    parser.add_argument(
+        "--dragon-version",
+        default=None,
+        type=str,
+        help=f"Specify the dragon version to install (e.g. {DEFAULT_DRAGON_VERSION})",
+    )
+    parser.add_argument(
         "--skip-python-packages",
         action="store_true",
         help="Do not install the python packages that match the backends",
@@ -388,10 +320,4 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         default=str(DEFAULT_MLPACKAGE_PATH),
         type=str,
         help="Path to directory with JSON files describing platform and packages",
-    )
-    parser.add_argument(
-        "--keydb",
-        action="store_true",
-        default=False,
-        help="Build KeyDB instead of Redis",
     )

@@ -30,6 +30,8 @@ name: enforce_changelog
 
 on:
   pull_request:
+    branches-ignore:
+      - smartsim-refactor
   push:
     branches:
       - develop

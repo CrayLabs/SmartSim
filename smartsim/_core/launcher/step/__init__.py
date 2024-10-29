@@ -24,12 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .alpsStep import AprunStep
-from .dragonStep import DragonBatchStep, DragonStep
-from .localStep import LocalStep
-from .lsfStep import BsubBatchStep, JsrunStep
-from .mpiStep import MpiexecStep, MpirunStep, OrterunStep
-from .pbsStep import QsubBatchStep
-from .sgeStep import SgeQsubBatchStep
-from .slurmStep import SbatchStep, SrunStep
+from .alps_step import AprunStep
+from .dragon_step import DragonBatchStep, DragonStep
+from .local_step import LocalStep
+from .lsf_step import BsubBatchStep, JsrunStep
+from .mpi_step import MpiexecStep, MpirunStep, OrterunStep
+from .pbs_step import QsubBatchStep
+from .sge_step import SgeQsubBatchStep
+from .slurm_step import SbatchStep, SrunStep
 from .step import Step

@@ -37,7 +37,7 @@ from types import FrameType
 
 import zmq
 
-from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
+from smartsim._core.launcher.dragon.dragon_connector import DragonConnector
 from smartsim._core.schemas import (
     DragonHandshakeRequest,
     DragonRequest,
@@ -148,6 +148,7 @@ def execute_entrypoint(args: DragonClientEntrypointArgs) -> int:
 
     requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=True))
 
+    # TODO: DragonConnector constructor needs a path
     connector = DragonConnector()
 
     for request in requests:

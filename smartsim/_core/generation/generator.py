@@ -25,314 +25,303 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pathlib
-import shutil
+import subprocess
 import typing as t
+from collections import namedtuple
 from datetime import datetime
-from distutils import dir_util  # pylint: disable=deprecated-module
-from logging import DEBUG, INFO
-from os import mkdir, path, symlink
-from os.path import join, relpath
 
-from tabulate import tabulate
-
-from ...database import Orchestrator
-from ...entity import Ensemble, Model, TaggedFilesHierarchy
+from ...entity import entity
+from ...launchable import Job
 from ...log import get_logger
-from ..control import Manifest
-from .modelwriter import ModelWriter
+from ..commands import Command, CommandList
+from .operations.operations import (
+    ConfigureOperation,
+    CopyOperation,
+    FileSysOperationSet,
+    GenerationContext,
+    SymlinkOperation,
+)
 
 logger = get_logger(__name__)
 logger.propagate = False
 
 
+@t.runtime_checkable
+class _GenerableProtocol(t.Protocol):
+    """Protocol to ensure that an entity supports both file operations
+    and parameters."""
+
+    files: FileSysOperationSet
+    # TODO change when file_parameters taken off Application
+    # during Ensemble refactor ticket
+    file_parameters: t.Mapping[str, str]
+
+
+JobPath = namedtuple("JobPath", ["run_path", "out_path", "err_path"])
+"""Namedtuple that stores a Job's run directory, output file path, and
+error file path."""
+
+
 class Generator:
-    """The primary job of the generator is to create the file structure
-    for a SmartSim experiment. The Generator is responsible for reading
-    and writing into configuration files as well.
+    """The Generator class creates the directory structure for a
+    SmartSim Job by building and executing file operation commands.
     """
 
-    def __init__(
-        self, gen_path: str, overwrite: bool = False, verbose: bool = True
-    ) -> None:
-        """Initialize a generator object
+    run_directory = "run"
+    """The name of the directory storing run-related files."""
+    log_directory = "log"
+    """The name of the directory storing log-related files."""
 
-        if overwrite is true, replace any existing
-        configured models within an ensemble if there
-        is a name collision. Also replace any and all directories
-        for the experiment with fresh copies. Otherwise, if overwrite
-        is false, raises EntityExistsError when there is a name
-        collision between entities.
+    def __init__(self, root: pathlib.Path) -> None:
+        """Initialize a Generator object
 
-        :param gen_path: Path in which files need to be generated
-        :param overwrite: toggle entity replacement
-        :param verbose: Whether generation information should be logged to std out
+        The Generator class is responsible for constructing a
+        Job's directory, performing the following tasks:
+
+        - Creating the run and log directories
+        - Generating the output and error files
+        - Building the parameter settings file
+        - Managing symlinking, copying, and configuration of attached files
+
+        :param root: The base path for job-related files and directories
         """
-        self._writer = ModelWriter()
-        self.gen_path = gen_path
-        self.overwrite = overwrite
-        self.log_level = DEBUG if not verbose else INFO
+        self.root = root
+        """The root directory under which all generated files and 
+        directories will be placed."""
 
-    @property
-    def log_file(self) -> str:
-        """Returns the location of the file
-        summarizing the parameters used for the last generation
-        of all generated entities.
+    def _build_job_base_path(self, job: Job, job_index: int) -> pathlib.Path:
+        """Build and return a Job's base directory. The path is created by combining the
+        root directory with the Job type (derived from the class name),
+        the name attribute of the Job, and an index to differentiate between multiple
+        Job runs.
 
-        :returns: path to file with parameter settings
+        :param job: Job object
+        :param job_index: Job index
+        :returns: The built file path for the Job
         """
-        return join(self.gen_path, "smartsim_params.txt")
+        job_type = f"{job.__class__.__name__.lower()}s"
+        job_path = self.root / f"{job_type}/{job.name}-{job_index}"
+        return pathlib.Path(job_path)
 
-    def generate_experiment(self, *args: t.Any) -> None:
-        """Run ensemble and experiment file structure generation
+    def _build_job_run_path(self, job: Job, job_index: int) -> pathlib.Path:
+        """Build and return a Job's run directory. The path is formed by
+        combining the base directory with the `run_directory` class-level
+        constant, which specifies the name of the Job's run folder.
 
-        Generate the file structure for a SmartSim experiment. This
-        includes the writing and configuring of input files for a
-        model.
-
-        To have files or directories present in the created entity
-        directories, such as datasets or input files, call
-        ``entity.attach_generator_files`` prior to generation. See
-        ``entity.attach_generator_files`` for more information on
-        what types of files can be included.
-
-        Tagged model files are read, checked for input variables to
-        configure, and written. Input variables to configure are
-        specified with a tag within the input file itself.
-        The default tag is surronding an input value with semicolons.
-        e.g. ``THERMO=;90;``
-
+        :param job: Job object
+        :param job_index: Job index
+        :returns: The built file path for the Job run folder
         """
-        generator_manifest = Manifest(*args)
+        path = self._build_job_base_path(job, job_index) / self.run_directory
+        return pathlib.Path(path)
 
-        self._gen_exp_dir()
-        self._gen_orc_dir(generator_manifest.dbs)
-        self._gen_entity_list_dir(generator_manifest.ensembles)
-        self._gen_entity_dirs(generator_manifest.models)
+    def _build_job_log_path(self, job: Job, job_index: int) -> pathlib.Path:
+        """Build and return a Job's log directory. The path is formed by combining
+        the base directory with the `log_directory` class-level constant,
+        which specifies the name of the Job's log folder.
 
-    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
-        """Set the tag used for tagging input files
-
-        Set a tag or a regular expression for the
-        generator to look for when configuring new models.
-
-        For example, a tag might be ``;`` where the
-        expression being replaced in the model configuration
-        file would look like ``;expression;``
-
-        A full regular expression might tag specific
-        model configurations such that the configuration
-        files don't need to be tagged manually.
-
-        :param tag: A string of characters that signify
-                    the string to be changed. Defaults to ``;``
-        :param regex: full regex for the modelwriter to search for
+        :param job: Job object
+        :param job_index: Job index
+        :returns: The built file path for the Job run folder
         """
-        self._writer.set_tag(tag, regex)
+        path = self._build_job_base_path(job, job_index) / self.log_directory
+        return pathlib.Path(path)
 
-    def _gen_exp_dir(self) -> None:
-        """Create the directory for an experiment if it does not
-        already exist.
+    @staticmethod
+    def _build_log_file_path(log_path: pathlib.Path) -> pathlib.Path:
+        """Build and return a parameters file summarizing the parameters
+        used for the generation of the entity.
+
+        :param log_path: Path to log directory
+        :returns: The built file path an entities params file
+        """
+        return pathlib.Path(log_path) / "smartsim_params.txt"
+
+    @staticmethod
+    def _build_out_file_path(log_path: pathlib.Path, job_name: str) -> pathlib.Path:
+        """Build and return the path to the output file.
+        The path is created by combining the Job's log directory with the
+        job name and appending the `.out` extension.
+
+        :param log_path: Path to log directory
+        :param job_name: Name of the Job
+        :returns: Path to the output file
+        """
+        out_file_path = log_path / f"{job_name}.out"
+        return out_file_path
+
+    @staticmethod
+    def _build_err_file_path(log_path: pathlib.Path, job_name: str) -> pathlib.Path:
+        """Build and return the path to the error file. The path is created by combining
+        the Job's log directory with the job name and appending the `.err` extension.
+
+        :param log_path: Path to log directory
+        :param job_name: Name of the Job
+        :returns: Path to the error file
+        """
+        err_file_path = log_path / f"{job_name}.err"
+        return err_file_path
+
+    def generate_job(self, job: Job, job_index: int) -> JobPath:
+        """Build and return the Job's run directory, output file, and error file.
+
+        This method creates the Job's run and log directories, generates the
+        `smartsim_params.txt` file to log parameters used for the Job, and sets
+        up the output and error files for Job execution information. If files are
+        attached to the Job's entity, it builds file operation commands and executes
+        them.
+
+        :param job: Job object
+        :param job_index: Job index
+        :return: Job's run directory, error file and out file.
         """
 
-        if path.isfile(self.gen_path):
-            raise FileExistsError(
-                f"Experiment directory could not be created. {self.gen_path} exists"
-            )
-        if not path.isdir(self.gen_path):
-            # keep exists ok for race conditions on NFS
-            pathlib.Path(self.gen_path).mkdir(exist_ok=True, parents=True)
-        else:
-            logger.log(
-                level=self.log_level, msg="Working in previously created experiment"
-            )
+        job_path = self._build_job_run_path(job, job_index)
+        log_path = self._build_job_log_path(job, job_index)
 
-        # The log_file only keeps track of the last generation
-        # this is to avoid gigantic files in case the user repeats
-        # generation several times. The information is anyhow
-        # redundant, as it is also written in each entity's dir
-        with open(self.log_file, mode="w", encoding="utf-8") as log_file:
+        out_file = self._build_out_file_path(log_path, job.entity.name)
+        err_file = self._build_err_file_path(log_path, job.entity.name)
+
+        cmd_list = self._build_commands(job.entity, job_path, log_path)
+
+        self._execute_commands(cmd_list)
+
+        with open(
+            self._build_log_file_path(log_path), mode="w", encoding="utf-8"
+        ) as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_orc_dir(self, orchestrator_list: t.List[Orchestrator]) -> None:
-        """Create the directory that will hold the error, output and
-           configuration files for the orchestrator.
+        return JobPath(job_path, out_file, err_file)
 
-        :param orchestrator: Orchestrator instance
+    @classmethod
+    def _build_commands(
+        cls,
+        smartsim_entity: entity.SmartSimEntity,
+        job_path: pathlib.Path,
+        log_path: pathlib.Path,
+    ) -> CommandList:
+        """Build file operation commands for a Job's entity.
+
+        This method constructs commands for copying, symlinking, and writing
+        tagged files associated with the Job's entity. This method builds
+        the constructs the commands to generate the Job's run and log directory.
+        It aggregates these commands into a CommandList to return.
+
+        :param job: Job object
+        :param job_path: The file path for the Job run folder
+        :param log_path: The file path for the Job log folder
+        :return: A CommandList containing the file operation commands
         """
-        # Loop through orchestrators
-        for orchestrator in orchestrator_list:
-            orc_path = path.join(self.gen_path, orchestrator.name)
+        context = GenerationContext(job_path)
+        cmd_list = CommandList()
 
-            orchestrator.set_path(orc_path)
-            # Always remove orchestrator files if present.
-            if path.isdir(orc_path):
-                shutil.rmtree(orc_path, ignore_errors=True)
-            pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite, parents=True)
+        cls._append_mkdir_commands(cmd_list, job_path, log_path)
 
-    def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
-        """Generate directories for Ensemble instances
+        if isinstance(smartsim_entity, _GenerableProtocol):
+            cls._append_file_operations(cmd_list, smartsim_entity, context)
 
-        :param entity_lists: list of Ensemble instances
-        """
+        return cmd_list
 
-        if not entity_lists:
-            return
-
-        for elist in entity_lists:
-            elist_dir = path.join(self.gen_path, elist.name)
-            if path.isdir(elist_dir):
-                if self.overwrite:
-                    shutil.rmtree(elist_dir)
-                    mkdir(elist_dir)
-            else:
-                mkdir(elist_dir)
-            elist.path = elist_dir
-
-            self._gen_entity_dirs(list(elist.models), entity_list=elist)
-
-    def _gen_entity_dirs(
-        self,
-        entities: t.List[Model],
-        entity_list: t.Optional[Ensemble] = None,
+    @classmethod
+    def _append_mkdir_commands(
+        cls, cmd_list: CommandList, job_path: pathlib.Path, log_path: pathlib.Path
     ) -> None:
-        """Generate directories for Entity instances
+        """Append file operation Commands (mkdir) for a Job's run and log directory.
 
-        :param entities: list of Model instances
-        :param entity_list: Ensemble instance
-        :raises EntityExistsError: if a directory already exists for an
-                                   entity by that name
+        :param cmd_list: A CommandList object containing the commands to be executed
+        :param job_path: The file path for the Job run folder
+        :param log_path: The file path for the Job log folder
         """
-        if not entities:
-            return
+        cmd_list.append(cls._mkdir_file(job_path))
+        cmd_list.append(cls._mkdir_file(log_path))
 
-        for entity in entities:
-            if entity_list:
-                dst = path.join(self.gen_path, entity_list.name, entity.name)
-            else:
-                dst = path.join(self.gen_path, entity.name)
-
-            if path.isdir(dst):
-                if self.overwrite:
-                    shutil.rmtree(dst)
-                else:
-                    error = (
-                        f"Directory for entity {entity.name} "
-                        f"already exists in path {dst}"
-                    )
-                    raise FileExistsError(error)
-            pathlib.Path(dst).mkdir(exist_ok=True)
-            entity.path = dst
-
-            self._copy_entity_files(entity)
-            self._link_entity_files(entity)
-            self._write_tagged_entity_files(entity)
-
-    def _write_tagged_entity_files(self, entity: Model) -> None:
-        """Read, configure and write the tagged input files for
-           a Model instance within an ensemble. This function
-           specifically deals with the tagged files attached to
-           an Ensemble.
-
-        :param entity: a Model instance
-        """
-        if entity.files:
-            to_write = []
-
-            def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
-                """Using a TaggedFileHierarchy, reproduce the tagged file
-                directory structure
-
-                :param tagged: a TaggedFileHierarchy to be built as a
-                               directory structure
-                """
-                for file in tagged.files:
-                    dst_path = path.join(entity.path, tagged.base, path.basename(file))
-                    shutil.copyfile(file, dst_path)
-                    to_write.append(dst_path)
-
-                for tagged_dir in tagged.dirs:
-                    mkdir(
-                        path.join(
-                            entity.path, tagged.base, path.basename(tagged_dir.base)
-                        )
-                    )
-                    _build_tagged_files(tagged_dir)
-
-            if entity.files.tagged_hierarchy:
-                _build_tagged_files(entity.files.tagged_hierarchy)
-
-            # write in changes to configurations
-            if isinstance(entity, Model):
-                files_to_params = self._writer.configure_tagged_model_files(
-                    to_write, entity.params
-                )
-                self._log_params(entity, files_to_params)
-
-    def _log_params(
-        self, entity: Model, files_to_params: t.Dict[str, t.Dict[str, str]]
+    @classmethod
+    def _append_file_operations(
+        cls,
+        cmd_list: CommandList,
+        smartsim_entity: _GenerableProtocol,
+        context: GenerationContext,
     ) -> None:
-        """Log which files were modified during generation
+        """Append file operation Commands (copy, symlink, configure) for all
+        files attached to the entity.
 
-        and what values were set to the parameters
-
-        :param entity: the model being generated
-        :param files_to_params: a dict connecting each file to its parameter settings
+        :param cmd_list: A CommandList object containing the commands to be executed
+        :param smartsim_entity: The Job's attached entity
+        :param context: A GenerationContext object that holds the Job's run directory
         """
-        used_params: t.Dict[str, str] = {}
-        file_to_tables: t.Dict[str, str] = {}
-        for file, params in files_to_params.items():
-            used_params.update(params)
-            table = tabulate(params.items(), headers=["Name", "Value"])
-            file_to_tables[relpath(file, self.gen_path)] = table
+        copy_ret = cls._copy_files(smartsim_entity.files.copy_operations, context)
+        cmd_list.extend(copy_ret)
 
-        if used_params:
-            used_params_str = ", ".join(
-                [f"{name}={value}" for name, value in used_params.items()]
-            )
-            logger.log(
-                level=self.log_level,
-                msg=f"Configured model {entity.name} with params {used_params_str}",
-            )
-            file_table = tabulate(
-                file_to_tables.items(),
-                headers=["File name", "Parameters"],
-            )
-            log_entry = f"Model name: {entity.name}\n{file_table}\n\n"
-            with open(self.log_file, mode="a", encoding="utf-8") as logfile:
-                logfile.write(log_entry)
-            with open(
-                join(entity.path, "smartsim_params.txt"), mode="w", encoding="utf-8"
-            ) as local_logfile:
-                local_logfile.write(log_entry)
+        symlink_ret = cls._symlink_files(
+            smartsim_entity.files.symlink_operations, context
+        )
+        cmd_list.extend(symlink_ret)
 
-        else:
-            logger.log(
-                level=self.log_level,
-                msg=f"Configured model {entity.name} with no parameters",
-            )
+        configure_ret = cls._configure_files(
+            smartsim_entity.files.configure_operations, context
+        )
+        cmd_list.extend(configure_ret)
+
+    @classmethod
+    def _execute_commands(cls, cmd_list: CommandList) -> None:
+        """Execute a list of commands using subprocess.
+
+        This helper function iterates through each command in the provided CommandList
+        and executes them using the subprocess module.
+
+        :param cmd_list: A CommandList object containing the commands to be executed
+        """
+        for cmd in cmd_list:
+            subprocess.run(cmd.command, check=False)
 
     @staticmethod
-    def _copy_entity_files(entity: Model) -> None:
-        """Copy the entity files and directories attached to this entity.
+    def _mkdir_file(file_path: pathlib.Path) -> Command:
+        """Build a Command to create the directory along with any
+        necessary parent directories.
 
-        :param entity: Model
+        :param file_path: The directory path to be created
+        :return: A Command object to execute the directory creation
         """
-        if entity.files:
-            for to_copy in entity.files.copy:
-                dst_path = path.join(entity.path, path.basename(to_copy))
-                if path.isdir(to_copy):
-                    dir_util.copy_tree(to_copy, entity.path)
-                else:
-                    shutil.copyfile(to_copy, dst_path)
+        cmd = Command(["mkdir", "-p", str(file_path)])
+        return cmd
 
     @staticmethod
-    def _link_entity_files(entity: Model) -> None:
-        """Symlink the entity files attached to this entity.
+    def _copy_files(
+        files: list[CopyOperation], context: GenerationContext
+    ) -> CommandList:
+        """Build commands to copy files/directories from specified source paths
+        to an optional destination in the run directory.
 
-        :param entity: Model
+        :param files: A list of CopyOperation objects
+        :param context: A GenerationContext object that holds the Job's run directory
+        :return: A CommandList containing the copy commands
         """
-        if entity.files:
-            for to_link in entity.files.link:
-                dst_path = path.join(entity.path, path.basename(to_link))
-                symlink(to_link, dst_path)
+        return CommandList([file.format(context) for file in files])
+
+    @staticmethod
+    def _symlink_files(
+        files: list[SymlinkOperation], context: GenerationContext
+    ) -> CommandList:
+        """Build commands to symlink files/directories from specified source paths
+        to an optional destination in the run directory.
+
+        :param files: A list of SymlinkOperation objects
+        :param context: A GenerationContext object that holds the Job's run directory
+        :return: A CommandList containing the symlink commands
+        """
+        return CommandList([file.format(context) for file in files])
+
+    @staticmethod
+    def _configure_files(
+        files: list[ConfigureOperation],
+        context: GenerationContext,
+    ) -> CommandList:
+        """Build commands to configure files/directories from specified source paths
+        to an optional destination in the run directory.
+
+        :param files: A list of ConfigurationOperation objects
+        :param context: A GenerationContext object that holds the Job's run directory
+        :return: A CommandList containing the configuration commands
+        """
+        return CommandList([file.format(context) for file in files])

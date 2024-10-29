@@ -35,7 +35,6 @@ from smartsim._core._cli.build import execute as build_execute
 from smartsim._core._cli.clean import configure_parser as clean_parser
 from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
-from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.info import execute as info_execute
 from smartsim._core._cli.plugin import plugins
 from smartsim._core._cli.site import execute as site_execute
@@ -108,7 +107,7 @@ def default_cli() -> SmartCli:
     menu = [
         MenuItemConfig(
             "build",
-            "Build SmartSim dependencies (Redis, RedisAI, Dragon, ML runtimes)",
+            "Build SmartSim dependencies (Dragon, ML runtimes)",
             build_execute,
             build_parser,
         ),
@@ -117,11 +116,6 @@ def default_cli() -> SmartCli:
             "Remove previous ML runtime installation",
             clean_execute,
             clean_parser,
-        ),
-        MenuItemConfig(
-            "dbcli",
-            "Print the path to the redis-cli binary",
-            dbcli_execute,
         ),
         MenuItemConfig(
             "site",

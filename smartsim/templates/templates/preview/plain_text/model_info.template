@@ -10,32 +10,32 @@
         {%- endfor %}
         {%- endif %}
 
-        {%- if model.run_settings.colocated_db_settings %}
+        {%- if model.run_settings.colocated_fs_settings %}
         Colocated:
-        {%- if model.run_settings.colocated_db_settings.db_identifier %}
-          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+        {%- if model.run_settings.colocated_fs_settings.fs_identifier %}
+          Feature Store Identifier: {{ model.run_settings.colocated_fs_settings.fs_identifier }}
           {%- endif %}
-          {%- if model.run_settings.colocated_db_settings.port %}
+          {%- if model.run_settings.colocated_fs_settings.port %}
           Connection Type: TCP
           TCP/IP Port(s):
-            {{ model.run_settings.colocated_db_settings.port }}
+            {{ model.run_settings.colocated_fs_settings.port }}
           {%- endif %}
-          {%- if model.run_settings.colocated_db_settings.unix_socket %}
+          {%- if model.run_settings.colocated_fs_settings.unix_socket %}
           Connection Type: UDS
-          Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+          Unix Socket: {{ model.run_settings.colocated_fs_settings.unix_socket }}
         {%- endif %}
         {%- endif %}
 
-        {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
+        {%- if model.run_settings.colocated_fs_settings['fs_scripts'] %}
         Torch Scripts:
-        {%- for script in model.run_settings.colocated_db_settings['db_scripts'] %}
+        {%- for script in model.run_settings.colocated_fs_settings['fs_scripts'] %}
           Name: {{ script.name }}
           Path: {{ script.script_path }}
         {%- endfor %}
         {%- endif %}
-        {%- if model.run_settings.colocated_db_settings['db_models'] %}
+        {%- if model.run_settings.colocated_fs_settings['fs_models'] %}
         ML Models:
-        {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
+        {%- for mlmodel in model.run_settings.colocated_fs_settings['fs_models'] %}
           Name: {{ mlmodel.name }}
             Path: {{ mlmodel.model_file }}
             Backend: {{ mlmodel.backend }}

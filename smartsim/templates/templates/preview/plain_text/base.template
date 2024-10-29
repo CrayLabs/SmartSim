@@ -1,22 +1,22 @@
 
 {% include "experiment.template" %}
-{%- if manifest.has_deployable or active_dbjobs %}
+{%- if manifest.has_deployable or active_fsjobs %}
 
 === Entity Preview ===
 
-  {%- if active_dbjobs %}
+  {%- if active_fsjobs %}
 
   == Active Infrastructure ==
-  {%- for name, db in active_dbjobs.items() %}
+  {%- for name, fs in active_fsjobs.items() %}
       {% include "activeinfra.template" %}
   {%- endfor %}
   {%- endif %}
-  {%- if manifest.dbs %}
+  {%- if manifest.fss %}
 
-  == Orchestrators ==
-    {%- for db in manifest.dbs %}
-    {%- if db.is_active() %}
-    WARNING: Cannot preview {{ db.name }}, because it is already started.
+  == Feature Stores ==
+    {%- for fs in manifest.fss %}
+    {%- if fs.is_active() %}
+    WARNING: Cannot preview {{ fs.name }}, because it is already started.
     {%- else %}
         {% include "orchestrator.template" %}
     {%- endif %}
@@ -29,12 +29,12 @@
 
     = Model Name: {{ model.name }} =
     {%- include "model.template" %}
-      {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
+      {%- if model.run_settings.colocated_fs_settings or manifest.fss %}
         Client Configuration:
-        {%- if model.run_settings.colocated_db_settings %}
+        {%- if model.run_settings.colocated_fs_settings %}
         {%- include "clientconfigcolo.template" %}
         {%- endif %}
-        {%- if manifest.dbs %}
+        {%- if manifest.fss %}
         {%- include "clientconfig.template" %}
         {%- endif %}
         {%- endif %}

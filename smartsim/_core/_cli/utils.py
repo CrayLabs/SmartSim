@@ -91,38 +91,15 @@ def clean(core_path: Path, _all: bool = False) -> int:
 
     lib_path = core_path / "lib"
     if lib_path.is_dir():
-        # remove RedisAI
-        rai_path = lib_path / "redisai.so"
-        if rai_path.is_file():
-            rai_path.unlink()
-            logger.info("Successfully removed existing RedisAI installation")
-
         backend_path = lib_path / "backends"
         if backend_path.is_dir():
             shutil.rmtree(backend_path, ignore_errors=True)
             logger.info("Successfully removed ML runtimes")
 
-    bin_path = core_path / "bin"
-    if bin_path.is_dir() and _all:
-        files_to_remove = ["redis-server", "redis-cli", "keydb-server", "keydb-cli"]
-        removed = False
-        for _file in files_to_remove:
-            file_path = bin_path.joinpath(_file)
-
-            if file_path.is_file():
-                removed = True
-                file_path.unlink()
-        if removed:
-            logger.info("Successfully removed SmartSim database installation")
-
     return os.EX_OK
 
 
-def get_db_path() -> t.Optional[Path]:
-    bin_path = get_install_path() / "_core" / "bin"
-    for option in bin_path.iterdir():
-        if option.name in ("redis-cli", "keydb-cli"):
-            return option
+def get_fs_path() -> t.Optional[Path]:
     return None
 
 

@@ -44,7 +44,7 @@ class EntityExistsError(SmartSimError):
 
 
 class UserStrategyError(SmartSimError):
-    """Raised when there is an error with model creation inside an ensemble
+    """Raised when there is an error with application creation inside an ensemble
     that is from a user provided permutation strategy
     """
 
@@ -60,7 +60,7 @@ class UserStrategyError(SmartSimError):
 
 
 class ParameterWriterError(SmartSimError):
-    """Raised in the event that input parameter files for a model
+    """Raised in the event that input parameter files for a application
     could not be written.
     """
 
@@ -82,13 +82,13 @@ class SSReservedKeywordError(SmartSimError):
 
 
 class SSDBIDConflictError(SmartSimError):
-    """Raised in the event that a database identifier
-    is not unique when multiple databases are created
+    """Raised in the event that a feature store identifier
+    is not unique when multiple feature stores are created
     """
 
 
 class SSDBFilesNotParseable(SmartSimError):
-    """Raised when the files related to the database cannot be parsed.
+    """Raised when the files related to the feature store cannot be parsed.
     Includes the case when the files do not exist.
     """
 
@@ -110,6 +110,14 @@ class LauncherError(SSInternalError):
 
 class LauncherUnsupportedFeature(LauncherError):
     """Raised when the launcher does not support a given method"""
+
+
+class LauncherNotFoundError(LauncherError):
+    """A requested launcher could not be found"""
+
+
+class LauncherJobNotFound(LauncherError):
+    """Launcher was asked to get information about a job it did not start"""
 
 
 class AllocationError(LauncherError):

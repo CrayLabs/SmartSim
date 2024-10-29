@@ -28,14 +28,14 @@ import argparse
 import os
 import typing as t
 
-from smartsim._core._cli.utils import get_db_path
+from smartsim._core._cli.utils import get_fs_path
 
 
 def execute(
     _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
-    if db_path := get_db_path():
-        print(db_path)
+    if fs_path := get_fs_path():
+        print(fs_path)
         return os.EX_OK
-    print("Database (Redis or KeyDB) dependencies not found")
+    print("Feature store(Redis or KeyDB) dependencies not found")
     return os.EX_SOFTWARE
