@@ -55,10 +55,7 @@ def _as_srun_command(
     #       there is no way to access it. In the meantime, we will just use the
     #       exe being called.
     app, *_ = exe
-    try:
-        _, job_name = app.rsplit(os.path.sep, maxsplit=1)
-    except ValueError:
-        job_name = app
+    *_, job_name = app.rsplit(os.path.sep, maxsplit=1)
 
     # TODO: This logic should probably be moved onto the `SlurmLaunchArguments`
     #       themselves to remove the protected access, and remove it from the
