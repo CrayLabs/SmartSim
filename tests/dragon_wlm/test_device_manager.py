@@ -123,7 +123,7 @@ def test_device_manager_model_in_request():
 
     request = InferenceRequest(
         model_key=model_key,
-        callback=None,
+        callback_desc=None,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -132,10 +132,13 @@ def test_device_manager_model_in_request():
         batch_size=0,
     )
 
-    request_batch = RequestBatch(
+    request_batch = RequestBatch.from_requests(
         [request],
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_key,
+        model_key,
+    )
+
+    request_batch.inputs = TransformInputResult(
+        b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]
     )
 
     with device_manager.get_device(
@@ -161,7 +164,7 @@ def test_device_manager_model_key():
 
     request = InferenceRequest(
         model_key=model_key,
-        callback=None,
+        callback_desc=None,
         raw_inputs=None,
         input_keys=[tensor_key],
         input_meta=None,
@@ -170,10 +173,13 @@ def test_device_manager_model_key():
         batch_size=0,
     )
 
-    request_batch = RequestBatch(
+    request_batch = RequestBatch.from_requests(
         [request],
-        TransformInputResult(b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]),
-        model_id=model_key,
+        model_key,
+    )
+
+    request_batch.inputs = TransformInputResult(
+        b"transformed", [slice(0, 1)], [[1, 2]], ["float32"]
     )
 
     with device_manager.get_device(
