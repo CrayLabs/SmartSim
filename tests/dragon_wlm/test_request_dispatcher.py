@@ -53,11 +53,8 @@ import torch
 from smartsim._core.mli.comm.channel.dragon_channel import DragonCommChannel
 from smartsim._core.mli.comm.channel.dragon_fli import DragonFLIChannel
 from smartsim._core.mli.comm.channel.dragon_util import create_local
-from smartsim._core.mli.infrastructure.control.dragon_utils.dragon_util import (
+from smartsim._core.mli.infrastructure.control.dragon_util import (
     function_as_dragon_proc,
-)
-from smartsim._core.mli.infrastructure.control.dragon_utils.msg_pump import (
-    mock_messages,
 )
 from smartsim._core.mli.infrastructure.control.request_dispatcher import (
     RequestBatch,
@@ -78,7 +75,8 @@ from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest, Te
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .utils.channel import FileSystemCommChannel
+from .channel import FileSystemCommChannel
+from .msg_pump import mock_messages
 
 logger = get_logger(__name__)
 
