@@ -90,7 +90,6 @@ except Exception:
     pass
 
 
-@pytest.mark.skip("TODO: Fix issue unpickling messages")
 @pytest.mark.parametrize("num_iterations", [4])
 def test_request_dispatcher(
     num_iterations: int,
