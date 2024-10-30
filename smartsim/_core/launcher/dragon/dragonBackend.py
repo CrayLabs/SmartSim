@@ -152,7 +152,11 @@ class ProcessGroupInfo:
         process groups.
         """
         self._final_return_codes = self.return_codes
+        self.process_group.join()
+        self.process_group.close()
         self.process_group = None
+        self.redir_workers.join()
+        self.redir_workers.close()
         self.redir_workers = None
 
 
