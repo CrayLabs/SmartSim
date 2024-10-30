@@ -75,8 +75,8 @@ from smartsim._core.mli.infrastructure.worker.worker import InferenceRequest, Te
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
-from .channel import FileSystemCommChannel
-from .msg_pump import mock_messages
+from .utils.channel import FileSystemCommChannel
+from .utils.msg_pump import mock_messages
 
 logger = get_logger(__name__)
 
