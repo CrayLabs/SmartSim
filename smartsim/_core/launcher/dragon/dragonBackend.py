@@ -151,13 +151,15 @@ class ProcessGroupInfo:
         """Cache the final return codes and release any underlying dragon
         process groups.
         """
-        self._final_return_codes = self.return_codes
-        self.process_group.join()
-        self.process_group.close()
-        self.process_group = None
-        self.redir_workers.join()
-        self.redir_workers.close()
-        self.redir_workers = None
+        if self.process_group is not None:
+            self.process_group.join()
+            self._final_return_codes = self.return_codes
+            self.process_group.close()
+            self.process_group = None
+        if self.redir_workers is not None:
+            self.redir_workers.join()
+            self.redir_workers.close()
+            self.redir_workers = None
 
 
 # Thanks to Colin Wahl from HPE HPC Dragon Team
