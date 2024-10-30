@@ -103,13 +103,8 @@ def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]
     assets: t.List[GitReleaseAsset] = []
     mock_archive_name_tpl = "{}-{}.4.1-{}ac132fe95.tar.gz"
 
-    for python_version, dragon_version, platform in itertools.chain(
-        itertools.product(
-            ["py3.9", "py3.10", "py3.11"], ["dragon-0.8", "dragon-0.9"], ["", "CRAYEX-"]
-        ),
-        itertools.product(
-            ["py3.9", "py3.10", "py3.11"], ["dragon-0.10", "dragon-0.11"], ["", "HSN-"]
-        ),
+    for python_version, dragon_version, platform in itertools.product(
+        ["py3.9", "py3.10", "py3.11"], ["dragon-0.10", "dragon-0.11"], ["", "HSN-"]
     ):
         asset = GitReleaseAsset(requester, headers, attributes, completed)
         archive_name = mock_archive_name_tpl.format(
@@ -192,9 +187,9 @@ def test_retrieve_cached(
     [
         # Dragon V0.8
         pytest.param("0.8", "py3.8", False, False, id="0.8,python 3.8"),
-        pytest.param("0.8", "py3.9", True, False, id="0.8,python 3.9"),
-        pytest.param("0.8", "py3.10", True, False, id="0.8,python 3.10"),
-        pytest.param("0.8", "py3.11", True, False, id="0.8,python 3.11"),
+        pytest.param("0.8", "py3.9", False, False, id="0.8,python 3.9"),
+        pytest.param("0.8", "py3.10", False, False, id="0.8,python 3.10"),
+        pytest.param("0.8", "py3.11", False, False, id="0.8,python 3.11"),
         pytest.param("0.8", "py3.12", False, False, id="0.8,python 3.12"),
         pytest.param("0.8", "py3.8", False, True, id="0.8,python 3.8,HSN"),
         pytest.param("0.8", "py3.9", False, True, id="0.8,python 3.9,HSN"),
@@ -203,9 +198,9 @@ def test_retrieve_cached(
         pytest.param("0.8", "py3.12", False, True, id="0.8,python 3.12,HSN"),
         # Dragon V0.9
         pytest.param("0.9", "py3.8", False, False, id="0.9,python 3.8"),
-        pytest.param("0.9", "py3.9", True, False, id="0.9,python 3.9"),
-        pytest.param("0.9", "py3.10", True, False, id="0.9,python 3.10"),
-        pytest.param("0.9", "py3.11", True, False, id="0.9,python 3.11"),
+        pytest.param("0.9", "py3.9", False, False, id="0.9,python 3.9"),
+        pytest.param("0.9", "py3.10", False, False, id="0.9,python 3.10"),
+        pytest.param("0.9", "py3.11", False, False, id="0.9,python 3.11"),
         pytest.param("0.9", "py3.12", False, False, id="0.9,python 3.12"),
         pytest.param("0.9", "py3.8", False, True, id="0.9,python 3.8,HSN"),
         pytest.param("0.9", "py3.9", False, True, id="0.9,python 3.9,HSN"),
