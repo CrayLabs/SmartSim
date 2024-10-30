@@ -134,7 +134,6 @@ jobs:
           SP=$(python -c 'import site; print(site.getsitepackages()[0])')/smartsim/_core/config/dragon/.env
           LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
           echo "LD_LIBRARY_PATH=$LLP:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PYTHONPATH=$GITHUB_WORKSPACE/tests/dragon_wlm" >> $GITHUB_ENV
 
       - name: Run mypy
         run: |
