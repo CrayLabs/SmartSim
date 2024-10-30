@@ -67,7 +67,6 @@ logger = get_logger(__name__)
 
 
 _RETURN_CODES_NO_PROCESS_GROUP: t.Final = [-1]
-_RETURN_CODES_PROCESS_GROUP_CANCELLED: t.Final = [-9]
 
 
 @dataclass
@@ -128,8 +127,6 @@ class ProcessGroupInfo:
             return self._final_return_codes
         if self.process_group is None:
             return _RETURN_CODES_NO_PROCESS_GROUP
-        if self.status == SmartSimStatus.STATUS_CANCELLED:
-            return _RETURN_CODES_PROCESS_GROUP_CANCELLED
         return [ret for _, ret in self.process_group.inactive_puids]
 
     def __str__(self) -> str:
