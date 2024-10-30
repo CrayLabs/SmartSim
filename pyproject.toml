@@ -58,9 +58,9 @@ force-exclude = '''
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "debug"
-pythonpath = ["tests/dragon_wlm_/utils"]
+pythonpath = ["tests/dragon_wlm/utils"]
 testpaths = [
-    "tests",
+    "tests"
 ]
 norecursedirs = [
     "tests/test_configs",
