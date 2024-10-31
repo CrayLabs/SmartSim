@@ -42,11 +42,6 @@ from ...launch_command import LauncherType
 
 logger = get_logger(__name__)
 
-# ***************************************
-# TODO: Remove pylint disable after merge
-# ***************************************
-# pylint: disable=no-self-use
-
 
 def _as_srun_command(
     args: ShellLaunchArguments,
@@ -78,7 +73,8 @@ class SlurmLaunchArguments(ShellLaunchArguments):
         """
         return LauncherType.SLURM.value
 
-    def _reserved_launch_args(self) -> set[str]:
+    @staticmethod
+    def _reserved_launch_args() -> set[str]:
         """Return reserved launch arguments.
 
         :returns: The set of reserved launcher arguments
@@ -316,7 +312,8 @@ class SlurmLaunchArguments(ShellLaunchArguments):
 
         return fmt_exported_env, compound_env
 
-    def _check_env_vars(self, env_vars: t.Mapping[str, str | None]) -> None:
+    @staticmethod
+    def _check_env_vars(env_vars: t.Mapping[str, str | None]) -> None:
         """Warn a user trying to set a variable which is set in the environment
 
         Given Slurm's env var precedence, trying to export a variable which is already

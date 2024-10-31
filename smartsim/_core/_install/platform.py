@@ -82,6 +82,8 @@ class Device(enum.Enum):
     CUDA12 = "cuda-12"
     ROCM5 = "rocm-5"
     ROCM6 = "rocm-6"
+    # TODO: check to see if this got overwritten/ gpu was removed
+    GPU = "gpu"
 
     @classmethod
     def from_str(cls, str_: str) -> "Device":
