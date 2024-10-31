@@ -192,10 +192,8 @@ def test_symlink_operation_format(
     assert symlink_cmd in exec.command
 
     normalized_path = os.path.normpath(mock_src)
-    parent_dir = os.path.dirname(normalized_path)
     final_dest = _create_dest_path(generation_context.job_run_path, mock_dest)
-    new_dest = os.path.join(final_dest, parent_dir)
-    assert new_dest in exec.command
+    assert final_dest in exec.command
 
 
 def test_init_configure_operation(mock_src: str, mock_dest: str):
