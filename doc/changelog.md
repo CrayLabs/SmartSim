@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Fix symlink operation
 - RequestBatch rewrite
 - Fix regression on hostlist param to DragonRunRequest
 - Fix dragon build logging bug
