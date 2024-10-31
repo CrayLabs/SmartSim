@@ -149,7 +149,6 @@ def test_request_dispatcher(
         callback_channel = DragonCommChannel.from_local()
         channels.append(callback_channel)
 
-        # assert process.returncode is None, "The message pump failed to start"
         # give dragon some time to populate the message queues
         for j in range(5):
             try:

@@ -152,9 +152,6 @@ def mock_message(
 
     logger.info("Sending msg_envelope")
 
-    # cuid = request_dispatcher_queue._channel.cuid
-    # logger.info(f"\tInternal cuid: {cuid}")
-
     # send the header & body together so they arrive together
     try:
         request_dispatcher_queue.send_multiple([request_bytes, tensor.tobytes()], 1.0)
