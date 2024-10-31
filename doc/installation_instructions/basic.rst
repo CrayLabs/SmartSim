@@ -4,9 +4,9 @@
 Basic Installation
 ******************
 
-The following instructions serve as a guide for installing both SmartSim and
-SmartRedis. SmartSim, despite being a Python-library, has a second build
-step for Redis and RedisAI. Please follow these instructions carefully.
+The following instructions guide you through installing SmartSim and SmartRedis.
+SmartSim, despite being a Python-library, has a second build step for Redis and
+RedisAI. Please follow these instructions carefully.
 
 .. note::
 
@@ -32,26 +32,29 @@ The base prerequisites to install SmartSim and SmartRedis wtih CPU-only support 
 
 .. note::
 
-  GCC is recommended to build the backends for SmartSim. CUDA 11.8 requires GCC
-  9 or 11, CUDA 12 requires GCC 11 or higher. SmartRedis can be compiled with
-  GCC, Intel, Cray, and Nvidia compilers.
+  We suggest using GCC to build Redis, RedisAI, and the ML backends. For specific
+  version requirements see the :ref:`Requirements <requirements>` section.
+
+  SmartRedis can be compiled with GCC, Intel, Cray, and Nvidia compilers.
 
 ML Library Support
 ==================
 
-We currently support both Nvidia and AMD GPUs when using RedisAI for GPU
-inference. The support for these GPUs often depends on the version of the CUDA
-or ROCm stack that is availble on your machine. In _most_ cases, the versions of
-the ML frameworks are backwards compatible. If you encounter problems, please
-contact us and we can build the backend libraries for your desired version of
-CUDA and ROCm.
+SmartSim supports using Nvidia and AMD GPUs when using RedisAI for GPU
+inference. GPU support often depends on the version of the CUDA or ROCm stack
+that is available on your machine. In _most_ cases, the versions of the ML
+frameworks are backwards compatible. If you encounter problems, please contact
+us at (smartsim at hpe dot com) and we can build the backend libraries for your
+desired version of CUDA and/or ROCm.
 
 CPU backends are provided for Apple (both Intel and Apple Silicon) and Linux (x86_64).
 
 Be sure to reference the table below to find which versions of the ML libraries
 are supported for your particular platform. Additionally, see :ref:`Platform
 Installation Guide <platform-installation>` for helpful information regarding
-for specific systems.
+specific systems.
+
+.. _requirements:
 
 Linux
 -----
@@ -62,7 +65,7 @@ Linux
 
       Additional requirements:
 
-      * GCC <= 11
+      * GCC <= 11 (except 10)
       * CUDA Toolkit 11.7 or 11.8
       * cuDNN 8.9
 
@@ -84,6 +87,7 @@ Linux
 
       Additional requirements:
 
+      * GCC >= 11
       * CUDA Toolkit 12
       * cuDNN 8.9
 

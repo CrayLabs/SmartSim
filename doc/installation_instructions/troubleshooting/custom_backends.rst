@@ -3,14 +3,15 @@ Custom ML backends
 
 The ML backends (Torch, ONNX Runtime, and Tensorflow) and their associated
 python packages have different versions and indices that can be supported based
-on the intended device (CPU, ROCM, CUDA-11, or CUDA-12). The officially
+on the intended device (CPU, ROCm, CUDA-11, or CUDA-12). The officially
 supported backends are stored in JSON files within the
 ``smartsim/_core/_install/configs/mlpackages`` directory.
 
-If you need to define a different version of the backend and/or the packages, we
-recommend that you copy one of the JSON files (for example the one at the end of
-this section) that SmartSim ships with, modify as needed, and then use ``smart
-build --config-dir`` to specify the path to your custom configuration(s).
+To customize the version of a backend and/or package, we recommend that you use
+a configuration shipped with SmartSim as a template (for example the one at the
+end of this section). Copy the file and update as needed. Afterwards, use
+``smart build --config-dir`` to tell the build process to use custom
+configuration(s).
 
 The following table describes the main fields needed to define a machine learning
 backend used by RedisAI.

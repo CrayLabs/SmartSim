@@ -10,22 +10,22 @@ and install these dependencies and configure your build environment.
 
 .. note::
 
-    At runtime, the environment in which the Orchestrator is launched must have
-    the cuDNN and CUDA Toolkit libraries findable by the link loader (e.g.
-    available in the ``LD_LIBRARY_PATH`` environment variable).
+    The Orchestrator must launched in an environment with the cuDNN and CUDA
+    Toolkit libraries findable by the link loader (e.g.  available in the
+    ``LD_LIBRARY_PATH`` environment variable).
 
 Download and install
 ^^^^^^^^^^^^^^^^^^^^
 
 **Step 1:** Find a location which is globally accessible and has sufficient
-storage space (about 12GB) and set an environment variable
+storage space (about 12GB) and set an environment variable:
 
 .. code-block:: bash
 
     export CUDA_TOOLKIT_INSTALL_PATH=/path/to/install/location/cudatoolkit
     export CUDNN_INSTALL_PATH=/path/to/install/location/cudnn
 
-**Step 2:** Download cudatoolkit and install it
+**Step 2:** Download cudatoolkit and install it:
 
 .. tabs::
 
@@ -43,12 +43,12 @@ storage space (about 12GB) and set an environment variable
             wget https://developer.download.nvidia.com/compute/cuda/12.5.0/local_installers/cuda_12.5.0_555.42.02_linux.run
             sh ./cuda_12.5.0_555.42.02_linux.run --toolkit --silent --toolkitpath=$CUDA_TOOLKIT_INSTALL_PATH
 
-**Step 3:** Download cuDNN
+**Step 3:** Download cuDNN:
 For cuDNN, follow `Nvidia's instructions
 <https://docs.nvidia.com/deeplearning/cudnn/installation/overview.html>`_ for
 downloading cuDNN version 8.9 for either CUDA-11 or CUDA-12.
 
-**Step 4:** Untar the cuDNN archive
+**Step 4:** Untar the cuDNN archive:
 
 .. tabs::
 
@@ -87,8 +87,8 @@ Option 2: Setup Modulefiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, these environment variables can be setup by using environment
-modules instead. This can be especially useful when the CUDA dependencies are
-intended to be shared across users.
+modules. This is useful when the CUDA dependencies are intended to be shared
+across users.
 
 **Step 1:** Download these two modulefiles to a directory of your choosing
 

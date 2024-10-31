@@ -1,9 +1,9 @@
 Airgapped Systems
 -----------------
 
-SmartSim implictly assumes that dependencies can be retrieved via the Internet.
-The ``smart build`` step can be bypassed by transferring the build artifacts
-from a different machine.
+SmartSim assumes that dependencies can be retrieved via the Internet.  The
+``smart build`` step can be bypassed by transferring the build artifacts from a
+different machine.
 
 .. warning::
 
@@ -13,10 +13,12 @@ from a different machine.
     <https://redis.io/legal/rsalv2-agreement/>`_).
 
 
-The easiest way to accomplish this assumes that you have a machine that can be
-connected to the internet and has built SmartSim (referred to as Machine A).
-This machine should have a similar compilation and build environment as the
-target machine (referred to as Machine B) to ensure compatibility.
+The easiest way to accomplish this assumes that you have the following
+- A source machine connected to the internet with SmartSim built (referred to as Machine A).
+- A target machine not connected to the Internet
+
+.. warning::
+    The build and compilation environments of Machine A and B must be compatibile.
 
 **Step 1:** Note the path to SmartSim's ``core`` directory on Machine A
 
