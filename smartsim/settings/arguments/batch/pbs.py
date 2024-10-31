@@ -106,7 +106,9 @@ class QsubBatchArguments(BatchArguments):
         if walltime and re.match(pattern, walltime):
             self.set("walltime", walltime)
         else:
-            raise ValueError("Invalid walltime format. Please use 'HH:MM:SS' format.")
+            raise ValueError(
+                f"Invalid walltime: {walltime}. Please use 'HH:MM:SS' format."
+            )
 
     def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job
@@ -211,4 +213,6 @@ class QsubBatchArguments(BatchArguments):
         :param value: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
+        if key in self._batch_args and key != self._batch_args[key]:
+            logger.warning(f"Overwriting argument '{key}' with value '{value}'")
         self._batch_args[key] = value

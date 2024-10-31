@@ -190,5 +190,7 @@ class BsubBatchArguments(BatchArguments):
         :param value: A string representation of the value for the launch
             argument (if applicable), otherwise `None`
         """
+        if key in self._batch_args and key != self._batch_args[key]:
+            logger.warning(f"Overwriting argument '{key}' with value '{value}'")
         # Store custom arguments in the launcher_args
         self._batch_args[key] = value

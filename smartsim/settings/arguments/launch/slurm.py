@@ -210,7 +210,9 @@ class SlurmLaunchArguments(ShellLaunchArguments):
         if walltime and re.match(pattern, walltime):
             self.set("time", str(walltime))
         else:
-            raise ValueError("Invalid walltime format. Please use 'HH:MM:SS' format.")
+            raise ValueError(
+                f"Invalid walltime: {walltime}. Please use 'HH:MM:SS' format."
+            )
 
     def set_het_group(self, het_group: t.Iterable[int]) -> None:
         """Set the heterogeneous group for this job
@@ -349,5 +351,5 @@ class SlurmLaunchArguments(ShellLaunchArguments):
             )
             return
         if key in self._launch_args and key != self._launch_args[key]:
-            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
+            logger.warning(f"Overwriting argument '{key}' with value '{value}'")
         self._launch_args[key] = value

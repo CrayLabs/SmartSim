@@ -77,7 +77,7 @@ def test_create_bsub():
     assert args == ["-core_isolation", "-nnodes", "1", "-W", "10:10", "-q", "default"]
 
 
-def test_batch_arguments_type_set_hostlist(scheduler):
+def test_batch_arguments_type_set_hostlist():
     bs = BatchSettings(batch_scheduler="lsf", env_vars={"ENV": "VAR"})
     with pytest.raises(TypeError, match="host_list argument must be a list of strings"):
         bs.batch_args.set_hostlist([25, 37])

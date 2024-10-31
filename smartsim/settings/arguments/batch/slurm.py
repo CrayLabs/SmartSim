@@ -65,7 +65,9 @@ class SlurmBatchArguments(BatchArguments):
         if walltime and re.match(pattern, walltime):
             self.set("time", str(walltime))
         else:
-            raise ValueError("Invalid walltime format. Please use 'HH:MM:SS' format.")
+            raise ValueError(
+                f"Invalid walltime: {walltime}. Please use 'HH:MM:SS' format."
+            )
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
@@ -181,4 +183,6 @@ class SlurmBatchArguments(BatchArguments):
             argument (if applicable), otherwise `None`
         """
         # Store custom arguments in the launcher_args
+        if key in self._batch_args and key != self._batch_args[key]:
+            logger.warning(f"Overwriting argument '{key}' with value '{value}'")
         self._batch_args[key] = value

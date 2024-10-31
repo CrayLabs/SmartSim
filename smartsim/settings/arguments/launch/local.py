@@ -83,5 +83,5 @@ class LocalLaunchArguments(ShellLaunchArguments):
         """
         set_check_input(key, value)
         if key in self._launch_args and key != self._launch_args[key]:
-            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
+            logger.warning(f"Overwriting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
