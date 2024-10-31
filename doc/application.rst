@@ -12,7 +12,8 @@ launcher-specific behavior for the ``Job``.
 ==========
 Initialize
 ==========
-This section details the steps to set up the parameters that control your application's initialization.
+The ``Application`` class allows you to set your jobs program.
+This section details the steps to set up the input parameters for your application.
 
 **Step 1: Import Application**
 
@@ -24,9 +25,8 @@ After installing Smartsim, ``Application`` may be imported in Python code like:
 
 **Step 2: Set the Application Name and Executable**
 
-Set the application name and executable. The `name` is a string that identifies the application, and
-`exe` is the string path to the executable. Optionally, you can provide `exe_args` as a string or sequence of
-of strings to specify arguments for the executable.
+The `name` is a string that identifies the application, and `exe` is the string path to the executable.
+Optionally, you can provide `exe_args` as a string or sequence of strings to specify arguments for the executable.
 
 * `name`: A string that identifies the application. Example:
 
@@ -41,8 +41,6 @@ of strings to specify arguments for the executable.
 
     exe = "/path/to/new_executable"
 
-  .. code-block:: python
-
     exe = "new_executable"
 
 * `exe_args`: An optional argument that can be a string or a sequence of strings, representing the arguments
@@ -51,8 +49,6 @@ of strings to specify arguments for the executable.
   .. code-block:: python
 
     exe_args="--arg1 value1 --arg2 value2"
-
-  .. code-block:: python
 
     exe_args=["--arg1", "value1", "--arg2", "value2"]
 
@@ -70,15 +66,15 @@ import Application``, initialize an ``Application``. For example:
 =========
 Configure
 =========
-After initializing an ``Application`` object, configure the ``exe``, ``exe_args``, or ``files`` attribute. If the simulation
-requires specific parameters, attach configuration files via the ``Application.files`` attribute. This attribute also
-supports copying or symlinking files into the job's run directory to ensure accessibility during the simulation.
-To reuse an application but alter the system state, update the ``exe_args`` attribute. To change the executable while keeping
-the same arguments, modify the ``exe`` attribute.
+After initializing an ``Application`` object, you might want to configure the ``exe``, ``exe_args``, or ``files`` attributes.
+If an executable requires specific parameters, attach configuration files using the ``Application.files`` attribute. This attribute also
+supports copying or symlinking files into the job's run directory to ensure access at simulation runtime. To reuse an application but
+alter the system state, update or overwrite the ``exe_args`` attribute. To change the executable while keeping the same arguments,
+overwrite the ``exe`` attribute.
 
 Executable
 ==========
-To reset the executable after initializing the ``Application`` object, assign the desired executable path to the ``exe``
+To overwrite the executable after initializing the ``Application`` object, assign the desired executable path to the ``exe``
 attribute. If only the executable name is specified, SmartSim will attempt to locate the executable path on the
 machine. For example:
 
@@ -123,25 +119,25 @@ overwriting them. For example:
 
 Input Files
 ===========
-In this section, we will explore how to attach files to an application using the ``Application.files``
+In this section, we explore how to attach files to an application using the ``Application.files``
 attribute. This attribute allows users to add files through three different operations:
 
 1. Copying
 2. Creating symlinks
 3. Configuring files
 
-Each file operation can be added to the `files` attribute of the ``Application`` instance.
+Each file operation can be added to the ``files`` attribute of the ``Application`` instance.
 
 ----
 Copy
 ----
-Copying files involves creating a duplicate of the source file at the destination path. This is useful
-when you need to ensure that the original file remains unchanged while providing a copy for the application
+Copying files involves creating a duplicate of the source file or folder at the destination path. This is useful
+when you need to ensure that the original file remains unchanged while providing a copy for the executable
 to use.
 
 **Adding a Copy Operation:**
-To add a copy operation, use the `add_copy` method on the `files` attribute of the ``Application`` instance.
-This method requires the absolute source path (`src`) and the relative destination path (`dest`) to be of
+To add a copy operation, use the ``add_copy`` method on the ``files`` attribute of the ``Application`` instance.
+This method requires the absolute source path (``src``) and an optional relative destination path (``dest``) to be of
 type ``pathlib.Path``. For example:
 
 .. code-block:: python
@@ -151,7 +147,8 @@ type ``pathlib.Path``. For example:
         dest=pathlib.Path("destination")
     )
 
-This will create a copy of the file located at `"/path/to/source"` and place it at `"/path/to/destination"`.
+This will create a copy of the file located at `"/path/to/source"` and place it within the job's
+run directory at `"/job/run/destination"`.
 
 -------
 Symlink
@@ -160,8 +157,8 @@ Creating symlinks involves creating a symbolic link from the source file to the 
 is useful when you want to reference the original file without duplicating it.
 
 **Adding a Symlink Operation:**
-To add a symlink operation, use the `add_symlink` method on the `files` attribute of the ``Application`` instance.
-This method requires the absolute source path (`src`) and the relative destination path (`dest`) to be of type
+To add a symlink operation, use the ``add_symlink`` method on the ``files`` attribute of the ``Application`` instance.
+This method requires the absolute source path (``src``) and an optional relative destination path (``dest``) to be of type
 pathlib.Path. For example:
 
 .. code-block:: python
@@ -171,7 +168,8 @@ pathlib.Path. For example:
         dest=pathlib.Path("destination")
     )
 
-This will create a symbolic link from the file located at `"/path/to/source"` to `"/path/to/destination"`.
+This will create a symbolic link from the file located at `"/path/to/source"` to the job's
+run directory at `"/job/run/destination"`.
 
 ---------
 Configure
@@ -182,8 +180,8 @@ files with dynamic content.
 
 **Adding a Configure Operation:**
 To add a configure operation, use the ``add_configuration`` method on the ``files`` attribute of the ``Application``
-instance. This method requires the absolute source path (``src``), the relative destination path (``dest``), and the file parameters
-(``file_parameters``) to be of type mapping of string to strings. Additionally, you can specify a tag
+instance. This method requires the absolute source path (``src``), an optional relative destination path (``dest``), and the file parameters
+(``file_parameters``) to be of type mapping of string to strings. Additionally, you can specify an optional tag
 (``tag``) to identify the configuration. For example:
 
 .. code-block:: python
@@ -196,4 +194,4 @@ instance. This method requires the absolute source path (``src``), the relative 
     )
 
 This will modify the content of the file located at `"/path/to/source"` based on the specified parameters and
-place the modified file at `"/path/to/destination"`.
+place the modified file at `"/job/run/destination"`.
