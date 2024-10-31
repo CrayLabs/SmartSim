@@ -132,6 +132,9 @@ def get_env(var: str, default: str) -> str:
     return os.environ.get(var, default)
 
 
+# TODO Add A Version class for the new backend
+
+
 class Versioner:
     """Versioner is responsible for managing all the versions
     within SmartSim including SmartSim itself.
@@ -221,12 +224,7 @@ class BuildEnv:
     """Environment for building third-party dependencies
 
     BuildEnv provides a method for configuring how the third-party
-    dependencies within SmartSim are built, namely Redis/KeyDB
-    and RedisAI.
-
-    The environment variables listed here can be set to control the
-    Redis build in the pip wheel build as well as the Redis and RedisAI
-    build executed by the CLI.
+    dependencies within SmartSim are built.
 
     Build tools are also checked for here and if they are not found
     then a SetupError is raised.

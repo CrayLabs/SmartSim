@@ -24,356 +24,413 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import filecmp
+import itertools
+import pathlib
+import unittest.mock
+from glob import glob
 from os import path as osp
 
 import pytest
-from tabulate import tabulate
 
-from smartsim import Experiment
-from smartsim._core.generation import Generator
-from smartsim.database import Orchestrator
-from smartsim.settings import RunSettings
+from smartsim._core.commands import Command, CommandList
+from smartsim._core.generation.generator import Generator
+from smartsim._core.generation.operations.operations import (
+    ConfigureOperation,
+    CopyOperation,
+    FileSysOperationSet,
+    GenerationContext,
+    SymlinkOperation,
+)
+from smartsim.entity import SmartSimEntity
+from smartsim.launchable import Job
 
-# The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
-
-rs = RunSettings("python", exe_args="sleep.py")
-
-
-"""
-Test the generation of files and input data for an experiment
-
-TODO
- - test lists of inputs for each file type
- - test empty directories
- - test re-generation
-
-"""
+ids = set()
 
 
-def get_gen_file(fileutils, filename):
-    return fileutils.get_test_conf_path(osp.join("generator_files", filename))
+_ID_GENERATOR = (str(i) for i in itertools.count())
 
 
-def test_ensemble(fileutils, test_dir):
-    exp = Experiment("gen-test", launcher="local")
-
-    gen = Generator(test_dir)
-    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
-
-    config = get_gen_file(fileutils, "in.atm")
-    ensemble.attach_generator_files(to_configure=config)
-    gen.generate_experiment(ensemble)
-
-    assert len(ensemble) == 9
-    assert osp.isdir(osp.join(test_dir, "test"))
-    for i in range(9):
-        assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
+def random_id():
+    return next(_ID_GENERATOR)
 
 
-def test_ensemble_overwrite(fileutils, test_dir):
-    exp = Experiment("gen-test-overwrite", launcher="local")
-
-    gen = Generator(test_dir, overwrite=True)
-
-    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
-
-    config = get_gen_file(fileutils, "in.atm")
-    ensemble.attach_generator_files(to_configure=[config])
-    gen.generate_experiment(ensemble)
-
-    # re generate without overwrite
-    config = get_gen_file(fileutils, "in.atm")
-    ensemble.attach_generator_files(to_configure=[config])
-    gen.generate_experiment(ensemble)
-
-    assert len(ensemble) == 9
-    assert osp.isdir(osp.join(test_dir, "test"))
-    for i in range(9):
-        assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
+@pytest.fixture
+def generator_instance(test_dir: str) -> Generator:
+    """Instance of Generator"""
+    # os.mkdir(root)
+    yield Generator(root=pathlib.Path(test_dir))
 
 
-def test_ensemble_overwrite_error(fileutils, test_dir):
-    exp = Experiment("gen-test-overwrite-error", launcher="local")
-
-    gen = Generator(test_dir)
-
-    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
-
-    config = get_gen_file(fileutils, "in.atm")
-    ensemble.attach_generator_files(to_configure=[config])
-    gen.generate_experiment(ensemble)
-
-    # re generate without overwrite
-    config = get_gen_file(fileutils, "in.atm")
-    ensemble.attach_generator_files(to_configure=[config])
-    with pytest.raises(FileExistsError):
-        gen.generate_experiment(ensemble)
+@pytest.fixture
+def mock_index():
+    """Fixture to create a mock destination path."""
+    return 1
 
 
-def test_full_exp(fileutils, test_dir, wlmutils):
-    exp = Experiment("gen-test", test_dir, launcher="local")
+class EchoHelloWorldEntity(SmartSimEntity):
+    """A simple smartsim entity that meets the `ExecutableProtocol` protocol"""
 
-    model = exp.create_model("model", run_settings=rs)
-    script = fileutils.get_test_conf_path("sleep.py")
-    model.attach_generator_files(to_copy=script)
+    def __init__(self):
+        self.name = "entity_name"
+        self.files = FileSysOperationSet([])
+        self.file_parameters = None
 
-    orc = Orchestrator(wlmutils.get_test_port())
-    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-    ensemble = exp.create_ensemble("test_ens", params=params, run_settings=rs)
-
-    config = get_gen_file(fileutils, "in.atm")
-    ensemble.attach_generator_files(to_configure=config)
-    exp.generate(orc, ensemble, model)
-
-    # test for ensemble
-    assert osp.isdir(osp.join(test_dir, "test_ens/"))
-    for i in range(9):
-        assert osp.isdir(osp.join(test_dir, "test_ens/test_ens_" + str(i)))
-
-    # test for orc dir
-    assert osp.isdir(osp.join(test_dir, orc.name))
-
-    # test for model file
-    assert osp.isdir(osp.join(test_dir, "model"))
-    assert osp.isfile(osp.join(test_dir, "model/sleep.py"))
+    def as_executable_sequence(self):
+        return ("echo", "Hello", "World!")
 
 
-def test_dir_files(fileutils, test_dir):
-    """test the generate of models with files that
-    are directories with subdirectories and files
-    """
-
-    exp = Experiment("gen-test", test_dir, launcher="local")
-
-    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-    conf_dir = get_gen_file(fileutils, "test_dir")
-    ensemble.attach_generator_files(to_configure=conf_dir)
-
-    exp.generate(ensemble, tag="@")
-
-    assert osp.isdir(osp.join(test_dir, "dir_test/"))
-    for i in range(9):
-        model_path = osp.join(test_dir, "dir_test/dir_test_" + str(i))
-        assert osp.isdir(model_path)
-        assert osp.isdir(osp.join(model_path, "test_dir_1"))
-        assert osp.isfile(osp.join(model_path, "test.in"))
-
-
-def test_print_files(fileutils, test_dir, capsys):
-    """Test the stdout print of files attached to an ensemble"""
-
-    exp = Experiment("print-attached-files-test", test_dir, launcher="local")
-
-    ensemble = exp.create_ensemble("dir_test", replicas=1, run_settings=rs)
-    ensemble.entities = []
-
-    ensemble.print_attached_files()
-    captured = capsys.readouterr()
-    assert captured.out == "The ensemble is empty, no files to show.\n"
-
-    params = {"THERMO": [10, 20], "STEPS": [20, 30]}
-    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-    gen_dir = get_gen_file(fileutils, "test_dir")
-    symlink_dir = get_gen_file(fileutils, "to_symlink_dir")
-    copy_dir = get_gen_file(fileutils, "to_copy_dir")
-
-    ensemble.print_attached_files()
-    captured = capsys.readouterr()
-    expected_out = (
-        tabulate(
-            [
-                [model.name, "No file attached to this model."]
-                for model in ensemble.models
-            ],
-            headers=["Model name", "Files"],
-            tablefmt="grid",
-        )
-        + "\n"
+@pytest.fixture
+def mock_job() -> unittest.mock.MagicMock:
+    """Fixture to create a mock Job."""
+    job = unittest.mock.MagicMock(
+        entity=EchoHelloWorldEntity(),
+        get_launch_steps=unittest.mock.MagicMock(
+            side_effect=lambda: NotImplementedError()
+        ),
+        spec=Job,
     )
+    job.name = "test_job"
+    yield job
 
-    assert captured.out == expected_out
 
-    ensemble.attach_generator_files()
-    ensemble.print_attached_files()
-    captured = capsys.readouterr()
-    expected_out = (
-        tabulate(
-            [
-                [model.name, "No file attached to this entity."]
-                for model in ensemble.models
-            ],
-            headers=["Model name", "Files"],
-            tablefmt="grid",
-        )
-        + "\n"
+# UNIT TESTS
+
+
+def test_init_generator(generator_instance: Generator, test_dir: str):
+    """Test Generator init"""
+    assert generator_instance.root == pathlib.Path(test_dir)
+
+
+def test_build_job_base_path(
+    generator_instance: Generator, mock_job: unittest.mock.MagicMock, mock_index
+):
+    """Test Generator._build_job_base_path returns correct path"""
+    root_path = generator_instance._build_job_base_path(mock_job, mock_index)
+    expected_path = (
+        generator_instance.root
+        / f"{mock_job.__class__.__name__.lower()}s"
+        / f"{mock_job.name}-{mock_index}"
     )
-    assert captured.out == expected_out
+    assert root_path == expected_path
 
-    ensemble.attach_generator_files(
-        to_configure=[gen_dir, copy_dir], to_copy=copy_dir, to_symlink=symlink_dir
+
+def test_build_job_run_path(
+    test_dir: str,
+    mock_job: unittest.mock.MagicMock,
+    generator_instance: Generator,
+    monkeypatch: pytest.MonkeyPatch,
+    mock_index,
+):
+    """Test Generator._build_job_run_path returns correct path"""
+    monkeypatch.setattr(
+        Generator,
+        "_build_job_base_path",
+        lambda self, job, job_index: pathlib.Path(test_dir),
     )
+    run_path = generator_instance._build_job_run_path(mock_job, mock_index)
+    expected_run_path = pathlib.Path(test_dir) / generator_instance.run_directory
+    assert run_path == expected_run_path
 
-    expected_out = tabulate(
-        [
-            ["Copy", copy_dir],
-            ["Symlink", symlink_dir],
-            ["Configure", f"{gen_dir}\n{copy_dir}"],
-        ],
-        headers=["Strategy", "Files"],
-        tablefmt="grid",
+
+def test_build_job_log_path(
+    test_dir: str,
+    mock_job: unittest.mock.MagicMock,
+    generator_instance: Generator,
+    monkeypatch: pytest.MonkeyPatch,
+    mock_index,
+):
+    """Test Generator._build_job_log_path returns correct path"""
+    monkeypatch.setattr(
+        Generator,
+        "_build_job_base_path",
+        lambda self, job, job_index: pathlib.Path(test_dir),
     )
+    log_path = generator_instance._build_job_log_path(mock_job, mock_index)
+    expected_log_path = pathlib.Path(test_dir) / generator_instance.log_directory
+    assert log_path == expected_log_path
 
-    assert all(str(model.files) == expected_out for model in ensemble.models)
 
-    expected_out_multi = (
-        tabulate(
-            [[model.name, expected_out] for model in ensemble.models],
-            headers=["Model name", "Files"],
-            tablefmt="grid",
-        )
-        + "\n"
+def test_build_log_file_path(test_dir: str, generator_instance: Generator):
+    """Test Generator._build_log_file_path returns correct path"""
+    expected_path = pathlib.Path(test_dir) / "smartsim_params.txt"
+    assert generator_instance._build_log_file_path(test_dir) == expected_path
+
+
+def test_build_out_file_path(
+    test_dir: str, generator_instance: Generator, mock_job: unittest.mock.MagicMock
+):
+    """Test Generator._build_out_file_path returns out path"""
+    out_file_path = generator_instance._build_out_file_path(
+        pathlib.Path(test_dir), mock_job.name
     )
-    ensemble.print_attached_files()
-
-    captured = capsys.readouterr()
-    assert captured.out == expected_out_multi
+    assert out_file_path == pathlib.Path(test_dir) / f"{mock_job.name}.out"
 
 
-def test_multiple_tags(fileutils, test_dir):
-    """Test substitution of multiple tagged parameters on same line"""
-
-    exp = Experiment("test-multiple-tags", test_dir)
-    model_params = {"port": 6379, "password": "unbreakable_password"}
-    model_settings = RunSettings("bash", "multi_tags_template.sh")
-    parameterized_model = exp.create_model(
-        "multi-tags", run_settings=model_settings, params=model_params
+def test_build_err_file_path(
+    test_dir: str, generator_instance: Generator, mock_job: unittest.mock.MagicMock
+):
+    """Test Generator._build_err_file_path returns err path"""
+    err_file_path = generator_instance._build_err_file_path(
+        pathlib.Path(test_dir), mock_job.name
     )
-    config = get_gen_file(fileutils, "multi_tags_template.sh")
-    parameterized_model.attach_generator_files(to_configure=[config])
-    exp.generate(parameterized_model, overwrite=True)
-    exp.start(parameterized_model, block=True)
-
-    with open(osp.join(parameterized_model.path, "multi-tags.out")) as f:
-        log_content = f.read()
-        assert "My two parameters are 6379 and unbreakable_password, OK?" in log_content
+    assert err_file_path == pathlib.Path(test_dir) / f"{mock_job.name}.err"
 
 
-def test_generation_log(fileutils, test_dir):
-    """Test that an error is issued when a tag is unused and make_fatal is True"""
+def test_generate_job(
+    mock_job: unittest.mock.MagicMock, generator_instance: Generator, mock_index: int
+):
+    """Test Generator.generate_job returns correct paths"""
+    job_paths = generator_instance.generate_job(mock_job, mock_index)
+    assert job_paths.run_path.name == Generator.run_directory
+    assert job_paths.out_path.name == f"{mock_job.entity.name}.out"
+    assert job_paths.err_path.name == f"{mock_job.entity.name}.err"
 
-    exp = Experiment("gen-log-test", test_dir, launcher="local")
 
-    params = {"THERMO": [10, 20], "STEPS": [10, 20]}
-    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-    conf_file = get_gen_file(fileutils, "in.atm")
-    ensemble.attach_generator_files(to_configure=conf_file)
+def test_execute_commands(generator_instance: Generator):
+    """Test Generator._execute_commands subprocess.run"""
+    with (
+        unittest.mock.patch(
+            "smartsim._core.generation.generator.subprocess.run"
+        ) as run_process,
+    ):
+        cmd_list = CommandList(Command(["test", "command"]))
+        generator_instance._execute_commands(cmd_list)
+        run_process.assert_called_once()
 
-    def not_header(line):
-        """you can add other general checks in here"""
-        return not line.startswith("Generation start date and time:")
 
-    exp.generate(ensemble, verbose=True)
+def test_mkdir_file(generator_instance: Generator, test_dir: str):
+    """Test Generator._mkdir_file returns correct type and value"""
+    cmd = generator_instance._mkdir_file(pathlib.Path(test_dir))
+    assert isinstance(cmd, Command)
+    assert cmd.command == ["mkdir", "-p", test_dir]
 
-    log_file = osp.join(test_dir, "smartsim_params.txt")
-    ground_truth = get_gen_file(
-        fileutils, osp.join("log_params", "smartsim_params.txt")
+
+@pytest.mark.parametrize(
+    "dest",
+    (
+        pytest.param(None, id="dest as None"),
+        pytest.param(
+            pathlib.Path("absolute/path"),
+            id="dest as valid path",
+        ),
+    ),
+)
+def test_copy_files_valid_dest(
+    dest, source, generator_instance: Generator, test_dir: str
+):
+    to_copy = [CopyOperation(src=file, dest=dest) for file in source]
+    gen = GenerationContext(pathlib.Path(test_dir))
+    cmd_list = generator_instance._copy_files(files=to_copy, context=gen)
+    assert isinstance(cmd_list, CommandList)
+    # Extract file paths from commands
+    cmd_src_paths = set()
+    for cmd in cmd_list.commands:
+        src_index = cmd.command.index("copy") + 1
+        cmd_src_paths.add(cmd.command[src_index])
+    # Assert all file paths are in the command list
+    file_paths = {str(file) for file in source}
+    assert file_paths == cmd_src_paths, "Not all file paths are in the command list"
+
+
+@pytest.mark.parametrize(
+    "dest",
+    (
+        pytest.param(None, id="dest as None"),
+        pytest.param(
+            pathlib.Path("absolute/path"),
+            id="dest as valid path",
+        ),
+    ),
+)
+def test_symlink_files_valid_dest(
+    dest, source, generator_instance: Generator, test_dir: str
+):
+    to_symlink = [SymlinkOperation(src=file, dest=dest) for file in source]
+    gen = GenerationContext(pathlib.Path(test_dir))
+    cmd_list = generator_instance._symlink_files(files=to_symlink, context=gen)
+    assert isinstance(cmd_list, CommandList)
+    # Extract file paths from commands
+    cmd_src_paths = set()
+    for cmd in cmd_list.commands:
+        print(cmd)
+        src_index = cmd.command.index("symlink") + 1
+        cmd_src_paths.add(cmd.command[src_index])
+    # Assert all file paths are in the command list
+    file_paths = {str(file) for file in source}
+    assert file_paths == cmd_src_paths, "Not all file paths are in the command list"
+
+
+@pytest.mark.parametrize(
+    "dest",
+    (
+        pytest.param(None, id="dest as None"),
+        pytest.param(
+            pathlib.Path("absolute/path"),
+            id="dest as valid path",
+        ),
+    ),
+)
+def test_configure_files_valid_dest(
+    dest, source, generator_instance: Generator, test_dir: str
+):
+    file_param = {
+        "5": 10,
+        "FIRST": "SECOND",
+        "17": 20,
+        "65": "70",
+        "placeholder": "group leftupper region",
+        "1200": "120",
+        "VALID": "valid",
+    }
+    to_configure = [
+        ConfigureOperation(src=file, dest=dest, file_parameters=file_param)
+        for file in source
+    ]
+    gen = GenerationContext(pathlib.Path(test_dir))
+    cmd_list = generator_instance._configure_files(files=to_configure, context=gen)
+    assert isinstance(cmd_list, CommandList)
+    # Extract file paths from commands
+    cmd_src_paths = set()
+    for cmd in cmd_list.commands:
+        src_index = cmd.command.index("configure") + 1
+        cmd_src_paths.add(cmd.command[src_index])
+    # Assert all file paths are in the command list
+    file_paths = {str(file) for file in source}
+    assert file_paths == cmd_src_paths, "Not all file paths are in the command list"
+
+
+@pytest.fixture
+def run_directory(test_dir, generator_instance):
+    return pathlib.Path(test_dir) / generator_instance.run_directory
+
+
+@pytest.fixture
+def log_directory(test_dir, generator_instance):
+    return pathlib.Path(test_dir) / generator_instance.log_directory
+
+
+def test_build_commands(
+    generator_instance: Generator,
+    run_directory: pathlib.Path,
+    log_directory: pathlib.Path,
+):
+    """Test Generator._build_commands calls internal helper functions"""
+    with (
+        unittest.mock.patch(
+            "smartsim._core.generation.Generator._append_mkdir_commands"
+        ) as mock_append_mkdir_commands,
+        unittest.mock.patch(
+            "smartsim._core.generation.Generator._append_file_operations"
+        ) as mock_append_file_operations,
+    ):
+        generator_instance._build_commands(
+            EchoHelloWorldEntity(),
+            run_directory,
+            log_directory,
+        )
+        mock_append_mkdir_commands.assert_called_once()
+        mock_append_file_operations.assert_called_once()
+
+
+def test_append_mkdir_commands(
+    generator_instance: Generator,
+    run_directory: pathlib.Path,
+    log_directory: pathlib.Path,
+):
+    """Test Generator._append_mkdir_commands calls Generator._mkdir_file twice"""
+    with (
+        unittest.mock.patch(
+            "smartsim._core.generation.Generator._mkdir_file"
+        ) as mock_mkdir_file,
+    ):
+        generator_instance._append_mkdir_commands(
+            CommandList(),
+            run_directory,
+            log_directory,
+        )
+        assert mock_mkdir_file.call_count == 2
+
+
+def test_append_file_operations(
+    context: GenerationContext, generator_instance: Generator
+):
+    """Test Generator._append_file_operations calls all file operations"""
+    with (
+        unittest.mock.patch(
+            "smartsim._core.generation.Generator._copy_files"
+        ) as mock_copy_files,
+        unittest.mock.patch(
+            "smartsim._core.generation.Generator._symlink_files"
+        ) as mock_symlink_files,
+        unittest.mock.patch(
+            "smartsim._core.generation.Generator._configure_files"
+        ) as mock_configure_files,
+    ):
+        generator_instance._append_file_operations(
+            CommandList(),
+            EchoHelloWorldEntity(),
+            context,
+        )
+        mock_copy_files.assert_called_once()
+        mock_symlink_files.assert_called_once()
+        mock_configure_files.assert_called_once()
+
+
+@pytest.fixture
+def paths_to_copy(fileutils):
+    paths = fileutils.get_test_conf_path(osp.join("generator_files", "to_copy_dir"))
+    yield [pathlib.Path(path) for path in sorted(glob(paths + "/*"))]
+
+
+@pytest.fixture
+def paths_to_symlink(fileutils):
+    paths = fileutils.get_test_conf_path(osp.join("generator_files", "to_symlink_dir"))
+    yield [pathlib.Path(path) for path in sorted(glob(paths + "/*"))]
+
+
+@pytest.fixture
+def paths_to_configure(fileutils):
+    paths = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
     )
-
-    with open(log_file) as f1, open(ground_truth) as f2:
-        assert not not_header(f1.readline())
-        f1 = filter(not_header, f1)
-        f2 = filter(not_header, f2)
-        assert all(x == y for x, y in zip(f1, f2))
-
-    for entity in ensemble:
-        assert filecmp.cmp(
-            osp.join(entity.path, "smartsim_params.txt"),
-            get_gen_file(
-                fileutils,
-                osp.join("log_params", "dir_test", entity.name, "smartsim_params.txt"),
-            ),
-        )
+    yield [pathlib.Path(path) for path in sorted(glob(paths + "/*"))]
 
 
-def test_config_dir(fileutils, test_dir):
-    """Test the generation and configuration of models with
-    tagged files that are directories with subdirectories and files
-    """
-    exp = Experiment("config-dir", launcher="local")
-
-    gen = Generator(test_dir)
-
-    params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
-    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
-
-    config = get_gen_file(fileutils, "tag_dir_template")
-    ensemble.attach_generator_files(to_configure=config)
-    gen.generate_experiment(ensemble)
-
-    assert osp.isdir(osp.join(test_dir, "test"))
-
-    def _check_generated(test_num, param_0, param_1):
-        conf_test_dir = osp.join(test_dir, "test", f"test_{test_num}")
-        assert osp.isdir(conf_test_dir)
-        assert osp.isdir(osp.join(conf_test_dir, "nested_0"))
-        assert osp.isdir(osp.join(conf_test_dir, "nested_1"))
-
-        with open(osp.join(conf_test_dir, "nested_0", "tagged_0.sh")) as f:
-            line = f.readline()
-            assert line.strip() == f'echo "Hello with parameter 0 = {param_0}"'
-
-        with open(osp.join(conf_test_dir, "nested_1", "tagged_1.sh")) as f:
-            line = f.readline()
-            assert line.strip() == f'echo "Hello with parameter 1 = {param_1}"'
-
-    _check_generated(0, 0, 2)
-    _check_generated(1, 0, 3)
-    _check_generated(2, 1, 2)
-    _check_generated(3, 1, 3)
+@pytest.fixture
+def context(test_dir: str):
+    yield GenerationContext(pathlib.Path(test_dir))
 
 
-def test_no_gen_if_file_not_exist(fileutils):
-    """Test that generation of file with non-existant config
-    raises a FileNotFound exception
-    """
-    exp = Experiment("file-not-found", launcher="local")
-    ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
-    config = get_gen_file(fileutils, "path_not_exist")
-    with pytest.raises(FileNotFoundError):
-        ensemble.attach_generator_files(to_configure=config)
+@pytest.fixture
+def operations_list(paths_to_copy, paths_to_symlink, paths_to_configure):
+    op_list = []
+    for file in paths_to_copy:
+        op_list.append(CopyOperation(src=file))
+    for file in paths_to_symlink:
+        op_list.append(SymlinkOperation(src=file))
+    for file in paths_to_configure:
+        op_list.append(SymlinkOperation(src=file))
+    return op_list
 
 
-def test_no_gen_if_symlink_to_dir(fileutils):
-    """Test that when configuring a directory containing a symlink
-    a ValueError exception is raised to prevent circular file
-    structure configuration
-    """
-    exp = Experiment("circular-config-files", launcher="local")
-    ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
-    config = get_gen_file(fileutils, "circular_config")
-    with pytest.raises(ValueError):
-        ensemble.attach_generator_files(to_configure=config)
+@pytest.fixture
+def formatted_command_list(operations_list: list, context: GenerationContext):
+    new_list = CommandList()
+    for file in operations_list:
+        new_list.append(file.format(context))
+    return new_list
 
 
-def test_no_file_overwrite():
-    exp = Experiment("test_no_file_overwrite", launcher="local")
-    ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
-    with pytest.raises(ValueError):
-        ensemble.attach_generator_files(
-            to_configure=["/normal/file.txt", "/path/to/smartsim_params.txt"]
-        )
-    with pytest.raises(ValueError):
-        ensemble.attach_generator_files(
-            to_symlink=["/normal/file.txt", "/path/to/smartsim_params.txt"]
-        )
-    with pytest.raises(ValueError):
-        ensemble.attach_generator_files(
-            to_copy=["/normal/file.txt", "/path/to/smartsim_params.txt"]
-        )
+def test_execute_commands(
+    operations_list: list, formatted_command_list, generator_instance: Generator
+):
+    """Test Generator._execute_commands calls with appropriate type and num times"""
+    with (
+        unittest.mock.patch(
+            "smartsim._core.generation.generator.subprocess.run"
+        ) as mock_run,
+    ):
+        generator_instance._execute_commands(formatted_command_list)
+        assert mock_run.call_count == len(formatted_command_list)
