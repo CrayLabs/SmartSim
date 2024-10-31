@@ -110,6 +110,60 @@ def persist_model_file(model_path: pathlib.Path) -> pathlib.Path:
     return model_path
 
 
+def mock_message(
+    dispatch_fli_descriptor: str,
+    fs_descriptor: str,
+    msg_number: int,
+    callback_descriptor: str,
+) -> None:
+    """Mock event producer for triggering the inference pipeline."""
+    model_key = "mini-model"
+    # mock_message sends 2 messages, so we offset by 2 * (# of iterations in caller)
+
+    feature_store = BackboneFeatureStore.from_descriptor(fs_descriptor)
+    request_dispatcher_queue = DragonFLIChannel.from_descriptor(dispatch_fli_descriptor)
+
+    feature_store[model_key] = load_model()
+    logger.debug(f"Sending mock message {msg_number}")
+
+    output_key = f"output-{msg_number}"
+
+    tensor = ((msg_number + 1) * torch.ones((1, 2), dtype=torch.float32)).numpy()
+    fsd = feature_store.descriptor
+
+    tensor_desc = MessageHandler.build_tensor_descriptor(
+        "c", "float32", list(tensor.shape)
+    )
+
+    message_tensor_output_key = MessageHandler.build_tensor_key(output_key, fsd)
+    message_model_key = MessageHandler.build_model_key(model_key, fsd)
+
+    request = MessageHandler.build_request(
+        reply_channel=callback_descriptor,
+        model=message_model_key,
+        inputs=[tensor_desc],
+        outputs=[message_tensor_output_key],
+        output_descriptors=[],
+        custom_attributes=None,
+    )
+
+    logger.info(f"Sending request {msg_number} to request_dispatcher_queue")
+    request_bytes = MessageHandler.serialize_request(request)
+
+    logger.info("Sending msg_envelope")
+
+    # cuid = request_dispatcher_queue._channel.cuid
+    # logger.info(f"\tInternal cuid: {cuid}")
+
+    # send the header & body together so they arrive together
+    try:
+        request_dispatcher_queue.send_multiple([request_bytes, tensor.tobytes()], 1.0)
+        logger.info(f"\tenvelope 0: {request_bytes[:5]}...")
+        logger.info(f"\tenvelope 1: {tensor.tobytes()[:5]} - ({tensor})")
+    except Exception as ex:
+        logger.exception("Unable to send request envelope")
+
+
 def _mock_messages(
     dispatch_fli_descriptor: str,
     fs_descriptor: str,
@@ -163,7 +217,9 @@ def _mock_messages(
 
         # send the header & body together so they arrive together
         try:
-            request_dispatcher_queue.send_multiple([request_bytes, tensor.tobytes()])
+            request_dispatcher_queue.send_multiple(
+                [request_bytes, tensor.tobytes()], 1.0
+            )
             logger.info(f"\tenvelope 0: {request_bytes[:5]}...")
             logger.info(f"\tenvelope 1: {tensor.tobytes()[:5]}...")
         except Exception as ex:
