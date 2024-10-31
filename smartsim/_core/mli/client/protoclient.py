@@ -30,6 +30,7 @@ import dragon
 import dragon.channels
 from dragon.globalservices.api_setup import connect_to_infrastructure
 
+# TODO: fix import for mpi4py.MPI, add in setup.py --> mpi4py
 try:
     from mpi4py import MPI  # type: ignore[import-not-found]
 except Exception:

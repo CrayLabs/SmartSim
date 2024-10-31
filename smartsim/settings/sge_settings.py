@@ -36,8 +36,9 @@ logger = get_logger(__name__)
 # ***************************************
 # TODO: Remove pylint disable after merge
 # ***************************************
-# pylint: disable=no-self-use,no-member
-
+# pylint: disable=no-member
+# TODO: 'BsubBatchArguments','SlurmBatchArguments',
+# 'QsubBatchArguments' has no 'items' member
 
 class SgeQsubBatchSettings(BatchSettings):
     def __init__(
@@ -94,12 +95,14 @@ class SgeQsubBatchSettings(BatchSettings):
         self._sanity_check_resources(resources)
         self._resources = resources.copy()
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    @staticmethod
+    def set_hostlist(host_list: t.Union[str, t.List[str]]) -> None:
         raise LauncherUnsupportedFeature(
             "SGE does not support requesting specific hosts in batch jobs"
         )
 
-    def set_queue(self, queue: str) -> None:
+    @staticmethod
+    def set_queue(queue: str) -> None:
         raise LauncherUnsupportedFeature("SGE does not support specifying queues")
 
     def set_shebang(self, shebang: str) -> None:
@@ -124,7 +127,8 @@ class SgeQsubBatchSettings(BatchSettings):
         if walltime:
             self.set_resource("h_rt", walltime)
 
-    def set_nodes(self, num_nodes: t.Optional[int]) -> None:
+    @staticmethod
+    def set_nodes(num_nodes: t.Optional[int]) -> None:
         """Set the number of nodes, invalid for SGE
 
         :param nodes: Number of nodes, any integer other than 0 is invalid

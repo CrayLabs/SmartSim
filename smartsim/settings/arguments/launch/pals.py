@@ -39,10 +39,6 @@ from ...launch_command import LauncherType
 logger = get_logger(__name__)
 _as_pals_command = make_shell_format_fn(run_command="mpiexec")
 
-# ***************************************
-# TODO: Remove pylint disable after merge
-# ***************************************
-# pylint: disable=no-self-use
 
 
 @dispatch(with_format=_as_pals_command, to_launcher=ShellLauncher)
@@ -54,7 +50,8 @@ class PalsMpiexecLaunchArguments(ShellLaunchArguments):
         """
         return LauncherType.PALS.value
 
-    def _reserved_launch_args(self) -> set[str]:
+    @staticmethod
+    def _reserved_launch_args() -> set[str]:
         """Return reserved launch arguments.
 
         :returns: The set of reserved launcher arguments

@@ -126,7 +126,8 @@ class ShellLauncher:
         """Initialize a new shell launcher."""
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    def check_popen_inputs(self, shell_command: ShellLauncherCommand) -> None:
+    @staticmethod
+    def check_popen_inputs(shell_command: ShellLauncherCommand) -> None:
         """Validate that the contents of a shell command are valid.
 
         :param shell_command: The command to validate

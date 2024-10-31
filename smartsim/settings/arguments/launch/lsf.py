@@ -40,10 +40,6 @@ from ...launch_command import LauncherType
 
 logger = get_logger(__name__)
 
-# ***************************************
-# TODO: Remove pylint disable after merge
-# ***************************************
-# pylint: disable=no-self-use
 
 
 def _as_jsrun_command(
@@ -76,7 +72,8 @@ class JsrunLaunchArguments(ShellLaunchArguments):
         """
         return LauncherType.LSF.value
 
-    def _reserved_launch_args(self) -> set[str]:
+    @staticmethod
+    def _reserved_launch_args() -> set[str]:
         """Return reserved launch arguments.
 
         :returns: The set of reserved launcher arguments

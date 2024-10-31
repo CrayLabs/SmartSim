@@ -60,7 +60,7 @@ def _check_entity(mpmd_pairs: t.List[MPMDPair]) -> None:
     ret: SmartSimEntity | None = None
     for mpmd_pair in mpmd_pairs:
         if flag == 1:
-            if type(ret) == type(mpmd_pair.entity):
+            if isinstance(ret,type(mpmd_pair.entity)):
                 flag = 0
             else:
                 raise SSUnsupportedError(
@@ -110,11 +110,13 @@ class MPMDJob(BaseJob):
 
     def __str__(self) -> str:  # pragma: no cover
         """returns A user-readable string of a MPMD Job"""
-        fmt = lambda mpmd_pair: textwrap.dedent(
-            f"""\
-                == MPMD Pair ==
-                {mpmd_pair.entity}
-                {mpmd_pair.launch_settings}
-                """
-        )
-        return "\n".join(map(fmt, self.mpmd_pairs))
+
+        def _fmt(mpmd_pair: MPMDPair) -> str:
+            return textwrap.dedent(
+                f"""\
+                    == MPMD Pair ==
+                    {mpmd_pair.entity}
+                    {mpmd_pair.launch_settings}
+                    """
+            )
+        return "\n".join(map(_fmt, self.mpmd_pairs))

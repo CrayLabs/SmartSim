@@ -31,9 +31,6 @@ import socket
 import typing as t
 
 import pytest
-from smartsim.log import get_logger
-
-dragon = pytest.importorskip("dragon")
 
 # isort: off
 
@@ -43,6 +40,9 @@ import dragon.native.process as dragon_process
 
 # isort: on
 
+from smartsim.log import get_logger
+
+dragon = pytest.importorskip("dragon")
 
 logger = get_logger(__name__)
 

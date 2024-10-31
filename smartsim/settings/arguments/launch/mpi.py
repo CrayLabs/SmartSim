@@ -38,10 +38,6 @@ from ...launch_command import LauncherType
 
 logger = get_logger(__name__)
 
-# ***************************************
-# TODO: Remove pylint disable after merge
-# ***************************************
-# pylint: disable=no-self-use
 
 _as_mpirun_command = make_shell_format_fn("mpirun")
 _as_mpiexec_command = make_shell_format_fn("mpiexec")
@@ -49,7 +45,8 @@ _as_orterun_command = make_shell_format_fn("orterun")
 
 
 class _BaseMPILaunchArguments(ShellLaunchArguments):
-    def _reserved_launch_args(self) -> set[str]:
+    @staticmethod
+    def _reserved_launch_args() -> set[str]:
         """Return reserved launch arguments.
 
         :returns: The set of reserved launcher arguments
