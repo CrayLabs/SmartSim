@@ -1,0 +1,24 @@
+#%Module -*- tcl -*- ##
+## modulefile
+
+proc ModulesHelp { } {
+
+ puts stderr "\tAdds CUDA Toolkit to your environment,"
+
+}
+
+module-whatis "CUDA Toolkit development libraries"
+
+conflict cudatoolkit
+
+set          cuda_home             path/to/cudatoolkit
+
+setenv	     CUDA_HOME		       $cuda_home
+setenv       CUDA_TOOLKIT_ROOT_DIR $cuda_home
+set          cuda_lib              $cuda_home/lib64/
+setenv       CUDA_LIBRARY          $cuda_lib
+prepend-path LD_LIBRARY_PATH       $cuda_lib
+
+prepend-path PATH                  $cuda_home/bin
+setenv       CUDA_NVCC_EXECUTABLE  $cuda_home/bin/nvcc
+setenv       CUDA_INCLUDE_DIRS     $cuda_home/include
