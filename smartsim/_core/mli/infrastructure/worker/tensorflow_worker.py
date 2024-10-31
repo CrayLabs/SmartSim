@@ -41,7 +41,6 @@ from dragon.managed_memory import MemoryAlloc, MemoryPool
 
 from .....error import SmartSimError
 from .....log import get_logger
-from ...mli_schemas.tensor import tensor_capnp
 from .worker import (
     ExecuteResult,
     FetchInputResult,
@@ -49,6 +48,7 @@ from .worker import (
     LoadModelResult,
     MachineLearningWorkerBase,
     RequestBatch,
+    TensorMeta,
     TransformInputResult,
     TransformOutputResult,
 )
@@ -148,7 +148,7 @@ class TensorFlowWorker(MachineLearningWorkerBase):
     @staticmethod
     def transform_input(
         batch: RequestBatch,
-        fetch_results: list[FetchInputResult],
+        fetch_results: FetchInputResult,
         mem_pool: MemoryPool,
     ) -> TransformInputResult:
         """Given a collection of data, perform a transformation on the data and put
@@ -161,38 +161,38 @@ class TensorFlowWorker(MachineLearningWorkerBase):
         :raises ValueError: If tensors cannot be reconstructed
         :raises IndexError: If index out of range
         """
-        results: list[memoryview] = []
+        results: list[bytes] = []
         total_samples = 0
         slices: list[slice] = []
 
         all_dims: list[list[int]] = []
         all_dtypes: list[str] = []
-        if fetch_results[0].meta is None:
+        if fetch_results.meta is None:
             raise ValueError("Cannot reconstruct tensor without meta information")
         # Traverse inputs to get total number of samples and compute slices
         # Assumption: first dimension is samples, all tensors in the same input
         # have same number of samples
         # thus we only look at the first tensor for each input
-        for res_idx, fetch_result in enumerate(fetch_results):
-            if fetch_result.meta is None or any(
-                item_meta is None for item_meta in fetch_result.meta
+        for res_idx, res_meta_list in enumerate(fetch_results.meta):
+            if res_meta_list is None or any(
+                item_meta is None for item_meta in res_meta_list
             ):
                 raise ValueError("Cannot reconstruct tensor without meta information")
-            first_tensor_desc: tensor_capnp.TensorDescriptor = fetch_result.meta[0]
+            first_tensor_desc: TensorMeta = res_meta_list[0]  # type: ignore
             num_samples = first_tensor_desc.dimensions[0]
             slices.append(slice(total_samples, total_samples + num_samples))
             total_samples = total_samples + num_samples
 
-            if res_idx == len(fetch_results) - 1:
+            if res_idx == len(fetch_results.meta) - 1:
                 # For each tensor in the last input, get remaining dimensions
                 # Assumptions: all inputs have the same number of tensors and
                 # last N-1 dimensions match across inputs for corresponding tensors
                 # thus: resulting array will be of size (num_samples, all_other_dims)
-                for item_meta in fetch_result.meta:
-                    tensor_desc: tensor_capnp.TensorDescriptor = item_meta
-                    tensor_dims = list(tensor_desc.dimensions)
+                for item_meta in res_meta_list:
+                    tensor_desc: TensorMeta = item_meta  # type: ignore
+                    tensor_dims = tensor_desc.dimensions
                     all_dims.append([total_samples, *tensor_dims[1:]])
-                    all_dtypes.append(str(tensor_desc.dataType))
+                    all_dtypes.append(tensor_desc.datatype)
 
         for result_tensor_idx, (dims, dtype) in enumerate(zip(all_dims, all_dtypes)):
             itemsize = np.empty((1), dtype=dtype).itemsize
@@ -202,8 +202,8 @@ class TensorFlowWorker(MachineLearningWorkerBase):
             try:
                 joined = b"".join(
                     [
-                        fetch_result.inputs[result_tensor_idx]
-                        for fetch_result in fetch_results
+                        fetch_result[result_tensor_idx]
+                        for fetch_result in fetch_results.inputs
                     ]
                 )
                 mem_view[:alloc_size] = joined

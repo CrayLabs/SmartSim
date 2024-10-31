@@ -105,13 +105,14 @@ class TorchWorker(MachineLearningWorkerBase):
         the raw tensor data on a MemoryPool allocation.
 
         :param batch: The batch that triggered the pipeline
-        :param fetch_result: Raw outputs from fetching inputs out of a feature store
+        :param fetch_result: Raw outputs from fetching inputs from feature store or
+        request
         :param mem_pool: The memory pool used to access batched input tensors
         :returns: The transformed inputs wrapped in a TransformInputResult
         :raises ValueError: If tensors cannot be reconstructed
         :raises IndexError: If index out of range
         """
-        results: list[torch.Tensor] = []
+        results: list[bytes] = []
         total_samples = 0
         slices: list[slice] = []
 
