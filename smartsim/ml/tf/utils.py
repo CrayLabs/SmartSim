@@ -29,7 +29,7 @@ from pathlib import Path
 
 import keras
 import tensorflow as tf
-from tensorflow.python.framework.convert_to_constants import (
+from tensorflow.python.framework.convert_to_constants import (  # type: ignore[import-not-found,unused-ignore]
     convert_variables_to_constants_v2,
 )
 
@@ -39,12 +39,8 @@ def freeze_model(
 ) -> t.Tuple[str, t.List[str], t.List[str]]:
     """Freeze a Keras or TensorFlow Graph
 
-    to use a Keras or TensorFlow model in SmartSim, the model
-    must be frozen and the inputs and outputs provided to the
-    smartredis.client.set_model_from_file() method.
-
     This utiliy function provides everything users need to take
-    a trained model and put it inside an ``orchestrator`` instance
+    a trained model and put it inside an ``featurestore`` instance
 
     :param model: TensorFlow or Keras model
     :param output_dir: output dir to save model file to
@@ -62,7 +58,7 @@ def freeze_model(
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
 
-    frozen_func = convert_variables_to_constants_v2(full_model)
+    frozen_func = convert_variables_to_constants_v2(full_model)  # type: ignore[no-untyped-call,unused-ignore]
     frozen_func.graph.as_graph_def()
 
     input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
@@ -81,12 +77,8 @@ def freeze_model(
 def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]]:
     """Serialize a Keras or TensorFlow Graph
 
-    to use a Keras or TensorFlow model in SmartSim, the model
-    must be frozen and the inputs and outputs provided to the
-    smartredis.client.set_model() method.
-
     This utiliy function provides everything users need to take
-    a trained model and put it inside an ``orchestrator`` instance.
+    a trained model and put it inside an ``featurestore`` instance.
 
     :param model: TensorFlow or Keras model
     :return: serialized model, model input layer names, model output layer names
@@ -97,7 +89,7 @@ def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
 
-    frozen_func = convert_variables_to_constants_v2(full_model)
+    frozen_func = convert_variables_to_constants_v2(full_model)  # type: ignore[no-untyped-call,unused-ignore]
     frozen_func.graph.as_graph_def()
 
     input_names = [x.name.split(":")[0] for x in frozen_func.inputs]

@@ -1,4 +1,4 @@
-Model name: dir_test_3
+Application name: dir_test_3
 File name                   Parameters
 --------------------------  ---------------
 dir_test/dir_test_3/in.atm  Name      Value

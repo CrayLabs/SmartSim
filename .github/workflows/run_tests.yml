@@ -49,7 +49,7 @@ env:
 
 jobs:
   run_tests:
-    name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}, RedisAI ${{ matrix.rai }}
+    name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -63,14 +63,19 @@ jobs:
           - os: macos-14
             py_v: "3.9"
 
-    env:
-      SMARTSIM_REDISAI: ${{ matrix.rai }}
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py_v }}
+
+      - name: Check Test Files are Marked
+        run: |
+          diff <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | xargs grep -l 'pytestmark' \
+                 | sort) \
+               <(find tests -path tests/_legacy -prune -o -type f -name 'test_*.py' -print \
+                 | sort)
 
       - name: Install build-essentials for Ubuntu
         if: contains( matrix.os, 'ubuntu' )
@@ -109,36 +114,34 @@ jobs:
       - name: Install SmartSim (with ML backends)
         run: |
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
-          python -m pip install .[dev,mypy,ml]
+          python -m pip install .[dev,mypy]
 
-      - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset != 'dragon' )
-        run: smart build --device cpu --onnx -v
+      - name: Install ML Runtimes
+        if: matrix.subset != 'dragon'
+        run: smart build --device cpu -v
 
-      - name: Install ML Runtimes with Smart (with pt, tf, dragon, and onnx support)
-        if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset == 'dragon' )
+
+      - name: Install ML Runtimes (with dragon)
+        if: matrix.subset == 'dragon'
         env:
           SMARTSIM_DRAGON_TOKEN: ${{ secrets.DRAGON_TOKEN }}
         run: |
           if [ -n "${SMARTSIM_DRAGON_TOKEN}" ]; then
-            smart build --device cpu --onnx -v --dragon-repo dragonhpc/dragon-nightly --dragon-version 0.10
+            smart build --device cpu -v --dragon-repo dragonhpc/dragon-nightly --dragon-version 0.10
           else
-            smart build --device cpu --onnx -v --dragon
+            smart build --device cpu -v --dragon
           fi
           SP=$(python -c 'import site; print(site.getsitepackages()[0])')/smartsim/_core/config/dragon/.env
           LLP=$(cat $SP | grep LD_LIBRARY_PATH | awk '{split($0, array, "="); print array[2]}')
           echo "LD_LIBRARY_PATH=$LLP:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
-      - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
-        if: contains( matrix.os, 'macos-14' )
-        run: smart build --device cpu --no_tf -v
-
       - name: Run mypy
         run: |
           make check-mypy
 
-      - name: Run Pylint
-        run: make check-lint
+      # TODO: Re-enable static analysis once API is firmed up
+      # - name: Run Pylint
+      #   run: make check-lint
 
       # Run isort/black style check
       - name: Run isort

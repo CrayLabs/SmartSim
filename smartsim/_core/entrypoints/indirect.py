@@ -61,7 +61,7 @@ def main(
 
     :param cmd: a base64 encoded cmd to execute
     :param entity_type: `SmartSimEntity` entity class. Valid values
-    include: orchestrator, dbnode, ensemble, model
+    include: feature store, fsnode, ensemble, application
     :param cwd: working directory to execute the cmd from
     :param status_dir: path to the output directory for status updates
     """
@@ -233,7 +233,7 @@ if __name__ == "__main__":
         logger.debug("Starting indirect step execution")
 
         # make sure to register the cleanup before the start the process
-        # so our signaller will be able to stop the database process.
+        # so our signaller will be able to stop the feature store process.
         register_signal_handlers()
 
         rc = main(

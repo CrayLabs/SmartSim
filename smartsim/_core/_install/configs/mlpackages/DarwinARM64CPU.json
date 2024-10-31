@@ -1,0 +1,59 @@
+{
+    "platform": {
+        "operating_system":"darwin",
+        "architecture":"arm64",
+        "device":"cpu"
+    },
+    "ml_packages": [
+        {
+            "name": "dlpack",
+            "version": "v0.5_RAI",
+            "pip_index": "",
+            "python_packages": [],
+            "lib_source": "https://github.com/RedisAI/dlpack.git"
+        },
+        {
+            "name": "libtorch",
+            "version": "2.4.0",
+            "pip_index": "",
+            "python_packages": [
+                "torch==2.4.0",
+                "torchvision==0.19.0",
+                "torchaudio==2.4.0"
+            ],
+            "lib_source": "https://download.pytorch.org/libtorch/cpu/libtorch-macos-arm64-2.4.0.zip",
+            "rai_patches": [
+                {
+                    "description": "Patch RedisAI module to require C++17 standard instead of C++14",
+                    "source_file": "src/backends/libtorch_c/CMakeLists.txt",
+                    "regex": "set_property\\(TARGET\\storch_c\\sPROPERTY\\sCXX_STANDARD\\s(98|11|14)\\)",
+                    "replacement": "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)"
+                },
+                {
+                    "description": "Fix the type in a Tensorflow function signature",
+                    "source_file": "src/backends/tensorflow.c",
+                    "regex": "TF_Input inputs",
+                    "replacement": "TF_Output inputs"
+                },
+                {
+                    "description": "Fix the type in a Tensorflow function signature",
+                    "source_file": "src/backends/tensorflow.c",
+                    "regex": "TF_Input port",
+                    "replacement": "TF_Output port"
+                }
+            ]
+        },
+        {
+            "name": "onnxruntime",
+            "version": "1.17.3",
+            "pip_index": "",
+            "python_packages": [
+                "onnx==1.15",
+                "skl2onnx",
+                "scikit-learn",
+                "onnxmltools"
+            ],
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-osx-arm64-1.17.3.tgz"
+        }
+    ]
+}

@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .dragonRequests import *
-from .dragonResponses import *
+from .dragon_requests import *
+from .dragon_responses import *
 
 __all__ = [
     "DragonRequest",

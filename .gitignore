@@ -12,6 +12,7 @@ tests/test_output
 # Dependencies
 smartsim/_core/.third-party
 smartsim/_core/.dragon
+smartsim/_core/build
 
 # Docs
 _build
