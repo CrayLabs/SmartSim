@@ -7,6 +7,8 @@ build:
   tools:
     python: "3.10"
   jobs:
+    post_create_environment:
+      GRPC_VERBOSITY: "NONE"
     post_checkout:
       # Cancel building pull requests when there aren't changed in the docs directory or YAML file.
       # You can add any other files or directories that you'd like here as well,
