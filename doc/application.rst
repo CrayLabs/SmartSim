@@ -63,9 +63,9 @@ import Application``, initialize an ``Application``. For example:
         exe_args="--arg1 value1 --arg2 value2"
     )
 
-=========
-Configure
-=========
+======
+Modify
+======
 After initializing an ``Application`` object, you might want to configure the ``exe``, ``exe_args``, or ``files`` attributes.
 If an executable requires specific parameters, attach configuration files using the ``Application.files`` attribute. This attribute also
 supports copying or symlinking files into the job's run directory to ensure access at simulation runtime. To reuse an application but
