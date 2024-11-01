@@ -92,9 +92,9 @@ of ``Application(s)`` created:
 Each ``ParamSet`` is duplicated according to the number of replicas specified, allowing for multiple identical
 ``Application(s)`` to be created and deployed.
 
-=========
-Configure
-=========
+======
+Modify
+======
 This section will cover general methods for configuring `exe`, `exe_args`, `exe_arg_parameters`, `files`,
 `permutation_strategy`, `max_permutations` and `replicas` attributes of ``Ensemble``.
 
