@@ -409,7 +409,7 @@ class DragonBackend:
         err_file: t.Optional[str],
     ) -> dragon_process_group.ProcessGroup:
         grp_redir = dragon_process_group.ProcessGroup(
-            restart=False, policy=global_policy, pmi_enabled=False
+            restart=False, ignore_error_on_exit=True, policy=global_policy, pmi_enabled=False
         )
         for pol, puid in zip(policies, puids):
             proc = dragon_process.Process(None, ident=puid)
@@ -528,7 +528,7 @@ class DragonBackend:
                     host_name=hosts[0],
                 )
                 grp = dragon_process_group.ProcessGroup(
-                    restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy
+                    restart=False, ignore_error_on_exit=True, pmi_enabled=request.pmi_enabled, policy=global_policy
                 )
 
                 policies = []
