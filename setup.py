@@ -150,7 +150,7 @@ extras_require = {
         "sphinx-copybutton==0.5.2",
         "sphinx-tabs",
         "nbsphinx==0.9.3",
-        "docutils==0.18.1",
+        "docutils",
         "torch==2.0.1",
         "tensorflow>=2.14,<3.0",
         "ipython",
