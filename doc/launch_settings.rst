@@ -9,10 +9,9 @@ SmartSim’s ``LaunchSettings`` supports multiple launchers, allowing users to s
 Additionally, this class provides methods to access and configure these settings, as well as retrieve information associated with
 the ``LaunchSettings`` object.
 
-**Dragon** is the fastest and most versatile distributed runtime available for HPC workflows. It can function as a
-launcher within a Slurm allocation, providing rapid, interactive, and customizable execution of complex workflows
-on large HPC systems. As a scheduler-agnostic solution, Dragon allows the same SmartSim script to run on both Slurm and
-PBS systems, with future support for additional schedulers.
+**Dragon** is a launcher which that enables fast, interactive, and customizable execution of complex
+workflows on HPC systems. It works within a Slurm allocation, making it easy to run large workflows
+efficiently on HPC machines. Additional launcher support is coming soon.
 
 ===================
 Supported Launchers
@@ -80,7 +79,7 @@ runtime for HPC workflows. SLURM is a open-source job scheduler and resource man
      - **Description**
    * - ``srun``
      - Simple Linux Utility for Resource Management (SLURM).
-   * - ``dragonrun``
+   * - ``n/a``
      - High-performance computing launcher for large-scale jobs (Dragon).
 
 Local
@@ -191,7 +190,7 @@ varaible ``launcher`` to a launcher string such as `"slurm"`. For example:
         env_vars={"MY_VAR": "my_value"}
     )
 
-**Example using an Enum:**
+**Example using a LauncherType Enum:**
 Once you have imported ``LaunchSettings`` and ``LauncherType`` using ``from smartsim import LaunchSettings, LauncherType``,
 set the input variable ``launcher`` to a ``LauncherType`` enum such as ``LauncherType.Slurm``. For example:
 
@@ -203,9 +202,9 @@ set the input variable ``launcher`` to a ``LauncherType`` enum such as ``Launche
         env_vars={"MY_VAR": "my_value"}
     )
 
-=========
-Configure
-=========
+======
+Modify
+======
 After initializing a ``LaunchSettings`` object, you might want to go back and configure ``launch_args`` or
 ``env_vars``. Configuring these settings allows you to fine-tune the execution environment
 to meet the specific needs of different jobs.
@@ -222,12 +221,13 @@ These functions allow you to customize launch arguments after initializing the `
 **Option 1: Use LaunchSettings.launch_args.set**
 
 To set additional launch arguments after initializing the ``LaunchSettings`` object,
-use the `set` method on `launch_args` as shown below:
+use the ``set`` method on ``launch_args`` as shown below:
 
 .. code-block:: python
 
     launch_settings.launch_args.set("--nodes", "2")
 
+TODO: dragon example, syntanx is truly launcher specific
 **Option 2: Use custom HPC launcher methods**
 
 The ``LaunchSettings`` class provides custom methods to set launch arguments for different launchers.
@@ -335,13 +335,3 @@ of environment settings without overwriting it. For example:
 .. code-block:: python
 
     launch_settings.update_env({"MY_VAR": "new_value", "ANOTHER_VAR": "another_value"})
-
-========
-Examples
-========
-
-Local
-=====
-
-HPC
-===
