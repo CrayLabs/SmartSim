@@ -122,8 +122,8 @@ This section details how to attach files to an ``Application``. SmartSim support
 2. :ref:`Symlink<app_file_symlink>`
 3. :ref:`Configure<app_file_configure>`
 
-The ``Application.files`` attribute enables adding file operations. Continue to the operation
-sections for further details.
+The ``Application.files`` attribute enables adding the file operations. Continue to the operation
+sections for further explanation.
 
 .. _app_file_copy:
 
@@ -134,8 +134,8 @@ The copy operation involves creating a duplicate of the source file or folder at
 path within the job's run directory.
 
 **Add a Copy Operation:**
-To add a copy operation, use the ``add_copy`` method on the ``files`` attribute of the ``Application`` instance.
-This method requires the absolute source path (``src``) and an optional relative destination path (``dest``) to be of
+To add a copy operation, use the ``add_copy`` method on ``Application.files``. This method requires
+an absolute source path (``src``) and an optional relative destination path (``dest``) of
 type ``pathlib.Path``. For example:
 
 .. code-block:: python
@@ -153,13 +153,13 @@ run directory at `"/job/run/destination"`.
 -------
 Symlink
 -------
-Creating symlinks involves creating a symbolic link from the source file to the destination path. This
-is useful when you want to reference the original file without duplicating it.
+The symlink operation involves creating a symbolic link from the source file to the destination path
+within the job's run directory.
 
-**Adding a Symlink Operation:**
-To add a symlink operation, use the ``add_symlink`` method on the ``files`` attribute of the ``Application`` instance.
-This method requires the absolute source path (``src``) and an optional relative destination path (``dest``) to be of type
-pathlib.Path. For example:
+**Add a Symlink Operation:**
+To add a symlink operation, use the ``add_symlink`` method on ``Application.files``. This method requires
+the absolute source path (``src``) and an optional relative destination path (``dest``) of type
+``pathlib.Path``. For example:
 
 .. code-block:: python
 
@@ -176,14 +176,13 @@ run directory at `"/job/run/destination"`.
 ---------
 Configure
 ---------
-Configuring files involves modifying the content of the source file based on specified parameters and
-then placing the modified file at the destination path. This is useful for setting up configuration
-files with dynamic content.
+The configure operation involves modifying the content of the source file based on specified parameters and
+then placing the modified file at the destination path.
 
-**Adding a Configure Operation:**
-To add a configure operation, use the ``add_configuration`` method on the ``files`` attribute of the ``Application``
-instance. This method requires the absolute source path (``src``), an optional relative destination path (``dest``), and the file parameters
-(``file_parameters``) to be of type mapping of string to strings. Additionally, you can specify an optional tag
+**Add a Configure Operation:**
+To add a configure operation, use the ``add_configuration`` method on ``Application.files``.
+This method requires the absolute source path (``src``), an optional relative destination path (``dest``), and file parameters
+(``file_parameters``) of type mapping of string to strings. Additionally, specify an optional tag
 (``tag``) to identify the configuration. For example:
 
 .. code-block:: python
