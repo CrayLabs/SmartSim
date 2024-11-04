@@ -5,15 +5,16 @@ Application
 Overview
 ========
 The ``Application`` class facilitates the execution of computational tasks within an ``Experiment`` workflow.
-These tasks can include launching compiled applications, running scripts, or performing general
+These tasks include launching compiled applications, running scripts, or performing general
 computational operations. ``Application(s)`` integrate into ``Job(s)``, where ``LaunchSettings`` provide
 launcher-specific behavior for the ``Job``.
 
 ==========
 Initialize
 ==========
-The ``Application`` class allows you to set your jobs program.
-This section details the steps to set up the input parameters for your application.
+A ``Application`` requires two input arguments: name and executable. Optionally, users may
+provide executable arguments. This section details argument names, argument types
+and how to use the arguments to initialize an ``Application``.
 
 **Step 1: Import Application**
 
@@ -23,10 +24,10 @@ After installing Smartsim, ``Application`` may be imported in Python code like:
 
     from smartsim import Application
 
-**Step 2: Set the Application Name and Executable**
+**Step 2: Set the Application Name, Executable and Executable Arguments**
 
 The `name` is a string that identifies the application, and `exe` is the string path to the executable.
-Optionally, you can provide `exe_args` as a string or sequence of strings to specify arguments for the executable.
+Optionally, you can provide `exe_args` as a string or sequence of strings.
 
 * `name`: A string that identifies the application. Example:
 
@@ -43,7 +44,7 @@ Optionally, you can provide `exe_args` as a string or sequence of strings to spe
 
     exe = "new_executable"
 
-* `exe_args`: An optional argument that can be a string or a sequence of strings, representing the arguments
+* `exe_args`: An optional argument of type string or sequence of strings, representing the arguments
   for the executable. Examples:
 
   .. code-block:: python
@@ -52,10 +53,11 @@ Optionally, you can provide `exe_args` as a string or sequence of strings to spe
 
     exe_args=["--arg1", "value1", "--arg2", "value2"]
 
-**Example initializing an Application:** Once you have imported ``Application`` using ``from smartsim
-import Application``, initialize an ``Application``. For example:
+**Example initialize an Application:**
 
 .. code-block:: python
+
+    from smartsim import Application
 
     app = Application(
         name="my_app",
@@ -66,24 +68,19 @@ import Application``, initialize an ``Application``. For example:
 ======
 Modify
 ======
-After initializing an ``Application`` object, you might want to configure the ``exe``, ``exe_args``, or ``files`` attributes.
-If an executable requires specific parameters, attach configuration files using the ``Application.files`` attribute. This attribute also
-supports copying or symlinking files into the job's run directory to ensure access at simulation runtime. To reuse an application but
-alter the system state, update or overwrite the ``exe_args`` attribute. To change the executable while keeping the same arguments,
-overwrite the ``exe`` attribute.
+This section explains how to modify the attached executable and executable arguments. Additionally,
+learn how to attach copy, symlink and configuration files to an initialized ``Application``.
 
 Executable
 ==========
-To overwrite the executable after initializing the ``Application`` object, assign the desired executable path to the ``exe``
-attribute. If only the executable name is specified, SmartSim will attempt to locate the executable path on the
+To overwrite the executable, assign the desired executable path to the ``exe`` attribute.
+If only the executable name is specified, SmartSim will attempt to locate the executable path on the
 machine. For example:
 
 .. code-block:: python
 
-    # Set the executable path
     my_app.exe = "/path/to/new_executable"
 
-    # or just the executable name
     my_app.exe = "new_executable"
 
 Executable Arguments
@@ -119,23 +116,24 @@ overwriting them. For example:
 
 Input Files
 ===========
-In this section, we explore how to attach files to an application using the ``Application.files``
-attribute. This attribute allows users to add files through three different operations:
+This section details how to attach files to an ``Application``. SmartSim supports three file operations:
 
-1. Copying
-2. Creating symlinks
-3. Configuring files
+1. :ref:`Copy<app_file_copy>`
+2. :ref:`Symlink<app_file_symlink>`
+3. :ref:`Configure<app_file_configure>`
 
-Each file operation can be added to the ``files`` attribute of the ``Application`` instance.
+The ``Application.files`` attribute enables adding file operations. Continue to the operation
+sections for further details.
+
+.. _app_file_copy:
 
 ----
 Copy
 ----
-Copying files involves creating a duplicate of the source file or folder at the destination path. This is useful
-when you need to ensure that the original file remains unchanged while providing a copy for the executable
-to use.
+The copy operation involves creating a duplicate of the source file or folder at the destination
+path within the job's run directory.
 
-**Adding a Copy Operation:**
+**Add a Copy Operation:**
 To add a copy operation, use the ``add_copy`` method on the ``files`` attribute of the ``Application`` instance.
 This method requires the absolute source path (``src``) and an optional relative destination path (``dest``) to be of
 type ``pathlib.Path``. For example:
@@ -149,6 +147,8 @@ type ``pathlib.Path``. For example:
 
 This will create a copy of the file located at `"/path/to/source"` and place it within the job's
 run directory at `"/job/run/destination"`.
+
+.. _app_file_symlink:
 
 -------
 Symlink
@@ -170,6 +170,8 @@ pathlib.Path. For example:
 
 This will create a symbolic link from the file located at `"/path/to/source"` to the job's
 run directory at `"/job/run/destination"`.
+
+.. _app_file_configure:
 
 ---------
 Configure
