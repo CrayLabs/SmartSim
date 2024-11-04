@@ -4,21 +4,20 @@ LaunchSettings
 ========
 Overview
 ========
-The ``LaunchSettings`` class manages launcher configuration settings to enable the injection of launcher-specific behavior into jobs.
-SmartSim’s ``LaunchSettings`` supports multiple launchers, allowing users to set both launch arguments and environment variables.
-Additionally, this class provides methods to access and configure these settings, as well as retrieve information associated with
-the ``LaunchSettings`` object.
+The ``LaunchSettings`` class manages launcher configuration settings to support launcher-specific behavior in jobs.
+SmartSim supports multiple launchers and allows users to set launch arguments and environment variables.
+Additionally, the ``LaunchSettings`` class provides methods to access and configure launch arguments and
+environment variables.
 
-**Dragon** is a launcher which that enables fast, interactive, and customizable execution of complex
-workflows on HPC systems. It works within a Slurm allocation, making it easy to run large workflows
-efficiently on HPC machines. Additional launcher support is coming soon.
+**Dragon** is a launcher which that enables fast execution of complex workflows on HPC systems. It works within
+a Slurm allocation, making it easy to run large workflows efficiently on HPC machines.
 
 ===================
 Supported Launchers
 ===================
-The ``LaunchSettings`` class supports multiple launchers, each customized for different environments. Among these,
-**Dragon** stands out as the fastest and most versatile option, ideal for large-scale HPC jobs. The following launchers
-are categorized based on their specific use cases and the systems they are designed for.
+The ``LaunchSettings`` class supports multiple launchers, each customized for different environments. Among the launchers,
+**Dragon** stands out as fast and ideal for large-scale HPC jobs. The following launchers are categorized
+based on the systems or programs they are designed for.
 
 HPE Cray
 ========
@@ -39,7 +38,7 @@ workload managers (WLMs) that do not have their own launchers.
 
 IBM
 ===
-Smartsim provides support for an IBM launcher: **LSF**. IBM's LSF is a platform for managing workloads and scheduling jobs
+SmartSim provides support for an IBM launcher: **LSF**. IBM's LSF is a platform for managing workloads and scheduling jobs
 in distributed high-performance computing (HPC) environments.
 
 .. list-table:: IMB Specific Launchers
@@ -100,13 +99,12 @@ various environments.
 ==========
 Initialize
 ==========
-The ``LaunchSettings`` class allows you to set your application’s execution
-environment. This section details the steps to set up the input parameters for
-launching your application.
+The ``LaunchSettings`` class allows you to customize your application’s execution
+environment. This section details the steps to set up a ``LaunchSettings`` instance.
 
 **Step 1: Import LaunchSettings**
 
-After installing Smartsim, ``LaunchSettings`` may be imported in Python code like:
+After installing SmartSim, ``LaunchSettings`` may be imported in Python code like:
 
 .. code-block:: python
 
@@ -114,8 +112,8 @@ After installing Smartsim, ``LaunchSettings`` may be imported in Python code lik
 
 **Step 2: Set the Launcher Type**
 
-Set the launcher type using either a string or a ``LauncherType`` enum. This step is crucial as it
-determines the applied launcher. The following table lists the supported launcher strings and
+Set the launcher type using either a string or a ``LauncherType`` enum. This step is important as it
+determines the job's launcher. The following table lists the supported launcher strings and
 their corresponding ``LauncherType`` enums:
 
 .. list-table:: Supported Launcher Strings and Enums
@@ -160,7 +158,7 @@ To use an enum, import ``LauncherType`` into Python code like:
 
 **Step 3: Provide Launch Arguments and Environment Variables**
 
-Optionally, you can provide ``launch_args`` and ``env_vars`` to customize the application's execution environment:
+Optionally, you can provide ``launch_args`` and ``env_vars``:
 
 * ``launch_args``: A dictionary where keys are argument names (strings) and values are argument values (strings).
   These arguments are specific to the launcher being used. Example:
@@ -180,7 +178,7 @@ Here's how you can initialize ``LaunchSettings`` with input parameters:
 
 **Example using a launcher String:**
 Once you have imported ``LaunchSettings`` using ``from smartsim import LaunchSettings``, set the input
-varaible ``launcher`` to a launcher string such as `"slurm"`. For example:
+variable ``launcher`` to a launcher string such as `"slurm"`. For example:
 
 .. code-block:: python
 
@@ -205,13 +203,13 @@ set the input variable ``launcher`` to a ``LauncherType`` enum such as ``Launche
 ======
 Modify
 ======
-After initializing a ``LaunchSettings`` object, you might want to go back and configure ``launch_args`` or
-``env_vars``. Configuring these settings allows you to fine-tune the execution environment
-to meet the specific needs of different jobs.
+After initializing a ``LaunchSettings`` object, you might want to go back and modify the ``launch_args`` or
+``env_vars``. Configuring these settings allows you to change the execution environment to meet the
+requirements of different jobs.
 
 Launch Arguments
 ================
-There are two methods to configure ``launch_args``:
+There are two methods to modify ``launch_args``:
 
 1. Use ``LaunchSettings.launch_args.set``.
 2. Use custom methods specific to each HPC launcher.
@@ -220,14 +218,15 @@ These functions allow you to customize launch arguments after initializing the `
 
 **Option 1: Use LaunchSettings.launch_args.set**
 
-To set additional launch arguments after initializing the ``LaunchSettings`` object,
-use the ``set`` method on ``launch_args`` as shown below:
+To add or modify launch arguments after initializing the ``LaunchSettings`` object,
+use the ``set`` method on ``launch_args`` as demonstrated below:
 
 .. code-block:: python
 
     launch_settings.launch_args.set("--nodes", "2")
 
 TODO: dragon example, syntanx is truly launcher specific
+
 **Option 2: Use custom HPC launcher methods**
 
 The ``LaunchSettings`` class provides custom methods to set launch arguments for different launchers.
@@ -313,14 +312,14 @@ Environment Variables
 =====================
 There are two methods to configure ``env_vars``:
 
-1. Use ``LaunchSettings.env_vars`` to overwrite the existing executable arguments.
-2. Use ``LaunchSettings.update_env`` to add to the existing environment variables.
+1. Use ``LaunchSettings.env_vars`` to overwrite the environment variables.
+2. Use ``LaunchSettings.update_env`` to add environment variables.
 
 **Option 1: Use LaunchSettings.env_vars**
 
 To overwrite the ``env_vars`` after initializing the ``LaunchSettings`` object, set a dictionary where
-each key and value are strings to ``LaunchSettings.env_vars``. This method overwrites the existing dictionary
-of environment settings. For example:
+each key and value are strings to ``LaunchSettings.env_vars``. This method overwrites the existing
+environment settings. For example:
 
 .. code-block:: python
 
@@ -329,8 +328,8 @@ of environment settings. For example:
 **Option 1: Use LaunchSettings.update_env**
 
 To update the ``env_vars`` after initializing the ``LaunchSettings`` object, pass in a dictionary where
-each key and value are strings to ``LaunchSettings.update_env``. This function updates the existing dictionary
-of environment settings without overwriting it. For example:
+each key and value are strings to ``LaunchSettings.update_env``. This function updates the existing
+environment settings without overwriting. For example:
 
 .. code-block:: python
 
