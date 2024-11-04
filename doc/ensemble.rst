@@ -10,93 +10,46 @@ transforms into a list of deployable ``Job(s)``, with identical ``LaunchSettings
 ==========
 Initialize
 ==========
-An ``Ensemble`` supports two main creation strategies: **Parameter Expansion** and **Replication**.
+An ``Ensemble`` supports two creation strategies:
+
+- :ref:`Parameter Expansion<param_expansion>`
+- :ref:`Replication<replication>`
+
+.. _param_expansion:
 
 Parameter Expansion
 ===================
-With parameter expansion, an ``Ensemble`` enables the creation of multiple ``Application(s)`` by assigning different parameter
-values to each one. This involves providing inputs to ``Ensemble.file_parameters``, ``Ensemble.exe_arg_parameters``,
-and ``Ensemble.permutation_strategy``.
+Parameter expansion involves taking the file parameters and executable argument parameters,
+grouping them according to the user specified strategy, and then applying each set of parameters to a member
+of the ``Ensemble``.
 
-Here's a breakdown of how it works:
-
-1. **File Parameters**: These are parameters that are read from files and can vary between ``Application(s)``.
-2. **Executable Argument Parameters**: These are parameters passed as arguments to the executable and can also vary.
+1. **File Parameters**: Configuration parameters supplied to the executable via a configuration file operation.
+   For examples, please visit the :ref:`Input Files<ensemble_files>` section of :ref:`Modify<ensemble_modify>`.
+2. **Executable Argument Parameters**: These are parameters passed as arguments to the executable.
 3. **Permutation Strategy**: This determines how the different parameter values are combined to create unique sets
-   for each ``Application``. The strategies include:
+   for each ``Ensemble`` member. The strategies include:
 
-   - **all_perm**: Generates all possible combinations of the parameters.
-   - **step**: Collects identically indexed values across parameter lists to create sets.
-   - **random**: Selects randomly from predefined parameter spaces.
+   - **all_perm**: Generates all possible combinations of the file parameters and executable argument parameters.
+   - **step**: Collects identically indexed values across file parameters and executable argument parameters lists to create sets.
+   - **random**: Selects randomly from predefined file parameters and executable argument parameters.
 
-For example, if you have two sets of file parameters and two sets of executable arguments, using the
-`"step"` strategy might look like this:
+For examples, please visit the :ref:`permutation strategy<perm_strategy>` section of :ref:`Modify<ensemble_modify>`.
 
-.. code-block:: python
-
-    file_params = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
-    exe_arg_parameters = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
-    ensemble = Ensemble(
-        name="example_ensemble",
-        exe="python",
-        exe_arg_parameters=exe_arg_parameters,
-        file_parameters=file_params,
-        permutation_strategy="step"
-    )
-
-This configuration will create two ``Application(s)`` with the following parameter sets:
-
-.. code-block:: python
-
-    [
-        ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
-        ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']})
-    ]
-
-Each ``ParamSet`` contains the parameters assigned from ``file_params`` and the corresponding executable
-arguments from ``exe_arg_parameters``. This allows for flexible and efficient creation of multiple
-``Application(s)`` with varying configurations.
+.. _replication:
 
 Replication
 ===========
-Replication involves creating identical ``Application(s)`` by specifying the ``Ensemble.replicas`` argument. Applying this
-to a parameter expansion setup doubles the number of ``Application(s)`` by replicating each parameter set.
+The replication strategy involves creating multiple copies of each ``Application`` within an ``Ensemble`` based on
+the number specified to the ``Ensemble.replicas`` argument. For examples, please visit the
+:ref:`replicas<ensemble_replicas>` section of :ref:`Modify<ensemble_modify>`.
 
-Consider the following example where we apply the ``replicas`` argument to create multiple identical ``Application(s)``:
-
-.. code-block:: python
-
-    file_params = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
-    exe_arg_parameters = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
-    ensemble = Ensemble(
-        name="example_ensemble",
-        exe="python",
-        exe_arg_parameters=exe_arg_parameters,
-        file_parameters=file_params,
-        permutation_strategy="step",
-        replicas=2
-    )
-
-This configuration will result in each parameter set being replicated, effectively doubling the number
-of ``Application(s)`` created:
-
-.. code-block:: python
-
-    [
-        ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
-        ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
-        ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']}),
-        ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']})
-    ]
-
-Each ``ParamSet`` is duplicated according to the number of replicas specified, allowing for multiple identical
-``Application(s)`` to be created and deployed.
+.. _ensemble_modify:
 
 ======
 Modify
 ======
-This section will cover general methods for configuring `exe`, `exe_args`, `exe_arg_parameters`, `files`,
-`permutation_strategy`, `max_permutations` and `replicas` attributes of ``Ensemble``.
+This section will cover general methods for configuring ``exe``, ``exe_args``, ``exe_arg_parameters``, ``files``,
+``permutation_strategy``, ``max_permutations`` and ``replicas`` attributes of ``Ensemble``.
 
 Executable
 ==========
@@ -136,6 +89,8 @@ For example:
 
     my_ensemble.exe_arg_parameters = {"EXE": [["arg1"], ["arg2", "arg3"]], "ARGS": [["arg4"], ["arg5", "arg6"]]}
 
+.. _perm_strategy:
+
 Permutation Strategy
 ====================
 To configure the permutation strategy for an ``Ensemble``, assign the desired strategy to the
@@ -155,6 +110,34 @@ For example:
 
     my_ensemble.permutation_strategy = "random"
 
+For example, if you have two sets of file parameters and two sets of executable arguments, using the
+`"step"` strategy might look like this:
+
+.. code-block:: python
+
+    file_params = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
+    exe_arg_parameters = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
+    ensemble = Ensemble(
+        name="example_ensemble",
+        exe="python",
+        exe_arg_parameters=exe_arg_parameters,
+        file_parameters=file_params,
+        permutation_strategy="step"
+    )
+
+This configuration will create two ``Application(s)`` with the following parameter sets:
+
+.. code-block:: python
+
+    [
+        ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
+        ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']})
+    ]
+
+Each ``ParamSet`` contains the parameters assigned from ``file_params`` and the corresponding executable
+arguments from ``exe_arg_parameters``. This allows for flexible and efficient creation of multiple
+``Application(s)`` with varying configurations.
+
 Maximum Permutations
 ====================
 To limit the number of parameter permutations generated for an ``Ensemble``, assign the desired maximum
@@ -171,6 +154,8 @@ For example:
     # Set the maximum number of parameter permutations to 50
     my_ensemble.max_permutations = 50
 
+.. _ensemble_replicas:
+
 Replicas
 ========
 To create multiple identical ``Application(s)`` within an ``Ensemble``, assign the desired number of replicas to
@@ -186,6 +171,38 @@ For example:
 
     # Set the number of replicas to 5
     my_ensemble.replicas = 5
+
+Consider the following example where we apply the ``replicas`` argument to create multiple identical ``Application(s)``:
+
+.. code-block:: python
+
+    file_params = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
+    exe_arg_parameters = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
+    ensemble = Ensemble(
+        name="example_ensemble",
+        exe="python",
+        exe_arg_parameters=exe_arg_parameters,
+        file_parameters=file_params,
+        permutation_strategy="step",
+        replicas=2
+    )
+
+This configuration will result in each parameter set being replicated, effectively doubling the number
+of ``Application(s)`` created:
+
+.. code-block:: python
+
+    [
+        ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
+        ParamSet(params={'SPAM': 'a', 'EGGS': 'c'}, exe_args={'EXE': ['a'], 'ARGS': ['d']}),
+        ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']}),
+        ParamSet(params={'SPAM': 'b', 'EGGS': 'd'}, exe_args={'EXE': ['b', 'c'], 'ARGS': ['e', 'f']})
+    ]
+
+Each ``ParamSet`` is duplicated according to the number of replicas specified, allowing for multiple identical
+``Application(s)`` to be created and deployed.
+
+.. _ensemble_files:
 
 Input Files
 ===========
