@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Refactor dragon dispatcher tests to avoid multiprocessing
 - Fix symlink operation
 - RequestBatch rewrite
 - Fix regression on hostlist param to DragonRunRequest

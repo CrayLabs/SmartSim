@@ -76,7 +76,7 @@ from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
 from .utils.channel import FileSystemCommChannel
-from .utils.msg_pump import mock_messages
+from .utils.msg_pump import mock_message
 
 logger = get_logger(__name__)
 
@@ -90,7 +90,6 @@ except Exception:
     pass
 
 
-@pytest.mark.skip("TODO: Fix issue unpickling messages")
 @pytest.mark.parametrize("num_iterations", [4])
 def test_request_dispatcher(
     num_iterations: int,
@@ -139,7 +138,6 @@ def test_request_dispatcher(
 
     # put some messages into the work queue for the dispatcher to pickup
     channels = []
-    processes = []
     for i in range(num_iterations):
         batch: t.Optional[RequestBatch] = None
         mem_allocs = []
@@ -151,28 +149,21 @@ def test_request_dispatcher(
         callback_channel = DragonCommChannel.from_local()
         channels.append(callback_channel)
 
-        process = function_as_dragon_proc(
-            mock_messages,
-            [
-                worker_queue.descriptor,
-                backbone_fs.descriptor,
-                i,
-                callback_channel.descriptor,
-            ],
-            [],
-            [],
-        )
-        processes.append(process)
-        process.start()
-        assert process.returncode is None, "The message pump failed to start"
         # give dragon some time to populate the message queues
-        for i in range(15):
+        for j in range(5):
             try:
+                if j < 2:
+                    mock_message(
+                        worker_queue.descriptor,
+                        backbone_fs.descriptor,
+                        j,
+                        callback_channel.descriptor,
+                    )
                 request_dispatcher._on_iteration()
                 batch = request_dispatcher.task_queue.get(timeout=1.0)
                 break
             except Empty:
-                time.sleep(2)
+                time.sleep(1)
                 logger.warning(f"Task queue is empty on iteration {i}")
                 continue
             except Exception as exc:
@@ -213,13 +204,9 @@ def test_request_dispatcher(
             assert len(tensors) == 1
             assert tensors[0].shape == torch.Size([2, 2])
 
-            for tensor in tensors:
-                for sample_idx in range(tensor.shape[0]):
-                    tensor_in = tensor[sample_idx]
-                    tensor_out = (sample_idx + 1) * torch.ones(
-                        (2,), dtype=torch.float32
-                    )
-                    assert torch.equal(tensor_in, tensor_out)
+            exp_tensor = torch.Tensor([[1.0, 1.0], [2.0, 2.0]])
+
+            assert torch.equal(exp_tensor, tensors[0])
 
         except Exception as exc:
             raise exc
