@@ -23,7 +23,7 @@ Detailed Notes
 - After the supercomputer Summit was decommissioned, a decision was made to
   terminate SmartSim's support of the LSF launcher and LSB scheduler. If
   this impacts your work, please contact us.
-  ([SmartSim-PR778](https://github.com/CrayLabs/SmartSim/pull/778))
+  ([SmartSim-PR780](https://github.com/CrayLabs/SmartSim/pull/780))
 - Fix typos in the `train_surrogate` tutorial documentation.
   ([SmartSim-PR758](https://github.com/CrayLabs/SmartSim/pull/758))
 - PML's Scylla is still under development. The usual SmartSim
