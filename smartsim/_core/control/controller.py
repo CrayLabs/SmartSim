@@ -70,7 +70,6 @@ from ..config import CONFIG
 from ..launcher import (
     DragonLauncher,
     LocalLauncher,
-    LSFLauncher,
     PBSLauncher,
     SGELauncher,
     SlurmLauncher,
@@ -329,7 +328,7 @@ class Controller:
 
     def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), lsf,
+        SmartSim currently supports slurm, pbs(pro), sge, dragon,
         and local launching
 
         :param launcher: which launcher to initialize
@@ -341,7 +340,6 @@ class Controller:
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
             "pals": PBSLauncher,
-            "lsf": LSFLauncher,
             "local": LocalLauncher,
             "dragon": DragonLauncher,
             "sge": SGELauncher,

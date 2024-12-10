@@ -36,7 +36,7 @@ from . import slurm as _slurm
 
 def detect_launcher() -> str:
     """Detect available launcher."""
-    # Precedence: PBS, LSF, Slurm, local
+    # Precedence: PBS, Slurm, local
     if which("qsub") and which("qstat") and which("qdel"):
         qsub_version = run(
             ["qsub", "--version"],
@@ -47,10 +47,6 @@ def detect_launcher() -> str:
         )
         if "pbs" in (qsub_version.stdout).lower():
             return "pbs"
-    if all(
-        [which("bsub"), which("jsrun"), which("jslist"), which("bjobs"), which("bkill")]
-    ):
-        return "lsf"
     if all(
         [
             which("sacct"),

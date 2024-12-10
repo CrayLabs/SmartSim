@@ -16,8 +16,6 @@ launching capabilities tailored for specific workload managers (WLMs). Each Smar
    - :ref:`SbatchSettings<sbatch_api>`
 - The PBS Pro `launcher` supports:
    - :ref:`QsubBatchSettings<qsub_api>`
-- The LSF `launcher` supports:
-   - :ref:`BsubBatchSettings<bsub_api>`
 
 .. note::
       The local `launcher` does not support batch jobs.
@@ -97,31 +95,6 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
         If `launcher="auto"`, SmartSim will detect that the ``Experiment`` is running on a PBS Pro based
         machine and set the launcher to `"pbs"`.
 
-    .. group-tab:: LSF
-      To instantiate the ``BsubBatchSettings`` object, which interfaces with the LSF job scheduler, specify
-      `launcher="lsf"` when initializing the ``Experiment``. Upon calling ``create_batch_settings``,
-      SmartSim will detect the job scheduler and return the appropriate batch settings object.
-
-        .. code-block:: python
-
-            from smartsim import Experiment
-
-            # Initialize the experiment and provide launcher LSF
-            exp = Experiment("name-of-experiment", launcher="lsf")
-
-            # Initialize a BsubBatchSettings object
-            bsub_batch_settings = exp.create_batch_settings(nodes=1, time="10:00:00", batch_args={"ntasks": 1})
-            # Set the account for the lsf batch job
-            bsub_batch_settings.set_account("12345-Cray")
-            # Set the partition for the lsf batch job
-            bsub_batch_settings.set_queue("default")
-
-      The initialized ``BsubBatchSettings`` instance can now be passed to a SmartSim entity
-      (``Model`` or ``Ensemble``) via the `batch_settings` argument in ``create_batch_settings``.
-
-      .. note::
-        If `launcher="auto"`, SmartSim will detect that the ``Experiment`` is running on a LSF based
-        machine and set the launcher to `"lsf"`.
 
 .. warning::
       Note that initialization values provided (e.g., `nodes`, `time`, etc) will overwrite the same arguments in `batch_args` if present.

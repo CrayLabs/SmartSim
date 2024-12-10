@@ -28,7 +28,6 @@ from .alpsSettings import AprunSettings
 from .base import RunSettings, SettingsBase
 from .containers import Container, Singularity
 from .dragonRunSettings import DragonRunSettings
-from .lsfSettings import BsubBatchSettings, JsrunSettings
 from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
 from .palsSettings import PalsMpiexecSettings
 from .pbsSettings import QsubBatchSettings
@@ -37,8 +36,6 @@ from .slurmSettings import SbatchSettings, SrunSettings
 
 __all__ = [
     "AprunSettings",
-    "BsubBatchSettings",
-    "JsrunSettings",
     "MpirunSettings",
     "MpiexecSettings",
     "OrterunSettings",

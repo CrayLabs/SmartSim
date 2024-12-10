@@ -144,7 +144,6 @@ SmartSim](https://www.craylabs.org/docs/api/smartsim_api.html#settings).
  - ``MpirunSettings``
  - ``SrunSettings``
  - ``AprunSettings``
- - ``JsrunSettings``
 
 The following example launches a hello world MPI program using the local launcher
 for single compute node, workstations and laptops.
@@ -177,7 +176,7 @@ SmartSim integrates with common HPC schedulers providing batch and interactive
 launch capabilities for all applications:
 
  - Slurm
- - LSF
+ - SGE
  - PBSPro
  - Local (for laptops/single node, no batch)
 
@@ -197,11 +196,9 @@ salloc -N 3 --ntasks-per-node=20 --ntasks 60 --exclusive -t 00:10:00
 # get interactive allocation (PBS)
 qsub -l select=3:ncpus=20 -l walltime=00:10:00 -l place=scatter -I -q <queue>
 
-# get interactive allocation (LSF)
-bsub -Is -W 00:10 -nnodes 3 -P <project> $SHELL
 ```
 
-This same script will run on a SLURM, PBS, or LSF system as the ``launcher``
+This same script will run on a SLURM, PBS, or SGE system as the ``launcher``
 is set to `auto` in the [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
 initialization. The run command like ``mpirun``,
 ``aprun`` or ``srun`` will be automatically detected from what is available on the
@@ -281,7 +278,7 @@ python hello_ensemble.py
 ```
 
 Similar to the interactive example, this same script will run on a SLURM, PBS,
-or LSF system as the ``launcher`` is set to `auto` in the
+or SGE system as the ``launcher`` is set to `auto` in the
 [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
 initialization. Local launching does not support batch workloads.
 
@@ -342,9 +339,6 @@ salloc -N 3 --ntasks-per-node=1 --exclusive -t 00:10:00
 
 # get interactive allocation (PBS)
 qsub -l select=3:ncpus=1 -l walltime=00:10:00 -l place=scatter -I -q queue
-
-# get interactive allocation (LSF)
-bsub -Is -W 00:10 -nnodes 3 -P project $SHELL
 
 ```
 
