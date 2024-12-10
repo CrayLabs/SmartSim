@@ -30,7 +30,7 @@ import pytest
 from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.error import SSUnsupportedError
-from smartsim.settings import JsrunSettings, RunSettings
+from smartsim.settings import PalsMpiexecSettings,RunSettings
 from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_a group
@@ -40,7 +40,7 @@ pytestmark = pytest.mark.group_a
 def test_unsupported_run_settings(test_dir):
     exp_name = "test-unsupported-run-settings"
     exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
-    bad_settings = JsrunSettings("echo", "hello")
+    bad_settings = PalsMpiexecSettings("echo", "hello")
     model = exp.create_model("bad_rs", bad_settings)
 
     with pytest.raises(SSUnsupportedError):

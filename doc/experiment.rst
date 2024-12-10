@@ -7,7 +7,7 @@ Overview
 SmartSim helps automate the deployment of AI-enabled workflows on HPC systems. With SmartSim, users
 can describe and launch combinations of applications and AI/ML infrastructure to produce novel and
 scalable workflows. SmartSim supports launching these workflows on a diverse set of systems, including
-local environments such as Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS Pro, and LSF).
+local environments such as Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS Pro, and SGE).
 
 The ``Experiment`` API is SmartSim's top level API that provides users with methods for creating, combining,
 configuring, launching and monitoring :ref:`entities<entities_exp_docs>` in an AI-enabled workflow. More specifically, the
@@ -49,7 +49,7 @@ workflow in the :ref:`Example<exp_example>` section of this page.
 Launchers
 =========
 SmartSim supports launching AI-enabled workflows on a wide variety of systems, including locally on a Mac or
-Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS Pro, and LSF). When creating a SmartSim
+Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS Pro, and SGE). When creating a SmartSim
 ``Experiment``, the user has the opportunity to specify the `launcher` type or defer to automatic `launcher` selection.
 `Launcher` selection determines how SmartSim translates entity configurations into system calls to launch,
 manage, and monitor. Currently, SmartSim supports 7 `launcher` options:
@@ -58,7 +58,7 @@ manage, and monitor. Currently, SmartSim supports 7 `launcher` options:
 2. ``slurm``: for systems using the Slurm scheduler
 3. ``pbs``: for systems using the PBS Pro scheduler
 4. ``pals``: for systems using the PALS scheduler
-5. ``lsf``: for systems using the LSF scheduler
+5. ``sge``: for systems using the SGE scheduler
 6. ``dragon``: if Dragon is installed in the current Python environment, see :ref:`Dragon Install <dragon_install>`
 7. ``auto``: have SmartSim auto-detect the launcher to use (will not detect ``dragon``)
 

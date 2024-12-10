@@ -90,7 +90,7 @@ If any of the above commands are used, the test suite will run the "light" test
 suite by default.
 
 
-PBSPro, Slurm, LSF
+PBSPro, Slurm, SGE
 ==================
 
 To run the full test suite, users will have to be on a system with one of the
@@ -105,9 +105,6 @@ of at least 3 nodes.
   # for PBSPro (with aprun)
   qsub -l select=3 -l place=scatter -l walltime=00:10:00 -q queue
 
-  # for LSF (with jsrun)
-  bsub -Is -W 00:30 -nnodes 3 -P project $SHELL
-
 Values for queue, account, or project should be substituted appropriately.
 
 Once in an iterative allocation, users will need to set the test launcher
@@ -115,7 +112,7 @@ environment variable: ``SMARTSIM_TEST_LAUNCHER`` to one of the following values
 
  - slurm
  - pbs
- - lsf
+ - sge
  - local
 
 If tests have to run on an account or project, the environment variable

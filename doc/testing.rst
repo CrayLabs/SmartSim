@@ -78,9 +78,6 @@ Examples of how to obtain allocations on systems with the launchers:
   # for PBSPro (with aprun)
   qsub -l select=8 -l place=scatter -l walltime=00:10:00 -q queue
 
-  # for LSF (with jsrun)
-  bsub -Is -W 00:30 -nnodes 8 -P project $SHELL
-
 Values for queue, account, or project should be substituted appropriately.
 
 Once in an iterative allocation, users will need to set the test
@@ -89,7 +86,8 @@ of the following values
 
  - slurm
  - pbs
- - lsf
+ - sge
+ - pals
  - local
 
 In addition to the ``SMARTSIM_TEST_LAUNCHER`` variable, there
@@ -110,6 +108,7 @@ Other possible values are:
  - ``ipogif0``
  - ``ib0`` (and other ib variants)
  - ``eth0``
+ - ``hsn``
 
 For the local test suite, the network interface does not need
 to be set.

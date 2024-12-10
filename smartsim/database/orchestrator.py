@@ -54,8 +54,6 @@ from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
     AprunSettings,
-    BsubBatchSettings,
-    JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
@@ -75,7 +73,6 @@ by_launcher: t.Dict[str, t.List[str]] = {
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
     "pals": ["mpiexec"],
-    "lsf": ["jsrun"],
     "local": [""],
     "sge": ["mpirun", "mpiexec", "orterun"],
 }
@@ -193,7 +190,7 @@ class Orchestrator(EntityList[DBNode]):
         :param port: TCP/IP port
         :param interface: network interface(s)
         :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "lsf", or "local". If set to "auto",
+                         "sge", or "local". If set to "auto",
                          an attempt will be made to find an available launcher
                          on the system.
         :param run_command: specify launch binary or detect automatically
@@ -230,9 +227,7 @@ class Orchestrator(EntityList[DBNode]):
 
         gpus_per_shard: t.Optional[int] = None
         cpus_per_shard: t.Optional[int] = None
-        if self.launcher == "lsf":
-            gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
-            cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
+
         super().__init__(
             name=db_identifier,
             path=str(path),
@@ -365,7 +360,6 @@ class Orchestrator(EntityList[DBNode]):
         for node in self.entities:
             node.clear_hosts()
         self._hosts = []
-        # This is only needed on LSF
         if self._user_hostlist:
             self.set_hosts(self._user_hostlist)
 
@@ -492,10 +486,7 @@ class Orchestrator(EntityList[DBNode]):
         if self.batch and hasattr(self, "batch_settings") and self.batch_settings:
             self.batch_settings.set_hostlist(host_list)
 
-        if self.launcher == "lsf":
-            for db in self.entities:
-                db.set_hosts(host_list)
-        elif (
+        if (
             self.launcher == "pals"
             and isinstance(self.entities[0].run_settings, PalsMpiexecSettings)
             and self.entities[0].is_mpmd
@@ -730,60 +721,6 @@ class Orchestrator(EntityList[DBNode]):
 
         return run_settings
 
-    @staticmethod
-    def _build_run_settings_lsf(
-        exe: str,
-        exe_args: t.List[t.List[str]],
-        *,
-        run_args: t.Optional[t.Dict[str, t.Any]] = None,
-        cpus_per_shard: t.Optional[int] = None,
-        gpus_per_shard: t.Optional[int] = None,
-        **_kwargs: t.Any,  # Needed to ensure no API break and do not want to
-        # introduce that possibility, even if this method is
-        # protected, without running the test suite.
-    ) -> t.Optional[JsrunSettings]:
-        run_args = {} if run_args is None else run_args
-        erf_rs: t.Optional[JsrunSettings] = None
-
-        if cpus_per_shard is None:
-            raise ValueError("Expected an integer number of cpus per shard")
-        if gpus_per_shard is None:
-            raise ValueError("Expected an integer number of gpus per shard")
-
-        # We always run the DB on cpus 0:cpus_per_shard-1
-        # and gpus 0:gpus_per_shard-1
-        for shard_id, args in enumerate(exe_args):
-            host = shard_id
-            run_args["launch_distribution"] = "packed"
-
-            run_settings = JsrunSettings(exe, args, run_args=run_args.copy())
-            run_settings.set_binding("none")
-
-            # This makes sure output is written to orchestrator_0.out,
-            # orchestrator_1.out, and so on
-            run_settings.set_individual_output("_%t")
-
-            erf_sets = {
-                "rank": str(shard_id),
-                "host": str(1 + host),
-                "cpu": "{" + f"0:{cpus_per_shard}" + "}",
-            }
-
-            if gpus_per_shard > 1:  # pragma: no-cover
-                erf_sets["gpu"] = f"{{0-{gpus_per_shard-1}}}"
-            elif gpus_per_shard > 0:
-                erf_sets["gpu"] = "{0}"
-
-            run_settings.set_erf_sets(erf_sets)
-
-            if not erf_rs:
-                erf_rs = run_settings
-                continue
-
-            erf_rs.make_mpmd(run_settings)
-
-        return erf_rs
-
     def _initialize_entities(
         self,
         *,
@@ -801,7 +738,7 @@ class Orchestrator(EntityList[DBNode]):
                 "Local Orchestrator does not support multiple database shards"
             )
 
-        mpmd_nodes = (single_cmd and db_nodes > 1) or self.launcher == "lsf"
+        mpmd_nodes = (single_cmd and db_nodes > 1)
 
         if mpmd_nodes:
             self._initialize_entities_mpmd(
@@ -853,16 +790,11 @@ class Orchestrator(EntityList[DBNode]):
             exe_args = " ".join(start_script_args)
             exe_args_mpmd.append(sh_split(exe_args))
         run_settings: t.Optional[RunSettings] = None
-        if self.launcher == "lsf":
-            run_settings = self._build_run_settings_lsf(
-                sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
-            )
-            output_files = [f"{self.name}_{db_id}.out" for db_id in range(db_nodes)]
-        else:
-            run_settings = self._build_run_settings(
-                sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
-            )
-            output_files = [mpmd_node_name + ".out"]
+
+        run_settings = self._build_run_settings(
+            sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
+        )
+        output_files = [mpmd_node_name + ".out"]
         if not run_settings:
             raise ValueError(f"Could not build run settings for {self.launcher}")
         node = DBNode(
@@ -983,51 +915,3 @@ class Orchestrator(EntityList[DBNode]):
             "D",
         ]
         self._reserved_batch_args[QsubBatchSettings] = ["e", "o", "N", "l"]
-        self._reserved_run_args[JsrunSettings] = [
-            "chdir",
-            "h",
-            "stdio_stdout",
-            "o",
-            "stdio_stderr",
-            "k",
-            "tasks_per_rs",
-            "a",
-            "np",
-            "p",
-            "cpu_per_rs",
-            "c",
-            "gpu_per_rs",
-            "g",
-            "latency_priority",
-            "l",
-            "memory_per_rs",
-            "m",
-            "nrs",
-            "n",
-            "rs_per_host",
-            "r",
-            "rs_per_socket",
-            "K",
-            "appfile",
-            "f",
-            "allocate_only",
-            "A",
-            "launch_node_task",
-            "H",
-            "use_reservation",
-            "J",
-            "use_resources",
-            "bind",
-            "b",
-            "launch_distribution",
-            "d",
-        ]
-
-        self._reserved_batch_args[BsubBatchSettings] = [
-            "J",
-            "o",
-            "e",
-            "m",
-            "n",
-            "nnodes",
-        ]
