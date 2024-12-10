@@ -738,7 +738,7 @@ class Orchestrator(EntityList[DBNode]):
                 "Local Orchestrator does not support multiple database shards"
             )
 
-        mpmd_nodes = (single_cmd and db_nodes > 1)
+        mpmd_nodes = single_cmd and db_nodes > 1
 
         if mpmd_nodes:
             self._initialize_entities_mpmd(

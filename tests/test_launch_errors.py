@@ -30,7 +30,7 @@ import pytest
 from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.error import SSUnsupportedError
-from smartsim.settings import PalsMpiexecSettings,RunSettings
+from smartsim.settings import PalsMpiexecSettings, RunSettings
 from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_a group
