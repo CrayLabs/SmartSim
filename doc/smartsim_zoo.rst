@@ -83,12 +83,12 @@ can find a more detailed description of each example in the `SmartSim Zoo
      - National Center for Atmospheric Research (NCAR)
    * - Cheyenne
      - National Center for Atmospheric Research (NCAR)
-   * - Summit
-     - Oak Ridge National Lab
    * - Theta
      - Argonne National Lab
    * - ThetaGPU
      - Argonne National Lab
+   * - Scylla
+     - Plymouth Marine Laboratory
 
 .. list-table:: Current CrayLabs Collaborations
    :widths: 100 150 100

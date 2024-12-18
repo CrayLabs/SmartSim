@@ -41,7 +41,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}
@@ -77,7 +77,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}
@@ -113,7 +113,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}
@@ -149,7 +149,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}
@@ -185,7 +185,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}
@@ -221,7 +221,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}
@@ -257,7 +257,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}
@@ -293,7 +293,7 @@
               ],
               "run_settings": {
                 "exe": [
-                  "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                  "/home/someuser/.pyenv/versions/3.10.16/envs/ss/bin/python"
                 ],
                 "run_command": null,
                 "run_args": {}

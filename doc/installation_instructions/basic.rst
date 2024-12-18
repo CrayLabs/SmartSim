@@ -20,7 +20,7 @@ Basic
 
 The base prerequisites to install SmartSim and SmartRedis wtih CPU-only support are:
 
-  - Python 3.9-3.11
+  - Python 3.10-3.11
   - Pip
   - Cmake 3.13.x (or later)
   - C compiler
@@ -77,7 +77,7 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.9-3.11
+         * - 3.10-3.11
            - 2.3.1
            - 2.14.1
            - 1.17.3
@@ -98,7 +98,7 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.9-3.11
+         * - 3.10-3.11
            - 2.3.1
            - 2.17
            - 1.17.3
@@ -114,7 +114,7 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.9-3.11
+         * - 3.10-3.11
            - 2.4.1
            - N/A
            - N/A
@@ -130,7 +130,7 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.9-3.11
+         * - 3.10-3.11
            - 2.4.0
            - 2.15
            - 1.17.3
@@ -151,7 +151,7 @@ MacOSX
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.9-3.11
+         * - 3.10-3.11
            - 2.4.0
            - 2.17
            - 1.17.3
@@ -167,7 +167,7 @@ MacOSX
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.9-3.11
+         * - 3.10-3.11
            - 2.2.0
            - 2.15
            - 1.17.3
@@ -328,9 +328,9 @@ SmartSim does.
    * - Platform
      - Python Versions
    * - MacOS
-     - 3.9 - 3.11
+     - 3.10 - 3.11
    * - Linux
-     - 3.9 - 3.11
+     - 3.10 - 3.11
 
 The Python client for SmartRedis is installed through ``pip`` as follows:
 
