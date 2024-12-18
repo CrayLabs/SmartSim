@@ -13,6 +13,7 @@ To be released at some point in the future
 
 Description
 
+- Drop Python 3.9 support
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
 - Add instructions for installing SmartSim on PML's Scylla
@@ -20,6 +21,9 @@ Description
 
 Detailed Notes
 
+- Python 3.9 will not be supported anymore, the last stable version of SmartSim
+  with support for Python 3.9 will be 0.8.
+  ([SmartSim-PR781](https://github.com/CrayLabs/SmartSim/pull/781))
 - After the supercomputer Summit was decommissioned, a decision was made to
   terminate SmartSim's support of the LSF launcher and LSB scheduler. If
   this impacts your work, please contact us.

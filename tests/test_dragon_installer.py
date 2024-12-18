@@ -187,7 +187,6 @@ def test_retrieve_cached(
 @pytest.mark.parametrize(
     "dragon_pin,pyv,is_found,is_crayex",
     [
-
         pytest.param("0.8", "py3.10", True, False, id="0.8,python 3.10"),
         pytest.param("0.8", "py3.11", True, False, id="0.8,python 3.11"),
         pytest.param("0.8", "py3.12", False, False, id="0.8,python 3.12"),
