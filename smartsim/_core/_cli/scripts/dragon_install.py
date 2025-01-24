@@ -114,8 +114,8 @@ def filter_assets(assets: t.Collection[GitReleaseAsset]) -> t.Optional[GitReleas
     :param assets: The collection of dragon release assets to filter
     :returns: An asset meeting platform & version filtering requirements"""
     # Expect cray & non-cray assets that require a filter, e.g.
-    # 'dragon-0.8-py3.9.4.1-bafaa887f.tar.gz',
-    # 'dragon-0.8-py3.9.4.1-CRAYEX-ac132fe95.tar.gz'
+    # 'dragon-0.8-py3.10.4.1-bafaa887f.tar.gz',
+    # 'dragon-0.8-py3.10.4.1-CRAYEX-ac132fe95.tar.gz'
     asset = next(
         (
             asset
