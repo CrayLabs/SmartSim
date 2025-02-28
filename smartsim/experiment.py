@@ -189,6 +189,7 @@ class Experiment:
         block: bool = True,
         summary: bool = False,
         kill_on_interrupt: bool = True,
+        monitor: bool = True,
     ) -> None:
         """Start passed instances using Experiment launcher
 
@@ -246,6 +247,7 @@ class Experiment:
                 manifest=start_manifest,
                 block=block,
                 kill_on_interrupt=kill_on_interrupt,
+                monitor=monitor,
             )
         except SmartSimError as e:
             logger.error(e)

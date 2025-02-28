@@ -115,6 +115,7 @@ class Controller:
         manifest: Manifest,
         block: bool = True,
         kill_on_interrupt: bool = True,
+        monitor: bool = True,
     ) -> None:
         """Start the passed SmartSim entities
 
@@ -134,7 +135,7 @@ class Controller:
         SignalInterceptionStack.get(signal.SIGINT).push_unique(
             self._jobs.signal_interrupt
         )
-        launched = self._launch(exp_name, exp_path, manifest)
+        launched = self._launch(exp_name, exp_path, manifest, monitor)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
@@ -172,7 +173,7 @@ class Controller:
         :param kill_on_interrupt: flag for killing jobs when SIGINT is received
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
-        to_monitor = self._jobs.jobs
+        to_monitor = self._jobs.monitor_jobs
         while len(to_monitor) > 0:
             time.sleep(interval)
 
@@ -388,7 +389,7 @@ class Controller:
             )
 
     def _launch(
-        self, exp_name: str, exp_path: str, manifest: Manifest
+        self, exp_name: str, exp_path: str, manifest: Manifest, monitor: bool = True
     ) -> LaunchedManifest[t.Tuple[str, Step]]:
         """Main launching function of the controller
 
@@ -479,7 +480,7 @@ class Controller:
 
         # launch and symlink steps
         for step, entity in steps:
-            self._launch_step(step, entity)
+            self._launch_step(step, entity, monitor)
             self.symlink_output_files(step, entity)
 
         # symlink substeps to maintain directory structure
@@ -570,6 +571,7 @@ class Controller:
         self,
         job_step: Step,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        monitor: bool = True,
     ) -> None:
         """Use the launcher to launch a job step
 
@@ -622,7 +624,7 @@ class Controller:
             self._jobs.restart_job(job_step.name, job_id, entity.name, is_task)
         else:
             logger.debug(f"Launching {entity.name}")
-            self._jobs.add_job(job_step.name, job_id, entity, is_task)
+            self._jobs.add_job(job_step.name, job_id, entity, is_task, monitor)
 
     def _create_batch_job_step(
         self,

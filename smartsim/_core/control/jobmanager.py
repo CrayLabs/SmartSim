@@ -66,6 +66,7 @@ class JobManager:
 
         # active jobs
         self.jobs: t.Dict[str, Job] = {}
+        self.monitor_jobs: t.Dict[str, Job] = {}
         self.db_jobs: t.Dict[str, Job] = {}
 
         # completed jobs
@@ -133,6 +134,8 @@ class JobManager:
                 del self.db_jobs[job.ename]
             elif job.ename in self.jobs:
                 del self.jobs[job.ename]
+                if job.ename in self.monitor_jobs:
+                    del self.monitor_jobs[job.ename]
 
     def __getitem__(self, entity_name: str) -> Job:
         """Return the job associated with the name of the entity
@@ -166,6 +169,7 @@ class JobManager:
         job_id: t.Optional[str],
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         is_task: bool = True,
+        monitor: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
 
@@ -183,6 +187,8 @@ class JobManager:
             self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job
+            if monitor:
+                self.monitor_jobs[entity.name] = job
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
