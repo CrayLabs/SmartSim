@@ -13,6 +13,7 @@ To be released at some point in the future
 
 Description
 
+- Python 3.12 is now supported
 - Drop Python 3.9 support
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
@@ -21,6 +22,7 @@ Description
 
 Detailed Notes
 
+- Python 3.12 is now supported. <!-- PR link to be added -->
 - Python 3.9 will not be supported anymore, the last stable version of SmartSim
   with support for Python 3.9 will be 0.8.
   ([SmartSim-PR781](https://github.com/CrayLabs/SmartSim/pull/781))
