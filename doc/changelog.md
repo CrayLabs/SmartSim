@@ -22,7 +22,8 @@ Description
 
 Detailed Notes
 
-- Python 3.12 is now supported. <!-- PR link to be added -->
+- Python 3.12 is now supported.
+  ([SmartSim-PR785](https://github.com/CrayLabs/SmartSim/pull/785))
 - Python 3.9 will not be supported anymore, the last stable version of SmartSim
   with support for Python 3.9 will be 0.8.
   ([SmartSim-PR781](https://github.com/CrayLabs/SmartSim/pull/781))
