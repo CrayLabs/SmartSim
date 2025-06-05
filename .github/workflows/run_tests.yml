@@ -58,7 +58,7 @@ jobs:
         os: [macos-14, ubuntu-22.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
-        py_v: ["3.10", "3.11"] # Python versions
+        py_v: ["3.10", "3.11", "3.12"] # Python versions
 
     steps:
       - uses: actions/checkout@v4
