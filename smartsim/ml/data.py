@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# mypy: disable-error-code="redundant-cast"
+
 import time
 import typing as t
 from os import environ
@@ -439,14 +441,14 @@ class DataDownloader:
             for dataset in datasets:
                 self.samples = np.concatenate(
                     (
-                        t.cast("npt.NDArray[t.Any]", self.samples),  # type: ignore[redundant-cast]
+                        t.cast("npt.NDArray[t.Any]", self.samples),
                         dataset.get_tensor(self.sample_name),
                     )
                 )
                 if self.need_targets:
                     self.targets = np.concatenate(
                         (
-                            t.cast("npt.NDArray[t.Any]", self.targets),  # type: ignore[redundant-cast]
+                            t.cast("npt.NDArray[t.Any]", self.targets),
                             dataset.get_tensor(self.target_name),
                         )
                     )
