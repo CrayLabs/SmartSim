@@ -451,7 +451,7 @@ class RunSettings(SettingsBase):
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
-    def set(
+    def set_option(
         self, arg: str, value: t.Optional[str] = None, condition: bool = True
     ) -> None:
         """Allows users to set individual run arguments.
