@@ -45,12 +45,12 @@
         },
         {
             "name": "libtensorflow",
-            "version": "2.15",
+            "version": "2.16.2",
             "pip_index": "",
             "python_packages": [
-                "tensorflow==2.15"
+                "tensorflow==2.16.2"
             ],
-            "lib_source": "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-gpu-linux-x86_64-2.15.0.tar.gz",
+            "lib_source": "https://storage.googleapis.com/tensorflow/versions/2.16.2/libtensorflow-gpu-linux-x86_64.tar.gz",
             "rai_patches": [
                 {
                     "description": "Patch RedisAI to point to correct tsl directory",

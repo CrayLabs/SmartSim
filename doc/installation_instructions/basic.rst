@@ -130,9 +130,9 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.10-3.11
+         * - 3.10-3.12
            - 2.4.0
-           - 2.15
+           - 2.16.2
            - 1.17.3
 
 MacOSX
@@ -167,9 +167,9 @@ MacOSX
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.10-3.11
+         * - 3.10-3.12
            - 2.2.0
-           - 2.15
+           - 2.16.2
            - 1.17.3
 
 

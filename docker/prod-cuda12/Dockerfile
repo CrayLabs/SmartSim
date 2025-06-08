@@ -58,7 +58,7 @@ ENV PATH="${PATH}:${CUDA_HOME}/bin"
 # Install machine-learning python packages consistent with RedisAI
 # Note: pytorch gets installed in the smart build step
 # This step will be deprecated in a future update
-RUN pip install tensorflow==2.15.0
+RUN pip install tensorflow==2.16.2
 
 # Build ML Backends
 RUN smart build --device=cuda121

@@ -641,7 +641,7 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.15.0</td>
+      <td>2.16.2</td>
     </tr>
     <tr>
       <td>ONNX</td>
