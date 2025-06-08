@@ -267,9 +267,10 @@ To see all the installation options:
 
     # run one of the following
     smart build --device cpu      # For unaccelerated AI/ML loads
-    smart build --device cuda118  # Nvidia Accelerator with CUDA 11.8
-    smart build --device cuda125  # Nvidia Accelerator with CUDA 12.5
-    smart build --device rocm57   # AMD Accelerator with ROCm 5.7.0
+    smart build --device cuda-11  # Nvidia Accelerator with CUDA 11.8
+    smart build --device cuda-12  # Nvidia Accelerator with CUDA 12.5
+    smart build --device rocm-5   # AMD Accelerator with ROCm 5.7.0
+    smart build --device rocm-6   # AMD Accelerator with ROCm 6.1
 
 By default, ``smart`` will install all backends available for the specified accelerator
 _and_ the compatible versions of the Python packages associated with the backends. To
