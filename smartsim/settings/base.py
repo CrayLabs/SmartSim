@@ -600,8 +600,12 @@ class BatchSettings(SettingsBase):
         queue = kwargs.get("queue", None)
         if queue:
             self.set_queue(queue)
-        self.set_walltime(kwargs.get("time", None))
-        self.set_account(kwargs.get("account", None))
+        time = kwargs.get("time", None)
+        if time:
+            self.set_walltime(time)
+        account = kwargs.get("account", None)
+        if account:
+            self.set_account(account)
 
     @property
     def batch_cmd(self) -> str:

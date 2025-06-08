@@ -439,14 +439,14 @@ class DataDownloader:
             for dataset in datasets:
                 self.samples = np.concatenate(
                     (
-                        t.cast("npt.NDArray[t.Any]", self.samples),
+                        self.samples,
                         dataset.get_tensor(self.sample_name),
                     )
                 )
                 if self.need_targets:
                     self.targets = np.concatenate(
                         (
-                            t.cast("npt.NDArray[t.Any]", self.targets),
+                            "npt.NDArray[t.Any]",
                             dataset.get_tensor(self.target_name),
                         )
                     )
