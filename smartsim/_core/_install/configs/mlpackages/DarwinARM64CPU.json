@@ -44,6 +44,15 @@
             ]
         },
         {
+            "name": "libtensorflow",
+            "version": "2.16.2",
+            "pip_index": "",
+            "python_packages": [
+                "tensorflow==2.16.2"
+            ],
+            "lib_source": "https://storage.googleapis.com/tensorflow/versions/2.16.2/libtensorflow-cpu-darwin-arm64.tar.gz"
+        },
+        {
             "name": "onnxruntime",
             "version": "1.17.3",
             "pip_index": "",
