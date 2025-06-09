@@ -55,6 +55,7 @@ def expand_exe_path(exe: str) -> str:
         raise FileNotFoundError(f"Could not locate executable {exe}")
     return os.path.abspath(in_path)
 
+
 # Configuration Values
 #
 # These values can be set through environment variables to
