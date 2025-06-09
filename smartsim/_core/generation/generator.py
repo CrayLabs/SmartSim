@@ -321,7 +321,7 @@ class Generator:
             for to_copy in entity.files.copy:
                 dst_path = path.join(entity.path, path.basename(to_copy))
                 if path.isdir(to_copy):
-                    shutil.copytree(to_copy, entity.path)
+                    shutil.copytree(to_copy, entity.path, dirs_exist_ok=True)
                 else:
                     shutil.copyfile(to_copy, dst_path)
 

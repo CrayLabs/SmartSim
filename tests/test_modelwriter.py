@@ -59,7 +59,7 @@ def test_write_easy_configs(fileutils, test_dir):
     conf_path = get_gen_file(fileutils, "easy/marked/")
     correct_path = get_gen_file(fileutils, "easy/correct/")
     # copy confs to gen directory
-    shutil.copytree(conf_path, test_dir)
+    shutil.copytree(conf_path, test_dir, dirs_exist_ok=True)
     assert path.isdir(test_dir)
 
     # init modelwriter
@@ -87,7 +87,7 @@ def test_write_med_configs(fileutils, test_dir):
     correct_path = get_gen_file(fileutils, "med/correct/")
 
     # copy confs to gen directory
-    shutil.copytree(conf_path, test_dir)
+    shutil.copytree(conf_path, test_dir, dirs_exist_ok=True)
     assert path.isdir(test_dir)
 
     # init modelwriter
@@ -119,7 +119,7 @@ def test_write_new_tag_configs(fileutils, test_dir):
     correct_path = get_gen_file(fileutils, "new-tag/correct/")
 
     # copy confs to gen directory
-    shutil.copytree(conf_path, test_dir)
+    shutil.copytree(conf_path, test_dir, dirs_exist_ok=True)
     assert path.isdir(test_dir)
 
     # init modelwriter
@@ -154,7 +154,7 @@ def test_write_mw_error_3(fileutils, test_dir):
     conf_path = get_gen_file(fileutils, "easy/marked/")
 
     # copy confs to gen directory
-    shutil.copytree(conf_path, test_dir)
+    shutil.copytree(conf_path, test_dir, dirs_exist_ok=True)
     assert path.isdir(test_dir)
 
     # init modelwriter
