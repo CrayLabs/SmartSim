@@ -26,6 +26,7 @@
 
 import os
 import platform
+
 import psutil
 import torch
 import torch.nn as nn
@@ -104,7 +105,7 @@ if __name__ == "__main__":
     print("Finished Training")
     del trainloader
 
-    if platform.machine() == 'arm64' and platform.system() == 'Darwin':
+    if platform.machine() == "arm64" and platform.system() == "Darwin":
         parent = psutil.Process(os.getpid())
         for child in parent.children(recursive=True):
             child.kill()
