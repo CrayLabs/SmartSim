@@ -13,7 +13,7 @@ To be released at some point in the future
 
 Description
 
-- Python 3.12 is now supported, supported TensorFlow version is now 2.16.2
+- Python 3.12 is now supported, supported TensorFlow version is now 2.16.2 where available, PyTorch is 2.7.1
 - Drop Python 3.9 support
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14

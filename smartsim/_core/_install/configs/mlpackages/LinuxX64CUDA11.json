@@ -54,15 +54,15 @@
         },
         {
             "name": "onnxruntime",
-            "version": "1.22.0",
+            "version": "1.17.3",
             "pip_index": "",
             "python_packages": [
-                "onnx==1.18",
+                "onnx==1.15",
                 "skl2onnx",
                 "scikit-learn",
                 "onnxmltools"
             ],
-            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-linux-x64-gpu-1.22.0.tgz"
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-linux-x64-gpu-1.17.3.tgz"
         }
     ]
 }

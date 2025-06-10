@@ -645,7 +645,7 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     </tr>
     <tr>
       <td>ONNX Runtime</td>
-      <td>1.22.0</td>
+      <td>1.17.3</td>
     </tr>
   </tbody>
 </table>
