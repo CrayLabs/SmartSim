@@ -40,7 +40,7 @@ def build_lin_reg():
 
     linreg = LinearRegression()
     linreg.fit(x, y)
-    linreg = to_onnx(linreg, x.astype(np.float32), target_opset=13)
+    linreg = to_onnx(linreg, x.astype(np.float32), target_opset=21)
     return linreg.SerializeToString()
 
 
@@ -49,18 +49,18 @@ def build_kmeans():
     tr = KMeans(n_clusters=2)
     tr.fit(X)
 
-    kmeans = to_onnx(tr, X, target_opset=11)
+    kmeans = to_onnx(tr, X, target_opset=21)
     return kmeans.SerializeToString()
 
 
 def build_random_forest():
     iris = load_iris()
     X, y = iris.data, iris.target
-    X_train, X_test, y_train, _ = train_test_split(X, y, random_state=13)
+    X_train, X_test, y_train, _ = train_test_split(X, y, random_state=21)
     clr = RandomForestRegressor(n_jobs=1, n_estimators=100)
     clr.fit(X_train, y_train)
 
-    rf_model = to_onnx(clr, X_test.astype(np.float32), target_opset=13)
+    rf_model = to_onnx(clr, X_test.astype(np.float32), target_opset=21)
     return rf_model.SerializeToString()
 
 
