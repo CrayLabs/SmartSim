@@ -44,7 +44,6 @@
             ]
         },
         {
-            "_comment": "Caution: TensorFlow 2.18 was the last release of Mac Arm64 Libtensorflow packages.",
             "name": "libtensorflow",
             "version": "2.18.0",
             "pip_index": "",

@@ -1,5 +1,4 @@
 {
-    "_comment": "Darwin x86 is close to EoL, these packages are not updated anymore",
     "platform": {
         "operating_system":"darwin",
         "architecture":"x86_64",
