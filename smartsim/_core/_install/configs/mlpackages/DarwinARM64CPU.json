@@ -44,13 +44,14 @@
             ]
         },
         {
+            "_comment": "Caution: TensorFlow 2.18 was the last release of Mac Arm64 Libtensorflow packages.",
             "name": "libtensorflow",
-            "version": "2.16.2",
+            "version": "2.18.0",
             "pip_index": "",
             "python_packages": [
-                "tensorflow==2.16.2"
+                "tensorflow==2.18.1"
             ],
-            "lib_source": "https://storage.googleapis.com/tensorflow/versions/2.16.2/libtensorflow-cpu-darwin-arm64.tar.gz"
+            "lib_source": "https://storage.googleapis.com/tensorflow/versions/2.18.0/libtensorflow-cpu-darwin-arm64.tar.gz"
         },
         {
             "name": "onnxruntime",
