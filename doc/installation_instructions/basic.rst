@@ -157,7 +157,7 @@ MacOSX
            - ONNX Runtime
          * - 3.10-3.12
            - 2.7.1
-           - 2.16.2
+           - 2.18.1
            - 1.17.3
 
     .. group-tab:: Intel Mac (x86)
