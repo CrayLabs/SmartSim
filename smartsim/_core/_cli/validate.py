@@ -288,7 +288,7 @@ def _test_onnx_install(client: Client, device: Device) -> None:
     model = KMeans(n_clusters=2, n_init=10)
     model.fit(data)
 
-    kmeans = to_onnx(model, data, target_opset=21)
+    kmeans = to_onnx(model, data, target_opset=11)
     model = kmeans.SerializeToString()
     sample = np.arange(20, dtype=np.float32).reshape(10, 2)
 
