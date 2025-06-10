@@ -55,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         subset: [backends, slow_tests, group_a, group_b]
-        os: [macos-14, ubuntu-22.04] # Operating systems
+        os: [macos-14, ubuntu-24.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
         py_v: ["3.10", "3.11", "3.12"] # Python versions
@@ -72,7 +72,10 @@ jobs:
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt-get update
           sudo apt-get install -y build-essential
+          sudo apt install gcc-15 g++-15
           sudo apt-get install -y wget
+          gcc --version
+          g++ --version
 
       - name: Install GNU make for MacOS and set GITHUB_PATH
         if: contains( matrix.os, 'macos' )
