@@ -25,10 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import platform
 from os import path as osp
 
 import numpy as np
-import platform
 import pytest
 
 from smartsim.error.errors import SSInternalError
@@ -39,7 +39,7 @@ from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 
-shouldrun_tf = not(platform.machine() == "arm64" and platform.system() == "Darwin")
+shouldrun_tf = not (platform.machine() == "arm64" and platform.system() == "Darwin")
 if shouldrun_tf:
     try:
         import tensorflow as tf
