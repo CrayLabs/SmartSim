@@ -1,4 +1,5 @@
 {
+    "_comment": "Darwin x86 is close to EoL, these packages are not updated anymore",
     "platform": {
         "operating_system":"darwin",
         "architecture":"x86_64",
@@ -54,15 +55,15 @@
         },
         {
             "name": "onnxruntime",
-            "version": "1.17.3",
+            "version": "1.22.0",
             "pip_index": "",
             "python_packages": [
-                "onnx==1.15",
+                "onnx==1.18",
                 "skl2onnx",
                 "scikit-learn",
                 "onnxmltools"
             ],
-            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-osx-x86_64-1.17.3.tgz"
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-osx-x86_64-1.22.0.tgz"
         }
     ]
 }

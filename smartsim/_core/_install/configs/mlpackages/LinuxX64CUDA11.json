@@ -14,14 +14,14 @@
         },
         {
             "name": "libtorch",
-            "version": "2.3.1",
+            "version": "2.7.1",
             "pip_index": "https://download.pytorch.org/whl/cu118",
             "python_packages": [
-                "torch==2.3.1+cu118",
-                "torchvision==0.18.1+cu118",
-                "torchaudio==2.3.1+cu118"
+                "torch==2.7.1+cu118",
+                "torchvision==0.22.1+cu118",
+                "torchaudio==2.7.1+cu118"
             ],
-            "lib_source": "https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.3.1%2Bcu118.zip",
+            "lib_source": "https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.7.1%2Bcu118.zip",
             "rai_patches": [
                 {
                     "description": "Patch RedisAI module to require C++17 standard instead of C++14",
@@ -54,15 +54,15 @@
         },
         {
             "name": "onnxruntime",
-            "version": "1.17.3",
+            "version": "1.22.0",
             "pip_index": "",
             "python_packages": [
-                "onnx==1.15",
+                "onnx==1.18",
                 "skl2onnx",
                 "scikit-learn",
                 "onnxmltools"
             ],
-            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-linux-x64-gpu-1.17.3.tgz"
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-linux-x64-gpu-1.22.0.tgz"
         }
     ]
 }

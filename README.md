@@ -637,15 +637,15 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     <tr>
       <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>2.1.0</td>
+      <td>2.7.1</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
       <td>2.16.2</td>
     </tr>
     <tr>
-      <td>ONNX</td>
-      <td>1.14.1</td>
+      <td>ONNX Runtime</td>
+      <td>1.22.0</td>
     </tr>
   </tbody>
 </table>

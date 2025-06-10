@@ -77,10 +77,10 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.10-3.11
-           - 2.3.1
+         * - 3.10-3.12
+           - 2.7.1
            - 2.14.1
-           - 1.17.3
+           - 1.22.0
 
     .. group-tab:: CUDA 12
 
@@ -98,14 +98,14 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.10-3.11
-           - 2.3.1
-           - 2.17
-           - 1.17.3
+         * - 3.10-3.12
+           - 2.7.1
+           - 2.16.2
+           - 1.22.0
 
     .. group-tab:: ROCm 6
 
-      .. list-table:: AMD ROCm 6.1
+      .. list-table:: AMD ROCm 6.3
          :widths: 50 50 50 50
          :header-rows: 1
          :align: center
@@ -114,8 +114,8 @@ Linux
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.10-3.11
-           - 2.4.1
+         * - 3.10-3.12
+           - 2.7.1
            - N/A
            - N/A
 
@@ -131,12 +131,16 @@ Linux
            - Tensorflow
            - ONNX Runtime
          * - 3.10-3.12
-           - 2.4.0
+           - 2.7.1
            - 2.16.2
-           - 1.17.3
+           - 1.22.0
 
 MacOSX
 ------
+
+.. warning::
+  Support for Intel Mac (`x86_64`) will be discontinued in a
+  future release.
 
 .. tabs::
 
@@ -151,10 +155,10 @@ MacOSX
            - Torch
            - Tensorflow
            - ONNX Runtime
-         * - 3.10-3.11
-           - 2.4.0
-           - 2.17
-           - 1.17.3
+         * - 3.10-3.12
+           - 2.7.1
+           - 2.16.2
+           - 1.22.0
 
     .. group-tab:: Intel Mac (x86)
 
@@ -268,9 +272,9 @@ To see all the installation options:
     # run one of the following
     smart build --device cpu      # For unaccelerated AI/ML loads
     smart build --device cuda-11  # Nvidia Accelerator with CUDA 11.8
-    smart build --device cuda-12  # Nvidia Accelerator with CUDA 12.5
+    smart build --device cuda-12  # Nvidia Accelerator with CUDA 12.8
     smart build --device rocm-5   # AMD Accelerator with ROCm 5.7.0
-    smart build --device rocm-6   # AMD Accelerator with ROCm 6.1
+    smart build --device rocm-6   # AMD Accelerator with ROCm 6.3
 
 By default, ``smart`` will install all backends available for the specified accelerator
 _and_ the compatible versions of the Python packages associated with the backends. To
