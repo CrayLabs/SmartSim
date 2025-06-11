@@ -58,4 +58,4 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86
  ENV PATH="${PATH}:${CUDA_HOME}/bin"
 
  # Build ML Backends
- RUN smart build --device=gpu --onnx
+ RUN smart build --device=cuda-11

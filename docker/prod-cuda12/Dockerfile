@@ -56,4 +56,4 @@ ENV CUDA_HOME="/usr/local/cuda/"
 ENV PATH="${PATH}:${CUDA_HOME}/bin"
 
 # Build ML Backends
-RUN smart build --device=cuda121
+RUN smart build --device=cuda-12

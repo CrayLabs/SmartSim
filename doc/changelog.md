@@ -22,8 +22,9 @@ Description
 
 Detailed Notes
 
-- Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files are installed as part of `smart build` process when available. On Mac, ONNX runtime 1.22.0 is now installed, together with
-ONNX 1.16.
+- Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
+  are installed as part of `smart build` process when available. On Mac, ONNX runtime
+  1.22.0 is now installed, together with ONNX 1.16.
   ([SmartSim-PR785](https://github.com/CrayLabs/SmartSim/pull/785))
 - Python 3.9 will not be supported anymore, the last stable version of SmartSim
   with support for Python 3.9 will be 0.8.

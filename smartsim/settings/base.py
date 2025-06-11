@@ -471,8 +471,8 @@ class RunSettings(SettingsBase):
         .. code-block:: python
 
             rs = RunSettings("python")
-            rs.set("an-arg", "a-val")
-            rs.set("a-flag")
+            rs.set_option("an-arg", "a-val")
+            rs.set_option("a-flag")
             rs.format_run_args()  # returns ["an-arg", "a-val", "a-flag", "None"]
 
         Slurm Example with Conditional Setting
@@ -484,11 +484,11 @@ class RunSettings(SettingsBase):
 
             rs = SrunSettings("echo", "hello")
             rs.set_tasks(1)
-            rs.set("exclusive")
+            rs.set_option("exclusive")
 
             # Only set this argument if condition param evals True
             # Otherwise log and NOP
-            rs.set("partition", "debug",
+            rs.set_option("partition", "debug",
                    condition=socket.gethostname()=="testing-system")
 
             rs.format_run_args()
