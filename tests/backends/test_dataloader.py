@@ -26,6 +26,7 @@
 
 import os
 import platform
+import sys
 from os import path as osp
 
 import numpy as np
@@ -39,7 +40,7 @@ from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 
-shouldrun_tf = not (platform.machine() == "arm64" and platform.system() == "Darwin")
+shouldrun_tf = not (sys.version_info.minor > 11 and platform.system() == "Darwin")
 if shouldrun_tf:
     try:
         import tensorflow as tf
