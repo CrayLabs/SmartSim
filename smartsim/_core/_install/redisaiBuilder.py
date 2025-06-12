@@ -59,7 +59,9 @@ class RedisAIBuilder:
         build_env: BuildEnv,
         main_build_path: pathlib.Path,
         verbose: bool = False,
-        source: t.Union[str, pathlib.Path] = "https://github.com/RedisAI/redis-inference-optimization.git",
+        source: t.Union[
+            str, pathlib.Path
+        ] = "https://github.com/RedisAI/redis-inference-optimization.git",
         version: str = "v1.2.7",
     ) -> None:
 
