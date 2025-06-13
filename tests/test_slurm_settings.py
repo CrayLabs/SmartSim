@@ -298,7 +298,7 @@ def test_format_comma_sep_env_vars():
 @pytest.mark.parametrize("reserved_arg", ["chdir", "D"])
 def test_no_set_reserved_args(reserved_arg):
     srun = SrunSettings("python")
-    srun.set_option(reserved_arg)
+    srun.set(reserved_arg)
     assert reserved_arg not in srun.run_args
 
 

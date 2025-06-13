@@ -304,8 +304,8 @@ def test_bad_exe_args_2():
 
 def test_set_args():
     rs = RunSettings("python")
-    rs.set_option("str", "some-string")
-    rs.set_option("nothing")
+    rs.set("str", "some-string")
+    rs.set("nothing")
 
     assert "str" in rs.run_args
     assert rs.run_args["str"] == "some-string"
@@ -326,7 +326,7 @@ def test_set_args():
 )
 def test_set_format_args(set_str, val, key):
     rs = RunSettings("python")
-    rs.set_option(set_str, val)
+    rs.set(set_str, val)
     assert rs.run_args[key] == val
 
 
@@ -402,24 +402,24 @@ def test_set_raises_type_errors():
     rs = RunSettings("python")
 
     with pytest.raises(TypeError):
-        rs.set_option("good-key", 5)
+        rs.set("good-key", 5)
 
     with pytest.raises(TypeError):
-        rs.set_option(9)
+        rs.set(9)
 
 
 def test_set_overwrites_prev_args():
     rs = RunSettings("python")
-    rs.set_option("some-key", "some-val")
-    rs.set_option("some-key", "another-val")
+    rs.set("some-key", "some-val")
+    rs.set("some-key", "another-val")
     assert rs.run_args["some-key"] == "another-val"
 
 
 def test_set_conditional():
     rs = RunSettings("python")
     ans = 2 + 2
-    rs.set_option("ans-is-4-arg", condition=ans == 4)
-    rs.set_option("ans-is-5-arg", condition=ans == 5)
+    rs.set("ans-is-4-arg", condition=ans == 4)
+    rs.set("ans-is-5-arg", condition=ans == 5)
     assert "ans-is-4-arg" in rs.run_args
     assert "ans-is-5-arg" not in rs.run_args
 

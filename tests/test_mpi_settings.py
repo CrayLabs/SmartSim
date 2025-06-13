@@ -210,7 +210,7 @@ def test_mpirun_hostlist_errors_1():
 @pytest.mark.parametrize("reserved_arg", ["wd", "wdir"])
 def test_no_set_reserved_args(reserved_arg):
     srun = _BaseMPISettings(*default_mpi_args, **default_mpi_kwargs)
-    srun.set_option(reserved_arg)
+    srun.set(reserved_arg)
     assert reserved_arg not in srun.run_args
 
 

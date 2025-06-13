@@ -156,7 +156,7 @@ class RunSettings(SettingsBase):
         self._env_vars = copy.deepcopy(value)
 
     # To be overwritten by subclasses. Set of reserved args a user cannot change
-    reserved_run_args = set()  # type: set[str]
+    reserved_run_args = frozenset()
 
     def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes
@@ -451,7 +451,7 @@ class RunSettings(SettingsBase):
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
-    def set_option(
+    def set(
         self, arg: str, value: t.Optional[str] = None, condition: bool = True
     ) -> None:
         """Allows users to set individual run arguments.
@@ -471,8 +471,8 @@ class RunSettings(SettingsBase):
         .. code-block:: python
 
             rs = RunSettings("python")
-            rs.set_option("an-arg", "a-val")
-            rs.set_option("a-flag")
+            rs.set("an-arg", "a-val")
+            rs.set("a-flag")
             rs.format_run_args()  # returns ["an-arg", "a-val", "a-flag", "None"]
 
         Slurm Example with Conditional Setting
@@ -484,11 +484,11 @@ class RunSettings(SettingsBase):
 
             rs = SrunSettings("echo", "hello")
             rs.set_tasks(1)
-            rs.set_option("exclusive")
+            rs.set("exclusive")
 
             # Only set this argument if condition param evals True
             # Otherwise log and NOP
-            rs.set_option("partition", "debug",
+            rs.set("partition", "debug",
                    condition=socket.gethostname()=="testing-system")
 
             rs.format_run_args()

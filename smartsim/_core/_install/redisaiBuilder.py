@@ -271,6 +271,7 @@ class RedisAIBuilder:
             "INSTALL_PATH": str(CONFIG.lib_path),
             "CMAKE_C_COMPILER": self.build_env.CC,
             "CMAKE_CXX_COMPILER": self.build_env.CXX,
+            "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
         }
         if self.platform.device.is_rocm():
             cmake_args["Torch_DIR"] = str(self.package_path / "libtorch")
