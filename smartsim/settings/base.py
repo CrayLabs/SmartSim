@@ -156,7 +156,7 @@ class RunSettings(SettingsBase):
         self._env_vars = copy.deepcopy(value)
 
     # To be overwritten by subclasses. Set of reserved args a user cannot change
-    reserved_run_args = frozenset()
+    reserved_run_args: frozenset[str] = frozenset()
 
     def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes
