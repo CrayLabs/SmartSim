@@ -29,32 +29,11 @@ import os
 import typing as t
 from functools import lru_cache
 from pathlib import Path
-from shutil import which
 
 import psutil
 
 from ...error import SSConfigError
-
-
-# Duplicating code to avoid circular import
-def expand_exe_path(exe: str) -> str:
-    """Takes an executable and returns the full path to that executable
-
-    :param exe: executable or file
-    :raises TypeError: if file is not an executable
-    :raises FileNotFoundError: if executable cannot be found
-    """
-
-    # which returns none if not found
-    in_path = which(exe)
-    if not in_path:
-        if os.path.isfile(exe) and os.access(exe, os.X_OK):
-            return os.path.abspath(exe)
-        if os.path.isfile(exe) and not os.access(exe, os.X_OK):
-            raise TypeError(f"File, {exe}, is not an executable")
-        raise FileNotFoundError(f"Could not locate executable {exe}")
-    return os.path.abspath(in_path)
-
+from ..utils.helpers import expand_exe_path
 
 # Configuration Values
 #
