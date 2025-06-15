@@ -28,7 +28,6 @@ import pathlib
 import shutil
 import typing as t
 from datetime import datetime
-from distutils import dir_util  # pylint: disable=deprecated-module
 from logging import DEBUG, INFO
 from os import mkdir, path, symlink
 from os.path import join, relpath
@@ -322,7 +321,7 @@ class Generator:
             for to_copy in entity.files.copy:
                 dst_path = path.join(entity.path, path.basename(to_copy))
                 if path.isdir(to_copy):
-                    dir_util.copy_tree(to_copy, entity.path)
+                    shutil.copytree(to_copy, entity.path, dirs_exist_ok=True)
                 else:
                     shutil.copyfile(to_copy, dst_path)
 

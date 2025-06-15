@@ -45,24 +45,24 @@
         },
         {
             "name": "libtensorflow",
-            "version": "2.15",
+            "version": "2.16.2",
             "pip_index": "",
             "python_packages": [
-                "tensorflow==2.15"
+                "tensorflow==2.16.2"
             ],
-            "lib_source": "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-darwin-x86_64-2.15.0.tar.gz"
+            "lib_source": "https://storage.googleapis.com/tensorflow/versions/2.16.2/libtensorflow-cpu-darwin-x86_64.tar.gz"
         },
         {
             "name": "onnxruntime",
-            "version": "1.17.3",
+            "version": "1.22.0",
             "pip_index": "",
             "python_packages": [
-                "onnx==1.15",
+                "onnx==1.16",
                 "skl2onnx",
                 "scikit-learn",
                 "onnxmltools"
             ],
-            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.17.3/onnxruntime-osx-x86_64-1.17.3.tgz"
+            "lib_source": "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-osx-x86_64-1.22.0.tgz"
         }
     ]
 }

@@ -271,7 +271,7 @@ def cleanup() -> None:
     except OSError as e:
         logger.warning(f"Failed to clean up colocated database gracefully: {str(e)}")
     finally:
-        if LOCK.is_locked:
+        if LOCK.is_locked:  # pylint: disable=E0606
             LOCK.release()
 
         if os.path.exists(LOCK.lock_file):

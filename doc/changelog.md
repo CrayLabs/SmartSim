@@ -13,6 +13,7 @@ To be released at some point in the future
 
 Description
 
+- Python 3.12 is now supported; where available, installed TensorFlow version is now 2.16.2, PyTorch is 2.7.1.
 - Drop Python 3.9 support
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
@@ -21,6 +22,10 @@ Description
 
 Detailed Notes
 
+- Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
+  are installed as part of `smart build` process when available. On Mac, ONNX runtime
+  1.22.0 is now installed, together with ONNX 1.16.
+  ([SmartSim-PR785](https://github.com/CrayLabs/SmartSim/pull/785))
 - Python 3.9 will not be supported anymore, the last stable version of SmartSim
   with support for Python 3.9 will be 0.8.
   ([SmartSim-PR781](https://github.com/CrayLabs/SmartSim/pull/781))

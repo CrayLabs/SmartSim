@@ -622,7 +622,7 @@ to create your own.
 
 ## Online Inference
 
-SmartSim supports the following frameworks for querying Machine Learning models
+Where available, SmartSim supports the following frameworks for querying Machine Learning models
 from C, C++, Fortran and Python with the SmartRedis Clients:
 
 <table>
@@ -637,15 +637,15 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     <tr>
       <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>2.1.0</td>
+      <td>2.7.1</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.15.0</td>
+      <td>2.16.2</td>
     </tr>
     <tr>
-      <td>ONNX</td>
-      <td>1.14.1</td>
+      <td>ONNX Runtime</td>
+      <td>1.17.3</td>
     </tr>
   </tbody>
 </table>
@@ -653,6 +653,8 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
 A [number of other libraries](https://github.com/onnx/onnxmltools) are
 supported through ONNX, like [SciKit-Learn](https://github.com/onnx/sklearn-onnx/)
 and [XGBoost](https://github.com/onnx/onnxmltools/tree/master/tests/xgboost).
+
+A more detailed breakdown of supported toolkit versions for different platforms is available in the [installation section of the documentation](https://www.craylabs.org/docs/installation_instructions/basic.html).
 
 **Note:** It's important to remember that SmartSim utilizes a client-server model. To run
 experiments that utilize the above frameworks, you must first start the Orchestrator

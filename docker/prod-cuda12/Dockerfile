@@ -42,7 +42,7 @@ RUN apt-get update \
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
     dpkg -i cuda-keyring_1.1-1_all.deb && \
     apt-get update -y && \
-    apt-get install -y cuda-toolkit-12-5
+    apt-get install -y cuda-toolkit-12-8
 
 # Install cuDNN 8.9.7
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcudnn8_8.9.7.29-1+cuda12.2_amd64.deb && \
@@ -50,15 +50,10 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86
 
 # Install SmartSim and SmartRedis
 RUN pip install git+https://github.com/CrayLabs/SmartRedis.git && \
-    pip install git+https://github.com/CrayLabs/SmartSim.git@cuda-12-support
+    pip install git+https://github.com/CrayLabs/SmartSim.git
 
 ENV CUDA_HOME="/usr/local/cuda/"
 ENV PATH="${PATH}:${CUDA_HOME}/bin"
 
-# Install machine-learning python packages consistent with RedisAI
-# Note: pytorch gets installed in the smart build step
-# This step will be deprecated in a future update
-RUN pip install tensorflow==2.15.0
-
 # Build ML Backends
-RUN smart build --device=cuda121
+RUN smart build --device=cuda-12

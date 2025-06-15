@@ -226,7 +226,7 @@ def _installed(base_path: Path, backend: str) -> bool:
 
 
 def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
-    # pylint: disable-next=import-outside-toplevel
+    # pylint: disable-next=import-outside-toplevel,cyclic-import
     from ..._core.config import CONFIG
 
     base_path: Path = (

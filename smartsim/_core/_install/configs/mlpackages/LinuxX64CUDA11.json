@@ -14,14 +14,14 @@
         },
         {
             "name": "libtorch",
-            "version": "2.3.1",
+            "version": "2.7.1",
             "pip_index": "https://download.pytorch.org/whl/cu118",
             "python_packages": [
-                "torch==2.3.1+cu118",
-                "torchvision==0.18.1+cu118",
-                "torchaudio==2.3.1+cu118"
+                "torch==2.7.1+cu118",
+                "torchvision==0.22.1+cu118",
+                "torchaudio==2.7.1+cu118"
             ],
-            "lib_source": "https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.3.1%2Bcu118.zip",
+            "lib_source": "https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.7.1%2Bcu118.zip",
             "rai_patches": [
                 {
                     "description": "Patch RedisAI module to require C++17 standard instead of C++14",
