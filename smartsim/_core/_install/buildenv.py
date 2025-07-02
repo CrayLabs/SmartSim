@@ -263,9 +263,9 @@ class Versioner:
     # RedisAI
     REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.7"))
     REDISAI_URL = get_env(
-        "SMARTSIM_REDISAI_URL", "https://github.com/rickybalin/RedisAI.git/"
+        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
     )
-    REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}.rb")
+    REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
 
     # ML/DL (based on RedisAI version defaults)
     # torch can be set by the user because we download that for them
