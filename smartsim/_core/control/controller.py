@@ -399,6 +399,7 @@ class Controller:
         :param exp_name: The name of the launching experiment
         :param exp_path: path to location of ``Experiment`` directory if generated
         :param manifest: Manifest of deployables to launch
+        :param monitor: boolean to signal whether to monitor deployables
         """
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
@@ -577,6 +578,7 @@ class Controller:
 
         :param job_step: a job step instance
         :param entity: entity instance
+        :param monitor: boolean determining whether to monitor job
         :raises SmartSimError: if launch fails
         """
         # attempt to retrieve entity name in JobManager.completed

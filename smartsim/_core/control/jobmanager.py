@@ -176,6 +176,7 @@ class JobManager:
         :param job_name: name of the job step
         :param job_id: job step id created by launcher
         :param entity: entity that was launched on job step
+        :param monitor: boolean to monitor job
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         """
         launcher = str(self._launcher)
