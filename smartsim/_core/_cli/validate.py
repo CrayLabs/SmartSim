@@ -172,7 +172,7 @@ def test_install(
 
 @contextlib.contextmanager
 def _env_vars_set_to(
-    evars: t.Mapping[str, t.Optional[str]]
+    evars: t.Mapping[str, t.Optional[str]],
 ) -> t.Generator[None, None, None]:
     envvars = tuple((var, os.environ.pop(var, None), val) for var, val in evars.items())
     for var, _, tmpval in envvars:

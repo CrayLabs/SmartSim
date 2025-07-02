@@ -69,9 +69,7 @@ def turn_off_telemetry_indirect(monkeypatch):
 
 def test_set_launcher_args():
     settings = PalsMpiexecSettings(default_exe, **default_kwargs)
-    settings.set_launcher_args(
-        {"mem-bind": "none", "line-buffer": ""}
-    )
+    settings.set_launcher_args({"mem-bind": "none", "line-buffer": ""})
     assert settings.format_run_args() == ["--mem-bind", "none", "--line-buffer"]
 
 

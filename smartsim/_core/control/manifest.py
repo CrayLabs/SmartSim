@@ -310,7 +310,7 @@ class LaunchedManifestBuilder(t.Generic[_T]):
 
 
 def _format_exp_telemetry_path(
-    exp_path: t.Union[str, "os.PathLike[str]"]
+    exp_path: t.Union[str, "os.PathLike[str]"],
 ) -> pathlib.Path:
     return pathlib.Path(exp_path, CONFIG.telemetry_subdir)
 

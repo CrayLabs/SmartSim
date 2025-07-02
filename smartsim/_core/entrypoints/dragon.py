@@ -87,14 +87,16 @@ def print_summary(network_interface: str, ip_address: str) -> None:
     log_path = get_log_path()
     with open(log_path, "w", encoding="utf-8") as dragon_config_log:
         dragon_config_log.write(
-            textwrap.dedent(f"""\
+            textwrap.dedent(
+                f"""\
                 -------- Dragon Configuration --------
                 IPADDRESS: {ip_address}
                 NETWORK: {network_interface}
                 HOSTNAME: {socket.gethostname()}
                 DRAGON_SERVER_CONFIG: {json.dumps(zmq_config)}
                 --------------------------------------
-                """),
+                """
+            ),
         )
 
 

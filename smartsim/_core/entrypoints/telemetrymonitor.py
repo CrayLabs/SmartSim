@@ -49,7 +49,7 @@ logger = logging.getLogger("TelemetryMonitor")
 
 
 def register_signal_handlers(
-    handle_signal: t.Callable[[int, t.Optional[FrameType]], None]
+    handle_signal: t.Callable[[int, t.Optional[FrameType]], None],
 ) -> None:
     """Register a signal handling function for all termination events
 
