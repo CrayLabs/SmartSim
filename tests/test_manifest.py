@@ -26,6 +26,7 @@
 
 
 import os.path
+import typing as t
 from copy import deepcopy
 from uuid import uuid4
 
@@ -40,7 +41,9 @@ from smartsim._core.control.manifest import (
 from smartsim._core.control.manifest import (
     _LaunchedManifestMetadata as LaunchedManifestMetadata,
 )
+from smartsim._core.launcher.step import Step
 from smartsim.database import Orchestrator
+from smartsim.entity import Ensemble, Model
 from smartsim.entity.dbobject import DBModel, DBScript
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
@@ -51,22 +54,33 @@ pytestmark = pytest.mark.group_b
 
 # ---- create entities for testing --------
 
-rs = RunSettings("python", "sleep.py")
-
-exp = Experiment("util-test", launcher="local")
-model = exp.create_model("model_1", run_settings=rs)
-model_2 = exp.create_model("model_1", run_settings=rs)
-ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
-
-orc = Orchestrator()
-orc_1 = deepcopy(orc)
-orc_1.name = "orc2"
-
-db_script = DBScript("some-script", "def main():\n    print('hello world')\n")
-db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
+_EntityResult = t.Tuple[
+    Experiment, t.Tuple[Model, Model], Ensemble, Orchestrator, DBModel, DBScript
+]
 
 
-def test_separate():
+@pytest.fixture
+def entities(test_dir: str) -> _EntityResult:
+    rs = RunSettings("python", "sleep.py")
+
+    exp = Experiment("util-test", launcher="local", exp_path=test_dir)
+    model = exp.create_model("model_1", run_settings=rs)
+    model_2 = exp.create_model("model_1", run_settings=rs)
+    ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
+
+    orc = Orchestrator()
+    orc_1 = deepcopy(orc)
+    orc_1.name = "orc2"
+
+    db_script = DBScript("some-script", "def main():\n    print('hello world')\n")
+    db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
+
+    return exp, (model, model_2), ensemble, orc, db_model, db_script
+
+
+def test_separate(entities: _EntityResult) -> None:
+    _, (model, _), ensemble, orc, _, _ = entities
+
     manifest = Manifest(model, ensemble, orc)
     assert manifest.models[0] == model
     assert len(manifest.models) == 1
@@ -75,24 +89,28 @@ def test_separate():
     assert manifest.dbs[0] == orc
 
 
-def test_separate_type():
+def test_separate_type() -> None:
     with pytest.raises(TypeError):
-        _ = Manifest([1, 2, 3])
+        _ = Manifest([1, 2, 3])  # type: ignore
 
 
-def test_name_collision():
+def test_name_collision(entities: _EntityResult) -> None:
+    _, (model, model_2), _, _, _, _ = entities
+
     with pytest.raises(SmartSimError):
         _ = Manifest(model, model_2)
 
 
-def test_catch_empty_ensemble():
+def test_catch_empty_ensemble(entities: _EntityResult) -> None:
+    _, _, ensemble, _, _, _ = entities
+
     e = deepcopy(ensemble)
     e.entities = []
     with pytest.raises(ValueError):
         _ = Manifest(e)
 
 
-def test_corner_case():
+def test_corner_case() -> None:
     """tricky corner case where some variable may have a
     name attribute
     """
@@ -102,59 +120,77 @@ def test_corner_case():
 
     p = Person()
     with pytest.raises(TypeError):
-        _ = Manifest(p)
+        _ = Manifest(p)  # type: ignore
 
 
 @pytest.mark.parametrize(
-    "patch, has_db_objects",
+    "target_obj, target_prop, target_value, has_db_objects",
     [
-        pytest.param((), False, id="No DB Objects"),
-        pytest.param((model, "_db_models", [db_model]), True, id="Model w/ DB Model"),
-        pytest.param(
-            (model, "_db_scripts", [db_script]), True, id="Model w/ DB Script"
-        ),
-        pytest.param(
-            (ensemble, "_db_models", [db_model]), True, id="Ensemble w/ DB Model"
-        ),
-        pytest.param(
-            (ensemble, "_db_scripts", [db_script]), True, id="Ensemble w/ DB Script"
-        ),
-        pytest.param(
-            (ensemble.entities[0], "_db_models", [db_model]),
-            True,
-            id="Ensemble Member w/ DB Model",
-        ),
-        pytest.param(
-            (ensemble.entities[0], "_db_scripts", [db_script]),
-            True,
-            id="Ensemble Member w/ DB Script",
-        ),
+        pytest.param(None, None, None, False, id="No DB Objects"),
+        pytest.param("m0", "dbm", "dbm", True, id="Model w/ DB Model"),
+        pytest.param("m0", "dbs", "dbs", True, id="Model w/ DB Script"),
+        pytest.param("ens", "dbm", "dbm", True, id="Ensemble w/ DB Model"),
+        pytest.param("ens", "dbs", "dbs", True, id="Ensemble w/ DB Script"),
+        pytest.param("ens_0", "dbm", "dbm", True, id="Ensemble Member w/ DB Model"),
+        pytest.param("ens_0", "dbs", "dbs", True, id="Ensemble Member w/ DB Script"),
     ],
 )
-def test_manifest_detects_db_objects(monkeypatch, patch, has_db_objects):
-    if patch:
+def test_manifest_detects_db_objects(
+    monkeypatch: pytest.MonkeyPatch,
+    target_obj: str,
+    target_prop: str,
+    target_value: str,
+    has_db_objects: bool,
+    entities: _EntityResult,
+) -> None:
+    _, (model, _), ensemble, _, db_model, db_script = entities
+    target_map = {
+        "m0": model,
+        "dbm": db_model,
+        "dbs": db_script,
+        "ens": ensemble,
+        "ens_0": ensemble.entities[0],
+    }
+    prop_map = {
+        "dbm": "_db_models",
+        "dbs": "_db_scripts",
+    }
+    if target_obj:
+        patch = (
+            target_map[target_obj],
+            prop_map[target_prop],
+            [target_map[target_value]],
+        )
         monkeypatch.setattr(*patch)
+
     assert Manifest(model, ensemble).has_db_objects == has_db_objects
 
 
-def test_launched_manifest_transform_data():
+def test_launched_manifest_transform_data(entities: _EntityResult) -> None:
+    _, (model, model_2), ensemble, orc, _, _ = entities
+
     models = [(model, 1), (model_2, 2)]
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
     dbs = [(orc, [(n, i) for i, n in enumerate(orc.entities)])]
-    launched = LaunchedManifest(
+    lmb = LaunchedManifest(
         metadata=LaunchedManifestMetadata("name", "path", "launcher", "run_id"),
-        models=models,
-        ensembles=ensembles,
-        databases=dbs,
+        models=models,  # type: ignore
+        ensembles=ensembles,  # type: ignore
+        databases=dbs,  # type: ignore
     )
-    transformed = launched.map(lambda x: str(x))
+    transformed = lmb.map(lambda x: str(x))
+
     assert transformed.models == tuple((m, str(i)) for m, i in models)
     assert transformed.ensembles[0][1] == tuple((m, str(i)) for m, i in ensembles[0][1])
     assert transformed.databases[0][1] == tuple((n, str(i)) for n, i in dbs[0][1])
 
 
-def test_launched_manifest_builder_correctly_maps_data():
-    lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
+def test_launched_manifest_builder_correctly_maps_data(entities: _EntityResult) -> None:
+    _, (model, model_2), ensemble, orc, _, _ = entities
+
+    lmb = LaunchedManifestBuilder(
+        "name", "path", "launcher name", str(uuid4())
+    )  # type: ignore
     lmb.add_model(model, 1)
     lmb.add_model(model_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
@@ -166,8 +202,14 @@ def test_launched_manifest_builder_correctly_maps_data():
     assert len(manifest.databases) == 1
 
 
-def test_launced_manifest_builder_raises_if_lens_do_not_match():
-    lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
+def test_launced_manifest_builder_raises_if_lens_do_not_match(
+    entities: _EntityResult,
+) -> None:
+    _, _, ensemble, orc, _, _ = entities
+
+    lmb = LaunchedManifestBuilder(
+        "name", "path", "launcher name", str(uuid4())
+    )  # type: ignore
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, list(range(123)))
     with pytest.raises(ValueError):
@@ -175,17 +217,23 @@ def test_launced_manifest_builder_raises_if_lens_do_not_match():
 
 
 def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
-    monkeypatch,
-):
-    lmb = LaunchedManifestBuilder("name", "path", "launcher", str(uuid4()))
+    monkeypatch: pytest.MonkeyPatch, entities: _EntityResult
+) -> None:
+    _, _, ensemble, _, _, _ = entities
+
+    lmb: LaunchedManifestBuilder[t.Tuple[str, Step]] = LaunchedManifestBuilder(
+        "name", "path", "launcher", str(uuid4())
+    )
     monkeypatch.setattr(ensemble, "entities", [])
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, [])
 
 
-def test_lmb_and_launched_manifest_have_same_paths_for_launched_metadata():
+def test_lmb_and_launched_manifest_have_same_paths_for_launched_metadata() -> None:
     exp_path = "/path/to/some/exp"
-    lmb = LaunchedManifestBuilder("exp_name", exp_path, "launcher", str(uuid4()))
+    lmb: LaunchedManifestBuilder[t.Tuple[str, Step]] = LaunchedManifestBuilder(
+        "exp_name", exp_path, "launcher", str(uuid4())
+    )
     manifest = lmb.finalize()
     assert (
         lmb.exp_telemetry_subdirectory == manifest.metadata.exp_telemetry_subdirectory

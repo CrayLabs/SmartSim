@@ -45,7 +45,6 @@ from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
-from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.stepInfo import StepInfo
@@ -99,7 +98,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
-            "lsf": LSFLauncher,
             "local": LocalLauncher,
             "dragon": DragonLauncher,
         }
@@ -115,7 +113,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports Slurm, PBS(Pro), LSF, Dragon
+        SmartSim currently supports Slurm, PBS(Pro), Dragon
         and local launching
 
         :param launcher: the name of the workload manager used by the experiment

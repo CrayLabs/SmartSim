@@ -28,6 +28,7 @@ from .errors import (
     AllocationError,
     EntityExistsError,
     LauncherError,
+    LauncherUnsupportedFeature,
     ParameterWriterError,
     ShellError,
     SmartSimError,

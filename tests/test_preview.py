@@ -357,7 +357,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert hw_rs == hello_world_model.run_settings.exe_args[0]
     assert None == hello_world_model.batch_settings
     assert "port" in list(hello_world_model.params.items())[0]
-    assert hw_port in list(hello_world_model.params.items())[0]
+    assert str(hw_port) in list(hello_world_model.params.items())[0]
     assert "password" in list(hello_world_model.params.items())[1]
     assert hw_password in list(hello_world_model.params.items())[1]
 

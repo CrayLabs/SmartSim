@@ -26,7 +26,7 @@
 
 import typing as t
 
-from ..util.shell import execute_cmd
+from ...utils.shell import execute_cmd
 
 
 def qstat(args: t.List[str]) -> t.Tuple[str, str]:

@@ -35,6 +35,7 @@ class SmartSimStatus(Enum):
     STATUS_NEW = "New"
     STATUS_PAUSED = "Paused"
     STATUS_NEVER_STARTED = "NeverStarted"
+    STATUS_QUEUED = "Queued"
 
 
 TERMINAL_STATUSES = {

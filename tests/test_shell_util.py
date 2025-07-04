@@ -28,7 +28,7 @@
 import psutil
 import pytest
 
-from smartsim._core.launcher.util.shell import *
+from smartsim._core.utils.shell import *
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b

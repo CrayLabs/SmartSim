@@ -9,17 +9,150 @@ Jump to:
 
 ## SmartSim
 
-### Development branch
-
-To be released at some future point in time
+To be released at some point in the future
 
 Description
 
-- Improve support for building SmartSim without ML backends
-- Update packaging dependency
+- Python 3.12 is now supported; where available, installed TensorFlow version is now 2.16.2, PyTorch is 2.7.1.
+- Drop Python 3.9 support
+- Terminate LSF and LSB support
+- Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
+- Add instructions for installing SmartSim on PML's Scylla
+- Fix typos in documentation
 
 Detailed Notes
 
+- Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
+  are installed as part of `smart build` process when available. On Mac, ONNX runtime
+  1.22.0 is now installed, together with ONNX 1.16.
+  ([SmartSim-PR785](https://github.com/CrayLabs/SmartSim/pull/785))
+- Python 3.9 will not be supported anymore, the last stable version of SmartSim
+  with support for Python 3.9 will be 0.8.
+  ([SmartSim-PR781](https://github.com/CrayLabs/SmartSim/pull/781))
+- After the supercomputer Summit was decommissioned, a decision was made to
+  terminate SmartSim's support of the LSF launcher and LSB scheduler. If
+  this impacts your work, please contact us.
+  ([SmartSim-PR780](https://github.com/CrayLabs/SmartSim/pull/780))
+- Fix typos in the `train_surrogate` tutorial documentation.
+  ([SmartSim-PR758](https://github.com/CrayLabs/SmartSim/pull/758))
+- PML's Scylla is still under development. The usual SmartSim
+  build instructions do not apply because the GPU dependencies
+  have yet to be installed at a system-wide level. Scylla has
+  its own entry in the documentation.
+  ([SmartSim-PR733](https://github.com/CrayLabs/SmartSim/pull/733))
+- In libtensorflow, the input argument to TF_SessionRun seems to be mistyped to
+  TF_Output instead of TF_Input. These two types differ only in name. GCC-14
+  catches this and throws an error, even though earlier versions allow this. To
+  solve this problem, patches are applied to the Tensorflow backend in RedisAI.
+  Future versions of Tensorflow may fix this problem, but for now this seems to be
+  the best workaround.
+  ([SmartSim-PR738](https://github.com/CrayLabs/SmartSim/pull/738))
+
+
+### 0.8.0
+
+Released on 27 September, 2024
+
+Description
+
+- Add instructions for Frontier to set the MIOPEN cache
+- Refine Frontier documentation for proper use of miniforge3
+- Refactor to the RedisAI build to allow more flexibility in versions
+  and sources of ML backends
+- Add Dockerfiles with GPU support
+- Fine grain build support for GPUs
+- Update Torch to 2.1.0, Tensorflow to 2.15.0
+- Better error messages in build process
+- Allow specifying Model and Ensemble parameters with
+  number-like types (e.g. numpy types)
+- Pin watchdog to 4.x
+- Update codecov to 4.5.0
+- Remove build of Redis from setup.py
+- Mitigate dependency installation issues
+- Fix internal host name representation for Dragon backend
+- Make dependencies more discoverable in setup.py
+- Add hardware pinning capability when using dragon
+- Pin NumPy version to 1.x
+- New launcher support for SGE (and similar derivatives)
+- Fix test outputs being created in incorrect directory
+- Improve support for building SmartSim without ML backends
+- Update packaging dependency
+- Remove broken oss.redis.com URI blocking documentation generation
+
+Detailed Notes
+
+- On Frontier, the MIOPEN cache may need to be set prior to using
+  RedisAI in the ``smart validate``. The instructions for Frontier
+  have been updated accordingly.
+  ([SmartSim-PR727](https://github.com/CrayLabs/SmartSim/pull/727))
+- On Frontier, the recommended way to activate conda environments is
+  to go through source activate. This also means that ``conda init``
+  is not needed. The instructions for Frontier have been updated to
+  reflect this.
+  ([SmartSim-PR719](https://github.com/CrayLabs/SmartSim/pull/719))
+- The RedisAIBuilder class was completely overhauled to allow users to
+  express a wider range of support for hardware/software stacks. This
+  will be extended to support ROCm, CUDA-11, and CUDA-12.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Versions for each of these packages are no longer specified in an
+  internal class. Instead a default set of JSON files specifies the
+  sources and versions. Users can specify their own custom specifications
+  at smart build time.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Because all build configuration has been moved to static files and all
+  backends are compiled during `smart build`, SmartSim can now be shipped as a
+  pure python wheel.
+  ([SmartSim-PR728](https://github.com/CrayLabs/SmartSim/pull/728))
+- Two new Dockerfiles are now provided (one each for 11.8 and 12.1) that
+  can be used to build a container to run the tutorials. No HPC support
+  should be expected at this time
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- As a result of the previous change, SmartSim now requires C++17 and a
+  minimum Cuda version of 11.8 in order to build Torch 2.1.0.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- Error messages were not being interpolated correctly. This has been
+  addressed to provide more context when exposing error messages to users.
+  ([SmartSim-PR669](https://github.com/CrayLabs/SmartSim/pull/669))
+- The serializer would fail if a parameter for a Model or Ensemble
+  was specified as a numpy dtype. The constructors for these
+  methods now validate that the input is number-like and convert
+  them to strings
+  ([SmartSim-PR676](https://github.com/CrayLabs/SmartSim/pull/676))
+- Pin watchdog to 4.x because v5 introduces new types and requires
+  updates to the type-checking
+  ([SmartSim-PR690](https://github.com/CrayLabs/SmartSim/pull/690))
+- Update codecov to 4.5.0 to mitigate GitHub action failure
+  ([SmartSim-PR657](https://github.com/CrayLabs/SmartSim/pull/657))
+- The builder module was included in setup.py to allow us to ship the
+  main Redis binaries (not RedisAI) with installs from PyPI. To
+  allow easier maintenance of this file and enable future complexity
+  this has been removed. The Redis binaries will thus be built
+  by users during the `smart build` step
+- Installation of mypy or dragon in separate build actions caused
+  some dependencies (typing_extensions, numpy) to be upgraded and
+  caused runtime failures. The build actions were tweaked to include
+  all optional dependencies to be considered by pip during resolution.
+  Additionally, the numpy version was capped on dragon installations.
+  ([SmartSim-PR653](https://github.com/CrayLabs/SmartSim/pull/653))
+- setup.py used to define dependencies in a way that was not amenable
+  to code scanning tools. Direct dependencies now appear directly
+  in the setup call and the definition of the SmartRedis version
+  has been removed
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+- The separate definition of dependencies for the docs in
+  requirements-doc.txt is now defined as an extra.
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+- The new major version release of Numpy is incompatible with modules
+  compiled against Numpy 1.x. For both SmartSim and SmartRedis we
+  request a 1.x version of numpy. This is needed in SmartSim because
+  some of the downstream dependencies request NumPy
+  ([SmartSim-PR623](https://github.com/CrayLabs/SmartSim/pull/623))
+- SGE is now a supported launcher for SmartSim. Users can now define
+  BatchSettings which will be monitored by the TaskManager. Additionally,
+  if the MPI implementation was built with SGE support, Orchestrators can
+  use `mpirun` without needing to specify the hosts
+  ([SmartSim-PR610](https://github.com/CrayLabs/SmartSim/pull/610))
+- Ensure outputs from tests are written to temporary `tests/test_output` directory
 - Fix an error that would prevent ``smart build`` from moving a successfully
   compiled RedisAI shared object to the install location expected by SmartSim
   if no ML backend installations were found. Previously, this would effectively

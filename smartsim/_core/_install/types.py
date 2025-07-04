@@ -24,30 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
+import pathlib
+import typing as t
 
-from smartsim import Experiment
-from smartsim.status import SmartSimStatus
-
-# retrieved from pytest fixtures
-if pytest.test_launcher not in pytest.wlm_options:
-    pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
-
-
-@pytest.mark.skip("OpenMPI currently not working on LSF systems")
-def test_launch_openmpi_lsf(fileutils, test_dir, wlmutils):
-    launcher = wlmutils.get_test_launcher()
-    if launcher != "lsf":
-        pytest.skip("Test only runs on systems with LSF as WLM")
-    exp_name = "test-launch-openmpi-lsf"
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-
-    script = fileutils.get_test_conf_path("sleep.py")
-    settings = exp.create_run_settings("python", script, "mpirun")
-    settings.set_cpus_per_task(1)
-    settings.set_tasks(1)
-
-    model = exp.create_model("ompi-model", path=test_dir, run_settings=settings)
-    exp.start(model, block=True)
-    statuses = exp.get_status(model)
-    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+PathLike = t.Union[str, pathlib.Path]

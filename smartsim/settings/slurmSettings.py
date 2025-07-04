@@ -71,7 +71,7 @@ class SrunSettings(RunSettings):
         self.alloc = alloc
         self.mpmd: t.List[RunSettings] = []
 
-    reserved_run_args = {"chdir", "D"}
+    reserved_run_args = frozenset({"chdir", "D"})
 
     def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes

@@ -50,7 +50,7 @@ from smartsim.error.errors import SmartSimCLIActionCancelled
 pytestmark = pytest.mark.group_a
 
 
-mock_archive_name = "dragon-0.8-py3.9.4.1-CRAYEX-ac132fe95.tar.gz"
+mock_archive_name = "dragon-0.8-py3.10.4.1-CRAYEX-ac132fe95.tar.gz"
 _git_attr = namedtuple("_git_attr", "value")
 
 
@@ -102,7 +102,7 @@ def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]
     assets: t.List[GitReleaseAsset] = []
     mock_archive_name_tpl = "{}-{}.4.1-{}ac132fe95.tar.gz"
 
-    for python_version in ["py3.9", "py3.10", "py3.11"]:
+    for python_version in ["py3.10", "py3.11"]:
         for dragon_version in ["dragon-0.8", "dragon-0.9", "dragon-0.10"]:
             for platform in ["", "CRAYEX-"]:
 
@@ -187,29 +187,21 @@ def test_retrieve_cached(
 @pytest.mark.parametrize(
     "dragon_pin,pyv,is_found,is_crayex",
     [
-        pytest.param("0.8", "py3.8", False, False, id="0.8,python 3.8"),
-        pytest.param("0.8", "py3.9", True, False, id="0.8,python 3.9"),
         pytest.param("0.8", "py3.10", True, False, id="0.8,python 3.10"),
         pytest.param("0.8", "py3.11", True, False, id="0.8,python 3.11"),
         pytest.param("0.8", "py3.12", False, False, id="0.8,python 3.12"),
-        pytest.param("0.8", "py3.8", False, True, id="0.8,python 3.8,CrayEX"),
-        pytest.param("0.8", "py3.9", True, True, id="0.8,python 3.9,CrayEX"),
         pytest.param("0.8", "py3.10", True, True, id="0.8,python 3.10,CrayEX"),
         pytest.param("0.8", "py3.11", True, True, id="0.8,python 3.11,CrayEX"),
         pytest.param("0.8", "py3.12", False, True, id="0.8,python 3.12,CrayEX"),
-        pytest.param("0.9", "py3.8", False, False, id="0.9,python 3.8"),
-        pytest.param("0.9", "py3.9", True, False, id="0.9,python 3.9"),
         pytest.param("0.9", "py3.10", True, False, id="0.9,python 3.10"),
         pytest.param("0.9", "py3.11", True, False, id="0.9,python 3.11"),
         pytest.param("0.9", "py3.12", False, False, id="0.9,python 3.12"),
-        pytest.param("0.9", "py3.8", False, True, id="0.9,python 3.8,CrayEX"),
-        pytest.param("0.9", "py3.9", True, True, id="0.9,python 3.9,CrayEX"),
         pytest.param("0.9", "py3.10", True, True, id="0.9,python 3.10,CrayEX"),
         pytest.param("0.9", "py3.11", True, True, id="0.9,python 3.11,CrayEX"),
         pytest.param("0.9", "py3.12", False, True, id="0.9,python 3.12,CrayEX"),
         # add a couple variants for a dragon version that isn't in the asset list
-        pytest.param("0.7", "py3.9", False, False, id="0.7,python 3.9"),
-        pytest.param("0.7", "py3.9", False, True, id="0.7,python 3.9,CrayEX"),
+        pytest.param("0.7", "py3.10", False, False, id="0.7,python 3.10"),
+        pytest.param("0.7", "py3.10", False, True, id="0.7,python 3.10,CrayEX"),
     ],
 )
 def test_retrieve_asset_info(

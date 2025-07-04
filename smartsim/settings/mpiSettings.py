@@ -87,7 +87,7 @@ class _BaseMPISettings(RunSettings):
                 raise LauncherError(msg)
             logger.warning(msg)
 
-    reserved_run_args = {"wd", "wdir"}
+    reserved_run_args = frozenset({"wd", "wdir"})
 
     def make_mpmd(self, settings: RunSettings) -> None:
         """Make a mpmd workload by combining two ``mpirun`` commands

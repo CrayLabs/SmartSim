@@ -29,6 +29,7 @@ from .helpers import (
     colorize,
     delete_elements,
     execute_platform_cmd,
+    expand_exe_path,
     installed_redisai_backends,
     is_crayex_platform,
 )

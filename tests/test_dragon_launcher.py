@@ -31,6 +31,7 @@ import pathlib
 import sys
 import time
 import typing as t
+from unittest.mock import MagicMock
 
 import pytest
 import zmq
@@ -38,15 +39,74 @@ import zmq
 import smartsim._core.config
 from smartsim._core._cli.scripts.dragon_install import create_dotenv
 from smartsim._core.config.config import get_config
-from smartsim._core.launcher.dragon.dragonLauncher import DragonConnector
+from smartsim._core.launcher.dragon.dragonLauncher import (
+    DragonConnector,
+    DragonLauncher,
+)
 from smartsim._core.launcher.dragon.dragonSockets import (
     get_authenticator,
     get_secure_socket,
 )
+from smartsim._core.launcher.step.dragonStep import DragonBatchStep, DragonStep
 from smartsim._core.schemas.dragonRequests import DragonBootstrapRequest
-from smartsim._core.schemas.dragonResponses import DragonHandshakeResponse
+from smartsim._core.schemas.dragonResponses import (
+    DragonHandshakeResponse,
+    DragonRunResponse,
+)
 from smartsim._core.utils.network import IFConfig, find_free_port
 from smartsim._core.utils.security import KeyManager
+from smartsim.error.errors import LauncherError
+from smartsim.settings.dragonRunSettings import DragonRunSettings
+from smartsim.settings.slurmSettings import SbatchSettings
+
+
+@pytest.fixture
+def dragon_batch_step(test_dir: str) -> DragonBatchStep:
+    """Fixture for creating a default batch of steps for a dragon launcher"""
+    test_path = pathlib.Path(test_dir)
+
+    batch_step_name = "batch_step"
+    num_nodes = 4
+    batch_settings = SbatchSettings(nodes=num_nodes)
+    batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
+
+    # ensure the status_dir is set
+    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+    batch_step.meta["status_dir"] = status_dir
+
+    # create some steps to verify the requests file output changes
+    rs0 = DragonRunSettings(exe="sleep", exe_args=["1"])
+    rs1 = DragonRunSettings(exe="sleep", exe_args=["2"])
+    rs2 = DragonRunSettings(exe="sleep", exe_args=["3"])
+    rs3 = DragonRunSettings(exe="sleep", exe_args=["4"])
+
+    names = "test00", "test01", "test02", "test03"
+    settings = rs0, rs1, rs2, rs3
+
+    # create steps with:
+    # no affinity, cpu affinity only, gpu affinity only, cpu and gpu affinity
+    cpu_affinities = [[], [0, 1, 2], [], [3, 4, 5, 6]]
+    gpu_affinities = [[], [], [0, 1, 2], [3, 4, 5, 6]]
+
+    # assign some unique affinities to each run setting instance
+    for index, rs in enumerate(settings):
+        if gpu_affinities[index]:
+            rs.set_node_feature("gpu")
+        rs.set_cpu_affinity(cpu_affinities[index])
+        rs.set_gpu_affinity(gpu_affinities[index])
+
+    steps = list(
+        DragonStep(name_, test_dir, rs_) for name_, rs_ in zip(names, settings)
+    )
+
+    for index, step in enumerate(steps):
+        # ensure meta is configured...
+        step.meta["status_dir"] = status_dir
+        # ... and put all the steps into the batch
+        batch_step.add_to_batch(steps[index])
+
+    return batch_step
+
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -521,3 +581,168 @@ def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
         # any non-dragon keys that didn't exist avoid unnecessary prepending
         assert merged_env[non_dragon_key] == non_dragon_value
+
+
+def test_run_step_fail(test_dir: str) -> None:
+    """Verify that the dragon launcher still returns the step id
+    when the running step fails"""
+    test_path = pathlib.Path(test_dir)
+    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+    step0 = DragonStep("step0", test_dir, rs)
+    step0.meta["status_dir"] = status_dir
+
+    mock_connector = MagicMock(spec=DragonConnector)
+    mock_connector.is_connected = True
+    mock_connector.send_request = MagicMock(
+        return_value=DragonRunResponse(step_id=step0.name, error_message="mock fail!")
+    )
+    mock_connector.merge_persisted_env = MagicMock(
+        return_value={"FOO": "bar", "BAZ": "boop"}
+    )
+
+    launcher = DragonLauncher()
+    launcher._connector = mock_connector
+
+    result = launcher.run(step0)
+
+    # verify the failed step name is in the result
+    assert step0.name in result
+
+
+def test_run_step_batch_empty(dragon_batch_step: DragonBatchStep) -> None:
+    """Verify that the dragon launcher behaves when asked to execute
+    a batch step that has no sub-steps"""
+    # remove the steps added in the batch fixture
+    dragon_batch_step.steps.clear()
+
+    mock_step_id = "MOCK-STEPID"
+    mock_connector = MagicMock()  # DragonConnector()
+    mock_connector.is_connected = True
+    mock_connector.send_request = MagicMock(
+        return_value=DragonRunResponse(
+            step_id=dragon_batch_step.name, error_message="mock fail!"
+        )
+    )
+
+    launcher = DragonLauncher()
+    launcher._connector = mock_connector
+    launcher.task_manager.start_and_wait = MagicMock(return_value=(0, mock_step_id, ""))
+
+    result = launcher.run(dragon_batch_step)
+
+    # verify a step name is returned
+    assert result
+    # verify the batch step name is not in the result (renamed to SLURM-*)
+    assert dragon_batch_step.name not in result
+
+    send_invocation = mock_connector.send_request
+
+    # verify a batch request is not sent through the dragon connector
+    send_invocation.assert_not_called()
+
+
+def test_run_step_batch_failure(dragon_batch_step: DragonBatchStep) -> None:
+    """Verify that the dragon launcher sends returns the step id
+    when the running step fails"""
+    mock_connector = MagicMock()  # DragonConnector()
+    mock_connector.is_connected = True
+    mock_connector.send_request = MagicMock(
+        return_value=DragonRunResponse(
+            step_id=dragon_batch_step.name, error_message="mock fail!"
+        )
+    )
+
+    mock_step_id = "MOCK-STEPID"
+    error_msg = "DOES_NOT_COMPUTE!"
+    launcher = DragonLauncher()
+    launcher._connector = mock_connector
+    launcher.task_manager.start_and_wait = MagicMock(
+        return_value=(1, mock_step_id, error_msg)
+    )
+
+    # a non-zero return code from the batch script should raise an error
+    with pytest.raises(LauncherError) as ex:
+        launcher.run(dragon_batch_step)
+
+    # verify the correct error message is in the exception
+    assert error_msg in ex.value.args[0]
+
+
+def test_run_step_success(test_dir: str) -> None:
+    """Verify that the dragon launcher sends the correctly formatted request for a step"""
+    test_path = pathlib.Path(test_dir)
+    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+
+    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
+    step0 = DragonStep("step0", test_dir, rs)
+    step0.meta["status_dir"] = status_dir
+
+    mock_connector = MagicMock(spec=DragonConnector)
+    mock_connector.is_connected = True
+    mock_connector.send_request = MagicMock(
+        return_value=DragonRunResponse(step_id=step0.name)
+    )
+
+    launcher = DragonLauncher()
+    launcher._connector = mock_connector
+    mock_connector.merge_persisted_env = MagicMock(
+        return_value={"FOO": "bar", "BAZ": "boop"}
+    )
+
+    result = launcher.run(step0)
+
+    # verify the successfully executed step name is in the result
+    assert step0.name in result
+
+    # verify the DragonRunRequest sent matches all expectations
+    send_invocation = mock_connector.send_request
+    send_invocation.assert_called_once()
+
+    args = send_invocation.call_args[0]  # call_args == t.Tuple[args, kwargs]
+
+    dragon_run_request = args[0]
+    req_name = dragon_run_request.name  # name sent to dragon env
+    assert req_name.startswith(step0.name)
+
+    req_policy_cpu_affinity = dragon_run_request.policy.cpu_affinity
+    assert not req_policy_cpu_affinity  # default should be empty list
+
+    req_policy_gpu_affinity = dragon_run_request.policy.gpu_affinity
+    assert not req_policy_gpu_affinity  # default should be empty list
+
+
+def test_run_step_success_batch(
+    monkeypatch: pytest.MonkeyPatch, dragon_batch_step: DragonBatchStep
+) -> None:
+    """Verify that the dragon launcher sends the correctly formatted request
+    for a batch step"""
+    mock_connector = MagicMock()  # DragonConnector()
+    mock_connector.is_connected = True
+    mock_connector.send_request = MagicMock(
+        return_value=DragonRunResponse(step_id=dragon_batch_step.name)
+    )
+
+    launcher = DragonLauncher()
+    launcher._connector = mock_connector
+    launcher.task_manager.start_and_wait = MagicMock(return_value=(0, "success", ""))
+
+    result = launcher.run(dragon_batch_step)
+
+    # verify the successfully executed step name is in the result
+    assert dragon_batch_step.name not in result
+    assert result
+
+    send_invocation = mock_connector.send_request
+
+    # verify a batch request is not sent through the dragon connector
+    send_invocation.assert_not_called()
+    launcher.task_manager.start_and_wait.assert_called_once()
+
+    args = launcher.task_manager.start_and_wait.call_args[0]
+
+    # verify the batch script is executed
+    launch_cmd = dragon_batch_step.get_launch_cmd()
+    for stmt in launch_cmd:
+        assert stmt in args[0]  # args[0] is the cmd list sent to subprocess.Popen

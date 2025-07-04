@@ -62,7 +62,6 @@ from smartsim.log import get_logger
 from smartsim.settings import (
     AprunSettings,
     DragonRunSettings,
-    JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
     PalsMpiexecSettings,
@@ -120,7 +119,7 @@ def print_test_configuration() -> None:
 
 def pytest_configure() -> None:
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals", "dragon"]
+    pytest.wlm_options = ["slurm", "pbs", "pals", "dragon", "sge"]
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device
@@ -386,15 +385,10 @@ class WLMUtils:
             run_args = {"--np": ntasks, "--hostfile": host_file}
             run_args.update(kwargs)
             return RunSettings(exe, args, run_command="mpiexec", run_args=run_args)
-        if test_launcher == "lsf":
-            run_args = {"--np": ntasks, "--nrs": nodes}
-            run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command="jsrun", run_args=run_args)
-            return settings
         if test_launcher != "local":
             raise SSConfigError(
                 "Base run settings are available for Slurm, PBS, "
-                f"and LSF, but launcher was {test_launcher}"
+                f"and Dragon, but launcher was {test_launcher}"
             )
         # TODO allow user to pick aprun vs MPIrun
         return RunSettings(exe, args)
@@ -429,13 +423,6 @@ class WLMUtils:
             run_args = {"np": ntasks, "hostfile": host_file}
             run_args.update(kwargs)
             return PalsMpiexecSettings(exe, args, run_args=run_args)
-        if test_launcher == "lsf":
-            run_args = {
-                "nrs": nodes,
-                "tasks_per_rs": max(ntasks // nodes, 1),
-            }
-            run_args.update(kwargs)
-            return JsrunSettings(exe, args, run_args=run_args)
 
         return RunSettings(exe, args)
 

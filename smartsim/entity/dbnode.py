@@ -140,7 +140,7 @@ class DBNode(SmartSimEntity):
                     if osp.exists(file_name):
                         os.remove(file_name)
 
-    def _get_cluster_conf_filenames(self, port: int) -> t.List[str]:  # cov-lsf
+    def _get_cluster_conf_filenames(self, port: int) -> t.List[str]:
         """Returns the .conf file name for the given port number
 
         This function should bu used if and only if ``_mpmd==True``

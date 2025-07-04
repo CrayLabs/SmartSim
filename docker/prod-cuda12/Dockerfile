@@ -24,55 +24,36 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
+FROM ubuntu:22.04
 
-from ..util.shell import execute_cmd
+LABEL maintainer="Cray Labs"
+LABEL org.opencontainers.image.source https://github.com/CrayLabs/SmartSim
 
+ARG DEBIAN_FRONTEND="noninteractive"
+ENV TZ=US/Seattle
 
-def bjobs(args: t.List[str]) -> t.Tuple[str, str]:
-    """Calls LSF bjobs with args
+# Make basic dependencies
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential \
+    git gcc make git-lfs wget libopenmpi-dev openmpi-bin unzip \
+    python3-pip python3 python3-dev cmake wget
 
-    :param args: List of command arguments
-    :returns: Output and error of bjobs
-    """
-    cmd = ["bjobs"] + args
-    _, out, error = execute_cmd(cmd)
-    return out, error
+# Install Cudatoolkit 12.5
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
+    dpkg -i cuda-keyring_1.1-1_all.deb && \
+    apt-get update -y && \
+    apt-get install -y cuda-toolkit-12-8
 
+# Install cuDNN 8.9.7
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libcudnn8_8.9.7.29-1+cuda12.2_amd64.deb && \
+    dpkg -i libcudnn8_8.9.7.29-1+cuda12.2_amd64.deb
 
-def bkill(args: t.List[str]) -> t.Tuple[int, str, str]:
-    """Calls LSF bkill with args.
+# Install SmartSim and SmartRedis
+RUN pip install git+https://github.com/CrayLabs/SmartRedis.git && \
+    pip install git+https://github.com/CrayLabs/SmartSim.git
 
-    returncode is also supplied in this function.
+ENV CUDA_HOME="/usr/local/cuda/"
+ENV PATH="${PATH}:${CUDA_HOME}/bin"
 
-    :param args: list of command arguments
-    :return: returncode, output and error
-    """
-    cmd = ["bkill"] + args
-    returncode, out, error = execute_cmd(cmd)
-    return returncode, out, error
-
-
-def jskill(args: t.List[str]) -> t.Tuple[int, str, str]:
-    """Calls LSF jskill with args.
-
-    returncode is also supplied in this function.
-
-    :param args: list of command arguments
-    :return: returncode, output and error
-    """
-
-    cmd = ["jskill"] + args
-    returncode, out, error = execute_cmd(cmd)
-    return returncode, out, error
-
-
-def jslist(args: t.List[str]) -> t.Tuple[str, str]:
-    """Calls LSF jslist with args
-
-    :param args: List of command arguments
-    :returns: Output and error of jslist
-    """
-    cmd = ["jslist"] + args
-    _, out, err = execute_cmd(cmd)
-    return out, err
+# Build ML Backends
+RUN smart build --device=cuda-12

@@ -30,10 +30,8 @@ from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
 from ..settings import (
     AprunSettings,
-    BsubBatchSettings,
     Container,
     DragonRunSettings,
-    JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
@@ -41,6 +39,7 @@ from ..settings import (
     QsubBatchSettings,
     RunSettings,
     SbatchSettings,
+    SgeQsubBatchSettings,
     SrunSettings,
     base,
 )
@@ -76,8 +75,8 @@ def create_batch_settings(
     by_launcher: t.Dict[str, t.Callable[..., base.BatchSettings]] = {
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
-        "lsf": BsubBatchSettings,
         "pals": QsubBatchSettings,
+        "sge": SgeQsubBatchSettings,
     }
 
     if launcher in ["auto", "dragon"]:
@@ -142,7 +141,6 @@ def create_run_settings(
             MpiexecSettings if launcher != "pals" else PalsMpiexecSettings
         ),
         "orterun": lambda launcher: OrterunSettings,
-        "jsrun": lambda launcher: JsrunSettings,
     }
 
     # run commands supported by each launcher
@@ -152,7 +150,7 @@ def create_run_settings(
         "slurm": ["srun", "mpirun", "mpiexec"],
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "pals": ["mpiexec"],
-        "lsf": ["jsrun", "mpirun", "mpiexec"],
+        "sge": ["mpirun", "mpiexec"],
         "local": [""],
     }
 

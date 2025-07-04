@@ -71,6 +71,7 @@ disable=logging-fstring-interpolation,
         fixme,
         broad-exception-raised,
         duplicate-code, # TODO: remove this after fixing duplicate code
+        too-many-positional-arguments,
 
 enable=useless-object-inheritance,
        unused-variable,

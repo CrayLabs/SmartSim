@@ -74,7 +74,7 @@ def calc_svd(input_tensor):
     return input_tensor.svd()
 
 
-def run(device):
+def run(device, num_devices):
     # connect a client to the database
     client = Client(cluster=False)
 
@@ -92,9 +92,23 @@ def run(device):
     net = create_torch_model()
     # 20 samples of "image" data
     example_forward_input = torch.rand(20, 1, 28, 28)
-    client.set_model("cnn", net, "TORCH", device=device)
     client.put_tensor("input", example_forward_input.numpy())
-    client.run_model("cnn", inputs=["input"], outputs=["output"])
+    if device == "CPU":
+        client.set_model("cnn", net, "TORCH", device=device)
+        client.run_model("cnn", inputs=["input"], outputs=["output"])
+    else:
+        client.set_model_multigpu(
+            "cnn", net, "TORCH", first_gpu=0, num_gpus=num_devices
+        )
+        client.run_model_multigpu(
+            "cnn",
+            offset=1,
+            first_gpu=0,
+            num_gpus=num_devices,
+            inputs=["input"],
+            outputs=["output"],
+        )
+
     output = client.get_tensor("output")
     print(f"Prediction: {output}")
 
@@ -106,5 +120,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--device", type=str, default="CPU", help="device type for model execution"
     )
+    parser.add_argument(
+        "--num-devices",
+        type=int,
+        default=1,
+        help="Number of devices to set the model on",
+    )
     args = parser.parse_args()
-    run(args.device)
+    run(args.device, args.num_devices)

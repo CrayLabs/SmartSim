@@ -23,7 +23,7 @@ build:
       - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
       - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
     post_create_environment:
-      - python -m pip install .[dev]
+      - python -m pip install .[dev,docs]
       - cd smartredis; python -m pip install .
       - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
       - ln -s smartredis/examples ./examples
@@ -37,7 +37,3 @@ build:
 sphinx:
   configuration: doc/conf.py
   fail_on_warning: true
-
-python:
-   install:
-   - requirements: doc/requirements-doc.txt

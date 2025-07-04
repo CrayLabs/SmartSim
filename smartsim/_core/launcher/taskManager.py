@@ -36,7 +36,7 @@ import psutil
 from ...error import LauncherError
 from ...log import ContextThread, get_logger
 from ..utils.helpers import check_dev_log_level
-from .util.shell import execute_async_cmd, execute_cmd
+from ..utils.shell import execute_async_cmd, execute_cmd
 
 logger = get_logger(__name__)
 VERBOSE_TM = check_dev_log_level()  # pylint: disable=invalid-name

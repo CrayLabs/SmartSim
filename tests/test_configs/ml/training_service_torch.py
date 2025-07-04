@@ -24,6 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+import platform
+import sys
+
+import psutil
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -99,3 +104,9 @@ if __name__ == "__main__":
         epoch_running_loss = 0.0
 
     print("Finished Training")
+    del trainloader
+
+    if sys.version_info.minor > 11 and platform.system() == "Darwin":
+        parent = psutil.Process(os.getpid())
+        for child in parent.children(recursive=True):
+            child.kill()

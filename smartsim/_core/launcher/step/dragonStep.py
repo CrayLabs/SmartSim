@@ -30,7 +30,11 @@ import shutil
 import sys
 import typing as t
 
-from ...._core.schemas.dragonRequests import DragonRunRequest, request_registry
+from ...._core.schemas.dragonRequests import (
+    DragonRunPolicy,
+    DragonRunRequest,
+    request_registry,
+)
 from ....error.errors import SSUnsupportedError
 from ....log import get_logger
 from ....settings import (
@@ -166,8 +170,11 @@ class DragonBatchStep(Step):
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
 
+            policy = DragonRunPolicy.from_run_args(run_args)
+
             cmd = step.get_launch_cmd()
             out, err = step.get_output_files()
+
             request = DragonRunRequest(
                 exe=cmd[0],
                 exe_args=cmd[1:],
@@ -179,6 +186,7 @@ class DragonBatchStep(Step):
                 current_env=os.environ,
                 output_file=out,
                 error_file=err,
+                policy=policy,
             )
             requests.append(request_registry.to_string(request))
         with open(request_file, "w", encoding="utf-8") as script_file:

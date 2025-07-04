@@ -156,7 +156,7 @@ class RunSettings(SettingsBase):
         self._env_vars = copy.deepcopy(value)
 
     # To be overwritten by subclasses. Set of reserved args a user cannot change
-    reserved_run_args = set()  # type: set[str]
+    reserved_run_args: t.ClassVar[frozenset[str]] = frozenset()
 
     def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes
@@ -594,10 +594,18 @@ class BatchSettings(SettingsBase):
         self._batch_cmd = batch_cmd
         self.batch_args = batch_args or {}
         self._preamble: t.List[str] = []
-        self.set_nodes(kwargs.get("nodes", None))
-        self.set_walltime(kwargs.get("time", None))
-        self.set_queue(kwargs.get("queue", None))
-        self.set_account(kwargs.get("account", None))
+        nodes = kwargs.get("nodes", None)
+        if nodes:
+            self.set_nodes(nodes)
+        queue = kwargs.get("queue", None)
+        if queue:
+            self.set_queue(queue)
+        time = kwargs.get("time", None)
+        if time:
+            self.set_walltime(time)
+        account = kwargs.get("account", None)
+        if account:
+            self.set_account(account)
 
     @property
     def batch_cmd(self) -> str:

@@ -54,7 +54,7 @@ class _BaseMPIStep(Step):
             self._set_alloc()
         self.run_settings = run_settings
 
-    _supported_launchers = ["PBS", "SLURM", "LSB"]
+    _supported_launchers = ["PBS", "SLURM", "LSB", "SGE"]
 
     @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:
@@ -102,7 +102,10 @@ class _BaseMPIStep(Step):
 
         environment_keys = os.environ.keys()
         for launcher in self._supported_launchers:
-            jobid_field = f"{launcher.upper()}_JOBID"
+            if launcher == "SGE":
+                jobid_field = "JOB_ID"
+            else:
+                jobid_field = f"{launcher.upper()}_JOBID"
             if jobid_field in environment_keys:
                 self.alloc = os.environ[jobid_field]
                 logger.debug(f"Running on allocation {self.alloc} from {jobid_field}")

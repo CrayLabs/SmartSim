@@ -117,8 +117,7 @@ class EntitySequence(t.Generic[_T_co]):
         return None
 
     def __iter__(self) -> t.Iterator[_T_co]:
-        for entity in self.entities:
-            yield entity
+        yield from self.entities
 
     def __len__(self) -> int:
         return len(self.entities)
