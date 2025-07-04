@@ -435,8 +435,7 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
     set_mock_group_infos(monkeypatch, dragon_backend)
     hosts = dragon_backend.hosts
 
-    expected_message = textwrap.dedent(
-        f"""\
+    expected_message = textwrap.dedent(f"""\
         Dragon server backend update
         | Host    |  Status  |
         |---------|----------|
@@ -449,7 +448,6 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
         | del999-2 | Cancelled    | {hosts[1]}         |       -9       |      1      |
         | c101vz-3 | Completed    | {hosts[1]},{hosts[2]} |       0        |      2      |
         | 0ghjk1-4 | Failed       | {hosts[2]}         |       -1       |      1      |
-        | ljace0-5 | NeverStarted |                 |                |      0      |"""
-    )
+        | ljace0-5 | NeverStarted |                 |                |      0      |""")
 
     assert dragon_backend.status_message == expected_message

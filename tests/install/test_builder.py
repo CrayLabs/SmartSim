@@ -373,15 +373,13 @@ def test_git_commands_are_configered_correctly_for_platforms(plat, cmd, expected
 
 def test_modify_source_files(p_test_dir):
     def make_text_blurb(food):
-        return textwrap.dedent(
-            f"""\
+        return textwrap.dedent(f"""\
             My favorite food is {food}
             {food} is an important part of a healthy breakfast
             {food} {food} {food} {food}
             This line should be unchanged!
             --> {food} <--
-            """
-        )
+            """)
 
     original_word = "SPAM"
     mutated_word = "EGGS"
