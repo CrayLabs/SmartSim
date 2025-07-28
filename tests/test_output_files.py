@@ -30,7 +30,6 @@ import pathlib
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
@@ -106,35 +105,45 @@ def test_mutated_model_output(test_dir):
 def test_get_output_files_with_create_job_step(test_dir):
     """Testing output files through _create_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    status_dir = exp_dir / ".smartsim"
-    # Set the model path to the test directory
-    model.path = test_dir
-    step = controller._create_job_step(model)
-    expected_out_path = status_dir / (model.name + ".out")
-    expected_err_path = status_dir / (model.name + ".err")
+    # Create a fresh model instance for this test
+    test_model = Model("test_model", params={}, path=test_dir, run_settings=rs)
+    # Create run_dir to avoid using current working directory
+    run_dir = exp_dir / ".smartsim" / "run_test"
+    step = controller._create_job_step(test_model, run_dir)
+    expected_out_path = run_dir / (test_model.name + ".out")
+    expected_err_path = run_dir / (test_model.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
 @pytest.mark.parametrize(
-    "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(orc, id="orchestrator")],
+    "entity_type",
+    [
+        pytest.param("ensemble", id="ensemble"),
+        pytest.param("orchestrator", id="orchestrator"),
+    ],
 )
-def test_get_output_files_with_create_batch_job_step(entity, test_dir):
+def test_get_output_files_with_create_batch_job_step(entity_type, test_dir):
     """Testing output files through _create_batch_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    # Set the entity path to test_dir
+
+    # Create fresh entities for each test to avoid path conflicts
+    if entity_type == "ensemble":
+        entity = Ensemble(
+            "ens", params={}, run_settings=rs, batch_settings=bs, replicas=3
+        )
+    else:  # orchestrator
+        entity = Orchestrator(
+            db_nodes=3, batch=True, launcher="slurm", run_command="srun"
+        )
+
     entity.path = test_dir
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity)
+    # Create run_dir to avoid using current working directory
+    run_dir = exp_dir / ".smartsim" / "run_test_batch"
+    batch_step, substeps = slurm_controller._create_batch_job_step(entity, run_dir)
     for step in substeps:
-        # With the new simplified structure, each step should use its own entity's path
-        # Each entity member has their own individual path, so the output goes in their own .smartsim directory
-        step_entity_path = pathlib.Path(step.meta["status_dir"]).parent
-        expected_out_path = pathlib.Path(step.meta["status_dir"]) / (
-            step.entity_name + ".out"
-        )
-        expected_err_path = pathlib.Path(step.meta["status_dir"]) / (
-            step.entity_name + ".err"
-        )
+        # With timestamped runs, output files should be in the run_dir
+        expected_out_path = run_dir / (step.entity_name + ".out")
+        expected_err_path = run_dir / (step.entity_name + ".err")
         actual_out, actual_err = step.get_output_files()
         assert actual_out == str(expected_out_path)
         assert actual_err == str(expected_err_path)

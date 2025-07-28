@@ -30,7 +30,6 @@ import pathlib
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim.database.orchestrator import Orchestrator
 from smartsim.entity.ensemble import Ensemble
@@ -58,16 +57,20 @@ anon_batch_model = _AnonymousBatchJob(batch_model)
 
 
 @pytest.mark.parametrize(
-    "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(model, id="model")],
+    "entity_type",
+    [pytest.param("ensemble", id="ensemble"), pytest.param("model", id="model")],
 )
-def test_symlink(test_dir, entity):
+def test_symlink(test_dir, entity_type):
     """Test symlinking historical output files"""
-    entity.path = test_dir
-    if entity.type == Ensemble:
-        for member in ens.models:
+    if entity_type == "ensemble":
+        entity = Ensemble(
+            "ens", params={}, run_settings=rs, batch_settings=bs, replicas=3
+        )
+        entity.path = test_dir
+        for member in entity.models:
             symlink_with_create_job_step(test_dir, member)
     else:
+        entity = Model("test_model", params={}, path=test_dir, run_settings=rs)
         symlink_with_create_job_step(test_dir, entity)
 
 
@@ -75,33 +78,63 @@ def symlink_with_create_job_step(test_dir, entity):
     """Function that helps cut down on repeated testing code"""
     exp_dir = pathlib.Path(test_dir)
     entity.path = test_dir
-    # With simplified structure, output files go directly in .smartsim directory
-    status_dir = exp_dir / ".smartsim"
-    step = controller._create_job_step(entity)
+    # Create run_dir to simulate timestamped run structure
+    run_dir = exp_dir / ".smartsim" / "run_test"
+    step = controller._create_job_step(entity, run_dir)
     controller.symlink_output_files(step, entity)
     assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
     assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
+    # Verify symlinks point to the correct run directory
+    expected_out = run_dir / (entity.name + ".out")
+    expected_err = run_dir / (entity.name + ".err")
     assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
-        status_dir / (entity.name + ".out")
+        expected_out
     )
     assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.err")) == str(
-        status_dir / (entity.name + ".err")
+        expected_err
     )
 
 
 @pytest.mark.parametrize(
-    "entity",
+    "entity_type",
     [
-        pytest.param(ens, id="ensemble"),
-        pytest.param(orc, id="orchestrator"),
-        pytest.param(anon_batch_model, id="model"),
+        pytest.param("ensemble", id="ensemble"),
+        pytest.param("orchestrator", id="orchestrator"),
+        pytest.param("model", id="model"),
     ],
 )
-def test_batch_symlink(entity, test_dir):
+def test_batch_symlink(entity_type, test_dir):
     """Test symlinking historical output files"""
     exp_dir = pathlib.Path(test_dir)
+
+    # Create fresh entities for each test to avoid path conflicts
+    if entity_type == "ensemble":
+        entity = Ensemble(
+            "ens", params={}, run_settings=rs, batch_settings=bs, replicas=3
+        )
+    elif entity_type == "orchestrator":
+        entity = Orchestrator(
+            db_nodes=3, batch=True, launcher="slurm", run_command="srun"
+        )
+    else:  # model
+        batch_model = Model(
+            "batch_test_model",
+            params={},
+            path=test_dir,
+            run_settings=batch_rs,
+            batch_settings=bs,
+        )
+        entity = _AnonymousBatchJob(batch_model)
+
     entity.path = test_dir
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity)
+    # For entities with sub-entities (like Orchestrator), set their paths too
+    if hasattr(entity, "entities"):
+        for sub_entity in entity.entities:
+            sub_entity.path = test_dir
+
+    # Create run_dir to simulate timestamped run structure
+    run_dir = exp_dir / ".smartsim" / "run_test_batch"
+    batch_step, substeps = slurm_controller._create_batch_job_step(entity, run_dir)
 
     # For batch entities, we need to call symlink_output_files correctly
     # Based on how the controller does it, we should pass the individual entities
@@ -148,7 +181,9 @@ def test_symlink_error(test_dir):
         path=pathlib.Path(test_dir, "badpath"),
         run_settings=RunSettings("echo"),
     )
-    bad_step = controller._create_job_step(bad_model)
+    # Create run_dir to avoid using current working directory
+    run_dir = pathlib.Path(test_dir) / ".smartsim" / "run_test_error"
+    bad_step = controller._create_job_step(bad_model, run_dir)
     # The new behavior should auto-create directories and symlinks without errors
     controller.symlink_output_files(bad_step, bad_model)
 
