@@ -45,7 +45,6 @@ import dragon.native.machine as dragon_machine
 
 # pylint: enable=import-error
 # isort: on
-from ...._core.config import get_config
 from ...._core.schemas import (
     DragonHandshakeRequest,
     DragonHandshakeResponse,
@@ -177,12 +176,7 @@ class DragonBackend:
         """Whether the server frontend should shut down when the backend does"""
         self._shutdown_initiation_time: t.Optional[float] = None
         """The time at which the server initiated shutdown"""
-        smartsim_config = get_config()
-        self._cooldown_period = (
-            smartsim_config.telemetry_frequency * 2 + 5
-            if smartsim_config.telemetry_enabled
-            else 5
-        )
+        self._cooldown_period = 5
         """Time in seconds needed to server to complete shutdown"""
 
         self._view = DragonBackendView(self)

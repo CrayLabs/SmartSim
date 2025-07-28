@@ -103,7 +103,7 @@ class JobEntity:
         :param entity_dict: The raw dictionary deserialized from manifest JSON
         :param entity: The entity instance to modify
         """
-        # DB metadata mapping simplified since telemetry is removed
+        # DB metadata mapping simplified
         pass
 
     @staticmethod

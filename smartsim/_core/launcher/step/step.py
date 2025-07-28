@@ -145,12 +145,11 @@ def proxyable_launch_cmd(
         command is passed to the proxy as a base64 encoded string.
 
         Steps implementing `get_launch_cmd` and decorated with
-        `proxyable_launch_cmd` will generate status updates that can be consumed
-        by the telemetry monitor and dashboard"""
+        `proxyable_launch_cmd` will generate status updates for monitoring."""
         original_cmd_list = fn(self)
 
-        if not CONFIG.telemetry_enabled:
-            return original_cmd_list
+        # Always use direct launch
+        return original_cmd_list
 
         if self.managed:
             raise UnproxyableStepError(
