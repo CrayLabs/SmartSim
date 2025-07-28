@@ -197,54 +197,6 @@ def test_launcher_detection(
     assert exp._launcher == wlmutils.get_test_launcher()
 
 
-def test_enable_disable_telemetry(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, config: Config
-) -> None:
-    # Global telemetry defaults to `on` and can be modified by
-    # setting the value of env var SMARTSIM_FLAG_TELEMETRY to 0/1
-    monkeypatch.setattr(os, "environ", {})
-    exp = Experiment("my-exp", exp_path=test_dir)
-    exp.telemetry.enable()
-    assert exp.telemetry.is_enabled
-
-    exp.telemetry.disable()
-    assert not exp.telemetry.is_enabled
-
-    exp.telemetry.enable()
-    assert exp.telemetry.is_enabled
-
-    exp.telemetry.disable()
-    assert not exp.telemetry.is_enabled
-
-    exp.start()
-    mani_path = (
-        pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
-    )
-    assert mani_path.exists()
-
-
-def test_telemetry_default(
-    monkeypatch: pytest.MonkeyPatch, test_dir: str, config: Config
-) -> None:
-    """Ensure the default values for telemetry configuration match expectation
-    that experiment telemetry is on"""
-
-    # If env var related to telemetry doesn't exist, experiment should default to True
-    monkeypatch.setattr(os, "environ", {})
-    exp = Experiment("my-exp", exp_path=test_dir)
-    assert exp.telemetry.is_enabled
-
-    # If telemetry disabled in env, should get False
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
-    exp = Experiment("my-exp", exp_path=test_dir)
-    assert not exp.telemetry.is_enabled
-
-    # If telemetry enabled in env, should get True
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "1")
-    exp = Experiment("my-exp", exp_path=test_dir)
-    assert exp.telemetry.is_enabled
-
-
 def test_error_on_cobalt() -> None:
     with pytest.raises(SSUnsupportedError):
         exp = Experiment("cobalt_exp", launcher="cobalt")

@@ -659,6 +659,9 @@ class Controller:
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
+        # Create a status directory within the entity path for output files
+        status_dir = os.path.join(entity.path, ".smartsim")
+        step.meta["status_dir"] = status_dir
 
         return step
 
