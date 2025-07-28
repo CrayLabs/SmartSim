@@ -39,4 +39,4 @@ def dynamic_execute(
 
 
 # No plugins currently available
-plugins = ()
+plugins: t.Tuple[t.Callable[[], MenuItemConfig], ...] = ()

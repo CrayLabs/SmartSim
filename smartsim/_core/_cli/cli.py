@@ -62,7 +62,9 @@ class SmartCli:
         )
 
         self.register_menu_items(menu)
-        self.register_menu_items([plugin() for plugin in plugins])
+        # Register plugin menu items (currently empty since all plugins were removed)
+        plugin_items: t.List[MenuItemConfig] = [plugin() for plugin in plugins]
+        self.register_menu_items(plugin_items)
 
     def execute(self, cli_args: t.List[str]) -> int:
         if len(cli_args) < 2:

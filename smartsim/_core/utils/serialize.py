@@ -53,7 +53,7 @@ _LOGGER = smartsim.log.get_logger(__name__)
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     # Create directories for output
-    manifest.metadata.exp_path.mkdir(parents=True, exist_ok=True)
+    Path(manifest.metadata.exp_path).mkdir(parents=True, exist_ok=True)
     exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
     new_run = {
@@ -170,8 +170,8 @@ def _dictify_ensemble(
             else {}
         ),
         "models": [
-            _dictify_model(model, *launching_metadata)
-            for model, launching_metadata in members
+            _dictify_model(model)
+            for model, _launching_metadata in members  # Ignore metadata
         ],
     }
 

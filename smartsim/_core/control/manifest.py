@@ -199,7 +199,7 @@ class _LaunchedManifestMetadata(t.NamedTuple):
 
     @property
     def manifest_file_path(self) -> pathlib.Path:
-        return self.exp_path / _serialize.MANIFEST_FILENAME
+        return pathlib.Path(self.exp_path) / _serialize.MANIFEST_FILENAME
 
 
 @dataclass(frozen=True)
@@ -259,7 +259,7 @@ class LaunchedManifestBuilder(t.Generic[_T]):
 
     @property
     def manifest_file_path(self) -> pathlib.Path:
-        return self.exp_path / _serialize.MANIFEST_FILENAME
+        return pathlib.Path(self.exp_path) / _serialize.MANIFEST_FILENAME
 
     def add_model(self, model: Model, data: _T) -> None:
         self._models.append((model, data))
