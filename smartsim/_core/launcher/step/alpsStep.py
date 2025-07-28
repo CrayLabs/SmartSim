@@ -32,7 +32,7 @@ from shlex import split as sh_split
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import AprunSettings, RunSettings, Singularity
-from .step import Step, proxyable_launch_cmd
+from .step import Step
 
 logger = get_logger(__name__)
 
@@ -57,7 +57,6 @@ class AprunStep(Step):
         """
         return self.run_settings.mpmd
 
-    @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 

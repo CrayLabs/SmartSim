@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import copy
-import functools
 import os.path as osp
 import pathlib
 import time
@@ -127,24 +126,3 @@ class Step:
         :param step: a job step instance e.g. SrunStep
         """
         raise SmartSimError("add_to_batch not implemented for this step type")
-
-
-_StepT = t.TypeVar("_StepT", bound=Step)
-
-
-def proxyable_launch_cmd(
-    fn: t.Callable[[_StepT], t.List[str]], /
-) -> t.Callable[[_StepT], t.List[str]]:
-    @functools.wraps(fn)
-    def _get_launch_cmd(self: _StepT) -> t.List[str]:
-        """
-        Generate a launch command that executes the `JobStep` directly.
-
-        Steps implementing `get_launch_cmd` and decorated with
-        `proxyable_launch_cmd` support direct launching."""
-        original_cmd_list = fn(self)
-
-        # Always use direct launch
-        return original_cmd_list
-
-    return _get_launch_cmd

@@ -30,7 +30,7 @@ import typing as t
 
 from ....settings import Singularity
 from ....settings.base import RunSettings
-from .step import Step, proxyable_launch_cmd
+from .step import Step
 
 
 class LocalStep(Step):
@@ -43,7 +43,6 @@ class LocalStep(Step):
     def env(self) -> t.Dict[str, str]:
         return self._env
 
-    @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:
         cmd = []
 
