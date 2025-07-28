@@ -145,12 +145,6 @@ class ShellError(LauncherError):
         return msg
 
 
-class UnproxyableStepError(SmartSimError):
-    """Raised when a user attempts to proxy a managed ``Step`` through the
-    unmanaged step proxy entry point
-    """
-
-
 class SmartSimCLIActionCancelled(SmartSimError):
     """Raised when a `smart` CLI command is terminated"""
 
