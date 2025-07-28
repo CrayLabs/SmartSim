@@ -176,7 +176,6 @@ setup(
         "GitPython<=3.1.43",
         "protobuf<=3.20.3",
         "jinja2>=3.1.2",
-        "watchdog>4,<5",
         "pydantic>2",
         "pyzmq>=25.1.2",
         "pygithub>=2.3.0",

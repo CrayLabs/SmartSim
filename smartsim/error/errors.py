@@ -145,13 +145,7 @@ class ShellError(LauncherError):
         return msg
 
 
-class TelemetryError(SSInternalError):
-    """Raised when SmartSim runs into trouble establishing or communicating
-    telemetry information
-    """
-
-
-class UnproxyableStepError(TelemetryError):
+class UnproxyableStepError(SmartSimError):
     """Raised when a user attempts to proxy a managed ``Step`` through the
     unmanaged step proxy entry point
     """

@@ -272,22 +272,6 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_MPI", "1")) > 0
 
     @property
-    def telemetry_frequency(self) -> int:
-        return int(os.environ.get("SMARTSIM_TELEMETRY_FREQUENCY", 5))
-
-    @property
-    def telemetry_enabled(self) -> bool:
-        return int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", "1")) > 0
-
-    @property
-    def telemetry_cooldown(self) -> int:
-        return int(os.environ.get("SMARTSIM_TELEMETRY_COOLDOWN", 90))
-
-    @property
-    def telemetry_subdir(self) -> str:
-        return ".smartsim/telemetry"
-
-    @property
     def dragon_default_subdir(self) -> str:
         return ".smartsim/dragon"
 

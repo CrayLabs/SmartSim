@@ -44,7 +44,6 @@ from .entity import (
     EntitySequence,
     Model,
     SmartSimEntity,
-    TelemetryConfiguration,
 )
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
@@ -61,23 +60,6 @@ def _exp_path_map(exp: "Experiment") -> str:
 
 
 _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
-
-
-class ExperimentTelemetryConfiguration(TelemetryConfiguration):
-    """Customized telemetry configuration for an `Experiment`. Ensures
-    backwards compatible behavior with drivers using environment variables
-    to enable experiment telemetry"""
-
-    def __init__(self) -> None:
-        super().__init__(enabled=CONFIG.telemetry_enabled)
-
-    def _on_enable(self) -> None:
-        """Modify the environment variable to enable telemetry."""
-        environ["SMARTSIM_FLAG_TELEMETRY"] = "1"
-
-    def _on_disable(self) -> None:
-        """Modify the environment variable to disable telemetry."""
-        environ["SMARTSIM_FLAG_TELEMETRY"] = "0"
 
 
 # pylint: disable=no-self-use
@@ -173,7 +155,6 @@ class Experiment:
         self._control = Controller(launcher=self._launcher)
 
         self.db_identifiers: t.Set[str] = set()
-        self._telemetry_cfg = ExperimentTelemetryConfiguration()
 
     def _set_dragon_server_path(self) -> None:
         """Set path for dragon server through environment varialbes"""
@@ -907,14 +888,6 @@ class Experiment:
             missingval="None",
             disable_numparse=True,
         )
-
-    @property
-    def telemetry(self) -> TelemetryConfiguration:
-        """Return the telemetry configuration for this entity.
-
-        :returns: configuration of telemetry for this entity
-        """
-        return self._telemetry_cfg
 
     def _launch_summary(self, manifest: Manifest) -> None:
         """Experiment pre-launch summary of entities that will be launched

@@ -98,8 +98,8 @@ def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.
     default_paths = None, None
 
     if _path := ctx_exp_path.get():
-        file_out = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.out"
-        file_err = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.err"
+        file_out = pathlib.Path(_path) / "logs/smartsim.out"
+        file_err = pathlib.Path(_path) / "logs/smartsim.err"
         return file_out, file_err
 
     return default_paths
