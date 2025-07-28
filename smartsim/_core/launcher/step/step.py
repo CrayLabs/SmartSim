@@ -138,12 +138,10 @@ def proxyable_launch_cmd(
     @functools.wraps(fn)
     def _get_launch_cmd(self: _StepT) -> t.List[str]:
         """
-        Generate a launch command that executes the `JobStep` with the
-        indirect launching entrypoint instead of directly. The original
-        command is passed to the proxy as a base64 encoded string.
+        Generate a launch command that executes the `JobStep` directly.
 
         Steps implementing `get_launch_cmd` and decorated with
-        `proxyable_launch_cmd` will generate status updates for monitoring."""
+        `proxyable_launch_cmd` support direct launching."""
         original_cmd_list = fn(self)
 
         # Always use direct launch
