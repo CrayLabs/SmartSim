@@ -30,17 +30,15 @@ import copy
 import functools
 import os.path as osp
 import pathlib
-import sys
 import time
 import typing as t
 from os import makedirs
 
-from smartsim._core.config import CONFIG
-from smartsim.error.errors import SmartSimError, UnproxyableStepError
+from smartsim.error.errors import SmartSimError
 
 from ....log import get_logger
 from ....settings.base import RunSettings, SettingsBase
-from ...utils.helpers import encode_cmd, get_base_36_repr
+from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
 
 logger = get_logger(__name__)
@@ -150,37 +148,5 @@ def proxyable_launch_cmd(
 
         # Always use direct launch
         return original_cmd_list
-
-        if self.managed:
-            raise UnproxyableStepError(
-                f"Attempting to proxy managed step of type {type(self)} "
-                "through the unmanaged step proxy entry point"
-            )
-
-        proxy_module = "smartsim._core.entrypoints.indirect"
-        entity_type = self.meta["entity_type"]
-        status_dir = self.meta["status_dir"]
-
-        logger.debug(f"Encoding command{' '.join(original_cmd_list)}")
-
-        # encode the original cmd to avoid potential collisions and escaping
-        # errors when passing it using CLI arguments to the indirect entrypoint
-        encoded_cmd = encode_cmd(original_cmd_list)
-
-        # return a new command that executes the proxy and passes
-        # the original command as an argument
-        return [
-            sys.executable,
-            "-m",
-            proxy_module,
-            "+name",
-            self.name,
-            "+command",
-            encoded_cmd,
-            "+entity_type",
-            entity_type,
-            "+working_dir",
-            self.cwd,
-        ]
 
     return _get_launch_cmd

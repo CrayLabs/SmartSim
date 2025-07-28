@@ -105,7 +105,7 @@ def test_batch_symlink(entity, test_dir):
 
     # For batch entities, we need to call symlink_output_files correctly
     # Based on how the controller does it, we should pass the individual entities
-    if hasattr(entity, 'entities') and len(substeps) > 0:
+    if hasattr(entity, "entities") and len(substeps) > 0:
         # Just test the first substep and entity pair
         substep = substeps[0]
         substep_entity = entity.entities[0]
@@ -119,8 +119,12 @@ def test_batch_symlink(entity, test_dir):
         assert symlink_err.is_symlink()
 
         # The symlinks should point to the status_dir set for this substep
-        expected_out = pathlib.Path(substep.meta["status_dir"]) / (substep.entity_name + ".out")
-        expected_err = pathlib.Path(substep.meta["status_dir"]) / (substep.entity_name + ".err")
+        expected_out = pathlib.Path(substep.meta["status_dir"]) / (
+            substep.entity_name + ".out"
+        )
+        expected_err = pathlib.Path(substep.meta["status_dir"]) / (
+            substep.entity_name + ".err"
+        )
 
         assert os.readlink(symlink_out) == str(expected_out)
         assert os.readlink(symlink_err) == str(expected_err)

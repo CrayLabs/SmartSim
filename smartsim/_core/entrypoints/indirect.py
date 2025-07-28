@@ -37,7 +37,7 @@ import coloredlogs
 import psutil
 
 import smartsim.log
-from smartsim._core.utils.helpers import decode_cmd, get_ts_ms
+from smartsim._core.utils.helpers import decode_cmd
 
 STEP_PID: t.Optional[int] = None
 logger = smartsim.log.get_logger(__name__)
@@ -52,10 +52,10 @@ def main(
     cwd: str,
     status_dir: str,
 ) -> int:
-    """This function receives an encoded step command from a SmartSim Experiment
-    and runs it in a subprocess. The entrypoint provides logging and status
-    monitoring for unmanaged tasks - a workload manager can be queried for a managed task
-    to achieve the same result.
+    """This function receives an encoded step command from a SmartSim
+    Experiment and runs it in a subprocess. The entrypoint provides logging
+    and status monitoring for unmanaged tasks - a workload manager can be
+    queried for a managed task to achieve the same result.
 
     :param cmd: a base64 encoded cmd to execute
     :param entity_type: `SmartSimEntity` entity class. Valid values
@@ -78,7 +78,6 @@ def main(
     logger.debug("Indirect step starting")
 
     start_detail = f"Proxy process {proxy_pid}"
-    start_rc: t.Optional[int] = None
 
     try:
         process = psutil.Popen(
@@ -93,7 +92,6 @@ def main(
 
     except Exception as ex:
         start_detail += f" failed to start child process. {ex}"
-        start_rc = 1
         logger.error("Failed to create process", exc_info=True)
         cleanup()
         return 1

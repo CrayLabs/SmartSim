@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pathlib
 import time
 import typing as t
 from dataclasses import dataclass
@@ -46,8 +45,9 @@ class _JobKey:
 
 
 class JobEntity:
-    """An entity containing run-time SmartSimEntity metadata. The `JobEntity` satisfies the core
-    API necessary to use a `JobManager` to manage retrieval of managed step updates.
+    """An entity containing run-time SmartSimEntity metadata. The `JobEntity`
+    satisfies the core API necessary to use a `JobManager` to manage retrieval
+    of managed step updates.
     """
 
     def __init__(self) -> None:
@@ -103,8 +103,7 @@ class JobEntity:
         :param entity_dict: The raw dictionary deserialized from manifest JSON
         :param entity: The entity instance to modify
         """
-        # DB metadata mapping simplified
-        pass
+        # DB metadata mapping simplified - no implementation needed
 
     @staticmethod
     def _map_standard_metadata(
@@ -112,7 +111,7 @@ class JobEntity:
         entity_dict: t.Dict[str, t.Any],
         entity: "JobEntity",
         exp_dir: str,
-        raw_experiment: t.Dict[str, t.Any],
+        raw_experiment: t.Dict[str, t.Any],  # pylint: disable=unused-argument
     ) -> None:
         """Map universal properties from a runtime manifest onto a `JobEntity`
 
@@ -123,8 +122,6 @@ class JobEntity:
         :param raw_experiment: The raw experiment dictionary deserialized from
         manifest JSON
         """
-        is_dragon = raw_experiment["launcher"].lower() == "dragon"
-
         # all entities contain shared properties that identify the task
         entity.type = entity_type
         entity.name = entity_dict["name"]

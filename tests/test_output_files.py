@@ -129,8 +129,12 @@ def test_get_output_files_with_create_batch_job_step(entity, test_dir):
         # With the new simplified structure, each step should use its own entity's path
         # Each entity member has their own individual path, so the output goes in their own .smartsim directory
         step_entity_path = pathlib.Path(step.meta["status_dir"]).parent
-        expected_out_path = pathlib.Path(step.meta["status_dir"]) / (step.entity_name + ".out")
-        expected_err_path = pathlib.Path(step.meta["status_dir"]) / (step.entity_name + ".err")
+        expected_out_path = pathlib.Path(step.meta["status_dir"]) / (
+            step.entity_name + ".out"
+        )
+        expected_err_path = pathlib.Path(step.meta["status_dir"]) / (
+            step.entity_name + ".err"
+        )
         actual_out, actual_err = step.get_output_files()
         assert actual_out == str(expected_out_path)
         assert actual_err == str(expected_err_path)

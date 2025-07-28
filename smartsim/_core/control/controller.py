@@ -32,8 +32,6 @@ import os.path as osp
 import pathlib
 import pickle
 import signal
-import subprocess
-import sys
 import threading
 import time
 import typing as t
@@ -371,15 +369,18 @@ class Controller:
             entity_err.unlink()
 
         # Before creating new output files, preserve any existing ones with timestamps
-        import time
         if historical_out.exists():
             timestamp = str(int(time.time() * 1000))
-            backup_out = historical_out.with_name(f"{historical_out.stem}_{timestamp}{historical_out.suffix}")
+            backup_out = historical_out.with_name(
+                f"{historical_out.stem}_{timestamp}{historical_out.suffix}"
+            )
             historical_out.rename(backup_out)
 
         if historical_err.exists():
             timestamp = str(int(time.time() * 1000))
-            backup_err = historical_err.with_name(f"{historical_err.stem}_{timestamp}{historical_err.suffix}")
+            backup_err = historical_err.with_name(
+                f"{historical_err.stem}_{timestamp}{historical_err.suffix}"
+            )
             historical_err.rename(backup_err)
 
         historical_err.touch()
