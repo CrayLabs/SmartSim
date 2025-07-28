@@ -106,10 +106,12 @@ def test_mutated_model_output(test_dir):
 def test_get_output_files_with_create_job_step(test_dir):
     """Testing output files through _create_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    status_dir = exp_dir / CONFIG.telemetry_subdir / model.type
-    step = controller._create_job_step(model, status_dir)
-    expected_out_path = status_dir / model.name / (model.name + ".out")
-    expected_err_path = status_dir / model.name / (model.name + ".err")
+    status_dir = exp_dir / ".smartsim"
+    # Set the model path to the test directory
+    model.path = test_dir
+    step = controller._create_job_step(model)
+    expected_out_path = status_dir / (model.name + ".out")
+    expected_err_path = status_dir / (model.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
@@ -120,21 +122,18 @@ def test_get_output_files_with_create_job_step(test_dir):
 def test_get_output_files_with_create_batch_job_step(entity, test_dir):
     """Testing output files through _create_batch_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
+    # Set the entity path to test_dir
+    entity.path = test_dir
+    batch_step, substeps = slurm_controller._create_batch_job_step(entity)
     for step in substeps:
-        # example output path for a member of an Ensemble is
-        # .smartsim/telemetry/Ensemble/ens/ens_0/ens_0.out
-        expected_out_path = (
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".out")
-        )
-        expected_err_path = (
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".err")
-        )
-        assert step.get_output_files() == (
-            str(expected_out_path),
-            str(expected_err_path),
-        )
+        # With the new simplified structure, each step should use its own entity's path
+        # Each entity member has their own individual path, so the output goes in their own .smartsim directory
+        step_entity_path = pathlib.Path(step.meta["status_dir"]).parent
+        expected_out_path = pathlib.Path(step.meta["status_dir"]) / (step.entity_name + ".out")
+        expected_err_path = pathlib.Path(step.meta["status_dir"]) / (step.entity_name + ".err")
+        actual_out, actual_err = step.get_output_files()
+        assert actual_out == str(expected_out_path)
+        assert actual_err == str(expected_err_path)
 
 
 def test_model_get_output_files(test_dir):

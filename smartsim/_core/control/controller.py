@@ -370,6 +370,18 @@ class Controller:
             entity_out.unlink()
             entity_err.unlink()
 
+        # Before creating new output files, preserve any existing ones with timestamps
+        import time
+        if historical_out.exists():
+            timestamp = str(int(time.time() * 1000))
+            backup_out = historical_out.with_name(f"{historical_out.stem}_{timestamp}{historical_out.suffix}")
+            historical_out.rename(backup_out)
+
+        if historical_err.exists():
+            timestamp = str(int(time.time() * 1000))
+            backup_err = historical_err.with_name(f"{historical_err.stem}_{timestamp}{historical_err.suffix}")
+            historical_err.rename(backup_err)
+
         historical_err.touch()
         historical_out.touch()
 
@@ -648,7 +660,9 @@ class Controller:
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
         # Create a status directory within the entity path for output files
-        status_dir = os.path.join(entity.path, ".smartsim")
+        # Ensure we have an absolute path
+        entity_path = os.path.abspath(entity.path) if entity.path else os.getcwd()
+        status_dir = os.path.join(entity_path, ".smartsim")
         step.meta["status_dir"] = status_dir
 
         return step

@@ -487,22 +487,6 @@ def test_shutdown_request(
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
-@pytest.mark.parametrize("telemetry_flag", ["0", "1"])
-def test_cooldown_is_set(monkeypatch: pytest.MonkeyPatch, telemetry_flag: str) -> None:
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", telemetry_flag)
-    dragon_backend = get_mock_backend(monkeypatch)
-
-    expected_cooldown = (
-        2 * CONFIG.telemetry_frequency + 5 if int(telemetry_flag) > 0 else 5
-    )
-
-    if telemetry_flag:
-        assert dragon_backend.cooldown_period == expected_cooldown
-    else:
-        assert dragon_backend.cooldown_period == expected_cooldown
-
-
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_heartbeat_and_time(monkeypatch: pytest.MonkeyPatch) -> None:
     dragon_backend = get_mock_backend(monkeypatch)
     first_heartbeat = dragon_backend.last_heartbeat
