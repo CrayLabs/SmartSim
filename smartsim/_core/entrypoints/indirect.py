@@ -30,6 +30,7 @@ import os
 import pathlib
 import signal
 import sys
+import time
 import typing as t
 from types import FrameType
 
@@ -44,6 +45,14 @@ logger = smartsim.log.get_logger(__name__)
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
+
+
+def get_ts_ms() -> int:
+    """Get current timestamp in milliseconds
+
+    :return: timestamp in milliseconds
+    """
+    return int(time.time() * 1000)
 
 
 def main(
