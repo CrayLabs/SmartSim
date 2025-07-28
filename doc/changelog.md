@@ -1,11 +1,9 @@
 # Changelog
 
-Listed here are the changes between each release of SmartSim,
-SmartRedis and SmartDashboard.
+Listed here are the changes between each release of SmartSim and SmartRedis.
 
 Jump to:
 - {ref}`SmartRedis changelog<smartredis-changelog>`
-- {ref}`SmartDashboard changelog<smartdashboard-changelog>`
 
 ## SmartSim
 
@@ -19,6 +17,7 @@ Description
   - All telemetry-related API methods (`Experiment.telemetry`, `Orchestrator.telemetry`)
   - Telemetry collectors and sinks
   - Removed `watchdog` dependency
+- **BREAKING CHANGE**: Removed SmartDashboard integration and CLI plugin
 - Python 3.12 is now supported; where available, installed TensorFlow version is now 2.16.2, PyTorch is 2.7.1.
 - Drop Python 3.9 support
 - Terminate LSF and LSB support
@@ -1103,14 +1102,5 @@ Description:
 ## SmartRedis
 
 ```{include} ../smartredis/doc/changelog.md
-:start-line: 2
-```
-
-------------------------------------------------------------------------
-
-(smartdashboard-changelog)=
-## SmartDashboard
-
-```{include} ../smartdashboard/doc/changelog.md
 :start-line: 2
 ```

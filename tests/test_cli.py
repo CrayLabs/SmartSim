@@ -51,13 +51,6 @@ pytestmark = pytest.mark.group_a
 
 _TEST_LOGGER = logging.getLogger(__name__)
 
-try:
-    import smartdashboard
-except:
-    test_dash_plugin = False
-else:
-    test_dash_plugin = True
-
 
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
@@ -342,25 +335,6 @@ def test_cli_default_cli(capsys):
     assert ret_val == os.EX_USAGE
 
 
-@pytest.mark.skipif(not test_dash_plugin, reason="plugin not found")
-def test_cli_plugin_dashboard(capfd):
-    """Ensure expected dashboard CLI plugin commands are supported"""
-    smart_cli = cli.default_cli()
-    capfd.readouterr()  # throw away existing output
-
-    # execute with `dashboard` argument, expect dashboard-specific help text
-    build_args = ["smart", "dashboard", "-h"]
-    rc = smart_cli.execute(build_args)
-
-    captured = capfd.readouterr()  # capture new output
-
-    assert "[-d DIRECTORY]" in captured.out
-    assert "[-p PORT]" in captured.out
-
-    assert "optional arguments:" in captured.out
-    assert rc == 0
-
-
 def test_cli_plugin_invalid(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ):
@@ -371,9 +345,9 @@ def test_cli_plugin_invalid(
     plugin_module = "notinstalled.Experiment_Overview"
     bad_plugins = [
         lambda: MenuItemConfig(
-            "dashboard",
-            "Start the SmartSim dashboard",
-            plugin.dynamic_execute(plugin_module, "Dashboard!"),
+            "testplugin",
+            "Test plugin for invalid plugin test",
+            plugin.dynamic_execute(plugin_module, "TestPlugin!"),
             is_plugin=True,
         )
     ]
@@ -387,8 +361,8 @@ def test_cli_plugin_invalid(
 
     smart_cli = cli.default_cli()
 
-    # execute with `dashboard` argument, expect failure to find dashboard plugin
-    build_args = ["smart", "dashboard", "-h"]
+    # execute with invalid plugin argument, expect failure to find plugin
+    build_args = ["smart", "testplugin", "-h"]
 
     rc = smart_cli.execute(build_args)
 

@@ -21,13 +21,11 @@ build:
         fi
     pre_create_environment:
       - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
-      - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
     post_create_environment:
       - python -m pip install .[dev,docs]
       - cd smartredis; python -m pip install .
       - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
       - ln -s smartredis/examples ./examples
-      - cd smartdashboard; python -m pip install .
     pre_build:
       - pip install typing_extensions==4.8.0
       - pip install pydantic==1.10.13

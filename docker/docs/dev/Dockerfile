@@ -48,12 +48,6 @@ RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --dept
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
-# Install smartdashboard
-RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
-    && cd smartdashboard \
-    && python -m pip install . \
-    && rm -rf ~/.cache/pip
-
 # Install docs dependencies and SmartSim
 RUN NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .[docs]
 

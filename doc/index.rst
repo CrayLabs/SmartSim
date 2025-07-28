@@ -57,12 +57,6 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: SmartDashboard
-
-   smartdashboard
-
-.. toctree::
-   :maxdepth: 2
    :caption: Reference
 
    changelog
