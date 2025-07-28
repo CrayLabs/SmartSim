@@ -150,7 +150,7 @@ def test_indirect_main_dir_check(test_dir):
     cmd = ["echo", "unit-test"]
     encoded_cmd = encode_cmd(cmd)
 
-    status_path = exp_dir / CONFIG.telemetry_subdir
+    status_path = exp_dir / "status"
 
     # show that a missing status_path is created when missing
     main(encoded_cmd, "application", exp_dir, status_path)
@@ -165,7 +165,7 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr("smartsim._core.entrypoints.indirect.logger.error", print)
-        _ = main("", "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
+        _ = main("", "application", exp_dir, exp_dir / "status")
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -173,7 +173,7 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr("smartsim._core.entrypoints.indirect.logger.error", print)
-        status_dir = exp_dir / CONFIG.telemetry_subdir
+        status_dir = exp_dir / "status"
         _ = main("  \n  \t   ", "application", exp_dir, status_dir)
 
     captured = capsys.readouterr()
@@ -181,7 +181,7 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
 
 
 def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPatch):
-    """Ensure that a stop event is logged if the process unexpectedly terminates"""
+    """Ensure that the process handles unexpected termination correctly"""
     mock_pid = 1122334455
     create_msg = "creating: {0}"
     term_msg = "term: {0}"
@@ -209,26 +209,18 @@ def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPat
     raw_cmd = f"{sys.executable} {script} --time=10"
     cmd = encode_cmd(raw_cmd.split())
 
-    mock_track = conftest.CountingCallable()
-
     with monkeypatch.context() as ctx:
-        ctx.setattr("smartsim._core.entrypoints.indirect.write_event", mock_track)
         ctx.setattr("psutil.pid_exists", lambda pid: True)
         ctx.setattr("psutil.Popen", MockProc)
         ctx.setattr("psutil.Process", MockProc)  # handle the proc.terminate()
         ctx.setattr("smartsim._core.entrypoints.indirect.STEP_PID", mock_pid)
 
-        rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
+        rc = main(cmd, "application", exp_dir, exp_dir / "status")
         assert rc == -1
-
-    (args1, _), (args2, kwargs2) = mock_track.details
-    assert "start" in args1
-    assert "stop" in args2
-    assert kwargs2.get("returncode", -1)
 
 
 def test_complete_process(
-    fileutils: conftest.FileUtils, test_dir: str, monkeypatch: pytest.MonkeyPatch
+    fileutils: conftest.FileUtils, test_dir: str
 ) -> None:
     """Ensure the happy-path completes and returns a success return code"""
     script = fileutils.get_test_conf_path("sleep.py")
@@ -238,12 +230,5 @@ def test_complete_process(
     raw_cmd = f"{sys.executable} {script} --time=1"
     cmd = encode_cmd(raw_cmd.split())
 
-    mock_track = conftest.CountingCallable()
-    with monkeypatch.context() as ctx:
-        ctx.setattr("smartsim._core.entrypoints.indirect.write_event", mock_track)
-        rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
-        assert rc == 0
-
-    (args1, _), (args2, _) = mock_track.details
-    assert "start" in args1
-    assert "stop" in args2
+    rc = main(cmd, "application", exp_dir, exp_dir / "status")
+    assert rc == 0
