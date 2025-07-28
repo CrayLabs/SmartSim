@@ -641,6 +641,18 @@ class Controller:
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
 
+        # Set status directory for batch step
+        if run_dir:
+            status_dir = str(run_dir)
+        else:
+            # Create a status directory within the entity path for output files
+            # Ensure we have an absolute path
+            entity_path = (
+                os.path.abspath(entity_list.path) if entity_list.path else os.getcwd()
+            )
+            status_dir = os.path.join(entity_path, ".smartsim")
+        batch_step.meta["status_dir"] = status_dir
+
         substeps = []
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation

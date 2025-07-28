@@ -445,7 +445,6 @@ def test_shutdown_request(
     kill_jobs: bool,
     frontend_shutdown: bool,
 ) -> None:
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
     dragon_backend = get_mock_backend(monkeypatch)
     monkeypatch.setattr(dragon_backend, "_cooldown_period", 1)
     set_mock_group_infos(monkeypatch, dragon_backend)

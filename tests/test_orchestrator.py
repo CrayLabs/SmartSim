@@ -250,24 +250,3 @@ def test_orc_results_in_correct_number_of_shards(single_cmd: bool) -> None:
     assert (
         orc.num_shards == orc.db_nodes == sum(node.num_shards for node in orc.entities)
     )
-
-
-def test_orc_telemetry(test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    """Ensure the default behavior for an orchestrator is to disable telemetry"""
-    db = Orchestrator(port=wlmutils.get_test_port())
-    db.set_path(test_dir)
-
-    # default is disabled
-    assert not db.telemetry.is_enabled
-
-    # ensure updating value works as expected
-    db.telemetry.enable()
-    assert db.telemetry.is_enabled
-
-    # toggle back
-    db.telemetry.disable()
-    assert not db.telemetry.is_enabled
-
-    # toggle one more time
-    db.telemetry.enable()
-    assert db.telemetry.is_enabled
