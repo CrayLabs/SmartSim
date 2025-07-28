@@ -180,8 +180,6 @@ def proxyable_launch_cmd(
             encoded_cmd,
             "+entity_type",
             entity_type,
-            "+telemetry_dir",
-            status_dir,
             "+working_dir",
             self.cwd,
         ]

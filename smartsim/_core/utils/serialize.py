@@ -52,15 +52,16 @@ _LOGGER = smartsim.log.get_logger(__name__)
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
-    manifest.metadata.run_telemetry_subdirectory.mkdir(parents=True, exist_ok=True)
+    # Create directories for output
+    manifest.metadata.exp_path.mkdir(parents=True, exist_ok=True)
     exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
     new_run = {
         "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
         "model": [
-            _dictify_model(model, *telemetry_metadata)
-            for model, telemetry_metadata in manifest.models
+            _dictify_model(model)
+            for model, _ in manifest.models  # Ignore metadata
         ],
         "orchestrator": [
             _dictify_db(db, nodes_info) for db, nodes_info in manifest.databases
@@ -97,12 +98,6 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
 
 def _dictify_model(
     model: Model,
-    step_id: t.Optional[str],
-    task_id: t.Optional[str],
-    managed: t.Optional[bool],
-    out_file: str,
-    err_file: str,
-    telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
     colo_settings = (model.run_settings.colocated_db_settings or {}).copy()
     db_scripts = t.cast("t.List[DBScript]", colo_settings.pop("db_scripts", []))
@@ -156,14 +151,7 @@ def _dictify_model(
             if colo_settings
             else {}
         ),
-        "telemetry_metadata": {
-            "status_dir": str(telemetry_data_path),
-            "step_id": step_id,
-            "task_id": task_id,
-            "managed": managed,
-        },
-        "out_file": out_file,
-        "err_file": err_file,
+        # Metadata removed
     }
 
 
@@ -234,23 +222,11 @@ def _dictify_db(
                 "conf_file": shard.cluster_conf_file,
                 "out_file": out_file,
                 "err_file": err_file,
-                "memory_file": (
-                    str(status_dir / "memory.csv") if db.telemetry.is_enabled else ""
-                ),
-                "client_file": (
-                    str(status_dir / "client.csv") if db.telemetry.is_enabled else ""
-                ),
-                "client_count_file": (
-                    str(status_dir / "client_count.csv")
-                    if db.telemetry.is_enabled
-                    else ""
-                ),
-                "telemetry_metadata": {
-                    "status_dir": str(status_dir),
-                    "step_id": step_id,
-                    "task_id": task_id,
-                    "managed": managed,
-                },
+                # Files removed
+                "memory_file": "",
+                "client_file": "",
+                "client_count_file": "",
+                # Metadata removed
             }
             for dbnode, (
                 step_id,

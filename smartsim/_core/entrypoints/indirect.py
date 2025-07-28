@@ -38,7 +38,6 @@ import psutil
 
 import smartsim.log
 from smartsim._core.utils.helpers import decode_cmd, get_ts_ms
-from smartsim._core.utils.telemetry.telemetry import write_event
 
 STEP_PID: t.Optional[int] = None
 logger = smartsim.log.get_logger(__name__)
@@ -54,9 +53,8 @@ def main(
     status_dir: str,
 ) -> int:
     """This function receives an encoded step command from a SmartSim Experiment
-    and runs it in a subprocess. The entrypoint integrates with the telemetry
-    monitor by writing status update events. It is useful for wrapping
-    unmanaged tasks - a workload manager can be queried for a managed task
+    and runs it in a subprocess. The entrypoint provides logging and status
+    monitoring for unmanaged tasks - a workload manager can be queried for a managed task
     to achieve the same result.
 
     :param cmd: a base64 encoded cmd to execute
@@ -100,16 +98,8 @@ def main(
         cleanup()
         return 1
     finally:
-        write_event(
-            get_ts_ms(),
-            proxy_pid,
-            "",  # step_id for unmanaged task is always empty
-            entity_type,
-            "start",
-            status_path,
-            detail=start_detail,
-            return_code=start_rc,
-        )
+        # Log start event
+        logger.debug(f"Process {proxy_pid} ({entity_type}) started: {start_detail}")
 
     logger.info(f"Waiting for child process {STEP_PID} to complete")
 
@@ -124,16 +114,8 @@ def main(
         f" return code: {ret_code}"
     )
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
-    write_event(
-        get_ts_ms(),
-        proxy_pid,
-        "",  # step_id for unmanaged task is always empty
-        entity_type,
-        "stop",
-        status_path,
-        detail=msg,
-        return_code=ret_code,
-    )
+    # Log stop event
+    logger.debug(f"Process {proxy_pid} ({entity_type}) stopped: {msg}")
     cleanup()
 
     return ret_code
@@ -199,12 +181,6 @@ def get_parser() -> argparse.ArgumentParser:
         help="The working directory of the executable",
         required=True,
     )
-    parser.add_argument(
-        "+telemetry_dir",
-        type=str,
-        help="Directory for telemetry output",
-        required=True,
-    )
     return parser
 
 
@@ -240,7 +216,7 @@ if __name__ == "__main__":
             cmd=parsed_args.command,
             entity_type=parsed_args.entity_type,
             cwd=parsed_args.working_dir,
-            status_dir=parsed_args.telemetry_dir,
+            status_dir=parsed_args.working_dir,  # Use working dir for status
         )
         sys.exit(rc)
 

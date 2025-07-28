@@ -630,7 +630,6 @@ class Controller:
                 "EntityList must have batch settings to be launched as batch"
             )
 
-        telemetry_dir = telemetry_dir / entity_list.name
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )

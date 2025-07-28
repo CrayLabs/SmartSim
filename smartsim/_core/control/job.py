@@ -35,8 +35,8 @@ from ...status import SmartSimStatus
 
 @dataclass(frozen=True)
 class _JobKey:
-    """A helper class for creating unique lookup keys within the telemetry
-    monitor. These keys are not guaranteed to be unique across experiments,
+    """A helper class for creating unique lookup keys within a job manager.
+    These keys are not guaranteed to be unique across experiments,
     only within an experiment (due to process ID re-use by the OS)"""
 
     step_id: str
@@ -46,8 +46,7 @@ class _JobKey:
 
 
 class JobEntity:
-    """An entity containing run-time SmartSimEntity metadata. The run-time metadata
-    is required to perform telemetry collection. The `JobEntity` satisfies the core
+    """An entity containing run-time SmartSimEntity metadata. The `JobEntity` satisfies the core
     API necessary to use a `JobManager` to manage retrieval of managed step updates.
     """
 
@@ -91,10 +90,10 @@ class JobEntity:
     def check_completion_status(self) -> None:
         """Check if the entity has completed
 
-        Since telemetry tracking is removed, this method now
-        always marks entities as complete.
+        This method always marks entities as complete since
+        we no longer perform runtime tracking.
         """
-        # Mark as complete since we no longer track telemetry
+        # Mark as complete since we no longer track runtime status
         self._is_complete = True
 
     @staticmethod
@@ -129,8 +128,8 @@ class JobEntity:
         # all entities contain shared properties that identify the task
         entity.type = entity_type
         entity.name = entity_dict["name"]
-        entity.step_id = ""  # Simplified since telemetry is removed
-        entity.task_id = ""  # Simplified since telemetry is removed
+        entity.step_id = ""  # Simplified
+        entity.task_id = ""  # Simplified
         entity.timestamp = int(entity_dict.get("timestamp", "0"))
         entity.path = str(exp_dir)
 

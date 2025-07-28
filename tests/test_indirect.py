@@ -38,7 +38,6 @@ from smartsim._core.utils.helpers import encode_cmd
 ALL_ARGS = {
     "+command",
     "+entity_type",
-    "+telemetry_dir",
     "+output_file",
     "+error_file",
     "+working_dir",
@@ -52,13 +51,12 @@ pytestmark = pytest.mark.group_a
 @pytest.mark.parametrize(
         ["cmd", "missing"],
         [
-            pytest.param("indirect.py", {"+name", "+command", "+entity_type", "+telemetry_dir", "+working_dir"}, id="no args"),
-            pytest.param("indirect.py -c echo +entity_type ttt +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+command"}, id="cmd typo"),
-            pytest.param("indirect.py -t orchestrator +command ccc +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+entity_type"}, id="etype typo"),
-            pytest.param("indirect.py -d /foo/bar +entity_type ttt +command ccc +output_file ooo +working_dir www +error_file eee", {"+telemetry_dir"}, id="dir typo"),
-            pytest.param("indirect.py        +entity_type ttt +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+command"}, id="no cmd"),
-            pytest.param("indirect.py +command ccc        +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+entity_type"}, id="no etype"),
-            pytest.param("indirect.py +command ccc +entity_type ttt        +output_file ooo +working_dir www +error_file eee", {"+telemetry_dir"}, id="no dir"),
+            pytest.param("indirect.py", {"+name", "+command", "+entity_type", "+working_dir"}, id="no args"),
+            pytest.param("indirect.py -c echo +entity_type ttt +output_file ooo +working_dir www +error_file eee", {"+command"}, id="cmd typo"),
+            pytest.param("indirect.py -t orchestrator +command ccc +output_file ooo +working_dir www +error_file eee", {"+entity_type"}, id="etype typo"),
+            pytest.param("indirect.py        +entity_type ttt +output_file ooo +working_dir www +error_file eee", {"+command"}, id="no cmd"),
+            pytest.param("indirect.py +command ccc        +output_file ooo +working_dir www +error_file eee", {"+entity_type"}, id="no etype"),
+            pytest.param("indirect.py +command ccc +entity_type ttt        +output_file ooo +error_file eee", {"+working_dir"}, id="no working_dir"),
         ]
 )
 # fmt: on
