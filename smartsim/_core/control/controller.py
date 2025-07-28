@@ -396,7 +396,6 @@ class Controller:
         """
 
         # Create a new timestamped run directory under .smartsim
-        import time
         timestamp = str(int(time.time() * 1000))
         run_dir = pathlib.Path(exp_path) / ".smartsim" / f"run_{timestamp}"
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -451,7 +450,9 @@ class Controller:
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
-                job_steps = [(self._create_job_step(e, run_dir), e) for e in elist.entities]
+                job_steps = [
+                    (self._create_job_step(e, run_dir), e) for e in elist.entities
+                ]
                 manifest_builder.add_ensemble(
                     elist, [(step.name, step) for step, _ in job_steps]
                 )
@@ -461,7 +462,9 @@ class Controller:
         for model in manifest.models:
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
-                batch_step, substeps = self._create_batch_job_step(anon_entity_list, run_dir)
+                batch_step, substeps = self._create_batch_job_step(
+                    anon_entity_list, run_dir
+                )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
 
                 symlink_substeps.append((substeps[0], model))
@@ -501,7 +504,9 @@ class Controller:
         orchestrator.remove_stale_files()
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
-            orc_batch_step, substeps = self._create_batch_job_step(orchestrator, run_dir)
+            orc_batch_step, substeps = self._create_batch_job_step(
+                orchestrator, run_dir
+            )
             manifest_builder.add_database(
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
@@ -515,7 +520,9 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [(self._create_job_step(db, run_dir), db) for db in orchestrator.entities]
+            db_steps = [
+                (self._create_job_step(db, run_dir), db) for db in orchestrator.entities
+            ]
             manifest_builder.add_database(
                 orchestrator, [(step.name, step) for step, _ in db_steps]
             )
@@ -643,7 +650,9 @@ class Controller:
             batch_step.add_to_batch(step)
         return batch_step, substeps
 
-    def _create_job_step(self, entity: SmartSimEntity, run_dir: t.Optional[pathlib.Path] = None) -> Step:
+    def _create_job_step(
+        self, entity: SmartSimEntity, run_dir: t.Optional[pathlib.Path] = None
+    ) -> Step:
         """Create job steps for all entities with the launcher
 
         :param entity: an entity to create a step for
