@@ -11,13 +11,7 @@ To be released at some point in the future
 
 Description
 
-- **BREAKING CHANGE**: Removed telemetry functionality entirely. This includes:
-  - Telemetry monitor and collection system
-  - Telemetry configuration classes (`TelemetryConfiguration`, `ExperimentTelemetryConfiguration`)
-  - All telemetry-related API methods (`Experiment.telemetry`, `Orchestrator.telemetry`)
-  - Telemetry collectors and sinks
-  - Removed `watchdog` dependency
-- **BREAKING CHANGE**: Removed SmartDashboard integration and CLI plugin
+- **BREAKING CHANGE**: Removed telemetry functionality and SmartDashboard integration
 - Python 3.12 is now supported; where available, installed TensorFlow version is now 2.16.2, PyTorch is 2.7.1.
 - Drop Python 3.9 support
 - Terminate LSF and LSB support
@@ -27,6 +21,13 @@ Description
 
 Detailed Notes
 
+- **BREAKING CHANGE**: Removed telemetry functionality entirely. This includes the
+  telemetry monitor and collection system, telemetry configuration classes
+  (`TelemetryConfiguration`, `ExperimentTelemetryConfiguration`), all telemetry-related
+  API methods (`Experiment.telemetry`, `Orchestrator.telemetry`), telemetry collectors
+  and sinks, and the `watchdog` dependency. Also removed SmartDashboard integration
+  and CLI plugin. The indirect entrypoint launching mechanism has also been removed.
+  ([SmartSim-PR789](https://github.com/CrayLabs/SmartSim/pull/789))
 - Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
   are installed as part of `smart build` process when available. On Mac, ONNX runtime
   1.22.0 is now installed, together with ONNX 1.16.
