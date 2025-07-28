@@ -38,25 +38,13 @@ from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.utils import serialize
 from smartsim.database.orchestrator import Orchestrator
 
-_CFG_TM_ENABLED_ATTR = "telemetry_enabled"
-
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
 
 
-@pytest.fixture(autouse=True)
-def turn_on_tm(monkeypatch):
-    monkeypatch.setattr(
-        smartsim._core.config.config.Config,
-        _CFG_TM_ENABLED_ATTR,
-        property(lambda self: True),
-    )
-    yield
-
-
 @pytest.fixture
 def manifest_json(test_dir, config) -> str:
-    return Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
+    return Path(test_dir) / "manifest.json"
 
 
 def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
@@ -70,20 +58,6 @@ def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
         assert manifest["experiment"]["launcher"] == "launcher"
         assert isinstance(manifest["runs"], list)
         assert len(manifest["runs"]) == 1
-
-
-def test_serialize_does_write_manifest_json_if_telemetry_monitor_is_off(
-    test_dir, monkeypatch, manifest_json
-):
-    """Ensure that the manifest is written even if telemetry is not collected"""
-    monkeypatch.setattr(
-        smartsim._core.config.config.Config,
-        _CFG_TM_ENABLED_ATTR,
-        property(lambda self: False),
-    )
-    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4()))
-    serialize.save_launch_manifest(lmb.finalize())
-    assert manifest_json.exists()
 
 
 def test_serialize_appends_a_manifest_json_exists(test_dir, manifest_json):

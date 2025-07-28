@@ -35,20 +35,8 @@ import smartsim
 import smartsim.log
 from smartsim import Experiment
 
-_CFG_TM_ENABLED_ATTR = "telemetry_enabled"
-
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
-
-
-@pytest.fixture
-def turn_on_tm(monkeypatch):
-    monkeypatch.setattr(
-        smartsim._core.config.config.Config,
-        _CFG_TM_ENABLED_ATTR,
-        property(lambda self: True),
-    )
-    yield
 
 
 @pytest.mark.parametrize(
@@ -112,7 +100,7 @@ def test_add_exp_loggers(test_dir):
     assert err_file.is_file()
 
 
-def test_get_logger(test_dir: str, turn_on_tm, monkeypatch):
+def test_get_logger(test_dir: str, monkeypatch):
     """Ensure the correct logger type is instantiated"""
     monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "developer")
     logger = smartsim.log.get_logger("SmartSimTest", "INFO")
@@ -132,13 +120,13 @@ def test_get_logger(test_dir: str, turn_on_tm, monkeypatch):
         pytest.param("developer", "debug", id="translation back, developer"),
     ],
 )
-def test_translate_log_level(input_level: str, exp_level: str, turn_on_tm):
+def test_translate_log_level(input_level: str, exp_level: str):
     """Ensure the correct logger type is instantiated"""
     translated_level = smartsim.log._translate_log_level(input_level)
     assert exp_level == translated_level
 
 
-def test_exp_logs(test_dir: str, turn_on_tm, monkeypatch):
+def test_exp_logs(test_dir: str, monkeypatch):
     """Ensure that experiment loggers are added when context info exists"""
     monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "developer")
     test_dir = pathlib.Path(test_dir)
@@ -181,7 +169,7 @@ def test_exp_logs(test_dir: str, turn_on_tm, monkeypatch):
         smartsim.log.ctx_exp_path.reset(token)
 
 
-def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
+def test_context_leak(test_dir: str, monkeypatch):
     """Ensure that exceptions do not leave the context in an invalid state"""
     test_dir = pathlib.Path(test_dir)
     test_dir.mkdir(parents=True, exist_ok=True)
