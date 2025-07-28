@@ -445,10 +445,7 @@ class Controller:
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
-                job_steps = [
-                    (self._create_job_step(e), e)
-                    for e in elist.entities
-                ]
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 manifest_builder.add_ensemble(
                     elist, [(step.name, step) for step, _ in job_steps]
                 )
@@ -458,9 +455,7 @@ class Controller:
         for model in manifest.models:
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
-                batch_step, substeps = self._create_batch_job_step(
-                    anon_entity_list
-                )
+                batch_step, substeps = self._create_batch_job_step(anon_entity_list)
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
 
                 symlink_substeps.append((substeps[0], model))
@@ -499,9 +494,7 @@ class Controller:
         orchestrator.remove_stale_files()
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
-            orc_batch_step, substeps = self._create_batch_job_step(
-                orchestrator
-            )
+            orc_batch_step, substeps = self._create_batch_job_step(orchestrator)
             manifest_builder.add_database(
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
@@ -515,10 +508,7 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [
-                (self._create_job_step(db), db)
-                for db in orchestrator.entities
-            ]
+            db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
             manifest_builder.add_database(
                 orchestrator, [(step.name, step) for step, _ in db_steps]
             )
@@ -644,9 +634,7 @@ class Controller:
             batch_step.add_to_batch(step)
         return batch_step, substeps
 
-    def _create_job_step(
-        self, entity: SmartSimEntity
-    ) -> Step:
+    def _create_job_step(self, entity: SmartSimEntity) -> Step:
         """Create job steps for all entities with the launcher
 
         :param entity: an entity to create a step for

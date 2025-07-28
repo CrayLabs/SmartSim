@@ -60,8 +60,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
         "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
         "model": [
-            _dictify_model(model)
-            for model, _ in manifest.models  # Ignore metadata
+            _dictify_model(model) for model, _ in manifest.models  # Ignore metadata
         ],
         "orchestrator": [
             _dictify_db(db, nodes_info) for db, nodes_info in manifest.databases

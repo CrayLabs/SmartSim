@@ -219,9 +219,7 @@ def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPat
         assert rc == -1
 
 
-def test_complete_process(
-    fileutils: conftest.FileUtils, test_dir: str
-) -> None:
+def test_complete_process(fileutils: conftest.FileUtils, test_dir: str) -> None:
     """Ensure the happy-path completes and returns a success return code"""
     script = fileutils.get_test_conf_path("sleep.py")
 
