@@ -63,8 +63,6 @@ class JobEntity:
         """The type of the associated `SmartSimEntity`"""
         self.timestamp: int = 0
         """The timestamp when the entity was created"""
-        self._is_complete: bool = False
-        """Flag indicating if the entity has completed execution"""
 
     @property
     def is_db(self) -> bool:
@@ -81,20 +79,6 @@ class JobEntity:
         """Return a `_JobKey` that identifies an entity.
         NOTE: not guaranteed to be unique over time due to reused process IDs"""
         return _JobKey(self.step_id, self.task_id)
-
-    @property
-    def is_complete(self) -> bool:
-        """Returns `True` if the entity has completed execution"""
-        return self._is_complete
-
-    def check_completion_status(self) -> None:
-        """Check if the entity has completed
-
-        This method always marks entities as complete since
-        we no longer perform runtime tracking.
-        """
-        # Mark as complete since we no longer track runtime status
-        self._is_complete = True
 
     @staticmethod
     def _map_db_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
