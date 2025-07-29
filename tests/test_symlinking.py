@@ -174,24 +174,17 @@ def test_batch_symlink(entity_type, test_dir):
 
 
 def test_symlink_error(test_dir):
-    """Test that symlink creation works even with non-existent paths (auto-creates directories)"""
+    """Ensure FileNotFoundError is thrown"""
     bad_model = Model(
         "bad_model",
         params={},
         path=pathlib.Path(test_dir, "badpath"),
         run_settings=RunSettings("echo"),
     )
-    # Create run_dir to avoid using current working directory
-    run_dir = pathlib.Path(test_dir) / ".smartsim" / "run_test_error"
-    bad_step = controller._create_job_step(bad_model, run_dir)
-    # The new behavior should auto-create directories and symlinks without errors
-    controller.symlink_output_files(bad_step, bad_model)
-
-    # Verify the symlinks were created
-    entity_out = pathlib.Path(bad_model.path) / f"{bad_model.name}.out"
-    entity_err = pathlib.Path(bad_model.path) / f"{bad_model.name}.err"
-    assert entity_out.is_symlink()
-    assert entity_err.is_symlink()
+    telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
+    bad_step = controller._create_job_step(bad_model, telem_dir)
+    with pytest.raises(FileNotFoundError):
+        controller.symlink_output_files(bad_step, bad_model)
 
 
 def test_failed_model_launch_symlinks(test_dir):
