@@ -397,7 +397,9 @@ class Controller:
 
         # Create metadata directory for this experiment with timestamped subdirectory
         timestamp = str(int(time.time() * 1000))
-        metadata_dir = pathlib.Path(exp_path) / CONFIG.metadata_subdir / f"run_{timestamp}"
+        metadata_dir = (
+            pathlib.Path(exp_path) / CONFIG.metadata_subdir / f"run_{timestamp}"
+        )
         metadata_dir.mkdir(parents=True, exist_ok=True)
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
@@ -521,7 +523,8 @@ class Controller:
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
             db_steps = [
-                (self._create_job_step(db, metadata_dir), db) for db in orchestrator.entities
+                (self._create_job_step(db, metadata_dir), db)
+                for db in orchestrator.entities
             ]
             manifest_builder.add_database(
                 orchestrator, [(step.name, step) for step, _ in db_steps]
