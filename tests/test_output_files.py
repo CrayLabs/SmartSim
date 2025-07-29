@@ -107,11 +107,11 @@ def test_get_output_files_with_create_job_step(test_dir):
     exp_dir = pathlib.Path(test_dir)
     # Create a fresh model instance for this test
     test_model = Model("test_model", params={}, path=test_dir, run_settings=rs)
-    # Create run_dir to avoid using current working directory
-    run_dir = exp_dir / ".smartsim" / "run_test"
-    step = controller._create_job_step(test_model, run_dir)
-    expected_out_path = run_dir / (test_model.name + ".out")
-    expected_err_path = run_dir / (test_model.name + ".err")
+    # Create metadata_dir to simulate consistent metadata structure
+    metadata_dir = exp_dir / ".smartsim" / "metadata"
+    step = controller._create_job_step(test_model, metadata_dir)
+    expected_out_path = metadata_dir / (test_model.name + ".out")
+    expected_err_path = metadata_dir / (test_model.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
@@ -137,13 +137,13 @@ def test_get_output_files_with_create_batch_job_step(entity_type, test_dir):
         )
 
     entity.path = test_dir
-    # Create run_dir to avoid using current working directory
-    run_dir = exp_dir / ".smartsim" / "run_test_batch"
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, run_dir)
+    # Create metadata_dir to simulate consistent metadata structure
+    metadata_dir = exp_dir / ".smartsim" / "metadata"
+    batch_step, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
     for step in substeps:
-        # With timestamped runs, output files should be in the run_dir
-        expected_out_path = run_dir / (step.entity_name + ".out")
-        expected_err_path = run_dir / (step.entity_name + ".err")
+        # With consistent metadata directory, output files should be in the metadata_dir
+        expected_out_path = metadata_dir / (step.entity_name + ".out")
+        expected_err_path = metadata_dir / (step.entity_name + ".err")
         actual_out, actual_err = step.get_output_files()
         assert actual_out == str(expected_out_path)
         assert actual_err == str(expected_err_path)

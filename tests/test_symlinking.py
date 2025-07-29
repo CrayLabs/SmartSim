@@ -78,15 +78,15 @@ def symlink_with_create_job_step(test_dir, entity):
     """Function that helps cut down on repeated testing code"""
     exp_dir = pathlib.Path(test_dir)
     entity.path = test_dir
-    # Create run_dir to simulate timestamped run structure
-    run_dir = exp_dir / ".smartsim" / "run_test"
-    step = controller._create_job_step(entity, run_dir)
+    # Create metadata_dir to simulate consistent metadata structure
+    metadata_dir = exp_dir / ".smartsim" / "metadata"
+    step = controller._create_job_step(entity, metadata_dir)
     controller.symlink_output_files(step, entity)
     assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
     assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
-    # Verify symlinks point to the correct run directory
-    expected_out = run_dir / (entity.name + ".out")
-    expected_err = run_dir / (entity.name + ".err")
+    # Verify symlinks point to the correct metadata directory
+    expected_out = metadata_dir / (entity.name + ".out")
+    expected_err = metadata_dir / (entity.name + ".err")
     assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
         expected_out
     )
@@ -132,9 +132,9 @@ def test_batch_symlink(entity_type, test_dir):
         for sub_entity in entity.entities:
             sub_entity.path = test_dir
 
-    # Create run_dir to simulate timestamped run structure
-    run_dir = exp_dir / ".smartsim" / "run_test_batch"
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, run_dir)
+    # Create metadata_dir to simulate consistent metadata structure
+    metadata_dir = exp_dir / ".smartsim" / "metadata"
+    batch_step, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
 
     # For batch entities, we need to call symlink_output_files correctly
     # Based on how the controller does it, we should pass the individual entities
@@ -181,8 +181,8 @@ def test_symlink_error(test_dir):
         path=pathlib.Path(test_dir, "badpath"),
         run_settings=RunSettings("echo"),
     )
-    telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
-    bad_step = controller._create_job_step(bad_model, telem_dir)
+    metadata_dir = pathlib.Path(test_dir, "bad_model_metadata")
+    bad_step = controller._create_job_step(bad_model, metadata_dir)
     with pytest.raises(FileNotFoundError):
         controller.symlink_output_files(bad_step, bad_model)
 

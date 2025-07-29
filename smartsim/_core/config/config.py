@@ -276,6 +276,10 @@ class Config:
         return ".smartsim/dragon"
 
     @property
+    def metadata_subdir(self) -> str:
+        return ".smartsim/metadata"
+
+    @property
     def dragon_log_filename(self) -> str:
         return "dragon_config.log"
 

@@ -223,3 +223,10 @@ def test_key_path_non_default(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("SMARTSIM_KEY_PATH", key_path2)
     actual_value = config.smartsim_key_path
     assert key_path2 == actual_value, "Key path 2 didn't match overridden value"
+
+
+def test_metadata_subdir():
+    """Test that metadata_subdir returns the expected path"""
+    config = Config()
+    expected_path = ".smartsim/metadata"
+    assert config.metadata_subdir == expected_path

@@ -395,10 +395,10 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         """
 
-        # Create a new timestamped run directory under .smartsim
+        # Create metadata directory for this experiment with timestamped subdirectory
         timestamp = str(int(time.time() * 1000))
-        run_dir = pathlib.Path(exp_path) / ".smartsim" / f"run_{timestamp}"
-        run_dir.mkdir(parents=True, exist_ok=True)
+        metadata_dir = pathlib.Path(exp_path) / CONFIG.metadata_subdir / f"run_{timestamp}"
+        metadata_dir.mkdir(parents=True, exist_ok=True)
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
             exp_name=exp_name,
@@ -422,7 +422,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator(orchestrator, manifest_builder, run_dir)
+            self._launch_orchestrator(orchestrator, manifest_builder, metadata_dir)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -438,7 +438,7 @@ class Controller:
 
         for elist in manifest.ensembles:
             if elist.batch:
-                batch_step, substeps = self._create_batch_job_step(elist, run_dir)
+                batch_step, substeps = self._create_batch_job_step(elist, metadata_dir)
                 manifest_builder.add_ensemble(
                     elist, [(batch_step.name, step) for step in substeps]
                 )
@@ -451,7 +451,7 @@ class Controller:
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [
-                    (self._create_job_step(e, run_dir), e) for e in elist.entities
+                    (self._create_job_step(e, metadata_dir), e) for e in elist.entities
                 ]
                 manifest_builder.add_ensemble(
                     elist, [(step.name, step) for step, _ in job_steps]
@@ -463,14 +463,14 @@ class Controller:
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
                 batch_step, substeps = self._create_batch_job_step(
-                    anon_entity_list, run_dir
+                    anon_entity_list, metadata_dir
                 )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
 
                 symlink_substeps.append((substeps[0], model))
                 steps.append((batch_step, model))
             else:
-                job_step = self._create_job_step(model, run_dir)
+                job_step = self._create_job_step(model, metadata_dir)
                 manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
@@ -489,7 +489,7 @@ class Controller:
         self,
         orchestrator: Orchestrator,
         manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
-        run_dir: pathlib.Path,
+        metadata_dir: pathlib.Path,
     ) -> None:
         """Launch an Orchestrator instance
 
@@ -505,7 +505,7 @@ class Controller:
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
             orc_batch_step, substeps = self._create_batch_job_step(
-                orchestrator, run_dir
+                orchestrator, metadata_dir
             )
             manifest_builder.add_database(
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
@@ -521,7 +521,7 @@ class Controller:
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
             db_steps = [
-                (self._create_job_step(db, run_dir), db) for db in orchestrator.entities
+                (self._create_job_step(db, metadata_dir), db) for db in orchestrator.entities
             ]
             manifest_builder.add_database(
                 orchestrator, [(step.name, step) for step, _ in db_steps]
@@ -622,12 +622,12 @@ class Controller:
     def _create_batch_job_step(
         self,
         entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob],
-        run_dir: t.Optional[pathlib.Path] = None,
+        metadata_dir: t.Optional[pathlib.Path] = None,
     ) -> t.Tuple[Step, t.List[Step]]:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
-        :param run_dir: Optional run directory for this launch (for timestamped runs)
+        :param metadata_dir: Optional metadata directory for this launch
         :return: batch job step instance and a list of run steps to be
                  executed within the batch job
         """
@@ -642,8 +642,8 @@ class Controller:
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
 
         # Set status directory for batch step
-        if run_dir:
-            status_dir = str(run_dir)
+        if metadata_dir:
+            status_dir = str(metadata_dir)
         else:
             # Create a status directory within the entity path for output files
             # Ensure we have an absolute path
@@ -657,18 +657,18 @@ class Controller:
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation
             entity.run_settings.in_batch = True
-            step = self._create_job_step(entity, run_dir)
+            step = self._create_job_step(entity, metadata_dir)
             substeps.append(step)
             batch_step.add_to_batch(step)
         return batch_step, substeps
 
     def _create_job_step(
-        self, entity: SmartSimEntity, run_dir: t.Optional[pathlib.Path] = None
+        self, entity: SmartSimEntity, metadata_dir: t.Optional[pathlib.Path] = None
     ) -> Step:
         """Create job steps for all entities with the launcher
 
         :param entity: an entity to create a step for
-        :param run_dir: Optional run directory for this launch (for timestamped runs)
+        :param metadata_dir: Optional metadata directory for this launch
         :return: the job step
         """
         # get SSDB, SSIN, SSOUT and add to entity run settings
@@ -678,9 +678,9 @@ class Controller:
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
-        # Use run_dir if provided, otherwise fall back to entity-specific .smartsim dir
-        if run_dir:
-            status_dir = str(run_dir)
+        # Use metadata_dir if provided, otherwise fall back to entity-specific .smartsim dir
+        if metadata_dir:
+            status_dir = str(metadata_dir)
         else:
             # Create a status directory within the entity path for output files
             # Ensure we have an absolute path
