@@ -60,7 +60,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
         "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
         "model": [
-            _dictify_model(model) for model, _ in manifest.models  # Ignore metadata
+            _dictify_model(model, *metadata) for model, metadata in manifest.models
         ],
         "orchestrator": [
             _dictify_db(db, nodes_info) for db, nodes_info in manifest.databases
@@ -102,6 +102,7 @@ def _dictify_model(
     managed: t.Optional[bool],
     out_file: str,
     err_file: str,
+    metadata_path: Path,
 ) -> t.Dict[str, t.Any]:
     colo_settings = (model.run_settings.colocated_db_settings or {}).copy()
     db_scripts = t.cast("t.List[DBScript]", colo_settings.pop("db_scripts", []))
@@ -156,6 +157,7 @@ def _dictify_model(
             else {}
         ),
         "step_metadata": {
+            "status_dir": str(metadata_path),
             "step_id": step_id,
             "task_id": task_id,
             "managed": managed,
