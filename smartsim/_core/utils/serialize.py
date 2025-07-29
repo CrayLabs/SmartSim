@@ -97,6 +97,11 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
 
 def _dictify_model(
     model: Model,
+    step_id: t.Optional[str],
+    task_id: t.Optional[str],
+    managed: t.Optional[bool],
+    out_file: str,
+    err_file: str,
 ) -> t.Dict[str, t.Any]:
     colo_settings = (model.run_settings.colocated_db_settings or {}).copy()
     db_scripts = t.cast("t.List[DBScript]", colo_settings.pop("db_scripts", []))
@@ -150,7 +155,13 @@ def _dictify_model(
             if colo_settings
             else {}
         ),
-        # Metadata removed
+        "step_metadata": {
+            "step_id": step_id,
+            "task_id": task_id,
+            "managed": managed,
+        },
+        "out_file": out_file,
+        "err_file": err_file,
     }
 
 
@@ -169,8 +180,8 @@ def _dictify_ensemble(
             else {}
         ),
         "models": [
-            _dictify_model(model)
-            for model, _launching_metadata in members  # Ignore metadata
+            _dictify_model(model, *launching_metadata)
+            for model, launching_metadata in members
         ],
     }
 
@@ -221,11 +232,12 @@ def _dictify_db(
                 "conf_file": shard.cluster_conf_file,
                 "out_file": out_file,
                 "err_file": err_file,
-                # Files removed
-                "memory_file": "",
-                "client_file": "",
-                "client_count_file": "",
-                # Metadata removed
+                "step_metadata": {
+                    "status_dir": str(status_dir),
+                    "step_id": step_id,
+                    "task_id": task_id,
+                    "managed": managed,
+                },
             }
             for dbnode, (
                 step_id,
