@@ -74,7 +74,7 @@ class Step:
     def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on metadata directory"""
         try:
-            output_dir = self.meta["status_dir"]
+            output_dir = self.meta["metadata_dir"]
         except KeyError as exc:
             raise KeyError("Status directory for this step has not been set.") from exc
         self._ensure_output_directory_exists(output_dir)

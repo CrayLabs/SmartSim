@@ -151,11 +151,11 @@ def test_batch_symlink(entity_type, test_dir):
         assert symlink_out.is_symlink()
         assert symlink_err.is_symlink()
 
-        # The symlinks should point to the status_dir set for this substep
-        expected_out = pathlib.Path(substep.meta["status_dir"]) / (
+        # The symlinks should point to the metadata_dir set for this substep
+        expected_out = pathlib.Path(substep.meta["metadata_dir"]) / (
             substep.entity_name + ".out"
         )
-        expected_err = pathlib.Path(substep.meta["status_dir"]) / (
+        expected_err = pathlib.Path(substep.meta["metadata_dir"]) / (
             substep.entity_name + ".err"
         )
 

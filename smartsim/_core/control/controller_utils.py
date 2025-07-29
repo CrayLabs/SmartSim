@@ -71,7 +71,7 @@ def _look_up_launched_data(
             launched_step_map.managed,
             out_file,
             err_file,
-            pathlib.Path(step.meta.get("status_dir", step.cwd)),
+            pathlib.Path(step.meta.get("metadata_dir", step.cwd)),
         )
 
     return _unpack_launched_data

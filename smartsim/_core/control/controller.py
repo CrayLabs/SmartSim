@@ -651,7 +651,7 @@ class Controller:
                 os.path.abspath(entity_list.path) if entity_list.path else os.getcwd()
             )
             status_dir = os.path.join(entity_path, ".smartsim")
-        batch_step.meta["status_dir"] = status_dir
+        batch_step.meta["metadata_dir"] = status_dir
 
         substeps = []
         for entity in entity_list.entities:
@@ -686,7 +686,7 @@ class Controller:
             # Ensure we have an absolute path
             entity_path = os.path.abspath(entity.path) if entity.path else os.getcwd()
             status_dir = os.path.join(entity_path, ".smartsim")
-        step.meta["status_dir"] = status_dir
+        step.meta["metadata_dir"] = status_dir
 
         return step
 

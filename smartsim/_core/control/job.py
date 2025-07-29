@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
 import time
 import typing as t
 from dataclasses import dataclass
@@ -63,6 +64,12 @@ class JobEntity:
         """The type of the associated `SmartSimEntity`"""
         self.timestamp: int = 0
         """The timestamp when the entity was created"""
+        self.metadata_dir: str = ""
+        """The metadata directory for this entity's output files"""
+        self.collectors: t.Dict[str, str] = {}
+        """Collector configuration for database entities"""
+        self.config: t.Dict[str, str] = {}
+        """Configuration settings for database entities"""
 
     @property
     def is_db(self) -> bool:
@@ -87,7 +94,16 @@ class JobEntity:
         :param entity_dict: The raw dictionary deserialized from manifest JSON
         :param entity: The entity instance to modify
         """
-        # DB metadata mapping simplified - no implementation needed
+        if entity.is_db:
+            # add collectors if they're configured to be enabled in the manifest
+            entity.collectors = {
+                "client": entity_dict.get("client_file", ""),
+                "client_count": entity_dict.get("client_count_file", ""),
+                "memory": entity_dict.get("memory_file", ""),
+            }
+
+            entity.config["host"] = entity_dict.get("hostname", "")
+            entity.config["port"] = entity_dict.get("port", "")
 
     @staticmethod
     def _map_standard_metadata(
@@ -106,13 +122,22 @@ class JobEntity:
         :param raw_experiment: The raw experiment dictionary deserialized from
         manifest JSON
         """
+        metadata = entity_dict["step_metadata"]
+        metadata_dir = pathlib.Path(metadata.get("metadata_dir"))
+        is_dragon = raw_experiment["launcher"].lower() == "dragon"
+
         # all entities contain shared properties that identify the task
         entity.type = entity_type
-        entity.name = entity_dict["name"]
-        entity.step_id = ""  # Simplified
-        entity.task_id = ""  # Simplified
+        entity.name = (
+            entity_dict["name"]
+            if not is_dragon
+            else entity_dict["step_metadata"]["step_id"]
+        )
+        entity.step_id = str(metadata.get("step_id") or "")
+        entity.task_id = str(metadata.get("task_id") or "")
         entity.timestamp = int(entity_dict.get("timestamp", "0"))
         entity.path = str(exp_dir)
+        entity.metadata_dir = str(metadata_dir)
 
     @classmethod
     def from_manifest(

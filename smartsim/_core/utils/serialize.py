@@ -157,7 +157,7 @@ def _dictify_model(
             else {}
         ),
         "step_metadata": {
-            "status_dir": str(metadata_path),
+            "metadata_dir": str(metadata_path),
             "step_id": step_id,
             "task_id": task_id,
             "managed": managed,
@@ -235,7 +235,7 @@ def _dictify_db(
                 "out_file": out_file,
                 "err_file": err_file,
                 "step_metadata": {
-                    "status_dir": str(status_dir),
+                    "metadata_dir": str(status_dir),
                     "step_id": step_id,
                     "task_id": task_id,
                     "managed": managed,

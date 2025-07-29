@@ -153,9 +153,9 @@ def test_model_get_output_files(test_dir):
     """Testing model output files with manual step creation"""
     exp_dir = pathlib.Path(test_dir)
     step = Step(model.name, model.path, model.run_settings)
-    step.meta["status_dir"] = exp_dir / "output_dir"
-    expected_out_path = step.meta["status_dir"] / (model.name + ".out")
-    expected_err_path = step.meta["status_dir"] / (model.name + ".err")
+    step.meta["metadata_dir"] = exp_dir / "output_dir"
+    expected_out_path = step.meta["metadata_dir"] / (model.name + ".out")
+    expected_err_path = step.meta["metadata_dir"] / (model.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
@@ -164,16 +164,16 @@ def test_ensemble_get_output_files(test_dir):
     exp_dir = pathlib.Path(test_dir)
     for member in ens.models:
         step = Step(member.name, member.path, member.run_settings)
-        step.meta["status_dir"] = exp_dir / "output_dir"
-        expected_out_path = step.meta["status_dir"] / (member.name + ".out")
-        expected_err_path = step.meta["status_dir"] / (member.name + ".err")
+        step.meta["metadata_dir"] = exp_dir / "output_dir"
+        expected_out_path = step.meta["metadata_dir"] / (member.name + ".out")
+        expected_err_path = step.meta["metadata_dir"] / (member.name + ".err")
         assert step.get_output_files() == (
             str(expected_out_path),
             str(expected_err_path),
         )
 
 
-def test_get_output_files_no_status_dir(test_dir):
+def test_get_output_files_no_metadata_dir(test_dir):
     """Test that a step not having a status directory throws a KeyError"""
     step_settings = RunSettings("echo")
     step = Step("mock-step", test_dir, step_settings)
