@@ -374,8 +374,8 @@ class Controller:
         historical_out.touch()
 
         # Ensure the entity directory exists for symlinks
-        entity_out.parent.mkdir(parents=True, exist_ok=True)
-        entity_err.parent.mkdir(parents=True, exist_ok=True)
+        # entity_out.parent.mkdir(parents=True, exist_ok=True)
+        # entity_err.parent.mkdir(parents=True, exist_ok=True)
 
         if historical_err.exists() and historical_out.exists():
             entity_out.symlink_to(historical_out)
