@@ -401,9 +401,6 @@ class Controller:
             launcher_name=str(self._launcher),
         )
 
-        # Create metadata directory for this experiment with timestamped subdirectory
-        metadata_dir = manifest_builder.run_metadata_subdirectory
-        metadata_dir.mkdir(parents=True, exist_ok=True)
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
