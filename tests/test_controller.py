@@ -69,5 +69,7 @@ def test_controller_batch_step_creation_preserves_entity_order(collection, monke
     )
     entity_names = [x.name for x in collection.entities]
     assert len(entity_names) == len(set(entity_names))
-    _, steps = controller._create_batch_job_step(collection)
+    # Create a metadata directory for the test
+    metadata_dir = pathlib.Path("/tmp/.smartsim/metadata")
+    _, steps = controller._create_batch_job_step(collection, metadata_dir)
     assert entity_names == [step.name for step in steps]

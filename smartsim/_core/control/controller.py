@@ -625,12 +625,12 @@ class Controller:
     def _create_batch_job_step(
         self,
         entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob],
-        metadata_dir: t.Optional[pathlib.Path] = None,
+        metadata_dir: pathlib.Path,
     ) -> t.Tuple[Step, t.List[Step]]:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
-        :param metadata_dir: Optional metadata directory for this launch
+        :param metadata_dir: Metadata directory for this launch
         :return: batch job step instance and a list of run steps to be
                  executed within the batch job
         """
@@ -644,16 +644,8 @@ class Controller:
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
 
-        # Set status directory for batch step
-        if metadata_dir:
-            status_dir = str(metadata_dir)
-        else:
-            # Create a status directory within the entity path for output files
-            # Ensure we have an absolute path
-            entity_path = (
-                os.path.abspath(entity_list.path) if entity_list.path else os.getcwd()
-            )
-            status_dir = os.path.join(entity_path, ".smartsim")
+        # Set metadata directory for batch step
+        status_dir = str(metadata_dir)
         batch_step.meta["metadata_dir"] = status_dir
 
         substeps = []
