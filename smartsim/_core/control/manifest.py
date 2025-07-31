@@ -274,6 +274,14 @@ class LaunchedManifestBuilder(t.Generic[_T]):
         """Return the run-specific metadata subdirectory path"""
         return self.exp_metadata_subdirectory / f"run_{self._launch_timestamp}"
 
+    def get_entity_metadata_subdirectory(self, entity_type: str) -> pathlib.Path:
+        """Return the entity-type-specific metadata subdirectory path
+
+        :param entity_type: The type of entity (e.g., 'model', 'ensemble', 'database')
+        :return: The metadata subdirectory path for the specific entity type
+        """
+        return self.run_metadata_subdirectory / entity_type
+
     def add_model(self, model: Model, data: _T) -> None:
         self._models.append((model, data))
 

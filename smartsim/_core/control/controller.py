@@ -401,9 +401,25 @@ class Controller:
             launcher_name=str(self._launcher),
         )
 
-        # Create metadata directory for this experiment with timestamped subdirectory
-        metadata_dir = manifest_builder.run_metadata_subdirectory
-        metadata_dir.mkdir(parents=True, exist_ok=True)
+        # Create metadata directories for this experiment with timestamped subdirectory
+        base_metadata_dir = manifest_builder.run_metadata_subdirectory
+        base_metadata_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create entity-type specific metadata directories
+        model_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
+            "model"
+        )
+        ensemble_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
+            "ensemble"
+        )
+        database_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
+            "database"
+        )
+
+        # Create the directories
+        model_metadata_dir.mkdir(parents=True, exist_ok=True)
+        ensemble_metadata_dir.mkdir(parents=True, exist_ok=True)
+        database_metadata_dir.mkdir(parents=True, exist_ok=True)
 
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -438,7 +454,9 @@ class Controller:
 
         for elist in manifest.ensembles:
             if elist.batch:
-                batch_step, substeps = self._create_batch_job_step(elist, metadata_dir)
+                batch_step, substeps = self._create_batch_job_step(
+                    elist, ensemble_metadata_dir
+                )
                 manifest_builder.add_ensemble(
                     elist, [(batch_step.name, step) for step in substeps]
                 )
@@ -451,7 +469,8 @@ class Controller:
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [
-                    (self._create_job_step(e, metadata_dir), e) for e in elist.entities
+                    (self._create_job_step(e, ensemble_metadata_dir), e)
+                    for e in elist.entities
                 ]
                 manifest_builder.add_ensemble(
                     elist, [(step.name, step) for step, _ in job_steps]
@@ -463,14 +482,14 @@ class Controller:
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
                 batch_step, substeps = self._create_batch_job_step(
-                    anon_entity_list, metadata_dir
+                    anon_entity_list, model_metadata_dir
                 )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
 
                 symlink_substeps.append((substeps[0], model))
                 steps.append((batch_step, model))
             else:
-                job_step = self._create_job_step(model, metadata_dir)
+                job_step = self._create_job_step(model, model_metadata_dir)
                 manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
@@ -500,8 +519,9 @@ class Controller:
         :param manifest_builder: An `LaunchedManifestBuilder` to record the
                                  names and `Step`s of the launched orchestrator
         """
-        # Get metadata directory from manifest builder
-        metadata_dir = manifest_builder.run_metadata_subdirectory
+        # Get database-specific metadata directory from manifest builder
+        metadata_dir = manifest_builder.get_entity_metadata_subdirectory("database")
+        metadata_dir.mkdir(parents=True, exist_ok=True)
         orchestrator.remove_stale_files()
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
