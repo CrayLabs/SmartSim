@@ -658,12 +658,12 @@ class Controller:
         return batch_step, substeps
 
     def _create_job_step(
-        self, entity: SmartSimEntity, metadata_dir: t.Optional[pathlib.Path] = None
+        self, entity: SmartSimEntity, metadata_dir: pathlib.Path
     ) -> Step:
         """Create job steps for all entities with the launcher
 
         :param entity: an entity to create a step for
-        :param metadata_dir: Optional metadata directory for this launch
+        :param metadata_dir: Metadata directory for this launch
         :return: the job step
         """
         # get SSDB, SSIN, SSOUT and add to entity run settings
@@ -673,15 +673,8 @@ class Controller:
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
-        # Use metadata_dir if provided, otherwise fall back
-        # to entity-specific .smartsim dir
-        if metadata_dir:
-            status_dir = str(metadata_dir)
-        else:
-            # Create a status directory within the entity path for output files
-            # Ensure we have an absolute path
-            entity_path = os.path.abspath(entity.path) if entity.path else os.getcwd()
-            status_dir = os.path.join(entity_path, ".smartsim")
+        # Set metadata directory for job step
+        status_dir = str(metadata_dir)
         step.meta["metadata_dir"] = status_dir
 
         return step
