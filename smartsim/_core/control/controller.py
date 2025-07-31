@@ -405,22 +405,6 @@ class Controller:
         base_metadata_dir = manifest_builder.run_metadata_subdirectory
         base_metadata_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create entity-type specific metadata directories
-        model_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
-            "model"
-        )
-        ensemble_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
-            "ensemble"
-        )
-        database_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
-            "database"
-        )
-
-        # Create the directories
-        model_metadata_dir.mkdir(parents=True, exist_ok=True)
-        ensemble_metadata_dir.mkdir(parents=True, exist_ok=True)
-        database_metadata_dir.mkdir(parents=True, exist_ok=True)
-
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
@@ -453,6 +437,10 @@ class Controller:
         ] = []
 
         for elist in manifest.ensembles:
+            # Create ensemble-specific metadata directory
+            ensemble_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
+                "ensemble"
+            )
             if elist.batch:
                 batch_step, substeps = self._create_batch_job_step(
                     elist, ensemble_metadata_dir
@@ -479,6 +467,10 @@ class Controller:
         # models themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
+            # Create model-specific metadata directory
+            model_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
+                "model"
+            )
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
                 batch_step, substeps = self._create_batch_job_step(
