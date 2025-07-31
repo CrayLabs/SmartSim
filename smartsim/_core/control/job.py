@@ -111,7 +111,7 @@ class JobEntity:
         entity_dict: t.Dict[str, t.Any],
         entity: "JobEntity",
         exp_dir: str,
-        raw_experiment: t.Dict[str, t.Any],  # pylint: disable=unused-argument
+        raw_experiment: t.Dict[str, t.Any],
     ) -> None:
         """Map universal properties from a runtime manifest onto a `JobEntity`
 
