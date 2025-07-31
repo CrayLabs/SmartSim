@@ -163,7 +163,7 @@ def test_restarting_entity(test_dir, wlmutils, entity):
     step_settings = RunSettings("echo")
     test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
-    step.meta["status_dir"] = test_dir
+    step.meta["metadata_dir"] = test_dir
     entity.path = test_dir
     controller = Controller(test_launcher)
     controller._jobs.add_job(entity.name, job_id="1234", entity=entity)
@@ -176,7 +176,7 @@ def test_restarting_orch(test_dir, wlmutils):
     step_settings = RunSettings("echo")
     test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
-    step.meta["status_dir"] = test_dir
+    step.meta["metadata_dir"] = test_dir
     orc.path = test_dir
     controller = Controller(test_launcher)
     controller._jobs.add_job(orc.name, job_id="1234", entity=orc)

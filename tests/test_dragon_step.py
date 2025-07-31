@@ -55,9 +55,9 @@ def dragon_batch_step(test_dir: str) -> DragonBatchStep:
     batch_settings = SbatchSettings(nodes=num_nodes)
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
-    # ensure the status_dir is set
+    # ensure the metadata_dir is set
     status_dir = (test_path / ".smartsim" / "logs").as_posix()
-    batch_step.meta["status_dir"] = status_dir
+    batch_step.meta["metadata_dir"] = status_dir
 
     # create some steps to verify the requests file output changes
     rs0 = DragonRunSettings(exe="sleep", exe_args=["1"])
@@ -86,7 +86,7 @@ def dragon_batch_step(test_dir: str) -> DragonBatchStep:
 
     for index, step in enumerate(steps):
         # ensure meta is configured...
-        step.meta["status_dir"] = status_dir
+        step.meta["metadata_dir"] = status_dir
         # ... and put all the steps into the batch
         batch_step.add_to_batch(steps[index])
 
@@ -311,9 +311,9 @@ def test_dragon_batch_step_get_launch_command(
     batch_settings = batch_settings_class(nodes=num_nodes)
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
-    # ensure the status_dir is set
+    # ensure the metadata_dir is set
     status_dir = (test_path / ".smartsim" / "logs").as_posix()
-    batch_step.meta["status_dir"] = status_dir
+    batch_step.meta["metadata_dir"] = status_dir
 
     launch_cmd = batch_step.get_launch_cmd()
     assert launch_cmd
@@ -353,9 +353,9 @@ def test_dragon_batch_step_write_request_file_no_steps(test_dir: str) -> None:
     batch_settings = SbatchSettings(nodes=num_nodes)
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
-    # ensure the status_dir is set
+    # ensure the metadata_dir is set
     status_dir = (test_path / ".smartsim" / "logs").as_posix()
-    batch_step.meta["status_dir"] = status_dir
+    batch_step.meta["metadata_dir"] = status_dir
 
     launch_cmd = batch_step.get_launch_cmd()
     requests_file = get_request_path_from_batch_script(launch_cmd)
