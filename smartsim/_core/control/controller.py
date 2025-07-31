@@ -395,18 +395,15 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         """
 
-        # Create metadata directory for this experiment with timestamped subdirectory
-        timestamp = str(int(time.time() * 1000))
-        metadata_dir = (
-            pathlib.Path(exp_path) / CONFIG.metadata_subdir / f"run_{timestamp}"
-        )
-        metadata_dir.mkdir(parents=True, exist_ok=True)
-
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
             exp_name=exp_name,
             exp_path=exp_path,
             launcher_name=str(self._launcher),
         )
+
+        # Create metadata directory for this experiment with timestamped subdirectory
+        metadata_dir = manifest_builder.run_metadata_subdirectory
+        metadata_dir.mkdir(parents=True, exist_ok=True)
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():

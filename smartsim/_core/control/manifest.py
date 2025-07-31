@@ -26,6 +26,7 @@
 
 import itertools
 import pathlib
+import time
 import typing as t
 from dataclasses import dataclass, field
 
@@ -247,6 +248,9 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     exp_path: str
     launcher_name: str
     run_id: str = field(default_factory=_helpers.create_short_id_str)
+    _launch_timestamp: str = field(
+        default_factory=lambda: str(int(time.time() * 1000)), init=False
+    )
 
     _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list, init=False)
     _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]]] = field(
@@ -259,6 +263,16 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     @property
     def manifest_file_path(self) -> pathlib.Path:
         return pathlib.Path(self.exp_path) / _serialize.MANIFEST_FILENAME
+
+    @property
+    def exp_metadata_subdirectory(self) -> pathlib.Path:
+        """Return the experiment-level metadata subdirectory path"""
+        return pathlib.Path(self.exp_path) / ".smartsim" / "metadata"
+
+    @property
+    def run_metadata_subdirectory(self) -> pathlib.Path:
+        """Return the run-specific metadata subdirectory path"""
+        return self.exp_metadata_subdirectory / f"run_{self._launch_timestamp}"
 
     def add_model(self, model: Model, data: _T) -> None:
         self._models.append((model, data))
