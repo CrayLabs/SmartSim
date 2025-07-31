@@ -401,6 +401,10 @@ class Controller:
             launcher_name=str(self._launcher),
         )
 
+        # Create metadata directory for this experiment with timestamped subdirectory
+        metadata_dir = manifest_builder.run_metadata_subdirectory
+        metadata_dir.mkdir(parents=True, exist_ok=True)
+
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
@@ -418,7 +422,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator(orchestrator, manifest_builder, metadata_dir)
+            self._launch_orchestrator(orchestrator, manifest_builder)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -485,7 +489,6 @@ class Controller:
         self,
         orchestrator: Orchestrator,
         manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
-        metadata_dir: pathlib.Path,
     ) -> None:
         """Launch an Orchestrator instance
 
@@ -497,6 +500,8 @@ class Controller:
         :param manifest_builder: An `LaunchedManifestBuilder` to record the
                                  names and `Step`s of the launched orchestrator
         """
+        # Get metadata directory from manifest builder
+        metadata_dir = manifest_builder.run_metadata_subdirectory
         orchestrator.remove_stale_files()
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
