@@ -681,7 +681,8 @@ class Controller:
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
-        # Use metadata_dir if provided, otherwise fall back to entity-specific .smartsim dir
+        # Use metadata_dir if provided, otherwise fall back
+        # to entity-specific .smartsim dir
         if metadata_dir:
             status_dir = str(metadata_dir)
         else:
