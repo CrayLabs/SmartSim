@@ -1,15 +1,15 @@
 """Integration tests for metadata directory functionality end-to-end"""
 
-import tempfile
 import pathlib
+import tempfile
 import time
 from unittest.mock import patch
 
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Model, Ensemble
 from smartsim.database.orchestrator import Orchestrator
+from smartsim.entity import Ensemble, Model
 from smartsim.settings import RunSettings
 
 
@@ -23,8 +23,7 @@ class TestMetadataDirectoryIntegration:
 
             # Create a simple model
             model = exp.create_model(
-                "test_model",
-                run_settings=exp.create_run_settings("echo", ["hello"])
+                "test_model", run_settings=exp.create_run_settings("echo", ["hello"])
             )
 
             # Start and wait for completion
@@ -38,8 +37,14 @@ class TestMetadataDirectoryIntegration:
             assert metadata_dir.exists(), "Metadata directory should exist"
 
             # Check for run-specific subdirectory
-            run_dirs = [d for d in metadata_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
-            assert len(run_dirs) == 1, f"Should have exactly one run directory, found: {run_dirs}"
+            run_dirs = [
+                d
+                for d in metadata_dir.iterdir()
+                if d.is_dir() and d.name.startswith("run_")
+            ]
+            assert (
+                len(run_dirs) == 1
+            ), f"Should have exactly one run directory, found: {run_dirs}"
 
             run_dir = run_dirs[0]
 
@@ -48,23 +53,33 @@ class TestMetadataDirectoryIntegration:
             ensemble_dir = run_dir / "ensemble"
             database_dir = run_dir / "database"
 
-            assert model_dir.exists(), f"Model metadata directory should exist: {model_dir}"
-            assert not ensemble_dir.exists(), f"Ensemble metadata directory should not exist: {ensemble_dir}"
-            assert not database_dir.exists(), f"Database metadata directory should not exist: {database_dir}"
+            assert (
+                model_dir.exists()
+            ), f"Model metadata directory should exist: {model_dir}"
+            assert (
+                not ensemble_dir.exists()
+            ), f"Ensemble metadata directory should not exist: {ensemble_dir}"
+            assert (
+                not database_dir.exists()
+            ), f"Database metadata directory should not exist: {database_dir}"
 
             # Clean up
             exp.stop(model)
 
-    def test_experiment_creates_correct_metadata_directory_structure_ensemble_only(self):
+    def test_experiment_creates_correct_metadata_directory_structure_ensemble_only(
+        self,
+    ):
         """Test that launching only ensembles creates the correct directory structure"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            exp = Experiment("test_metadata_ensemble", exp_path=temp_dir, launcher="local")
+            exp = Experiment(
+                "test_metadata_ensemble", exp_path=temp_dir, launcher="local"
+            )
 
             # Create an ensemble
             ensemble = exp.create_ensemble(
                 "test_ensemble",
                 run_settings=exp.create_run_settings("echo", ["world"]),
-                replicas=2
+                replicas=2,
             )
 
             # Start and wait for completion
@@ -78,8 +93,14 @@ class TestMetadataDirectoryIntegration:
             assert metadata_dir.exists(), "Metadata directory should exist"
 
             # Check for run-specific subdirectory
-            run_dirs = [d for d in metadata_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
-            assert len(run_dirs) == 1, f"Should have exactly one run directory, found: {run_dirs}"
+            run_dirs = [
+                d
+                for d in metadata_dir.iterdir()
+                if d.is_dir() and d.name.startswith("run_")
+            ]
+            assert (
+                len(run_dirs) == 1
+            ), f"Should have exactly one run directory, found: {run_dirs}"
 
             run_dir = run_dirs[0]
 
@@ -88,9 +109,15 @@ class TestMetadataDirectoryIntegration:
             ensemble_dir = run_dir / "ensemble"
             database_dir = run_dir / "database"
 
-            assert not model_dir.exists(), f"Model metadata directory should not exist: {model_dir}"
-            assert ensemble_dir.exists(), f"Ensemble metadata directory should exist: {ensemble_dir}"
-            assert not database_dir.exists(), f"Database metadata directory should not exist: {database_dir}"
+            assert (
+                not model_dir.exists()
+            ), f"Model metadata directory should not exist: {model_dir}"
+            assert (
+                ensemble_dir.exists()
+            ), f"Ensemble metadata directory should exist: {ensemble_dir}"
+            assert (
+                not database_dir.exists()
+            ), f"Database metadata directory should not exist: {database_dir}"
 
             # Clean up
             exp.stop(ensemble)
@@ -102,15 +129,14 @@ class TestMetadataDirectoryIntegration:
 
             # Create model
             model = exp.create_model(
-                "test_model",
-                run_settings=exp.create_run_settings("echo", ["hello"])
+                "test_model", run_settings=exp.create_run_settings("echo", ["hello"])
             )
 
             # Create ensemble
             ensemble = exp.create_ensemble(
                 "test_ensemble",
                 run_settings=exp.create_run_settings("echo", ["world"]),
-                replicas=2
+                replicas=2,
             )
 
             # Create database
@@ -128,8 +154,14 @@ class TestMetadataDirectoryIntegration:
             assert metadata_dir.exists(), "Metadata directory should exist"
 
             # Check for run-specific subdirectories (may be 1 or 2 depending on timing)
-            run_dirs = [d for d in metadata_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
-            assert len(run_dirs) >= 1, f"Should have at least one run directory, found: {run_dirs}"
+            run_dirs = [
+                d
+                for d in metadata_dir.iterdir()
+                if d.is_dir() and d.name.startswith("run_")
+            ]
+            assert (
+                len(run_dirs) >= 1
+            ), f"Should have at least one run directory, found: {run_dirs}"
 
             # Find directory with model/ensemble subdirs
             run_dir = None
@@ -144,8 +176,12 @@ class TestMetadataDirectoryIntegration:
             model_dir = run_dir / "model"
             ensemble_dir = run_dir / "ensemble"
 
-            assert model_dir.exists(), f"Model metadata directory should exist: {model_dir}"
-            assert ensemble_dir.exists(), f"Ensemble metadata directory should exist: {ensemble_dir}"            # Clean up
+            assert (
+                model_dir.exists()
+            ), f"Model metadata directory should exist: {model_dir}"
+            assert (
+                ensemble_dir.exists()
+            ), f"Ensemble metadata directory should exist: {ensemble_dir}"  # Clean up
             exp.stop(model, ensemble)
             exp.stop(orchestrator)
 
@@ -155,8 +191,7 @@ class TestMetadataDirectoryIntegration:
             # First experiment run
             exp1 = Experiment("test_metadata_run1", exp_path=temp_dir, launcher="local")
             model1 = exp1.create_model(
-                "test_model1",
-                run_settings=exp1.create_run_settings("echo", ["run1"])
+                "test_model1", run_settings=exp1.create_run_settings("echo", ["run1"])
             )
 
             exp1.start(model1, block=False)
@@ -169,8 +204,7 @@ class TestMetadataDirectoryIntegration:
             # Second experiment run
             exp2 = Experiment("test_metadata_run2", exp_path=temp_dir, launcher="local")
             model2 = exp2.create_model(
-                "test_model2",
-                run_settings=exp2.create_run_settings("echo", ["run2"])
+                "test_model2", run_settings=exp2.create_run_settings("echo", ["run2"])
             )
 
             exp2.start(model2, block=False)
@@ -179,14 +213,22 @@ class TestMetadataDirectoryIntegration:
 
             # Verify two separate run directories exist
             metadata_dir = pathlib.Path(temp_dir) / ".smartsim" / "metadata"
-            run_dirs = [d for d in metadata_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
+            run_dirs = [
+                d
+                for d in metadata_dir.iterdir()
+                if d.is_dir() and d.name.startswith("run_")
+            ]
 
-            assert len(run_dirs) == 2, f"Should have exactly two run directories, found: {run_dirs}"
+            assert (
+                len(run_dirs) == 2
+            ), f"Should have exactly two run directories, found: {run_dirs}"
 
             # Verify both have model subdirectories
             for run_dir in run_dirs:
                 model_dir = run_dir / "model"
-                assert model_dir.exists(), f"Model metadata directory should exist in {run_dir}"
+                assert (
+                    model_dir.exists()
+                ), f"Model metadata directory should exist in {run_dir}"
 
     def test_metadata_directory_structure_with_batch_entities(self):
         """Test metadata directory creation pattern with batch-like behavior"""
@@ -196,13 +238,13 @@ class TestMetadataDirectoryIntegration:
             # Create model and ensemble (batch settings don't work with local launcher)
             model = exp.create_model(
                 "batch_model",
-                run_settings=exp.create_run_settings("echo", ["batch_hello"])
+                run_settings=exp.create_run_settings("echo", ["batch_hello"]),
             )
 
             ensemble = exp.create_ensemble(
                 "batch_ensemble",
                 run_settings=exp.create_run_settings("echo", ["batch_world"]),
-                replicas=2
+                replicas=2,
             )
 
             # Start entities to trigger metadata directory creation
@@ -216,8 +258,14 @@ class TestMetadataDirectoryIntegration:
             assert metadata_dir.exists(), "Metadata directory should exist"
 
             # Check for run-specific subdirectory
-            run_dirs = [d for d in metadata_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
-            assert len(run_dirs) >= 1, f"Should have at least one run directory, found: {run_dirs}"
+            run_dirs = [
+                d
+                for d in metadata_dir.iterdir()
+                if d.is_dir() and d.name.startswith("run_")
+            ]
+            assert (
+                len(run_dirs) >= 1
+            ), f"Should have at least one run directory, found: {run_dirs}"
 
             # Check that at least one run directory has entity subdirs
             has_model_dir = any((rd / "model").exists() for rd in run_dirs)
@@ -236,7 +284,7 @@ class TestMetadataDirectoryIntegration:
 
             model = exp.create_model(
                 "test_model",
-                run_settings=exp.create_run_settings("echo", ["permissions"])
+                run_settings=exp.create_run_settings("echo", ["permissions"]),
             )
 
             exp.start(model, block=False)
@@ -248,9 +296,15 @@ class TestMetadataDirectoryIntegration:
 
             # Verify directories exist and are readable/writable
             assert metadata_dir.exists() and metadata_dir.is_dir()
-            assert metadata_dir.stat().st_mode & 0o700  # Owner should have read/write/execute
+            assert (
+                metadata_dir.stat().st_mode & 0o700
+            )  # Owner should have read/write/execute
 
-            run_dirs = [d for d in metadata_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
+            run_dirs = [
+                d
+                for d in metadata_dir.iterdir()
+                if d.is_dir() and d.name.startswith("run_")
+            ]
             if run_dirs:
                 run_dir = run_dirs[0]
                 assert run_dir.exists() and run_dir.is_dir()
