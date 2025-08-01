@@ -27,30 +27,6 @@ class TestControllerMetadataDirectoryUsage:
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_controller_creates_base_metadata_directory(self):
-        """Test that Controller creates the base metadata directory"""
-        manifest = Manifest()  # Empty manifest
-
-        with patch.object(self.controller, "_jobs") as mock_jobs:
-            mock_jobs.get_db_host_addresses.return_value = {}
-            mock_jobs.actively_monitoring = False
-
-            # Mock the manifest builder's mkdir to track calls
-            with patch.object(pathlib.Path, "mkdir") as mock_mkdir:
-                launched_manifest = self.controller._launch(
-                    "test_exp", self.temp_dir, manifest
-                )
-
-                # Verify that mkdir was called for the base metadata directory
-                # The base metadata directory should be created
-                mkdir_calls = [call for call in mock_mkdir.call_args_list]
-                assert len(mkdir_calls) >= 1  # At least the base directory
-
-                # Check that the call included parents=True, exist_ok=True
-                base_mkdir_call = mkdir_calls[0]
-                assert base_mkdir_call[1]["parents"] is True
-                assert base_mkdir_call[1]["exist_ok"] is True
-
     def test_controller_creates_model_metadata_directory_only_when_models_present(self):
         """Test that model metadata directory is created only when models are present"""
         # Create manifest with model

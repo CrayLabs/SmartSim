@@ -401,10 +401,6 @@ class Controller:
             launcher_name=str(self._launcher),
         )
 
-        # Create metadata directories for this experiment with timestamped subdirectory
-        base_metadata_dir = manifest_builder.run_metadata_subdirectory
-        base_metadata_dir.mkdir(parents=True, exist_ok=True)
-
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
@@ -513,7 +509,6 @@ class Controller:
         """
         # Get database-specific metadata directory from manifest builder
         metadata_dir = manifest_builder.get_entity_metadata_subdirectory("database")
-        metadata_dir.mkdir(parents=True, exist_ok=True)
         orchestrator.remove_stale_files()
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
