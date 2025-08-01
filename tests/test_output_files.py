@@ -30,6 +30,7 @@ import pathlib
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
@@ -116,37 +117,23 @@ def test_get_output_files_with_create_job_step(test_dir):
 
 
 @pytest.mark.parametrize(
-    "entity_type",
-    [
-        pytest.param("ensemble", id="ensemble"),
-        pytest.param("orchestrator", id="orchestrator"),
-    ],
+    "entity",
+    [pytest.param(ens, id="ensemble"), pytest.param(orc, id="orchestrator")],
 )
-def test_get_output_files_with_create_batch_job_step(entity_type, test_dir):
+def test_get_output_files_with_create_batch_job_step(entity, test_dir):
     """Testing output files through _create_batch_job_step"""
     exp_dir = pathlib.Path(test_dir)
-
-    # Create fresh entities for each test to avoid path conflicts
-    if entity_type == "ensemble":
-        entity = Ensemble(
-            "ens", params={}, run_settings=rs, batch_settings=bs, replicas=3
-        )
-    else:  # orchestrator
-        entity = Orchestrator(
-            db_nodes=3, batch=True, launcher="slurm", run_command="srun"
-        )
-
-    entity.path = test_dir
-    # Create metadata_dir to simulate consistent metadata structure
-    metadata_dir = exp_dir / ".smartsim" / "metadata"
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
+    status_dir = exp_dir / CONFIG.metadata_subdir / entity.type
+    batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
     for step in substeps:
-        # With consistent metadata directory, output files should be in the metadata_dir
-        expected_out_path = metadata_dir / (step.entity_name + ".out")
-        expected_err_path = metadata_dir / (step.entity_name + ".err")
-        actual_out, actual_err = step.get_output_files()
-        assert actual_out == str(expected_out_path)
-        assert actual_err == str(expected_err_path)
+        # example output path for a member of an Ensemble is
+        # .smartsim/metadata/Ensemble/ens_0.out
+        expected_out_path = status_dir / (step.entity_name + ".out")
+        expected_err_path = status_dir / (step.entity_name + ".err")
+        assert step.get_output_files() == (
+            str(expected_out_path),
+            str(expected_err_path),
+        )
 
 
 def test_model_get_output_files(test_dir):
