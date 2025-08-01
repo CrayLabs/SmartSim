@@ -53,7 +53,7 @@ _LOGGER = smartsim.log.get_logger(__name__)
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     # Create directories for output
-    Path(manifest.metadata.exp_path).mkdir(parents=True, exist_ok=True)
+    Path(manifest.metadata.exp_path, ".smartsim", "metadata").mkdir(parents=True, exist_ok=True)
     exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
     new_run = {
