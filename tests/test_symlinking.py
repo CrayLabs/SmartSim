@@ -96,36 +96,16 @@ def symlink_with_create_job_step(test_dir, entity):
 
 
 @pytest.mark.parametrize(
-    "entity_type",
+    "entity",
     [
-        pytest.param("ensemble", id="ensemble"),
-        pytest.param("orchestrator", id="orchestrator"),
-        pytest.param("model", id="model"),
+        pytest.param(ens, id="ensemble"),
+        pytest.param(orc, id="orchestrator"),
+        pytest.param(anon_batch_model, id="model"),
     ],
 )
-def test_batch_symlink(entity_type, test_dir):
+def test_batch_symlink(entity, test_dir):
     """Test symlinking historical output files"""
     exp_dir = pathlib.Path(test_dir)
-
-    # Create fresh entities for each test to avoid path conflicts
-    if entity_type == "ensemble":
-        entity = Ensemble(
-            "ens", params={}, run_settings=rs, batch_settings=bs, replicas=3
-        )
-    elif entity_type == "orchestrator":
-        entity = Orchestrator(
-            db_nodes=3, batch=True, launcher="slurm", run_command="srun"
-        )
-    else:  # model
-        batch_model = Model(
-            "batch_test_model",
-            params={},
-            path=test_dir,
-            run_settings=batch_rs,
-            batch_settings=bs,
-        )
-        entity = _AnonymousBatchJob(batch_model)
-
     entity.path = test_dir
     # For entities with sub-entities (like Orchestrator), set their paths too
     if hasattr(entity, "entities"):
