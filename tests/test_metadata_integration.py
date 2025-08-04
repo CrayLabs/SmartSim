@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.config import CONFIG
 from smartsim.database.orchestrator import Orchestrator
 from smartsim.entity import Ensemble, Model
 from smartsim.settings import RunSettings
@@ -31,7 +32,7 @@ class TestMetadataDirectoryIntegration:
             exp.poll(interval=1)
 
             # Verify directory structure
-            smartsim_dir = pathlib.Path(temp_dir) / ".smartsim"
+            smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
             metadata_dir = smartsim_dir / "metadata"
 
             assert metadata_dir.exists(), "Metadata directory should exist"
@@ -87,7 +88,7 @@ class TestMetadataDirectoryIntegration:
             exp.poll(interval=1)
 
             # Verify directory structure
-            smartsim_dir = pathlib.Path(temp_dir) / ".smartsim"
+            smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
             metadata_dir = smartsim_dir / "metadata"
 
             assert metadata_dir.exists(), "Metadata directory should exist"
@@ -148,7 +149,7 @@ class TestMetadataDirectoryIntegration:
             exp.poll(interval=1)
 
             # Verify directory structure
-            smartsim_dir = pathlib.Path(temp_dir) / ".smartsim"
+            smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
             metadata_dir = smartsim_dir / "metadata"
 
             assert metadata_dir.exists(), "Metadata directory should exist"
@@ -213,7 +214,7 @@ class TestMetadataDirectoryIntegration:
             exp2.stop(model2)
 
             # Verify two separate run directories exist
-            metadata_dir = pathlib.Path(temp_dir) / ".smartsim" / "metadata"
+            metadata_dir = pathlib.Path(temp_dir) / CONFIG.metadata_subdir
             run_dirs = [
                 d
                 for d in metadata_dir.iterdir()
@@ -273,7 +274,7 @@ class TestMetadataDirectoryIntegration:
             exp.poll(interval=1)
 
             # Verify directory structure was created
-            smartsim_dir = pathlib.Path(temp_dir) / ".smartsim"
+            smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
             metadata_dir = smartsim_dir / "metadata"
 
             assert metadata_dir.exists(), "Metadata directory should exist"
@@ -320,7 +321,7 @@ class TestMetadataDirectoryIntegration:
             exp.poll(interval=1)
 
             # Check directory structure and permissions
-            smartsim_dir = pathlib.Path(temp_dir) / ".smartsim"
+            smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
             metadata_dir = smartsim_dir / "metadata"
 
             # Verify directories exist and are readable/writable

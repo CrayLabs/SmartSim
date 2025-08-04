@@ -30,6 +30,7 @@ import pathlib
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim.database.orchestrator import Orchestrator
 from smartsim.entity.ensemble import Ensemble
@@ -74,8 +75,8 @@ def symlink_with_create_job_step(test_dir, entity):
     """Function that helps cut down on repeated testing code"""
     exp_dir = pathlib.Path(test_dir)
     entity.path = test_dir
-    # Create metadata_dir to simulate consistent metadata structure
-    metadata_dir = exp_dir / ".smartsim" / "metadata"
+    # Use consistent metadata directory structure
+    metadata_dir = exp_dir / CONFIG.metadata_subdir
     step = controller._create_job_step(entity, metadata_dir)
     controller.symlink_output_files(step, entity)
     assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
@@ -109,7 +110,7 @@ def test_batch_symlink(entity, test_dir):
             sub_entity.path = test_dir
 
     # Create metadata_dir to simulate consistent metadata structure
-    metadata_dir = exp_dir / ".smartsim" / "metadata"
+    metadata_dir = exp_dir / CONFIG.metadata_subdir
     batch_step, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
 
     # For batch entities, we need to call symlink_output_files correctly

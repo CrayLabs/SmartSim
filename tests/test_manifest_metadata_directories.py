@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+from smartsim._core.config import CONFIG
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 
 
@@ -23,7 +24,7 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 run_id="test_run_id",
             )
 
-            expected_path = pathlib.Path(temp_dir) / ".smartsim" / "metadata"
+            expected_path = pathlib.Path(temp_dir) / CONFIG.metadata_subdir
             assert lmb.exp_metadata_subdirectory == expected_path
 
     def test_run_metadata_subdirectory_property(self):
@@ -41,8 +42,7 @@ class TestLaunchedManifestBuilderMetadataDirectories:
 
             expected_path = (
                 pathlib.Path(temp_dir)
-                / ".smartsim"
-                / "metadata"
+                / CONFIG.metadata_subdir
                 / f"run_{mock_timestamp}"
             )
             assert lmb.run_metadata_subdirectory == expected_path
@@ -88,8 +88,7 @@ class TestLaunchedManifestBuilderMetadataDirectories:
 
             base_path = (
                 pathlib.Path(temp_dir)
-                / ".smartsim"
-                / "metadata"
+                / CONFIG.metadata_subdir
                 / f"run_{mock_timestamp}"
             )
 
@@ -128,8 +127,13 @@ class TestLaunchedManifestBuilderMetadataDirectories:
 
             # Check path components
             path_parts = model_dir.parts
-            assert path_parts[-4] == ".smartsim"
-            assert path_parts[-3] == "metadata"
+            # Extract the metadata subdir parts for comparison
+            metadata_parts = pathlib.Path(CONFIG.metadata_subdir).parts
+            if len(metadata_parts) == 2:  # e.g., ".smartsim/metadata"
+                assert path_parts[-4] == metadata_parts[0]  # ".smartsim"
+                assert path_parts[-3] == metadata_parts[1]  # "metadata"
+            else:  # single part, e.g., "metadata"
+                assert path_parts[-3] == metadata_parts[0]
             assert path_parts[-2].startswith("run_")
             assert path_parts[-1] == "model"
 
@@ -188,7 +192,7 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 run_id="test_run_id",
             )
 
-            expected_exp_metadata = exp_path / ".smartsim" / "metadata"
+            expected_exp_metadata = exp_path / CONFIG.metadata_subdir
             assert lmb.exp_metadata_subdirectory == expected_exp_metadata
 
     def test_metadata_paths_are_pathlib_paths(self):

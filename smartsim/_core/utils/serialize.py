@@ -33,6 +33,7 @@ from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
 import smartsim.log
+from smartsim._core.config import CONFIG
 
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
@@ -53,7 +54,7 @@ _LOGGER = smartsim.log.get_logger(__name__)
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     # Create directories for output
-    Path(manifest.metadata.exp_path, ".smartsim", "metadata").mkdir(
+    Path(manifest.metadata.exp_path, CONFIG.metadata_subdir).mkdir(
         parents=True, exist_ok=True
     )
     exp_out, exp_err = smartsim.log.get_exp_log_paths()

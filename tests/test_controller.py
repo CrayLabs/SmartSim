@@ -28,6 +28,7 @@ import pathlib
 
 import pytest
 
+from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
@@ -70,6 +71,6 @@ def test_controller_batch_step_creation_preserves_entity_order(collection, monke
     entity_names = [x.name for x in collection.entities]
     assert len(entity_names) == len(set(entity_names))
     # Create a metadata directory for the test
-    metadata_dir = pathlib.Path("/tmp/.smartsim/metadata")
+    metadata_dir = pathlib.Path("/tmp") / CONFIG.metadata_subdir
     _, steps = controller._create_batch_job_step(collection, metadata_dir)
     assert entity_names == [step.name for step in steps]

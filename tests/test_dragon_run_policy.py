@@ -28,6 +28,7 @@ import pathlib
 
 import pytest
 
+from smartsim._core.config import CONFIG
 from smartsim._core.launcher.step.dragonStep import DragonBatchStep, DragonStep
 from smartsim.settings.dragonRunSettings import DragonRunSettings
 from smartsim.settings.slurmSettings import SbatchSettings
@@ -60,7 +61,7 @@ def dragon_batch_step(test_dir: str) -> "DragonBatchStep":
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
     # ensure the metadata_dir is set
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+    status_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
     batch_step.meta["metadata_dir"] = status_dir
 
     # create some steps to verify the requests file output changes

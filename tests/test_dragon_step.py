@@ -32,6 +32,7 @@ import typing as t
 
 import pytest
 
+from smartsim._core.config import CONFIG
 from smartsim._core.launcher.step.dragonStep import DragonBatchStep, DragonStep
 from smartsim.settings import DragonRunSettings
 from smartsim.settings.pbsSettings import QsubBatchSettings
@@ -56,7 +57,7 @@ def dragon_batch_step(test_dir: str) -> DragonBatchStep:
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
     # ensure the metadata_dir is set
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+    status_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
     batch_step.meta["metadata_dir"] = status_dir
 
     # create some steps to verify the requests file output changes
@@ -312,7 +313,7 @@ def test_dragon_batch_step_get_launch_command(
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
     # ensure the metadata_dir is set
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+    status_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
     batch_step.meta["metadata_dir"] = status_dir
 
     launch_cmd = batch_step.get_launch_cmd()
@@ -354,7 +355,7 @@ def test_dragon_batch_step_write_request_file_no_steps(test_dir: str) -> None:
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
     # ensure the metadata_dir is set
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+    status_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
     batch_step.meta["metadata_dir"] = status_dir
 
     launch_cmd = batch_step.get_launch_cmd()

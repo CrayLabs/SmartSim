@@ -126,7 +126,7 @@ def test_get_output_files_with_create_batch_job_step(entity, test_dir):
     batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
     for step in substeps:
         # example output path for a member of an Ensemble is
-        # .smartsim/metadata/Ensemble/ens_0.out
+        # {CONFIG.metadata_subdir}/Ensemble/ens_0.out
         expected_out_path = status_dir / (step.entity_name + ".out")
         expected_err_path = status_dir / (step.entity_name + ".err")
         assert step.get_output_files() == (

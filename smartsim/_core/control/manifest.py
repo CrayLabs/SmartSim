@@ -33,6 +33,7 @@ from dataclasses import dataclass, field
 from ...database import Orchestrator
 from ...entity import DBNode, Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import SmartSimError
+from ..config import CONFIG
 from ..utils import helpers as _helpers
 from ..utils import serialize as _serialize
 
@@ -267,7 +268,7 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     @property
     def exp_metadata_subdirectory(self) -> pathlib.Path:
         """Return the experiment-level metadata subdirectory path"""
-        return pathlib.Path(self.exp_path) / ".smartsim" / "metadata"
+        return pathlib.Path(self.exp_path) / CONFIG.metadata_subdir
 
     @property
     def run_metadata_subdirectory(self) -> pathlib.Path:
