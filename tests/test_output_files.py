@@ -106,13 +106,12 @@ def test_mutated_model_output(test_dir):
 def test_get_output_files_with_create_job_step(test_dir):
     """Testing output files through _create_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    # Create a fresh model instance for this test
-    test_model = Model("test_model", params={}, path=test_dir, run_settings=rs)
+    model.path = test_dir
     # Create metadata_dir to simulate consistent metadata structure
-    metadata_dir = exp_dir / ".smartsim" / "metadata"
-    step = controller._create_job_step(test_model, metadata_dir)
-    expected_out_path = metadata_dir / (test_model.name + ".out")
-    expected_err_path = metadata_dir / (test_model.name + ".err")
+    metadata_dir = exp_dir / CONFIG.metadata_subdir
+    step = controller._create_job_step(model, metadata_dir)
+    expected_out_path = metadata_dir / (model.name + ".out")
+    expected_err_path = metadata_dir / (model.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
