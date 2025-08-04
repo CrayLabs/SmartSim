@@ -57,20 +57,16 @@ anon_batch_model = _AnonymousBatchJob(batch_model)
 
 
 @pytest.mark.parametrize(
-    "entity_type",
-    [pytest.param("ensemble", id="ensemble"), pytest.param("model", id="model")],
+    "entity",
+    [pytest.param(ens, id="ensemble"), pytest.param(model, id="model")],
 )
-def test_symlink(test_dir, entity_type):
+def test_symlink(test_dir, entity):
     """Test symlinking historical output files"""
-    if entity_type == "ensemble":
-        entity = Ensemble(
-            "ens", params={}, run_settings=rs, batch_settings=bs, replicas=3
-        )
-        entity.path = test_dir
+    entity.path = test_dir
+    if entity.type == "Ensemble":
         for member in entity.models:
             symlink_with_create_job_step(test_dir, member)
     else:
-        entity = Model("test_model", params={}, path=test_dir, run_settings=rs)
         symlink_with_create_job_step(test_dir, entity)
 
 
