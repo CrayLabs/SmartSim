@@ -48,8 +48,8 @@ class TestMetadataDirectoryIntegration:
 
             run_dir = run_dirs[0]
 
-            # Check for entity-specific subdirectories
-            model_dir = run_dir / "model"
+            # Check for entity-specific subdirectories with entity names
+            model_dir = run_dir / "model" / "test_model"
             ensemble_dir = run_dir / "ensemble"
             database_dir = run_dir / "database"
 
@@ -104,9 +104,9 @@ class TestMetadataDirectoryIntegration:
 
             run_dir = run_dirs[0]
 
-            # Check for entity-specific subdirectories
+            # Check for entity-specific subdirectories with entity names
             model_dir = run_dir / "model"
-            ensemble_dir = run_dir / "ensemble"
+            ensemble_dir = run_dir / "ensemble" / "test_ensemble"
             database_dir = run_dir / "database"
 
             assert (
@@ -172,16 +172,17 @@ class TestMetadataDirectoryIntegration:
 
             assert run_dir is not None, "Should find run directory with entity subdirs"
 
-            # Check for entity-specific subdirectories
-            model_dir = run_dir / "model"
-            ensemble_dir = run_dir / "ensemble"
+            # Check for entity-specific subdirectories with entity names
+            model_dir = run_dir / "model" / "test_model"
+            ensemble_dir = run_dir / "ensemble" / "test_ensemble"
 
             assert (
                 model_dir.exists()
             ), f"Model metadata directory should exist: {model_dir}"
             assert (
                 ensemble_dir.exists()
-            ), f"Ensemble metadata directory should exist: {ensemble_dir}"  # Clean up
+            ), f"Ensemble metadata directory should exist: {ensemble_dir}"
+            # Clean up
             exp.stop(model, ensemble)
             exp.stop(orchestrator)
 
@@ -223,12 +224,28 @@ class TestMetadataDirectoryIntegration:
                 len(run_dirs) == 2
             ), f"Should have exactly two run directories, found: {run_dirs}"
 
-            # Verify both have model subdirectories
+            # Verify both have model subdirectories with entity names
+            model_names = ["test_model1", "test_model2"]
+            found_models = []
+
             for run_dir in run_dirs:
-                model_dir = run_dir / "model"
+                model_parent_dir = run_dir / "model"
                 assert (
-                    model_dir.exists()
-                ), f"Model metadata directory should exist in {run_dir}"
+                    model_parent_dir.exists()
+                ), f"Model parent directory should exist in {run_dir}"
+
+                # Find which model is in this run directory
+                for model_name in model_names:
+                    model_dir = run_dir / "model" / model_name
+                    if model_dir.exists():
+                        found_models.append(model_name)
+                        break
+                else:
+                    assert False, f"No model directory found in {run_dir}"
+
+            # Verify we found both models
+            assert len(found_models) == 2, f"Should find both models, found: {found_models}"
+            assert set(found_models) == set(model_names), f"Should find correct models: {model_names}, found: {found_models}"
 
     def test_metadata_directory_structure_with_batch_entities(self):
         """Test metadata directory creation pattern with batch-like behavior"""
@@ -267,12 +284,12 @@ class TestMetadataDirectoryIntegration:
                 len(run_dirs) >= 1
             ), f"Should have at least one run directory, found: {run_dirs}"
 
-            # Check that at least one run directory has entity subdirs
-            has_model_dir = any((rd / "model").exists() for rd in run_dirs)
-            has_ensemble_dir = any((rd / "ensemble").exists() for rd in run_dirs)
+            # Check that at least one run directory has entity subdirs with entity names
+            has_model_dir = any((rd / "model" / "batch_model").exists() for rd in run_dirs)
+            has_ensemble_dir = any((rd / "ensemble" / "batch_ensemble").exists() for rd in run_dirs)
 
-            assert has_model_dir, "Should have model metadata directory"
-            assert has_ensemble_dir, "Should have ensemble metadata directory"
+            assert has_model_dir, "Should have model metadata directory with entity name"
+            assert has_ensemble_dir, "Should have ensemble metadata directory with entity name"
 
             # Stop entities to clean up
             exp.stop(model, ensemble)
@@ -309,7 +326,8 @@ class TestMetadataDirectoryIntegration:
                 run_dir = run_dirs[0]
                 assert run_dir.exists() and run_dir.is_dir()
 
-                model_dir = run_dir / "model"
+                # Check for entity-specific model directory with entity name
+                model_dir = run_dir / "model" / "test_model"
                 if model_dir.exists():
                     assert model_dir.is_dir()
                     assert model_dir.stat().st_mode & 0o700

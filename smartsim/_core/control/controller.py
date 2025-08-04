@@ -434,8 +434,9 @@ class Controller:
 
         for elist in manifest.ensembles:
             # Create ensemble-specific metadata directory
-            ensemble_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
-                "ensemble"
+            ensemble_metadata_dir = (
+                manifest_builder.get_entity_metadata_subdirectory("ensemble")
+                / elist.name
             )
             if elist.batch:
                 batch_step, substeps = self._create_batch_job_step(
@@ -464,8 +465,9 @@ class Controller:
         # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
             # Create model-specific metadata directory
-            model_metadata_dir = manifest_builder.get_entity_metadata_subdirectory(
-                "model"
+            model_metadata_dir = (
+                manifest_builder.get_entity_metadata_subdirectory("model")
+                / model.name
             )
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
@@ -508,7 +510,10 @@ class Controller:
                                  names and `Step`s of the launched orchestrator
         """
         # Get database-specific metadata directory from manifest builder
-        metadata_dir = manifest_builder.get_entity_metadata_subdirectory("database")
+        metadata_dir = (
+            manifest_builder.get_entity_metadata_subdirectory("database")
+            / orchestrator.name
+        )
         orchestrator.remove_stale_files()
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
