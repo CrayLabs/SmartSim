@@ -63,7 +63,7 @@ anon_batch_model = _AnonymousBatchJob(batch_model)
 def test_symlink(test_dir, entity):
     """Test symlinking historical output files"""
     entity.path = test_dir
-    if entity.type == "Ensemble":
+    if entity.type == Ensemble:
         for member in entity.models:
             symlink_with_create_job_step(test_dir, member)
     else:
