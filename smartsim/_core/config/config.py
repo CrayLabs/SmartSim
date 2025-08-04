@@ -281,7 +281,7 @@ class Config:
 
     @property
     def dragon_logs_subdir(self) -> str:
-        return f"{self.smartsim_base_dir}/logs"
+        return f"{self.dragon_default_subdir}/logs"
 
     @property
     def metadata_subdir(self) -> str:
