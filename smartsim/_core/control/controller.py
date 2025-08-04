@@ -466,8 +466,7 @@ class Controller:
         for model in manifest.models:
             # Create model-specific metadata directory
             model_metadata_dir = (
-                manifest_builder.get_entity_metadata_subdirectory("model")
-                / model.name
+                manifest_builder.get_entity_metadata_subdirectory("model") / model.name
             )
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)

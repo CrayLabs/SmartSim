@@ -244,8 +244,12 @@ class TestMetadataDirectoryIntegration:
                     assert False, f"No model directory found in {run_dir}"
 
             # Verify we found both models
-            assert len(found_models) == 2, f"Should find both models, found: {found_models}"
-            assert set(found_models) == set(model_names), f"Should find correct models: {model_names}, found: {found_models}"
+            assert (
+                len(found_models) == 2
+            ), f"Should find both models, found: {found_models}"
+            assert set(found_models) == set(
+                model_names
+            ), f"Should find correct models: {model_names}, found: {found_models}"
 
     def test_metadata_directory_structure_with_batch_entities(self):
         """Test metadata directory creation pattern with batch-like behavior"""
@@ -285,11 +289,19 @@ class TestMetadataDirectoryIntegration:
             ), f"Should have at least one run directory, found: {run_dirs}"
 
             # Check that at least one run directory has entity subdirs with entity names
-            has_model_dir = any((rd / "model" / "batch_model").exists() for rd in run_dirs)
-            has_ensemble_dir = any((rd / "ensemble" / "batch_ensemble").exists() for rd in run_dirs)
+            has_model_dir = any(
+                (rd / "model" / "batch_model").exists() for rd in run_dirs
+            )
+            has_ensemble_dir = any(
+                (rd / "ensemble" / "batch_ensemble").exists() for rd in run_dirs
+            )
 
-            assert has_model_dir, "Should have model metadata directory with entity name"
-            assert has_ensemble_dir, "Should have ensemble metadata directory with entity name"
+            assert (
+                has_model_dir
+            ), "Should have model metadata directory with entity name"
+            assert (
+                has_ensemble_dir
+            ), "Should have ensemble metadata directory with entity name"
 
             # Stop entities to clean up
             exp.stop(model, ensemble)
