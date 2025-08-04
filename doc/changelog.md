@@ -22,16 +22,19 @@ Description
 Detailed Notes
 
 - **BREAKING CHANGE**: Removed telemetry functionality entirely and implemented unified
-  metadata directory structure. This includes complete removal of the telemetry monitor
-  and collection system, telemetry configuration classes (`TelemetryConfiguration`,
-  `ExperimentTelemetryConfiguration`), all telemetry-related API methods
-  (`Experiment.telemetry`, `Orchestrator.telemetry`), telemetry collectors and sinks,
-  and the `watchdog` dependency. Also removed SmartDashboard integration and CLI plugin,
-  along with the indirect entrypoint launching mechanism. The legacy telemetry directory
-  structure has been replaced with a unified metadata system using
+  metadata directory structure with centralized path management. This includes complete
+  removal of the telemetry monitor and collection system, telemetry configuration classes
+  (`TelemetryConfiguration`, `ExperimentTelemetryConfiguration`), all telemetry-related
+  API methods (`Experiment.telemetry`, `Orchestrator.telemetry`), telemetry collectors
+  and sinks, and the `watchdog` dependency. Also removed SmartDashboard integration and
+  CLI plugin, along with the indirect entrypoint launching mechanism. The legacy telemetry
+  directory structure has been replaced with a unified metadata system using
   `.smartsim/metadata/run_{timestamp}/{entity_type}/{entity_name}/` directories, providing
-  better organization and run isolation. Added `CONFIG.metadata_subdir` property for
-  consistent metadata directory management across all components.
+  better organization and run isolation. Enhanced the CONFIG system with hierarchical
+  directory properties (`CONFIG.smartsim_base_dir`, `CONFIG.dragon_default_subdir`,
+  `CONFIG.dragon_logs_subdir`, `CONFIG.metadata_subdir`) and eliminated all hardcoded
+  `.smartsim` directory references throughout the codebase (15+ files updated). Dragon
+  logs are now properly organized under `.smartsim/dragon/logs/` for better modularity.
   ([SmartSim-PR789](https://github.com/CrayLabs/SmartSim/pull/789))
 - Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
   are installed as part of `smart build` process when available. On Mac, ONNX runtime
