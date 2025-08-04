@@ -21,12 +21,17 @@ Description
 
 Detailed Notes
 
-- **BREAKING CHANGE**: Removed telemetry functionality entirely. This includes the
-  telemetry monitor and collection system, telemetry configuration classes
-  (`TelemetryConfiguration`, `ExperimentTelemetryConfiguration`), all telemetry-related
-  API methods (`Experiment.telemetry`, `Orchestrator.telemetry`), telemetry collectors
-  and sinks, and the `watchdog` dependency. Also removed SmartDashboard integration
-  and CLI plugin. The indirect entrypoint launching mechanism has also been removed.
+- **BREAKING CHANGE**: Removed telemetry functionality entirely and implemented unified
+  metadata directory structure. This includes complete removal of the telemetry monitor
+  and collection system, telemetry configuration classes (`TelemetryConfiguration`,
+  `ExperimentTelemetryConfiguration`), all telemetry-related API methods
+  (`Experiment.telemetry`, `Orchestrator.telemetry`), telemetry collectors and sinks,
+  and the `watchdog` dependency. Also removed SmartDashboard integration and CLI plugin,
+  along with the indirect entrypoint launching mechanism. The legacy telemetry directory
+  structure has been replaced with a unified metadata system using
+  `.smartsim/metadata/run_{timestamp}/{entity_type}/{entity_name}/` directories, providing
+  better organization and run isolation. Added `CONFIG.metadata_subdir` property for
+  consistent metadata directory management across all components.
   ([SmartSim-PR789](https://github.com/CrayLabs/SmartSim/pull/789))
 - Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
   are installed as part of `smart build` process when available. On Mac, ONNX runtime
