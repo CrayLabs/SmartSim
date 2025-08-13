@@ -26,6 +26,7 @@ Detailed Notes
 - Copyright headers have been updated from "2021-2024" to "2021-2025" across 271 files
   including Python source files, configuration files, documentation, tests, Docker files,
   shell scripts, and other supporting files to reflect the new year.
+  ([SmartSim-PR790](https://github.com/CrayLabs/SmartSim/pull/790))
 - Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
   are installed as part of `smart build` process when available. On Mac, ONNX runtime
   1.22.0 is now installed, together with ONNX 1.16.
