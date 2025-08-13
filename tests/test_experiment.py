@@ -34,7 +34,6 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
-from smartsim._core.utils import serialize
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SmartSimError

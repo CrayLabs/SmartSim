@@ -25,21 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import itertools
-import pathlib
-import time
 import typing as t
-from dataclasses import dataclass, field
 
 from ...database import Orchestrator
-from ...entity import DBNode, Ensemble, EntitySequence, Model, SmartSimEntity
+from ...entity import Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import SmartSimError
-from ..config import CONFIG
 from ..utils import helpers as _helpers
-from ..utils import serialize as _serialize
-
-_T = t.TypeVar("_T")
-_U = t.TypeVar("_U")
-_AtomicLaunchableT = t.TypeVar("_AtomicLaunchableT", Model, DBNode)
 
 if t.TYPE_CHECKING:
     import os
@@ -190,127 +181,3 @@ class Manifest:
             (member for ens in self.ensembles for member in ens.entities),
         )
         return any(any(ent.db_models) or any(ent.db_scripts) for ent in ents)
-
-
-class _LaunchedManifestMetadata(t.NamedTuple):
-    exp_name: str
-    exp_path: str
-    launcher_name: str
-
-    @property
-    def manifest_file_path(self) -> pathlib.Path:
-        return pathlib.Path(self.exp_path) / _serialize.MANIFEST_FILENAME
-
-
-@dataclass(frozen=True)
-class LaunchedManifest(t.Generic[_T]):
-    """Immutable manifest mapping launched entities or collections of launched
-    entities to other pieces of external data. This is commonly used to map a
-    launch-able entity to its constructed ``Step`` instance without assuming
-    that ``step.name == job.name`` or querying the ``JobManager`` which itself
-    can be ephemeral.
-    """
-
-    metadata: _LaunchedManifestMetadata
-    models: t.Tuple[t.Tuple[Model, _T], ...]
-    ensembles: t.Tuple[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]], ...]
-    databases: t.Tuple[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]], ...]
-
-    def map(self, func: t.Callable[[_T], _U]) -> "LaunchedManifest[_U]":
-        def _map_entity_data(
-            fn: t.Callable[[_T], _U],
-            entity_list: t.Sequence[t.Tuple[_AtomicLaunchableT, _T]],
-        ) -> t.Tuple[t.Tuple[_AtomicLaunchableT, _U], ...]:
-            return tuple((entity, fn(data)) for entity, data in entity_list)
-
-        return LaunchedManifest(
-            metadata=self.metadata,
-            models=_map_entity_data(func, self.models),
-            ensembles=tuple(
-                (ens, _map_entity_data(func, model_data))
-                for ens, model_data in self.ensembles
-            ),
-            databases=tuple(
-                (db_, _map_entity_data(func, node_data))
-                for db_, node_data in self.databases
-            ),
-        )
-
-
-@dataclass(frozen=True)
-class LaunchedManifestBuilder(t.Generic[_T]):
-    """A class comprised of mutable collections of SmartSim entities that is
-    used to build a ``LaunchedManifest`` while going through the launching
-    process.
-    """
-
-    exp_name: str
-    exp_path: str
-    launcher_name: str
-    _launch_timestamp: str = field(
-        default_factory=lambda: str(int(time.time() * 1000)), init=False
-    )
-
-    _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list, init=False)
-    _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]]] = field(
-        default_factory=list, init=False
-    )
-    _databases: t.List[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]] = (
-        field(default_factory=list, init=False)
-    )
-
-    @property
-    def manifest_file_path(self) -> pathlib.Path:
-        return pathlib.Path(self.exp_path) / _serialize.MANIFEST_FILENAME
-
-    @property
-    def exp_metadata_subdirectory(self) -> pathlib.Path:
-        """Return the experiment-level metadata subdirectory path"""
-        return pathlib.Path(self.exp_path) / CONFIG.metadata_subdir
-
-    @property
-    def run_metadata_subdirectory(self) -> pathlib.Path:
-        """Return the run-specific metadata subdirectory path"""
-        return self.exp_metadata_subdirectory / f"run_{self._launch_timestamp}"
-
-    def get_entity_metadata_subdirectory(self, entity_type: str) -> pathlib.Path:
-        """Return the entity-type-specific metadata subdirectory path
-
-        :param entity_type: The type of entity (e.g., 'model', 'ensemble', 'database')
-        :return: The metadata subdirectory path for the specific entity type
-        """
-        return self.run_metadata_subdirectory / entity_type
-
-    def add_model(self, model: Model, data: _T) -> None:
-        self._models.append((model, data))
-
-    def add_ensemble(self, ens: Ensemble, data: t.Sequence[_T]) -> None:
-        self._ensembles.append((ens, self._entities_to_data(ens.entities, data)))
-
-    def add_database(self, db_: Orchestrator, data: t.Sequence[_T]) -> None:
-        self._databases.append((db_, self._entities_to_data(db_.entities, data)))
-
-    @staticmethod
-    def _entities_to_data(
-        entities: t.Sequence[_AtomicLaunchableT], data: t.Sequence[_T]
-    ) -> t.Tuple[t.Tuple[_AtomicLaunchableT, _T], ...]:
-        if not entities:
-            raise ValueError("Cannot map data to an empty entity sequence")
-        if len(entities) != len(data):
-            raise ValueError(
-                f"Cannot map data sequence of length {len(data)} to entity "
-                f"sequence of length {len(entities)}"
-            )
-        return tuple(zip(entities, data))
-
-    def finalize(self) -> LaunchedManifest[_T]:
-        return LaunchedManifest(
-            metadata=_LaunchedManifestMetadata(
-                self.exp_name,
-                self.exp_path,
-                self.launcher_name,
-            ),
-            models=tuple(self._models),
-            ensembles=tuple(self._ensembles),
-            databases=tuple(self._databases),
-        )

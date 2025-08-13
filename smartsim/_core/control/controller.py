@@ -73,17 +73,10 @@ from ..launcher import (
     SlurmLauncher,
 )
 from ..launcher.launcher import Launcher
-from ..utils import check_cluster_status, create_cluster, serialize
-from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
+from .controller_utils import _AnonymousBatchJob
 from .job import Job
 from .jobmanager import JobManager
-from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
-
-if t.TYPE_CHECKING:
-    from types import FrameType
-
-    from ..utils.serialize import TStepLaunchMetaData
-
+from .manifest import Manifest
 
 logger = get_logger(__name__)
 
@@ -127,15 +120,16 @@ class Controller:
         SignalInterceptionStack.get(signal.SIGINT).push_unique(
             self._jobs.signal_interrupt
         )
-        launched = self._launch(exp_name, exp_path, manifest)
+        self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
             self._jobs.start()
 
-        serialize.save_launch_manifest(
-            launched.map(_look_up_launched_data(self._launcher))
-        )
+        # TODO: Remove or update serialization since LaunchedManifest was removed
+        # serialize.save_launch_manifest(
+        #     launched.map(_look_up_launched_data(self._launcher))
+        # )
 
         # block until all non-database jobs are complete
         if block:
@@ -382,9 +376,7 @@ class Controller:
                 "Symlinking files failed."
             )
 
-    def _launch(
-        self, exp_name: str, exp_path: str, manifest: Manifest
-    ) -> LaunchedManifest[t.Tuple[str, Step]]:
+    def _launch(self, _exp_name: str, exp_path: str, manifest: Manifest) -> None:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
@@ -394,12 +386,6 @@ class Controller:
         :param exp_path: path to location of ``Experiment`` directory if generated
         :param manifest: Manifest of deployables to launch
         """
-
-        manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
-            exp_name=exp_name,
-            exp_path=exp_path,
-            launcher_name=str(self._launcher),
-        )
 
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -418,7 +404,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator(orchestrator, manifest_builder)
+            self._launch_orchestrator_simple(orchestrator)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -433,19 +419,17 @@ class Controller:
         ] = []
 
         for elist in manifest.ensembles:
-            # Create ensemble-specific metadata directory
+            # Create ensemble metadata directory
             ensemble_metadata_dir = (
-                manifest_builder.get_entity_metadata_subdirectory("ensemble")
+                pathlib.Path(exp_path)
+                / CONFIG.metadata_subdir
+                / "ensemble"
                 / elist.name
             )
             if elist.batch:
                 batch_step, substeps = self._create_batch_job_step(
                     elist, ensemble_metadata_dir
                 )
-                manifest_builder.add_ensemble(
-                    elist, [(batch_step.name, step) for step in substeps]
-                )
-
                 # symlink substeps to maintain directory structure
                 for substep, substep_entity in zip(substeps, elist.models):
                     symlink_substeps.append((substep, substep_entity))
@@ -457,29 +441,23 @@ class Controller:
                     (self._create_job_step(e, ensemble_metadata_dir), e)
                     for e in elist.entities
                 ]
-                manifest_builder.add_ensemble(
-                    elist, [(step.name, step) for step, _ in job_steps]
-                )
                 steps.extend(job_steps)
         # models themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
             # Create model-specific metadata directory
             model_metadata_dir = (
-                manifest_builder.get_entity_metadata_subdirectory("model") / model.name
+                pathlib.Path(exp_path) / CONFIG.metadata_subdir / "model" / model.name
             )
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
                 batch_step, substeps = self._create_batch_job_step(
                     anon_entity_list, model_metadata_dir
                 )
-                manifest_builder.add_model(model, (batch_step.name, batch_step))
-
                 symlink_substeps.append((substeps[0], model))
                 steps.append((batch_step, model))
             else:
                 job_step = self._create_job_step(model, model_metadata_dir)
-                manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
         # launch and symlink steps
@@ -491,38 +469,23 @@ class Controller:
         for substep, entity in symlink_substeps:
             self.symlink_output_files(substep, entity)
 
-        return manifest_builder.finalize()
-
-    def _launch_orchestrator(
-        self,
-        orchestrator: Orchestrator,
-        manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
-    ) -> None:
-        """Launch an Orchestrator instance
-
-        This function will launch the Orchestrator instance and
-        if on WLM, find the nodes where it was launched and
-        set them in the JobManager
+    def _launch_orchestrator_simple(self, orchestrator: "Orchestrator") -> None:
+        """Launch an Orchestrator instance (simplified version without manifest)
 
         :param orchestrator: orchestrator to launch
-        :param manifest_builder: An `LaunchedManifestBuilder` to record the
-                                 names and `Step`s of the launched orchestrator
         """
-        # Get database-specific metadata directory from manifest builder
-        metadata_dir = (
-            manifest_builder.get_entity_metadata_subdirectory("database")
-            / orchestrator.name
-        )
         orchestrator.remove_stale_files()
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
+            metadata_dir = (
+                pathlib.Path(orchestrator.path)
+                / CONFIG.metadata_subdir
+                / "database"
+                / orchestrator.name
+            )
             orc_batch_step, substeps = self._create_batch_job_step(
                 orchestrator, metadata_dir
             )
-            manifest_builder.add_database(
-                orchestrator, [(orc_batch_step.name, step) for step in substeps]
-            )
-
             self._launch_step(orc_batch_step, orchestrator)
             self.symlink_output_files(orc_batch_step, orchestrator)
 
@@ -532,47 +495,22 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
+            metadata_dir = (
+                pathlib.Path(orchestrator.path)
+                / CONFIG.metadata_subdir
+                / "database"
+                / orchestrator.name
+            )
             db_steps = [
                 (self._create_job_step(db, metadata_dir), db)
                 for db in orchestrator.entities
             ]
-            manifest_builder.add_database(
-                orchestrator, [(step.name, step) for step, _ in db_steps]
-            )
             for db_step in db_steps:
                 self._launch_step(*db_step)
                 self.symlink_output_files(*db_step)
 
         # wait for orchestrator to spin up
         self._orchestrator_launch_wait(orchestrator)
-
-        # set the jobs in the job manager to provide SSDB variable to entities
-        # if _host isnt set within each
-        self._jobs.set_db_hosts(orchestrator)
-
-        # create the database cluster
-        if orchestrator.num_shards > 2:
-            num_trials = 5
-            cluster_created = False
-            while not cluster_created:
-                try:
-                    create_cluster(orchestrator.hosts, orchestrator.ports)
-                    check_cluster_status(orchestrator.hosts, orchestrator.ports)
-                    num_shards = orchestrator.num_shards
-                    logger.info(f"Database cluster created with {num_shards} shards")
-                    cluster_created = True
-                except SSInternalError:
-                    if num_trials > 0:
-                        logger.debug(
-                            "Cluster creation failed, attempting again in five seconds."
-                        )
-                        num_trials -= 1
-                        time.sleep(5)
-                    else:
-                        # surface SSInternalError as we have no way to recover
-                        raise
-        self._save_orchestrator(orchestrator)
-        logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
     def _launch_step(
         self,
