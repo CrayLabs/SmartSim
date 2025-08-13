@@ -60,7 +60,6 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
     new_run = {
-        "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
         "model": [
             _dictify_model(model, *metadata) for model, metadata in manifest.models

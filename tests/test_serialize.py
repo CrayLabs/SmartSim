@@ -48,7 +48,7 @@ def manifest_json(test_dir, config) -> str:
 
 
 def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
-    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4()))
+    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
 
     assert manifest_json.is_file()
@@ -62,13 +62,13 @@ def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
 
 def test_serialize_appends_a_manifest_json_exists(test_dir, manifest_json):
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4())).finalize()
+        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
     )
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4())).finalize()
+        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
     )
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4())).finalize()
+        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
     )
 
     assert manifest_json.is_file()
@@ -76,7 +76,8 @@ def test_serialize_appends_a_manifest_json_exists(test_dir, manifest_json):
         manifest = json.load(f)
         assert isinstance(manifest["runs"], list)
         assert len(manifest["runs"]) == 3
-        assert len({run["run_id"] for run in manifest["runs"]}) == 3
+        # Verify each run has a timestamp (unique runs can be identified by timestamp)
+        assert len({run["timestamp"] for run in manifest["runs"]}) == 3
 
 
 def test_serialize_overwites_file_if_not_json(test_dir, manifest_json):
@@ -84,7 +85,7 @@ def test_serialize_overwites_file_if_not_json(test_dir, manifest_json):
     with open(manifest_json, "w") as f:
         f.write("This is not a json\n")
 
-    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4()))
+    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
     with open(manifest_json, "r") as f:
         assert isinstance(json.load(f), dict)

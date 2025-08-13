@@ -173,7 +173,7 @@ def test_launched_manifest_transform_data(entities: _EntityResult) -> None:
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
     dbs = [(orc, [(n, i) for i, n in enumerate(orc.entities)])]
     lmb = LaunchedManifest(
-        metadata=LaunchedManifestMetadata("name", "path", "launcher", "run_id"),
+        metadata=LaunchedManifestMetadata("name", "path", "launcher"),
         models=models,  # type: ignore
         ensembles=ensembles,  # type: ignore
         databases=dbs,  # type: ignore
@@ -189,7 +189,7 @@ def test_launched_manifest_builder_correctly_maps_data(entities: _EntityResult) 
     _, (model, model_2), ensemble, orc, _, _ = entities
 
     lmb = LaunchedManifestBuilder(
-        "name", "path", "launcher name", str(uuid4())
+        "name", "path", "launcher name"
     )  # type: ignore
     lmb.add_model(model, 1)
     lmb.add_model(model_2, 1)
@@ -208,7 +208,7 @@ def test_launced_manifest_builder_raises_if_lens_do_not_match(
     _, _, ensemble, orc, _, _ = entities
 
     lmb = LaunchedManifestBuilder(
-        "name", "path", "launcher name", str(uuid4())
+        "name", "path", "launcher name"
     )  # type: ignore
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, list(range(123)))
@@ -222,7 +222,7 @@ def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
     _, _, ensemble, _, _, _ = entities
 
     lmb: LaunchedManifestBuilder[t.Tuple[str, Step]] = LaunchedManifestBuilder(
-        "name", "path", "launcher", str(uuid4())
+        "name", "path", "launcher"
     )
     monkeypatch.setattr(ensemble, "entities", [])
     with pytest.raises(ValueError):

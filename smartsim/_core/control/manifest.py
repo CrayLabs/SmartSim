@@ -193,7 +193,6 @@ class Manifest:
 
 
 class _LaunchedManifestMetadata(t.NamedTuple):
-    run_id: str
     exp_name: str
     exp_path: str
     launcher_name: str
@@ -248,7 +247,6 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     exp_name: str
     exp_path: str
     launcher_name: str
-    run_id: str = field(default_factory=_helpers.create_short_id_str)
     _launch_timestamp: str = field(
         default_factory=lambda: str(int(time.time() * 1000)), init=False
     )
@@ -308,7 +306,6 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def finalize(self) -> LaunchedManifest[_T]:
         return LaunchedManifest(
             metadata=_LaunchedManifestMetadata(
-                self.run_id,
                 self.exp_name,
                 self.exp_path,
                 self.launcher_name,
