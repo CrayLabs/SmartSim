@@ -21,7 +21,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             expected_path = pathlib.Path(temp_dir) / CONFIG.metadata_subdir
@@ -36,8 +35,7 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 lmb = LaunchedManifestBuilder(
                     exp_name="test_exp",
                     exp_path=temp_dir,
-                launcher_name="local",
-                    
+                    launcher_name="local",
                 )
 
             expected_path = (
@@ -54,7 +52,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             # Check that the timestamp is reasonable (within last few seconds)
@@ -77,8 +74,7 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 lmb = LaunchedManifestBuilder(
                     exp_name="test_exp",
                     exp_path=temp_dir,
-                launcher_name="local",
-                    
+                    launcher_name="local",
                 )
 
             # Test different entity types
@@ -103,7 +99,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             # Test with custom entity type
@@ -119,7 +114,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             # Test that the hierarchy is: exp_path/.smartsim/metadata/run_<timestamp>/entity_type
@@ -144,7 +138,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp1",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             # Small delay to ensure different timestamps
@@ -154,7 +147,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp2",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             # Timestamps should be different
@@ -168,7 +160,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             # Multiple calls should return the same timestamp
@@ -189,7 +180,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp",
                 exp_path=str(exp_path),  # LaunchedManifestBuilder expects string
                 launcher_name="local",
-                
             )
 
             expected_exp_metadata = exp_path / CONFIG.metadata_subdir
@@ -202,7 +192,6 @@ class TestLaunchedManifestBuilderMetadataDirectories:
                 exp_name="test_exp",
                 exp_path=temp_dir,
                 launcher_name="local",
-                
             )
 
             assert isinstance(lmb.exp_metadata_subdirectory, pathlib.Path)

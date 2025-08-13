@@ -188,9 +188,7 @@ def test_launched_manifest_transform_data(entities: _EntityResult) -> None:
 def test_launched_manifest_builder_correctly_maps_data(entities: _EntityResult) -> None:
     _, (model, model_2), ensemble, orc, _, _ = entities
 
-    lmb = LaunchedManifestBuilder(
-        "name", "path", "launcher name"
-    )  # type: ignore
+    lmb = LaunchedManifestBuilder("name", "path", "launcher name")  # type: ignore
     lmb.add_model(model, 1)
     lmb.add_model(model_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
@@ -207,9 +205,7 @@ def test_launced_manifest_builder_raises_if_lens_do_not_match(
 ) -> None:
     _, _, ensemble, orc, _, _ = entities
 
-    lmb = LaunchedManifestBuilder(
-        "name", "path", "launcher name"
-    )  # type: ignore
+    lmb = LaunchedManifestBuilder("name", "path", "launcher name")  # type: ignore
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, list(range(123)))
     with pytest.raises(ValueError):
