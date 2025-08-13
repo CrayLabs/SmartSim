@@ -1,6 +1,7 @@
 """Test the controller's metadata directory usage patterns"""
 
 import pathlib
+import shutil
 import tempfile
 from unittest.mock import MagicMock, patch
 
@@ -23,8 +24,6 @@ class TestControllerMetadataDirectoryUsage:
 
     def teardown_method(self):
         """Clean up test fixtures"""
-        import shutil
-
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_controller_creates_model_metadata_directory_only_when_models_present(self):

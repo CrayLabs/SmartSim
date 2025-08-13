@@ -272,20 +272,20 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_MPI", "1")) > 0
 
     @property
-    def smartsim_base_dir(self) -> str:
-        return ".smartsim"
+    def smartsim_base_dir(self) -> Path:
+        return Path(".smartsim")
 
     @property
-    def dragon_default_subdir(self) -> str:
-        return f"{self.smartsim_base_dir}/dragon"
+    def dragon_default_subdir(self) -> Path:
+        return self.smartsim_base_dir / "dragon"
 
     @property
-    def dragon_logs_subdir(self) -> str:
-        return f"{self.dragon_default_subdir}/logs"
+    def dragon_logs_subdir(self) -> Path:
+        return self.dragon_default_subdir / "logs"
 
     @property
-    def metadata_subdir(self) -> str:
-        return f"{self.smartsim_base_dir}/metadata"
+    def metadata_subdir(self) -> Path:
+        return self.smartsim_base_dir / "metadata"
 
     @property
     def dragon_log_filename(self) -> str:

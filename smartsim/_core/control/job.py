@@ -24,144 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pathlib
 import time
 import typing as t
-from dataclasses import dataclass
 
 from ...entity import EntitySequence, SmartSimEntity
 from ...status import SmartSimStatus
-
-
-@dataclass(frozen=True)
-class _JobKey:
-    """A helper class for creating unique lookup keys within a job manager.
-    These keys are not guaranteed to be unique across experiments,
-    only within an experiment (due to process ID re-use by the OS)"""
-
-    step_id: str
-    """The process id of an unmanaged task"""
-    task_id: str
-    """The task id of a managed task"""
-
-
-class JobEntity:
-    """An entity containing run-time SmartSimEntity metadata. The `JobEntity`
-    satisfies the core API necessary to use a `JobManager` to manage retrieval
-    of managed step updates.
-    """
-
-    def __init__(self) -> None:
-        self.name: str = ""
-        """The entity name"""
-        self.path: str = ""
-        """The root path for entity output files"""
-        self.step_id: str = ""
-        """The process id of an unmanaged task"""
-        self.task_id: str = ""
-        """The task id of a managed task"""
-        self.type: str = ""
-        """The type of the associated `SmartSimEntity`"""
-        self.timestamp: int = 0
-        """The timestamp when the entity was created"""
-        self.metadata_dir: str = ""
-        """The metadata directory for this entity's output files"""
-        self.collectors: t.Dict[str, str] = {}
-        """Collector configuration for database entities"""
-        self.config: t.Dict[str, str] = {}
-        """Configuration settings for database entities"""
-
-    @property
-    def is_db(self) -> bool:
-        """Returns `True` if the entity represents a database or database shard"""
-        return self.type in ["orchestrator", "dbnode"]
-
-    @property
-    def is_managed(self) -> bool:
-        """Returns `True` if the entity is managed by a workload manager"""
-        return bool(self.step_id)
-
-    @property
-    def key(self) -> _JobKey:
-        """Return a `_JobKey` that identifies an entity.
-        NOTE: not guaranteed to be unique over time due to reused process IDs"""
-        return _JobKey(self.step_id, self.task_id)
-
-    @staticmethod
-    def _map_db_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
-        """Map DB-specific properties from a runtime manifest onto a `JobEntity`
-
-        :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :param entity: The entity instance to modify
-        """
-        if entity.is_db:
-            # add collectors if they're configured to be enabled in the manifest
-            entity.collectors = {
-                "client": entity_dict.get("client_file", ""),
-                "client_count": entity_dict.get("client_count_file", ""),
-                "memory": entity_dict.get("memory_file", ""),
-            }
-
-            entity.config["host"] = entity_dict.get("hostname", "")
-            entity.config["port"] = entity_dict.get("port", "")
-
-    @staticmethod
-    def _map_standard_metadata(
-        entity_type: str,
-        entity_dict: t.Dict[str, t.Any],
-        entity: "JobEntity",
-        exp_dir: str,
-        raw_experiment: t.Dict[str, t.Any],
-    ) -> None:
-        """Map universal properties from a runtime manifest onto a `JobEntity`
-
-        :param entity_type: The type of the associated `SmartSimEntity`
-        :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :param entity: The entity instance to modify
-        :param exp_dir: The path to the experiment working directory
-        :param raw_experiment: The raw experiment dictionary deserialized from
-        manifest JSON
-        """
-        metadata = entity_dict["step_metadata"]
-        metadata_dir = pathlib.Path(metadata.get("metadata_dir"))
-        is_dragon = raw_experiment["launcher"].lower() == "dragon"
-
-        # all entities contain shared properties that identify the task
-        entity.type = entity_type
-        entity.name = (
-            entity_dict["name"]
-            if not is_dragon
-            else entity_dict["step_metadata"]["step_id"]
-        )
-        entity.step_id = str(metadata.get("step_id") or "")
-        entity.task_id = str(metadata.get("task_id") or "")
-        entity.timestamp = int(entity_dict.get("timestamp", "0"))
-        entity.path = str(exp_dir)
-        entity.metadata_dir = str(metadata_dir)
-
-    @classmethod
-    def from_manifest(
-        cls,
-        entity_type: str,
-        entity_dict: t.Dict[str, t.Any],
-        exp_dir: str,
-        raw_experiment: t.Dict[str, t.Any],
-    ) -> "JobEntity":
-        """Instantiate a `JobEntity` from the dictionary deserialized from manifest JSON
-
-        :param entity_type: The type of the associated `SmartSimEntity`
-        :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :param exp_dir: The path to the experiment working directory
-        :param raw_experiment: raw experiment deserialized from manifest JSON
-        """
-        entity = JobEntity()
-
-        cls._map_standard_metadata(
-            entity_type, entity_dict, entity, exp_dir, raw_experiment
-        )
-        cls._map_db_metadata(entity_dict, entity)
-
-        return entity
 
 
 class Job:
@@ -175,7 +42,7 @@ class Job:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         launcher: str,
         is_task: bool,
     ) -> None:

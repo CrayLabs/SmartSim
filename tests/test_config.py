@@ -228,5 +228,5 @@ def test_key_path_non_default(monkeypatch: pytest.MonkeyPatch):
 def test_metadata_subdir():
     """Test that metadata_subdir returns the expected path"""
     config = Config()
-    expected_path = ".smartsim/metadata"
+    expected_path = Path(".smartsim/metadata")
     assert config.metadata_subdir == expected_path
