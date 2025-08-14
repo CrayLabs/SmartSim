@@ -38,7 +38,6 @@ from subprocess import SubprocessError
 from smartsim._core._install.utils import retrieve
 from smartsim._core.utils import expand_exe_path
 
-
 # TODO: check cmake version and use system if possible to avoid conflicts
 
 _PathLike = str | os.PathLike[str]
