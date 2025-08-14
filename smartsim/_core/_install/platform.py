@@ -29,7 +29,6 @@ import json
 import os
 import pathlib
 import platform
-import typing as t
 from dataclasses import dataclass
 
 from typing_extensions import Self
@@ -98,7 +97,7 @@ class Device(enum.Enum):
         return cls(str_)
 
     @classmethod
-    def detect_cuda_version(cls) -> t.Optional["Device"]:
+    def detect_cuda_version(cls) -> "Device | None":
         """Find the enum based on environment CUDA
 
         :return: Enum for the version of CUDA currently available
@@ -112,7 +111,7 @@ class Device(enum.Enum):
         return None
 
     @classmethod
-    def detect_rocm_version(cls) -> t.Optional["Device"]:
+    def detect_rocm_version(cls) -> "Device | None":
         """Find the enum based on environment ROCm
 
         :return: Enum for the version of ROCm currently available
@@ -149,7 +148,7 @@ class Device(enum.Enum):
         return self in cls.rocm_enums()
 
     @classmethod
-    def cuda_enums(cls) -> t.Tuple["Device", ...]:
+    def cuda_enums(cls) -> tuple["Device", ...]:
         """Detect all CUDA devices supported by SmartSim
 
         :return: all enums associated with CUDA
@@ -157,7 +156,7 @@ class Device(enum.Enum):
         return tuple(device for device in cls if "cuda" in device.value)
 
     @classmethod
-    def rocm_enums(cls) -> t.Tuple["Device", ...]:
+    def rocm_enums(cls) -> tuple["Device", ...]:
         """Detect all ROCm devices supported by SmartSim
 
         :return: all enums associated with ROCm

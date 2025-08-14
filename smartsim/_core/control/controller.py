@@ -34,7 +34,6 @@ import pickle
 import signal
 import threading
 import time
-import typing as t
 
 from smartredis import Client, ConfigOptions
 
@@ -135,7 +134,7 @@ class Controller:
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
-    def active_orchestrator_jobs(self) -> t.Dict[str, Job]:
+    def active_orchestrator_jobs(self) -> dict[str, Job]:
         """Return active orchestrator jobs."""
         return {**self._jobs.db_jobs}
 
@@ -167,9 +166,7 @@ class Controller:
                     for job in to_monitor.values():
                         logger.info(job)
 
-    def finished(
-        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> bool:
+    def finished(self, entity: SmartSimEntity | EntitySequence[SmartSimEntity]) -> bool:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
@@ -194,7 +191,7 @@ class Controller:
             ) from None
 
     def stop_entity(
-        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+        self, entity: SmartSimEntity | EntitySequence[SmartSimEntity]
     ) -> None:
         """Stop an instance of an entity
 
@@ -265,7 +262,7 @@ class Controller:
             for entity in entity_list.entities:
                 self.stop_entity(entity)
 
-    def get_jobs(self) -> t.Dict[str, Job]:
+    def get_jobs(self) -> dict[str, Job]:
         """Return a dictionary of completed job data
 
         :returns: dict[str, Job]
@@ -274,7 +271,7 @@ class Controller:
             return self._jobs.completed
 
     def get_entity_status(
-        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+        self, entity: SmartSimEntity | EntitySequence[SmartSimEntity]
     ) -> SmartSimStatus:
         """Get the status of an entity
 
@@ -291,7 +288,7 @@ class Controller:
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
-    ) -> t.List[SmartSimStatus]:
+    ) -> list[SmartSimStatus]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
@@ -320,7 +317,7 @@ class Controller:
                                     a supported launcher
         :raises TypeError: if no launcher argument is provided.
         """
-        launcher_map: t.Dict[str, t.Type[Launcher]] = {
+        launcher_map: dict[str, type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
             "pals": PBSLauncher,
@@ -342,7 +339,7 @@ class Controller:
 
     @staticmethod
     def symlink_output_files(
-        job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+        job_step: Step, entity: SmartSimEntity | EntitySequence[SmartSimEntity]
     ) -> None:
         """Create symlinks for entity output files that point to the output files
         under the .smartsim directory
@@ -411,12 +408,10 @@ class Controller:
             self._set_dbobjects(manifest)
 
         # create all steps prior to launch
-        steps: t.List[
-            t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
-        ] = []
+        steps: list[tuple[Step, SmartSimEntity | EntitySequence[SmartSimEntity]]] = []
 
-        symlink_substeps: t.List[
-            t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
+        symlink_substeps: list[
+            tuple[Step, SmartSimEntity | EntitySequence[SmartSimEntity]]
         ] = []
 
         for elist in manifest.ensembles:
@@ -553,7 +548,7 @@ class Controller:
     def _launch_step(
         self,
         job_step: Step,
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        entity: SmartSimEntity | EntitySequence[SmartSimEntity],
     ) -> None:
         """Use the launcher to launch a job step
 
@@ -610,9 +605,9 @@ class Controller:
 
     def _create_batch_job_step(
         self,
-        entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob],
+        entity_list: Orchestrator | Ensemble | _AnonymousBatchJob,
         metadata_dir: pathlib.Path,
-    ) -> t.Tuple[Step, t.List[Step]]:
+    ) -> tuple[Step, list[Step]]:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
@@ -671,7 +666,7 @@ class Controller:
         :param entity: The entity to retrieve connections from
         """
 
-        client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
+        client_env: dict[str, str | int | float | bool] = {}
         address_dict = self._jobs.get_db_host_addresses()
 
         for db_id, addresses in address_dict.items():
@@ -803,9 +798,7 @@ class Controller:
                 # launch explicitly
                 raise
 
-    def reload_saved_db(
-        self, checkpoint_file: t.Union[str, os.PathLike[str]]
-    ) -> Orchestrator:
+    def reload_saved_db(self, checkpoint_file: str | os.PathLike[str]) -> Orchestrator:
         with JM_LOCK:
 
             if not osp.exists(checkpoint_file):

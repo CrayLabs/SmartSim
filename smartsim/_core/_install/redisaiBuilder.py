@@ -59,9 +59,9 @@ class RedisAIBuilder:
         build_env: BuildEnv,
         main_build_path: pathlib.Path,
         verbose: bool = False,
-        source: t.Union[
-            str, pathlib.Path
-        ] = "https://github.com/RedisAI/redis-inference-optimization.git",
+        source: (
+            str | pathlib.Path
+        ) = "https://github.com/RedisAI/redis-inference-optimization.git",
         version: str = "v1.2.7",
     ) -> None:
 
@@ -196,7 +196,7 @@ class RedisAIBuilder:
     @staticmethod
     def _find_closest_object(
         start_path: pathlib.Path, target_obj: str
-    ) -> t.Optional[pathlib.Path]:
+    ) -> pathlib.Path | None:
         queue = deque([start_path])
         while queue:
             current_dir = queue.popleft()
@@ -234,7 +234,7 @@ class RedisAIBuilder:
                 for file in actual_root.iterdir():
                     file.rename(target_dir / file.name)
 
-    def run_command(self, cmd: t.Union[str, t.List[str]], cwd: pathlib.Path) -> None:
+    def run_command(self, cmd: str | list[str], cwd: pathlib.Path) -> None:
         """Executor of commands usedi in the build
 
         :param cmd: The actual command to execute
@@ -252,7 +252,7 @@ class RedisAIBuilder:
                 f"RedisAI build failed during command: {' '.join(cmd)}"
             )
 
-    def _rai_cmake_cmd(self) -> t.List[str]:
+    def _rai_cmake_cmd(self) -> list[str]:
         """Build the CMake configuration command
 
         :return: CMake command with correct options
@@ -281,7 +281,7 @@ class RedisAIBuilder:
         return cmd
 
     @property
-    def _rai_build_cmd(self) -> t.List[str]:
+    def _rai_build_cmd(self) -> list[str]:
         """Shell command to build RedisAI and modules
 
         With the CMake based install, very little needs to be done here.
@@ -293,7 +293,7 @@ class RedisAIBuilder:
         """
         return "make install -j VERBOSE=1".split(" ")
 
-    def _patch_source_files(self, patches: t.Tuple[RAIPatch, ...]) -> None:
+    def _patch_source_files(self, patches: tuple[RAIPatch, ...]) -> None:
         """Apply specified RedisAI patches"""
         for patch in patches:
             with fileinput.input(

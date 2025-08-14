@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 import xml.etree.ElementTree as ET
 
 
@@ -57,7 +56,7 @@ def parse_qsub_error(output: str) -> str:
     return base_err
 
 
-def parse_qstat_jobid_xml(output: str, job_id: str) -> t.Optional[str]:
+def parse_qstat_jobid_xml(output: str, job_id: str) -> str | None:
     """Parse and return output of the qstat command run with XML options
     to obtain job status.
 
@@ -78,7 +77,7 @@ def parse_qstat_jobid_xml(output: str, job_id: str) -> t.Optional[str]:
     return None
 
 
-def parse_qacct_job_output(output: str, field_name: str) -> t.Union[str, int]:
+def parse_qacct_job_output(output: str, field_name: str) -> str | int:
     """Parse the output from qacct for a single job
 
     :param output: The raw text output from qacct

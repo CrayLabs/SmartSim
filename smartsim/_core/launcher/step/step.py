@@ -30,7 +30,6 @@ import copy
 import os.path as osp
 import pathlib
 import time
-import typing as t
 from os import makedirs
 
 from smartsim.error.errors import SmartSimError
@@ -50,14 +49,14 @@ class Step:
         self.cwd = cwd
         self.managed = False
         self.step_settings = copy.deepcopy(step_settings)
-        self.meta: t.Dict[str, str] = {}
+        self.meta: dict[str, str] = {}
 
     @property
-    def env(self) -> t.Optional[t.Dict[str, str]]:
+    def env(self) -> dict[str, str] | None:
         """Overridable, read only property for step to specify its environment"""
         return None
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         raise NotImplementedError
 
     @staticmethod
@@ -71,7 +70,7 @@ class Step:
         if not osp.exists(output_dir):
             pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    def get_output_files(self) -> t.Tuple[str, str]:
+    def get_output_files(self) -> tuple[str, str]:
         """Return two paths to error and output files based on metadata directory"""
         try:
             output_dir = self.meta["metadata_dir"]
@@ -82,9 +81,7 @@ class Step:
         error = osp.join(output_dir, f"{self.entity_name}.err")
         return output, error
 
-    def get_step_file(
-        self, ending: str = ".sh", script_name: t.Optional[str] = None
-    ) -> str:
+    def get_step_file(self, ending: str = ".sh", script_name: str | None = None) -> str:
         """Get the name for a file/script created by the step class
 
         Used for Batch scripts, mpmd scripts, etc.

@@ -36,9 +36,9 @@ class AprunSettings(RunSettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        exe_args: t.Optional[str | list[str]] = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ):
         """Settings to run job with ``aprun`` command
@@ -58,7 +58,7 @@ class AprunSettings(RunSettings):
             env_vars=env_vars,
             **kwargs,
         )
-        self.mpmd: t.List[RunSettings] = []
+        self.mpmd: list[RunSettings] = []
 
     def make_mpmd(self, settings: RunSettings) -> None:
         """Make job an MPMD job
@@ -105,7 +105,7 @@ class AprunSettings(RunSettings):
         """
         self.run_args["pes-per-node"] = int(tasks_per_node)
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -128,7 +128,7 @@ class AprunSettings(RunSettings):
         """
         self.run_args["node-list-file"] = file_path
 
-    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_excluded_hosts(self, host_list: str | list[str]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -142,7 +142,7 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude-node-list"] = ",".join(host_list)
 
-    def set_cpu_bindings(self, bindings: t.Union[int, t.List[int]]) -> None:
+    def set_cpu_bindings(self, bindings: int | list[int]) -> None:
         """Specifies the cores to which MPI processes are bound
 
         This sets ``--cpu-binding``
@@ -186,7 +186,7 @@ class AprunSettings(RunSettings):
         else:
             self.run_args.pop("quiet", None)
 
-    def format_run_args(self) -> t.List[str]:
+    def format_run_args(self) -> list[str]:
         """Return a list of ALPS formatted run arguments
 
         :return: list of ALPS arguments for these settings
@@ -208,7 +208,7 @@ class AprunSettings(RunSettings):
                         args += ["=".join((prefix + opt, str(value)))]
         return args
 
-    def format_env_vars(self) -> t.List[str]:
+    def format_env_vars(self) -> list[str]:
         """Format the environment variables for aprun
 
         :return: list of env vars

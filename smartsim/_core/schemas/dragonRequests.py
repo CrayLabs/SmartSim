@@ -43,14 +43,14 @@ class DragonRequest(BaseModel): ...
 class DragonRunPolicy(BaseModel):
     """Policy specifying hardware constraints when running a Dragon job"""
 
-    cpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+    cpu_affinity: list[NonNegativeInt] = Field(default_factory=list)
     """List of CPU indices to which the job should be pinned"""
-    gpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+    gpu_affinity: list[NonNegativeInt] = Field(default_factory=list)
     """List of GPU indices to which the job should be pinned"""
 
     @staticmethod
     def from_run_args(
-        run_args: t.Dict[str, t.Union[int, str, float, None]]
+        run_args: dict[str, int | str | float | None]
     ) -> "DragonRunPolicy":
         """Create a DragonRunPolicy with hardware constraints passed from
         a dictionary of run arguments
@@ -79,23 +79,23 @@ class DragonRunPolicy(BaseModel):
 
 class DragonRunRequestView(DragonRequest):
     exe: t.Annotated[str, Field(min_length=1)]
-    exe_args: t.List[t.Annotated[str, Field(min_length=1)]] = []
+    exe_args: list[t.Annotated[str, Field(min_length=1)]] = []
     path: t.Annotated[str, Field(min_length=1)]
     nodes: PositiveInt = 1
     tasks: PositiveInt = 1
     tasks_per_node: PositiveInt = 1
-    hostlist: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
-    output_file: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
-    error_file: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
-    env: t.Dict[str, t.Optional[str]] = {}
-    name: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
+    hostlist: t.Annotated[str, Field(min_length=1)] | None = None
+    output_file: t.Annotated[str, Field(min_length=1)] | None = None
+    error_file: t.Annotated[str, Field(min_length=1)] | None = None
+    env: dict[str, str | None] = {}
+    name: t.Annotated[str, Field(min_length=1)] | None = None
     pmi_enabled: bool = True
 
 
 @request_registry.register("run")
 class DragonRunRequest(DragonRunRequestView):
-    current_env: t.Dict[str, t.Optional[str]] = {}
-    policy: t.Optional[DragonRunPolicy] = None
+    current_env: dict[str, str | None] = {}
+    policy: DragonRunPolicy | None = None
 
     def __str__(self) -> str:
         return str(DragonRunRequestView.parse_obj(self.dict(exclude={"current_env"})))
@@ -103,7 +103,7 @@ class DragonRunRequest(DragonRunRequestView):
 
 @request_registry.register("update_status")
 class DragonUpdateStatusRequest(DragonRequest):
-    step_ids: t.List[t.Annotated[str, Field(min_length=1)]]
+    step_ids: list[t.Annotated[str, Field(min_length=1)]]
 
 
 @request_registry.register("stop")

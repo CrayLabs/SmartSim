@@ -43,10 +43,10 @@ class _BaseMPISettings(RunSettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        exe_args: t.Optional[str | list[str]] = None,
         run_command: str = "mpiexec",
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
         fail_if_missing_exec: bool = True,
         **kwargs: t.Any,
     ) -> None:
@@ -75,8 +75,8 @@ class _BaseMPISettings(RunSettings):
             env_vars=env_vars,
             **kwargs,
         )
-        self.mpmd: t.List[RunSettings] = []
-        self.affinity_script: t.List[str] = []
+        self.mpmd: list[RunSettings] = []
+        self.affinity_script: list[str] = []
 
         if not shutil.which(self._run_command):
             msg = (
@@ -151,7 +151,7 @@ class _BaseMPISettings(RunSettings):
         """
         self.run_args["n"] = int(tasks)
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         """Set the hostlist for the ``mpirun`` command
 
         This sets ``--host``
@@ -200,7 +200,7 @@ class _BaseMPISettings(RunSettings):
         else:
             self.run_args.pop("quiet", None)
 
-    def set_broadcast(self, dest_path: t.Optional[str] = None) -> None:
+    def set_broadcast(self, dest_path: str | None = None) -> None:
         """Copy the specified executable(s) to remote machines
 
         This sets ``--preload-binary``
@@ -225,7 +225,7 @@ class _BaseMPISettings(RunSettings):
         """
         self.run_args["timeout"] = walltime
 
-    def format_run_args(self) -> t.List[str]:
+    def format_run_args(self) -> list[str]:
         """Return a list of MPI-standard formatted run arguments
 
         :return: list of MPI-standard arguments for these settings
@@ -243,7 +243,7 @@ class _BaseMPISettings(RunSettings):
                     args += [prefix + opt, str(value)]
         return args
 
-    def format_env_vars(self) -> t.List[str]:
+    def format_env_vars(self) -> list[str]:
         """Format the environment variables for mpirun
 
         :return: list of env vars
@@ -264,9 +264,9 @@ class MpirunSettings(_BaseMPISettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        exe_args: t.Optional[str | list[str]] = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``mpirun`` command (MPI-standard)
@@ -291,9 +291,9 @@ class MpiexecSettings(_BaseMPISettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        exe_args: t.Optional[str | list[str]] = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``mpiexec`` command (MPI-standard)
@@ -327,9 +327,9 @@ class OrterunSettings(_BaseMPISettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        exe_args: t.Optional[str | list[str]] = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``orterun`` command (MPI-standard)

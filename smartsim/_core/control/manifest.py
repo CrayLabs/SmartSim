@@ -26,6 +26,7 @@
 
 import itertools
 import typing as t
+from collections.abc import Iterable
 
 from ...database import Orchestrator
 from ...entity import Ensemble, EntitySequence, Model, SmartSimEntity
@@ -43,16 +44,14 @@ class Manifest:
     can all be passed as arguments
     """
 
-    def __init__(
-        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> None:
+    def __init__(self, *args: SmartSimEntity | EntitySequence[SmartSimEntity]) -> None:
         self._deployables = list(args)
         self._check_types(self._deployables)
         self._check_names(self._deployables)
         self._check_entity_lists_nonempty()
 
     @property
-    def dbs(self) -> t.List[Orchestrator]:
+    def dbs(self) -> list[Orchestrator]:
         """Return a list of Orchestrator instances in Manifest
 
         :raises SmartSimError: if user added to databases to manifest
@@ -62,18 +61,18 @@ class Manifest:
         return dbs
 
     @property
-    def models(self) -> t.List[Model]:
+    def models(self) -> list[Model]:
         """Return Model instances in Manifest
 
         :return: model instances
         """
-        _models: t.List[Model] = [
+        _models: list[Model] = [
             item for item in self._deployables if isinstance(item, Model)
         ]
         return _models
 
     @property
-    def ensembles(self) -> t.List[Ensemble]:
+    def ensembles(self) -> list[Ensemble]:
         """Return Ensemble instances in Manifest
 
         :return: list of ensembles
@@ -81,13 +80,13 @@ class Manifest:
         return [e for e in self._deployables if isinstance(e, Ensemble)]
 
     @property
-    def all_entity_lists(self) -> t.List[EntitySequence[SmartSimEntity]]:
+    def all_entity_lists(self) -> list[EntitySequence[SmartSimEntity]]:
         """All entity lists, including ensembles and
         exceptional ones like Orchestrator
 
         :return: list of entity lists
         """
-        _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
+        _all_entity_lists: list[EntitySequence[SmartSimEntity]] = list(self.ensembles)
 
         for db in self.dbs:
             _all_entity_lists.append(db)
@@ -103,7 +102,7 @@ class Manifest:
         return bool(self._deployables)
 
     @staticmethod
-    def _check_names(deployables: t.List[t.Any]) -> None:
+    def _check_names(deployables: list[t.Any]) -> None:
         used = []
         for deployable in deployables:
             name = getattr(deployable, "name", None)
@@ -114,7 +113,7 @@ class Manifest:
             used.append(name)
 
     @staticmethod
-    def _check_types(deployables: t.List[t.Any]) -> None:
+    def _check_types(deployables: list[t.Any]) -> None:
         for deployable in deployables:
             if not isinstance(deployable, (SmartSimEntity, EntitySequence)):
                 raise TypeError(
@@ -172,7 +171,7 @@ class Manifest:
     @property
     def has_db_objects(self) -> bool:
         """Check if any entity has DBObjects to set"""
-        ents: t.Iterable[t.Union[Model, Ensemble]] = itertools.chain(
+        ents: Iterable[Model | Ensemble] = itertools.chain(
             self.models,
             self.ensembles,
             (member for ens in self.ensembles for member in ens.entities),

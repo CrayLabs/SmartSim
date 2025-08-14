@@ -38,12 +38,10 @@ from subprocess import SubprocessError
 from smartsim._core._install.utils import retrieve
 from smartsim._core.utils import expand_exe_path
 
-if t.TYPE_CHECKING:
-    from typing_extensions import Never
 
 # TODO: check cmake version and use system if possible to avoid conflicts
 
-_PathLike = t.Union[str, "os.PathLike[str]"]
+_PathLike = str | "os.PathLike[str]"
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
 
@@ -67,7 +65,7 @@ class Builder:
 
     def __init__(
         self,
-        env: t.Dict[str, str],
+        env: dict[str, str],
         jobs: int = 1,
         verbose: bool = False,
     ) -> None:
@@ -99,7 +97,7 @@ class Builder:
         self.jobs = jobs
 
     @property
-    def out(self) -> t.Optional[int]:
+    def out(self) -> int | None:
         return None if self.verbose else subprocess.DEVNULL
 
     # implemented in base classes
@@ -115,16 +113,12 @@ class Builder:
         raise BuildError(f"{binary} not found in PATH")
 
     @staticmethod
-    def copy_file(
-        src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False
-    ) -> None:
+    def copy_file(src: str | Path, dst: str | Path, set_exe: bool = False) -> None:
         shutil.copyfile(src, dst)
         if set_exe:
             Path(dst).chmod(stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)
 
-    def copy_dir(
-        self, src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False
-    ) -> None:
+    def copy_dir(self, src: str | Path, dst: str | Path, set_exe: bool = False) -> None:
         src = Path(src)
         dst = Path(dst)
         dst.mkdir(exist_ok=True)
@@ -144,10 +138,10 @@ class Builder:
 
     def run_command(
         self,
-        cmd: t.List[str],
+        cmd: list[str],
         shell: bool = False,
-        out: t.Optional[int] = None,
-        cwd: t.Union[str, Path, None] = None,
+        out: int | None = None,
+        cwd: str | Path | None = None,
     ) -> None:
         # option to manually disable output if necessary
         if not out:
@@ -179,7 +173,7 @@ class DatabaseBuilder(Builder):
 
     def __init__(
         self,
-        build_env: t.Optional[t.Dict[str, str]] = None,
+        build_env: dict[str, str] | None = None,
         malloc: str = "libc",
         jobs: int = 1,
         verbose: bool = False,

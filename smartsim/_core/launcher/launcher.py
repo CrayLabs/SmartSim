@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import abc
-import typing as t
 
 from ..._core.launcher.stepMapping import StepMap
 from ...error import AllocationError, LauncherError, SSUnsupportedError
@@ -54,16 +53,16 @@ class Launcher(abc.ABC):  # pragma: no cover
 
     @abc.abstractmethod
     def get_step_update(
-        self, step_names: t.List[str]
-    ) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:
+        self, step_names: list[str]
+    ) -> list[tuple[str, StepInfo | None]]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
+    def get_step_nodes(self, step_names: list[str]) -> list[list[str]]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> str | None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -93,7 +92,7 @@ class WLMLauncher(Launcher):  # cov-wlm
 
     @property
     @abc.abstractmethod
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+    def supported_rs(self) -> dict[type[SettingsBase], type[Step]]:
         raise NotImplementedError
 
     # every launcher utilizing this interface must have a map
@@ -125,19 +124,19 @@ class WLMLauncher(Launcher):  # cov-wlm
     # don't need to be covered here.
 
     def get_step_nodes(
-        self, step_names: t.List[str]
-    ) -> t.List[t.List[str]]:  # pragma: no cover
+        self, step_names: list[str]
+    ) -> list[list[str]]:  # pragma: no cover
         raise SSUnsupportedError("Node acquisition not supported for this launcher")
 
     def get_step_update(
-        self, step_names: t.List[str]
-    ) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:  # cov-wlm
+        self, step_names: list[str]
+    ) -> list[tuple[str, StepInfo | None]]:  # cov-wlm
         """Get update for a list of job steps
 
         :param step_names: list of job steps to get updates for
         :return: list of name, job update tuples
         """
-        updates: t.List[t.Tuple[str, t.Union[StepInfo, None]]] = []
+        updates: list[tuple[str, StepInfo | None]] = []
 
         # get updates of jobs managed by workload manager (PBS, Slurm, etc)
         # this is primarily batch jobs.
@@ -161,8 +160,8 @@ class WLMLauncher(Launcher):  # cov-wlm
         return updates
 
     def _get_unmanaged_step_update(
-        self, task_ids: t.List[str]
-    ) -> t.List[UnmanagedStepInfo]:  # cov-wlm
+        self, task_ids: list[str]
+    ) -> list[UnmanagedStepInfo]:  # cov-wlm
         """Get step updates for Popen managed jobs
 
         :param task_ids: task id to check
@@ -178,6 +177,6 @@ class WLMLauncher(Launcher):  # cov-wlm
     # pylint: disable-next=no-self-use
     def _get_managed_step_update(
         self,
-        step_ids: t.List[str],  # pylint: disable=unused-argument
-    ) -> t.List[StepInfo]:  # pragma: no cover
+        step_ids: list[str],  # pylint: disable=unused-argument
+    ) -> list[StepInfo]:  # pragma: no cover
         return []

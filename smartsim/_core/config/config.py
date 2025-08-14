@@ -27,6 +27,7 @@
 import json
 import os
 import typing as t
+from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
 
@@ -175,7 +176,7 @@ class Config:
         return Path(self.conf_dir / "dragon" / ".env")
 
     @property
-    def dragon_server_path(self) -> t.Optional[str]:
+    def dragon_server_path(self) -> str | None:
         return os.getenv(
             "SMARTSIM_DRAGON_SERVER_PATH",
             os.getenv("SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
@@ -218,7 +219,7 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_NUM_GPUS") or 1)
 
     @property
-    def test_ports(self) -> t.Sequence[int]:  # pragma: no cover
+    def test_ports(self) -> Sequence[int]:  # pragma: no cover
         min_required_ports = 25
         first_port = int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
         num_ports = max(
@@ -228,7 +229,7 @@ class Config:
         return range(first_port, first_port + num_ports)
 
     @property
-    def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover
+    def test_batch_resources(self) -> dict[t.Any, t.Any]:  # pragma: no cover
         resource_str = os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}")
         resources = json.loads(resource_str)
         if not isinstance(resources, dict):
@@ -242,7 +243,7 @@ class Config:
         return resources
 
     @property
-    def test_interface(self) -> t.List[str]:  # pragma: no cover
+    def test_interface(self) -> list[str]:  # pragma: no cover
         if interfaces_cfg := os.environ.get("SMARTSIM_TEST_INTERFACE", None):
             return interfaces_cfg.split(",")
 
@@ -262,7 +263,7 @@ class Config:
         return ["lo"]
 
     @property
-    def test_account(self) -> t.Optional[str]:  # pragma: no cover
+    def test_account(self) -> str | None:  # pragma: no cover
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
 

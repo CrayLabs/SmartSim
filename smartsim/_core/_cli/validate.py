@@ -31,6 +31,7 @@ import os
 import os.path
 import tempfile
 import typing as t
+from collections.abc import Callable, Mapping
 from types import TracebackType
 
 import numpy as np
@@ -68,9 +69,9 @@ class _VerificationTempDir(_TemporaryDirectory):
 
     def __exit__(
         self,
-        exc: t.Optional[t.Type[BaseException]],
-        value: t.Optional[BaseException],
-        tb: t.Optional[TracebackType],
+        exc: type[BaseException] | None,
+        value: BaseException | None,
+        tb: TracebackType | None,
     ) -> None:
         if not value:  # Yay, no error! Clean up as normal
             super().__exit__(exc, value, tb)
@@ -79,7 +80,7 @@ class _VerificationTempDir(_TemporaryDirectory):
 
 
 def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+    args: argparse.Namespace, _unparsed_args: list[str] | None = None, /
 ) -> int:
     """Validate the SmartSim installation works as expected given a
     simple experiment
@@ -143,7 +144,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 
 def test_install(
     location: str,
-    port: t.Optional[int],
+    port: int | None,
     device: Device,
     with_tf: bool,
     with_pt: bool,
@@ -169,9 +170,7 @@ def test_install(
 
 
 @contextlib.contextmanager
-def _env_vars_set_to(
-    evars: t.Mapping[str, t.Optional[str]]
-) -> t.Generator[None, None, None]:
+def _env_vars_set_to(evars: Mapping[str, str | None]) -> t.Generator[None, None, None]:
     envvars = tuple((var, os.environ.pop(var, None), val) for var, val in evars.items())
     for var, _, tmpval in envvars:
         _set_or_del_env_var(var, tmpval)
@@ -182,7 +181,7 @@ def _env_vars_set_to(
             _set_or_del_env_var(var, origval)
 
 
-def _set_or_del_env_var(var: str, val: t.Optional[str]) -> None:
+def _set_or_del_env_var(var: str, val: str | None) -> None:
     if val is not None:
         os.environ[var] = val
     else:
@@ -221,7 +220,7 @@ def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
     client.get_tensor("keras-output")
 
 
-def _build_tf_frozen_model(tmp_dir: str) -> t.Tuple[str, t.List[str], t.List[str]]:
+def _build_tf_frozen_model(tmp_dir: str) -> tuple[str, list[str], list[str]]:
 
     from tensorflow import keras  # pylint: disable=no-name-in-module
 
@@ -250,7 +249,7 @@ def _test_torch_install(client: Client, device: Device) -> None:
     class Net(nn.Module):
         def __init__(self) -> None:
             super().__init__()
-            self.conv: t.Callable[..., torch.Tensor] = nn.Conv2d(1, 1, 3)
+            self.conv: Callable[..., torch.Tensor] = nn.Conv2d(1, 1, 3)
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             return self.conv(x)

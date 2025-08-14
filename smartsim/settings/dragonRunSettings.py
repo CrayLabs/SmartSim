@@ -40,8 +40,8 @@ class DragonRunSettings(RunSettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        exe_args: t.Optional[str | list[str]] = None,
+        env_vars: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ) -> None:
         """Initialize run parameters for a Dragon process
@@ -82,7 +82,7 @@ class DragonRunSettings(RunSettings):
         self.run_args["tasks-per-node"] = tasks_per_node
 
     @override
-    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+    def set_node_feature(self, feature_list: str | list[str]) -> None:
         """Specify the node feature for this job
 
         :param feature_list: a collection of strings representing the required
@@ -95,14 +95,14 @@ class DragonRunSettings(RunSettings):
 
         self.run_args["node-feature"] = ",".join(feature_list)
 
-    def set_cpu_affinity(self, devices: t.List[int]) -> None:
+    def set_cpu_affinity(self, devices: list[int]) -> None:
         """Set the CPU affinity for this job
 
         :param devices: list of CPU indices to execute on
         """
         self.run_args["cpu-affinity"] = ",".join(str(device) for device in devices)
 
-    def set_gpu_affinity(self, devices: t.List[int]) -> None:
+    def set_gpu_affinity(self, devices: list[int]) -> None:
         """Set the GPU affinity for this job
 
         :param devices: list of GPU indices to execute on.

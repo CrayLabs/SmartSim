@@ -40,7 +40,7 @@ except:
 
 
 @pytest.fixture
-def mock_argv() -> t.List[str]:
+def mock_argv() -> list[str]:
     """Fixture for returning valid arguments to the entrypoint"""
     return ["+launching_address", "mock-addr", "+interface", "mock-interface"]
 
@@ -83,7 +83,7 @@ def test_file_removal_on_bad_path(test_dir: str, monkeypatch: pytest.MonkeyPatch
 
 
 def test_dragon_failure(
-    mock_argv: t.List[str], test_dir: str, monkeypatch: pytest.MonkeyPatch
+    mock_argv: list[str], test_dir: str, monkeypatch: pytest.MonkeyPatch
 ):
     """Verify that the expected cleanup actions are taken when the dragon
     entrypoint exits"""
@@ -110,7 +110,7 @@ def test_dragon_failure(
 
 
 def test_dragon_main(
-    mock_argv: t.List[str], test_dir: str, monkeypatch: pytest.MonkeyPatch
+    mock_argv: list[str], test_dir: str, monkeypatch: pytest.MonkeyPatch
 ):
     """Verify that the expected startup & cleanup actions are taken when the dragon
     entrypoint exits"""
@@ -228,7 +228,7 @@ def test_cleanup(monkeypatch: pytest.MonkeyPatch):
 
 def test_signal_handler_registration(test_dir: str, monkeypatch: pytest.MonkeyPatch):
     """Verify that signal handlers are registered for all expected signals"""
-    sig_nums: t.List[int] = []
+    sig_nums: list[int] = []
 
     def track_args(*args, **kwargs):
         nonlocal sig_nums

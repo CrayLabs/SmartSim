@@ -26,6 +26,7 @@
 
 import dataclasses
 import typing as t
+from collections.abc import Callable, Mapping
 
 import pydantic
 import pydantic.dataclasses
@@ -54,7 +55,7 @@ class _Message(t.Generic[_SchemaT]):
     def from_str(
         cls,
         str_: str,
-        payload_type: t.Type[_SchemaT],
+        payload_type: type[_SchemaT],
         delimiter: str = _DEFAULT_MSG_DELIM,
     ) -> "_Message[_SchemaT]":
         header, payload = str_.split(delimiter, 1)
@@ -63,11 +64,11 @@ class _Message(t.Generic[_SchemaT]):
 
 class SchemaRegistry(t.Generic[_SchemaT]):
     def __init__(
-        self, init_map: t.Optional[t.Mapping[str, t.Type[_SchemaT]]] = None
+        self, init_map: t.Optional[Mapping[str, type[_SchemaT]]] = None
     ) -> None:
         self._map = dict(init_map) if init_map else {}
 
-    def register(self, key: str) -> t.Callable[[t.Type[_SchemaT]], t.Type[_SchemaT]]:
+    def register(self, key: str) -> Callable[[type[_SchemaT]], type[_SchemaT]]:
         if _DEFAULT_MSG_DELIM in key:
             _msg = f"Registry key cannot contain delimiter `{_DEFAULT_MSG_DELIM}`"
             raise ValueError(_msg)
@@ -76,7 +77,7 @@ class SchemaRegistry(t.Generic[_SchemaT]):
         if key in self._map:
             raise KeyError(f"Key `{key}` has already been registered for this parser")
 
-        def _register(cls: t.Type[_SchemaT]) -> t.Type[_SchemaT]:
+        def _register(cls: type[_SchemaT]) -> type[_SchemaT]:
             self._map[key] = cls
             return cls
 

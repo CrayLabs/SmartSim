@@ -26,7 +26,6 @@
 
 import os
 import shutil
-import typing as t
 from shlex import split as sh_split
 
 from ....error import AllocationError, SmartSimError
@@ -49,14 +48,14 @@ class _BaseMPIStep(Step):
 
         super().__init__(name, cwd, run_settings)
 
-        self.alloc: t.Optional[str] = None
+        self.alloc: str | None = None
         if not run_settings.in_batch:
             self._set_alloc()
         self.run_settings = run_settings
 
     _supported_launchers = ["PBS", "SLURM", "LSB", "SGE"]
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -115,16 +114,16 @@ class _BaseMPIStep(Step):
             "No allocation specified or found and not running in batch"
         )
 
-    def _get_mpmd(self) -> t.List[RunSettings]:
+    def _get_mpmd(self) -> list[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings
         """
         if hasattr(self.run_settings, "mpmd") and self.run_settings.mpmd:
-            rs_mpmd: t.List[RunSettings] = self.run_settings.mpmd
+            rs_mpmd: list[RunSettings] = self.run_settings.mpmd
             return rs_mpmd
         return []
 
-    def _build_exe(self) -> t.List[str]:
+    def _build_exe(self) -> list[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -136,7 +135,7 @@ class _BaseMPIStep(Step):
         args = self.run_settings._exe_args  # pylint: disable=protected-access
         return exe + args
 
-    def _make_mpmd(self) -> t.List[str]:
+    def _make_mpmd(self) -> list[str]:
         """Build mpiexec (MPMD) executable"""
         exe = self.run_settings.exe
         args = self.run_settings._exe_args  # pylint: disable=protected-access

@@ -26,7 +26,7 @@
 
 import collections
 import re
-import typing as t
+from collections import defaultdict
 
 from smartsim.error.errors import SmartSimError
 
@@ -40,9 +40,9 @@ class ModelWriter:
     def __init__(self) -> None:
         self.tag = ";"
         self.regex = "(;[^;]+;)"
-        self.lines: t.List[str] = []
+        self.lines: list[str] = []
 
-    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
+    def set_tag(self, tag: str, regex: str | None = None) -> None:
         """Set the tag for the modelwriter to search for within
            tagged files attached to an entity.
 
@@ -59,10 +59,10 @@ class ModelWriter:
 
     def configure_tagged_model_files(
         self,
-        tagged_files: t.List[str],
-        params: t.Dict[str, str],
+        tagged_files: list[str],
+        params: dict[str, str],
         make_missing_tags_fatal: bool = False,
-    ) -> t.Dict[str, t.Dict[str, str]]:
+    ) -> dict[str, dict[str, str]]:
         """Read, write and configure tagged files attached to a Model
            instance.
 
@@ -71,7 +71,7 @@ class ModelWriter:
         :param make_missing_tags_fatal: raise an error if a tag is missing
         :returns: A dict connecting each file to its parameter settings
         """
-        files_to_tags: t.Dict[str, t.Dict[str, str]] = {}
+        files_to_tags: dict[str, dict[str, str]] = {}
         for tagged_file in tagged_files:
             self._set_lines(tagged_file)
             used_tags = self._replace_tags(params, make_missing_tags_fatal)
@@ -105,8 +105,8 @@ class ModelWriter:
             raise ParameterWriterError(file_path, read=False) from e
 
     def _replace_tags(
-        self, params: t.Dict[str, str], make_fatal: bool = False
-    ) -> t.Dict[str, str]:
+        self, params: dict[str, str], make_fatal: bool = False
+    ) -> dict[str, str]:
         """Replace the tagged parameters within the file attached to this
            model. The tag defaults to ";"
 
@@ -116,8 +116,8 @@ class ModelWriter:
         :returns: A dict of parameter names and values set for the file
         """
         edited = []
-        unused_tags: t.DefaultDict[str, t.List[int]] = collections.defaultdict(list)
-        used_params: t.Dict[str, str] = {}
+        unused_tags: defaultdict[str, list[int]] = collections.defaultdict(list)
+        used_params: dict[str, str] = {}
         for i, line in enumerate(self.lines, 1):
             while search := re.search(self.regex, line):
                 tagged_line = search.group(0)
@@ -144,9 +144,7 @@ class ModelWriter:
         self.lines = edited
         return used_params
 
-    def _is_ensemble_spec(
-        self, tagged_line: str, model_params: t.Dict[str, str]
-    ) -> bool:
+    def _is_ensemble_spec(self, tagged_line: str, model_params: dict[str, str]) -> bool:
         split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():

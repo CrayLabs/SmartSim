@@ -34,7 +34,7 @@ from ..utils.helpers import create_lockfile_name
 
 
 def write_colocated_launch_script(
-    file_name: str, db_log: str, colocated_settings: t.Dict[str, t.Any]
+    file_name: str, db_log: str, colocated_settings: dict[str, t.Any]
 ) -> None:
     """Write the colocated launch script
 
@@ -80,11 +80,11 @@ def write_colocated_launch_script(
 def _build_colocated_wrapper_cmd(
     db_log: str,
     cpus: int = 1,
-    rai_args: t.Optional[t.Dict[str, str]] = None,
-    extra_db_args: t.Optional[t.Dict[str, str]] = None,
+    rai_args: dict[str, str] | None = None,
+    extra_db_args: dict[str, str] | None = None,
     port: int = 6780,
-    ifname: t.Optional[t.Union[str, t.List[str]]] = None,
-    custom_pinning: t.Optional[str] = None,
+    ifname: str | list[str] | None = None,
+    custom_pinning: str | None = None,
     **kwargs: t.Any,
 ) -> str:
     """Build the command use to run a colocated DB application
@@ -189,7 +189,7 @@ def _build_colocated_wrapper_cmd(
     return " ".join(cmd)
 
 
-def _build_db_model_cmd(db_models: t.List[DBModel]) -> t.List[str]:
+def _build_db_model_cmd(db_models: list[DBModel]) -> list[str]:
     cmd = []
     for db_model in db_models:
         cmd.append("+db_model")
@@ -219,7 +219,7 @@ def _build_db_model_cmd(db_models: t.List[DBModel]) -> t.List[str]:
     return cmd
 
 
-def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
+def _build_db_script_cmd(db_scripts: list[DBScript]) -> list[str]:
     cmd = []
     for db_script in db_scripts:
         cmd.append("+db_script")

@@ -29,8 +29,8 @@ import os
 import shutil
 import subprocess as sp
 import sys
-import typing as t
 from argparse import ArgumentParser, Namespace
+from collections.abc import Callable
 from pathlib import Path
 
 from smartsim._core._install.buildenv import SetupError
@@ -118,7 +118,7 @@ def clean(core_path: Path, _all: bool = False) -> int:
     return os.EX_OK
 
 
-def get_db_path() -> t.Optional[Path]:
+def get_db_path() -> Path | None:
     bin_path = get_install_path() / "_core" / "bin"
     for option in bin_path.iterdir():
         if option.name in ("redis-cli", "keydb-cli"):
@@ -126,8 +126,8 @@ def get_db_path() -> t.Optional[Path]:
     return None
 
 
-_CliHandler = t.Callable[[Namespace, t.List[str]], int]
-_CliParseConfigurator = t.Callable[[ArgumentParser], None]
+_CliHandler = Callable[[Namespace, list[str]], int]
+_CliParseConfigurator = Callable[[ArgumentParser], None]
 
 
 class MenuItemConfig:
@@ -136,7 +136,7 @@ class MenuItemConfig:
         cmd: str,
         description: str,
         handler: _CliHandler,
-        configurator: t.Optional[_CliParseConfigurator] = None,
+        configurator: _CliParseConfigurator | None = None,
         is_plugin: bool = False,
     ):
         self.command = cmd

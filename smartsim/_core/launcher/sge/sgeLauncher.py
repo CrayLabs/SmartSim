@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -69,7 +68,7 @@ class SGELauncher(WLMLauncher):
     # init in WLMLauncher, launcher.py
 
     @property
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+    def supported_rs(self) -> dict[type[SettingsBase], type[Step]]:
         # RunSettings types supported by this launcher
         return {
             SgeQsubBatchSettings: SgeQsubBatchStep,
@@ -79,7 +78,7 @@ class SGELauncher(WLMLauncher):
             RunSettings: LocalStep,
         }
 
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> str | None:
         """Run a job step through SGE
 
         :param step: a job step instance
@@ -90,8 +89,8 @@ class SGELauncher(WLMLauncher):
             self.task_manager.start()
 
         cmd_list = step.get_launch_cmd()
-        step_id: t.Optional[str] = None
-        task_id: t.Optional[str] = None
+        step_id: str | None = None
+        task_id: str | None = None
         if isinstance(step, SgeQsubBatchStep):
             # wait for batch step to submit successfully
             return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
@@ -141,13 +140,13 @@ class SGELauncher(WLMLauncher):
         )  # set status to cancelled instead of failed
         return step_info
 
-    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
+    def _get_managed_step_update(self, step_ids: list[str]) -> list[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
         :return: list of updates for managed jobs
         """
-        updates: t.List[StepInfo] = []
+        updates: list[StepInfo] = []
 
         qstat_out, _ = qstat(["-xml"])
         stats = [parse_qstat_jobid_xml(qstat_out, str(step_id)) for step_id in step_ids]

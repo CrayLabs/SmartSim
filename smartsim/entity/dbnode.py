@@ -31,6 +31,7 @@ import os
 import os.path as osp
 import time
 import typing as t
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from .._core.config import CONFIG
@@ -56,14 +57,14 @@ class DBNode(SmartSimEntity):
         name: str,
         path: str,
         run_settings: RunSettings,
-        ports: t.List[int],
-        output_files: t.List[str],
+        ports: list[int],
+        output_files: list[str],
         db_identifier: str = "",
     ) -> None:
         """Initialize a database node within an orchestrator."""
         super().__init__(name, path, run_settings)
         self.ports = ports
-        self._hosts: t.Optional[t.List[str]] = None
+        self._hosts: list[str] | None = None
 
         if not output_files:
             raise ValueError("output_files cannot be empty")
@@ -93,7 +94,7 @@ class DBNode(SmartSimEntity):
         return host
 
     @property
-    def hosts(self) -> t.List[str]:
+    def hosts(self) -> list[str]:
         if not self._hosts:
             self._hosts = self._parse_db_hosts()
         return self._hosts
@@ -109,7 +110,7 @@ class DBNode(SmartSimEntity):
 
         return bool(self.run_settings.mpmd)
 
-    def set_hosts(self, hosts: t.List[str]) -> None:
+    def set_hosts(self, hosts: list[str]) -> None:
         self._hosts = [str(host) for host in hosts]
 
     def remove_stale_dbnode_files(self) -> None:
@@ -140,7 +141,7 @@ class DBNode(SmartSimEntity):
                     if osp.exists(file_name):
                         os.remove(file_name)
 
-    def _get_cluster_conf_filenames(self, port: int) -> t.List[str]:
+    def _get_cluster_conf_filenames(self, port: int) -> list[str]:
         """Returns the .conf file name for the given port number
 
         This function should bu used if and only if ``_mpmd==True``
@@ -157,8 +158,8 @@ class DBNode(SmartSimEntity):
 
     @staticmethod
     def _parse_launched_shard_info_from_iterable(
-        stream: t.Iterable[str], num_shards: t.Optional[int] = None
-    ) -> "t.List[LaunchedShardData]":
+        stream: Iterable[str], num_shards: int | None = None
+    ) -> "list[LaunchedShardData]":
         lines = (line.strip() for line in stream)
         lines = (line for line in lines if line)
         tokenized = (line.split(maxsplit=1) for line in lines)
@@ -167,7 +168,7 @@ class DBNode(SmartSimEntity):
             kwjson for first, kwjson in tokenized if "SMARTSIM_ORC_SHARD_INFO" in first
         )
         shard_data_kwargs = (json.loads(kwjson) for kwjson in shard_data_jsons)
-        shard_data: "t.Iterable[LaunchedShardData]" = (
+        shard_data: "Iterable[LaunchedShardData]" = (
             LaunchedShardData(**kwargs) for kwargs in shard_data_kwargs
         )
         if num_shards:
@@ -176,18 +177,18 @@ class DBNode(SmartSimEntity):
 
     @classmethod
     def _parse_launched_shard_info_from_files(
-        cls, file_paths: t.List[str], num_shards: t.Optional[int] = None
-    ) -> "t.List[LaunchedShardData]":
+        cls, file_paths: list[str], num_shards: int | None = None
+    ) -> "list[LaunchedShardData]":
         with fileinput.FileInput(file_paths) as ifstream:
             return cls._parse_launched_shard_info_from_iterable(ifstream, num_shards)
 
-    def get_launched_shard_info(self) -> "t.List[LaunchedShardData]":
+    def get_launched_shard_info(self) -> "list[LaunchedShardData]":
         """Parse the launched database shard info from the output files
 
         :raises SSDBFilesNotParseable: if all shard info could not be found
         :return: The found launched shard info
         """
-        ips: "t.List[LaunchedShardData]" = []
+        ips: "list[LaunchedShardData]" = []
         trials = CONFIG.database_file_parse_trials
         interval = CONFIG.database_file_parse_interval
         output_files = [osp.join(self.path, file) for file in self._output_files]
@@ -214,7 +215,7 @@ class DBNode(SmartSimEntity):
             raise SSDBFilesNotParseable(msg)
         return ips
 
-    def _parse_db_hosts(self) -> t.List[str]:
+    def _parse_db_hosts(self) -> list[str]:
         """Parse the database hosts/IPs from the output files
 
         The IP address is preferred, but if hostname is only present
@@ -236,8 +237,8 @@ class LaunchedShardData:
     cluster: bool
 
     @property
-    def cluster_conf_file(self) -> t.Optional[str]:
+    def cluster_conf_file(self) -> str | None:
         return f"nodes-{self.name}-{self.port}.conf" if self.cluster else None
 
-    def to_dict(self) -> t.Dict[str, t.Any]:
+    def to_dict(self) -> dict[str, t.Any]:
         return dict(self.__dict__)

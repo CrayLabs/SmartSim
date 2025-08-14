@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import typing as t
 
 from smartsim._core._cli.utils import clean, get_install_path
 
@@ -41,13 +40,13 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 
 
 def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+    args: argparse.Namespace, _unparsed_args: list[str] | None = None, /
 ) -> int:
     return clean(get_install_path() / "_core", _all=args.clobber)
 
 
 def execute_all(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+    args: argparse.Namespace, _unparsed_args: list[str] | None = None, /
 ) -> int:
     args.clobber = True
     return execute(args)

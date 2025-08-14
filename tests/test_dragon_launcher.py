@@ -701,7 +701,7 @@ def test_run_step_success(test_dir: str) -> None:
     send_invocation = mock_connector.send_request
     send_invocation.assert_called_once()
 
-    args = send_invocation.call_args[0]  # call_args == t.Tuple[args, kwargs]
+    args = send_invocation.call_args[0]  # call_args == tuple[args, kwargs]
 
     dragon_run_request = args[0]
     req_name = dragon_run_request.name  # name sent to dragon env

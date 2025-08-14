@@ -2,6 +2,7 @@ import os
 import pathlib
 import sys
 import typing as t
+from collections.abc import Collection
 
 from github import Github
 from github.GitReleaseAsset import GitReleaseAsset
@@ -83,7 +84,7 @@ def _pin_filter(asset_name: str) -> bool:
     return f"dragon-{dragon_pin()}" in asset_name
 
 
-def _get_release_assets() -> t.Collection[GitReleaseAsset]:
+def _get_release_assets() -> Collection[GitReleaseAsset]:
     """Retrieve a collection of available assets for all releases that satisfy
     the dragon version pin
 
@@ -107,7 +108,7 @@ def _get_release_assets() -> t.Collection[GitReleaseAsset]:
     return assets
 
 
-def filter_assets(assets: t.Collection[GitReleaseAsset]) -> t.Optional[GitReleaseAsset]:
+def filter_assets(assets: Collection[GitReleaseAsset]) -> GitReleaseAsset | None:
     """Filter the available release assets so that HSTA agents are used
     when run on a Cray EX platform
 
@@ -191,7 +192,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
 
 
 def cleanup(
-    archive_path: t.Optional[pathlib.Path] = None,
+    archive_path: pathlib.Path | None = None,
 ) -> None:
     """Delete the downloaded asset and any files extracted during installation
 
@@ -201,7 +202,7 @@ def cleanup(
         logger.debug(f"Deleted archive: {archive_path}")
 
 
-def install_dragon(extraction_dir: t.Union[str, os.PathLike[str]]) -> int:
+def install_dragon(extraction_dir: str | os.PathLike[str]) -> int:
     """Retrieve a dragon runtime appropriate for the current platform
     and install to the current python environment
     :param extraction_dir: path for download and extraction of assets
@@ -211,8 +212,8 @@ def install_dragon(extraction_dir: t.Union[str, os.PathLike[str]]) -> int:
         return 1
 
     extraction_dir = pathlib.Path(extraction_dir)
-    filename: t.Optional[pathlib.Path] = None
-    asset_dir: t.Optional[pathlib.Path] = None
+    filename: pathlib.Path | None = None
+    asset_dir: pathlib.Path | None = None
 
     try:
         asset_info = retrieve_asset_info()

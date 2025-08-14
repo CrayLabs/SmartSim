@@ -29,6 +29,7 @@ import sys
 import tarfile
 import typing as t
 from collections import namedtuple
+from collections.abc import Collection
 
 import pytest
 from github.GitReleaseAsset import GitReleaseAsset
@@ -84,7 +85,7 @@ def extraction_dir(test_dir: str) -> pathlib.Path:
 
 
 @pytest.fixture
-def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]:
+def test_assets(monkeypatch: pytest.MonkeyPatch) -> dict[str, GitReleaseAsset]:
     requester = Requester(
         auth=None,
         base_url="https://github.com",
@@ -99,7 +100,7 @@ def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]
     attributes = {"mock-attr": "mock-attr-value"}
     completed = True
 
-    assets: t.List[GitReleaseAsset] = []
+    assets: list[GitReleaseAsset] = []
     mock_archive_name_tpl = "{}-{}.4.1-{}ac132fe95.tar.gz"
 
     for python_version in ["py3.10", "py3.11"]:
@@ -205,7 +206,7 @@ def test_retrieve_cached(
     ],
 )
 def test_retrieve_asset_info(
-    test_assets: t.Collection[GitReleaseAsset],
+    test_assets: Collection[GitReleaseAsset],
     monkeypatch: pytest.MonkeyPatch,
     dragon_pin: str,
     pyv: str,

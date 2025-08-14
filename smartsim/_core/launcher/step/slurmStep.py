@@ -26,7 +26,6 @@
 
 import os
 import shutil
-import typing as t
 from shlex import split as sh_split
 
 from ....error import AllocationError
@@ -46,11 +45,11 @@ class SbatchStep(Step):
         :param batch_settings: batch settings for entity
         """
         super().__init__(name, cwd, batch_settings)
-        self.step_cmds: t.List[t.List[str]] = []
+        self.step_cmds: list[list[str]] = []
         self.managed = True
         self.batch_settings = batch_settings
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
@@ -106,13 +105,13 @@ class SrunStep(Step):
         :param run_settings: run settings for entity
         """
         super().__init__(name, cwd, run_settings)
-        self.alloc: t.Optional[str] = None
+        self.alloc: str | None = None
         self.managed = True
         self.run_settings = run_settings
         if not self.run_settings.in_batch:
             self._set_alloc()
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -124,7 +123,7 @@ class SrunStep(Step):
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
-        compound_env: t.Set[str] = set()
+        compound_env: set[str] = set()
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
@@ -177,22 +176,22 @@ class SrunStep(Step):
                     "No allocation specified or found and not running in batch"
                 )
 
-    def _get_mpmd(self) -> t.List[RunSettings]:
+    def _get_mpmd(self) -> list[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings
         """
         return self.run_settings.mpmd
 
     @staticmethod
-    def _get_exe_args_list(run_setting: RunSettings) -> t.List[str]:
+    def _get_exe_args_list(run_setting: RunSettings) -> list[str]:
         """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list
         """
         exe_args = run_setting.exe_args
-        args: t.List[str] = exe_args if isinstance(exe_args, list) else [exe_args]
+        args: list[str] = exe_args if isinstance(exe_args, list) else [exe_args]
         return args
 
-    def _build_exe(self) -> t.List[str]:
+    def _build_exe(self) -> list[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -204,7 +203,7 @@ class SrunStep(Step):
         args = self._get_exe_args_list(self.run_settings)
         return exe + args
 
-    def _make_mpmd(self) -> t.List[str]:
+    def _make_mpmd(self) -> list[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.run_settings.exe
         args = self._get_exe_args_list(self.run_settings)
