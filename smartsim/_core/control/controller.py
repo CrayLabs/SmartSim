@@ -512,6 +512,9 @@ class Controller:
         # wait for orchestrator to spin up
         self._orchestrator_launch_wait(orchestrator)
 
+        # save orchestrator state for reconnection
+        self._save_orchestrator(orchestrator)
+
     def _launch_step(
         self,
         job_step: Step,
