@@ -442,7 +442,7 @@ class DragonConnector:
     @classmethod
     def _parse_launched_dragon_server_info_from_files(
         cls,
-        file_paths: list[str | "os.PathLike[str]"],
+        file_paths: list[str | os.PathLike[str]],
         num_dragon_envs: int | None = None,
     ) -> list[dict[str, str]]:
         with fileinput.FileInput(file_paths) as ifstream:
@@ -520,7 +520,7 @@ def _dragon_cleanup(
         print("Authenticator shutdown is complete")
 
 
-def _resolve_dragon_path(fallback: str | "os.PathLike[str]") -> Path:
+def _resolve_dragon_path(fallback: str | os.PathLike[str]) -> Path:
     dragon_server_path = get_config().dragon_server_path or os.path.join(
         fallback, ".smartsim", "dragon"
     )
