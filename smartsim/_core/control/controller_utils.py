@@ -26,18 +26,10 @@
 
 from __future__ import annotations
 
-import pathlib
 import typing as t
-from pathlib import Path
 
-from ..._core.launcher.step import Step
 from ...entity import EntityList, Model
 from ...error import SmartSimError
-from ..launcher.launcher import Launcher
-
-TStepLaunchMetaData = t.Tuple[
-    t.Optional[str], t.Optional[str], t.Optional[bool], str, str, Path
-]
 
 
 class _AnonymousBatchJob(EntityList[Model]):
@@ -54,26 +46,3 @@ class _AnonymousBatchJob(EntityList[Model]):
         self.batch_settings = model.batch_settings
 
     def _initialize_entities(self, **kwargs: t.Any) -> None: ...
-
-
-def _look_up_launched_data(
-    launcher: Launcher,
-) -> t.Callable[[t.Tuple[str, Step]], "TStepLaunchMetaData"]:
-    def _unpack_launched_data(data: t.Tuple[str, Step]) -> "TStepLaunchMetaData":
-        # NOTE: we cannot assume that the name of the launched step
-        # ``launched_step_name`` is equal to the name of the step referring to
-        # the entity ``step.name`` as is the case when an entity list is
-        # launched as a batch job
-        launched_step_name, step = data
-        launched_step_map = launcher.step_mapping[launched_step_name]
-        out_file, err_file = step.get_output_files()
-        return (
-            launched_step_map.step_id,
-            launched_step_map.task_id,
-            launched_step_map.managed,
-            out_file,
-            err_file,
-            pathlib.Path(step.meta.get("metadata_dir", step.cwd)),
-        )
-
-    return _unpack_launched_data
