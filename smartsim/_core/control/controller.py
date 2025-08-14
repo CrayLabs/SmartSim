@@ -512,6 +512,9 @@ class Controller:
         # wait for orchestrator to spin up
         self._orchestrator_launch_wait(orchestrator)
 
+        # set the jobs in the job manager to provide SSDB variable to entities
+        self._jobs.set_db_hosts(orchestrator)
+
         # save orchestrator state for reconnection
         self._save_orchestrator(orchestrator)
 
