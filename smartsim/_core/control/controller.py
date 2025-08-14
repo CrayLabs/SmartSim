@@ -43,6 +43,7 @@ from smartsim._core.utils.network import get_ip_from_host
 from ..._core.launcher.step import Step
 from ..._core.utils.helpers import (
     SignalInterceptionStack,
+    get_ts_ms,
     unpack_colo_db_identifier,
     unpack_db_identifier,
 )
@@ -387,6 +388,10 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         """
 
+        # Create a unique timestamp for this launch to ensure unique metadata
+        # directories
+        launch_timestamp = get_ts_ms()
+
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
@@ -423,6 +428,7 @@ class Controller:
             ensemble_metadata_dir = (
                 pathlib.Path(exp_path)
                 / CONFIG.metadata_subdir
+                / str(launch_timestamp)
                 / "ensemble"
                 / elist.name
             )
@@ -447,7 +453,11 @@ class Controller:
         for model in manifest.models:
             # Create model-specific metadata directory
             model_metadata_dir = (
-                pathlib.Path(exp_path) / CONFIG.metadata_subdir / "model" / model.name
+                pathlib.Path(exp_path)
+                / CONFIG.metadata_subdir
+                / str(launch_timestamp)
+                / "model"
+                / model.name
             )
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
