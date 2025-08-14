@@ -41,7 +41,7 @@ from smartsim._core.utils import expand_exe_path
 
 # TODO: check cmake version and use system if possible to avoid conflicts
 
-_PathLike = str | "os.PathLike[str]"
+_PathLike = str | os.PathLike[str]
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
 
