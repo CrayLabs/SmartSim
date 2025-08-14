@@ -28,14 +28,16 @@ from __future__ import annotations
 
 import pathlib
 import typing as t
+from pathlib import Path
 
 from ..._core.launcher.step import Step
 from ...entity import EntityList, Model
 from ...error import SmartSimError
 from ..launcher.launcher import Launcher
 
-if t.TYPE_CHECKING:
-    from ..utils.serialize import TStepLaunchMetaData
+TStepLaunchMetaData = t.Tuple[
+    t.Optional[str], t.Optional[str], t.Optional[bool], str, str, Path
+]
 
 
 class _AnonymousBatchJob(EntityList[Model]):

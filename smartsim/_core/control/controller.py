@@ -74,6 +74,7 @@ from ..launcher import (
     SlurmLauncher,
 )
 from ..launcher.launcher import Launcher
+from ..utils import check_cluster_status, create_cluster
 from .controller_utils import _AnonymousBatchJob
 from .job import Job
 from .jobmanager import JobManager
@@ -126,11 +127,6 @@ class Controller:
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
             self._jobs.start()
-
-        # TODO: Remove or update serialization since LaunchedManifest was removed
-        # serialize.save_launch_manifest(
-        #     launched.map(_look_up_launched_data(self._launcher))
-        # )
 
         # block until all non-database jobs are complete
         if block:
@@ -409,7 +405,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator_simple(orchestrator)
+            self._launch_orchestrator(orchestrator)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -479,8 +475,12 @@ class Controller:
         for substep, entity in symlink_substeps:
             self.symlink_output_files(substep, entity)
 
-    def _launch_orchestrator_simple(self, orchestrator: "Orchestrator") -> None:
-        """Launch an Orchestrator instance (simplified version without manifest)
+    def _launch_orchestrator(self, orchestrator: Orchestrator) -> None:
+        """Launch an Orchestrator instance
+
+        This function will launch the Orchestrator instance and
+        if on WLM, find the nodes where it was launched and
+        set them in the JobManager
 
         :param orchestrator: orchestrator to launch
         """
@@ -523,10 +523,32 @@ class Controller:
         self._orchestrator_launch_wait(orchestrator)
 
         # set the jobs in the job manager to provide SSDB variable to entities
+        # if _host isnt set within each
         self._jobs.set_db_hosts(orchestrator)
 
-        # save orchestrator state for reconnection
+        # create the database cluster
+        if orchestrator.num_shards > 2:
+            num_trials = 5
+            cluster_created = False
+            while not cluster_created:
+                try:
+                    create_cluster(orchestrator.hosts, orchestrator.ports)
+                    check_cluster_status(orchestrator.hosts, orchestrator.ports)
+                    num_shards = orchestrator.num_shards
+                    logger.info(f"Database cluster created with {num_shards} shards")
+                    cluster_created = True
+                except SSInternalError:
+                    if num_trials > 0:
+                        logger.debug(
+                            "Cluster creation failed, attempting again in five seconds."
+                        )
+                        num_trials -= 1
+                        time.sleep(5)
+                    else:
+                        # surface SSInternalError as we have no way to recover
+                        raise
         self._save_orchestrator(orchestrator)
+        logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
     def _launch_step(
         self,
