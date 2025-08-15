@@ -30,7 +30,6 @@ import numpy as np
 import pytest
 
 from smartsim import Experiment
-
 from smartsim._core.launcher.step import SbatchStep, SrunStep
 from smartsim.entity import Ensemble, Model
 from smartsim.entity.model import _parse_model_parameters
