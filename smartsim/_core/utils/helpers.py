@@ -27,7 +27,6 @@
 """
 A file of helper functions for SmartSim
 """
-import base64
 import collections.abc
 import os
 import signal
