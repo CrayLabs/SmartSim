@@ -267,29 +267,6 @@ def get_ts_ms() -> int:
     return int(datetime.now().timestamp() * 1000)
 
 
-def encode_cmd(cmd: t.Sequence[str]) -> str:
-    """Transform a standard command list into an encoded string safe for providing as an
-    argument to a proxy entrypoint
-    """
-    if not cmd:
-        raise ValueError("Invalid cmd supplied")
-
-    ascii_cmd = "|".join(cmd).encode("ascii")
-    encoded_cmd = base64.b64encode(ascii_cmd).decode("ascii")
-    return encoded_cmd
-
-
-def decode_cmd(encoded_cmd: str) -> t.List[str]:
-    """Decode an encoded command string to the original command list format"""
-    if not encoded_cmd.strip():
-        raise ValueError("Invalid cmd supplied")
-
-    decoded_cmd = base64.b64decode(encoded_cmd.encode("ascii"))
-    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
-
-    return cleaned_cmd
-
-
 def check_for_utility(util_name: str) -> str:
     """Check for existence of the provided CLI utility.
 
