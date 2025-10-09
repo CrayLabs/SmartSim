@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
 
 project = 'SmartSim'
-copyright = '2021-2024, Hewlett Packard Enterprise'
+copyright = '2021-2025, Hewlett Packard Enterprise'
 author = 'Cray Labs'
 
 try:
