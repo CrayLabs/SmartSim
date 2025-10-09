@@ -105,7 +105,7 @@ def monkeypatch_exp_controller(monkeypatch):
             self._launch(exp_name, exp_path, manifest)
             return LaunchedManifestBuilder("name", "path", "launcher").finalize()
 
-        def launch_step_nop(self, step, entity):
+        def launch_step_nop(self, step, entity, monitor):
             entity_steps.append((step, entity))
 
         monkeypatch.setattr(
