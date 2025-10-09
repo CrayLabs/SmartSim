@@ -231,7 +231,7 @@ class Experiment:
         zombie processes will need to be manually killed.
 
         If `monitor=True`, all the jobs being started will be monitored
-        by the Controller. If `monitor=True`, the jobs will not be 
+        by the Controller. If `monitor=True`, the jobs will not be
         monitored, meaning that their status will not be reported.
 
         :param block: block execution until all non-database
