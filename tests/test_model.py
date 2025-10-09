@@ -94,7 +94,13 @@ def monkeypatch_exp_controller(monkeypatch):
         entity_steps = []
 
         def start_wo_job_manager(
-            self, exp_name, exp_path, manifest, block=True, kill_on_interrupt=True
+            self,
+            exp_name,
+            exp_path,
+            manifest,
+            block=True,
+            kill_on_interrupt=True,
+            monitor=True,
         ):
             self._launch(exp_name, exp_path, manifest)
             return LaunchedManifestBuilder("name", "path", "launcher").finalize()
