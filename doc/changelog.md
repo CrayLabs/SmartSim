@@ -23,6 +23,11 @@ Description
 
 Detailed Notes
 
+- Enable control over monitoring of Models launched with `experiment.start()` by 
+  adding an optional boolean argument determining whether to monitor the particular 
+  model or not. The argument is set to True by default, so no changes are needed for 
+  the default behavior of monitoring all Models launched.
+  ([SmartSim-PR788](https://github.com/CrayLabs/SmartSim/pull/788))
 - Copyright headers have been updated from "2021-2024" to "2021-2025" across 271 files
   including Python source files, configuration files, documentation, tests, Docker files,
   shell scripts, and other supporting files to reflect the new year.
