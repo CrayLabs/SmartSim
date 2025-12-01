@@ -61,9 +61,7 @@ def ensemble_entity():
 
 @pytest.fixture
 def orchestrator_entity():
-    return Orchestrator(
-        db_nodes=3, batch=True, launcher="slurm", run_command="srun"
-    )
+    return Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
 
 
 @pytest.fixture
