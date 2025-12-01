@@ -144,24 +144,17 @@ class TestMetadataDirectoryIntegration:
 
             assert metadata_dir.exists(), "Metadata directory should exist"
 
-            # Check for run-specific subdirectories
+            # Check for run-specific subdirectories (single launch, so single run dir)
             run_dirs = [
                 d
                 for d in metadata_dir.iterdir()
                 if d.is_dir() and d.name.startswith("run_")
             ]
             assert (
-                len(run_dirs) == 2
-            ), f"Should have two run directories, found: {run_dirs}"
+                len(run_dirs) == 1
+            ), f"Should have exactly one run directory, found: {run_dirs}"
 
-            # Find directory with model/ensemble subdirs
-            run_dir = None
-            for rd in run_dirs:
-                if (rd / "model").exists() or (rd / "ensemble").exists():
-                    run_dir = rd
-                    break
-
-            assert run_dir is not None, "Should find run directory with entity subdirs"
+            run_dir = run_dirs[0]
 
             # Check for entity-specific subdirectories with entity names
             model_dir = run_dir / "model" / "test_model"
