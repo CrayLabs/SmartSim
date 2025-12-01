@@ -387,6 +387,11 @@ class Controller:
         # Create a unique timestamp for this launch to ensure unique metadata
         # directories
         launch_timestamp = get_ts_ms()
+        run_metadata_dir = (
+            pathlib.Path(exp_path)
+            / CONFIG.metadata_subdir
+            / f"run_{launch_timestamp}"
+        )
 
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -405,7 +410,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator(orchestrator)
+            self._launch_orchestrator(orchestrator, run_metadata_dir)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -421,13 +426,7 @@ class Controller:
 
         for elist in manifest.ensembles:
             # Create ensemble metadata directory
-            ensemble_metadata_dir = (
-                pathlib.Path(exp_path)
-                / CONFIG.metadata_subdir
-                / str(launch_timestamp)
-                / "ensemble"
-                / elist.name
-            )
+            ensemble_metadata_dir = run_metadata_dir / "ensemble" / elist.name
             if elist.batch:
                 batch_step, substeps = self._create_batch_job_step(
                     elist, ensemble_metadata_dir
@@ -448,13 +447,7 @@ class Controller:
         # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
             # Create model-specific metadata directory
-            model_metadata_dir = (
-                pathlib.Path(exp_path)
-                / CONFIG.metadata_subdir
-                / str(launch_timestamp)
-                / "model"
-                / model.name
-            )
+            model_metadata_dir = run_metadata_dir / "model" / model.name
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
                 batch_step, substeps = self._create_batch_job_step(
@@ -475,7 +468,9 @@ class Controller:
         for substep, entity in symlink_substeps:
             self.symlink_output_files(substep, entity)
 
-    def _launch_orchestrator(self, orchestrator: Orchestrator) -> None:
+    def _launch_orchestrator(
+        self, orchestrator: Orchestrator, run_metadata_dir: pathlib.Path
+    ) -> None:
         """Launch an Orchestrator instance
 
         This function will launch the Orchestrator instance and
@@ -483,16 +478,13 @@ class Controller:
         set them in the JobManager
 
         :param orchestrator: orchestrator to launch
+        :param run_metadata_dir: Base metadata directory for this launch
         """
         orchestrator.remove_stale_files()
+        metadata_dir = run_metadata_dir / "database" / orchestrator.name
+
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
-            metadata_dir = (
-                pathlib.Path(orchestrator.path)
-                / CONFIG.metadata_subdir
-                / "database"
-                / orchestrator.name
-            )
             orc_batch_step, substeps = self._create_batch_job_step(
                 orchestrator, metadata_dir
             )
@@ -505,12 +497,6 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            metadata_dir = (
-                pathlib.Path(orchestrator.path)
-                / CONFIG.metadata_subdir
-                / "database"
-                / orchestrator.name
-            )
             db_steps = [
                 (self._create_job_step(db, metadata_dir), db)
                 for db in orchestrator.entities

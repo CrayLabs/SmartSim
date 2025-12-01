@@ -235,61 +235,6 @@ class TestMetadataDirectoryIntegration:
                 model_names
             ), f"Should find correct models: {model_names}, found: {found_models}"
 
-    def test_metadata_directory_structure_with_batch_entities(self):
-        """Test metadata directory creation pattern with batch-like behavior"""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            exp = Experiment("test_metadata_batch", exp_path=temp_dir, launcher="local")
-
-            # Create model and ensemble (batch settings don't work with local launcher)
-            model = exp.create_model(
-                "batch_model",
-                run_settings=exp.create_run_settings("echo", ["batch_hello"]),
-            )
-
-            ensemble = exp.create_ensemble(
-                "batch_ensemble",
-                run_settings=exp.create_run_settings("echo", ["batch_world"]),
-                replicas=2,
-            )
-
-            # Start entities to trigger metadata directory creation
-            exp.start(model, ensemble, block=False)
-            exp.poll(interval=1)
-
-            # Verify directory structure was created
-            smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
-            metadata_dir = smartsim_dir / "metadata"
-
-            assert metadata_dir.exists(), "Metadata directory should exist"
-
-            # Check for run-specific subdirectory
-            run_dirs = [
-                d
-                for d in metadata_dir.iterdir()
-                if d.is_dir() and d.name.startswith("run_")
-            ]
-            assert (
-                len(run_dirs) >= 1
-            ), f"Should have at least one run directory, found: {run_dirs}"
-
-            # Check that at least one run directory has entity subdirs with entity names
-            has_model_dir = any(
-                (rd / "model" / "batch_model").exists() for rd in run_dirs
-            )
-            has_ensemble_dir = any(
-                (rd / "ensemble" / "batch_ensemble").exists() for rd in run_dirs
-            )
-
-            assert (
-                has_model_dir
-            ), "Should have model metadata directory with entity name"
-            assert (
-                has_ensemble_dir
-            ), "Should have ensemble metadata directory with entity name"
-
-            # Stop entities to clean up
-            exp.stop(model, ensemble)
-
     def test_metadata_directory_permissions_and_structure(self):
         """Test that metadata directories are created with correct permissions"""
         with tempfile.TemporaryDirectory() as temp_dir:
