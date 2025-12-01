@@ -111,13 +111,12 @@ def test_batch_symlink(entity, test_dir):
 
     # Create metadata_dir to simulate consistent metadata structure
     metadata_dir = exp_dir / CONFIG.metadata_subdir
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
+    _, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
 
     # For batch entities, we need to call symlink_output_files correctly
     # Based on how the controller does it, we should pass the individual entities
-    if hasattr(entity, "entities") and len(substeps) > 0:
+    for substep in substeps:
         # Just test the first substep and entity pair
-        substep = substeps[0]
         substep_entity = entity.entities[0]
         slurm_controller.symlink_output_files(substep, substep_entity)
 
@@ -138,9 +137,8 @@ def test_batch_symlink(entity, test_dir):
 
         assert os.readlink(symlink_out) == str(expected_out)
         assert os.readlink(symlink_err) == str(expected_err)
-    else:
+
         # For _AnonymousBatchJob (single model)
-        substep = substeps[0]
         slurm_controller.symlink_output_files(substep, entity)
 
         symlink_out = pathlib.Path(entity.path, f"{entity.name}.out")

@@ -28,8 +28,7 @@ class TestMetadataDirectoryIntegration:
             )
 
             # Start and wait for completion
-            exp.start(model, block=False)
-            exp.poll(interval=1)
+            exp.start(model, block=True)
 
             # Verify directory structure
             smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
@@ -63,9 +62,6 @@ class TestMetadataDirectoryIntegration:
             assert (
                 not database_dir.exists()
             ), f"Database metadata directory should not exist: {database_dir}"
-
-            # Clean up
-            exp.stop(model)
 
     def test_experiment_creates_correct_metadata_directory_structure_ensemble_only(
         self,
@@ -140,13 +136,7 @@ class TestMetadataDirectoryIntegration:
                 replicas=2,
             )
 
-            # Create database
-            orchestrator = exp.create_database(port=6379, interface="lo")
-
-            # Start all entities - orchestrator and compute entities may create separate run dirs
-            exp.start(orchestrator, block=False)
-            exp.start(model, ensemble, block=False)
-            exp.poll(interval=1)
+            exp.start(model, ensemble, block=True)
 
             # Verify directory structure
             smartsim_dir = pathlib.Path(temp_dir) / CONFIG.smartsim_base_dir
@@ -154,15 +144,15 @@ class TestMetadataDirectoryIntegration:
 
             assert metadata_dir.exists(), "Metadata directory should exist"
 
-            # Check for run-specific subdirectories (may be 1 or 2 depending on timing)
+            # Check for run-specific subdirectories
             run_dirs = [
                 d
                 for d in metadata_dir.iterdir()
                 if d.is_dir() and d.name.startswith("run_")
             ]
             assert (
-                len(run_dirs) >= 1
-            ), f"Should have at least one run directory, found: {run_dirs}"
+                len(run_dirs) == 2
+            ), f"Should have two run directories, found: {run_dirs}"
 
             # Find directory with model/ensemble subdirs
             run_dir = None
@@ -183,9 +173,6 @@ class TestMetadataDirectoryIntegration:
             assert (
                 ensemble_dir.exists()
             ), f"Ensemble metadata directory should exist: {ensemble_dir}"
-            # Clean up
-            exp.stop(model, ensemble)
-            exp.stop(orchestrator)
 
     def test_multiple_experiment_runs_create_separate_run_directories(self):
         """Test that multiple experiment runs create separate timestamped directories"""
@@ -196,9 +183,7 @@ class TestMetadataDirectoryIntegration:
                 "test_model1", run_settings=exp1.create_run_settings("echo", ["run1"])
             )
 
-            exp1.start(model1, block=False)
-            exp1.poll(interval=1)
-            exp1.stop(model1)
+            exp1.start(model1, block=True)
 
             # Small delay to ensure different timestamps
             time.sleep(0.01)
@@ -209,9 +194,7 @@ class TestMetadataDirectoryIntegration:
                 "test_model2", run_settings=exp2.create_run_settings("echo", ["run2"])
             )
 
-            exp2.start(model2, block=False)
-            exp2.poll(interval=1)
-            exp2.stop(model2)
+            exp2.start(model2, block=True)
 
             # Verify two separate run directories exist
             metadata_dir = pathlib.Path(temp_dir) / CONFIG.metadata_subdir
