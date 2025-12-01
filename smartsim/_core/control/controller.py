@@ -388,9 +388,7 @@ class Controller:
         # directories
         launch_timestamp = get_ts_ms()
         run_metadata_dir = (
-            pathlib.Path(exp_path)
-            / CONFIG.metadata_subdir
-            / f"run_{launch_timestamp}"
+            pathlib.Path(exp_path) / CONFIG.metadata_subdir / f"run_{launch_timestamp}"
         )
 
         # Loop over deployables to launch and launch multiple orchestrators

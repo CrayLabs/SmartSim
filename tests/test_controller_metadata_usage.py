@@ -42,7 +42,9 @@ def test_controller_uses_run_prefixed_metadata_dir(tmp_path, monkeypatch):
 
     monkeypatch.setattr(controller, "_create_job_step", fake_create_job_step)
     monkeypatch.setattr(controller, "_launch_step", lambda step, entity: None)
-    monkeypatch.setattr(controller, "symlink_output_files", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        controller, "symlink_output_files", lambda *args, **kwargs: None
+    )
 
     run_settings = RunSettings("echo", ["hello"])
     model_path = tmp_path / "simple_model"
