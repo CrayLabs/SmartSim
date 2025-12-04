@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+from types import SimpleNamespace
 
 import pytest
 
@@ -72,7 +73,7 @@ def test_symlink_output_files_targets_metadata_dir(tmp_path):
 
     entity_path = tmp_path / "workdir"
     entity_path.mkdir()
-    entity = type("Entity", (), {"name": "sample", "path": str(entity_path)})
+    entity = SimpleNamespace(name="sample", path=str(entity_path))
 
     Controller.symlink_output_files(step, entity)
 

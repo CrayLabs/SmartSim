@@ -85,7 +85,7 @@ def test_symlink(test_dir, request, entity_fixture):
     """Test symlinking historical output files"""
     entity = request.getfixturevalue(entity_fixture)
     entity.path = test_dir
-    if entity.type == Ensemble:
+    if isinstance(entity, Ensemble):
         for member in entity.models:
             symlink_with_create_job_step(test_dir, member)
     else:
