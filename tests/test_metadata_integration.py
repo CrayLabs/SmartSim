@@ -90,8 +90,12 @@ def test_metadata_structure_all_entity_types(test_dir: str) -> None:
     database_dir = run_dir / "database" / db.name
 
     assert model_dir.is_dir(), f"Model metadata directory should exist: {model_dir}"
-    assert ensemble_dir.is_dir(), f"Ensemble metadata directory should exist: {ensemble_dir}"
-    assert database_dir.is_dir(), f"Database metadata directory should exist: {database_dir}"
+    assert (
+        ensemble_dir.is_dir()
+    ), f"Ensemble metadata directory should exist: {ensemble_dir}"
+    assert (
+        database_dir.is_dir()
+    ), f"Database metadata directory should exist: {database_dir}"
 
 
 def test_multiple_runs_create_unique_directories(test_dir: str) -> None:
@@ -113,7 +117,9 @@ def test_multiple_runs_create_unique_directories(test_dir: str) -> None:
     run_dirs = [
         d for d in metadata_dir.iterdir() if d.is_dir() and d.name.startswith("run_")
     ]
-    assert len(run_dirs) == 2, f"Should have exactly two run directories, found: {run_dirs}"
+    assert (
+        len(run_dirs) == 2
+    ), f"Should have exactly two run directories, found: {run_dirs}"
 
     expected_models = {"test_model1", "test_model2"}
     discovered = set()
