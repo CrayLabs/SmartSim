@@ -11,7 +11,7 @@ To be released at some point in the future
 
 Description
 
-- **BREAKING CHANGE**: Removed telemetry functionality, LaunchedManifest tracking
+- Removed telemetry functionality, LaunchedManifest tracking
   classes, and SmartDashboard integration
 - Update copyright headers from 2021-2024 to 2021-2025 across the entire codebase
 - Python 3.12 is now supported; where available, installed TensorFlow version
@@ -24,7 +24,7 @@ Description
 
 Detailed Notes
 
-- **BREAKING CHANGE**: Removed telemetry functionality, LaunchedManifest tracking
+- Removed telemetry functionality, LaunchedManifest tracking
   system, and SmartDashboard integration.
   This includes complete removal of the telemetry monitor and collection system,
   telemetry configuration classes (`TelemetryConfiguration`,
@@ -45,6 +45,10 @@ Detailed Notes
   `.smartsim/metadata/` structure for job output files with entity-specific
   subdirectories (`ensemble/{name}`, `model/{name}`, `database/{name}`) and
   proper symlink management.
+  Added new `CONFIG` path helpers (`smartsim_base_dir`, `metadata_subdir`,
+  `dragon_default_subdir`, `dragon_logs_subdir`) that now return
+  `pathlib.Path` instances to provide a single source of truth for SmartSim's
+  hidden workspace directories and Dragon launcher log locations.
   ([SmartSim-PR789](https://github.com/CrayLabs/SmartSim/pull/789))
 - Copyright headers have been updated from "2021-2024" to "2021-2025" across
   271 files including Python source files, configuration files, documentation,
