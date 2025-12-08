@@ -53,6 +53,7 @@ class RunSettings(SettingsBase):
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         container: t.Optional[Container] = None,
+        skip_exe_check: bool = False,
         **_kwargs: t.Any,
     ) -> None:
         """Run parameters for a ``Model``
@@ -82,7 +83,7 @@ class RunSettings(SettingsBase):
         :param container: container type for workload (e.g. "singularity")
         """
         # Do not expand executable if running within a container
-        self.exe = [exe] if container else [expand_exe_path(exe)]
+        self.exe = [exe] if container or skip_exe_check else [expand_exe_path(exe)]
         self.exe_args = exe_args or []
         self.run_args = run_args or {}
         self.env_vars = env_vars or {}
