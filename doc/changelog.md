@@ -1,11 +1,9 @@
 # Changelog
 
-Listed here are the changes between each release of SmartSim,
-SmartRedis and SmartDashboard.
+Listed here are the changes between each release of SmartSim and SmartRedis.
 
 Jump to:
 - {ref}`SmartRedis changelog<smartredis-changelog>`
-- {ref}`SmartDashboard changelog<smartdashboard-changelog>`
 
 ## SmartSim
 
@@ -13,8 +11,11 @@ To be released at some point in the future
 
 Description
 
+- Removed telemetry functionality, LaunchedManifest tracking
+  classes, and SmartDashboard integration
 - Update copyright headers from 2021-2024 to 2021-2025 across the entire codebase
-- Python 3.12 is now supported; where available, installed TensorFlow version is now 2.16.2, PyTorch is 2.7.1.
+- Python 3.12 is now supported; where available, installed TensorFlow version
+  is now 2.16.2, PyTorch is 2.7.1.
 - Drop Python 3.9 support
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
@@ -23,20 +24,47 @@ Description
 
 Detailed Notes
 
-- Copyright headers have been updated from "2021-2024" to "2021-2025" across 271 files
-  including Python source files, configuration files, documentation, tests, Docker files,
-  shell scripts, and other supporting files to reflect the new year.
+- Removed telemetry functionality, LaunchedManifest tracking
+  system, and SmartDashboard integration.
+  This includes complete removal of the telemetry monitor and collection system,
+  telemetry configuration classes (`TelemetryConfiguration`,
+  `ExperimentTelemetryConfiguration`), all telemetry-related API methods
+  (`Experiment.telemetry`, `Orchestrator.telemetry`), telemetry collectors and
+  sinks, and the `watchdog` dependency. Also removed SmartDashboard integration
+  and CLI plugin, along with the indirect entrypoint launching mechanism.
+  Additionally removed the `LaunchedManifest`, `_LaunchedManifestMetadata`, and
+  `LaunchedManifestBuilder` classes that were used for telemetry data collection
+  during entity launches. Simplified the controller launch workflow by removing
+  telemetry metadata tracking and launch manifest serialization. Cleaned up the
+  `serialize.py` module by removing orphaned telemetry functions (80% code
+  reduction), preserving only essential type definitions. Updated all test files
+  to remove LaunchedManifest dependencies and deleted obsolete telemetry test
+  files. The core `Manifest` class for entity organization remains unchanged,
+  maintaining backward compatibility for entity management while removing the
+  telemetry overhead. Enhanced the metadata directory system to use a centralized
+  `.smartsim/metadata/` structure for job output files with entity-specific
+  subdirectories (`ensemble/{name}`, `model/{name}`, `database/{name}`) and
+  proper symlink management.
+  Added new `CONFIG` path helpers (`smartsim_base_dir`, `metadata_subdir`,
+  `dragon_default_subdir`, `dragon_logs_subdir`) that now return
+  `pathlib.Path` instances to provide a single source of truth for SmartSim's
+  hidden workspace directories and Dragon launcher log locations.
+  ([SmartSim-PR789](https://github.com/CrayLabs/SmartSim/pull/789))
+- Copyright headers have been updated from "2021-2024" to "2021-2025" across
+  271 files including Python source files, configuration files, documentation,
+  tests, Docker files, shell scripts, and other supporting files to reflect the
+  new year.
   ([SmartSim-PR790](https://github.com/CrayLabs/SmartSim/pull/790))
-- Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library files
-  are installed as part of `smart build` process when available. On Mac, ONNX runtime
-  1.22.0 is now installed, together with ONNX 1.16.
+- Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library
+  files are installed as part of `smart build` process when available. On Mac,
+  ONNX runtime 1.22.0 is now installed, together with ONNX 1.16.
   ([SmartSim-PR785](https://github.com/CrayLabs/SmartSim/pull/785))
 - Python 3.9 will not be supported anymore, the last stable version of SmartSim
   with support for Python 3.9 will be 0.8.
   ([SmartSim-PR781](https://github.com/CrayLabs/SmartSim/pull/781))
 - After the supercomputer Summit was decommissioned, a decision was made to
-  terminate SmartSim's support of the LSF launcher and LSB scheduler. If
-  this impacts your work, please contact us.
+  terminate SmartSim's support of the LSF launcher and LSB scheduler. If this
+  impacts your work, please contact us.
   ([SmartSim-PR780](https://github.com/CrayLabs/SmartSim/pull/780))
 - Fix typos in the `train_surrogate` tutorial documentation.
   ([SmartSim-PR758](https://github.com/CrayLabs/SmartSim/pull/758))
@@ -1102,14 +1130,5 @@ Description:
 ## SmartRedis
 
 ```{include} ../smartredis/doc/changelog.md
-:start-line: 2
-```
-
-------------------------------------------------------------------------
-
-(smartdashboard-changelog)=
-## SmartDashboard
-
-```{include} ../smartdashboard/doc/changelog.md
 :start-line: 2
 ```

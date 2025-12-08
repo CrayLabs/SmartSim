@@ -38,18 +38,5 @@ def dynamic_execute(
     return process_execute
 
 
-def dashboard() -> MenuItemConfig:
-    return MenuItemConfig(
-        "dashboard",
-        (
-            "Start the SmartSim dashboard to monitor experiment output from a "
-            "graphical user interface. This requires that the SmartSim Dashboard "
-            "Package be installed. For more infromation please visit "
-            "https://github.com/CrayLabs/SmartDashboard"
-        ),
-        dynamic_execute("smartdashboard", "Dashboard"),
-        is_plugin=True,
-    )
-
-
-plugins = (dashboard,)
+# No plugins currently available
+plugins: t.Tuple[t.Callable[[], MenuItemConfig], ...] = ()

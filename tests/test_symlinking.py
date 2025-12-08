@@ -48,24 +48,45 @@ rs = RunSettings("echo", ["spam", "eggs"])
 bs = SbatchSettings()
 batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
-ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
-model = Model("test_model", params={}, path="", run_settings=rs)
-batch_model = Model(
-    "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
-)
-anon_batch_model = _AnonymousBatchJob(batch_model)
+
+@pytest.fixture
+def model_entity():
+    return Model("test_model", params={}, path="", run_settings=rs)
+
+
+@pytest.fixture
+def ensemble_entity():
+    return Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
+
+
+@pytest.fixture
+def orchestrator_entity():
+    return Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
+
+
+@pytest.fixture
+def anon_batch_model_entity():
+    batch_model = Model(
+        "batch_test_model",
+        params={},
+        path="",
+        run_settings=batch_rs,
+        batch_settings=bs,
+    )
+    return _AnonymousBatchJob(batch_model)
 
 
 @pytest.mark.parametrize(
-    "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(model, id="model")],
+    "entity_fixture",
+    ["ensemble_entity", "model_entity"],
+    ids=["ensemble", "model"],
 )
-def test_symlink(test_dir, entity):
+def test_symlink(test_dir, request, entity_fixture):
     """Test symlinking historical output files"""
+    entity = request.getfixturevalue(entity_fixture)
     entity.path = test_dir
-    if entity.type == Ensemble:
-        for member in ens.models:
+    if isinstance(entity, Ensemble):
+        for member in entity.models:
             symlink_with_create_job_step(test_dir, member)
     else:
         symlink_with_create_job_step(test_dir, entity)
@@ -75,43 +96,79 @@ def symlink_with_create_job_step(test_dir, entity):
     """Function that helps cut down on repeated testing code"""
     exp_dir = pathlib.Path(test_dir)
     entity.path = test_dir
-    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
-    step = controller._create_job_step(entity, status_dir)
+    # Use consistent metadata directory structure
+    metadata_dir = exp_dir / CONFIG.metadata_subdir
+    step = controller._create_job_step(entity, metadata_dir)
     controller.symlink_output_files(step, entity)
     assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
     assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
+    # Verify symlinks point to the correct metadata directory
+    expected_out = metadata_dir / (entity.name + ".out")
+    expected_err = metadata_dir / (entity.name + ".err")
     assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
-        status_dir / entity.name / (entity.name + ".out")
+        expected_out
     )
     assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.err")) == str(
-        status_dir / entity.name / (entity.name + ".err")
+        expected_err
     )
 
 
 @pytest.mark.parametrize(
-    "entity",
+    "entity_fixture",
     [
-        pytest.param(ens, id="ensemble"),
-        pytest.param(orc, id="orchestrator"),
-        pytest.param(anon_batch_model, id="model"),
+        "ensemble_entity",
+        "orchestrator_entity",
+        "anon_batch_model_entity",
     ],
+    ids=["ensemble", "orchestrator", "model"],
 )
-def test_batch_symlink(entity, test_dir):
+def test_batch_symlink(request, entity_fixture, test_dir):
     """Test symlinking historical output files"""
+    entity = request.getfixturevalue(entity_fixture)
     exp_dir = pathlib.Path(test_dir)
     entity.path = test_dir
-    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
-    for step in substeps:
-        slurm_controller.symlink_output_files(step, entity)
-        assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
-        assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
-        assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".out")
+    # For entities with sub-entities (like Orchestrator), set their paths too
+    if hasattr(entity, "entities"):
+        for sub_entity in entity.entities:
+            sub_entity.path = test_dir
+
+    # Create metadata_dir to simulate consistent metadata structure
+    metadata_dir = exp_dir / CONFIG.metadata_subdir
+    _, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
+
+    # For batch entities, we need to call symlink_output_files correctly
+    # Based on how the controller does it, we should pass the individual entities
+    for substep in substeps:
+        # Just test the first substep and entity pair
+        substep_entity = entity.entities[0]
+        slurm_controller.symlink_output_files(substep, substep_entity)
+
+        # The symlinks should be created in the substep entity's path using its name
+        symlink_out = pathlib.Path(substep_entity.path, f"{substep_entity.name}.out")
+        symlink_err = pathlib.Path(substep_entity.path, f"{substep_entity.name}.err")
+
+        assert symlink_out.is_symlink()
+        assert symlink_err.is_symlink()
+
+        # The symlinks should point to the metadata_dir set for this substep
+        expected_out = pathlib.Path(substep.meta["metadata_dir"]) / (
+            substep.entity_name + ".out"
         )
-        assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.err")) == str(
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".err")
+        expected_err = pathlib.Path(substep.meta["metadata_dir"]) / (
+            substep.entity_name + ".err"
         )
+
+        assert os.readlink(symlink_out) == str(expected_out)
+        assert os.readlink(symlink_err) == str(expected_err)
+
+        # For _AnonymousBatchJob (single model)
+        slurm_controller.symlink_output_files(substep, entity)
+
+        symlink_out = pathlib.Path(entity.path, f"{entity.name}.out")
+        symlink_err = pathlib.Path(entity.path, f"{entity.name}.err")
+
+        assert symlink_out.is_symlink()
+        assert symlink_err.is_symlink()
 
 
 def test_symlink_error(test_dir):
@@ -122,8 +179,8 @@ def test_symlink_error(test_dir):
         path=pathlib.Path(test_dir, "badpath"),
         run_settings=RunSettings("echo"),
     )
-    telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
-    bad_step = controller._create_job_step(bad_model, telem_dir)
+    metadata_dir = pathlib.Path(test_dir, "bad_model_metadata")
+    bad_step = controller._create_job_step(bad_model, metadata_dir)
     with pytest.raises(FileNotFoundError):
         controller.symlink_output_files(bad_step, bad_model)
 

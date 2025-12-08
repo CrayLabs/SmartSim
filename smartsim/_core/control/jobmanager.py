@@ -39,7 +39,7 @@ from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
-from .job import Job, JobEntity
+from .job import Job
 
 logger = get_logger(__name__)
 
@@ -164,7 +164,7 @@ class JobManager:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -178,8 +178,6 @@ class JobManager:
         # all operations here should be atomic
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
-            self.db_jobs[entity.name] = job
-        elif isinstance(entity, JobEntity) and entity.is_db:
             self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job

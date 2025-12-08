@@ -28,6 +28,7 @@ import pathlib
 
 import pytest
 
+from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
@@ -61,7 +62,9 @@ class MockStep(Step):
         pytest.param(orc, id="Database"),
     ],
 )
-def test_controller_batch_step_creation_preserves_entity_order(collection, monkeypatch):
+def test_controller_batch_step_creation_preserves_entity_order(
+    collection, monkeypatch, test_dir
+):
     monkeypatch.setattr(
         controller._launcher,
         "create_step",
@@ -69,7 +72,7 @@ def test_controller_batch_step_creation_preserves_entity_order(collection, monke
     )
     entity_names = [x.name for x in collection.entities]
     assert len(entity_names) == len(set(entity_names))
-    _, steps = controller._create_batch_job_step(
-        collection, pathlib.Path("mock/exp/path")
-    )
+    # Create a metadata directory for the test
+    metadata_dir = pathlib.Path(test_dir) / CONFIG.metadata_subdir
+    _, steps = controller._create_batch_job_step(collection, metadata_dir)
     assert entity_names == [step.name for step in steps]

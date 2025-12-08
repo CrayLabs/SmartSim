@@ -445,7 +445,6 @@ def test_shutdown_request(
     kill_jobs: bool,
     frontend_shutdown: bool,
 ) -> None:
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
     dragon_backend = get_mock_backend(monkeypatch)
     monkeypatch.setattr(dragon_backend, "_cooldown_period", 1)
     set_mock_group_infos(monkeypatch, dragon_backend)
@@ -484,22 +483,6 @@ def test_shutdown_request(
     assert dragon_backend._can_shutdown == kill_jobs
     assert dragon_backend.should_shutdown == kill_jobs
     assert dragon_backend._has_cooled_down == kill_jobs
-
-
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
-@pytest.mark.parametrize("telemetry_flag", ["0", "1"])
-def test_cooldown_is_set(monkeypatch: pytest.MonkeyPatch, telemetry_flag: str) -> None:
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", telemetry_flag)
-    dragon_backend = get_mock_backend(monkeypatch)
-
-    expected_cooldown = (
-        2 * CONFIG.telemetry_frequency + 5 if int(telemetry_flag) > 0 else 5
-    )
-
-    if telemetry_flag:
-        assert dragon_backend.cooldown_period == expected_cooldown
-    else:
-        assert dragon_backend.cooldown_period == expected_cooldown
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")

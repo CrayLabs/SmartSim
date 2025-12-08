@@ -26,7 +26,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 import json
@@ -43,7 +42,6 @@ import typing as t
 import uuid
 import warnings
 from subprocess import run
-import time
 
 import psutil
 import pytest
@@ -51,10 +49,8 @@ import pytest
 import smartsim
 from smartsim import Experiment
 from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
-from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SSConfigError, SSInternalError
@@ -706,143 +702,7 @@ def config() -> Config:
     return CONFIG
 
 
-class MockSink:
-    """Telemetry sink that writes console output for testing purposes"""
 
-    def __init__(self, delay_ms: int = 0) -> None:
-        self._delay_ms = delay_ms
-        self.num_saves = 0
-        self.args: t.Any = None
-
-    async def save(self, *args: t.Any) -> None:
-        """Save all arguments as console logged messages"""
-        self.num_saves += 1
-        if self._delay_ms:
-            # mimic slow collection....
-            delay_s = self._delay_ms / 1000
-            await asyncio.sleep(delay_s)
-        self.args = args
-
-
-@pytest.fixture
-def mock_sink() -> t.Type[MockSink]:
-    return MockSink
-
-
-@pytest.fixture
-def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
-    """Generates mock db connection telemetry"""
-
-    def _mock_con(min: int = 1, max: int = 254) -> t.Iterable[t.Any]:
-        for i in range(min, max):
-            yield [
-                {"addr": f"127.0.0.{i}:1234", "id": f"ABC{i}"},
-                {"addr": f"127.0.0.{i}:2345", "id": f"XYZ{i}"},
-            ]
-
-    return _mock_con
-
-
-@pytest.fixture
-def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
-    """Generates mock db memory usage telemetry"""
-
-    def _mock_mem(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
-        for i in range(min, max):
-            yield {
-                "total_system_memory": 1000 * i,
-                "used_memory": 1111 * i,
-                "used_memory_peak": 1234 * i,
-            }
-
-    return _mock_mem
-
-
-@pytest.fixture
-def mock_redis() -> t.Callable[..., t.Any]:
-    def _mock_redis(
-        conn_side_effect=None,
-        mem_stats=None,
-        client_stats=None,
-        coll_side_effect=None,
-    ):
-        """Generate a mock object for the redis.Redis contract"""
-
-        class MockConn:
-            def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
-                if conn_side_effect is not None:
-                    conn_side_effect()
-
-            async def info(self, *args: t.Any, **kwargs: t.Any) -> t.Dict[str, t.Any]:
-                if coll_side_effect:
-                    await coll_side_effect()
-
-                if mem_stats:
-                    return next(mem_stats)
-                return {
-                    "total_system_memory": "111",
-                    "used_memory": "222",
-                    "used_memory_peak": "333",
-                }
-
-            async def client_list(
-                self, *args: t.Any, **kwargs: t.Any
-            ) -> t.Dict[str, t.Any]:
-                if coll_side_effect:
-                    await coll_side_effect()
-
-                if client_stats:
-                    return next(client_stats)
-                return {"addr": "127.0.0.1", "id": "111"}
-
-            async def ping(self):
-                return True
-
-        return MockConn
-
-    return _mock_redis
-
-
-class MockCollectorEntityFunc(t.Protocol):
-    @staticmethod
-    def __call__(
-        host: str = "127.0.0.1",
-        port: int = 6379,
-        name: str = "",
-        type: str = "",
-        telemetry_on: bool = False,
-    ) -> "JobEntity": ...
-
-
-@pytest.fixture
-def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
-    def _mock_entity(
-        host: str = "127.0.0.1",
-        port: int = 6379,
-        name: str = "",
-        type: str = "",
-        telemetry_on: bool = False,
-    ) -> "JobEntity":
-        test_path = pathlib.Path(test_dir)
-
-        entity = JobEntity()
-        entity.name = name if name else str(uuid.uuid4())
-        entity.status_dir = str(test_path / entity.name)
-        entity.type = type
-        entity.telemetry_on = True
-        entity.collectors = {
-            "client": "",
-            "client_count": "",
-            "memory": "",
-        }
-        entity.config = {
-            "host": host,
-            "port": str(port),
-        }
-        entity.telemetry_on = telemetry_on
-        return entity
-
-    return _mock_entity
 
 
 class CountingCallable:

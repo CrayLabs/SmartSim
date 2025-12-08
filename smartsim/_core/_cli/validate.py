@@ -150,7 +150,6 @@ def test_install(
     with_onnx: bool,
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
-    exp.telemetry.disable()
     port = find_free_port() if port is None else port
 
     with _make_managed_local_orc(exp, port) as client:

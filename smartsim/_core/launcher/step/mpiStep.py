@@ -33,7 +33,7 @@ from ....error import AllocationError, SmartSimError
 from ....log import get_logger
 from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings
 from ....settings.base import RunSettings
-from .step import Step, proxyable_launch_cmd
+from .step import Step
 
 logger = get_logger(__name__)
 
@@ -56,7 +56,6 @@ class _BaseMPIStep(Step):
 
     _supported_launchers = ["PBS", "SLURM", "LSB", "SGE"]
 
-    @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 

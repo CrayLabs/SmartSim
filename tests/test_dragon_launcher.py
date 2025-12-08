@@ -38,6 +38,7 @@ import zmq
 
 import smartsim._core.config
 from smartsim._core._cli.scripts.dragon_install import create_dotenv
+from smartsim._core.config import CONFIG
 from smartsim._core.config.config import get_config
 from smartsim._core.launcher.dragon.dragonLauncher import (
     DragonConnector,
@@ -70,9 +71,9 @@ def dragon_batch_step(test_dir: str) -> DragonBatchStep:
     batch_settings = SbatchSettings(nodes=num_nodes)
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
-    # ensure the status_dir is set
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
-    batch_step.meta["status_dir"] = status_dir
+    # ensure the metadata_dir is set
+    status_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
+    batch_step.meta["metadata_dir"] = status_dir
 
     # create some steps to verify the requests file output changes
     rs0 = DragonRunSettings(exe="sleep", exe_args=["1"])
@@ -101,7 +102,7 @@ def dragon_batch_step(test_dir: str) -> DragonBatchStep:
 
     for index, step in enumerate(steps):
         # ensure meta is configured...
-        step.meta["status_dir"] = status_dir
+        step.meta["metadata_dir"] = status_dir
         # ... and put all the steps into the batch
         batch_step.add_to_batch(steps[index])
 
@@ -587,11 +588,11 @@ def test_run_step_fail(test_dir: str) -> None:
     """Verify that the dragon launcher still returns the step id
     when the running step fails"""
     test_path = pathlib.Path(test_dir)
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+    status_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
 
     rs = DragonRunSettings(exe="sleep", exe_args=["1"])
     step0 = DragonStep("step0", test_dir, rs)
-    step0.meta["status_dir"] = status_dir
+    step0.meta["metadata_dir"] = status_dir
 
     mock_connector = MagicMock(spec=DragonConnector)
     mock_connector.is_connected = True
@@ -673,11 +674,11 @@ def test_run_step_batch_failure(dragon_batch_step: DragonBatchStep) -> None:
 def test_run_step_success(test_dir: str) -> None:
     """Verify that the dragon launcher sends the correctly formatted request for a step"""
     test_path = pathlib.Path(test_dir)
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
+    status_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
 
     rs = DragonRunSettings(exe="sleep", exe_args=["1"])
     step0 = DragonStep("step0", test_dir, rs)
-    step0.meta["status_dir"] = status_dir
+    step0.meta["metadata_dir"] = status_dir
 
     mock_connector = MagicMock(spec=DragonConnector)
     mock_connector.is_connected = True

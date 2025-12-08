@@ -56,23 +56,6 @@ def test_fallthrough_concat():
     assert result == "--xx=FOO"
 
 
-def test_encode_decode_cmd_round_trip():
-    orig_cmd = ["this", "is", "a", "cmd"]
-    decoded_cmd = helpers.decode_cmd(helpers.encode_cmd(orig_cmd))
-    assert orig_cmd == decoded_cmd
-    assert orig_cmd is not decoded_cmd
-
-
-def test_encode_raises_on_empty():
-    with pytest.raises(ValueError):
-        helpers.encode_cmd([])
-
-
-def test_decode_raises_on_empty():
-    with pytest.raises(ValueError):
-        helpers.decode_cmd("")
-
-
 class MockSignal:
     def __init__(self):
         self.signal_handlers = collections.defaultdict(lambda: signal.SIG_IGN)

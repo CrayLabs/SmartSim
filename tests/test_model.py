@@ -30,7 +30,6 @@ import numpy as np
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.launcher.step import SbatchStep, SrunStep
 from smartsim.entity import Ensemble, Model
 from smartsim.entity.model import _parse_model_parameters
@@ -97,7 +96,7 @@ def monkeypatch_exp_controller(monkeypatch):
             self, exp_name, exp_path, manifest, block=True, kill_on_interrupt=True
         ):
             self._launch(exp_name, exp_path, manifest)
-            return LaunchedManifestBuilder("name", "path", "launcher").finalize()
+            return None
 
         def launch_step_nop(self, step, entity):
             entity_steps.append((step, entity))
