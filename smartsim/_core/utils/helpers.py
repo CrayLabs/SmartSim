@@ -33,7 +33,7 @@ import signal
 import subprocess
 import typing as t
 import uuid
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
