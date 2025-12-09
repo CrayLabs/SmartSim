@@ -48,23 +48,44 @@ rs = RunSettings("echo", ["spam", "eggs"])
 bs = SbatchSettings()
 batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
-ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
-model = Model("test_model", params={}, path="", run_settings=rs)
-batch_model = Model(
-    "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
-)
-anon_batch_model = _AnonymousBatchJob(batch_model)
+
+@pytest.fixture
+def model_entity():
+    return Model("test_model", params={}, path="", run_settings=rs)
+
+
+@pytest.fixture
+def ensemble_entity():
+    return Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
+
+
+@pytest.fixture
+def orchestrator_entity():
+    return Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
+
+
+@pytest.fixture
+def anon_batch_model_entity():
+    batch_model = Model(
+        "batch_test_model",
+        params={},
+        path="",
+        run_settings=batch_rs,
+        batch_settings=bs,
+    )
+    return _AnonymousBatchJob(batch_model)
 
 
 @pytest.mark.parametrize(
-    "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(model, id="model")],
+    "entity_fixture",
+    ["ensemble_entity", "model_entity"],
+    ids=["ensemble", "model"],
 )
-def test_symlink(test_dir, entity):
+def test_symlink(test_dir, request, entity_fixture):
     """Test symlinking historical output files"""
+    entity = request.getfixturevalue(entity_fixture)
     entity.path = test_dir
-    if entity.type == Ensemble:
+    if isinstance(entity, Ensemble):
         for member in entity.models:
             symlink_with_create_job_step(test_dir, member)
     else:
@@ -93,15 +114,17 @@ def symlink_with_create_job_step(test_dir, entity):
 
 
 @pytest.mark.parametrize(
-    "entity",
+    "entity_fixture",
     [
-        pytest.param(ens, id="ensemble"),
-        pytest.param(orc, id="orchestrator"),
-        pytest.param(anon_batch_model, id="model"),
+        "ensemble_entity",
+        "orchestrator_entity",
+        "anon_batch_model_entity",
     ],
+    ids=["ensemble", "orchestrator", "model"],
 )
-def test_batch_symlink(entity, test_dir):
+def test_batch_symlink(request, entity_fixture, test_dir):
     """Test symlinking historical output files"""
+    entity = request.getfixturevalue(entity_fixture)
     exp_dir = pathlib.Path(test_dir)
     entity.path = test_dir
     # For entities with sub-entities (like Orchestrator), set their paths too
@@ -111,13 +134,12 @@ def test_batch_symlink(entity, test_dir):
 
     # Create metadata_dir to simulate consistent metadata structure
     metadata_dir = exp_dir / CONFIG.metadata_subdir
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
+    _, substeps = slurm_controller._create_batch_job_step(entity, metadata_dir)
 
     # For batch entities, we need to call symlink_output_files correctly
     # Based on how the controller does it, we should pass the individual entities
-    if hasattr(entity, "entities") and len(substeps) > 0:
+    for substep in substeps:
         # Just test the first substep and entity pair
-        substep = substeps[0]
         substep_entity = entity.entities[0]
         slurm_controller.symlink_output_files(substep, substep_entity)
 
@@ -138,9 +160,8 @@ def test_batch_symlink(entity, test_dir):
 
         assert os.readlink(symlink_out) == str(expected_out)
         assert os.readlink(symlink_err) == str(expected_err)
-    else:
+
         # For _AnonymousBatchJob (single model)
-        substep = substeps[0]
         slurm_controller.symlink_output_files(substep, entity)
 
         symlink_out = pathlib.Path(entity.path, f"{entity.name}.out")

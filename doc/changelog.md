@@ -14,6 +14,8 @@ Description
 - Modernize typing syntax to Python 3.10+ standards
 - **BREAKING CHANGE**: Removed telemetry functionality, LaunchedManifest tracking
   classes, and SmartDashboard integration
+- Removed telemetry functionality, LaunchedManifest tracking
+  classes, and SmartDashboard integration
 - Update copyright headers from 2021-2024 to 2021-2025 across the entire codebase
 - Python 3.12 is now supported; where available, installed TensorFlow version
   is now 2.16.2, PyTorch is 2.7.1.
