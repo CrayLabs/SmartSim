@@ -156,8 +156,4 @@ def test_manifest_detects_db_objects(
         )
         monkeypatch.setattr(*patch)
 
-        assert Manifest(model, ensemble).has_db_objects == has_db_objects
-
-
-# Removed tests for LaunchedManifest, LaunchedManifestBuilder, and _LaunchedManifestMetadata
-# since those classes were removed per MattToast's feedback
+    assert Manifest(model, ensemble).has_db_objects == has_db_objects
