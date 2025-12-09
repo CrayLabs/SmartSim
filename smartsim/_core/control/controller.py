@@ -478,12 +478,6 @@ class Controller:
 
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
-            metadata_dir = (
-                pathlib.Path(orchestrator.path)
-                / CONFIG.metadata_subdir
-                / "database"
-                / orchestrator.name
-            )
             orc_batch_step, substeps = self._create_batch_job_step(
                 orchestrator, metadata_dir
             )
@@ -496,12 +490,6 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            metadata_dir = (
-                pathlib.Path(orchestrator.path)
-                / CONFIG.metadata_subdir
-                / "database"
-                / orchestrator.name
-            )
             db_steps = [
                 (self._create_job_step(db, metadata_dir), db)
                 for db in orchestrator.entities

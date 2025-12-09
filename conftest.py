@@ -351,7 +351,7 @@ class WLMUtils:
     def get_base_run_settings(
         exe: str, args: list[str], nodes: int = 1, ntasks: int = 1, **kwargs: t.Any
     ) -> RunSettings:
-        run_args: dict[str, int, str | float | None] = {}
+        run_args: dict[str, int | str | float | None] = {}
 
         if test_launcher == "slurm":
             run_args = {"--nodes": nodes, "--ntasks": ntasks, "--time": "00:10:00"}
@@ -394,7 +394,7 @@ class WLMUtils:
     def get_run_settings(
         exe: str, args: list[str], nodes: int = 1, ntasks: int = 1, **kwargs: t.Any
     ) -> RunSettings:
-        run_args: dict[str, int, str | float | None] = {}
+        run_args: dict[str, int | str | float | None] = {}
 
         if test_launcher == "slurm":
             run_args = {"nodes": nodes, "ntasks": ntasks, "time": "00:10:00"}
