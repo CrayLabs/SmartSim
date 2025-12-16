@@ -64,7 +64,7 @@ class _Message(t.Generic[_SchemaT]):
 
 class SchemaRegistry(t.Generic[_SchemaT]):
     def __init__(
-        self, init_map: t.Optional[Mapping[str, type[_SchemaT]]] = None
+        self, init_map: Mapping[str, type[_SchemaT]] | None = None
     ) -> None:
         self._map = dict(init_map) if init_map else {}
 
