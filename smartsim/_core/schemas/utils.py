@@ -63,9 +63,7 @@ class _Message(t.Generic[_SchemaT]):
 
 
 class SchemaRegistry(t.Generic[_SchemaT]):
-    def __init__(
-        self, init_map: Mapping[str, type[_SchemaT]] | None = None
-    ) -> None:
+    def __init__(self, init_map: Mapping[str, type[_SchemaT]] | None = None) -> None:
         self._map = dict(init_map) if init_map else {}
 
     def register(self, key: str) -> Callable[[type[_SchemaT]], type[_SchemaT]]:
