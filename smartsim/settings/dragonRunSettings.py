@@ -40,7 +40,7 @@ class DragonRunSettings(RunSettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[str | list[str]] = None,
+        exe_args: str | list[str] | None = None,
         env_vars: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ) -> None:
