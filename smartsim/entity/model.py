@@ -347,7 +347,7 @@ class Model(SmartSimEntity):
         connection_options: Mapping[str, int | list[str] | str],
         common_options: dict[
             str,
-            Iterable[int | Iterable[int]] | None | bool | int | str | None,
+            Iterable[int | Iterable[int]] | bool | int | str | None,
         ],
         **kwargs: int | None,
     ) -> None:
