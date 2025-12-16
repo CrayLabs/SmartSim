@@ -42,7 +42,7 @@ class SrunSettings(RunSettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[str | list[str]] = None,
+        exe_args: str | list[str] | None = None,
         run_args: dict[str, int | str | float | None] | None = None,
         env_vars: dict[str, str | None] | None = None,
         alloc: str | None = None,
