@@ -116,7 +116,7 @@ class ModelWriter:
         :returns: A dict of parameter names and values set for the file
         """
         edited = []
-        unused_tags: defaultdict[str, list[int]] = collections.defaultdict(list)
+        unused_tags = defaultdict[str, list[int]](list)
         used_params: dict[str, str] = {}
         for i, line in enumerate(self.lines, 1):
             while search := re.search(self.regex, line):
