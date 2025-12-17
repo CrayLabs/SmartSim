@@ -30,7 +30,6 @@ import signal
 import socket
 import sys
 import tempfile
-import typing as t
 from pathlib import Path
 from subprocess import STDOUT
 from types import FrameType
@@ -52,13 +51,13 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 
-def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+def handle_signal(signo: int, _frame: FrameType | None) -> None:
     if not signo:
         logger.warning("Received signal with no signo")
     cleanup()
 
 
-def launch_db_model(client: Client, db_model: t.List[str]) -> str:
+def launch_db_model(client: Client, db_model: list[str]) -> str:
     """Parse options to launch model on local cluster
 
     :param client: SmartRedis client connected to local DB
@@ -122,7 +121,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     return name
 
 
-def launch_db_script(client: Client, db_script: t.List[str]) -> str:
+def launch_db_script(client: Client, db_script: list[str]) -> str:
     """Parse options to launch script on local cluster
 
     :param client: SmartRedis client connected to local DB
@@ -166,9 +165,9 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
 def main(
     network_interface: str,
     db_cpus: int,
-    command: t.List[str],
-    db_models: t.List[t.List[str]],
-    db_scripts: t.List[t.List[str]],
+    command: list[str],
+    db_models: list[list[str]],
+    db_scripts: list[list[str]],
     db_identifier: str,
 ) -> None:
     # pylint: disable=too-many-statements
@@ -226,13 +225,13 @@ def main(
         logger.error(f"Failed to start database process: {str(e)}")
         raise SSInternalError("Colocated process failed to start") from e
 
-    def launch_models(client: Client, db_models: t.List[t.List[str]]) -> None:
+    def launch_models(client: Client, db_models: list[list[str]]) -> None:
         for i, db_model in enumerate(db_models):
             logger.debug("Uploading model")
             model_name = launch_db_model(client, db_model)
             logger.debug(f"Added model {model_name} ({i+1}/{len(db_models)})")
 
-    def launch_db_scripts(client: Client, db_scripts: t.List[t.List[str]]) -> None:
+    def launch_db_scripts(client: Client, db_scripts: list[list[str]]) -> None:
         for i, db_script in enumerate(db_scripts):
             logger.debug("Uploading script")
             script_name = launch_db_script(client, db_script)

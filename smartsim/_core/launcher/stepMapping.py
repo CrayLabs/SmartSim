@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 
 from ...log import get_logger
 
@@ -34,9 +33,9 @@ logger = get_logger(__name__)
 class StepMap:
     def __init__(
         self,
-        step_id: t.Optional[str] = None,
-        task_id: t.Optional[str] = None,
-        managed: t.Optional[bool] = None,
+        step_id: str | None = None,
+        task_id: str | None = None,
+        managed: bool | None = None,
     ) -> None:
         self.step_id = step_id
         self.task_id = task_id
@@ -46,7 +45,7 @@ class StepMap:
 class StepMapping:
     def __init__(self) -> None:
         # step_name : wlm_id, pid, wlm_managed?
-        self.mapping: t.Dict[str, StepMap] = {}
+        self.mapping: dict[str, StepMap] = {}
 
     def __getitem__(self, step_name: str) -> StepMap:
         return self.mapping[step_name]
@@ -57,8 +56,8 @@ class StepMapping:
     def add(
         self,
         step_name: str,
-        step_id: t.Optional[str] = None,
-        task_id: t.Optional[str] = None,
+        step_id: str | None = None,
+        task_id: str | None = None,
         managed: bool = True,
     ) -> None:
         try:
@@ -68,7 +67,7 @@ class StepMapping:
             msg = f"Could not add step {step_name} to mapping: {e}"
             logger.exception(msg)
 
-    def get_task_id(self, step_id: str) -> t.Optional[str]:
+    def get_task_id(self, step_id: str) -> str | None:
         """Get the task id from the step id"""
         task_id = None
         for stepmap in self.mapping.values():
@@ -78,9 +77,9 @@ class StepMapping:
         return task_id
 
     def get_ids(
-        self, step_names: t.List[str], managed: bool = True
-    ) -> t.Tuple[t.List[str], t.List[t.Union[str, None]]]:
-        ids: t.List[t.Union[str, None]] = []
+        self, step_names: list[str], managed: bool = True
+    ) -> tuple[list[str], list[str | None]]:
+        ids: list[str | None] = []
         names = []
         for name in step_names:
             if name in self.mapping:

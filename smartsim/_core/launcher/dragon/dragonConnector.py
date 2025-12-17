@@ -35,6 +35,7 @@ import subprocess
 import sys
 import typing as t
 from collections import defaultdict
+from collections.abc import Iterable
 from pathlib import Path
 from threading import RLock
 
@@ -59,7 +60,7 @@ from ...utils.network import find_free_port, get_best_interface_and_address
 
 logger = get_logger(__name__)
 
-_SchemaT = t.TypeVar("_SchemaT", bound=t.Union[DragonRequest, DragonResponse])
+_SchemaT = t.TypeVar("_SchemaT", bound=DragonRequest | DragonResponse)
 
 DRG_LOCK = RLock()
 
@@ -73,17 +74,17 @@ class DragonConnector:
         self._context: zmq.Context[t.Any] = zmq.Context.instance()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
-        self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
+        self._authenticator: zmq.auth.thread.ThreadAuthenticator | None = None
         config = get_config()
         self._reset_timeout(config.dragon_server_timeout)
-        self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
-        self._dragon_head_process: t.Optional[subprocess.Popen[bytes]] = None
+        self._dragon_head_socket: zmq.Socket[t.Any] | None = None
+        self._dragon_head_process: subprocess.Popen[bytes] | None = None
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another connector
-        self._dragon_head_pid: t.Optional[int] = None
+        self._dragon_head_pid: int | None = None
         self._dragon_server_path = config.dragon_server_path
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
-        self._env_vars: t.Dict[str, str] = {}
+        self._env_vars: dict[str, str] = {}
         if self._dragon_server_path is None:
             raise SmartSimError(
                 "DragonConnector could not find the dragon server path. "
@@ -218,7 +219,7 @@ class DragonConnector:
 
     def _start_connector_socket(self, socket_addr: str) -> zmq.Socket[t.Any]:
         config = get_config()
-        connector_socket: t.Optional[zmq.Socket[t.Any]] = None
+        connector_socket: zmq.Socket[t.Any] | None = None
         self._reset_timeout(config.dragon_server_startup_timeout)
         self._get_new_authenticator(-1)
         connector_socket = dragonSockets.get_secure_socket(self._context, zmq.REP, True)
@@ -229,7 +230,7 @@ class DragonConnector:
 
         return connector_socket
 
-    def load_persisted_env(self) -> t.Dict[str, str]:
+    def load_persisted_env(self) -> dict[str, str]:
         """Load key-value pairs from a .env file created during dragon installation
 
         :return: Key-value pairs stored in .env file"""
@@ -251,7 +252,7 @@ class DragonConnector:
 
         return self._env_vars
 
-    def merge_persisted_env(self, current_env: t.Dict[str, str]) -> t.Dict[str, str]:
+    def merge_persisted_env(self, current_env: dict[str, str]) -> dict[str, str]:
         """Combine the current environment variable set with the dragon .env by adding
         Dragon-specific values and prepending any new values to existing keys
 
@@ -259,7 +260,7 @@ class DragonConnector:
         :return: Merged environment
         """
         # ensure we start w/a complete env from current env state
-        merged_env: t.Dict[str, str] = {**current_env}
+        merged_env: dict[str, str] = {**current_env}
 
         # copy all the values for dragon straight into merged_env
         merged_env.update(
@@ -416,8 +417,8 @@ class DragonConnector:
 
     @staticmethod
     def _parse_launched_dragon_server_info_from_iterable(
-        stream: t.Iterable[str], num_dragon_envs: t.Optional[int] = None
-    ) -> t.List[t.Dict[str, str]]:
+        stream: Iterable[str], num_dragon_envs: int | None = None
+    ) -> list[dict[str, str]]:
         lines = (line.strip() for line in stream)
         lines = (line for line in lines if line)
         tokenized = (line.split(maxsplit=1) for line in lines)
@@ -441,9 +442,9 @@ class DragonConnector:
     @classmethod
     def _parse_launched_dragon_server_info_from_files(
         cls,
-        file_paths: t.List[t.Union[str, "os.PathLike[str]"]],
-        num_dragon_envs: t.Optional[int] = None,
-    ) -> t.List[t.Dict[str, str]]:
+        file_paths: list[str | os.PathLike[str]],
+        num_dragon_envs: int | None = None,
+    ) -> list[dict[str, str]]:
         with fileinput.FileInput(file_paths) as ifstream:
             dragon_envs = cls._parse_launched_dragon_server_info_from_iterable(
                 ifstream, num_dragon_envs
@@ -468,16 +469,16 @@ class DragonConnector:
             return response
 
 
-def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
+def _assert_schema_type(obj: object, typ: type[_SchemaT], /) -> _SchemaT:
     if not isinstance(obj, typ):
         raise TypeError(f"Expected schema of type `{typ}`, but got {type(obj)}")
     return obj
 
 
 def _dragon_cleanup(
-    server_socket: t.Optional[zmq.Socket[t.Any]] = None,
-    server_process_pid: t.Optional[int] = 0,
-    server_authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None,
+    server_socket: zmq.Socket[t.Any] | None = None,
+    server_process_pid: int | None = 0,
+    server_authenticator: zmq.auth.thread.ThreadAuthenticator | None = None,
 ) -> None:
     """Clean up resources used by the launcher.
     :param server_socket: (optional) Socket used to connect to dragon environment
@@ -519,7 +520,7 @@ def _dragon_cleanup(
         print("Authenticator shutdown is complete")
 
 
-def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
+def _resolve_dragon_path(fallback: str | os.PathLike[str]) -> Path:
     dragon_server_path = get_config().dragon_server_path or os.path.join(
         fallback, ".smartsim", "dragon"
     )

@@ -11,6 +11,7 @@ To be released at some point in the future
 
 Description
 
+- Modernize typing syntax to Python 3.10+ standards
 - Removed telemetry functionality, LaunchedManifest tracking
   classes, and SmartDashboard integration
 - Update copyright headers from 2021-2024 to 2021-2025 across the entire codebase
@@ -24,6 +25,10 @@ Description
 
 Detailed Notes
 
+- Modernized typing syntax to use Python 3.10+ standards, replacing
+  `Union[X, Y]` with `X | Y`, `Optional[X]` with `X | None`, and generic
+  collections (`List[X]` → `list[X]`, `Dict[X, Y]` → `dict[X, Y]`, etc.).
+  ([SmartSim-PR791](https://github.com/CrayLabs/SmartSim/pull/791))
 - Removed telemetry functionality, LaunchedManifest tracking
   system, and SmartDashboard integration.
   This includes complete removal of the telemetry monitor and collection system,

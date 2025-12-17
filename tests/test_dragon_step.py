@@ -94,7 +94,7 @@ def dragon_batch_step(test_dir: str) -> DragonBatchStep:
     return batch_step
 
 
-def get_request_path_from_batch_script(launch_cmd: t.List[str]) -> pathlib.Path:
+def get_request_path_from_batch_script(launch_cmd: list[str]) -> pathlib.Path:
     """Helper method for finding the path to a request file from the launch command"""
     script_path = pathlib.Path(launch_cmd[-1])
     batch_script = script_path.read_text(encoding="utf-8")
@@ -298,7 +298,7 @@ def test_dragon_batch_step_get_launch_command_meta_fail(test_dir: str) -> None:
 )
 def test_dragon_batch_step_get_launch_command(
     test_dir: str,
-    batch_settings_class: t.Type,
+    batch_settings_class: type,
     batch_exe: str,
     batch_header: str,
     node_spec_tpl: str,
@@ -379,7 +379,7 @@ def test_dragon_batch_step_write_request_file(
     requests_file = get_request_path_from_batch_script(launch_cmd)
 
     requests_text = requests_file.read_text(encoding="utf-8")
-    requests_json: t.List[str] = json.loads(requests_text)
+    requests_json: list[str] = json.loads(requests_text)
 
     # verify that there is an item in file for each step added to the batch
     assert len(requests_json) == len(dragon_batch_step.steps)

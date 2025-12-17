@@ -44,13 +44,13 @@ class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDatase
                 "init_samples=False. Setting it to False automatically."
             )
 
-    def _add_samples(self, indices: t.List[int]) -> None:
+    def _add_samples(self, indices: list[int]) -> None:
         if self.client is None:
             client = Client(self.cluster, self.address)
         else:
             client = self.client
 
-        datasets: t.List[Dataset] = []
+        datasets: list[Dataset] = []
         if self.num_replicas == 1:
             datasets = client.get_dataset_list_range(
                 self.list_name, start_index=indices[0], end_index=indices[-1]

@@ -108,7 +108,7 @@ class Generator:
         self._gen_entity_list_dir(generator_manifest.ensembles)
         self._gen_entity_dirs(generator_manifest.models)
 
-    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
+    def set_tag(self, tag: str, regex: str | None = None) -> None:
         """Set the tag used for tagging input files
 
         Set a tag or a regular expression for the
@@ -153,7 +153,7 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_orc_dir(self, orchestrator_list: t.List[Orchestrator]) -> None:
+    def _gen_orc_dir(self, orchestrator_list: list[Orchestrator]) -> None:
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
@@ -169,7 +169,7 @@ class Generator:
                 shutil.rmtree(orc_path, ignore_errors=True)
             pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite, parents=True)
 
-    def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
+    def _gen_entity_list_dir(self, entity_lists: list[Ensemble]) -> None:
         """Generate directories for Ensemble instances
 
         :param entity_lists: list of Ensemble instances
@@ -192,8 +192,8 @@ class Generator:
 
     def _gen_entity_dirs(
         self,
-        entities: t.List[Model],
-        entity_list: t.Optional[Ensemble] = None,
+        entities: list[Model],
+        entity_list: Ensemble | None = None,
     ) -> None:
         """Generate directories for Entity instances
 
@@ -269,7 +269,7 @@ class Generator:
                 self._log_params(entity, files_to_params)
 
     def _log_params(
-        self, entity: Model, files_to_params: t.Dict[str, t.Dict[str, str]]
+        self, entity: Model, files_to_params: dict[str, dict[str, str]]
     ) -> None:
         """Log which files were modified during generation
 
@@ -278,8 +278,8 @@ class Generator:
         :param entity: the model being generated
         :param files_to_params: a dict connecting each file to its parameter settings
         """
-        used_params: t.Dict[str, str] = {}
-        file_to_tables: t.Dict[str, str] = {}
+        used_params: dict[str, str] = {}
+        file_to_tables: dict[str, str] = {}
         for file, params in files_to_params.items():
             used_params.update(params)
             table = tabulate(params.items(), headers=["Name", "Value"])

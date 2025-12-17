@@ -35,8 +35,8 @@ A handful of useful functions for dealing with networks
 
 
 class IFConfig(t.NamedTuple):
-    interface: t.Optional[str]
-    address: t.Optional[str]
+    interface: str | None
+    address: str | None
 
 
 def get_ip_from_host(host: str) -> str:

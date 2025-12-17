@@ -51,8 +51,8 @@ class _TqdmUpTo(tqdm):  # type: ignore[type-arg]
     """
 
     def update_to(
-        self, num_blocks: int = 1, bsize: int = 1, tsize: t.Optional[int] = None
-    ) -> t.Optional[bool]:
+        self, num_blocks: int = 1, bsize: int = 1, tsize: int | None = None
+    ) -> bool | None:
         """Update progress in tqdm-like way
 
         :param b: number of blocks transferred so far, defaults to 1

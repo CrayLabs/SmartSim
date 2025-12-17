@@ -28,7 +28,6 @@
 
 import argparse
 import os
-import typing as t
 
 from smartsim._core._cli.build import configure_parser as build_parser
 from smartsim._core._cli.build import execute as build_execute
@@ -47,8 +46,8 @@ from smartsim._core._cli.validate import execute as validate_execute
 
 
 class SmartCli:
-    def __init__(self, menu: t.List[MenuItemConfig]) -> None:
-        self.menu: t.Dict[str, MenuItemConfig] = {}
+    def __init__(self, menu: list[MenuItemConfig]) -> None:
+        self.menu: dict[str, MenuItemConfig] = {}
         self.parser = argparse.ArgumentParser(
             prog="smart",
             description="SmartSim command line interface",
@@ -66,7 +65,7 @@ class SmartCli:
         plugin_items = [plugin() for plugin in plugins]
         self.register_menu_items(plugin_items)
 
-    def execute(self, cli_args: t.List[str]) -> int:
+    def execute(self, cli_args: list[str]) -> int:
         if len(cli_args) < 2:
             self.parser.print_help()
             return os.EX_USAGE
@@ -101,7 +100,7 @@ class SmartCli:
 
         self.menu[item.command] = item
 
-    def register_menu_items(self, menu_items: t.List[MenuItemConfig]) -> None:
+    def register_menu_items(self, menu_items: list[MenuItemConfig]) -> None:
         for item in menu_items:
             self._register_menu_item(item)
 

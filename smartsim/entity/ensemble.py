@@ -26,6 +26,7 @@
 
 import os.path as osp
 import typing as t
+from collections.abc import Callable, Collection
 from copy import deepcopy
 from os import getcwd
 
@@ -49,9 +50,7 @@ from .strategies import create_all_permutations, random_permutations, step_value
 
 logger = get_logger(__name__)
 
-StrategyFunction = t.Callable[
-    [t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]
-]
+StrategyFunction = Callable[[list[str], list[list[str]], int], list[dict[str, str]]]
 
 
 class Ensemble(EntityList[Model]):
@@ -62,11 +61,11 @@ class Ensemble(EntityList[Model]):
     def __init__(
         self,
         name: str,
-        params: t.Dict[str, t.Any],
-        path: t.Optional[str] = getcwd(),
-        params_as_args: t.Optional[t.List[str]] = None,
-        batch_settings: t.Optional[BatchSettings] = None,
-        run_settings: t.Optional[RunSettings] = None,
+        params: dict[str, t.Any],
+        path: str | None = getcwd(),
+        params_as_args: list[str] | None = None,
+        batch_settings: BatchSettings | None = None,
+        run_settings: RunSettings | None = None,
         perm_strat: str = "all_perm",
         **kwargs: t.Any,
     ) -> None:
@@ -100,7 +99,7 @@ class Ensemble(EntityList[Model]):
         super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
 
     @property
-    def models(self) -> t.Collection[Model]:
+    def models(self) -> Collection[Model]:
         """An alias for a shallow copy of the ``entities`` attribute"""
         return list(self.entities)
 
@@ -235,9 +234,9 @@ class Ensemble(EntityList[Model]):
 
     def attach_generator_files(
         self,
-        to_copy: t.Optional[t.List[str]] = None,
-        to_symlink: t.Optional[t.List[str]] = None,
-        to_configure: t.Optional[t.List[str]] = None,
+        to_copy: list[str] | None = None,
+        to_symlink: list[str] | None = None,
+        to_configure: list[str] | None = None,
     ) -> None:
         """Attach files to each model within the ensemble for generation
 
@@ -307,7 +306,7 @@ class Ensemble(EntityList[Model]):
             f"Permutation strategy given is not supported: {strategy}"
         )
 
-    def _read_model_parameters(self) -> t.Tuple[t.List[str], t.List[t.List[str]]]:
+    def _read_model_parameters(self) -> tuple[list[str], list[list[str]]]:
         """Take in the parameters given to the ensemble and prepare to
         create models for the ensemble
 
@@ -320,8 +319,8 @@ class Ensemble(EntityList[Model]):
                 "Ensemble initialization argument 'params' must be of type dict"
             )
 
-        param_names: t.List[str] = []
-        parameters: t.List[t.List[str]] = []
+        param_names: list[str] = []
+        parameters: list[list[str]] = []
         for name, val in self.params.items():
             param_names.append(name)
 
@@ -341,8 +340,8 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         backend: str,
-        model: t.Optional[bytes] = None,
-        model_path: t.Optional[str] = None,
+        model: bytes | None = None,
+        model_path: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
@@ -350,8 +349,8 @@ class Ensemble(EntityList[Model]):
         min_batch_size: int = 0,
         min_batch_timeout: int = 0,
         tag: str = "",
-        inputs: t.Optional[t.List[str]] = None,
-        outputs: t.Optional[t.List[str]] = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
     ) -> None:
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
@@ -411,8 +410,8 @@ class Ensemble(EntityList[Model]):
     def add_script(
         self,
         name: str,
-        script: t.Optional[str] = None,
-        script_path: t.Optional[str] = None,
+        script: str | None = None,
+        script_path: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
@@ -466,7 +465,7 @@ class Ensemble(EntityList[Model]):
     def add_function(
         self,
         name: str,
-        function: t.Optional[str] = None,
+        function: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
@@ -517,7 +516,7 @@ class Ensemble(EntityList[Model]):
             self._extend_entity_db_scripts(entity, [db_script])
 
     @staticmethod
-    def _extend_entity_db_models(model: Model, db_models: t.List[DBModel]) -> None:
+    def _extend_entity_db_models(model: Model, db_models: list[DBModel]) -> None:
         """
         Ensures that the Machine Learning model names being added to the Ensemble
         are unique.
@@ -545,7 +544,7 @@ class Ensemble(EntityList[Model]):
             model.add_ml_model_object(add_ml_model)
 
     @staticmethod
-    def _extend_entity_db_scripts(model: Model, db_scripts: t.List[DBScript]) -> None:
+    def _extend_entity_db_scripts(model: Model, db_scripts: list[DBScript]) -> None:
         """
         Ensures that the script/function names being added to the Ensemble are unique.
 

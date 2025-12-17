@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 
 from ....settings import RunSettings, SettingsBase
 from ..launcher import Launcher
@@ -54,8 +53,8 @@ class LocalLauncher(Launcher):
         return LocalStep(name, cwd, step_settings)
 
     def get_step_update(
-        self, step_names: t.List[str]
-    ) -> t.List[t.Tuple[str, t.Optional[StepInfo]]]:
+        self, step_names: list[str]
+    ) -> list[tuple[str, StepInfo | None]]:
         """Get status updates of each job step name provided
 
         :param step_names: list of step_names
@@ -63,7 +62,7 @@ class LocalLauncher(Launcher):
         """
         # step ids are process ids of the tasks
         # as there is no WLM intermediary
-        updates: t.List[t.Tuple[str, t.Optional[StepInfo]]] = []
+        updates: list[tuple[str, StepInfo | None]] = []
         s_names, s_ids = self.step_mapping.get_ids(step_names, managed=False)
         for step_name, step_id in zip(s_names, s_ids):
             status, ret_code, out, err = self.task_manager.get_task_update(str(step_id))
@@ -72,7 +71,7 @@ class LocalLauncher(Launcher):
             updates.append(update)
         return updates
 
-    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
+    def get_step_nodes(self, step_names: list[str]) -> list[list[str]]:
         """Return the address of nodes assigned to the step
 
         :param step_names: list of step_names

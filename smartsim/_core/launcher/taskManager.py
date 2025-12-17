@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import time
-import typing as t
 from subprocess import PIPE
 from threading import RLock
 
@@ -62,10 +61,8 @@ class TaskManager:
     def __init__(self) -> None:
         """Initialize a task manager thread."""
         self.actively_monitoring = False
-        self.task_history: t.Dict[
-            str, t.Tuple[t.Optional[int], t.Optional[str], t.Optional[str]]
-        ] = {}
-        self.tasks: t.List[Task] = []
+        self.task_history: dict[str, tuple[int | None, str | None, str | None]] = {}
+        self.tasks: list[Task] = []
         self._lock = RLock()
 
     def start(self) -> None:
@@ -102,9 +99,9 @@ class TaskManager:
 
     def start_task(
         self,
-        cmd_list: t.List[str],
+        cmd_list: list[str],
         cwd: str,
-        env: t.Optional[t.Dict[str, str]] = None,
+        env: dict[str, str] | None = None,
         out: int = PIPE,
         err: int = PIPE,
     ) -> str:
@@ -131,11 +128,11 @@ class TaskManager:
 
     @staticmethod
     def start_and_wait(
-        cmd_list: t.List[str],
+        cmd_list: list[str],
         cwd: str,
-        env: t.Optional[t.Dict[str, str]] = None,
-        timeout: t.Optional[int] = None,
-    ) -> t.Tuple[int, str, str]:
+        env: dict[str, str] | None = None,
+        timeout: int | None = None,
+    ) -> tuple[int, str, str]:
         """Start a task not managed by the TaskManager
 
         This method is used by launchers to launch managed tasks
@@ -193,7 +190,7 @@ class TaskManager:
 
     def get_task_update(
         self, task_id: str
-    ) -> t.Tuple[str, t.Optional[int], t.Optional[str], t.Optional[str]]:
+    ) -> tuple[str, int | None, str | None, str | None]:
         """Get the update of a task
 
         :param task_id: task id
@@ -227,9 +224,9 @@ class TaskManager:
     def add_task_history(
         self,
         task_id: str,
-        returncode: t.Optional[int] = None,
-        out: t.Optional[str] = None,
-        err: t.Optional[str] = None,
+        returncode: int | None = None,
+        out: str | None = None,
+        err: str | None = None,
     ) -> None:
         """Add a task to the task history
 
@@ -263,7 +260,7 @@ class Task:
         self.process = process
         self.pid = str(self.process.pid)
 
-    def check_status(self) -> t.Optional[int]:
+    def check_status(self) -> int | None:
         """Ping the job and return the returncode if finished
 
         :return: returncode if finished otherwise None
@@ -277,7 +274,7 @@ class Task:
         # have to rely on .kill() to stop.
         return self.returncode
 
-    def get_io(self) -> t.Tuple[t.Optional[str], t.Optional[str]]:
+    def get_io(self) -> tuple[str | None, str | None]:
         """Get the IO from the subprocess
 
         :return: output and error from the Popen
@@ -341,7 +338,7 @@ class Task:
         self.process.wait()
 
     @property
-    def returncode(self) -> t.Optional[int]:
+    def returncode(self) -> int | None:
         if self.owned and isinstance(self.process, psutil.Popen):
             if self.process.returncode is not None:
                 return int(self.process.returncode)

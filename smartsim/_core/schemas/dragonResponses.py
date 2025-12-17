@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
+from collections.abc import Mapping
 
 from pydantic import BaseModel, Field
 
@@ -38,7 +39,7 @@ response_registry = _utils.SchemaRegistry["DragonResponse"]()
 
 
 class DragonResponse(BaseModel):
-    error_message: t.Optional[str] = None
+    error_message: str | None = None
 
 
 @response_registry.register("run")
@@ -49,9 +50,9 @@ class DragonRunResponse(DragonResponse):
 @response_registry.register("status_update")
 class DragonUpdateStatusResponse(DragonResponse):
     # status is a dict: {step_id: (is_alive, returncode)}
-    statuses: t.Mapping[
+    statuses: Mapping[
         t.Annotated[str, Field(min_length=1)],
-        t.Tuple[SmartSimStatus, t.Optional[t.List[int]]],
+        tuple[SmartSimStatus, list[int] | None],
     ] = {}
 
 

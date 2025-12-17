@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import os
-import typing as t
 
 from smartsim._core.schemas.dragonRequests import DragonRunPolicy
 
@@ -92,7 +91,7 @@ class DragonLauncher(WLMLauncher):
 
     # RunSettings types supported by this launcher
     @property
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+    def supported_rs(self) -> dict[type[SettingsBase], type[Step]]:
         # RunSettings types supported by this launcher
         return {
             DragonRunSettings: DragonStep,
@@ -106,7 +105,7 @@ class DragonLauncher(WLMLauncher):
 
         if step_map.step_id is None:
             return
-        sublauncher: t.Optional[t.Union[SlurmLauncher, PBSLauncher]] = None
+        sublauncher: SlurmLauncher | PBSLauncher | None = None
         if step_map.step_id.startswith("SLURM-"):
             sublauncher = self._slurm_launcher
         elif step_map.step_id.startswith("PBS-"):
@@ -121,7 +120,7 @@ class DragonLauncher(WLMLauncher):
         )
         sublauncher.add_step_to_mapping_table(name, sublauncher_step_map)
 
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> str | None:
         """Run a job step through Slurm
 
         :param step: a job step instance
@@ -140,7 +139,7 @@ class DragonLauncher(WLMLauncher):
 
         if isinstance(step, DragonBatchStep):
             # wait for batch step to submit successfully
-            sublauncher_step_id: t.Optional[str] = None
+            sublauncher_step_id: str | None = None
             return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
             if return_code != 0:
                 raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
@@ -241,7 +240,7 @@ class DragonLauncher(WLMLauncher):
     def _unprefix_step_id(step_id: str) -> str:
         return step_id.split("-", maxsplit=1)[1]
 
-    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
+    def _get_managed_step_update(self, step_ids: list[str]) -> list[StepInfo]:
         """Get step updates for Dragon-managed jobs
 
         :param step_ids: list of job step ids
@@ -250,9 +249,9 @@ class DragonLauncher(WLMLauncher):
 
         step_id_updates: dict[str, StepInfo] = {}
 
-        dragon_step_ids: t.List[str] = []
-        slurm_step_ids: t.List[str] = []
-        pbs_step_ids: t.List[str] = []
+        dragon_step_ids: list[str] = []
+        slurm_step_ids: list[str] = []
+        pbs_step_ids: list[str] = []
         for step_id in step_ids:
             if step_id.startswith("SLURM-"):
                 slurm_step_ids.append(step_id)
@@ -321,7 +320,7 @@ class DragonLauncher(WLMLauncher):
         return "Dragon"
 
 
-def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
+def _assert_schema_type(obj: object, typ: type[_SchemaT], /) -> _SchemaT:
     if not isinstance(obj, typ):
         raise TypeError(f"Expected schema of type `{typ}`, but got {type(obj)}")
     return obj

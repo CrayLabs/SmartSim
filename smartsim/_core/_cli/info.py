@@ -2,7 +2,6 @@ import argparse
 import importlib.metadata
 import os
 import pathlib
-import typing as t
 
 from tabulate import tabulate
 
@@ -14,7 +13,7 @@ _MISSING_DEP = _helpers.colorize("Not Installed", "red")
 
 
 def execute(
-    _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+    _args: argparse.Namespace, _unparsed_args: list[str] | None = None, /
 ) -> int:
     print("\nSmart Python Packages:")
     print(
@@ -72,7 +71,7 @@ def execute(
     return os.EX_OK
 
 
-def _fmt_installed_db(db_path: t.Optional[pathlib.Path]) -> str:
+def _fmt_installed_db(db_path: pathlib.Path | None) -> str:
     if db_path is None:
         return _MISSING_DEP
     db_name, _ = db_path.name.split("-", 1)

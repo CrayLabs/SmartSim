@@ -63,7 +63,7 @@ class DragonStep(Step):
     def run_settings(self) -> DragonRunSettings:
         return t.cast(DragonRunSettings, self.step_settings)
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         """Get stringified version of request
          needed to launch this step
 
@@ -93,12 +93,12 @@ class DragonStep(Step):
         return exe_cmd_and_args
 
     @staticmethod
-    def _get_exe_args_list(run_setting: DragonRunSettings) -> t.List[str]:
+    def _get_exe_args_list(run_setting: DragonRunSettings) -> list[str]:
         """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list
         """
         exe_args = run_setting.exe_args
-        args: t.List[str] = exe_args if isinstance(exe_args, list) else [exe_args]
+        args: list[str] = exe_args if isinstance(exe_args, list) else [exe_args]
         return args
 
 
@@ -107,7 +107,7 @@ class DragonBatchStep(Step):
         self,
         name: str,
         cwd: str,
-        batch_settings: t.Union[SbatchSettings, QsubBatchSettings],
+        batch_settings: SbatchSettings | QsubBatchSettings,
     ) -> None:
         """Initialize a Slurm Sbatch step
 
@@ -116,12 +116,12 @@ class DragonBatchStep(Step):
         :param batch_settings: batch settings for entity
         """
         super().__init__(name, cwd, batch_settings)
-        self.steps: t.List[Step] = []
+        self.steps: list[Step] = []
         self.managed = True
         self.batch_settings = batch_settings
         self._request_file_name = "requests.json"
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
