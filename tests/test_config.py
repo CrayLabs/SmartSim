@@ -55,9 +55,7 @@ def test_all_config_defaults():
     config.test_device
 
 
-def get_redisai_env(
-    rai_path: t.Optional[str], lib_path: t.Optional[str]
-) -> t.Dict[str, str]:
+def get_redisai_env(rai_path: str | None, lib_path: str | None) -> dict[str, str]:
     """Convenience method to create a set of environment variables
     that include RedisAI-specific variables
     :param rai_path: The path to the RedisAI library
@@ -149,7 +147,7 @@ def test_redisai_valid_lib_path(test_dir, monkeypatch):
 def test_redisai_valid_lib_path_null_rai(test_dir, monkeypatch):
     """Missing RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should succeed"""
 
-    rai_file_path: t.Optional[str] = None
+    rai_file_path: str | None = None
     lib_file_path = os.path.join(test_dir, "lib", "redisai.so")
     make_file(lib_file_path)
     env = get_redisai_env(rai_file_path, test_dir)

@@ -42,7 +42,7 @@ if t.TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-AUTHENTICATOR: t.Optional["zmq.auth.thread.ThreadAuthenticator"] = None
+AUTHENTICATOR: "zmq.auth.thread.ThreadAuthenticator | None" = None
 
 
 def as_server(

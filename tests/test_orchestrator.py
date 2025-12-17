@@ -88,7 +88,7 @@ def test_orc_is_active_functions(
 
 
 def test_multiple_interfaces(
-    test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]
+    test_dir: str, wlmutils: type["conftest.WLMUtils"]
 ) -> None:
     exp_name = "test_multiple_interfaces"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
@@ -136,7 +136,7 @@ def test_catch_local_db_errors() -> None:
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_pbs_set_run_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -155,7 +155,7 @@ def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     )
 
 
-def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_pbs_set_batch_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -184,7 +184,7 @@ def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_slurm_set_run_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -199,7 +199,7 @@ def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     )
 
 
-def test_slurm_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_slurm_set_batch_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,

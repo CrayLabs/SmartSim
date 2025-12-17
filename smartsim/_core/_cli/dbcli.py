@@ -26,13 +26,12 @@
 
 import argparse
 import os
-import typing as t
 
 from smartsim._core._cli.utils import get_db_path
 
 
 def execute(
-    _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+    _args: argparse.Namespace, _unparsed_args: list[str] | None = None, /
 ) -> int:
     if db_path := get_db_path():
         print(db_path)

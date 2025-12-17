@@ -66,7 +66,7 @@ def detect_launcher() -> str:
     return "local"
 
 
-def get_hosts(launcher: t.Optional[str] = None) -> t.List[str]:
+def get_hosts(launcher: str | None = None) -> list[str]:
     """Get the name of the hosts used in an allocation.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
@@ -83,7 +83,7 @@ def get_hosts(launcher: t.Optional[str] = None) -> t.List[str]:
     raise SSUnsupportedError(f"SmartSim cannot get hosts for launcher `{launcher}`")
 
 
-def get_queue(launcher: t.Optional[str] = None) -> str:
+def get_queue(launcher: str | None = None) -> str:
     """Get the name of the queue used in an allocation.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
@@ -100,7 +100,7 @@ def get_queue(launcher: t.Optional[str] = None) -> str:
     raise SSUnsupportedError(f"SmartSim cannot get queue for launcher `{launcher}`")
 
 
-def get_tasks(launcher: t.Optional[str] = None) -> int:
+def get_tasks(launcher: str | None = None) -> int:
     """Get the number of tasks in an allocation.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
@@ -117,7 +117,7 @@ def get_tasks(launcher: t.Optional[str] = None) -> int:
     raise SSUnsupportedError(f"SmartSim cannot get tasks for launcher `{launcher}`")
 
 
-def get_tasks_per_node(launcher: t.Optional[str] = None) -> t.Dict[str, int]:
+def get_tasks_per_node(launcher: str | None = None) -> dict[str, int]:
     """Get a map of nodes in an allocation to the number of tasks on each node.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher

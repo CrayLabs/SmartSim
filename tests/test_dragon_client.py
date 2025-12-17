@@ -92,7 +92,7 @@ def dragon_batch_step(test_dir: str) -> "DragonBatchStep":
     return batch_step
 
 
-def get_request_path_from_batch_script(launch_cmd: t.List[str]) -> pathlib.Path:
+def get_request_path_from_batch_script(launch_cmd: list[str]) -> pathlib.Path:
     """Helper method for finding the path to a request file from the launch command"""
     script_path = pathlib.Path(launch_cmd[-1])
     batch_script = script_path.read_text(encoding="utf-8")

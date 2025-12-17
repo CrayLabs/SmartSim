@@ -78,7 +78,7 @@ class Experiment:
     def __init__(
         self,
         name: str,
-        exp_path: t.Optional[str] = None,
+        exp_path: str | None = None,
         launcher: str = "local",
     ):
         """Initialize an Experiment instance.
@@ -149,7 +149,7 @@ class Experiment:
 
         self._control = Controller(launcher=self._launcher)
 
-        self.db_identifiers: t.Set[str] = set()
+        self.db_identifiers: set[str] = set()
 
     def _set_dragon_server_path(self) -> None:
         """Set path for dragon server through environment varialbes"""
@@ -161,7 +161,7 @@ class Experiment:
     @_contextualize
     def start(
         self,
-        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        *args: SmartSimEntity | EntitySequence[SmartSimEntity],
         block: bool = True,
         summary: bool = False,
         kill_on_interrupt: bool = True,
@@ -228,9 +228,7 @@ class Experiment:
             raise
 
     @_contextualize
-    def stop(
-        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> None:
+    def stop(self, *args: SmartSimEntity | EntitySequence[SmartSimEntity]) -> None:
         """Stop specific instances launched by this ``Experiment``
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
@@ -270,8 +268,8 @@ class Experiment:
     @_contextualize
     def generate(
         self,
-        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        tag: t.Optional[str] = None,
+        *args: SmartSimEntity | EntitySequence[SmartSimEntity],
+        tag: str | None = None,
         overwrite: bool = False,
         verbose: bool = False,
     ) -> None:
@@ -365,8 +363,8 @@ class Experiment:
 
     @_contextualize
     def get_status(
-        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> t.List[SmartSimStatus]:
+        self, *args: SmartSimEntity | EntitySequence[SmartSimEntity]
+    ) -> list[SmartSimStatus]:
         """Query the status of launched entity instances
 
         Return a smartsim.status string representing
@@ -393,7 +391,7 @@ class Experiment:
         """
         try:
             manifest = Manifest(*args)
-            statuses: t.List[SmartSimStatus] = []
+            statuses: list[SmartSimStatus] = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:
@@ -407,12 +405,12 @@ class Experiment:
     def create_ensemble(
         self,
         name: str,
-        params: t.Optional[t.Dict[str, t.Any]] = None,
-        batch_settings: t.Optional[base.BatchSettings] = None,
-        run_settings: t.Optional[base.RunSettings] = None,
-        replicas: t.Optional[int] = None,
+        params: dict[str, t.Any] | None = None,
+        batch_settings: base.BatchSettings | None = None,
+        run_settings: base.RunSettings | None = None,
+        replicas: int | None = None,
         perm_strategy: str = "all_perm",
-        path: t.Optional[str] = None,
+        path: str | None = None,
         **kwargs: t.Any,
     ) -> Ensemble:
         """Create an ``Ensemble`` of ``Model`` instances
@@ -483,10 +481,10 @@ class Experiment:
         self,
         name: str,
         run_settings: base.RunSettings,
-        params: t.Optional[t.Dict[str, t.Any]] = None,
-        path: t.Optional[str] = None,
+        params: dict[str, t.Any] | None = None,
+        path: str | None = None,
         enable_key_prefixing: bool = False,
-        batch_settings: t.Optional[base.BatchSettings] = None,
+        batch_settings: base.BatchSettings | None = None,
     ) -> Model:
         """Create a general purpose ``Model``
 
@@ -591,11 +589,11 @@ class Experiment:
     def create_run_settings(
         self,
         exe: str,
-        exe_args: t.Optional[t.List[str]] = None,
+        exe_args: list[str] | None = None,
         run_command: str = "auto",
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
-        container: t.Optional[Container] = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
+        container: Container | None = None,
         **kwargs: t.Any,
     ) -> settings.RunSettings:
         """Create a ``RunSettings`` instance.
@@ -651,7 +649,7 @@ class Experiment:
         time: str = "",
         queue: str = "",
         account: str = "",
-        batch_args: t.Optional[t.Dict[str, str]] = None,
+        batch_args: dict[str, str] | None = None,
         **kwargs: t.Any,
     ) -> base.BatchSettings:
         """Create a ``BatchSettings`` instance
@@ -703,15 +701,15 @@ class Experiment:
     def create_database(
         self,
         port: int = 6379,
-        path: t.Optional[str] = None,
+        path: str | None = None,
         db_nodes: int = 1,
         batch: bool = False,
-        hosts: t.Optional[t.Union[t.List[str], str]] = None,
+        hosts: list[str] | str | None = None,
         run_command: str = "auto",
-        interface: t.Union[str, t.List[str]] = "ipogif0",
-        account: t.Optional[str] = None,
-        time: t.Optional[str] = None,
-        queue: t.Optional[str] = None,
+        interface: str | list[str] = "ipogif0",
+        account: str | None = None,
+        time: str | None = None,
+        queue: str | None = None,
         single_cmd: bool = True,
         db_identifier: str = "orchestrator",
         **kwargs: t.Any,
@@ -798,7 +796,7 @@ class Experiment:
         *args: t.Any,
         verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
         output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
-        output_filename: t.Optional[str] = None,
+        output_filename: str | None = None,
     ) -> None:
         """Preview entity information prior to launch. This method
         aggregates multiple pieces of information to give users insight
@@ -909,7 +907,7 @@ class Experiment:
         logger.info(summary)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
+        def create_entity_dir(entity: Orchestrator | Model | Ensemble) -> None:
             if not os.path.isdir(entity.path):
                 os.makedirs(entity.path)
 

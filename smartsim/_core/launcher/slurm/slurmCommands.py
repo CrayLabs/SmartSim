@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -34,7 +33,7 @@ from ...utils.shell import execute_cmd
 logger = get_logger(__name__)
 
 
-def sstat(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
+def sstat(args: list[str], *, raise_on_err: bool = False) -> tuple[str, str]:
     """Calls sstat with args
 
     :param args: List of command arguments
@@ -44,7 +43,7 @@ def sstat(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]
     return out, err
 
 
-def sacct(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
+def sacct(args: list[str], *, raise_on_err: bool = False) -> tuple[str, str]:
     """Calls sacct with args
 
     :param args: List of command arguments
@@ -54,7 +53,7 @@ def sacct(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]
     return out, err
 
 
-def salloc(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
+def salloc(args: list[str], *, raise_on_err: bool = False) -> tuple[str, str]:
     """Calls slurm salloc with args
 
     :param args: List of command arguments
@@ -64,7 +63,7 @@ def salloc(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str
     return out, err
 
 
-def sinfo(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
+def sinfo(args: list[str], *, raise_on_err: bool = False) -> tuple[str, str]:
     """Calls slurm sinfo with args
 
     :param args: List of command arguments
@@ -74,7 +73,7 @@ def sinfo(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]
     return out, err
 
 
-def scontrol(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
+def scontrol(args: list[str], *, raise_on_err: bool = False) -> tuple[str, str]:
     """Calls slurm scontrol with args
 
     :param args: List of command arguments
@@ -84,7 +83,7 @@ def scontrol(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, s
     return out, err
 
 
-def scancel(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[int, str, str]:
+def scancel(args: list[str], *, raise_on_err: bool = False) -> tuple[int, str, str]:
     """Calls slurm scancel with args.
 
     returncode is also supplied in this function.
@@ -106,8 +105,8 @@ def _find_slurm_command(cmd: str) -> str:
 
 
 def _execute_slurm_cmd(
-    command: str, args: t.List[str], raise_on_err: bool = False
-) -> t.Tuple[int, str, str]:
+    command: str, args: list[str], raise_on_err: bool = False
+) -> tuple[int, str, str]:
     cmd_exe = _find_slurm_command(command)
     cmd = [cmd_exe] + args
     returncode, out, error = execute_cmd(cmd)

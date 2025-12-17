@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
-
 
 class ComputeNode:  # cov-slurm
     """The ComputeNode class holds resource information
@@ -33,15 +31,15 @@ class ComputeNode:  # cov-slurm
     """
 
     def __init__(
-        self, node_name: t.Optional[str] = None, node_ppn: t.Optional[int] = None
+        self, node_name: str | None = None, node_ppn: int | None = None
     ) -> None:
         """Initialize a ComputeNode
 
         :param node_name: the name of the node
         :param node_ppn: the number of ppn
         """
-        self.name: t.Optional[str] = node_name
-        self.ppn: t.Optional[int] = node_ppn
+        self.name: str | None = node_name
+        self.ppn: int | None = node_ppn
 
     def _is_valid_node(self) -> bool:
         """Check if the node is complete
@@ -66,9 +64,9 @@ class Partition:  # cov-slurm
 
     def __init__(self) -> None:
         """Initialize a system partition"""
-        self.name: t.Optional[str] = None
-        self.min_ppn: t.Optional[int] = None
-        self.nodes: t.Set[ComputeNode] = set()
+        self.name: str | None = None
+        self.min_ppn: int | None = None
+        self.nodes: set[ComputeNode] = set()
 
     def _is_valid_partition(self) -> bool:
         """Check if the partition is valid

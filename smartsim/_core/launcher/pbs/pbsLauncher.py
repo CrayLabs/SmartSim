@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -76,7 +75,7 @@ class PBSLauncher(WLMLauncher):
     # init in WLMLauncher, launcher.py
 
     @property
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+    def supported_rs(self) -> dict[type[SettingsBase], type[Step]]:
         # RunSettings types supported by this launcher
         return {
             AprunSettings: AprunStep,
@@ -88,7 +87,7 @@ class PBSLauncher(WLMLauncher):
             PalsMpiexecSettings: MpiexecStep,
         }
 
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> str | None:
         """Run a job step through PBSPro
 
         :param step: a job step instance
@@ -99,8 +98,8 @@ class PBSLauncher(WLMLauncher):
             self.task_manager.start()
 
         cmd_list = step.get_launch_cmd()
-        step_id: t.Optional[str] = None
-        task_id: t.Optional[str] = None
+        step_id: str | None = None
+        task_id: str | None = None
         if isinstance(step, QsubBatchStep):
             # wait for batch step to submit successfully
             return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
@@ -162,7 +161,7 @@ class PBSLauncher(WLMLauncher):
         TODO: change this to use ``qstat -a -u user``
         """
         time.sleep(interval)
-        step_id: t.Optional[str] = None
+        step_id: str | None = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["-f", "-F", "json"])
@@ -176,13 +175,13 @@ class PBSLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
+    def _get_managed_step_update(self, step_ids: list[str]) -> list[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
         :return: list of updates for managed jobs
         """
-        updates: t.List[StepInfo] = []
+        updates: list[StepInfo] = []
 
         qstat_out, _ = qstat(step_ids)
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]

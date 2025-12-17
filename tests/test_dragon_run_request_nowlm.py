@@ -81,8 +81,8 @@ def test_run_request_with_empty_policy(monkeypatch: pytest.MonkeyPatch) -> None:
 )
 def test_run_request_with_negative_affinity(
     device: str,
-    cpu_affinity: t.List[int],
-    gpu_affinity: t.List[int],
+    cpu_affinity: list[int],
+    gpu_affinity: list[int],
 ) -> None:
     """Verify that invalid affinity values fail validation"""
     with pytest.raises(ValidationError) as ex:

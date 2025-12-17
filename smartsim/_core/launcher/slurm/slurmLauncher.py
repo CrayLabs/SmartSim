@@ -26,7 +26,6 @@
 
 import os
 import time
-import typing as t
 from shutil import which
 
 from ....error import LauncherError
@@ -74,7 +73,7 @@ class SlurmLauncher(WLMLauncher):
 
     # RunSettings types supported by this launcher
     @property
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+    def supported_rs(self) -> dict[type[SettingsBase], type[Step]]:
         # RunSettings types supported by this launcher
         return {
             SrunSettings: SrunStep,
@@ -85,7 +84,7 @@ class SlurmLauncher(WLMLauncher):
             RunSettings: LocalStep,
         }
 
-    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
+    def get_step_nodes(self, step_names: list[str]) -> list[list[str]]:
         """Return the compute nodes of a specific job or allocation
 
         This function returns the compute nodes of a specific job or allocation
@@ -116,7 +115,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Failed to retrieve nodelist from stat")
         return node_lists
 
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> str | None:
         """Run a job step through Slurm
 
         :param step: a job step instance
@@ -230,7 +229,7 @@ class SlurmLauncher(WLMLauncher):
         m2-119225.1|119225.1|
         """
         time.sleep(interval)
-        step_id: t.Optional[str] = None
+        step_id: str | None = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = sacct(
@@ -247,7 +246,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
+    def _get_managed_step_update(self, step_ids: list[str]) -> list[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -262,7 +261,7 @@ class SlurmLauncher(WLMLauncher):
         stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
 
         # create SlurmStepInfo objects to return
-        updates: t.List[StepInfo] = []
+        updates: list[StepInfo] = []
         for stat_tuple, step_id in zip(stat_tuples, step_ids):
             _rc = int(stat_tuple[1]) if stat_tuple[1] else None
             info = SlurmStepInfo(stat_tuple[0], _rc)
@@ -301,5 +300,5 @@ class SlurmLauncher(WLMLauncher):
         return "Slurm"
 
 
-def _create_step_id_str(step_ids: t.List[str]) -> str:
+def _create_step_id_str(step_ids: list[str]) -> str:
     return ",".join(step_ids)

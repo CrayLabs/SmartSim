@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import typing as t
 
 from ...entity import EntitySequence, SmartSimEntity
 from ...status import SmartSimStatus
@@ -41,8 +40,8 @@ class Job:
     def __init__(
         self,
         job_name: str,
-        job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        job_id: str | None,
+        entity: SmartSimEntity | EntitySequence[SmartSimEntity],
         launcher: str,
         is_task: bool,
     ) -> None:
@@ -59,12 +58,12 @@ class Job:
         self.entity = entity
         self.status = SmartSimStatus.STATUS_NEW
         # status before smartsim status mapping is applied
-        self.raw_status: t.Optional[str] = None
-        self.returncode: t.Optional[int] = None
+        self.raw_status: str | None = None
+        self.returncode: int | None = None
         # output is only populated if it's system related (e.g. cmd failed immediately)
-        self.output: t.Optional[str] = None
-        self.error: t.Optional[str] = None  # same as output
-        self.hosts: t.List[str] = []  # currently only used for DB jobs
+        self.output: str | None = None
+        self.error: str | None = None  # same as output
+        self.hosts: list[str] = []  # currently only used for DB jobs
         self.launched_with = launcher
         self.is_task = is_task
         self.start_time = time.time()
@@ -79,9 +78,9 @@ class Job:
         self,
         new_status: SmartSimStatus,
         raw_status: str,
-        returncode: t.Optional[int],
-        error: t.Optional[str] = None,
-        output: t.Optional[str] = None,
+        returncode: int | None,
+        error: str | None = None,
+        output: str | None = None,
     ) -> None:
         """Set the status  of a job.
 
@@ -105,9 +104,7 @@ class Job:
         """Record the launching history of a job."""
         self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
-    def reset(
-        self, new_job_name: str, new_job_id: t.Optional[str], is_task: bool
-    ) -> None:
+    def reset(self, new_job_name: str, new_job_id: str | None, is_task: bool) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
@@ -168,16 +165,16 @@ class History:
         :param runs: number of runs so far
         """
         self.runs = runs
-        self.jids: t.Dict[int, t.Optional[str]] = {}
-        self.statuses: t.Dict[int, SmartSimStatus] = {}
-        self.returns: t.Dict[int, t.Optional[int]] = {}
-        self.job_times: t.Dict[int, float] = {}
+        self.jids: dict[int, str | None] = {}
+        self.statuses: dict[int, SmartSimStatus] = {}
+        self.returns: dict[int, int | None] = {}
+        self.job_times: dict[int, float] = {}
 
     def record(
         self,
-        job_id: t.Optional[str],
+        job_id: str | None,
         status: SmartSimStatus,
-        returncode: t.Optional[int],
+        returncode: int | None,
         job_time: float,
     ) -> None:
         """record the history of a job"""

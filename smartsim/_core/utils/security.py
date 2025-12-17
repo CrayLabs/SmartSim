@@ -28,7 +28,6 @@
 import dataclasses
 import pathlib
 import stat
-import typing as t
 from enum import IntEnum
 
 import zmq
@@ -216,7 +215,7 @@ class KeyManager:
         key_path = locator.private if in_context else locator.public
 
         pub_key: bytes = b""
-        priv_key: t.Optional[bytes] = b""
+        priv_key: bytes | None = b""
 
         if key_path.exists():
             logger.debug(f"Existing key files located at {key_path}")
@@ -227,7 +226,7 @@ class KeyManager:
         # avoid a `None` value in the private key when it isn't loaded
         return KeyPair(pub_key, priv_key or b"")
 
-    def _load_keys(self) -> t.Tuple[KeyPair, KeyPair]:
+    def _load_keys(self) -> tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to load public/private key pairs for the server and client
         components from the standard key paths for the associated experiment
 
@@ -270,7 +269,7 @@ class KeyManager:
             locator.private.chmod(_KeyPermissions.PRIVATE_KEY)
             locator.public.chmod(_KeyPermissions.PUBLIC_KEY)
 
-    def get_keys(self, create: bool = True) -> t.Tuple[KeyPair, KeyPair]:
+    def get_keys(self, create: bool = True) -> tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to generate a public/private key pair for the server
         and client components.
 

@@ -69,7 +69,7 @@ class DataInfo:
         list_name: str,
         sample_name: str = "samples",
         target_name: str = "targets",
-        num_classes: t.Optional[int] = None,
+        num_classes: int | None = None,
     ) -> None:
         self.list_name = list_name
         self.sample_name = sample_name
@@ -160,10 +160,10 @@ class TrainingDataUploader:
         list_name: str = "training_data",
         sample_name: str = "samples",
         target_name: str = "targets",
-        num_classes: t.Optional[int] = None,
+        num_classes: int | None = None,
         cluster: bool = True,
-        address: t.Optional[str] = None,
-        rank: t.Optional[int] = None,
+        address: str | None = None,
+        rank: int | None = None,
         verbose: bool = False,
     ) -> None:
         if not list_name:
@@ -190,7 +190,7 @@ class TrainingDataUploader:
         return self._info.target_name
 
     @property
-    def num_classes(self) -> t.Optional[int]:
+    def num_classes(self) -> int | None:
         return self._info.num_classes
 
     def publish_info(self) -> None:
@@ -199,7 +199,7 @@ class TrainingDataUploader:
     def put_batch(
         self,
         samples: np.ndarray,  # type: ignore[type-arg]
-        targets: t.Optional[np.ndarray] = None,  # type: ignore[type-arg]
+        targets: np.ndarray | None = None,  # type: ignore[type-arg]
     ) -> None:
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
         batch_ds = Dataset(batch_ds_name)
@@ -276,12 +276,12 @@ class DataDownloader:
 
     def __init__(
         self,
-        data_info_or_list_name: t.Union[str, DataInfo],
+        data_info_or_list_name: str | DataInfo,
         batch_size: int = 32,
         dynamic: bool = True,
         shuffle: bool = True,
         cluster: bool = True,
-        address: t.Optional[str] = None,
+        address: str | None = None,
         replica_rank: int = 0,
         num_replicas: int = 1,
         verbose: bool = False,
@@ -292,8 +292,8 @@ class DataDownloader:
         self.address = address
         self.cluster = cluster
         self.verbose = verbose
-        self.samples: t.Optional["npt.NDArray[t.Any]"] = None
-        self.targets: t.Optional["npt.NDArray[t.Any]"] = None
+        self.samples: "npt.NDArray[t.Any] | None" = None
+        self.targets: "npt.NDArray[t.Any] | None" = None
         self.num_samples = 0
         self.indices = np.arange(0)
         self.shuffle = shuffle
@@ -307,7 +307,7 @@ class DataDownloader:
             self._info.download(client)
         else:
             raise TypeError("data_info_or_list_name must be either DataInfo or str")
-        self._client: t.Optional[Client] = None
+        self._client: Client | None = None
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")
 
@@ -348,7 +348,7 @@ class DataDownloader:
         return self._info.target_name
 
     @property
-    def num_classes(self) -> t.Optional[int]:
+    def num_classes(self) -> int | None:
         return self._info.num_classes
 
     @property
@@ -368,7 +368,7 @@ class DataDownloader:
 
     def __iter__(
         self,
-    ) -> t.Iterator[t.Tuple[np.ndarray, np.ndarray]]:  # type: ignore[type-arg]
+    ) -> t.Iterator[tuple[np.ndarray, np.ndarray]]:  # type: ignore[type-arg]
         self.update_data()
         # Generate data
         if len(self) < 1:
@@ -416,8 +416,8 @@ class DataDownloader:
 
         return bool(self.client.tensor_exists(batch_name))
 
-    def _add_samples(self, indices: t.List[int]) -> None:
-        datasets: t.List[Dataset] = []
+    def _add_samples(self, indices: list[int]) -> None:
+        datasets: list[Dataset] = []
 
         if self.num_replicas == 1:
             datasets = self.client.get_dataset_list_range(
@@ -483,7 +483,7 @@ class DataDownloader:
 
     def _data_generation(
         self, indices: "npt.NDArray[t.Any]"
-    ) -> t.Tuple["npt.NDArray[t.Any]", "npt.NDArray[t.Any]"]:
+    ) -> tuple["npt.NDArray[t.Any]", "npt.NDArray[t.Any]"]:
         # Initialization
         if self.samples is None:
             raise ValueError("Samples have not been initialized")

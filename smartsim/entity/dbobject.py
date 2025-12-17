@@ -45,17 +45,15 @@ class DBObject(t.Generic[_DBObjectFuncT]):
     def __init__(
         self,
         name: str,
-        func: t.Optional[_DBObjectFuncT],
-        file_path: t.Optional[str],
+        func: _DBObjectFuncT | None,
+        file_path: str | None,
         device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
         self.name = name
-        self.func: t.Optional[_DBObjectFuncT] = func
-        self.file: t.Optional[Path] = (
-            None  # Need to have this explicitly to check on it
-        )
+        self.func: _DBObjectFuncT | None = func
+        self.file: Path | None = None  # Need to have this explicitly to check on it
         if file_path:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
@@ -64,7 +62,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         self._check_devices(device, devices_per_node, first_device)
 
     @property
-    def devices(self) -> t.List[str]:
+    def devices(self) -> list[str]:
         return self._enumerate_devices()
 
     @property
@@ -73,9 +71,9 @@ class DBObject(t.Generic[_DBObjectFuncT]):
 
     @staticmethod
     def _check_tensor_args(
-        inputs: t.Union[str, t.Optional[t.List[str]]],
-        outputs: t.Union[str, t.Optional[t.List[str]]],
-    ) -> t.Tuple[t.List[str], t.List[str]]:
+        inputs: str | list[str] | None,
+        outputs: str | list[str] | None,
+    ) -> tuple[list[str], list[str]]:
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(outputs, str):
@@ -107,7 +105,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 
-    def _enumerate_devices(self) -> t.List[str]:
+    def _enumerate_devices(self) -> list[str]:
         """Enumerate devices for a DBObject
 
         :param dbobject: DBObject to enumerate
@@ -154,8 +152,8 @@ class DBScript(DBObject[str]):
     def __init__(
         self,
         name: str,
-        script: t.Optional[str] = None,
-        script_path: t.Optional[str] = None,
+        script: str | None = None,
+        script_path: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
@@ -187,7 +185,7 @@ class DBScript(DBObject[str]):
             raise ValueError("Either script or script_path must be provided")
 
     @property
-    def script(self) -> t.Optional[t.Union[bytes, str]]:
+    def script(self) -> bytes | str | None:
         return self.func
 
     def __str__(self) -> str:
@@ -210,8 +208,8 @@ class DBModel(DBObject[bytes]):
         self,
         name: str,
         backend: str,
-        model: t.Optional[bytes] = None,
-        model_file: t.Optional[str] = None,
+        model: bytes | None = None,
+        model_file: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
@@ -219,8 +217,8 @@ class DBModel(DBObject[bytes]):
         min_batch_size: int = 0,
         min_batch_timeout: int = 0,
         tag: str = "",
-        inputs: t.Optional[t.List[str]] = None,
-        outputs: t.Optional[t.List[str]] = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
     ) -> None:
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
@@ -254,7 +252,7 @@ class DBModel(DBObject[bytes]):
         self.inputs, self.outputs = self._check_tensor_args(inputs, outputs)
 
     @property
-    def model(self) -> t.Optional[bytes]:
+    def model(self) -> bytes | None:
         return self.func
 
     def __str__(self) -> str:

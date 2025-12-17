@@ -38,7 +38,7 @@ if t.TYPE_CHECKING:
 class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
     def __getitem__(
         self, index: int
-    ) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
+    ) -> tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
         if len(self) < 1:
             raise ValueError(
                 "Not enough samples in generator for one batch. Please "
@@ -65,7 +65,7 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
 
     def _data_generation(
         self, indices: "npt.NDArray[t.Any]"
-    ) -> t.Tuple["npt.NDArray[t.Any]", "npt.NDArray[t.Any]"]:
+    ) -> tuple["npt.NDArray[t.Any]", "npt.NDArray[t.Any]"]:
         # Initialization
         if self.samples is None:
             raise ValueError("No samples loaded for data generation")

@@ -25,6 +25,5 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pathlib
-import typing as t
 
-PathLike = t.Union[str, pathlib.Path]
+PathLike = str | pathlib.Path

@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
+from collections.abc import Iterable, Sequence
 
 from .entity import SmartSimEntity
 
@@ -67,9 +68,9 @@ class EntitySequence(t.Generic[_T_co]):
         # object construction into the class' constructor.
         # ---------------------------------------------------------------------
         #
-        self.entities: t.Sequence[_T_co] = []
-        self._db_models: t.Sequence["smartsim.entity.DBModel"] = []
-        self._db_scripts: t.Sequence["smartsim.entity.DBScript"] = []
+        self.entities: Sequence[_T_co] = []
+        self._db_models: Sequence["smartsim.entity.DBModel"] = []
+        self._db_scripts: Sequence["smartsim.entity.DBScript"] = []
         #
         # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -80,12 +81,12 @@ class EntitySequence(t.Generic[_T_co]):
         raise NotImplementedError
 
     @property
-    def db_models(self) -> t.Iterable["smartsim.entity.DBModel"]:
+    def db_models(self) -> Iterable["smartsim.entity.DBModel"]:
         """Return an immutable collection of attached models"""
         return (model for model in self._db_models)
 
     @property
-    def db_scripts(self) -> t.Iterable["smartsim.entity.DBScript"]:
+    def db_scripts(self) -> Iterable["smartsim.entity.DBScript"]:
         """Return an immutable collection of attached scripts"""
         return (script for script in self._db_scripts)
 
@@ -110,7 +111,7 @@ class EntitySequence(t.Generic[_T_co]):
         for entity in self.entities:
             entity.path = new_path
 
-    def __getitem__(self, name: str) -> t.Optional[_T_co]:
+    def __getitem__(self, name: str) -> _T_co | None:
         for entity in self.entities:
             if entity.name == name:
                 return entity
@@ -129,9 +130,9 @@ class EntityList(EntitySequence[_T]):
     def __init__(self, name: str, path: str, **kwargs: t.Any) -> None:
         super().__init__(name, path, **kwargs)
         # Change container types to be invariant ``list``s
-        self.entities: t.List[_T] = list(self.entities)
-        self._db_models: t.List["smartsim.entity.DBModel"] = list(self._db_models)
-        self._db_scripts: t.List["smartsim.entity.DBScript"] = list(self._db_scripts)
+        self.entities: list[_T] = list(self.entities)
+        self._db_models: list["smartsim.entity.DBModel"] = list(self._db_models)
+        self._db_scripts: list["smartsim.entity.DBScript"] = list(self._db_scripts)
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize the SmartSimEntity objects in the container"""

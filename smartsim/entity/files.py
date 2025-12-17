@@ -51,9 +51,9 @@ class EntityFiles:
 
     def __init__(
         self,
-        tagged: t.Optional[t.List[str]] = None,
-        copy: t.Optional[t.List[str]] = None,
-        symlink: t.Optional[t.List[str]] = None,
+        tagged: list[str] | None = None,
+        copy: list[str] | None = None,
+        symlink: list[str] | None = None,
     ) -> None:
         """Initialize an EntityFiles instance
 
@@ -93,9 +93,7 @@ class EntityFiles:
             self.link[i] = self._check_path(value)
 
     @staticmethod
-    def _type_check_files(
-        file_list: t.Union[t.List[str], None], file_type: str
-    ) -> t.List[str]:
+    def _type_check_files(file_list: list[str] | None, file_type: str) -> list[str]:
         """Check the type of the files provided by the user.
 
         :param file_list: either tagged, copy, or symlink files
@@ -169,7 +167,7 @@ class TaggedFilesHierarchy:
     tagged file directory structure can be replicated
     """
 
-    def __init__(self, parent: t.Optional[t.Any] = None, subdir_name: str = "") -> None:
+    def __init__(self, parent: t.Any | None = None, subdir_name: str = "") -> None:
         """Initialize a TaggedFilesHierarchy
 
         :param parent: The parent hierarchy of the new hierarchy,
@@ -203,8 +201,8 @@ class TaggedFilesHierarchy:
 
         self._base: str = path.join(parent.base, subdir_name) if parent else ""
         self.parent: t.Any = parent
-        self.files: t.Set[str] = set()
-        self.dirs: t.Set[TaggedFilesHierarchy] = set()
+        self.files: set[str] = set()
+        self.dirs: set[TaggedFilesHierarchy] = set()
 
     @property
     def base(self) -> str:
@@ -213,7 +211,7 @@ class TaggedFilesHierarchy:
 
     @classmethod
     def from_list_paths(
-        cls, path_list: t.List[str], dir_contents_to_base: bool = False
+        cls, path_list: list[str], dir_contents_to_base: bool = False
     ) -> t.Any:
         """Given a list of absolute paths to files and dirs, create and return
         a TaggedFilesHierarchy instance representing the file hierarchy of
@@ -264,7 +262,7 @@ class TaggedFilesHierarchy:
             [path.join(dir_path, file) for file in os.listdir(dir_path)]
         )
 
-    def _add_paths(self, paths: t.List[str]) -> None:
+    def _add_paths(self, paths: list[str]) -> None:
         """Takes a list of paths and iterates over it, determining if each
         path is to a file or a dir and then appropriatly adding it to the
         TaggedFilesHierarchy.

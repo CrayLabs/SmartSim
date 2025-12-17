@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import typing as t
 from subprocess import PIPE, TimeoutExpired
 
 import psutil
@@ -39,13 +38,13 @@ VERBOSE_SHELL = check_dev_log_level()
 
 
 def execute_cmd(
-    cmd_list: t.List[str],
+    cmd_list: list[str],
     shell: bool = False,
-    cwd: t.Optional[str] = None,
-    env: t.Optional[t.Dict[str, str]] = None,
+    cwd: str | None = None,
+    env: dict[str, str] | None = None,
     proc_input: str = "",
-    timeout: t.Optional[int] = None,
-) -> t.Tuple[int, str, str]:
+    timeout: int | None = None,
+) -> tuple[int, str, str]:
     """Execute a command locally
 
     :param cmd_list: list of command with arguments
@@ -86,9 +85,9 @@ def execute_cmd(
 
 
 def execute_async_cmd(
-    cmd_list: t.List[str],
+    cmd_list: list[str],
     cwd: str,
-    env: t.Optional[t.Dict[str, str]] = None,
+    env: dict[str, str] | None = None,
     out: int = PIPE,
     err: int = PIPE,
 ) -> psutil.Popen:

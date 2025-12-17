@@ -47,8 +47,8 @@ pytestmark = pytest.mark.group_b
 
 # ---- create entities for testing --------
 
-_EntityResult = t.Tuple[
-    Experiment, t.Tuple[Model, Model], Ensemble, Orchestrator, DBModel, DBScript
+_EntityResult = tuple[
+    Experiment, tuple[Model, Model], Ensemble, Orchestrator, DBModel, DBScript
 ]
 
 

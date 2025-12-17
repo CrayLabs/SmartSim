@@ -32,6 +32,7 @@ import re
 import sys
 import typing as t
 import warnings
+from collections.abc import Iterable, Mapping
 from os import getcwd
 from os import path as osp
 
@@ -48,13 +49,13 @@ from .files import EntityFiles
 logger = get_logger(__name__)
 
 
-def _parse_model_parameters(params_dict: t.Dict[str, t.Any]) -> t.Dict[str, str]:
+def _parse_model_parameters(params_dict: dict[str, t.Any]) -> dict[str, str]:
     """Convert the values in a params dict to strings
     :raises TypeError: if params are of the wrong type
     :return: param dictionary with values and keys cast as strings
     """
-    param_names: t.List[str] = []
-    parameters: t.List[str] = []
+    param_names: list[str] = []
+    parameters: list[str] = []
     for name, val in params_dict.items():
         param_names.append(name)
         if isinstance(val, (str, numbers.Number)):
@@ -71,11 +72,11 @@ class Model(SmartSimEntity):
     def __init__(
         self,
         name: str,
-        params: t.Dict[str, str],
+        params: dict[str, str],
         run_settings: RunSettings,
-        path: t.Optional[str] = getcwd(),
-        params_as_args: t.Optional[t.List[str]] = None,
-        batch_settings: t.Optional[BatchSettings] = None,
+        path: str | None = getcwd(),
+        params_as_args: list[str] | None = None,
+        batch_settings: BatchSettings | None = None,
     ):
         """Initialize a ``Model``
 
@@ -93,15 +94,15 @@ class Model(SmartSimEntity):
         super().__init__(name, str(path), run_settings)
         self.params = _parse_model_parameters(params)
         self.params_as_args = params_as_args
-        self.incoming_entities: t.List[SmartSimEntity] = []
+        self.incoming_entities: list[SmartSimEntity] = []
         self._key_prefixing_enabled = False
         self.batch_settings = batch_settings
-        self._db_models: t.List[DBModel] = []
-        self._db_scripts: t.List[DBScript] = []
-        self.files: t.Optional[EntityFiles] = None
+        self._db_models: list[DBModel] = []
+        self._db_scripts: list[DBScript] = []
+        self.files: EntityFiles | None = None
 
     @property
-    def db_models(self) -> t.Iterable[DBModel]:
+    def db_models(self) -> Iterable[DBModel]:
         """Retrieve an immutable collection of attached models
 
         :return: Return an immutable collection of attached models
@@ -109,7 +110,7 @@ class Model(SmartSimEntity):
         return (model for model in self._db_models)
 
     @property
-    def db_scripts(self) -> t.Iterable[DBScript]:
+    def db_scripts(self) -> Iterable[DBScript]:
         """Retrieve an immutable collection attached of scripts
 
         :return: Return an immutable collection of attached scripts
@@ -161,9 +162,9 @@ class Model(SmartSimEntity):
 
     def attach_generator_files(
         self,
-        to_copy: t.Optional[t.List[str]] = None,
-        to_symlink: t.Optional[t.List[str]] = None,
-        to_configure: t.Optional[t.List[str]] = None,
+        to_copy: list[str] | None = None,
+        to_symlink: list[str] | None = None,
+        to_configure: list[str] | None = None,
     ) -> None:
         """Attach files to an entity for generation
 
@@ -235,7 +236,7 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
+        custom_pinning: Iterable[int | Iterable[int]] | None = None,
         debug: bool = False,
         db_identifier: str = "",
         **kwargs: t.Any,
@@ -276,7 +277,7 @@ class Model(SmartSimEntity):
                 f"Invalid name for unix socket: {unix_socket}. Must only "
                 "contain alphanumeric characters or . : _ - /"
             )
-        uds_options: t.Dict[str, t.Union[int, str]] = {
+        uds_options: dict[str, int | str] = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
             # This is hardcoded to 0 as recommended by redis for UDS
@@ -294,9 +295,9 @@ class Model(SmartSimEntity):
     def colocate_db_tcp(
         self,
         port: int = 6379,
-        ifname: t.Union[str, list[str]] = "lo",
+        ifname: str | list[str] = "lo",
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
+        custom_pinning: Iterable[int | Iterable[int]] | None = None,
         debug: bool = False,
         db_identifier: str = "",
         **kwargs: t.Any,
@@ -343,18 +344,12 @@ class Model(SmartSimEntity):
 
     def _set_colocated_db_settings(
         self,
-        connection_options: t.Mapping[str, t.Union[int, t.List[str], str]],
-        common_options: t.Dict[
+        connection_options: Mapping[str, int | list[str] | str],
+        common_options: dict[
             str,
-            t.Union[
-                t.Union[t.Iterable[t.Union[int, t.Iterable[int]]], None],
-                bool,
-                int,
-                str,
-                None,
-            ],
+            Iterable[int | Iterable[int]] | bool | int | str | None,
         ],
-        **kwargs: t.Union[int, None],
+        **kwargs: int | None,
     ) -> None:
         """
         Ingest the connection-specific options (UDS/TCP) and set the final settings
@@ -378,7 +373,7 @@ class Model(SmartSimEntity):
 
         # TODO list which db settings can be extras
         custom_pinning_ = t.cast(
-            t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
+            Iterable[int | Iterable[int]] | None,
             common_options.get("custom_pinning"),
         )
         cpus_ = t.cast(int, common_options.get("cpus"))
@@ -386,20 +381,20 @@ class Model(SmartSimEntity):
             custom_pinning_, cpus_
         )
 
-        colo_db_config: t.Dict[
+        colo_db_config: dict[
             str,
-            t.Union[
-                bool,
-                int,
-                str,
-                None,
-                t.List[str],
-                t.Iterable[t.Union[int, t.Iterable[int]]],
-                t.List[DBModel],
-                t.List[DBScript],
-                t.Dict[str, t.Union[int, None]],
-                t.Dict[str, str],
-            ],
+            (
+                bool
+                | int
+                | str
+                | None
+                | list[str]
+                | Iterable[int | Iterable[int]]
+                | list[DBModel]
+                | list[DBScript]
+                | dict[str, int | None]
+                | dict[str, str]
+            ),
         ] = {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)
@@ -423,8 +418,8 @@ class Model(SmartSimEntity):
 
     @staticmethod
     def _create_pinning_string(
-        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
-    ) -> t.Optional[str]:
+        pin_ids: Iterable[int | Iterable[int]] | None, cpus: int
+    ) -> str | None:
         """Create a comma-separated string of CPU ids. By default, ``None``
         returns 0,1,...,cpus-1; an empty iterable will disable pinning
         altogether, and an iterable constructs a comma separated string of
@@ -432,7 +427,7 @@ class Model(SmartSimEntity):
         """
 
         def _stringify_id(_id: int) -> str:
-            """Return the cPU id as a string if an int, otherwise raise a ValueError"""
+            """Return the CPU id as a string if an int, otherwise raise a ValueError"""
             if isinstance(_id, int):
                 if _id < 0:
                     raise ValueError("CPU id must be a nonnegative number")
@@ -491,8 +486,8 @@ class Model(SmartSimEntity):
         self,
         name: str,
         backend: str,
-        model: t.Optional[bytes] = None,
-        model_path: t.Optional[str] = None,
+        model: bytes | None = None,
+        model_path: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
@@ -500,8 +495,8 @@ class Model(SmartSimEntity):
         min_batch_size: int = 0,
         min_batch_timeout: int = 0,
         tag: str = "",
-        inputs: t.Optional[t.List[str]] = None,
-        outputs: t.Optional[t.List[str]] = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
     ) -> None:
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
@@ -550,8 +545,8 @@ class Model(SmartSimEntity):
     def add_script(
         self,
         name: str,
-        script: t.Optional[str] = None,
-        script_path: t.Optional[str] = None,
+        script: str | None = None,
+        script_path: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
@@ -597,7 +592,7 @@ class Model(SmartSimEntity):
     def add_function(
         self,
         name: str,
-        function: t.Optional[str] = None,
+        function: str | None = None,
         device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,

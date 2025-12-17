@@ -26,7 +26,6 @@
 
 import json
 import os
-import typing as t
 from shutil import which
 
 from smartsim.error.errors import LauncherError, SmartSimError
@@ -34,7 +33,7 @@ from smartsim.error.errors import LauncherError, SmartSimError
 from .._core.launcher.pbs.pbsCommands import qstat
 
 
-def get_hosts() -> t.List[str]:
+def get_hosts() -> list[str]:
     """Get the name of the hosts used in a PBS allocation.
 
     :returns: Names of the host nodes
@@ -92,7 +91,7 @@ def get_tasks() -> int:
     )
 
 
-def get_tasks_per_node() -> t.Dict[str, int]:
+def get_tasks_per_node() -> dict[str, int]:
     """Get the number of processes on each chunk in a PBS allocation.
 
     .. note::

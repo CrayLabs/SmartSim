@@ -59,20 +59,20 @@ def mock_execute_custom(msg: str = None, good: bool = True) -> int:
 
 
 def mock_execute_good(
-    _ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None
+    _ns: argparse.Namespace, _unparsed: list[str] | None = None
 ) -> int:
     return mock_execute_custom("GOOD THINGS", good=True)
 
 
 def mock_execute_fail(
-    _ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None
+    _ns: argparse.Namespace, _unparsed: list[str] | None = None
 ) -> int:
     return mock_execute_custom("BAD THINGS", good=False)
 
 
 def test_cli_default_args_parsing(capsys):
     """Test default parser behaviors with no subparsers"""
-    menu: t.List[cli.MenuItemConfig] = []
+    menu: list[cli.MenuItemConfig] = []
     smart_cli = cli.SmartCli(menu)
 
     captured = capsys.readouterr()  # throw away existing output
@@ -111,7 +111,7 @@ def test_cli_invalid_command(capsys):
 
 def test_cli_bad_default_args_parsing_bad_help(capsys):
     """Test passing an argument name that is incorrect"""
-    menu: t.List[cli.MenuItemConfig] = []
+    menu: list[cli.MenuItemConfig] = []
     smart_cli = cli.SmartCli(menu)
 
     captured = capsys.readouterr()  # throw away existing output
@@ -127,7 +127,7 @@ def test_cli_bad_default_args_parsing_bad_help(capsys):
 
 def test_cli_bad_default_args_parsing_good_help(capsys):
     """Test passing an argument name that is correct"""
-    menu: t.List[cli.MenuItemConfig] = []
+    menu: list[cli.MenuItemConfig] = []
     smart_cli = cli.SmartCli(menu)
 
     captured = capsys.readouterr()  # throw away existing output
@@ -388,7 +388,7 @@ def test_cli_plugin_invalid(
 def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
     """Ensure the default CLI executes the build action"""
 
-    def mock_execute(ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None):
+    def mock_execute(ns: argparse.Namespace, _unparsed: list[str] | None = None):
         print(exp_output)
         return 0
 
@@ -444,7 +444,7 @@ def test_cli_optional_args(
 ):
     """Ensure the parser for a command handles expected optional arguments"""
 
-    def mock_execute(ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None):
+    def mock_execute(ns: argparse.Namespace, _unparsed: list[str] | None = None):
         print(exp_output)
         return 0
 
@@ -495,7 +495,7 @@ def test_cli_help_support(
 ):
     """Ensure the parser supports help optional for commands as expected"""
 
-    def mock_execute(ns: argparse.Namespace, unparsed: t.Optional[t.List[str]] = None):
+    def mock_execute(ns: argparse.Namespace, unparsed: list[str] | None = None):
         print(mock_output)
         return 0
 
@@ -534,7 +534,7 @@ def test_cli_invalid_optional_args(
 ):
     """Ensure the parser throws expected error for an invalid argument"""
 
-    def mock_execute(ns: argparse.Namespace, unparsed: t.Optional[t.List[str]] = None):
+    def mock_execute(ns: argparse.Namespace, unparsed: list[str] | None = None):
         print(exp_output)
         return 0
 
