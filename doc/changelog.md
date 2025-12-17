@@ -21,6 +21,7 @@ Description
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
 - Add instructions for installing SmartSim on PML's Scylla
+- Drop unsued development dependencies
 - Fix typos in documentation
 
 Detailed Notes
@@ -85,6 +86,8 @@ Detailed Notes
   Future versions of Tensorflow may fix this problem, but for now this seems to be
   the best workaround.
   ([SmartSim-PR738](https://github.com/CrayLabs/SmartSim/pull/738))
+- Removes an undocumented and unused dependency from the testing suite.
+  ([SmartSim-PR792](https://github.com/CrayLabs/SmartSim/pull/792))
 
 
 ### 0.8.0
