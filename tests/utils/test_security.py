@@ -29,7 +29,6 @@ import pathlib
 import stat
 
 import pytest
-from sympy import public
 
 from smartsim._core.config.config import get_config
 from smartsim._core.utils.security import KeyManager, _KeyLocator, _KeyPermissions
