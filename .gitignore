@@ -8,6 +8,7 @@ htmlcov
 smartsim.egg-info
 tests/test_output
 .DS_Store
+build
 
 # Dependencies
 smartsim/_core/.third-party

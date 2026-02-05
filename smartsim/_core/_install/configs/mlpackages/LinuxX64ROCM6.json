@@ -30,10 +30,10 @@
                     "replacement": "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)"
                 },
                 {
-                    "description": "Fix Regex, Load HIP",
+                    "description": "Fix LoadHIP.cmake regex to match tabs in ROCm version header",
                     "source_file": "../package/libtorch/share/cmake/Caffe2/public/LoadHIP.cmake",
-                    "regex": ".*string.*",
-                    "replacement": ""
+                    "regex": "\\[ \\]\\+",
+                    "replacement": "[ \\\\t]+"
                 },
                 {
                     "description": "Replace `/opt/rocm` with `$ENV{ROCM_PATH}`",

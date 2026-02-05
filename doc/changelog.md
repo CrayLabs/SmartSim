@@ -11,6 +11,7 @@ To be released at some point in the future
 
 Description
 
+- Update install patch for PyTorch 2.7.1+rocm6.3
 - Modernize typing syntax to Python 3.10+ standards
 - Removed telemetry functionality, LaunchedManifest tracking
   classes, and SmartDashboard integration
@@ -26,6 +27,9 @@ Description
 
 Detailed Notes
 
+- Updated the post-install patch which is applied to the Caffe2/PyTorch
+  CMakeFind module.
+  ([SmartSim-PR793](https://github.com/CrayLabs/SmartSim/pull/793))
 - Modernized typing syntax to use Python 3.10+ standards, replacing
   `Union[X, Y]` with `X | Y`, `Optional[X]` with `X | None`, and generic
   collections (`List[X]` → `list[X]`, `Dict[X, Y]` → `dict[X, Y]`, etc.).
