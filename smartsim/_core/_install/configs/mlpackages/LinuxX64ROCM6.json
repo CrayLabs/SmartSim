@@ -33,7 +33,7 @@
                     "description": "Fix LoadHIP.cmake regex to match tabs in ROCm version header",
                     "source_file": "../package/libtorch/share/cmake/Caffe2/public/LoadHIP.cmake",
                     "regex": "\\[ \\]\\+",
-                    "replacement": "[ \\t]+"
+                    "replacement": "[ \\\\t]+"
                 },
                 {
                     "description": "Replace `/opt/rocm` with `$ENV{ROCM_PATH}`",
