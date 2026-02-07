@@ -1,0 +1,725 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Logger &#8212; SmartSim 0.8.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom_tab_style.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'ss_logger';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ML Features" href="ml_features.html" />
+    <link rel="prev" title="Orchestrator" href="orchestrator.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.8.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run_settings.html">Run Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch_settings.html">Batch Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ensemble.html">Ensemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Logger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dragon.html">Dragon</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fss_logger.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/ss_logger.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Logger</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#log-to-stdout">Log to stdout</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#logging-to-file">Logging to File</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="logger">
+<h1>Logger<a class="headerlink" href="#logger" title="Permalink to this heading">#</a></h1>
+<section id="overview">
+<span id="ss-logger"></span><h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">#</a></h2>
+<p>SmartSim supports logging experiment activity through a logging API accessible via
+the SmartSim <cite>log</cite> module. The SmartSim logger, backed by Python logging, enables
+real-time logging of experiment activity <strong>to stdout</strong> and/or <strong>to file</strong>, with
+multiple verbosity levels for categorizing log messages.</p>
+<p>Users may instruct SmartSim to log certain verbosity level log messages
+and omit others through the <cite>SMARTSIM_LOG_LEVEL</cite> environment variable. The <cite>SMARTSIM_LOG_LEVEL</cite>
+environment variable may be overridden when logging to file by specifying a log level to
+the <code class="docutils literal notranslate"><span class="pre">log_to_file</span></code> function. Examples walking through logging <a class="reference internal" href="#log-to-stdout"><span class="std std-ref">to stdout</span></a>
+and <a class="reference internal" href="#log-to-file"><span class="std std-ref">to file</span></a> are provided below.</p>
+<p>SmartSim offers <strong>four</strong> log functions to use within the Python driver script. The
+below functions accept string messages:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">logger.error</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger.warning</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger.info</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger.debug</span></code></p></li>
+</ul>
+<p>The <cite>SMARTSIM_LOG_LEVEL</cite> environment variable accepts <strong>four</strong> log levels: <cite>quiet</cite>,
+<cite>info</cite>, <cite>debug</cite> and <cite>developer</cite>. Setting the log level in the environment (or via the override function)
+controls the log messages that are output at runtime. The log levels are listed below from
+least verbose to most verbose:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>level: <cite>quiet</cite></dt><dd><ul>
+<li><p>The <cite>quiet</cite> log level instructs SmartSim to print <code class="docutils literal notranslate"><span class="pre">error</span></code> and <code class="docutils literal notranslate"><span class="pre">warning</span></code> messages.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>level: <cite>info</cite></dt><dd><ul>
+<li><p>The <cite>info</cite> log level instructs SmartSim to print <code class="docutils literal notranslate"><span class="pre">info</span></code>, <code class="docutils literal notranslate"><span class="pre">error</span></code> and <code class="docutils literal notranslate"><span class="pre">warning</span></code> messages.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>level: <cite>debug</cite></dt><dd><ul>
+<li><p>The <cite>debug</cite> log level instructs SmartSim to print <code class="docutils literal notranslate"><span class="pre">debug</span></code>, <code class="docutils literal notranslate"><span class="pre">info</span></code>, <code class="docutils literal notranslate"><span class="pre">error</span></code> and <code class="docutils literal notranslate"><span class="pre">warning</span></code> messages.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>level: <cite>developer</cite></dt><dd><ul>
+<li><p>The <cite>developer</cite> log level instructs SmartSim to print <code class="docutils literal notranslate"><span class="pre">debug</span></code>, <code class="docutils literal notranslate"><span class="pre">info</span></code>, <code class="docutils literal notranslate"><span class="pre">error</span></code> and <code class="docutils literal notranslate"><span class="pre">warning</span></code> messages.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Levels <cite>developer</cite> and <cite>debug</cite> print the same log messages. The <cite>developer</cite> log level is intended for use
+during code development and signifies highly detailed and verbose logging.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>SMARTSIM_LOG_LEVEL</cite> defaults to log level <cite>info</cite>. For SmartSim log API examples, continue to the <a class="reference internal" href="#log-ex"><span class="std std-ref">Examples</span></a> section.</p>
+</div>
+</section>
+<section id="examples">
+<span id="log-ex"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">#</a></h2>
+<section id="log-to-stdout">
+<span id="id1"></span><h3>Log to stdout<a class="headerlink" href="#log-to-stdout" title="Permalink to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">get_logger</span></code> function in SmartSim enables users to initialize a logger instance.
+Once initialized, a user may use the instance to log a message using one of the four
+logging functions.</p>
+<p>To use the SmartSim logger within a Python script, import the required <cite>get_logger</cite>
+function from the <cite>log</cite> module:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim.log</span> <span class="kn">import</span> <span class="n">get_logger</span>
+</pre></div>
+</div>
+<p>Next, initialize an instance of the logger and provide a logger <cite>name</cite>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;SmartSim&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To demonstrate full functionality of the SmartSim logger, we include all log
+functions in the Python driver script with log messages:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;This is a message&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;This is a debug message&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;This is an error message&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;This is a warning message&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Execute the script <em>without</em> setting the <cite>SMARTSIM_LOG_LEVEL</cite>. Remember that <cite>SMARTSIM_LOG_LEVEL</cite>
+defaults to <cite>info</cite>. When we execute the script, the following messages will print to stdout:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">130033</span><span class="o">]</span><span class="w"> </span>INFO<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">130033</span><span class="o">]</span><span class="w"> </span>ERROR<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>an<span class="w"> </span>error<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">130033</span><span class="o">]</span><span class="w"> </span>WARNING<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>warning<span class="w"> </span>message
+</pre></div>
+</div>
+<p>Notice that the <cite>debug</cite> function message was filtered. This is because by using
+a lower verbosity level (<cite>info</cite>), we instruct SmartSim to omit the higher verbosity level messages (<cite>debug</cite> and <cite>developer</cite>).</p>
+<p>Next, set <cite>SMARTSIM_LOG_LEVEL</cite> to <cite>debug</cite>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_LOG_LEVEL</span><span class="o">=</span>debug
+</pre></div>
+</div>
+<p>When we execute the script again,
+the following messages will print to stdout:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">65385</span><span class="o">]</span><span class="w"> </span>INFO<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">65385</span><span class="o">]</span><span class="w"> </span>DEBUG<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>debug<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">65385</span><span class="o">]</span><span class="w"> </span>ERROR<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>an<span class="w"> </span>error<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">65385</span><span class="o">]</span><span class="w"> </span>WARNING<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>warning<span class="w"> </span>message
+</pre></div>
+</div>
+<p>Notice that all log messages print to stdout. By using a higher verbosity level (<cite>debug</cite>),
+we instruct SmartSim to print all log functions at and above the level.</p>
+<p>Next, set <cite>SMARTSIM_LOG_LEVEL</cite> to <cite>quiet</cite> in terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_LOG_LEVEL</span><span class="o">=</span>quiet
+</pre></div>
+</div>
+<p>When we run the program once again, the following output is printed
+to stdout:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">65385</span><span class="o">]</span><span class="w"> </span>ERROR<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>an<span class="w"> </span>error<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">65385</span><span class="o">]</span><span class="w"> </span>WARNING<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>warning<span class="w"> </span>message
+</pre></div>
+</div>
+<p>Notice that the <cite>info</cite> and <cite>debug</cite> log functions were filtered. This is because by using
+the least verbose level (<cite>quiet</cite>), we instruct SmartSim to omit messages at higher verbosity levels
+(<cite>info</cite>, <cite>debug</cite> and <cite>developer</cite>).</p>
+<p>To finish the example, set <cite>SMARTSIM_LOG_LEVEL</cite> to <cite>info</cite> in terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_LOG_LEVEL</span><span class="o">=</span>info
+</pre></div>
+</div>
+<p>When we execute the script, the following messages will print
+to stdout:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">130033</span><span class="o">]</span><span class="w"> </span>INFO<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">130033</span><span class="o">]</span><span class="w"> </span>ERROR<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>an<span class="w"> </span>error<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">130033</span><span class="o">]</span><span class="w"> </span>WARNING<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>warning<span class="w"> </span>message
+</pre></div>
+</div>
+<p>Notice that the same messages were logged to stdout as when we ran the script with the default value <cite>info</cite>.
+SmartSim omits messages at higher verbosity levels (<cite>debug</cite> and <cite>developer</cite>).</p>
+</section>
+<section id="logging-to-file">
+<span id="log-to-file"></span><h3>Logging to File<a class="headerlink" href="#logging-to-file" title="Permalink to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">log_to_file</span></code> function in SmartSim allows users to log messages
+to a specified file by providing a file name or relative file path. If the file name
+passed in does not exist, SmartSim will create the file. If the program is re-executed with the same
+file name, the file contents will be overwritten.</p>
+<p>To demonstrate, begin by importing the functions <cite>get_logger</cite> and <cite>log_to_file</cite> from the <cite>log</cite> module:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim.log</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">log_to_file</span>
+</pre></div>
+</div>
+<p>Initialize a logger for use within the Python driver script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;SmartSim&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Invoke the <code class="docutils literal notranslate"><span class="pre">log_to_file</span></code> function to instruct SmartSim to create a file named <cite>logger.out</cite>
+to write log messages to:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">log_to_file</span><span class="p">(</span><span class="s2">&quot;logger.out&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the example, we add all log functions to the script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;This is a message&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;This is a debug message&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;This is an error message&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;This is a warning message&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Remember that the default value for the <cite>SMARTSIM_LOG_LEVEL</cite> variable is <cite>info</cite>.
+Therefore, we will not set the environment variable and instead rely on the
+default.</p>
+<p>When we execute the Python script, a file named <cite>logger.out</cite> is created in our working
+directory with the listed contents:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">10950</span><span class="o">]</span><span class="w"> </span>INFO<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">10950</span><span class="o">]</span><span class="w"> </span>ERROR<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>an<span class="w"> </span>error<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">10950</span><span class="o">]</span><span class="w"> </span>WARNING<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>warning<span class="w"> </span>message
+</pre></div>
+</div>
+<p>Notice that the <cite>debug</cite> function message was filtered. This is because by using
+a lower verbosity level (<cite>info</cite>), we instruct SmartSim to omit higher verbosity messages (<cite>debug</cite> and <cite>developer</cite>).</p>
+<p>In the same Python script, add a log level to the <code class="docutils literal notranslate"><span class="pre">log_to_file</span></code> as a input argument:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">log_to_file</span><span class="p">(</span><span class="s2">&quot;logger.out&quot;</span><span class="p">,</span> <span class="s2">&quot;quiet&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When we execute the Python script once again, SmartSim will override the <cite>SMARTSIM_LOG_LEVEL</cite>
+variable to output messages of log level <cite>quiet</cite>. SmartSim will overwrite the contents
+of <cite>logger.out</cite> with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">10950</span><span class="o">]</span><span class="w"> </span>ERROR<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>an<span class="w"> </span>error<span class="w"> </span>message
+<span class="m">11</span>:15:00<span class="w"> </span>system.host.com<span class="w"> </span>SmartSim<span class="o">[</span><span class="m">10950</span><span class="o">]</span><span class="w"> </span>WARNING<span class="w"> </span>This<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>warning<span class="w"> </span>message
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="orchestrator.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Orchestrator</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ml_features.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">ML Features</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#log-to-stdout">Log to stdout</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#logging-to-file">Logging to File</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2024, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

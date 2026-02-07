@@ -1,0 +1,872 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Installation on specific platforms &#8212; SmartSim 0.6.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/tabs.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'installation_instructions/platform';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing Guide" href="../contributing.html" />
+    <link rel="prev" title="Basic Installation" href="basic.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.6.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic.html">Basic Installation</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Finstallation_instructions/platform.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/installation_instructions/platform.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Installation on specific platforms</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Installation on specific platforms</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#customizing-environment-variables">Customizing environment variables</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compiler-environment">Compiler environment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-related">CUDA-related</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-dependencies-non-root">GPU dependencies (non-root)</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#olcf-frontier">OLCF Frontier</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#known-limitations">Known limitations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-process">Build process</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-environment">Set up environment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#binding-dbs-to-slingshot">Binding DBs to Slingshot</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-tests">Running tests</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#hpe-cray-supercomputers">HPE Cray supercomputers</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cheyenne-at-ncar">Cheyenne at NCAR</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#summit-at-olcf">Summit at OLCF</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#site-installation">Site Installation</a></li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="installation-on-specific-platforms">
+<span id="install-notes"></span><h1>Installation on specific platforms<a class="headerlink" href="#installation-on-specific-platforms" title="Permalink to this heading">#</a></h1>
+<p>The following describes installation details for various systems and platforms
+that SmartSim may be used on.</p>
+</section>
+<section id="customizing-environment-variables">
+<h1>Customizing environment variables<a class="headerlink" href="#customizing-environment-variables" title="Permalink to this heading">#</a></h1>
+<p>Various environment variables can be used to control the compilers and
+dependencies for SmartSim. These are particularly important to set before the
+<code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code> step to ensure that the Orchestrator and machine-learning
+backends are compiled with the desired compilation environment.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The compilation environment that SmartSim is compiled with <em>does not</em>
+necessarily have to be compatible with the SmartRedis library and the
+simulation application that will be launched by SmartSim. To ensure
+that this works as intended however, please be sure to set the
+correct environment for the simulation using the <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>.</p>
+</div>
+<p>All of the following environment variables must be <em>exported</em> to ensure that
+they are used throughout the entire build process. Additionally at runtime, the
+environment in which the Orchestrator is launched must have the cuDNN and CUDA
+Toolkit libraries findable by the link loader (e.g. available in the
+<code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code> environment variable).</p>
+<section id="compiler-environment">
+<h2>Compiler environment<a class="headerlink" href="#compiler-environment" title="Permalink to this heading">#</a></h2>
+<p>Unlike SmartRedis, we <em>strongly</em> encourage users to only use the GNU compiler
+chain to build the SmartSim dependencies. Notably, RedisAI has some coding
+conventions that prevent the use of Intel compiler chain. If a specific
+compiler should be used (e.g. the Cray Programming Environment wrappers),
+the following environment variables will control the C and C++ compilers:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CC</span></code>: Path to the C compiler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CXX</span></code>: Path the C++ compiler</p></li>
+</ul>
+</section>
+<section id="cuda-related">
+<h2>CUDA-related<a class="headerlink" href="#cuda-related" title="Permalink to this heading">#</a></h2>
+<p>The following environment variables help the <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code> step find and link in the
+CUDA Toolkit and cuDNN libraries needed to build the ML backends.</p>
+<p>cuDNN:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CUDNN_LIBRARY</span></code>: Path to the cuDNN shared libraries (e.g. <code class="docutils literal notranslate"><span class="pre">libcudnn.so</span></code>) are found</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CUDNN_INCLUDE_DIR</span></code>: Path to cuDNN header files (e.g. <code class="docutils literal notranslate"><span class="pre">cudnn.h</span></code>)</p></li>
+</ul>
+<p>CUDA Toolkit:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CUDA_TOOLKIT_ROOT_DIR</span></code>: Path to the root directory of CUDA Toolkit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CUDA_NVCC_EXECUTABLE</span></code>: Path to the <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> compiler</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CUDA_INCLUDE_DIRS</span></code>: Path to the CUDA Toolkit headers</p></li>
+</ul>
+</section>
+</section>
+<section id="gpu-dependencies-non-root">
+<h1>GPU dependencies (non-root)<a class="headerlink" href="#gpu-dependencies-non-root" title="Permalink to this heading">#</a></h1>
+<p>The Nvidia installation instructions for CUDA Toolkit and cuDNN tend to be
+tailored for users with root access. For those on HPC platforms where root
+access is rare, manually downloading and installing these dependencies as
+a user is possible.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://developer.download.nvidia.com/compute/cuda/11.4.4/local_installers/cuda_11.4.4_470.82.01_linux.run
+chmod<span class="w"> </span>+x<span class="w"> </span>cuda_11.4.4_470.82.01_linux.run
+./cuda_11.4.4_470.82.01_linux.run<span class="w"> </span>--toolkit<span class="w">  </span>--silent<span class="w"> </span>--toolkitpath<span class="o">=</span>/path/to/install/location/
+</pre></div>
+</div>
+<p>For cuDNN, follow <a class="reference external" href="https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download">Nvidia’s instructions</a>,
+and copy the cuDNN libraries to the <cite>lib64</cite> directory at the CUDA Toolkit
+location specified above.</p>
+</section>
+<section id="olcf-frontier">
+<h1>OLCF Frontier<a class="headerlink" href="#olcf-frontier" title="Permalink to this heading">#</a></h1>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this heading">#</a></h2>
+<p>Frontier is an AMD CPU/AMD GPU system.</p>
+<p>As of 2023-07-06, users can use the following instructions, however we
+anticipate that all the SmartSim dependencies will be available system-wide via
+the modules system.</p>
+</section>
+<section id="known-limitations">
+<h2>Known limitations<a class="headerlink" href="#known-limitations" title="Permalink to this heading">#</a></h2>
+<p>We are continually working on getting all the features of SmartSim working on
+Frontier, however we do have some known limitations:</p>
+<ul class="simple">
+<li><p>For now, only Torch models are supported. We are working to find a recipe to
+install Tensorflow with ROCm support from scratch</p></li>
+<li><p>The colocated database will fail without specifying <code class="docutils literal notranslate"><span class="pre">custom_pinning</span></code>. This
+is because the default pinning assumes that processor 0 is available, but the
+‘low-noise’ default on Frontier reserves the processor on each NUMA node.
+Users should pass a list of processor ids to the <code class="docutils literal notranslate"><span class="pre">custom_pinning</span></code> argument that
+avoids the reserved processors</p></li>
+<li><p>The Singularity-based tests are currently failing. We are investigating how to
+interact with Frontier’s configuration. Please contact us if this is interfering
+with your application</p></li>
+</ul>
+<p>Please raise an issue in the SmartSim Github or contact the developers if the above
+issues are affecting your workflow or if you find any other problems.</p>
+</section>
+<section id="build-process">
+<h2>Build process<a class="headerlink" href="#build-process" title="Permalink to this heading">#</a></h2>
+<p>To install the SmartRedis and SmartSim python packages on Frontier, please follow
+these instructions, being sure to set the following variables</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PROJECT_NAME</span><span class="o">=</span>CHANGE_ME
+<span class="nb">export</span><span class="w"> </span><span class="nv">VENV_NAME</span><span class="o">=</span>CHANGE_ME
+</pre></div>
+</div>
+<p>Then continue with the install:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>PrgEnv-gnu-amd<span class="w"> </span>git-lfs<span class="w"> </span>cmake<span class="w"> </span>cray-python
+module<span class="w"> </span>unload<span class="w"> </span>xalt<span class="w"> </span>amd-mixed
+module<span class="w"> </span>load<span class="w"> </span>rocm/4.5.2
+<span class="nb">export</span><span class="w"> </span><span class="nv">CC</span><span class="o">=</span>gcc
+<span class="nb">export</span><span class="w"> </span><span class="nv">CXX</span><span class="o">=</span>g++
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">SCRATCH</span><span class="o">=</span>/lustre/orion/<span class="nv">$PROJECT_NAME</span>/scratch/<span class="nv">$USER</span>/
+<span class="nb">export</span><span class="w"> </span><span class="nv">VENV_HOME</span><span class="o">=</span><span class="nv">$SCRATCH</span>/<span class="nv">$VENV_NAME</span>/
+
+python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span><span class="nv">$VENV_HOME</span>
+<span class="nb">source</span><span class="w"> </span><span class="nv">$VENV_HOME</span>/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch</span><span class="o">==</span><span class="m">1</span>.11.0+rocm4.5.2<span class="w"> </span><span class="nv">torchvision</span><span class="o">==</span><span class="m">0</span>.12.0+rocm4.5.2<span class="w"> </span><span class="nv">torchaudio</span><span class="o">==</span><span class="m">0</span>.11.0<span class="w">  </span>--extra-index-url<span class="w">  </span>https://download.pytorch.org/whl/rocm4.5.2
+
+
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$SCRATCH</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartRedis.git
+<span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib-with-fortran
+pip<span class="w"> </span>install<span class="w"> </span>.
+
+<span class="c1"># Download SmartSim and site-specific files</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$SCRATCH</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/site-deployments.git
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartSim.git
+<span class="nb">cd</span><span class="w"> </span>SmartSim
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+</pre></div>
+</div>
+<p>Next to finish the compilation, we need to manually modify one of the auxiliary
+cmake files that comes packaged with Torch</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TORCH_CMAKE_DIR</span><span class="o">=</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import torch;print(torch.utils.cmake_prefix_path)&#39;</span><span class="k">)</span>
+<span class="c1"># Manual step: modify all references to the &#39;rocm&#39; directory to rocm-4.5.2</span>
+vim<span class="w"> </span><span class="nv">$TORCH_CMAKE_DIR</span>/Caffe2/Caffe2Targets.cmake
+</pre></div>
+</div>
+<p>Finally, build Redis (or keydb for a more performant solution), RedisAI, and the
+machine-learning backends using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KEYDB_FLAG</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="c1"># set this to --keydb if desired</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>gpu<span class="w"> </span>--torch_dir<span class="w"> </span><span class="nv">$TORCH_CMAKE_DIR</span><span class="w"> </span>--no_tf<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span>KEYDB_FLAG<span class="k">)</span>
+</pre></div>
+</div>
+</section>
+<section id="set-up-environment">
+<h2>Set up environment<a class="headerlink" href="#set-up-environment" title="Permalink to this heading">#</a></h2>
+<p>Before running SmartSim, the environment should match the one used to
+build, and some variables should be set to work around some ROCm PyTorch
+issues:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set these to the same values that were used for install</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PROJECT_NAME</span><span class="o">=</span>CHANGE_ME
+<span class="nb">export</span><span class="w"> </span><span class="nv">VENV_NAME</span><span class="o">=</span>CHANGE_ME
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>PrgEnv-gnu-amd<span class="w"> </span>git-lfs<span class="w"> </span>cmake<span class="w"> </span>cray-python
+module<span class="w"> </span>unload<span class="w"> </span>xalt<span class="w"> </span>amd-mixed
+module<span class="w"> </span>load<span class="w"> </span>rocm/4.5.2
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">SCRATCH</span><span class="o">=</span>/lustre/orion/<span class="nv">$PROJECT_NAME</span>/scratch/<span class="nv">$USER</span>/
+<span class="nb">export</span><span class="w"> </span><span class="nv">MIOPEN_USER_DB_PATH</span><span class="o">=</span>/tmp/miopendb/
+<span class="nb">export</span><span class="w"> </span><span class="nv">MIOPEN_SYSTEM_DB_PATH</span><span class="o">=</span><span class="nv">$MIOPEN_USER_DB_PATH</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$MIOPEN_USER_DB_PATH</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MIOPEN_DISABLE_CACHE</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VENV_HOME</span><span class="o">=</span><span class="nv">$SCRATCH</span>/<span class="nv">$VENV_NAME</span>/
+<span class="nb">source</span><span class="w"> </span><span class="nv">$VENV_HOME</span>/bin/activate
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$LD_LIBRARY_PATH</span>:<span class="nv">$VENV_HOME</span>/lib/python3.9/site-packages/torch/lib
+</pre></div>
+</div>
+</section>
+<section id="binding-dbs-to-slingshot">
+<h2>Binding DBs to Slingshot<a class="headerlink" href="#binding-dbs-to-slingshot" title="Permalink to this heading">#</a></h2>
+<p>Each Frontier node has <em>four</em> NICs, which also means users need to bind
+DBs to <em>four</em> network interfaces, <code class="docutils literal notranslate"><span class="pre">hsn0</span></code>, <code class="docutils literal notranslate"><span class="pre">hsn1</span></code>, <code class="docutils literal notranslate"><span class="pre">hsn2</span></code>,
+<code class="docutils literal notranslate"><span class="pre">hsn3</span></code>. Typically, orchestrators will need to be created in the
+following way:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;my_exp&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;slurm&quot;</span><span class="p">)</span>
+<span class="n">orc</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">db_nodes</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;hsn0&quot;</span><span class="p">,</span><span class="s2">&quot;hsn1&quot;</span><span class="p">,</span><span class="s2">&quot;hsn2&quot;</span><span class="p">,</span><span class="s2">&quot;hsn3&quot;</span><span class="p">],</span> <span class="n">single_cmd</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="running-tests">
+<h2>Running tests<a class="headerlink" href="#running-tests" title="Permalink to this heading">#</a></h2>
+<p>The same environment set to run SmartSim must be set to run tests. The
+environment variables needed to run the test suite are the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_TEST_ACCOUNT</span><span class="o">=</span>PROJECT_NAME<span class="w"> </span><span class="c1"># Change this to above</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_TEST_LAUNCHER</span><span class="o">=</span>slurm
+<span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_TEST_DEVICE</span><span class="o">=</span>gpu
+<span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_TEST_PORT</span><span class="o">=</span><span class="m">6789</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_TEST_INTERFACE</span><span class="o">=</span><span class="s2">&quot;hsn0,hsn1,hsn2,hsn3&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="hpe-cray-supercomputers">
+<h1>HPE Cray supercomputers<a class="headerlink" href="#hpe-cray-supercomputers" title="Permalink to this heading">#</a></h1>
+<p>On certain HPE Cray machines, the SmartSim dependencies have been installed
+system-wide though specific paths and names might vary (please contact the team
+if these instructions do not work).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>use<span class="w"> </span>-a<span class="w"> </span>/lus/scratch/smartsim/local/modulefiles
+module<span class="w"> </span>load<span class="w"> </span>cudatoolkit/11.8<span class="w"> </span>cudnn<span class="w"> </span>git-lfs
+
+module<span class="w"> </span>unload<span class="w"> </span>PrgEnv-cray<span class="w"> </span>PrgEnv-intel<span class="w"> </span>PrgEnv-gcc
+module<span class="w"> </span>load<span class="w"> </span>PrgEnv-gnu
+module<span class="w"> </span>switch<span class="w"> </span>gcc/11.2.0
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">CRAYPE_LINK_TYPE</span><span class="o">=</span>dynamic
+</pre></div>
+</div>
+<p>This should provide all the dependencies needed to build the GPU backends for
+the ML bakcends. Users can thus proceed with their preferred way of installing
+SmartSim either <a class="reference internal" href="basic.html#from-pypi"><span class="std std-ref">from PyPI</span></a> or <a class="reference internal" href="basic.html#id1"><span class="std std-ref">from source</span></a>.</p>
+</section>
+<section id="cheyenne-at-ncar">
+<h1>Cheyenne at NCAR<a class="headerlink" href="#cheyenne-at-ncar" title="Permalink to this heading">#</a></h1>
+<p>Since SmartSim does not currently support the Message Passing Toolkit (MPT),
+Cheyenne users of SmartSim will need to utilize OpenMPI.</p>
+<p>The following module commands were utilized to run the examples:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>module<span class="w"> </span>purge
+$<span class="w"> </span>module<span class="w"> </span>load<span class="w"> </span>ncarenv/1.3<span class="w"> </span>gnu/8.3.0<span class="w"> </span>ncarcompilers/0.5.0<span class="w"> </span>netcdf/4.7.4<span class="w"> </span>openmpi/4.0.5
+</pre></div>
+</div>
+<p>With this environment loaded, users will need to build and install both SmartSim
+and SmartRedis through pip. Usually we recommend users installing or loading
+miniconda and using the pip that comes with that installation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>smartsim
+$<span class="w"> </span>smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cpu<span class="w">  </span><span class="c1">#(Since Cheyenne does not have GPUs)</span>
+</pre></div>
+</div>
+<p>To make the SmartRedis library (C, C++, Fortran clients), follow these steps
+with the same environment loaded.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># clone SmartRedis and build</span>
+$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/SmartRedis.git<span class="w"> </span>smartredis
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>smartredis
+$<span class="w"> </span>make<span class="w"> </span>lib
+</pre></div>
+</div>
+</section>
+<section id="summit-at-olcf">
+<h1>Summit at OLCF<a class="headerlink" href="#summit-at-olcf" title="Permalink to this heading">#</a></h1>
+<p>Since SmartSim does not have a built PowerPC build, the build steps for an IBM
+system are slightly different than other systems.</p>
+<p>Luckily for us, a conda channel with all relevant packages is maintained as part
+of the <a class="reference external" href="https://opence.mit.edu/#/">OpenCE</a> initiative.  Users can follow these
+instructions to get a working SmartSim build with PyTorch and TensorFlow for GPU
+on Summit.  Note that SmartSim and SmartRedis will be downloaded to the working
+directory from which these instructions are executed.</p>
+<p>Note that the available PyTorch version (1.10.2) does not match
+the one expected by RedisAI 1.2.7 (1.11): it is still compatible and should
+work, but please open an issue on SmartSim’s GitHub repo if you run
+into problems.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># setup Python and build environment</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">ENV_NAME</span><span class="o">=</span>smartsim-0.6.0
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartRedis.git<span class="w"> </span>smartredis
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartSim.git<span class="w"> </span>smartsim
+conda<span class="w"> </span>config<span class="w"> </span>--prepend<span class="w"> </span>channels<span class="w"> </span>https://ftp.osuosl.org/pub/open-ce/1.6.1/
+conda<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ENV_NAME</span><span class="w"> </span>-y<span class="w">  </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span>git-lfs<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span>cmake<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span>make<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">cudnn</span><span class="o">=</span><span class="m">8</span>.1.1_11.2<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">cudatoolkit</span><span class="o">=</span><span class="m">11</span>.2.2<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">tensorflow</span><span class="o">=</span><span class="m">2</span>.8.1<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span>libtensorflow<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">pytorch</span><span class="o">=</span><span class="m">1</span>.10.2<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">torchvision</span><span class="o">=</span><span class="m">0</span>.11.3
+conda<span class="w"> </span>activate<span class="w"> </span><span class="nv">$ENV_NAME</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CC</span><span class="o">=</span><span class="k">$(</span>which<span class="w"> </span>gcc<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CXX</span><span class="o">=</span><span class="k">$(</span>which<span class="w"> </span>g++<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$LDFLAGS</span><span class="s2"> -pthread&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDNN_LIBRARY</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDNN_INCLUDE_DIR</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/include/
+module<span class="w"> </span>load<span class="w"> </span>cuda/11.4.2
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$CUDNN_LIBRARY</span>:<span class="nv">$LD_LIBRARY_PATH</span>:/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/python3.9/site-packages/torch/lib
+module<span class="w"> </span>load<span class="w"> </span>gcc/9.3.0
+module<span class="w"> </span>unload<span class="w"> </span>xalt
+<span class="c1"># clone SmartRedis and build</span>
+<span class="nb">pushd</span><span class="w"> </span>smartredis
+make<span class="w"> </span>lib<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+<span class="nb">popd</span>
+
+<span class="c1"># clone SmartSim and build</span>
+<span class="nb">pushd</span><span class="w"> </span>smartsim
+pip<span class="w"> </span>install<span class="w"> </span>.
+
+<span class="c1"># install PyTorch and TensorFlow backend for the Orchestrator database.</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">Torch_DIR</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/python3.9/site-packages/torch/share/cmake/Torch/
+<span class="nb">export</span><span class="w"> </span><span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CFLAGS</span><span class="s2"> -I/ccs/home/</span><span class="nv">$USER</span><span class="s2">/.conda/envs/</span><span class="nv">$ENV_NAME</span><span class="s2">/lib/python3.9/site-packages/tensorflow/include&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_REDISAI</span><span class="o">=</span><span class="m">1</span>.2.7
+<span class="nb">export</span><span class="w"> </span><span class="nv">Tensorflow_BUILD_DIR</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/python3.9/site-packages/tensorflow/
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="o">=</span>gpu<span class="w"> </span>--torch_dir<span class="w"> </span><span class="nv">$Torch_DIR</span><span class="w"> </span>--libtensorflow_dir<span class="w"> </span><span class="nv">$Tensorflow_BUILD_DIR</span><span class="w"> </span>-v
+
+<span class="c1"># Show LD_LIBRARY_PATH for future reference</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;SmartSim installation is complete, LD_LIBRARY_PATH=</span><span class="nv">$LD_LIBRARY_PATH</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>When executing SmartSim, if you want to use the PyTorch and TensorFlow backends
+in the orchestrator, you will need to set up the same environment used at build
+time:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>cuda/11.4.2
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDNN_LIBRARY</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:<span class="nv">$LD_LIBRARY_PATH</span>:<span class="nv">$CUDNN_LIBRARY</span>
+module<span class="w"> </span>load<span class="w"> </span>gcc/9.3.0
+module<span class="w"> </span>unload<span class="w"> </span>xalt
+</pre></div>
+</div>
+</section>
+<section id="site-installation">
+<span id="id1"></span><h1>Site Installation<a class="headerlink" href="#site-installation" title="Permalink to this heading">#</a></h1>
+<p>Certain HPE customer machines have a site installation of SmartSim. This means
+that users can bypass the <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code> step that builds the ML backends and
+the Redis binaries. Users on these platforms can install SmartSim from PyPI or
+from source with the following steps replacing <code class="docutils literal notranslate"><span class="pre">COMPILER_VERSION</span></code> and
+<code class="docutils literal notranslate"><span class="pre">SMARTSIM_VERSION</span></code> with the desired entries.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>use<span class="w"> </span>-a<span class="w"> </span>/lus/scratch/smartsim/local/modulefiles
+module<span class="w"> </span>load<span class="w"> </span>cudatoolkit/11.8<span class="w"> </span>cudnn<span class="w"> </span>smartsim-deps/COMPILER_VERSION/SMARTSIM_VERSION
+pip<span class="w"> </span>install<span class="w"> </span>smartsim<span class="o">[</span>ml<span class="o">]</span>
+smart<span class="w"> </span>build<span class="w"> </span>--only_python_packages<span class="w"> </span>--device<span class="w"> </span>gpu<span class="w"> </span><span class="o">[</span>--onnx<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="basic.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Basic Installation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../contributing.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Contributing Guide</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Installation on specific platforms</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#customizing-environment-variables">Customizing environment variables</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compiler-environment">Compiler environment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-related">CUDA-related</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-dependencies-non-root">GPU dependencies (non-root)</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#olcf-frontier">OLCF Frontier</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#known-limitations">Known limitations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-process">Build process</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-environment">Set up environment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#binding-dbs-to-slingshot">Binding DBs to Slingshot</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-tests">Running tests</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#hpe-cray-supercomputers">HPE Cray supercomputers</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#cheyenne-at-ncar">Cheyenne at NCAR</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#summit-at-olcf">Summit at OLCF</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#site-installation">Site Installation</a></li>
+</ul>
+
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2023, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

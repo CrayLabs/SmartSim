@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Summit at OLCF &#8212; SmartSim 0.5.1 documentation</title>
+    
+  <link href="../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.5.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../basic.html">
+   Basic Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../platform.html">
+   Installation on specific platforms
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../contributing.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../smartsim_zoo.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../tutorials/ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_dataset_conversions.html">
+   DataSet Conversions
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../developer.html">
+   Developer
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../testing.html">
+   Testing
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../_sources/installation_instructions/platform/olcf-summit.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Finstallation_instructions/platform/olcf-summit.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Summit at OLCF</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <section id="summit-at-olcf">
+<h1>Summit at OLCF<a class="headerlink" href="#summit-at-olcf" title="Permalink to this headline">¶</a></h1>
+<p>Since SmartSim does not have a built PowerPC build, the build steps for an IBM
+system are slightly different than other systems.</p>
+<p>Luckily for us, a conda channel with all relevant packages is maintained as part
+of the <a class="reference external" href="https://opence.mit.edu/#/">OpenCE</a> initiative.  Users can follow these
+instructions to get a working SmartSim build with PyTorch and TensorFlow for GPU
+on Summit.  Note that SmartSim and SmartRedis will be downloaded to the working
+directory from which these instructions are executed.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># setup Python and build environment</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">ENV_NAME</span><span class="o">=</span>smartsim-0.5.1
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartRedis.git<span class="w"> </span>smartredis
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartSim.git<span class="w"> </span>smartsim
+conda<span class="w"> </span>config<span class="w"> </span>--prepend<span class="w"> </span>channels<span class="w"> </span>https://ftp.osuosl.org/pub/open-ce/1.4.1/
+conda<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ENV_NAME</span><span class="w"> </span>-y<span class="w">  </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span>git-lfs<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span>cmake<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span>make<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">cudnn</span><span class="o">=</span><span class="m">8</span>.1.1_11.2<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">cudatoolkit</span><span class="o">=</span><span class="m">11</span>.2.2<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">tensorflow</span><span class="o">=</span><span class="m">2</span>.6.2<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">libtensorflow</span><span class="o">=</span><span class="m">2</span>.6.2<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">pytorch</span><span class="o">=</span><span class="m">1</span>.9.0<span class="w"> </span><span class="se">\</span>
+<span class="w">                                  </span><span class="nv">torchvision</span><span class="o">=</span><span class="m">0</span>.10.0
+conda<span class="w"> </span>activate<span class="w"> </span><span class="nv">$ENV_NAME</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CC</span><span class="o">=</span><span class="k">$(</span>which<span class="w"> </span>gcc<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CXX</span><span class="o">=</span><span class="k">$(</span>which<span class="w"> </span>g++<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$LDFLAGS</span><span class="s2"> -pthread&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDNN_LIBRARY</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDNN_INCLUDE_DIR</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/include/
+module<span class="w"> </span>load<span class="w"> </span>cuda/11.4.2
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$CUDNN_LIBRARY</span>:<span class="nv">$LD_LIBRARY_PATH</span>:/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/python3.9/site-packages/torch/lib
+module<span class="w"> </span>load<span class="w"> </span>gcc/9.3.0
+module<span class="w"> </span>unload<span class="w"> </span>xalt
+<span class="c1"># clone SmartRedis and build</span>
+<span class="nb">pushd</span><span class="w"> </span>smartredis
+make<span class="w"> </span>lib<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+<span class="nb">popd</span>
+
+<span class="c1"># clone SmartSim and build</span>
+<span class="nb">pushd</span><span class="w"> </span>smartsim
+pip<span class="w"> </span>install<span class="w"> </span>.
+
+<span class="c1"># install PyTorch and TensorFlow backend for the Orchestrator database.</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">Torch_DIR</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/python3.9/site-packages/torch/share/cmake/Torch/
+<span class="nb">export</span><span class="w"> </span><span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CFLAGS</span><span class="s2"> -I/ccs/home/</span><span class="nv">$USER</span><span class="s2">/.conda/envs/</span><span class="nv">$ENV_NAME</span><span class="s2">/lib/python3.9/site-packages/tensorflow/include&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SMARTSIM_REDISAI</span><span class="o">=</span><span class="m">1</span>.2.5
+<span class="nb">export</span><span class="w"> </span><span class="nv">Tensorflow_BUILD_DIR</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/python3.9/site-packages/tensorflow/
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="o">=</span>gpu<span class="w"> </span>--torch_dir<span class="w"> </span><span class="nv">$Torch_DIR</span><span class="w"> </span>--libtensorflow_dir<span class="w"> </span><span class="nv">$Tensorflow_BUILD_DIR</span><span class="w"> </span>-v
+
+<span class="c1"># Show LD_LIBRARY_PATH for future reference</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;SmartSim installation is complete, LD_LIBRARY_PATH=</span><span class="nv">$LD_LIBRARY_PATH</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>When executing SmartSim, if you want to use the PyTorch and TensorFlow backends
+in the orchestrator, you will need to set up the same environment used at build
+time:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>cuda/11.4.2
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDNN_LIBRARY</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/<span class="nv">$ENV_NAME</span>/lib/
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>/ccs/home/<span class="nv">$USER</span>/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:<span class="nv">$LD_LIBRARY_PATH</span>:<span class="nv">$CUDNN_LIBRARY</span>
+module<span class="w"> </span>load<span class="w"> </span>gcc/9.3.0
+module<span class="w"> </span>unload<span class="w"> </span>xalt
+</pre></div>
+</div>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2023, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

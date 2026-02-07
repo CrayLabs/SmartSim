@@ -1,0 +1,911 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "487eb264-3c79-434f-842f-a11a8601ae7b",
+   "metadata": {},
+   "source": [
+    "# Online Inference\n",
+    "\n",
+    "This tutorial shows how to use trained PyTorch, TensorFlow, and ONNX (format) models, written in Python, directly in HPC workloads written in Fortran, C, C++ and Python.\n",
+    "\n",
+    "The example simulation here is written in Python for brevity, however, the inference API in SmartRedis is the same (besides extra parameters for compiled langauges) across all clients. \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f3604189-d438-4702-9aba-89161ebc4554",
+   "metadata": {},
+   "source": [
+    "## Installing the ML backends\n",
+    "\n",
+    "In order to use the `Orchestrator` database as an inference engine, the Machine Learning (ML) backends need to be built and supplied to the database at runtime. \n",
+    "\n",
+    "To check which backends are built, a simple helper function is available in SmartSim as shown below."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "bd289351-b2a7-45ae-a774-e54a94a80c65",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "['torch']\n"
+     ]
+    }
+   ],
+   "source": [
+    "## Installing the ML backends\n",
+    "from smartsim._core.utils.helpers import installed_redisai_backends\n",
+    "print(installed_redisai_backends())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e4b21b41-bd2d-412f-b8a7-8011b154d23b",
+   "metadata": {},
+   "source": [
+    "As you can see, only the Torch backend is built. In order to use the TensorFlow and ONNX backends as well, they need to be built.\n",
+    "\n",
+    "The `smart` command line interface can be used to build the backends using the `smart build` command. The output of `smart build --help` is shown below.\n",
+    "\n",
+    "\n",
+    "```text\n",
+    "usage: smart [-h] [-v] [--device DEVICE] [--no_pt] [--no_tf] [--onnx] [--torch_dir TORCH_DIR]\n",
+    "\n",
+    "optional arguments:\n",
+    "  -h, --help            show this help message and exit\n",
+    "  -v                    Enable verbose build process\n",
+    "  --device DEVICE       Device to build ML runtimes for (cpu || gpu)\n",
+    "  --no_pt               Do not build PyTorch backend\n",
+    "  --no_tf               Do not build TensorFlow backend\n",
+    "  --onnx                Build ONNX backend (off by default)\n",
+    "  --torch_dir TORCH_DIR Path to custom <path>/torch/share/cmake/Torch/ directory \n",
+    "```\n",
+    "\n",
+    "We use `smart clean` first to remove the previous build, and then call `smart build` to build the new backend set. For larger teams, CrayLabs will help setup your system so that the backends do not have to be built by each user.\n",
+    "\n",
+    "By default, the PyTorch and TensorFlow backends are built. To build all three backends for use on CPU, we issue the following command. Please note, the ONNX backend currently only works on linux."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "a6d157cf-1d2c-49d0-a588-ec99506661fb",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Successfully removed existing RedisAI installation\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Successfully removed ML runtimes\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Running SmartSim build process...\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Checking for build tools...\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Checking requested versions...\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Redis build complete!\n",
+      "\n",
+      "ML Backends Requested\n",
+      "-----------------------\n",
+      "    PyTorch 1.7.1: \u001b[32mTrue\u001b[0m\n",
+      "    TensorFlow 2.5.2: \u001b[32mTrue\u001b[0m\n",
+      "    ONNX 1.9.0: \u001b[32mTrue\u001b[0m\n",
+      "\n",
+      "Building for GPU support: \u001b[31mFalse\u001b[0m\n",
+      "\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m ONNX 1.9.0 installed in Python environment\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m TensorFlow 2.5.2 installed in Python environment\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Torch 1.7.1 installed in Python environment\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m Building RedisAI version 1.2.3 from https://github.com/RedisAI/RedisAI.git/\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m ML Backends and RedisAI build complete!\n",
+      "\u001b[34m[SmartSim]\u001b[0m \u001b[1;30mINFO\u001b[0m SmartSim build complete!\n"
+     ]
+    }
+   ],
+   "source": [
+    "!smart clean && smart build --device cpu --onnx"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7df6c3dd-6cc5-46e6-9c58-6ba2333d7045",
+   "metadata": {},
+   "source": [
+    "## Starting the Database for Inference\n",
+    "\n",
+    "SmartSim performs online inference by using the SmartRedis clients to call into the\n",
+    "Machine Learning (ML) runtimes linked into the Orchestrator database. The Orchestrator\n",
+    "is the name in SmartSim for a Redis or KeyDB database with a RedisAI module built\n",
+    "into it with the ML runtimes.\n",
+    "\n",
+    "Therefore, to perform inference, you must first create an Orchestrator database and\n",
+    "launch it. There are two methods to couple the database to your application in\n",
+    "order to add inference capability to your application.\n",
+    " - standard (not co-located)\n",
+    " - co-located\n",
+    " \n",
+    "`standard` mode launches an optionally clustered (across many compute hosts) database instance\n",
+    "that can be treated as a single storage device for many clients (possibly the many ranks\n",
+    "of an MPI program) where there is a single address space for keys across all hosts.\n",
+    "\n",
+    "`co-located` mode launches a orchestrator instance on each compute host used by a,\n",
+    "possibly distributed, application. each instance contains their own address space\n",
+    "for keys. In SmartSim, `Model` instances can be launched with a co-located orchetrator\n",
+    "through `Model.colocate_db`. Co-located `Model`s are used for highly scalable\n",
+    "inference where global aggregations aren't necessary for inference.\n",
+    "\n",
+    "The code below launches the `Orchestrator` database using the `standard` deployment\n",
+    "method."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "201b9c43-f3e9-476c-ac21-e45f2c621b00",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# some helper libraries for the tutorial\n",
+    "import io\n",
+    "import os\n",
+    "os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'\n",
+    "import logging\n",
+    "import numpy as np\n",
+    "\n",
+    "# import smartsim and smartredis\n",
+    "from smartredis import Client\n",
+    "from smartsim import Experiment"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "1df7ff13-e292-4c68-a99c-d0b5491be079",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "exp = Experiment(\"Inference-Tutorial\", launcher=\"local\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "7364dbdf-52bf-4107-be3a-78fb541449f8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "db = exp.create_database(port=6780, interface=\"lo\")\n",
+    "exp.start(db)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "58615a9e-bb53-4025-90de-c1eee4e315eb",
+   "metadata": {},
+   "source": [
+    "## Using PyTorch\n",
+    "\n",
+    "The Orchestrator supports both [PyTorch](https://pytorch.org/)\n",
+    "models and [TorchScript](https://pytorch.org/docs/stable/jit.html) functions and scripts\n",
+    "in PyTorch.\n",
+    "\n",
+    "Below, the code is shown to create, jit-trace (prepare for inference), set,\n",
+    "and call a PyTorch Convolutional Neural Network (CNN) with SmartSim and SmartRedis"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "dde172d9-4f18-4adc-8e78-fc6f71fb405c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import torch\n",
+    "import torch.nn as nn\n",
+    "import torch.nn.functional as F\n",
+    "\n",
+    "\n",
+    "class Net(nn.Module):\n",
+    "    def __init__(self):\n",
+    "        super(Net, self).__init__()\n",
+    "        self.conv1 = nn.Conv2d(1, 32, 3, 1)\n",
+    "        self.conv2 = nn.Conv2d(32, 64, 3, 1)\n",
+    "        self.dropout1 = nn.Dropout(0.25)\n",
+    "        self.dropout2 = nn.Dropout(0.5)\n",
+    "        self.fc1 = nn.Linear(9216, 128)\n",
+    "        self.fc2 = nn.Linear(128, 10)\n",
+    "\n",
+    "    def forward(self, x):\n",
+    "        x = self.conv1(x)\n",
+    "        x = F.relu(x)\n",
+    "        x = self.conv2(x)\n",
+    "        x = F.relu(x)\n",
+    "        x = F.max_pool2d(x, 2)\n",
+    "        x = self.dropout1(x)\n",
+    "        x = torch.flatten(x, 1)\n",
+    "        x = self.fc1(x)\n",
+    "        x = F.relu(x)\n",
+    "        x = self.dropout2(x)\n",
+    "        x = self.fc2(x)\n",
+    "        output = F.log_softmax(x, dim=1)\n",
+    "        return output\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0ab54aba-f6d7-4ecb-907e-1efdba9657a9",
+   "metadata": {},
+   "source": [
+    "To set a PyTorch model, we create a function to \"jit-trace\" the model\n",
+    "and save it to a buffer in memory.\n",
+    "\n",
+    "If you aren't familiar with the concept of tracing, take a look at the\n",
+    "Torch documentation for [trace](https://pytorch.org/docs/stable/generated/torch.jit.trace.html#torch.jit.trace)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "e5aa5995-d250-46c4-87f0-0115112560ae",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Initialize an instance of our CNN model\n",
+    "n = Net()\n",
+    "n.eval()\n",
+    "\n",
+    "# prepare a sample input to trace on (random noise is fine)\n",
+    "example_forward_input = torch.rand(1, 1, 28, 28)\n",
+    "\n",
+    "def create_torch_model(torch_module, example_forward_input):\n",
+    "\n",
+    "    # perform the trace of the nn.Module.forward() method\n",
+    "    module = torch.jit.trace(torch_module, example_forward_input)\n",
+    "\n",
+    "    # save the traced module to a buffer\n",
+    "    model_buffer = io.BytesIO()\n",
+    "    torch.jit.save(module, model_buffer)\n",
+    "    return model_buffer.getvalue()\n",
+    "\n",
+    "traced_cnn = create_torch_model(n, example_forward_input)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "209a8db0-249a-4345-b3de-9c309ae5ebe6",
+   "metadata": {},
+   "source": [
+    "Lastly, we use the SmartRedis Python client to\n",
+    "\n",
+    "1. Connect to the database\n",
+    "2. Put a batch of 20 tensors into the database  (``put_tensor``)\n",
+    "3. Set the Torch model in the database (``set_model``)\n",
+    "4. Run the model on the batch of tensors (``run_model``)\n",
+    "5. Retrieve the result (``get_tensor``)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "9bdabc3d-31cc-47fc-853b-94fffaa2bf10",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Prediction: [[-2.3896925 -2.222281  -2.2099075 -2.3109329 -2.2654908 -2.2972388\n",
+      "  -2.31261   -2.4206355 -2.3313663 -2.2851841]\n",
+      " [-2.3904743 -2.217032  -2.2037609 -2.3167074 -2.269724  -2.306428\n",
+      "  -2.3203554 -2.4291377 -2.3265824 -2.26761  ]\n",
+      " [-2.4030585 -2.2234566 -2.2061992 -2.3179824 -2.2666562 -2.3024952\n",
+      "  -2.3145995 -2.4121103 -2.321992  -2.2773328]\n",
+      " [-2.394936  -2.2272267 -2.204416  -2.3120143 -2.277909  -2.2956748\n",
+      "  -2.3282666 -2.417701  -2.3169427 -2.2704961]\n",
+      " [-2.4077153 -2.2218678 -2.2150905 -2.3086834 -2.271397  -2.2970207\n",
+      "  -2.316388  -2.4020846 -2.331749  -2.2727606]\n",
+      " [-2.3883135 -2.224255  -2.2007098 -2.318411  -2.262315  -2.3065453\n",
+      "  -2.3185995 -2.4213285 -2.324081  -2.2816932]\n",
+      " [-2.3935633 -2.2283232 -2.2039099 -2.3168964 -2.2663016 -2.3026004\n",
+      "  -2.3311245 -2.4100015 -2.3192656 -2.273057 ]\n",
+      " [-2.3912487 -2.2257855 -2.2192428 -2.3138208 -2.2605207 -2.3049622\n",
+      "  -2.3140588 -2.4085803 -2.3244717 -2.2805102]\n",
+      " [-2.396017  -2.2055867 -2.2076716 -2.3115468 -2.2626843 -2.317502\n",
+      "  -2.3293278 -2.4063933 -2.3240464 -2.2857068]\n",
+      " [-2.400525  -2.2175472 -2.2107942 -2.3215094 -2.2654407 -2.3106685\n",
+      "  -2.3121283 -2.4197953 -2.3143296 -2.2738698]\n",
+      " [-2.3951192 -2.22293   -2.2007458 -2.3257391 -2.2619295 -2.3119488\n",
+      "  -2.3230195 -2.414333  -2.3162081 -2.2745168]\n",
+      " [-2.3921893 -2.2197208 -2.2132788 -2.3196573 -2.2594788 -2.294501\n",
+      "  -2.3155563 -2.41964   -2.333443  -2.2784812]\n",
+      " [-2.3978572 -2.21814   -2.2138193 -2.3107896 -2.2682822 -2.3129818\n",
+      "  -2.3305137 -2.4049444 -2.3191633 -2.268348 ]\n",
+      " [-2.3885386 -2.2202256 -2.2113626 -2.320609  -2.2736616 -2.302711\n",
+      "  -2.3269918 -2.407227  -2.3243167 -2.2685623]\n",
+      " [-2.3907073 -2.2142136 -2.199826  -2.3316247 -2.2658823 -2.3049352\n",
+      "  -2.3258402 -2.4124892 -2.3311973 -2.270514 ]\n",
+      " [-2.397689  -2.221271  -2.210492  -2.31187   -2.269957  -2.3107474\n",
+      "  -2.3231914 -2.4086561 -2.3227108 -2.2684674]\n",
+      " [-2.3973284 -2.2178047 -2.2101116 -2.3327227 -2.2620602 -2.3082662\n",
+      "  -2.3223288 -2.4149203 -2.3173645 -2.2638412]\n",
+      " [-2.3989034 -2.2254052 -2.2099965 -2.315091  -2.256479  -2.316446\n",
+      "  -2.320125  -2.4082    -2.3202796 -2.27425  ]\n",
+      " [-2.4013472 -2.220387  -2.2055998 -2.3132184 -2.2628107 -2.2920387\n",
+      "  -2.3201547 -2.4167507 -2.347317  -2.2682052]\n",
+      " [-2.3958232 -2.212347  -2.2250805 -2.312564  -2.2687898 -2.3022218\n",
+      "  -2.3189983 -2.4084132 -2.3253684 -2.2745614]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "client = Client(address=db.get_address()[0], cluster=False)\n",
+    "\n",
+    "client.put_tensor(\"input\", torch.rand(20, 1, 28, 28).numpy())\n",
+    "\n",
+    "# put the PyTorch CNN in the database in GPU memory\n",
+    "client.set_model(\"cnn\", traced_cnn, \"TORCH\", device=\"CPU\")\n",
+    "\n",
+    "# execute the model, supports a variable number of inputs and outputs\n",
+    "client.run_model(\"cnn\", inputs=[\"input\"], outputs=[\"output\"])\n",
+    "\n",
+    "# get the output\n",
+    "output = client.get_tensor(\"output\")\n",
+    "print(f\"Prediction: {output}\")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "37c6f801-deb5-463c-bfc7-565a79b8bcfb",
+   "metadata": {},
+   "source": [
+    "As we gave the CNN random noise, the predictions reflect that.\n",
+    "\n",
+    "If running on CPU, be sure to change the argument in the ``set_model`` call\n",
+    "above to ``CPU``."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "638cdd2a-c0ad-4a54-a7ce-9eef0096da30",
+   "metadata": {},
+   "source": [
+    "## Using TorchScript\n",
+    "\n",
+    "In addition to PyTorch models, TorchScript scripts and functions can be set in the\n",
+    "Orchestrator database and called from any of the SmartRedis languages. Functions\n",
+    "can be set in the database in Python prior to application launch and then used\n",
+    "directly in Fortran, C, and C++ simulations.\n",
+    "\n",
+    "The example below uses the TorchScript Singular Value Decomposition (SVD) function.\n",
+    "The function set in side the database and then called with a random input\n",
+    "tensor.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "267405bf-3144-4219-a82b-15be10cf5125",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def calc_svd(input_tensor):\n",
+    "    # svd function from TorchScript API\n",
+    "    return input_tensor.svd()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "2e85ced9-e39a-4efb-91db-3919aa4e9489",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "U: [[[-0.23397607  0.5438373 ]\n",
+      "  [-0.86701274 -0.4917972 ]\n",
+      "  [-0.43993664  0.6799829 ]]\n",
+      "\n",
+      " [[-0.6620298  -0.13621859]\n",
+      "  [-0.52549917 -0.61676836]\n",
+      "  [-0.5343851   0.77526873]]\n",
+      "\n",
+      " [[-0.7783965   0.5492357 ]\n",
+      "  [-0.31023592 -0.7575878 ]\n",
+      "  [-0.545759   -0.3527054 ]]\n",
+      "\n",
+      " [[-0.4049839  -0.4157332 ]\n",
+      "  [-0.60041505 -0.55078214]\n",
+      "  [-0.68955773  0.7237438 ]]\n",
+      "\n",
+      " [[-0.41165417  0.8971315 ]\n",
+      "  [-0.8538579  -0.31819552]\n",
+      "  [-0.31854016 -0.30644214]]]\n",
+      "\n",
+      ", S: [[118.39219   34.77483 ]\n",
+      " [169.2848    51.890797]\n",
+      " [142.5363    16.198809]\n",
+      " [119.312645  17.043808]\n",
+      " [121.78022   29.403694]]\n",
+      "\n",
+      ", V: [[[-0.48653388  0.8736617 ]\n",
+      "  [-0.8736617  -0.48653388]]\n",
+      "\n",
+      " [[-0.73341507 -0.67978114]\n",
+      "  [-0.67978114  0.73341507]]\n",
+      "\n",
+      " [[-0.4511965   0.8924247 ]\n",
+      "  [-0.8924247  -0.4511965 ]]\n",
+      "\n",
+      " [[-0.56162083 -0.8273947 ]\n",
+      "  [-0.8273947   0.56162083]]\n",
+      "\n",
+      " [[-0.66356516  0.7481186 ]\n",
+      "  [-0.7481186  -0.66356516]]]\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "# connect a client to the database\n",
+    "client = Client(address=db.get_address()[0], cluster=False)\n",
+    "\n",
+    "# test the SVD function\n",
+    "tensor = np.random.randint(0, 100, size=(5, 3, 2)).astype(np.float32)\n",
+    "client.put_tensor(\"input\", tensor)\n",
+    "client.set_function(\"svd\", calc_svd)\n",
+    "client.run_script(\"svd\", \"calc_svd\", [\"input\"], [\"U\", \"S\", \"V\"])\n",
+    "U = client.get_tensor(\"U\")\n",
+    "S = client.get_tensor(\"S\")\n",
+    "V = client.get_tensor(\"V\")\n",
+    "print(f\"U: {U}\\n\\n, S: {S}\\n\\n, V: {V}\\n\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "55ae0408-7ddb-4a75-912f-7312ee43f79b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## TensorFlow and Keras\n",
+    "import tensorflow as tf\n",
+    "from tensorflow import keras\n",
+    "tf.get_logger().setLevel(logging.ERROR)\n",
+    "\n",
+    "# create a simple Fully connected network in Keras\n",
+    "model = keras.Sequential(\n",
+    "    layers=[\n",
+    "        keras.layers.InputLayer(input_shape=(28, 28), name=\"input\"),\n",
+    "        keras.layers.Flatten(input_shape=(28, 28), name=\"flatten\"),\n",
+    "        keras.layers.Dense(128, activation=\"relu\", name=\"dense\"),\n",
+    "        keras.layers.Dense(10, activation=\"softmax\", name=\"output\"),\n",
+    "    ],\n",
+    "    name=\"FCN\",\n",
+    ")\n",
+    "\n",
+    "# Compile model with optimizer\n",
+    "model.compile(optimizer=\"adam\",\n",
+    "            loss=\"sparse_categorical_crossentropy\",\n",
+    "            metrics=[\"accuracy\"])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "48b1efb6-4f39-4ad6-8a27-58648ec66bde",
+   "metadata": {},
+   "source": [
+    "### Setting TensorFlow and Keras Models\n",
+    "\n",
+    "After a model is created (trained or not), the graph of the model is\n",
+    "frozen and saved to file so the client method `client.set_model_from_file`\n",
+    "can load it into the database.\n",
+    "\n",
+    "SmartSim includes a utility to freeze the graph of a TensorFlow or Keras model in\n",
+    "`smartsim.ml.tf`. To use TensorFlow or Keras in SmartSim, specify\n",
+    "`TF` as the argument for *backend* in the call to `client.set_model` or\n",
+    "`client.set_model_from_file`.\n",
+    "\n",
+    "Note that TensorFlow and Keras, unlike the other ML libraries supported by\n",
+    "SmartSim, requires an `input` and `output` argument in the call to\n",
+    "`set_model`. These arguments correspond to the layer names of the\n",
+    "created model. The `smartsim.ml.tf.freeze_model` utility\n",
+    "returns these values for convenience as shown below."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "400e2a53-74b2-4bf1-a0e8-32222fd968f4",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[[0.10012024 0.01852205 0.03400946 0.04896204 0.10269627 0.05298079\n",
+      "  0.08056829 0.12078423 0.3550181  0.08633846]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "from smartsim.ml.tf import freeze_model\n",
+    "\n",
+    "# SmartSim utility for Freezing the model and saving it to a file.\n",
+    "model_path, inputs, outputs = freeze_model(model, os.getcwd(), \"fcn.pb\")\n",
+    "\n",
+    "# use the same client we used for PyTorch to set the TensorFlow model\n",
+    "# this time the method for setting a model from a saved file is shown. \n",
+    "# TensorFlow backed requires named inputs and outputs on graph\n",
+    "# this differs from PyTorch and ONNX.\n",
+    "client.set_model_from_file(\n",
+    "    \"keras_fcn\", model_path, \"TF\", device=\"CPU\", inputs=inputs, outputs=outputs\n",
+    ")\n",
+    "\n",
+    "# put random random input tensor into the database\n",
+    "input_data = np.random.rand(1, 28, 28).astype(np.float32)\n",
+    "client.put_tensor(\"input\", input_data)\n",
+    "\n",
+    "# run the Fully Connected Network model on the tensor we just put\n",
+    "# in and store the result of the inference at the \"output\" key\n",
+    "client.run_model(\"keras_fcn\", \"input\", \"output\")\n",
+    "\n",
+    "# get the result of the inference\n",
+    "pred = client.get_tensor(\"output\")\n",
+    "print(pred)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a23d248c-6280-44b0-88a7-2babbaed3f3f",
+   "metadata": {},
+   "source": [
+    "## Using ONNX\n",
+    "\n",
+    "ONNX is a standard format for representing models. A number of different Machine Learning\n",
+    "Libraries are supported by ONNX and can be readily used with SmartSim.\n",
+    "\n",
+    "Some popular ones are:\n",
+    "\n",
+    "\n",
+    "- [Scikit-learn](https://scikit-learn.org)\n",
+    "- [XGBoost](https://xgboost.readthedocs.io)\n",
+    "- [CatBoost](https://catboost.ai)\n",
+    "- [LightGBM](https://lightgbm.readthedocs.io/en/latest/)\n",
+    "- [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/)\n",
+    "\n",
+    "\n",
+    "As well as some that are not listed. There are also many tools to help convert\n",
+    "models to ONNX.\n",
+    "\n",
+    "- [onnxmltools](https://github.com/onnx/onnxmltools)\n",
+    "- [skl2onnx](https://github.com/onnx/sklearn-onnx/)\n",
+    "- [tensorflow-onnx](https://github.com/onnx/tensorflow-onnx/)\n",
+    "\n",
+    "\n",
+    "And PyTorch has its own converter.\n",
+    "\n",
+    "Currently the ONNX backend only works on Linux, but MacOS support will be added in the future.\n",
+    "\n",
+    "Below are some examples of a few models in [Scikit-learn](https://scikit-learn.org)\n",
+    "that are converted into ONNX format for use with SmartSim. To use ONNX in SmartSim, specify\n",
+    "`ONNX` as the argument for *backend* in the call to `client.set_model` or\n",
+    "`client.set_model_from_file`"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4bf422e5-bece-4402-a2ef-8bca1e009b5c",
+   "metadata": {},
+   "source": [
+    "### Scikit-Learn K-means Cluster\n",
+    "\n",
+    "\n",
+    "K-means clustering is an unsupervised ML algorithm. It is used to categorize data points\n",
+    "into functional groups (\"clusters\"). Scikit Learn has a built in implementation of K-means clustering\n",
+    "and it is easily converted to ONNX for use with SmartSim through \n",
+    "[skl2onnx.to_onnx](http://onnx.ai/sklearn-onnx/auto_examples/plot_convert_syntax.html)\n",
+    "\n",
+    "Since the KMeans model returns two outputs, we provide the `client.run_model` call\n",
+    "with two `output` key names.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "889328a7-2326-476f-a686-f34397f4a210",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from skl2onnx import to_onnx\n",
+    "from sklearn.cluster import KMeans"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "729486bb-ab34-44cb-a36f-7d26cbf6393a",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[1 1 1 1 1 0 0 0 0 0]\n"
+     ]
+    }
+   ],
+   "source": [
+    "\n",
+    "X = np.arange(20, dtype=np.float32).reshape(10, 2)\n",
+    "tr = KMeans(n_clusters=2)\n",
+    "tr.fit(X)\n",
+    "\n",
+    "# save the trained k-means model in memory with skl2onnx\n",
+    "kmeans = to_onnx(tr, X, target_opset=11)\n",
+    "model = kmeans.SerializeToString()\n",
+    "\n",
+    "# random input data\n",
+    "sample = np.arange(20, dtype=np.float32).reshape(10, 2)\n",
+    "\n",
+    "# use the same client from TensorFlow and Pytorch examples.\n",
+    "client.put_tensor(\"input\", sample)\n",
+    "client.set_model(\"kmeans\", model, \"ONNX\", device=\"CPU\")\n",
+    "client.run_model(\"kmeans\", inputs=\"input\", outputs=[\"labels\", \"transform\"])\n",
+    "\n",
+    "print(client.get_tensor(\"labels\"))\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7da6c43d-b1b2-46ae-89f8-cb7050d9592b",
+   "metadata": {},
+   "source": [
+    "### Scikit-Learn Random Forest\n",
+    "\n",
+    "The Random Forest example uses the Iris dataset from Scikit Learn to train a\n",
+    "RandomForestRegressor. As with the other examples, the skl2onnx function\n",
+    "`skl2onnx.to_onnx` is used to convert the model to ONNX format.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "657b3e7b-067a-4053-92e6-60379e5a6807",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.datasets import load_iris\n",
+    "from sklearn.ensemble import RandomForestRegressor\n",
+    "from sklearn.model_selection import train_test_split"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "d73f0d5b-e6c2-42b1-8e21-3b6d064d20e4",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[[1.9999987]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "iris = load_iris()\n",
+    "X, y = iris.data, iris.target\n",
+    "X_train, X_test, y_train, _ = train_test_split(X, y, random_state=13)\n",
+    "clr = RandomForestRegressor(n_jobs=1, n_estimators=100)\n",
+    "clr.fit(X_train, y_train)\n",
+    "\n",
+    "rf_model = to_onnx(clr, X_test.astype(np.float32), target_opset=11)\n",
+    "\n",
+    "sample = np.array([[6.4, 2.8, 5.6, 2.2]]).astype(np.float32)\n",
+    "model = rf_model.SerializeToString()\n",
+    "\n",
+    "client.put_tensor(\"input\", sample)\n",
+    "client.set_model(\"rf_regressor\", model, \"ONNX\", device=\"CPU\")\n",
+    "client.run_model(\"rf_regressor\", inputs=\"input\", outputs=\"output\")\n",
+    "print(client.get_tensor(\"output\"))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "ea774e12-956c-4bbe-be57-af416123c307",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "exp.stop(db)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "15662aeb-1b00-4887-9e47-2c596fdbe941",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<table>\n",
+       "<thead>\n",
+       "<tr><th style=\"text-align: right;\">  </th><th>Name          </th><th>Entity-Type  </th><th style=\"text-align: right;\">  JobID</th><th style=\"text-align: right;\">  RunID</th><th style=\"text-align: right;\">   Time</th><th>Status   </th><th style=\"text-align: right;\">  Returncode</th></tr>\n",
+       "</thead>\n",
+       "<tbody>\n",
+       "<tr><td style=\"text-align: right;\"> 0</td><td>orchestrator_0</td><td>DBNode       </td><td style=\"text-align: right;\">   1118</td><td style=\"text-align: right;\">      0</td><td style=\"text-align: right;\">121.096</td><td>Cancelled</td><td style=\"text-align: right;\">          -9</td></tr>\n",
+       "</tbody>\n",
+       "</table>"
+      ],
+      "text/plain": [
+       "'<table>\\n<thead>\\n<tr><th style=\"text-align: right;\">  </th><th>Name          </th><th>Entity-Type  </th><th style=\"text-align: right;\">  JobID</th><th style=\"text-align: right;\">  RunID</th><th style=\"text-align: right;\">   Time</th><th>Status   </th><th style=\"text-align: right;\">  Returncode</th></tr>\\n</thead>\\n<tbody>\\n<tr><td style=\"text-align: right;\"> 0</td><td>orchestrator_0</td><td>DBNode       </td><td style=\"text-align: right;\">   1118</td><td style=\"text-align: right;\">      0</td><td style=\"text-align: right;\">121.096</td><td>Cancelled</td><td style=\"text-align: right;\">          -9</td></tr>\\n</tbody>\\n</table>'"
+      ]
+     },
+     "execution_count": 20,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "exp.summary(format=\"html\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5daa7402-f62b-4710-a269-e078b2ce08ac",
+   "metadata": {},
+   "source": [
+    "# Co-Located Deployment\n",
+    "\n",
+    "A co-located Orchestrator is a special type of Orchestrator that is deployed\n",
+    "on the same compute hosts an a Model instance defined by the user. In this\n",
+    "deployment, the database is not connected together in a cluster and each shard\n",
+    "of the database is addressed individually by the processes running on that compute\n",
+    "host. This is particularly important for GPU-intensive workloads which require\n",
+    "frequent communication with the database.\n",
+    "\n",
+    "<img src=\"https://www.craylabs.org/docs/_images/co-located-orc-diagram.png\" alt=\"lattice\" width=\"600\"/>\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "id": "030448b9-67f0-4cd4-889e-3fac65ccaeaa",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# create colocated model\n",
+    "colo_settings = exp.create_run_settings(\n",
+    "    exe=\"python\",\n",
+    "    exe_args=\"./colo-db-torch-example.py\"\n",
+    ")\n",
+    "\n",
+    "colo_model = exp.create_model(\"colocated_model\", colo_settings)\n",
+    "colo_model.colocate_db(\n",
+    "    port=6780,\n",
+    "    db_cpus=1,\n",
+    "    limit_app_cpus=False,\n",
+    "    debug=False,\n",
+    "    ifname=\"lo\"\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "f8f30f83-9f93-41f6-8276-c805bc9b6eda",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "22:43:41 e3fbeabfdb3e SmartSim[32] INFO \n",
+      "\n",
+      "=== Launch Summary ===\n",
+      "Experiment: Inference-Tutorial\n",
+      "Experiment Path: /home/craylabs/tutorials/ml_inference/Inference-Tutorial\n",
+      "Launcher: local\n",
+      "Models: 1\n",
+      "Database Status: inactive\n",
+      "\n",
+      "=== Models ===\n",
+      "colocated_model\n",
+      "Executable: /usr/bin/python\n",
+      "Executable Arguments: ./colo-db-torch-example.py\n",
+      "Co-located Database: True\n",
+      "\n",
+      "\n",
+      "\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "                                                                                \r"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "22:43:53 e3fbeabfdb3e SmartSim[32] INFO colocated_model(1173): Completed\n"
+     ]
+    }
+   ],
+   "source": [
+    "exp.start(colo_model, summary=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "id": "87a21608-c1cd-43db-8c11-150ef44d0363",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<table>\n",
+       "<thead>\n",
+       "<tr><th style=\"text-align: right;\">  </th><th>Name           </th><th>Entity-Type  </th><th style=\"text-align: right;\">  JobID</th><th style=\"text-align: right;\">  RunID</th><th style=\"text-align: right;\">     Time</th><th>Status   </th><th style=\"text-align: right;\">  Returncode</th></tr>\n",
+       "</thead>\n",
+       "<tbody>\n",
+       "<tr><td style=\"text-align: right;\"> 0</td><td>orchestrator_0 </td><td>DBNode       </td><td style=\"text-align: right;\">   1118</td><td style=\"text-align: right;\">      0</td><td style=\"text-align: right;\">121.096  </td><td>Cancelled</td><td style=\"text-align: right;\">          -9</td></tr>\n",
+       "<tr><td style=\"text-align: right;\"> 1</td><td>colocated_model</td><td>Model        </td><td style=\"text-align: right;\">   1173</td><td style=\"text-align: right;\">      0</td><td style=\"text-align: right;\">  2.00999</td><td>Completed</td><td style=\"text-align: right;\">           0</td></tr>\n",
+       "</tbody>\n",
+       "</table>"
+      ],
+      "text/plain": [
+       "'<table>\\n<thead>\\n<tr><th style=\"text-align: right;\">  </th><th>Name           </th><th>Entity-Type  </th><th style=\"text-align: right;\">  JobID</th><th style=\"text-align: right;\">  RunID</th><th style=\"text-align: right;\">     Time</th><th>Status   </th><th style=\"text-align: right;\">  Returncode</th></tr>\\n</thead>\\n<tbody>\\n<tr><td style=\"text-align: right;\"> 0</td><td>orchestrator_0 </td><td>DBNode       </td><td style=\"text-align: right;\">   1118</td><td style=\"text-align: right;\">      0</td><td style=\"text-align: right;\">121.096  </td><td>Cancelled</td><td style=\"text-align: right;\">          -9</td></tr>\\n<tr><td style=\"text-align: right;\"> 1</td><td>colocated_model</td><td>Model        </td><td style=\"text-align: right;\">   1173</td><td style=\"text-align: right;\">      0</td><td style=\"text-align: right;\">  2.00999</td><td>Completed</td><td style=\"text-align: right;\">           0</td></tr>\\n</tbody>\\n</table>'"
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "exp.summary(format=\"html\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "97e117f3-e28f-4cc8-b72e-701ca59524b9",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

@@ -1,0 +1,1315 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Orchestrator &#8212; SmartSim 0.6.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'orchestrator';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Launchers" href="launchers.html" />
+    <link rel="prev" title="Experiments" href="experiment.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.6.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Forchestrator.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/orchestrator.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Orchestrator</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cluster-orchestrator">Cluster Orchestrator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colocated-orchestrator">Colocated Orchestrator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#redis">Redis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#keydb">KeyDB</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-orchestrator-example">Multiple Orchestrator Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-application-script">The Application Script</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#initialize-the-clients">Initialize the Clients</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-initialize-configoptions">Step 1: Initialize ConfigOptions</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-initialize-the-client-connections">Step 2: Initialize the Client Connections</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieve-data-and-store-using-smartredis-client-objects">Retrieve Data and Store Using SmartRedis Client Objects</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-experiment-driver-script">The Experiment Driver Script</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#launch-multiple-orchestrators">Launch Multiple Orchestrators</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-initialize-orchestrators">Step 1: Initialize Orchestrators</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-start-databases">Step 2: Start Databases</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#create-client-connections-to-orchestrators">Create Client Connections to Orchestrators</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#store-data-using-clients">Store Data Using Clients</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#initialize-a-colocated-model">Initialize a Colocated Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-configure">Step 1: Configure</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-initialize">Step 2: Initialize</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-colocate">Step 2: Colocate</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-start">Step 3: Start</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cleanup-experiment">Cleanup Experiment</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-run-the-example">How to Run the Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#application-source-code">Application Source Code</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#experiment-source-code">Experiment Source Code</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="orchestrator">
+<h1>Orchestrator<a class="headerlink" href="#orchestrator" title="Permalink to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is an in-memory database that is launched prior to all other
+entities within an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>. The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> can be used to store and retrieve
+data during the course of an experiment and across multiple entities. In order to
+stream data into or receive data from the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>, one of the SmartSim clients
+(SmartRedis) has to be used within a Model.</p>
+<p><a class="reference internal" href="_images/Orchestrator.png"><img alt="Alternative text" src="_images/Orchestrator.png" style="width: 700px;" /></a></p>
+<p>Combined with the SmartRedis clients, the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is capable of hosting and executing
+AI models written in Python on CPU or GPU. The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> supports models written with
+TensorFlow, Pytorch, TensorFlow-Lite, or models saved in an ONNX format (e.g. sci-kit learn).</p>
+<section id="cluster-orchestrator">
+<h2>Cluster Orchestrator<a class="headerlink" href="#cluster-orchestrator" title="Permalink to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> supports single node and distributed memory settings. This means
+that a single compute host can be used for the database or multiple by specifying
+<code class="docutils literal notranslate"><span class="pre">db_nodes</span></code> to be greater than 1.</p>
+<p><a class="reference internal" href="_images/clustered-orc-diagram.png"><img alt="Alternative text" src="_images/clustered-orc-diagram.png" style="width: 700px;" /></a></p>
+<p>With a clustered <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>, multiple compute hosts memory can be used together
+to store data. As well, the CPU or GPU(s) where the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is running can
+be used to execute the AI models, and Torchscript code on data stored within it.</p>
+<p>Users do not need to know how the data is stored in a clustered configuration and
+can address the cluster with the SmartRedis clients like a single block of memory
+using simple put/get semantics in SmartRedis. SmartRedis will ensure that data
+is evenly distributed amongst all nodes in the cluster.</p>
+<p>The cluster deployment is optimal for high data throughput scenarios such as
+online analysis, training and processing.</p>
+</section>
+<section id="colocated-orchestrator">
+<h2>Colocated Orchestrator<a class="headerlink" href="#colocated-orchestrator" title="Permalink to this heading">#</a></h2>
+<p>A colocated Orchestrator is a special type of Orchestrator that is deployed on
+the same compute hosts an a <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance defined by the user. In this
+deployment, the database is <em>not</em> connected together in a cluster and each
+shard of the database is addressed individually by the processes running
+on that compute host.</p>
+<p><a class="reference internal" href="_images/co-located-orc-diagram.png"><img alt="Alternative text" src="_images/co-located-orc-diagram.png" style="width: 700px;" /></a></p>
+<p>This deployment is designed for highly performant online inference scenarios where
+a distributed process (likely MPI processes) are performing inference with
+data local to each process.</p>
+<p>This method is deemed <code class="docutils literal notranslate"><span class="pre">locality</span> <span class="pre">based</span> <span class="pre">inference</span></code> since data is local to each
+process and the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is deployed locally on each compute host where
+the distributed application is running.</p>
+<p>To create a colocated model, first, create a <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance and then call
+the <code class="docutils literal notranslate"><span class="pre">Model.colocate_db_tcp</span></code> or <code class="docutils literal notranslate"><span class="pre">Model.colocate_db_uds</span></code> function.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">Model.</span></span><span class="sig-name descname"><span class="pre">colocate_db_tcp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">6379</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ifname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">t.Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'lo'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_pinning</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">t.Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">t.Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">t.Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">t.Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_identifier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">t.Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/smartsim/entity/model.html#Model.colocate_db_tcp"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Colocate an Orchestrator instance with this Model over TCP/IP.</p>
+<p>This method will initialize settings which add an unsharded
+database to this Model instance. Only this Model will be able to communicate
+with this colocated database by using the loopback TCP interface.</p>
+<p>Extra parameters for the db can be passed through kwargs. This includes
+many performance, caching and inference settings.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ex</span><span class="o">.</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">maxclients</span><span class="p">:</span> <span class="mi">100000</span><span class="p">,</span>
+    <span class="n">threads_per_queue</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">inter_op_threads</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">intra_op_threads</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">server_threads</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># keydb only</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Generally these don’t need to be changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>port</strong> (<em>int</em><em>, </em><em>optional</em>) – port to use for orchestrator database, defaults to 6379</p></li>
+<li><p><strong>ifname</strong> (<em>str</em><em> | </em><em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – interface to use for orchestrator, defaults to “lo”</p></li>
+<li><p><strong>db_cpus</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cpus to use for orchestrator, defaults to 1</p></li>
+<li><p><strong>custom_pinning</strong> (<em>iterable</em><em> of </em><em>ints</em><em> or </em><em>iterable</em><em> of </em><em>ints</em><em>, </em><em>optional</em>) – CPUs to pin the orchestrator to. Passing an empty
+iterable disables pinning</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>optional</em>) – launch Model with extra debug information about the colocated db</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – additional keyword arguments to pass to the orchestrator database</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">Model.</span></span><span class="sig-name descname"><span class="pre">colocate_db_uds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unix_socket</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'/tmp/redis.socket'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">socket_permissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">755</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_pinning</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_identifier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/smartsim/entity/model.html#Model.colocate_db_uds"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Colocate an Orchestrator instance with this Model over UDS.</p>
+<p>This method will initialize settings which add an unsharded
+database to this Model instance. Only this Model will be able to communicate
+with this colocated database by using Unix Domain sockets.</p>
+<p>Extra parameters for the db can be passed through kwargs. This includes
+many performance, caching and inference settings.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">example_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;maxclients&quot;</span><span class="p">:</span> <span class="mi">100000</span><span class="p">,</span>
+    <span class="s2">&quot;threads_per_queue&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;inter_op_threads&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;intra_op_threads&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;server_threads&quot;</span><span class="p">:</span> <span class="mi">2</span> <span class="c1"># keydb only</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Generally these don’t need to be changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>unix_socket</strong> (<em>str</em><em>, </em><em>optional</em>) – path to where the socket file will be created</p></li>
+<li><p><strong>socket_permissions</strong> (<em>int</em><em>, </em><em>optional</em>) – permissions for the socketfile</p></li>
+<li><p><strong>db_cpus</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cpus to use for orchestrator, defaults to 1</p></li>
+<li><p><strong>custom_pinning</strong> (<em>iterable</em><em> of </em><em>ints</em><em> or </em><em>iterable</em><em> of </em><em>ints</em><em>, </em><em>optional</em>) – CPUs to pin the orchestrator to. Passing an empty
+iterable disables pinning</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>optional</em>) – launch Model with extra debug information about the colocated db</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – additional keyword arguments to pass to the orchestrator database</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Here is an example of creating a simple model that is colocated with an
+<code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> deployment using Unix Domain Sockets</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;colo-test&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+<span class="n">colo_settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;./some_mpi_app&quot;</span><span class="p">)</span>
+
+<span class="n">colo_model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;colocated_model&quot;</span><span class="p">,</span> <span class="n">colo_settings</span><span class="p">)</span>
+<span class="n">colo_model</span><span class="o">.</span><span class="n">colocate_db_uds</span><span class="p">(</span>
+        <span class="n">db_cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>              <span class="c1"># cpus given to the database on each node</span>
+        <span class="n">debug</span><span class="o">=</span><span class="kc">False</span>             <span class="c1"># include debug information (will be slower)</span>
+        <span class="n">ifname</span><span class="o">=</span><span class="n">network_interface</span> <span class="c1"># specify network interface(s) to use (i.e. &quot;ib0&quot; or [&quot;ib0&quot;, &quot;lo&quot;])</span>
+<span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">colo_model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By default, SmartSim will pin the database to the first _N_ CPUs according to <code class="docutils literal notranslate"><span class="pre">db_cpus</span></code>. By
+specifying the optional argument <code class="docutils literal notranslate"><span class="pre">custom_pinning</span></code>, an alternative pinning can be specified
+by sending in a list of CPU ids (e.g [0,2,range(5,8)]). For optimal performance, most users
+will want to also modify the RunSettings for the model to pin their application to cores not
+occupied by the database.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Pinning is not supported on MacOS X. Setting <code class="docutils literal notranslate"><span class="pre">custom_pinning</span></code> to anything
+other than <code class="docutils literal notranslate"><span class="pre">None</span></code> will raise a warning and the input will be ignored.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Pinning _only_ affects the co-located deployment because both the application and the database
+are sharing the same compute node. For the clustered deployment, a shard occupies the entirety
+of the node.</p>
+</div>
+</section>
+<section id="redis">
+<h2>Redis<a class="headerlink" href="#redis" title="Permalink to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is built on <a class="reference external" href="https://github.com/redis/redis">Redis</a>. Largely, the job of the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is to
+create a Python reference to a Redis deployment so that users can launch, monitor
+and stop a Redis deployment on workstations and HPC systems.</p>
+<p>Redis was chosen for the Orchestrator because it resides in-memory, can be distributed on-node
+as well as across nodes, and provides low latency data access to many clients in parallel. The
+Redis ecosystem was a primary driver as the Redis module system provides APIs for languages,
+libraries, and techniques used in Data Science. In particular, the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>
+relies on <a class="reference external" href="https://github.com/RedisAI/RedisAI">RedisAI</a> to provide access to Machine Learning runtimes.</p>
+<p>At its core, Redis is a key-value store. This means that put/get semantics are used to send
+messages to and from the database. SmartRedis clients use a specific hashing algorithm, CRC16, to ensure
+that data is evenly distributed amongst all database nodes. Notably, a user is not required to
+know where (which database node) data or Datasets (see Dataset API) are stored as the
+SmartRedis clients will infer their location for the user.</p>
+</section>
+<section id="keydb">
+<h2>KeyDB<a class="headerlink" href="#keydb" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://github.com/EQ-Alpha/KeyDB">KeyDB</a> is a multi-threaded fork of Redis that can be swapped in as the database for
+the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> in SmartSim. KeyDB can be swapped in for Redis by setting the
+<code class="docutils literal notranslate"><span class="pre">REDIS_PATH</span></code> environment variable to point to the <code class="docutils literal notranslate"><span class="pre">keydb-server</span></code> binary.</p>
+<p>A full example of configuring KeyDB to run in SmartSim is shown below</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># build KeyDB</span>
+<span class="c1"># see https://github.com/EQ-Alpha/KeyDB</span>
+
+<span class="c1"># get KeyDB configuration file</span>
+wget<span class="w"> </span>https://github.com/CrayLabs/SmartSim/blob/d3d252b611c9ce9d9429ba6eeb71c15471a78f08/smartsim/_core/config/keydb.conf
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_PATH</span><span class="o">=</span>/path/to/keydb-server
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_CONF</span><span class="o">=</span>/path/to/keydb.conf
+
+<span class="c1"># run smartsim workload</span>
+</pre></div>
+</div>
+</section>
+<section id="multiple-orchestrator-example">
+<h2>Multiple Orchestrator Example<a class="headerlink" href="#multiple-orchestrator-example" title="Permalink to this heading">#</a></h2>
+<p>SmartSim offers functionality to automate the deployment of multiple
+databases, supporting workloads that require multiple
+<code class="docutils literal notranslate"><span class="pre">Orchestrators</span></code> for a <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>. For instance, a workload may consist of a
+simulation with high inference performance demands (necessitating a co-located deployment),
+along with an analysis and
+visualization workflow connected to the simulation (requiring a standard orchestrator).
+In the following example, we simulate a simple version of this use case.</p>
+<p>The example is comprised of two script files:</p>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="#the-application-script"><span class="std std-ref">Application Script</span></a></p></li>
+<li><p>The <a class="reference internal" href="#the-experiment-driver-script"><span class="std std-ref">Experiment Driver Script</span></a></p></li>
+</ul>
+<p><strong>The Application Script Overview:</strong>
+In this example, the application script is a python file that
+contains instructions to complete computational
+tasks. Applications are not limited to Python
+and can also be written in C, C++ and Fortran.
+This script specifies creating a Python SmartRedis client for each
+standard orchestrator and a colocated orchestrator. We use the
+clients to request data from both standard databases, then
+transfer the data to the colocated database. The application
+file is launched by the experiment driver script
+through a <code class="docutils literal notranslate"><span class="pre">Model</span></code> stage.</p>
+<p><strong>The Application Script Contents:</strong></p>
+<ol class="arabic simple">
+<li><p>Connecting SmartRedis clients within the application to retrieve tensors
+from the standard databases to store in a colocated database. Details in section:
+<a class="reference internal" href="#initialize-the-clients"><span class="std std-ref">Initialize the Clients</span></a>.</p></li>
+</ol>
+<p><strong>The Experiment Driver Script Overview:</strong>
+The experiment driver script holds the stages of the workflow
+and manages their execution through the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> API.
+We initialize an Experiment
+at the beginning of the Python file and use the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> to
+iteratively create, configure and launch computational kernels
+on the system through the <cite>slurm</cite> launcher.
+In the driver script, we use the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> to create and launch a <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance that
+runs the application.</p>
+<p><strong>The Experiment Driver Script Contents:</strong></p>
+<ol class="arabic simple">
+<li><p>Launching two standard Orchestrators with unique identifiers. Details in section:
+<a class="reference internal" href="#launch-multiple-orchestrators"><span class="std std-ref">Launch Multiple Orchestrators</span></a>.</p></li>
+<li><p>Launching the application script with a co-located database. Details in section:
+<a class="reference internal" href="#initialize-a-colocated-model"><span class="std std-ref">Initialize a Colocated Model</span></a>.</p></li>
+<li><p>Connecting SmartRedis clients within the driver script to send tensors to standard Orchestrators
+for retrieval within the application. Details in section:
+<a class="reference internal" href="#create-client-connections-to-orchestrators"><span class="std std-ref">Create Client Connections to Orchestrators</span></a>.</p></li>
+</ol>
+<p>Setup and run instructions can be found <a class="reference internal" href="#how-to-run-the-example"><span class="std std-ref">here</span></a></p>
+<section id="the-application-script">
+<h3>The Application Script<a class="headerlink" href="#the-application-script" title="Permalink to this heading">#</a></h3>
+<p>Applications interact with the databases
+through a SmartRedis client.
+In this section, we write an application script
+to demonstrate how to connect SmartRedis
+clients in the context of multiple
+launched databases. Using the clients, we retrieve tensors
+from two databases launched in the driver script, then store
+the tensors in the colocated database.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Experiment must be started to use the Orchestrators within the
+application script.  Otherwise, it will fail to connect.
+Find the instructions on how to launch <a class="reference internal" href="#how-to-run-the-example"><span class="std std-ref">here</span></a></p>
+</div>
+<p>To begin, import the necessary packages:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">ConfigOptions</span><span class="p">,</span> <span class="n">Client</span>
+<span class="linenos">2</span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="linenos">3</span><span class="kn">from</span> <span class="nn">smartredis.error</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<section id="initialize-the-clients">
+<h4>Initialize the Clients<a class="headerlink" href="#initialize-the-clients" title="Permalink to this heading">#</a></h4>
+<p>To establish a connection with each database,
+we need to initialize a new SmartRedis client for each
+<code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.</p>
+<section id="step-1-initialize-configoptions">
+<h5>Step 1: Initialize ConfigOptions<a class="headerlink" href="#step-1-initialize-configoptions" title="Permalink to this heading">#</a></h5>
+<p>Since we are launching multiple databases within the experiment,
+the SmartRedis <code class="docutils literal notranslate"><span class="pre">ConfigOptions</span></code> object is required when initializing
+a client in the application.
+We use the <code class="docutils literal notranslate"><span class="pre">ConfigOptions.create_from_environment()</span></code>
+function to create three instances of <code class="docutils literal notranslate"><span class="pre">ConfigOptions</span></code>,
+with one instance associated with each launched <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.
+Most importantly, to associate each launched Orchestrator to a ConfigOptions object,
+the <code class="docutils literal notranslate"><span class="pre">create_from_environment()</span></code> function requires specifying the unique database identifier
+argument named <cite>db_identifier</cite>.</p>
+<p>For the single-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a ConfigOptions object</span>
+<span class="linenos">2</span><span class="n">single_shard_config</span> <span class="o">=</span> <span class="n">ConfigOptions</span><span class="o">.</span><span class="n">create_from_environment</span><span class="p">(</span><span class="s2">&quot;single_shard_db_identifier&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the multi-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a ConfigOptions object</span>
+<span class="linenos">2</span><span class="n">multi_shard_config</span> <span class="o">=</span> <span class="n">ConfigOptions</span><span class="o">.</span><span class="n">create_from_environment</span><span class="p">(</span><span class="s2">&quot;multi_shard_db_identifier&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the colocated database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a ConfigOptions object</span>
+<span class="linenos">2</span><span class="n">colo_config</span> <span class="o">=</span> <span class="n">ConfigOptions</span><span class="o">.</span><span class="n">create_from_environment</span><span class="p">(</span><span class="s2">&quot;colo_db_identifier&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-initialize-the-client-connections">
+<h5>Step 2: Initialize the Client Connections<a class="headerlink" href="#step-2-initialize-the-client-connections" title="Permalink to this heading">#</a></h5>
+<p>Now that we have three <code class="docutils literal notranslate"><span class="pre">ConfigOptions</span></code> objects, we have the
+tools necessary to initialize three SmartRedis clients and
+establish a connection with the three databases.
+We use the SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> API to create the client instances by passing in
+the <code class="docutils literal notranslate"><span class="pre">ConfigOptions</span></code> objects and assigning a <cite>logger_name</cite> argument.</p>
+<p>Single-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a SmartRedis client for the single sharded database</span>
+<span class="linenos">2</span><span class="n">app_single_shard_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">single_shard_config</span><span class="p">,</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Model: single shard logger&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Multi-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a SmartRedis client for the multi sharded database</span>
+<span class="linenos">2</span><span class="n">app_multi_shard_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">multi_shard_config</span><span class="p">,</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Model: multi shard logger&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Colocated database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a SmartRedis client for the colocated database</span>
+<span class="linenos">2</span><span class="n">colo_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">colo_config</span><span class="p">,</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Model: colo logger&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="retrieve-data-and-store-using-smartredis-client-objects">
+<h4>Retrieve Data and Store Using SmartRedis Client Objects<a class="headerlink" href="#retrieve-data-and-store-using-smartredis-client-objects" title="Permalink to this heading">#</a></h4>
+<p>To confirm a successful connection to each database, we will retrieve the tensors
+that we plan to store in the python driver script. After retrieving, we
+store both tensors in the colocated database.
+The <code class="docutils literal notranslate"><span class="pre">Client.get_tensor()</span></code> method allows
+retrieval of a tensor. It requires the <cite>name</cite> of the tensor assigned
+when sent to the database via <code class="docutils literal notranslate"><span class="pre">Client.put_tensor()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Retrieve the tensor placed in driver script using the associated client</span>
+<span class="linenos">2</span><span class="n">val1</span> <span class="o">=</span> <span class="n">app_single_shard_client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">)</span>
+<span class="linenos">3</span><span class="n">val2</span> <span class="o">=</span> <span class="n">app_multi_shard_client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">)</span>
+<span class="linenos">4</span>
+<span class="linenos">5</span><span class="c1"># Print message to stdout using SmartRedis Client logger</span>
+<span class="linenos">6</span><span class="n">app_single_shard_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The single sharded db tensor is: </span><span class="si">{</span><span class="n">val1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">7</span><span class="n">app_multi_shard_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The multi sharded db tensor is: </span><span class="si">{</span><span class="n">val2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Later, when you run the experiment driver script the following output will appear in <code class="docutils literal notranslate"><span class="pre">tutorial_model.out</span></code>
+located in <code class="docutils literal notranslate"><span class="pre">getting-started-multidb/tutorial_model/</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Model</span><span class="p">:</span> <span class="n">single</span> <span class="n">shard</span> <span class="n">logger</span><span class="o">@</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="p">:</span><span class="n">The</span> <span class="n">single</span> <span class="n">sharded</span> <span class="n">db</span> <span class="n">tensor</span> <span class="ow">is</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">]</span>
+<span class="n">Model</span><span class="p">:</span> <span class="n">multi</span> <span class="n">shard</span> <span class="n">logger</span><span class="o">@</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="p">:</span><span class="n">The</span> <span class="n">multi</span> <span class="n">sharded</span> <span class="n">db</span> <span class="n">tensor</span> <span class="ow">is</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span> <span class="mi">8</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This output showcases that we have established a connection with multiple Orchestrators.</p>
+<p>Next, take the tensors retrieved from the standard deployment databases and
+store them in the colocated database using  <code class="docutils literal notranslate"><span class="pre">Client.put_tensor(name,</span> <span class="pre">data)</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Place retrieved tensors in colocated database</span>
+<span class="linenos">2</span><span class="n">colo_client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="n">val1</span><span class="p">)</span>
+<span class="linenos">3</span><span class="n">colo_client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="n">val2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, check if the tensors exist in the colocated database using <code class="docutils literal notranslate"><span class="pre">Client.poll_tensor()</span></code>.
+This function queries for data in the database. The function requires the tensor name (<cite>name</cite>),
+how many milliseconds to wait in between queries (<cite>poll_frequency_ms</cite>),
+and the total number of times to query (<cite>num_tries</cite>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Check that tensors are in colocated database</span>
+<span class="linenos">2</span><span class="n">colo_val1</span> <span class="o">=</span> <span class="n">colo_client</span><span class="o">.</span><span class="n">poll_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="linenos">3</span><span class="n">colo_val2</span> <span class="o">=</span> <span class="n">colo_client</span><span class="o">.</span><span class="n">poll_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="linenos">4</span><span class="c1"># Print message to stdout using SmartRedis Client logger</span>
+<span class="linenos">5</span><span class="n">colo_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The colocated db has tensor_1: </span><span class="si">{</span><span class="n">colo_val1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">6</span><span class="n">colo_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The colocated db has tensor_2: </span><span class="si">{</span><span class="n">colo_val2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The output will be as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Model</span><span class="p">:</span> <span class="n">colo</span> <span class="n">logger</span><span class="o">@</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="p">:</span><span class="n">The</span> <span class="n">colocated</span> <span class="n">db</span> <span class="n">has</span> <span class="n">tensor_1</span><span class="p">:</span> <span class="kc">True</span>
+<span class="n">Model</span><span class="p">:</span> <span class="n">colo</span> <span class="n">logger</span><span class="o">@</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="o">-</span><span class="mi">00</span><span class="p">:</span><span class="n">The</span> <span class="n">colocated</span> <span class="n">db</span> <span class="n">has</span> <span class="n">tensor_2</span><span class="p">:</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="the-experiment-driver-script">
+<h3>The Experiment Driver Script<a class="headerlink" href="#the-experiment-driver-script" title="Permalink to this heading">#</a></h3>
+<p>To run the previous application, we must define workflow stages within a workload.
+Defining workflow stages requires the utilization of functions associated
+with the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> object. The Experiment object is intended to be instantiated
+once and utilized throughout the workflow runtime.
+In this example, we instantiate an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> object with the name <code class="docutils literal notranslate"><span class="pre">getting-started-multidb</span></code>.
+We setup the SmartSim <code class="docutils literal notranslate"><span class="pre">logger</span></code> to output information from the Experiment.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="linenos"> 2</span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="linenos"> 3</span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="linenos"> 4</span><span class="kn">from</span> <span class="nn">smartsim.log</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="linenos"> 5</span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="n">exe_ex</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">executable</span>
+<span class="linenos"> 8</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;Multidb Experiment Log&quot;</span><span class="p">)</span>
+<span class="linenos"> 9</span><span class="c1"># Initialize the Experiment</span>
+<span class="linenos">10</span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;getting-started-multidb&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="launch-multiple-orchestrators">
+<h4>Launch Multiple Orchestrators<a class="headerlink" href="#launch-multiple-orchestrators" title="Permalink to this heading">#</a></h4>
+<p>In the context of this <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, it’s essential to create and launch
+the databases as a preliminary step before any other components since
+the application script requests tensors from the launched databases.</p>
+<p>We aim to showcase the multi-database automation capabilities of SmartSim, so we
+create two databases in the workflow: a single-sharded database and a
+multi-sharded database.</p>
+<section id="step-1-initialize-orchestrators">
+<h5>Step 1: Initialize Orchestrators<a class="headerlink" href="#step-1-initialize-orchestrators" title="Permalink to this heading">#</a></h5>
+<p>To create an database, utilize the <code class="docutils literal notranslate"><span class="pre">Experiment.create_database()</span></code> function.
+The function requires specifying a unique
+database identifier argument named <cite>db_identifier</cite> to launch multiple databases.
+This step is necessary to connect to databases outside of the driver script.
+We will use the <cite>db_identifier</cite> names we specified in the application script.</p>
+<p>For the single-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a single sharded database</span>
+<span class="linenos">2</span><span class="n">single_shard_db</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">db_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">,</span> <span class="n">db_identifier</span><span class="o">=</span><span class="s2">&quot;single_shard_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos">3</span><span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">single_shard_db</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the multi-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a multi sharded database</span>
+<span class="linenos">2</span><span class="n">multi_shard_db</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6380</span><span class="p">,</span> <span class="n">db_nodes</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">,</span> <span class="n">db_identifier</span><span class="o">=</span><span class="s2">&quot;multi_shard_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos">3</span><span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">multi_shard_db</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Calling <code class="docutils literal notranslate"><span class="pre">exp.generate()</span></code> will create two subfolders
+(one for each Orchestrator created in the previous step)
+whose names are based on the db_identifier of that Orchestrator.
+In this example, the Experiment folder is
+named <code class="docutils literal notranslate"><span class="pre">getting-started-multidb/</span></code>. Within this folder, two Orchestrator subfolders will
+be created, namely <code class="docutils literal notranslate"><span class="pre">single_shard_db_identifier/</span></code> and <code class="docutils literal notranslate"><span class="pre">multi_shard_db_identifier/</span></code>.</p>
+</div>
+</section>
+<section id="step-2-start-databases">
+<h5>Step 2: Start Databases<a class="headerlink" href="#step-2-start-databases" title="Permalink to this heading">#</a></h5>
+<p>Next, to launch the databases,
+pass the database instances to <code class="docutils literal notranslate"><span class="pre">Experiment.start()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Launch the single and multi sharded database</span>
+<span class="linenos">2</span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">single_shard_db</span><span class="p">,</span> <span class="n">multi_shard_db</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">Experiment.start()</span></code> function launches the <code class="docutils literal notranslate"><span class="pre">Orchestrators</span></code> for use within the workflow. In other words, the function
+deploys the databases on the allocated compute resources.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By setting <cite>summary=True</cite>, SmartSim will print a summary of the
+experiment before it is launched. After printing the experiment summary,
+the experiment is paused for 10 seconds giving the user time to
+briefly scan the summary contents. If we set <cite>summary=False</cite>, then the experiment
+would be launched immediately with no summary.</p>
+</div>
+</section>
+</section>
+<section id="create-client-connections-to-orchestrators">
+<h4>Create Client Connections to Orchestrators<a class="headerlink" href="#create-client-connections-to-orchestrators" title="Permalink to this heading">#</a></h4>
+<p>The SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> object contains functions that manipulate, send, and receive
+data within the database. Each database has a single, dedicated SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code>.
+Begin by initializing a SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> object per launched database.</p>
+<p>To create a designated SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code>, you need to specify the address of the target
+running database. You can easily retrieve this address using the <code class="docutils literal notranslate"><span class="pre">Orchestrator.get_address()</span></code> function.</p>
+<p>For the single-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize SmartRedis client for single sharded database</span>
+<span class="linenos">2</span><span class="n">driver_client_single_shard</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="n">single_shard_db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Single shard db logger&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the multi-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize SmartRedis client for multi sharded database</span>
+<span class="linenos">2</span><span class="n">driver_client_multi_shard</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="n">multi_shard_db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Multi shard db logger&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="store-data-using-clients">
+<h4>Store Data Using Clients<a class="headerlink" href="#store-data-using-clients" title="Permalink to this heading">#</a></h4>
+<p>In the application script, we retrieved two NumPy tensors.
+To support the apps functionality, we will create two
+NumPy arrays in the python driver script and send them to the a database. To
+accomplish this, we use the <code class="docutils literal notranslate"><span class="pre">Client.put_tensor()</span></code> function with the respective
+database client instances.</p>
+<p>For the single-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Create NumPy array</span>
+<span class="linenos">2</span><span class="n">array_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="linenos">3</span><span class="c1"># Use single shard db SmartRedis client to place tensor in single sharded db</span>
+<span class="linenos">4</span><span class="n">driver_client_single_shard</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="n">array_1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the multi-sharded database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Create NumPy array</span>
+<span class="linenos">2</span><span class="n">array_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">])</span>
+<span class="linenos">3</span><span class="c1"># Use single shard db SmartRedis client to place tensor in multi sharded db</span>
+<span class="linenos">4</span><span class="n">driver_client_multi_shard</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="n">array_2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Lets check to make sure the database tensors do not exist in the incorrect databases:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Check that tensors are in correct databases</span>
+<span class="linenos">2</span><span class="n">check_single_shard_db_tensor_incorrect</span> <span class="o">=</span> <span class="n">driver_client_single_shard</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">)</span>
+<span class="linenos">3</span><span class="n">check_multi_shard_db_tensor_incorrect</span> <span class="o">=</span> <span class="n">driver_client_multi_shard</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">)</span>
+<span class="linenos">4</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The multi shard array key exists in the incorrect database: </span><span class="si">{</span><span class="n">check_single_shard_db_tensor_incorrect</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">5</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The single shard array key exists in the incorrect database: </span><span class="si">{</span><span class="n">check_multi_shard_db_tensor_incorrect</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When you run the experiment, the following output will appear:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span> <span class="n">system</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">com</span> <span class="n">SmartSim</span><span class="p">[</span><span class="c1">#####] INFO The multi shard array key exists in the incorrect database: False</span>
+<span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span> <span class="n">system</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">com</span> <span class="n">SmartSim</span><span class="p">[</span><span class="c1">#####] INFO The single shard array key exists in the incorrect database: False</span>
+</pre></div>
+</div>
+</section>
+<section id="initialize-a-colocated-model">
+<h4>Initialize a Colocated Model<a class="headerlink" href="#initialize-a-colocated-model" title="Permalink to this heading">#</a></h4>
+<p>In the next stage of the experiment, we
+launch the application script with a co-located database
+by configuring and creating
+a SmartSim colocated <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p>
+<section id="step-1-configure">
+<h5>Step 1: Configure<a class="headerlink" href="#step-1-configure" title="Permalink to this heading">#</a></h5>
+<p>You can specify the run settings of a model.
+In this experiment, we invoke the Python interpreter to run
+the python script defined in section: <a class="reference internal" href="#the-application-script"><span class="std std-ref">The Application Script</span></a>.
+To configure this into a <code class="docutils literal notranslate"><span class="pre">Model</span></code>, we use the <code class="docutils literal notranslate"><span class="pre">Experiment.create_run_settings()</span></code> function.
+The function returns a <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> object.
+When initializing the RunSettings object,
+we specify the path to the application file,
+<cite>application_script.py</cite>, for
+<code class="docutils literal notranslate"><span class="pre">exe_args</span></code>, and the run command for <code class="docutils literal notranslate"><span class="pre">exe</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a RunSettings object</span>
+<span class="linenos">2</span><span class="n">model_settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="n">exe_ex</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;./path/to/application_script.py&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You will have to change the <cite>exe_args</cite> argument to the path of the application script
+on your machine to run the example.</p>
+</div>
+<p>With the <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> instance,
+configure the the distribution of computational tasks (<code class="docutils literal notranslate"><span class="pre">RunSettings.set_nodes()</span></code>) and the number of instances
+the script is execute on each node (<code class="docutils literal notranslate"><span class="pre">RunSettings.set_tasks_per_node()</span></code>). In this
+example, we specify to SmartSim that we intend to execute the script once on a single node.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Configure RunSettings object</span>
+<span class="linenos">2</span><span class="n">model_settings</span><span class="o">.</span><span class="n">set_nodes</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">3</span><span class="n">model_settings</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-initialize">
+<h5>Step 2: Initialize<a class="headerlink" href="#step-2-initialize" title="Permalink to this heading">#</a></h5>
+<p>Next, create a <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance using the <code class="docutils literal notranslate"><span class="pre">Experiment.create_model()</span></code>.
+Pass the <code class="docutils literal notranslate"><span class="pre">model_settings</span></code> object as an argument
+to the <code class="docutils literal notranslate"><span class="pre">create_model()</span></code> function and assign to the variable <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Initialize a SmartSim Model</span>
+<span class="linenos">2</span><span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;colo_model&quot;</span><span class="p">,</span> <span class="n">model_settings</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-colocate">
+<h5>Step 2: Colocate<a class="headerlink" href="#step-2-colocate" title="Permalink to this heading">#</a></h5>
+<p>To colocate the model, use the <code class="docutils literal notranslate"><span class="pre">Model.colocate_db_uds()</span></code> function to
+Colocate an Orchestrator instance with this Model over
+a Unix domain socket connection.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Colocate the Model</span>
+<span class="linenos">2</span><span class="n">model</span><span class="o">.</span><span class="n">colocate_db_tcp</span><span class="p">(</span><span class="n">db_identifier</span><span class="o">=</span><span class="s2">&quot;colo_db_identifier&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This method will initialize settings which add an unsharded
+database to this Model instance. Only this Model will be able
+to communicate with this colocated database by using the loopback TCP interface.</p>
+</section>
+<section id="step-3-start">
+<h5>Step 3: Start<a class="headerlink" href="#step-3-start" title="Permalink to this heading">#</a></h5>
+<p>Next, launch the colocated model instance using the <code class="docutils literal notranslate"><span class="pre">Experiment.start()</span></code> function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Launch the colocated Model</span>
+<span class="linenos">2</span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We set <cite>block=True</cite>,
+so that <code class="docutils literal notranslate"><span class="pre">Experiment.start()</span></code> waits until the last Model has finished
+before returning: it will act like a job monitor, letting us know
+if processes run, complete, or fail.</p>
+</div>
+</section>
+</section>
+<section id="cleanup-experiment">
+<h4>Cleanup Experiment<a class="headerlink" href="#cleanup-experiment" title="Permalink to this heading">#</a></h4>
+<p>Finally, use the <code class="docutils literal notranslate"><span class="pre">Experiment.stop()</span></code> function to stop the database instances. Print the
+workflow summary with <code class="docutils literal notranslate"><span class="pre">Experiment.summary()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Tear down the single and multi sharded databases</span>
+<span class="linenos">2</span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">single_shard_db</span><span class="p">,</span> <span class="n">multi_shard_db</span><span class="p">)</span>
+<span class="linenos">3</span><span class="c1"># Print the Experiment summary</span>
+<span class="linenos">4</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>When you run the experiment, the following output will appear:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span> <span class="n">system</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">com</span> <span class="n">SmartSim</span><span class="p">[</span><span class="c1">#####]INFO</span>
+<span class="o">|</span>    <span class="o">|</span> <span class="n">Name</span>                         <span class="o">|</span> <span class="n">Entity</span><span class="o">-</span><span class="n">Type</span>   <span class="o">|</span> <span class="n">JobID</span>       <span class="o">|</span> <span class="n">RunID</span>   <span class="o">|</span> <span class="n">Time</span>    <span class="o">|</span> <span class="n">Status</span>    <span class="o">|</span> <span class="n">Returncode</span>   <span class="o">|</span>
+<span class="o">|----|------------------------------|---------------|-------------|---------|---------|-----------|--------------|</span>
+<span class="o">|</span> <span class="mi">0</span>  <span class="o">|</span> <span class="n">colo_model</span>                   <span class="o">|</span> <span class="n">Model</span>         <span class="o">|</span> <span class="mf">1556529.5</span>   <span class="o">|</span> <span class="mi">0</span>       <span class="o">|</span> <span class="mf">1.7437</span>  <span class="o">|</span> <span class="n">Completed</span> <span class="o">|</span> <span class="mi">0</span>            <span class="o">|</span>
+<span class="o">|</span> <span class="mi">1</span>  <span class="o">|</span> <span class="n">single_shard_db_identifier_0</span> <span class="o">|</span> <span class="n">DBNode</span>        <span class="o">|</span> <span class="mf">1556529.3</span>   <span class="o">|</span> <span class="mi">0</span>       <span class="o">|</span> <span class="mf">68.8732</span> <span class="o">|</span> <span class="n">Cancelled</span> <span class="o">|</span> <span class="mi">0</span>            <span class="o">|</span>
+<span class="o">|</span> <span class="mi">2</span>  <span class="o">|</span> <span class="n">multi_shard_db_identifier_0</span>  <span class="o">|</span> <span class="n">DBNode</span>        <span class="o">|</span> <span class="mf">1556529.4</span><span class="o">+</span><span class="mi">2</span> <span class="o">|</span> <span class="mi">0</span>       <span class="o">|</span> <span class="mf">45.5139</span> <span class="o">|</span> <span class="n">Cancelled</span> <span class="o">|</span> <span class="mi">0</span>            <span class="o">|</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="how-to-run-the-example">
+<h3>How to Run the Example<a class="headerlink" href="#how-to-run-the-example" title="Permalink to this heading">#</a></h3>
+<p>Below are the steps to run the experiment. Find the
+<a class="reference internal" href="#experiment-source-code"><span class="std std-ref">experiment source code</span></a>
+and <a class="reference internal" href="#application-source-code"><span class="std std-ref">application source code</span></a>
+below in the respective subsections.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The example assumes that you have already installed and built
+SmartSim and SmartRedis. Please refer to Section <a class="reference internal" href="installation_instructions/basic.html#basic-installation"><span class="std std-ref">Basic Installation</span></a>
+for further details. For simplicity, we assume that you are
+running on a SLURM-based HPC-platform. Refer to the steps below
+for more details.</p>
+</div>
+<dl>
+<dt>Step 1<span class="classifier">Setup your directory tree</span></dt><dd><p>Your directory tree should look similar to below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">SmartSim</span><span class="o">/</span>
+<span class="n">SmartRedis</span><span class="o">/</span>
+<span class="n">Multi</span><span class="o">-</span><span class="n">db</span><span class="o">-</span><span class="n">example</span><span class="o">/</span>
+  <span class="n">application_script</span><span class="o">.</span><span class="n">py</span>
+  <span class="n">experiment_script</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>You can find the application and experiment source code in subsections below.</p>
+</dd>
+<dt>Step 2<span class="classifier">Install and Build SmartSim</span></dt><dd><p>This example assumes you have installed SmartSim and SmartRedis in your
+Python environment. We also assume that you have built SmartSim with
+the necessary modules for the machine you are running on.</p>
+</dd>
+<dt>Step 3<span class="classifier">Change the <cite>exe_args</cite> file path</span></dt><dd><p>When configuring the colocated model in <cite>experiment_script.py</cite>,
+we pass the file path of <cite>application_script.py</cite> to the <cite>exe_args</cite> argument
+on line 33 in <a class="reference internal" href="#experiment-source-code"><span class="std std-ref">experiment_script.py</span></a>.
+Edit this argument to the file path of your <cite>application_script.py</cite></p>
+</dd>
+<dt>Step 4<span class="classifier">Run the Experiment</span></dt><dd><p>Finally, run the experiment with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">experiment_script.py</span></code>.</p>
+</dd>
+</dl>
+<section id="application-source-code">
+<h4>Application Source Code<a class="headerlink" href="#application-source-code" title="Permalink to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">ConfigOptions</span><span class="p">,</span> <span class="n">Client</span>
+<span class="linenos"> 2</span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="linenos"> 3</span><span class="kn">from</span> <span class="nn">smartredis.error</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="c1"># Initialize a ConfigOptions object</span>
+<span class="linenos"> 6</span><span class="n">single_shard_config</span> <span class="o">=</span> <span class="n">ConfigOptions</span><span class="o">.</span><span class="n">create_from_environment</span><span class="p">(</span><span class="s2">&quot;single_shard_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos"> 7</span><span class="c1"># Initialize a SmartRedis client for the single sharded database</span>
+<span class="linenos"> 8</span><span class="n">app_single_shard_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">single_shard_config</span><span class="p">,</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Model: single shard logger&quot;</span><span class="p">)</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="c1"># Initialize a ConfigOptions object</span>
+<span class="linenos">11</span><span class="n">multi_shard_config</span> <span class="o">=</span> <span class="n">ConfigOptions</span><span class="o">.</span><span class="n">create_from_environment</span><span class="p">(</span><span class="s2">&quot;multi_shard_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos">12</span><span class="c1"># Initialize a SmartRedis client for the multi sharded database</span>
+<span class="linenos">13</span><span class="n">app_multi_shard_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">multi_shard_config</span><span class="p">,</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Model: multi shard logger&quot;</span><span class="p">)</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="c1"># Initialize a ConfigOptions object</span>
+<span class="linenos">16</span><span class="n">colo_config</span> <span class="o">=</span> <span class="n">ConfigOptions</span><span class="o">.</span><span class="n">create_from_environment</span><span class="p">(</span><span class="s2">&quot;colo_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos">17</span><span class="c1"># Initialize a SmartRedis client for the colocated database</span>
+<span class="linenos">18</span><span class="n">colo_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">colo_config</span><span class="p">,</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Model: colo logger&quot;</span><span class="p">)</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="c1"># Retrieve the tensor placed in driver script using the associated client</span>
+<span class="linenos">21</span><span class="n">val1</span> <span class="o">=</span> <span class="n">app_single_shard_client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">)</span>
+<span class="linenos">22</span><span class="n">val2</span> <span class="o">=</span> <span class="n">app_multi_shard_client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">)</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="c1"># Print message to stdout using SmartRedis Client logger</span>
+<span class="linenos">25</span><span class="n">app_single_shard_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The single sharded db tensor is: </span><span class="si">{</span><span class="n">val1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">26</span><span class="n">app_multi_shard_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The multi sharded db tensor is: </span><span class="si">{</span><span class="n">val2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="c1"># Place retrieved tensors in colocated database</span>
+<span class="linenos">29</span><span class="n">colo_client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="n">val1</span><span class="p">)</span>
+<span class="linenos">30</span><span class="n">colo_client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="n">val2</span><span class="p">)</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span><span class="c1"># Check that tensors are in colocated database</span>
+<span class="linenos">33</span><span class="n">colo_val1</span> <span class="o">=</span> <span class="n">colo_client</span><span class="o">.</span><span class="n">poll_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="linenos">34</span><span class="n">colo_val2</span> <span class="o">=</span> <span class="n">colo_client</span><span class="o">.</span><span class="n">poll_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="linenos">35</span><span class="c1"># Print message to stdout using SmartRedis Client logger</span>
+<span class="linenos">36</span><span class="n">colo_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The colocated db has tensor_1: </span><span class="si">{</span><span class="n">colo_val1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">37</span><span class="n">colo_client</span><span class="o">.</span><span class="n">log_data</span><span class="p">(</span><span class="n">LLInfo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;The colocated db has tensor_2: </span><span class="si">{</span><span class="n">colo_val2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="experiment-source-code">
+<h4>Experiment Source Code<a class="headerlink" href="#experiment-source-code" title="Permalink to this heading">#</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="linenos"> 2</span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="linenos"> 3</span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="linenos"> 4</span><span class="kn">from</span> <span class="nn">smartsim.log</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="linenos"> 5</span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="n">exe_ex</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">executable</span>
+<span class="linenos"> 8</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;Multidb Experiment Log&quot;</span><span class="p">)</span>
+<span class="linenos"> 9</span><span class="c1"># Initialize the Experiment</span>
+<span class="linenos">10</span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;getting-started-multidb&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="c1"># Initialize a single sharded database</span>
+<span class="linenos">13</span><span class="n">single_shard_db</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">db_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">,</span> <span class="n">db_identifier</span><span class="o">=</span><span class="s2">&quot;single_shard_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos">14</span><span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">single_shard_db</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="c1"># Initialize a multi sharded database</span>
+<span class="linenos">17</span><span class="n">multi_shard_db</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6380</span><span class="p">,</span> <span class="n">db_nodes</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ib0&quot;</span><span class="p">,</span> <span class="n">db_identifier</span><span class="o">=</span><span class="s2">&quot;multi_shard_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos">18</span><span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">multi_shard_db</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="c1"># Launch the single and multi sharded database</span>
+<span class="linenos">21</span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">single_shard_db</span><span class="p">,</span> <span class="n">multi_shard_db</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span><span class="c1"># Initialize SmartRedis client for single sharded database</span>
+<span class="linenos">24</span><span class="n">driver_client_single_shard</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="n">single_shard_db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Single shard db logger&quot;</span><span class="p">)</span>
+<span class="linenos">25</span><span class="c1"># Initialize SmartRedis client for multi sharded database</span>
+<span class="linenos">26</span><span class="n">driver_client_multi_shard</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="n">multi_shard_db</span><span class="o">.</span><span class="n">get_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;Multi shard db logger&quot;</span><span class="p">)</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="c1"># Create NumPy array</span>
+<span class="linenos">29</span><span class="n">array_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="linenos">30</span><span class="c1"># Use single shard db SmartRedis client to place tensor in single sharded db</span>
+<span class="linenos">31</span><span class="n">driver_client_single_shard</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">,</span> <span class="n">array_1</span><span class="p">)</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="c1"># Create NumPy array</span>
+<span class="linenos">34</span><span class="n">array_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">])</span>
+<span class="linenos">35</span><span class="c1"># Use single shard db SmartRedis client to place tensor in multi sharded db</span>
+<span class="linenos">36</span><span class="n">driver_client_multi_shard</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">,</span> <span class="n">array_2</span><span class="p">)</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span><span class="c1"># Check that tensors are in correct databases</span>
+<span class="linenos">39</span><span class="n">check_single_shard_db_tensor_incorrect</span> <span class="o">=</span> <span class="n">driver_client_single_shard</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="s2">&quot;tensor_2&quot;</span><span class="p">)</span>
+<span class="linenos">40</span><span class="n">check_multi_shard_db_tensor_incorrect</span> <span class="o">=</span> <span class="n">driver_client_multi_shard</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="s2">&quot;tensor_1&quot;</span><span class="p">)</span>
+<span class="linenos">41</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The multi shard array key exists in the incorrect database: </span><span class="si">{</span><span class="n">check_single_shard_db_tensor_incorrect</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">42</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The single shard array key exists in the incorrect database: </span><span class="si">{</span><span class="n">check_multi_shard_db_tensor_incorrect</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span><span class="c1"># Initialize a RunSettings object</span>
+<span class="linenos">45</span><span class="n">model_settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="n">exe_ex</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;./path/to/application_script.py&quot;</span><span class="p">)</span>
+<span class="linenos">46</span><span class="c1"># Configure RunSettings object</span>
+<span class="linenos">47</span><span class="n">model_settings</span><span class="o">.</span><span class="n">set_nodes</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">48</span><span class="n">model_settings</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">49</span><span class="c1"># Initialize a SmartSim Model</span>
+<span class="linenos">50</span><span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;colo_model&quot;</span><span class="p">,</span> <span class="n">model_settings</span><span class="p">)</span>
+<span class="linenos">51</span><span class="c1"># Colocate the Model</span>
+<span class="linenos">52</span><span class="n">model</span><span class="o">.</span><span class="n">colocate_db_tcp</span><span class="p">(</span><span class="n">db_identifier</span><span class="o">=</span><span class="s2">&quot;colo_db_identifier&quot;</span><span class="p">)</span>
+<span class="linenos">53</span><span class="c1"># Launch the colocated Model</span>
+<span class="linenos">54</span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">55</span>
+<span class="linenos">56</span><span class="c1"># Tear down the single and multi sharded databases</span>
+<span class="linenos">57</span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">single_shard_db</span><span class="p">,</span> <span class="n">multi_shard_db</span><span class="p">)</span>
+<span class="linenos">58</span><span class="c1"># Print the Experiment summary</span>
+<span class="linenos">59</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="experiment.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Experiments</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="launchers.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Launchers</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cluster-orchestrator">Cluster Orchestrator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#colocated-orchestrator">Colocated Orchestrator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#redis">Redis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#keydb">KeyDB</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-orchestrator-example">Multiple Orchestrator Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-application-script">The Application Script</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#initialize-the-clients">Initialize the Clients</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-initialize-configoptions">Step 1: Initialize ConfigOptions</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-initialize-the-client-connections">Step 2: Initialize the Client Connections</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieve-data-and-store-using-smartredis-client-objects">Retrieve Data and Store Using SmartRedis Client Objects</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-experiment-driver-script">The Experiment Driver Script</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#launch-multiple-orchestrators">Launch Multiple Orchestrators</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-initialize-orchestrators">Step 1: Initialize Orchestrators</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-start-databases">Step 2: Start Databases</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#create-client-connections-to-orchestrators">Create Client Connections to Orchestrators</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#store-data-using-clients">Store Data Using Clients</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#initialize-a-colocated-model">Initialize a Colocated Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-configure">Step 1: Configure</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-initialize">Step 2: Initialize</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-colocate">Step 2: Colocate</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-start">Step 3: Start</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cleanup-experiment">Cleanup Experiment</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-run-the-example">How to Run the Example</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#application-source-code">Application Source Code</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#experiment-source-code">Experiment Source Code</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2023, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

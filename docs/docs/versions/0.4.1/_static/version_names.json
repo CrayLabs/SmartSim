@@ -1,0 +1,4 @@
+{
+    "version_names":["develop (unstable)", "0.4.1 (stable)", "0.4.0", "0.3.2"],
+    "version_urls": ["https://www.craylabs.org/develop/overview.html", "https://www.craylabs.org/docs/overview.html", "https://www.craylabs.org/docs/versions/0.4.0/overview.html", "https://www.craylabs.org/docs/versions/0.3.2/overview.html"]
+}

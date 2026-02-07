@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Developer &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Code of Conduct" href="code_of_conduct.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#testing-smartsim">Testing SmartSim</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#local">Local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pbspro-slurm-cobalt-lsf">PBSPro, Slurm, Cobalt, LSF</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#testing-smartredis">Testing SmartRedis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#building-the-tests">Building the Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#starting-redis">Starting Redis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-tests">Running the Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#git-workflow">Git Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#setup">Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pull-requests">Pull Requests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#merging">Merging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#python-guidelines">Python Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#editor-suggestions">Editor Suggestions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Developer</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/developer.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="developer">
+<h1>Developer<a class="headerlink" href="#developer" title="Permalink to this headline">¶</a></h1>
+<p>This section details common practices and tips for contributors
+to SmartSim and SmartRedis</p>
+<div class="section" id="testing-smartsim">
+<h2>Testing SmartSim<a class="headerlink" href="#testing-smartsim" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This section describes how to run the SmartSim (infrastructure library)
+test suite. For testing SmartRedis, see below</p>
+</div>
+<p>SmartSim utilizes <code class="docutils literal notranslate"><span class="pre">Pytest</span></code> for running its test suite. In the
+top level of SmartSim, users can run multiple testing commands
+with the developer Makefile</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Test
+-------
+test                       - Build and run all tests
+test-verbose               - Build and run all tests [verbosely]
+test-cov                   - run python tests with coverage
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For the test to run, you must have the <code class="docutils literal notranslate"><span class="pre">requirements-dev.txt</span></code>
+dependencies installed in your python environment.</p>
+</div>
+<div class="section" id="local">
+<h3>Local<a class="headerlink" href="#local" title="Permalink to this headline">¶</a></h3>
+<p>There are two levels of testing in SmartSim. The first
+runs by default and doesn’t launch any jobs out onto
+a system through a workload manager like Cobalt.</p>
+<p>If any of the above commands are used, the test suite will
+run the “light” test suite by default.</p>
+</div>
+<div class="section" id="pbspro-slurm-cobalt-lsf">
+<h3>PBSPro, Slurm, Cobalt, LSF<a class="headerlink" href="#pbspro-slurm-cobalt-lsf" title="Permalink to this headline">¶</a></h3>
+<p>To run the full test suite, users will have to be on a system
+with one of the above workload managers. Additionally, users will
+need to obtain an allocation of at least 3 nodes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># for slurm (with srun)</span>
+salloc -N <span class="m">3</span> -A account --exclusive -t <span class="m">00</span>:10:00
+
+<span class="c1"># for PBSPro (with aprun)</span>
+qsub -l <span class="k">select</span><span class="o">=</span><span class="m">3</span> -l <span class="nv">place</span><span class="o">=</span>scatter -l <span class="nv">walltime</span><span class="o">=</span><span class="m">00</span>:10:00 -q queue
+
+<span class="c1"># for Cobalt (with aprun)</span>
+qsub -n <span class="m">3</span> -t <span class="m">00</span>:10:00 -A account -q queue -I
+
+<span class="c1"># for LSF (with jsrun)</span>
+bsub -Is -W <span class="m">00</span>:30 -nnodes <span class="m">3</span> -P project <span class="nv">$SHELL</span>
+</pre></div>
+</div>
+<p>Values for queue, account, or project should be substituted appropriately.</p>
+<p>Once in an iterative allocation, users will need to set the test
+launcher environment variable: <code class="docutils literal notranslate"><span class="pre">SMARTSIM_TEST_LAUNCHER</span></code> to one
+of the following values</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>slurm</p></li>
+<li><p>cobalt</p></li>
+<li><p>pbs</p></li>
+<li><p>lsf</p></li>
+<li><p>local</p></li>
+</ul>
+</div></blockquote>
+<p>If tests have to run on an account or project,
+the environment variable <code class="docutils literal notranslate"><span class="pre">SMARTSIM_TEST_ACCOUNT</span></code> can be set.</p>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="testing-smartredis">
+<h2>Testing SmartRedis<a class="headerlink" href="#testing-smartredis" title="Permalink to this headline">¶</a></h2>
+<p>The following will demonstrate how to build and run the tests for
+each of the SmartSim clients.</p>
+<div class="section" id="building-the-tests">
+<h3>Building the Tests<a class="headerlink" href="#building-the-tests" title="Permalink to this headline">¶</a></h3>
+<p>Before building the tests, it is assumed that the base dependencies
+for SmartRedis described in the installation instructions have already
+been executed.</p>
+<p>To build the tests, you first need to install the dependencies for
+testing. To download SmartRedis related testing dependencies, run
+the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make test-deps
+</pre></div>
+</div>
+<p>If you wish to run tests on GPU hardware, run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make test-deps-gpu
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The test suite is currently written to be run on CPU hardware to
+test model and script executions.  Testing on GPU hardware
+currently requires modifications to the test suite.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>The tests require</dt><dd><ul class="simple">
+<li><p>GCC &gt; 5</p></li>
+<li><p>CMake &gt; 3</p></li>
+</ul>
+</dd>
+</dl>
+<p>Since these are usually system libraries we do not install them
+for the user</p>
+</div>
+<p>After installing dependencies and setting up your testing environment with
+<code class="docutils literal notranslate"><span class="pre">setup_test_env.sh</span></code>, all tests can be built with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./setup_test_env.sh
+make build-tests
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-redis">
+<h3>Starting Redis<a class="headerlink" href="#starting-redis" title="Permalink to this headline">¶</a></h3>
+<p>Before running the tests, users will have to spin up a Redis
+cluster instance and set the <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment variable.</p>
+<p>To spin up a local Redis cluster, use the script
+in <code class="docutils literal notranslate"><span class="pre">utils/create_cluster</span></code> as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /smartredis                 <span class="c1"># navigate to the top level dir of smartredis</span>
+conda activate env             <span class="c1"># activate python env with SmartRedis requirements</span>
+<span class="nb">source</span> setup_test_env.sh       <span class="c1"># Setup smartredis environment</span>
+<span class="nb">cd</span> utils/create_cluster
+python local_cluster.py        <span class="c1"># spin up Redis cluster locally</span>
+<span class="nb">export</span> <span class="nv">SSDB</span><span class="o">=</span><span class="s2">&quot;127.0.0.1:6379,127.0.0.1:6380,127.0.0.1:6381&quot;</span>  <span class="c1"># Set database location</span>
+
+<span class="c1"># run the tests (described below)</span>
+
+<span class="nb">cd</span> utils/create_cluster
+python local_cluster.py --stop <span class="c1"># stop the Redis cluster</span>
+</pre></div>
+</div>
+<p>A similar script <code class="docutils literal notranslate"><span class="pre">utils/create_cluster/slurm_cluster.py</span></code>
+assists with launching a Redis cluster for testing on
+Slurm managed machines.  This script has only been tested
+on a Cray XC, and it may not be portable to all machines.</p>
+</div>
+<div class="section" id="running-the-tests">
+<h3>Running the Tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you are running the tests in a new terminal from the
+one used to build the tests and run the Redis cluster,
+remember to load your python environment with SmartRedis
+dependencies, source the <code class="docutils literal notranslate"><span class="pre">setup_test_env.sh</span></code> file,
+and set the <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment variable.</p>
+</div>
+<p>To build and run all tests, run the following command in the top
+level of the smartredis repository.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make <span class="nb">test</span>
+</pre></div>
+</div>
+<p>You can also run tests for individual clients as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make test-c         <span class="c1"># run C tests</span>
+make test-fortran   <span class="c1"># run Fortran tests</span>
+make test-cpp       <span class="c1"># run all C++ tests</span>
+make unit-test-cpp  <span class="c1"># run unit tests for C++</span>
+make test-py        <span class="c1"># run Python tests</span>
+make testpy-cov     <span class="c1"># run python tests with coverage</span>
+make testcpp-cpv    <span class="c1"># run cpp unit tests with coverage</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="git-workflow">
+<h2>Git Workflow<a class="headerlink" href="#git-workflow" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="setup">
+<h3>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><ul class="simple">
+<li><p>Fork the SmartSim (SmartRedis) repository</p></li>
+<li><p>Set upstream as the main repository and set upstream push remote to <code class="docutils literal notranslate"><span class="pre">no_push</span></code></p></li>
+<li><p>Follow installation instructions</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="pull-requests">
+<h3>Pull Requests<a class="headerlink" href="#pull-requests" title="Permalink to this headline">¶</a></h3>
+<p>Please check the following before submitting a pull request to the SmartSim repository</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Your feature is on a new branch off master.</p></li>
+<li><p>You are merging the feature branch from your fork into the main repository.</p></li>
+<li><p>All unnecessary whitespace has been purged from your code.</p></li>
+<li><p>Black and isort have been applied to format code and sort imports</p></li>
+<li><p>Pylint errors have been minimized as much as possible</p></li>
+<li><p>All your code as been appropriately documented.</p></li>
+<li><p>The PR description is clear and concise.</p></li>
+<li><p>You have requested a review.</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="merging">
+<h3>Merging<a class="headerlink" href="#merging" title="Permalink to this headline">¶</a></h3>
+<p>When merging there are a few guidelines to follow</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Wrap all merge messages to 70 characters per line.</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="python-guidelines">
+<h2>Python Guidelines<a class="headerlink" href="#python-guidelines" title="Permalink to this headline">¶</a></h2>
+<p>For the most part, the conventions are to follow PEP8 that is supplied by pylint. However, there
+are a few things to specifically mention.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Underscores should precede methods not meant to be used outside a class</p></li>
+<li><p>All methods should have docstrings (with some exceptions)</p></li>
+<li><p>Variable names should accurately capture what values it is storing without being overly verbose</p></li>
+<li><p>No bad words</p></li>
+<li><p>Use Black and isort frequently</p></li>
+<li><p>Utilize <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> for creating pytest fixtures</p></li>
+</ul>
+</div></blockquote>
+</div>
+<hr class="docutils" />
+<div class="section" id="editor-suggestions">
+<h2>Editor Suggestions<a class="headerlink" href="#editor-suggestions" title="Permalink to this headline">¶</a></h2>
+<p>The editor that we suggest developers to use is VSCode. Below are some extensions that
+could make the process of developing on SmartSim a bit easier.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>GitLens, for viewing changes in the git history</p></li>
+<li><p>Remote SSH, for connecting to clusters and supercomputers</p></li>
+<li><p>PyLance, Langauge Server</p></li>
+<li><p>Python indent, for correcting python indents</p></li>
+<li><p>reStructuredText, for writing documentation</p></li>
+<li><p>Strict Whitespace, for ensuring no whitespace left in code</p></li>
+<li><p>Python Docstring Generator, for writing docstring quickly</p></li>
+<li><p>C/C++, for client development</p></li>
+<li><p>Settings Sync, for syncing settings across remote servers</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="code_of_conduct.html" class="btn btn-neutral float-left" title="Code of Conduct" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

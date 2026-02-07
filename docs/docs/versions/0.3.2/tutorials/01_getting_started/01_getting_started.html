@@ -1,0 +1,1624 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Getting Started &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Using SmartRedis Clients" href="../using_clients.html" />
+    <link rel="prev" title="Community" href="../../community.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#1.1-Running-Models">1.1 Running Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#1.2-Running-Ensembles">1.2 Running Ensembles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#1.3-Running-and-Communicating-with-the-Orchestrator">1.3 Running and Communicating with the Orchestrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#1.4-Ensembles-using-SmartRedis">1.4 Ensembles using SmartRedis</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Getting Started</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/tutorials/01_getting_started/01_getting_started.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="Getting-Started">
+<h1>Getting Started<a class="headerlink" href="#Getting-Started" title="Permalink to this headline">¶</a></h1>
+<p>In this notebook, we will walk through the most basic functionalities of SmartSim.</p>
+<ul class="simple">
+<li><p>Creating and Running Models</p></li>
+<li><p>Creating and Running Ensembles</p></li>
+<li><p>Running and Communicating with the Orchestrator</p></li>
+<li><p>Ensembles using SmartRedis</p></li>
+</ul>
+<div class="section" id="1.1-Running-Models">
+<h2>1.1 Running Models<a class="headerlink" href="#1.1-Running-Models" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Experiment</span></code>s are how users define workflows in SmartSim. The <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> is used to create <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances which represent applications, scripts, or largely any program. An experiment can start and stop a <code class="docutils literal notranslate"><span class="pre">Model</span></code> and monitor execution.</p>
+<p>We begin by importing the modules we need: <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> and <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> help parameterize <em>how</em> a <code class="docutils literal notranslate"><span class="pre">Model</span></code> should be executed provided the system and available computational resources. There are many types of <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> in SmartSim. The base <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> class defines parameters for running <em>locally</em>, meaning on a laptop, workstation or single compute node.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">smartsim.settings</span> <span class="kn">import</span> <span class="n">RunSettings</span>
+</pre></div>
+</div>
+</div>
+<p>Throughout this notebook, we will incrementally build an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>. We start from the simplest case: A single <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance</p>
+<p>Our first <code class="docutils literal notranslate"><span class="pre">Model</span></code> will simply print <code class="docutils literal notranslate"><span class="pre">hello</span></code>, using the shell command <code class="docutils literal notranslate"><span class="pre">echo</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Init Experiment and specify to launch locally</span>
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;getting-started&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">)</span>
+
+<span class="c1"># create our simple model</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+<span class="n">M1</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tutorial-model&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">settings</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Once the <code class="docutils literal notranslate"><span class="pre">Model</span></code> has been created by the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, it can be started.</p>
+<p>By setting <code class="docutils literal notranslate"><span class="pre">summary=True</span></code>, we can see a summary of the experiment printed before it is launched. The summary will stay for 10 seconds, and it is useful as a last check. If we set <code class="docutils literal notranslate"><span class="pre">summary=False</span></code>, then the experiment would be launched immediately.</p>
+<p>We also explicitly set <code class="docutils literal notranslate"><span class="pre">block=True</span></code> (even though it is the default), so that <code class="docutils literal notranslate"><span class="pre">Experiment.start</span></code> waits until the last <code class="docutils literal notranslate"><span class="pre">Model</span></code> has finished before returning: it will act like a job monitor, letting us know if processes run, complete, or fail.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">M1</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== LAUNCH SUMMARY ===</span>
+<span class="ansi-green-intense-fg ansi-bold">Experiment: getting-started</span>
+<span class="ansi-green-fg">Experiment Path: /Users/spartee/Dropbox/Cray/smartsim/tutorials/01_getting_started/getting-started</span>
+<span class="ansi-green-fg">Launching with: local</span>
+<span class="ansi-green-fg"># of Ensembles: 0</span>
+<span class="ansi-green-fg"># of Models: 1</span>
+<span class="ansi-green-fg">Database: no</span>
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== MODELS ===</span>
+<span class="ansi-green-intense-fg ansi-bold">tutorial-model</span>
+<span class="ansi-green-fg">Model Parameters:
+{}</span>
+<span class="ansi-green-fg">Model Run Settings:
+Executable: /bin/echo
+Executable arguments: [&#39;hello&#39;]
+</span>
+
+
+
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:30:47 C02YN0J3JG5M SmartSim[49287] INFO tutorial-model(49432): Completed
+</pre></div></div>
+</div>
+<p>The model has completed. Let’s look at the content of the current working directory.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+
+<span class="n">outputfile</span> <span class="o">=</span> <span class="s1">&#39;./tutorial-model.out&#39;</span>
+<span class="n">errorfile</span> <span class="o">=</span> <span class="s1">&#39;./tutorial-model.err&#39;</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Content of tutorial-model.out:&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outputfile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Content of tutorial-model.err:&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">errorfile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Content of tutorial-model.out:
+hello
+
+Content of tutorial-model.err:
+
+</pre></div></div>
+</div>
+<p>We can see that two files, <code class="docutils literal notranslate"><span class="pre">tutorial-model-1.out</span></code> and <code class="docutils literal notranslate"><span class="pre">tutorial-model-1.err</span></code> have been created. The <code class="docutils literal notranslate"><span class="pre">.out</span></code> file contains the output generated by <code class="docutils literal notranslate"><span class="pre">model-1</span></code>, and the <code class="docutils literal notranslate"><span class="pre">.err</span></code> file would contain the error messages generated by it. Since there were no errors, the <code class="docutils literal notranslate"><span class="pre">.err</span></code> file is empty.</p>
+<p>Now let’s run two different <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances at the same time. This is just as easy as running one <code class="docutils literal notranslate"><span class="pre">Model</span></code>, and takes the same steps. This time, we will skip the summary. For each <code class="docutils literal notranslate"><span class="pre">Model</span></code>, we create a <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> object: it is recommended to always create separate <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> objects for each <code class="docutils literal notranslate"><span class="pre">Model</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">run_settings_1</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="s2">&quot;sleep&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">)</span>
+<span class="n">run_settings_2</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="s2">&quot;sleep&quot;</span><span class="p">,</span> <span class="s2">&quot;5&quot;</span><span class="p">)</span>
+
+<span class="n">model_1</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;tutorial-model-1&quot;</span><span class="p">,</span> <span class="n">run_settings_1</span><span class="p">)</span>
+<span class="n">model_2</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;tutorial-model-2&quot;</span><span class="p">,</span> <span class="n">run_settings_2</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">model_1</span><span class="p">,</span> <span class="n">model_2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:32:18 C02YN0J3JG5M SmartSim[49287] INFO tutorial-model-1(50330): Completed
+19:32:19 C02YN0J3JG5M SmartSim[49287] INFO tutorial-model-2(50337): Running
+19:32:20 C02YN0J3JG5M SmartSim[49287] INFO tutorial-model-2(50337): Completed
+</pre></div></div>
+</div>
+<p>For users of parallel applications, launch binaries can also be specified in <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>. For example, if <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> is installed on the system, we can run a model through it, by specifying it as <code class="docutils literal notranslate"><span class="pre">run_command</span></code> in <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>. Since <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> takes arguments (e.g. to define how many processes will be run), we pass them by defining <code class="docutils literal notranslate"><span class="pre">run_args</span></code> in <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>.</p>
+<p>Please note that to run this you need to have OpenMPI installed.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">openmpi_settings</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span>
+                           <span class="s2">&quot;hello world!&quot;</span><span class="p">,</span>
+                           <span class="n">run_command</span><span class="o">=</span><span class="s2">&quot;mpirun&quot;</span><span class="p">,</span>
+                           <span class="n">run_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;-np&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span> <span class="c1"># note that for base ``RunSettings`` run_args passed literally</span>
+
+<span class="n">ompi_model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;tutorial-model-mpirun&quot;</span><span class="p">,</span> <span class="n">openmpi_settings</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ompi_model</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== LAUNCH SUMMARY ===</span>
+<span class="ansi-green-intense-fg ansi-bold">Experiment: getting-started</span>
+<span class="ansi-green-fg">Experiment Path: /Users/spartee/Dropbox/Cray/smartsim/tutorials/01_getting_started/getting-started</span>
+<span class="ansi-green-fg">Launching with: local</span>
+<span class="ansi-green-fg"># of Ensembles: 0</span>
+<span class="ansi-green-fg"># of Models: 1</span>
+<span class="ansi-green-fg">Database: no</span>
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== MODELS ===</span>
+<span class="ansi-green-intense-fg ansi-bold">tutorial-model-mpirun</span>
+<span class="ansi-green-fg">Model Parameters:
+{}</span>
+<span class="ansi-green-fg">Model Run Settings:
+Executable: /bin/echo
+Executable arguments: [&#39;hello&#39;, &#39;world!&#39;]
+Run Command: mpirun
+Run arguments: {&#39;-np&#39;: 2}</span>
+
+
+
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:35:47 C02YN0J3JG5M SmartSim[49287] INFO tutorial-model-mpirun(52447): Completed
+</pre></div></div>
+</div>
+<p>This time, since we passed <code class="docutils literal notranslate"><span class="pre">-np</span> <span class="pre">2</span></code> to <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>, in the output file we should find the line <code class="docutils literal notranslate"><span class="pre">hello</span> <span class="pre">world!</span></code> twice.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">outputfile</span> <span class="o">=</span> <span class="s1">&#39;./tutorial-model-mpirun.out&#39;</span>
+<span class="n">errorfile</span> <span class="o">=</span> <span class="s1">&#39;./tutorial-model-mpirun.err&#39;</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Content of tutorial-model-mpirun.out:&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outputfile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Content of tutorial-model-mpirun.out:
+hello world!
+hello world!
+
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="1.2-Running-Ensembles">
+<h2>1.2 Running Ensembles<a class="headerlink" href="#1.2-Running-Ensembles" title="Permalink to this headline">¶</a></h2>
+<p>In the previous example, the two <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances were created separately. There are more convenient ways of doing this, through <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>s. <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>s are groups of <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances that can be treated as a single reference. We start by specifying <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code> similar to how we did with our <code class="docutils literal notranslate"><span class="pre">Model</span></code>s.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ens_settings</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;sleep&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;3&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Then, instead of creating it as we did before, we use <code class="docutils literal notranslate"><span class="pre">create_ensemble</span></code>. Let’s assume we want to run the same experiment four times in parallel, then we will pass the <code class="docutils literal notranslate"><span class="pre">replicas=4</span></code> argument and simply start the <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;ensemble-replica&quot;</span><span class="p">,</span> <span class="n">replicas</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">ens_settings</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== LAUNCH SUMMARY ===</span>
+<span class="ansi-green-intense-fg ansi-bold">Experiment: getting-started</span>
+<span class="ansi-green-fg">Experiment Path: /Users/spartee/Dropbox/Cray/smartsim/tutorials/01_getting_started/getting-started</span>
+<span class="ansi-green-fg">Launching with: local</span>
+<span class="ansi-green-fg"># of Ensembles: 1</span>
+<span class="ansi-green-fg"># of Models: 0</span>
+<span class="ansi-green-fg">Database: no</span>
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== ENSEMBLES ===</span>
+<span class="ansi-green-intense-fg ansi-bold">ensemble-replica</span>
+<span class="ansi-green-fg"># of models in ensemble: 4</span>
+<span class="ansi-green-fg">Launching as batch: False</span>
+<span class="ansi-green-fg">Run Settings:
+Executable: /bin/sleep
+Executable arguments: [&#39;3&#39;]
+</span>
+
+
+
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:39:43 C02YN0J3JG5M SmartSim[49287] INFO ensemble-replica_0(54811): Completed
+19:39:43 C02YN0J3JG5M SmartSim[49287] INFO ensemble-replica_2(54813): Completed
+19:39:44 C02YN0J3JG5M SmartSim[49287] INFO ensemble-replica_1(54812): Completed
+19:39:44 C02YN0J3JG5M SmartSim[49287] INFO ensemble-replica_3(54814): Completed
+19:39:45 C02YN0J3JG5M SmartSim[49287] INFO ensemble-replica_1(54812): Completed
+19:39:45 C02YN0J3JG5M SmartSim[49287] INFO ensemble-replica_3(54814): Completed
+</pre></div></div>
+</div>
+<p>From the output, we see that four copies of our <code class="docutils literal notranslate"><span class="pre">Model</span></code>, named <em>ensemble-replica_0</em>, <em>ensemble-replica_1</em>, … were run. In each output file, we will see that the same output was generated.</p>
+<p>Now let’s imagine that we don’t want to run the <em>same</em> model four times, but we want to run variations of it. One way of doing this would be to define four models, and starting them through the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>.</p>
+<p>For few, simple <code class="docutils literal notranslate"><span class="pre">Model</span></code>s, this would be OK, but what if we needed to run a large number of models, which only differ for some parameter? Defining and adding each one separately would be tedious. For such cases, we will rely on a parameterized <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> of models.</p>
+<p>Our goal is to run</p>
+<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">output_my_parameter.py</span></code></p>
+<p>with multiple parameter values. Clearly, we could pass the parameters as arguments, but in some cases, this could not be possible (e.g. if the parameters were stored in a file or the executable would not accept them from the command line).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">rs</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;output_my_parameter.py&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Then, we define the parameters we are going to set:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tutorial_name</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tutorial_parameter</span></code></p></li>
+</ol>
+<p>In the original file <code class="docutils literal notranslate"><span class="pre">output_my_parameter.py</span></code>, which acts as a template, they occur as <code class="docutils literal notranslate"><span class="pre">;tutorial_name;</span></code> and <code class="docutils literal notranslate"><span class="pre">;tutorial_parameter;</span></code>. The semi-colons are used to perform a regexp substitution with the desired values. The semi-colon in this case, is called a <em>tag</em> and can be changed.</p>
+<p>We pass them to <code class="docutils literal notranslate"><span class="pre">Experiment.create_ensemble</span></code>, along with the argument <code class="docutils literal notranslate"><span class="pre">perm_strategy=&quot;all_perm&quot;</span></code>. This argument means that we want all possible permutations of the given parameters, which are stored in the argument <code class="docutils literal notranslate"><span class="pre">params</span></code>. We have two options for both parameters, thus our ensemble will run 4 instances of the same <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, just using a different copy of <code class="docutils literal notranslate"><span class="pre">output_my_parameter.py</span></code> created by calling <code class="docutils literal notranslate"><span class="pre">Experiment.generate()</span></code>. We attach the template file to the <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> instance,
+generate the augmented python files, and run the experiment.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;tutorial_name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Ellie&quot;</span><span class="p">,</span> <span class="s2">&quot;John&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;tutorial_parameter&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">rs</span><span class="p">,</span> <span class="n">perm_strategy</span><span class="o">=</span><span class="s2">&quot;all_perm&quot;</span><span class="p">)</span>
+
+<span class="c1"># to_configure specifies that the files attached should be read and tags should be looked for</span>
+<span class="n">config_file</span> <span class="o">=</span> <span class="s2">&quot;./output_my_parameter.py&quot;</span>
+<span class="n">ensemble</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_configure</span><span class="o">=</span><span class="n">config_file</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ensemble</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:48:20 C02YN0J3JG5M SmartSim[49287] INFO ensemble_0(60008): Completed
+19:48:20 C02YN0J3JG5M SmartSim[49287] INFO ensemble_1(60009): Completed
+19:48:20 C02YN0J3JG5M SmartSim[49287] INFO ensemble_2(60010): Completed
+19:48:21 C02YN0J3JG5M SmartSim[49287] INFO ensemble_3(60012): Completed
+19:48:22 C02YN0J3JG5M SmartSim[49287] INFO ensemble_3(60012): Completed
+</pre></div></div>
+</div>
+<p>We can see from the output that four instances of our experiment were run, each one named like the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, with a numeric suffix at the end: <code class="docutils literal notranslate"><span class="pre">ensemble_0</span></code>, <code class="docutils literal notranslate"><span class="pre">ensemble_1</span></code>, … each ensemble member generated its own output files, which will be stored in <code class="docutils literal notranslate"><span class="pre">getting-started/ensemble/ensemble_0</span></code>, <code class="docutils literal notranslate"><span class="pre">getting-started/ensemble/ensemble_1</span></code>, and so on as the call to <code class="docutils literal notranslate"><span class="pre">Experiment.generate()</span></code> will created isolated output directories for each created <code class="docutils literal notranslate"><span class="pre">Model</span></code> in the ensemble.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">for</span> <span class="n">ensemble_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+    <span class="n">outputfile</span> <span class="o">=</span> <span class="s1">&#39;getting-started/ensemble/ensemble_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ensemble_id</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/ensemble_&quot;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ensemble_id</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;.out&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Content of </span><span class="si">{</span><span class="n">outputfile</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outputfile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Content of getting-started/ensemble/ensemble_0/ensemble_0.out:
+Hello, my name is Ellie and my parameter is 2
+
+Content of getting-started/ensemble/ensemble_1/ensemble_1.out:
+Hello, my name is Ellie and my parameter is 11
+
+Content of getting-started/ensemble/ensemble_2/ensemble_2.out:
+Hello, my name is John and my parameter is 2
+
+Content of getting-started/ensemble/ensemble_3/ensemble_3.out:
+Hello, my name is John and my parameter is 11
+
+</pre></div></div>
+</div>
+<p>That’s it! All possible permutations of the input parameters were used to execute the experiment! Sometimes, the parameter space can be too large to be explored exhaustively. In that case, we can use a different permutation strategy, i.e. <code class="docutils literal notranslate"><span class="pre">random</span></code>. For example, if we want to only use two possible random combinations of our parameter space, we can run the following code, where we specify <code class="docutils literal notranslate"><span class="pre">n_models=2</span></code> and <code class="docutils literal notranslate"><span class="pre">perm_strategy=&quot;random&quot;</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;tutorial_name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Ellie&quot;</span><span class="p">,</span> <span class="s2">&quot;John&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;tutorial_parameter&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">rs</span><span class="p">,</span> <span class="n">perm_strategy</span><span class="o">=</span><span class="s2">&quot;random&quot;</span><span class="p">,</span> <span class="n">n_models</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">config_file</span> <span class="o">=</span> <span class="s2">&quot;./output_my_parameter.py&quot;</span>
+<span class="n">ensemble</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_configure</span><span class="o">=</span><span class="n">config_file</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ensemble</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:51:29 C02YN0J3JG5M SmartSim[49287] INFO Working in previously created experiment
+19:51:34 C02YN0J3JG5M SmartSim[49287] INFO ensemble_0(62039): Completed
+19:51:34 C02YN0J3JG5M SmartSim[49287] INFO ensemble_1(62040): Completed
+</pre></div></div>
+</div>
+<p>Another possible permutation strategy is <code class="docutils literal notranslate"><span class="pre">stepped</span></code>, but it is also possible to pass a function, which will need to generate combinations of parameters starting from the dictionary. Please refer to the documentation to learn more about this.</p>
+<p>It is also possible to use different delimiters for the parameter regexp. For example, if instead of <code class="docutils literal notranslate"><span class="pre">;</span></code>, we want to use <code class="docutils literal notranslate"><span class="pre">&#64;</span></code>, we can set it as <code class="docutils literal notranslate"><span class="pre">tag</span></code> in <code class="docutils literal notranslate"><span class="pre">generate</span></code>. We have to use a different version of the parameterized file, one named <code class="docutils literal notranslate"><span class="pre">output_my_parameter_new_tag.py</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">rs</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;output_my_parameter_new_tag.py&quot;</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;tutorial_name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Ellie&quot;</span><span class="p">,</span> <span class="s2">&quot;John&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;tutorial_parameter&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;ensemble_new_tag&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">rs</span><span class="p">,</span> <span class="n">perm_strategy</span><span class="o">=</span><span class="s2">&quot;all_perm&quot;</span><span class="p">)</span>
+<span class="n">config_file</span> <span class="o">=</span> <span class="s2">&quot;./output_my_parameter_new_tag.py&quot;</span>
+<span class="n">ensemble</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_configure</span><span class="o">=</span><span class="n">config_file</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;@&#39;</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ensemble</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:52:39 C02YN0J3JG5M SmartSim[49287] INFO Working in previously created experiment
+19:52:44 C02YN0J3JG5M SmartSim[49287] INFO ensemble_new_tag_0(62747): Completed
+19:52:44 C02YN0J3JG5M SmartSim[49287] INFO ensemble_new_tag_1(62748): Completed
+19:52:44 C02YN0J3JG5M SmartSim[49287] INFO ensemble_new_tag_2(62749): Completed
+19:52:45 C02YN0J3JG5M SmartSim[49287] INFO ensemble_new_tag_3(62750): Completed
+19:52:46 C02YN0J3JG5M SmartSim[49287] INFO ensemble_new_tag_3(62750): Completed
+</pre></div></div>
+</div>
+<p>Last, we can see all the kernels we have executed by calling <code class="docutils literal notranslate"><span class="pre">Experiment.summary()</span></code></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">exp</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Name</th>
+      <th>Entity-Type</th>
+      <th>JobID</th>
+      <th>RunID</th>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Returncode</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>tutorial-model</td>
+      <td>Model</td>
+      <td>49432</td>
+      <td>0</td>
+      <td>2.001588</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>tutorial-model-1</td>
+      <td>Model</td>
+      <td>50330</td>
+      <td>0</td>
+      <td>4.217252</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>tutorial-model-2</td>
+      <td>Model</td>
+      <td>50337</td>
+      <td>0</td>
+      <td>6.010539</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>tutorial-model-mpirun</td>
+      <td>Model</td>
+      <td>52447</td>
+      <td>0</td>
+      <td>2.004867</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ensemble-replica_0</td>
+      <td>Model</td>
+      <td>54811</td>
+      <td>0</td>
+      <td>4.628920</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>ensemble-replica_2</td>
+      <td>Model</td>
+      <td>54813</td>
+      <td>0</td>
+      <td>4.216618</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>ensemble-replica_1</td>
+      <td>Model</td>
+      <td>54812</td>
+      <td>0</td>
+      <td>6.428902</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>ensemble-replica_3</td>
+      <td>Model</td>
+      <td>54814</td>
+      <td>0</td>
+      <td>6.017785</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>ensemble_2</td>
+      <td>Model</td>
+      <td>60010</td>
+      <td>0</td>
+      <td>4.218734</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>ensemble_3</td>
+      <td>Model</td>
+      <td>60012</td>
+      <td>0</td>
+      <td>6.013866</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>ensemble_0</td>
+      <td>Model</td>
+      <td>60008</td>
+      <td>0</td>
+      <td>4.631225</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>ensemble_0</td>
+      <td>Model</td>
+      <td>62039</td>
+      <td>1</td>
+      <td>4.216191</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>ensemble_1</td>
+      <td>Model</td>
+      <td>60009</td>
+      <td>0</td>
+      <td>4.426308</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>ensemble_1</td>
+      <td>Model</td>
+      <td>62040</td>
+      <td>1</td>
+      <td>4.011659</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>ensemble_new_tag_0</td>
+      <td>Model</td>
+      <td>62747</td>
+      <td>0</td>
+      <td>4.634087</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>ensemble_new_tag_1</td>
+      <td>Model</td>
+      <td>62748</td>
+      <td>0</td>
+      <td>4.428509</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>ensemble_new_tag_2</td>
+      <td>Model</td>
+      <td>62749</td>
+      <td>0</td>
+      <td>4.219598</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>ensemble_new_tag_3</td>
+      <td>Model</td>
+      <td>62750</td>
+      <td>0</td>
+      <td>6.015937</td>
+      <td>Completed</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</div>
+<div class="section" id="1.3-Running-and-Communicating-with-the-Orchestrator">
+<h2>1.3 Running and Communicating with the Orchestrator<a class="headerlink" href="#1.3-Running-and-Communicating-with-the-Orchestrator" title="Permalink to this headline">¶</a></h2>
+<p>In this section we will see how to use <code class="docutils literal notranslate"><span class="pre">SmartRedis</span></code> clients to interact with an in-memory database launched by SmartSim called the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>. We start by importing the SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> and the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> from SmartSim</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span> <span class="nn">smartsim.database</span> <span class="kn">import</span> <span class="n">Orchestrator</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">REDIS_PORT</span><span class="o">=</span><span class="mi">6899</span>
+</pre></div>
+</div>
+</div>
+<p>We start the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>. Since we are setting <code class="docutils literal notranslate"><span class="pre">launcher=&quot;local&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> will run a single DB instance.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;tutorial-smartredis&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">)</span>
+
+<span class="c1"># create and start a database</span>
+<span class="n">orc</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="n">REDIS_PORT</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">orc</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">orc</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now that the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> is running, we can use SmartRedis to store NumPy tensors on the Redis DB, and get them back. This is done using the SmartSim <code class="docutils literal notranslate"><span class="pre">Client</span></code>. First, we setup a connection to the DB.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;127.0.0.1:&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">REDIS_PORT</span><span class="p">),</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Then, we can use the DB to put and retrieve tensors. We need to assign a unique key to each tensor (or object) we store on the DB.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">send_tensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;tutorial_tensor_1&quot;</span><span class="p">,</span> <span class="n">send_tensor</span><span class="p">)</span>
+
+<span class="n">receive_tensor</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;tutorial_tensor_1&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Receive tensor:</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">receive_tensor</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Receive tensor:
+
+ [[[1. 1. 1.]
+  [1. 1. 1.]
+  [1. 1. 1.]]
+
+ [[1. 1. 1.]
+  [1. 1. 1.]
+  [1. 1. 1.]]
+
+ [[1. 1. 1.]
+  [1. 1. 1.]
+  [1. 1. 1.]]
+
+ [[1. 1. 1.]
+  [1. 1. 1.]
+  [1. 1. 1.]]]
+</pre></div></div>
+</div>
+<p>With the SmartRedis <code class="docutils literal notranslate"><span class="pre">Client</span></code> and its possible to store and run a Pytorch neural network directly on the DB node. We first create a one-layer PyTorch Convolutional Neural Network, and save it as a jit-traced, serialized, object.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="c1"># taken from https://pytorch.org/docs/master/generated/torch.jit.trace.html</span>
+<span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+<span class="n">example_forward_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">module</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">example_forward_input</span><span class="p">)</span>
+
+<span class="c1"># Save the traced model to a file</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;./torch_cnn.pt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we send the model to the database, again, we assign it a unique key, <code class="docutils literal notranslate"><span class="pre">tutorial-cnn</span></code>, which we will use to refer to the model when using the <code class="docutils literal notranslate"><span class="pre">Client</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Set the model in the Redis database from the file</span>
+<span class="n">client</span><span class="o">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="s2">&quot;tutorial-cnn&quot;</span><span class="p">,</span> <span class="s2">&quot;./torch_cnn.pt&quot;</span><span class="p">,</span> <span class="s2">&quot;TORCH&quot;</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we create a random tensor, store it on the DB, and use it as input to the CNN we just sent. The <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> will run the neural network and store the output with the key we specify. Using that key, we can retrieve the tensor.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Put a tensor in the database as a test input</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;torch_cnn_input&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Run model and retrieve the output</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_model</span><span class="p">(</span><span class="s2">&quot;tutorial-cnn&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;torch_cnn_input&quot;</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;torch_cnn_output&quot;</span><span class="p">])</span>
+<span class="n">out_data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;torch_cnn_output&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Notice that we could have defined the model as an object (without storing it on disk) and send it to the DB using <code class="docutils literal notranslate"><span class="pre">set_model</span></code> instead of <code class="docutils literal notranslate"><span class="pre">set_model_from_file</span></code>. We can do the same thing for any Python function. For example, let’s define a simple function takes a NumPy tensor as input.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">def</span> <span class="nf">max_of_tensor</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sample torchscript script that returns the</span>
+<span class="sd">    highest element in an array.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># return the highest element</span>
+    <span class="k">return</span> <span class="n">array</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">sample_array_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">9.</span><span class="p">)])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sample_array_1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">max_of_tensor</span><span class="p">(</span><span class="n">sample_array_1</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[0. 1. 2. 3. 4. 5. 6. 7. 8.]]
+Max:
+8.0
+</pre></div></div>
+</div>
+<p>Now let’s store this function on the DB, assignign it the key <code class="docutils literal notranslate"><span class="pre">max-of-tensor</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">client</span><span class="o">.</span><span class="n">set_function</span><span class="p">(</span><span class="s2">&quot;max-of-tensor&quot;</span><span class="p">,</span> <span class="n">max_of_tensor</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we perform the same sample computation on the DB.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;script-data-1&quot;</span><span class="p">,</span> <span class="n">sample_array_1</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">run_script</span><span class="p">(</span>
+    <span class="s2">&quot;max-of-tensor&quot;</span><span class="p">,</span>  <span class="c1"># key of our script</span>
+    <span class="s2">&quot;max_of_tensor&quot;</span><span class="p">,</span>  <span class="c1"># function to be called</span>
+    <span class="p">[</span><span class="s2">&quot;script-data-1&quot;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s2">&quot;script-output&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="n">out</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_tensor</span><span class="p">(</span><span class="s2">&quot;script-output&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[8.]
+</pre></div></div>
+</div>
+<p>And, as expected, we obtain the same result we obtained when we ran the function locally. To clean up, we need to tear down the DB. We do this by stopping the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">orc</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+19:59:29 C02YN0J3JG5M SmartSim[49287] INFO Stopping model orchestrator_0 with job name orchestrator_0-CACWEL8F89TK
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="1.4-Ensembles-using-SmartRedis">
+<h2>1.4 Ensembles using SmartRedis<a class="headerlink" href="#1.4-Ensembles-using-SmartRedis" title="Permalink to this headline">¶</a></h2>
+<p>In Section 1.2 we used <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>s. What would happen if <code class="docutils literal notranslate"><span class="pre">Model</span></code>s which are part of an <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> tried to put their tensors on the DB using SmartRedis? Unless we used unique keys across the running programs, several tensors (or objects) would have the same key, and this key collision would result in unexpected behavior. In other words, if in the source code of one program, a tensor with key <code class="docutils literal notranslate"><span class="pre">tensor1</span></code> was put on the DB, then each replica of the program would put a tensor with the key
+<code class="docutils literal notranslate"><span class="pre">tensor1</span></code>. SmartSim and SmartRedis can avoid key collision by prepending program-unique prefixes to entities.</p>
+<p>Let’s start by setting up the experiment with the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;tutorial-smartredis-ensemble&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">)</span>
+
+<span class="c1"># create and start a database</span>
+<span class="n">orc</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="n">REDIS_PORT</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">orc</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">orc</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now let’s add two replicas of the same <code class="docutils literal notranslate"><span class="pre">Model</span></code>. Basically, it is a simple producer, which puts a tensor on the DB. The code for it is in <code class="docutils literal notranslate"><span class="pre">producer.py</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">rs_prod</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;producer.py --redis-port &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">REDIS_PORT</span><span class="p">))</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;producer&quot;</span><span class="p">,</span>
+                               <span class="n">replicas</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                               <span class="n">run_settings</span><span class="o">=</span><span class="n">rs_prod</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We add a consumer, which will just retrieve the tensors put by the two producers and check that they are what it expects.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">rs_consumer</span> <span class="o">=</span> <span class="n">RunSettings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;consumer.py --redis-port &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">REDIS_PORT</span><span class="p">))</span>
+<span class="n">consumer</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;consumer&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">rs_consumer</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We need to register incoming entities, i.e. entities for which the prefix will have to be known by other entities. When we will start the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, environment variables will be set to let all entities know which incoming entities are present.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">consumer</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">ensemble</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">consumer</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">ensemble</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>Finally, we attach the files to the experiments, generate them, and run!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ensemble</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;producer.py&#39;</span><span class="p">])</span>
+<span class="n">consumer</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;consumer.py&#39;</span><span class="p">])</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># start the models</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+20:02:07 C02YN0J3JG5M SmartSim[49287] INFO Working in previously created experiment
+20:02:07 C02YN0J3JG5M SmartSim[49287] INFO Working in previously created experiment
+
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== LAUNCH SUMMARY ===</span>
+<span class="ansi-green-intense-fg ansi-bold">Experiment: tutorial-smartredis-ensemble</span>
+<span class="ansi-green-fg">Experiment Path: /Users/spartee/Dropbox/Cray/smartsim/tutorials/01_getting_started/tutorial-smartredis-ensemble</span>
+<span class="ansi-green-fg">Launching with: local</span>
+<span class="ansi-green-fg"># of Ensembles: 1</span>
+<span class="ansi-green-fg"># of Models: 1</span>
+<span class="ansi-green-fg">Database: no</span>
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== ENSEMBLES ===</span>
+<span class="ansi-green-intense-fg ansi-bold">producer</span>
+<span class="ansi-green-fg"># of models in ensemble: 2</span>
+<span class="ansi-green-fg">Launching as batch: False</span>
+<span class="ansi-green-fg">Run Settings:
+Executable: /Users/spartee/.virtualenvs/smartsim/bin/python
+Executable arguments: [&#39;producer.py&#39;, &#39;--redis-port&#39;, &#39;6899&#39;]
+</span>
+
+
+<span class="ansi-cyan-intense-fg ansi-bold">=== MODELS ===</span>
+<span class="ansi-green-intense-fg ansi-bold">consumer</span>
+<span class="ansi-green-fg">Model Parameters:
+{}</span>
+<span class="ansi-green-fg">Model Run Settings:
+Executable: /Users/spartee/.virtualenvs/smartsim/bin/python
+Executable arguments: [&#39;consumer.py&#39;, &#39;--redis-port&#39;, &#39;6899&#39;]
+</span>
+
+
+
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+20:02:22 C02YN0J3JG5M SmartSim[49287] INFO producer_0(68575): Completed
+20:02:22 C02YN0J3JG5M SmartSim[49287] INFO producer_1(68576): Completed
+20:02:23 C02YN0J3JG5M SmartSim[49287] INFO consumer(68577): Completed
+20:02:24 C02YN0J3JG5M SmartSim[49287] INFO consumer(68577): Completed
+</pre></div></div>
+</div>
+<p>The producers produced random NumPy tensors, and we can see that the consumer was able to retrieve both of them from the DB, by looking at its output.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">outputfile</span> <span class="o">=</span> <span class="s1">&#39;./tutorial-smartredis-ensemble/consumer/consumer.out&#39;</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outputfile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Tensor for producer_0 is: [[[[0.72651781 0.94967021 0.7009509 ]
+   [0.12356079 0.10970366 0.17820585]
+   [0.98406475 0.91311928 0.70532184]]]]
+Tensor for producer_1 is: [[[[0.99084866 0.56835187 0.19604226]
+   [0.08345202 0.82443378 0.50058923]
+   [0.03786348 0.64053919 0.6278744 ]]]]
+
+</pre></div></div>
+</div>
+<p>As usual, let’s shutdown the DB, by stopping the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">orc</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+20:02:45 C02YN0J3JG5M SmartSim[49287] INFO Stopping model orchestrator_0 with job name orchestrator_0-CACWHRLXI83C
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../using_clients.html" class="btn btn-neutral float-right" title="Using SmartRedis Clients" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../../community.html" class="btn btn-neutral float-left" title="Community" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

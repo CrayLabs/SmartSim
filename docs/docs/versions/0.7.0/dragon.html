@@ -1,0 +1,682 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Dragon &#8212; SmartSim 0.7.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom_tab_style.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="_static/design-tabs.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'dragon';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SmartSim API" href="api/smartsim_api.html" />
+    <link rel="prev" title="ML Features" href="ml_features.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.7.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run_settings.html">Run Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch_settings.html">Batch Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ensemble.html">Ensemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ss_logger.html">Logger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_features.html">ML Features</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Dragon</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fdragon.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/dragon.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Dragon</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-dragon-server">The Dragon Server</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sharing-the-dragon-server-across-experiments">Sharing the Dragon Server across Experiments</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dragon-s-high-speed-transport-agents">Dragon’s High-Speed Transport Agents</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#communication">Communication</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#known-issues">Known issues</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="dragon">
+<h1>Dragon<a class="headerlink" href="#dragon" title="Permalink to this heading">#</a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">#</a></h2>
+<p>Dragon is a composable distributed run-time targeting HPC workflows. In SmartSim,
+Dragon can be used as a launcher, within a Slurm or PBS allocation or batch job.
+The SmartSim team collaborates with the Dragon team to develop an efficient
+launcher which will enable fast, interactive, and customized execution of
+complex workflows on large HPC systems. As Dragon is scheduler-agnostic,
+the same SmartSim script using Dragon as a launcher can be run indifferently
+on a Slurm or PBS system. Support for additional schedulers is coming soon.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The Dragon launcher is currently in its early development stage and should be treated as
+a prototype implementation. Your assistance is invaluable in identifying any issues
+encountered during usage and suggesting missing features for implementation. Please
+provide feedback in the form of a created issue on the
+<a class="reference external" href="https://github.com/CrayLabs/SmartSim/issues">SmartSim issues GitHub page</a>.
+The <a class="reference internal" href="#dragon-known-issues"><span class="std std-ref">Known Issues section</span></a> is also a good starting
+point when troubleshooting workflows run using the Dragon launcher.</p>
+</div>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h2>
+<p>To use Dragon, you need to install it in your current Python environment. This can
+be accomplished by providing the <code class="docutils literal notranslate"><span class="pre">--dragon</span></code> flag to the <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">build</span></code> command, as
+detailed in the <a class="reference internal" href="installation_instructions/basic.html#dragon-install"><span class="std std-ref">Dragon Install</span></a>. Note that specifying the device
+configuration is also required for a proper build.</p>
+<p>After installation, specify Dragon as the launcher when creating an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;dragon-example&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;dragon&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Dragon introduces its own run settings class, <code class="docutils literal notranslate"><span class="pre">DragonRunSettings</span></code>, which allows users to
+specify nodes and tasks per node for a <code class="docutils literal notranslate"><span class="pre">Model</span></code>. For instance, continuing from the previous
+example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Because &quot;dragon&quot; was specified as the launcher during Experiment initialization,</span>
+<span class="c1"># create_run_settings will return a DragonRunSettings object</span>
+<span class="n">rs</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;mpi_app&quot;</span><span class="p">,</span>
+                             <span class="n">exe_args</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--option&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">],</span>
+                             <span class="n">env_vars</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;MYVAR&quot;</span><span class="p">:</span> <span class="s2">&quot;VALUE&quot;</span><span class="p">})</span>
+<span class="c1"># Above we specify the executable (exe), executable arguments (exe_args)</span>
+<span class="c1"># and environment variables (env_vars)</span>
+
+<span class="c1"># Sets the number of nodes for this job</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">set_nodes</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="c1"># Set the tasks per node for this job</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="c1"># Initialize the Model and pass in the DragonRunSettings object</span>
+<span class="n">mpi_app</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;MPI_APP&quot;</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">rs</span><span class="p">)</span>
+<span class="c1"># Start the Model</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">mpi_app</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>SmartSim supports <code class="docutils literal notranslate"><span class="pre">DragonRunSettings</span></code> with <code class="docutils literal notranslate"><span class="pre">Model</span></code>, <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> and <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code> entities.
+In the next sections, we detail how Dragon is integrated into SmartSim.</p>
+<p>For more information on HPC launchers, visit the <a class="reference internal" href="run_settings.html#run-settings-hpc-ex"><span class="std std-ref">Run Settings</span></a> page.</p>
+</section>
+<section id="the-dragon-server">
+<h2>The Dragon Server<a class="headerlink" href="#the-dragon-server" title="Permalink to this heading">#</a></h2>
+<p>Dragon can initiate processes on any available resource within an allocation. To facilitate
+this, SmartSim initializes the Dragon infrastructure whenever a <code class="docutils literal notranslate"><span class="pre">Model</span></code> is launched and maintains
+it until the parent <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> concludes. To facilitate interaction with processes managed by
+Dragon, SmartSim establishes a command server within the Dragon infrastructure. This server,
+known as the <cite>Dragon Server</cite>, is responsible for executing commands to start or stop processes
+and to query their status.</p>
+<section id="sharing-the-dragon-server-across-experiments">
+<h3>Sharing the Dragon Server across Experiments<a class="headerlink" href="#sharing-the-dragon-server-across-experiments" title="Permalink to this heading">#</a></h3>
+<p>Currently, SmartSim supports only one Dragon server per allocation. Consequently,
+if multiple Experiments need to run within the same allocation, the Dragon server
+must be shared among them. By default, the server starts from a subdirectory
+of the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> path, where it creates a configuration file.
+To enable server sharing, users can specify a custom path
+from which the server should be launched. This can be achieved by setting the
+environment variable <code class="docutils literal notranslate"><span class="pre">SMARTSIM_DRAGON_SERVER_PATH</span></code> to an existing absolute path.
+Each <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> will then search for the configuration file in the specified path
+and initiate a new server instance only if the file is not found.</p>
+</section>
+<section id="dragon-s-high-speed-transport-agents">
+<h3>Dragon’s High-Speed Transport Agents<a class="headerlink" href="#dragon-s-high-speed-transport-agents" title="Permalink to this heading">#</a></h3>
+<p>On systems equipped with the HPE Slingshot interconnect, Dragon utilizes High-Speed
+Transport Agents (HSTA) by default for internal messaging within the infrastructure
+launched by SmartSim. On systems without the HPE Slingshot interconnect,
+TCP agents are employed. To specify the use of TCP agents, users must set the environment
+variable <code class="docutils literal notranslate"><span class="pre">SMARTSIM_DRAGON_TRANSPORT</span></code> to <code class="docutils literal notranslate"><span class="pre">tcp</span></code> prior to executing the Experiment.
+To specify HSTA, <code class="docutils literal notranslate"><span class="pre">SMARTSIM_DRAGON_TRANSPORT</span></code> can be set to <code class="docutils literal notranslate"><span class="pre">hsta</span></code> or left unset.</p>
+</section>
+</section>
+<section id="communication">
+<h2>Communication<a class="headerlink" href="#communication" title="Permalink to this heading">#</a></h2>
+<p>SmartSim and the Dragon Server communicate using <a class="reference external" href="https://zeromq.org/">ZeroMQ</a>.</p>
+<p>Similar to other communication protocols, defining timeouts for send and receive operations
+is crucial in SmartSim. SmartSim configures default timeouts that have been tested on various
+systems, such as Polaris, Perlmutter, and other HPE Cray EX and Apollo systems.
+However, if you encounter failed communication attempts, adjusting the timeouts may
+be necessary. You can adjust these timeouts by setting the corresponding environment variables:</p>
+<ul class="simple">
+<li><p><strong>Server Start-up Timeout</strong>: This timeout specifies the duration the SmartSim <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>
+waits when the server is initially started. It must accommodate the time required for
+Dragon to set up the infrastructure, which varies based on the system’s workload manager
+response time. The default timeout is <cite>“300000”</cite> milliseconds (i.e., five minutes), and you can override
+it using the <code class="docutils literal notranslate"><span class="pre">SMARTSIM_DRAGON_STARTUP_TIMEOUT</span></code> environment variable.</p></li>
+<li><p><strong>Server Send and Receive Timeout</strong>: This timeout dictates how long SmartSim and the Dragon
+server wait to send or receive a message. The default timeout is <cite>“30000”</cite> milliseconds (i.e., 30 seconds),
+and you can modify it using the <code class="docutils literal notranslate"><span class="pre">SMARTSIM_DRAGON_TIMEOUT</span></code> environment variable.</p></li>
+</ul>
+<p>Setting any timeout to “-1” will result in an infinite waiting time, causing the execution to
+block until the communication is completed, potentially hanging indefinitely if issues occur.</p>
+<p>It’s important to note that all communications are secured with <a class="reference external" href="http://curvezmq.org/">elliptic curve cryptography</a>.
+SmartSim generates the necessary key-pairs and stores them in the user’s home directory by
+default. However, you can specify an alternative absolute path using the <code class="docutils literal notranslate"><span class="pre">SMARTSIM_KEY_PATH</span></code>
+environment variable.</p>
+</section>
+<section id="known-issues">
+<span id="dragon-known-issues"></span><h2>Known issues<a class="headerlink" href="#known-issues" title="Permalink to this heading">#</a></h2>
+<p>As previously noted, the integration of SmartSim with Dragon is still in its early
+development stage, and there are known issues that may result in unexpected behavior
+during runs:</p>
+<ul>
+<li><p><strong>Incomplete cleanup of Dragon resources</strong>: When SmartSim exits, it attempts to properly
+shut down the Dragon infrastructure to clean up associated resources, such as shared memory
+segments, and terminate all processes. However, in rare cases, if the execution is
+abruptly interrupted (e.g., by terminating SmartSim with <code class="docutils literal notranslate"><span class="pre">SIGKILL</span></code>), the cleanup process
+may be incomplete, leaving processes like the Dragon overlay network active on the node
+where SmartSim was executed (which could be a login node, particularly on Slurm systems).
+If this occurs, you can use the following command to address the issue:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">smart</span> <span class="n">teardown</span> <span class="o">--</span><span class="n">dragon</span>
+</pre></div>
+</div>
+<p>This command will terminate all Dragon-related processes, release shared memory segments,
+but also terminate all Python processes associated with your username.</p>
+</li>
+<li><p><strong>Dragon server not starting</strong>: This issue may arise due to two main reasons:</p>
+<ol class="arabic simple">
+<li><p><em>HSTA not available on the system</em>: Try setting the environment variable
+<code class="docutils literal notranslate"><span class="pre">SMARTSIM_DRAGON_TRANSPORT</span></code> to <code class="docutils literal notranslate"><span class="pre">tcp</span></code>.</p></li>
+<li><p><em>System or Workload Manager too busy</em>: Attempt to mitigate this by setting the environment
+variable <code class="docutils literal notranslate"><span class="pre">SMARTSIM_DRAGON_STARTUP_TIMEOUT</span></code> to a larger value or <code class="docutils literal notranslate"><span class="pre">&quot;-1&quot;</span></code>.</p></li>
+</ol>
+</li>
+<li><p><strong>MPI-based applications hanging</strong>: To run MPI-based applications on Dragon, Cray PMI or
+Cray PALS must be available on the system. This limitation is currently being addressed.</p></li>
+</ul>
+<p>Interested users can learn more about the Dragon project at the external
+<a class="reference external" href="https://dragonhpc.github.io/dragon/doc/_build/html/index.html">Dragon documentation page</a>.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ml_features.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">ML Features</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="api/smartsim_api.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">SmartSim API</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-dragon-server">The Dragon Server</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sharing-the-dragon-server-across-experiments">Sharing the Dragon Server across Experiments</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dragon-s-high-speed-transport-agents">Dragon’s High-Speed Transport Agents</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#communication">Communication</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#known-issues">Known issues</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2024, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

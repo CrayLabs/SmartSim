@@ -1,0 +1,1068 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Installation &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Community" href="community.html" />
+    <link rel="prev" title="Introduction" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-versions">Supported Versions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#smartsim">SmartSim</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#install-ml-backends">Install ML Backends</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#smartredis">SmartRedis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build-smartredis-library-c-c-fortran">Build SmartRedis Library (C++, C, Fortran)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#from-source">From Source</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#install-smartsim-from-source">Install SmartSim from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-smartredis-from-source">Install SmartRedis from Source</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#developer-makefile">Developer Makefile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#clone-smartredis">Clone SmartRedis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#building-the-python-client-from-source">Building the Python Client from Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#building-smartredis-static-library-from-source">Building SmartRedis Static Library from Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#building-the-documentation">Building the Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-notes-for-specific-system-types">Installation Notes for Specific System Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#smartsim-on-macos">SmartSim on MacOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#smartsim-on-ubuntu-or-linux-workstations">SmartSim on Ubuntu or Linux Workstations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#smartsim-on-cray-xc-cs-and-ex">SmartSim on Cray XC, CS, and EX</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cuda-and-cudnn-on-cray">CUDA and CUDNN on Cray</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#smartsim-on-summit-at-olcf">SmartSim on Summit at OLCF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#smartsim-on-cheyenne-at-ncar">SmartSim on Cheyenne at NCAR</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#changing-redis-installation-and-configurations">Changing Redis installation and Configurations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#override-pre-packaged-settings">Override Pre-packaged Settings</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Installation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>The following will show how to install both SmartSim and SmartRedis</p>
+<div class="section" id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+<p>If you want to get started with SmartSim quickly, you can install it through pip.
+We highly recommend starting a fresh Python environment.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ pip install smartsim
+$ smart --device cpu
+</pre></div>
+</div>
+<p>This will install SmartSim with PyTorch and TensorFlow backends for the Orchestrator
+database as well as the SmartRedis Python client.</p>
+</div>
+<div class="section" id="supported-versions">
+<h2>Supported Versions<a class="headerlink" href="#supported-versions" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-center" id="id1">
+<caption><span class="caption-text">Supported System for Pre-built Wheels</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>CPU</p></th>
+<th class="head"><p>GPU</p></th>
+<th class="head"><p>Python Versions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MacOS</p></td>
+<td><p>x86_64</p></td>
+<td><p>not supported</p></td>
+<td><p>3.7 - 3.9</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linux</p></td>
+<td><p>x64_64</p></td>
+<td><p>Nvidia</p></td>
+<td><p>3.7 - 3.9</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Windows is not supported and there are currently no plans
+to support Windows.</p>
+</div>
+<p>SmartSim supports multiple machine learning libraries through
+the use of <a class="reference external" href="https://github.com/RedisAI/RedisAI">RedisAI</a>. The following libraries are supported.</p>
+<table class="colwidths-given docutils align-center" id="id2">
+<caption><span class="caption-text">Supported ML Libraries</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Library</p></th>
+<th class="head"><p>Versions</p></th>
+<th class="head"><p>Python Versions</p></th>
+<th class="head"><p>Built By Default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference external" href="https://github.com/pytorch/pytorch">PyTorch</a></p></td>
+<td><p>1.7</p></td>
+<td><p>3.7 - 3.9</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://github.com/tensorflow/tensorflow">Tensorflow</a> / <a class="reference external" href="https://keras.io">Keras</a></p></td>
+<td><p>2.4.2</p></td>
+<td><p>3.7 - 3.8</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX</a></p></td>
+<td><p>1.6 - 1.7</p></td>
+<td><p>3.7 - 3.9</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+<p><a class="reference external" href="https://github.com/tensorflow/tensorflow">TensorFlow</a> 2.0 and <a class="reference external" href="https://keras.io">Keras</a> are supported through graph <a class="reference external" href="https://github.com/leimao/Frozen-Graph-TensorFlow">freezing</a>.</p>
+<p><a class="reference external" href="https://github.com/scikit-learn/scikit-learn">ScikitLearn</a> and <a class="reference external" href="https://spark.apache.org/mllib/">Spark</a> models are supported by SmartSim as well
+through the use of the <a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX</a> runtime.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>The prerequisites to install SmartSim and SmartRedis are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Python 3.7.x (or later) and pip</p></li>
+<li><p>CMake 3.10.x (or later)</p></li>
+<li><p>GCC &gt; 5</p></li>
+<li><p>GNU Make &gt; 4.0</p></li>
+<li><p>git-lfs</p></li>
+</ul>
+</div></blockquote>
+<p>For most developer systems, many of these packages will already
+be installed.</p>
+<p>Git LFS can be installed through <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">git-lfs</span> <span class="pre">&amp;&amp;</span> <span class="pre">git</span> <span class="pre">lfs</span> <span class="pre">install</span></code></p>
+<p>Be sure to reference the <a class="reference internal" href="#install-notes"><span class="std std-ref">installation notes</span></a> for helpful
+information regarding various system types before installation.</p>
+</div>
+<div class="section" id="smartsim">
+<h2>SmartSim<a class="headerlink" href="#smartsim" title="Permalink to this headline">¶</a></h2>
+<p>Activate a new virtual environment and install SmartSim from PyPi with
+the following command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install smartsim
+</pre></div>
+</div>
+<p>If you would like SmartSim to also install Machine Learning libraries that
+can be used outside SmartSim to build SmartSim-compatible models, you
+can request their installation through the <code class="docutils literal notranslate"><span class="pre">ml</span></code> flag as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install smartsim<span class="o">[</span>ml<span class="o">]</span>
+</pre></div>
+</div>
+<p>At this point, SmartSim is installed and can be used for more basic features.
+If you want to use the machine learning features of SmartSim, you will need
+to install the ML backends in the section below.</p>
+<div class="section" id="install-ml-backends">
+<h3>Install ML Backends<a class="headerlink" href="#install-ml-backends" title="Permalink to this headline">¶</a></h3>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">smart</span></code> cli tool to install the machine learning backends that
+are built into the Orchestrator database.
+<code class="docutils literal notranslate"><span class="pre">smart</span></code> is installed during the pip installation of SmartSim and may
+only be available while your virtual environment is active.</p>
+<p>To see all the installation options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>smart
+</pre></div>
+</div>
+<p>To install the database ML backends for CPU, run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># run one of the following</span>
+smart --device cpu          <span class="c1"># install PT and TF for cpu</span>
+smart --device cpu --onnx   <span class="c1"># install all backends (PT, TF, ONNX) on gpu</span>
+</pre></div>
+</div>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">smart</span></code> will install PyTorch and TensorFlow backends
+for use in SmartSim.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If a re-build is needed for any reason, <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">--clean</span></code> will remove
+all of the previous installs for the ML backends and <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">--clobber</span></code> will
+remove all pre-built dependencies as well as the ML backends.</p>
+</div>
+<p>To install the database ML backends for GPU, set the following environment variables if
+CUDNN is not in your <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code> or default loader locations.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CUDNN_INCLUDE_DIR</span></code>  - path to directory containing cudnn.h</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CUDNN_LIBRARY</span></code>      - path to directory containing libcudnn.so</p></li>
+</ul>
+</div></blockquote>
+<p>For example, for bash do</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CUDNN_LIBRARY</span><span class="o">=</span>/lus/sonexion/spartee/cuda/lib64/
+<span class="nb">export</span> <span class="nv">CUDNN_INCLUDE_DIR</span><span class="o">=</span>/lus/sonexion/spartee/cuda/include/
+<span class="nb">export</span> <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$CUDNN_LIBRARY</span>:<span class="nv">$LD_LIBRARY_PATH</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># run one of the following</span>
+smart --device gpu          <span class="c1"># install PT and TF for gpu</span>
+smart --device gpu --onnx   <span class="c1"># install all backends (PT, TF, ONNX) on gpu</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Currently, SmartSim is solely compatible with NVIDIA GPUs on Linux systems
+and <code class="docutils literal notranslate"><span class="pre">CUDA</span> <span class="pre">&gt;=</span> <span class="pre">11</span></code> is required to build.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">smart</span></code> tool is not found. Look for it in places like
+<code class="docutils literal notranslate"><span class="pre">~/.local/bin</span></code> and other <code class="docutils literal notranslate"><span class="pre">bin</span></code> locations and add it to your
+<code class="docutils literal notranslate"><span class="pre">$PATH</span></code></p>
+</div>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="smartredis">
+<h2>SmartRedis<a class="headerlink" href="#smartredis" title="Permalink to this headline">¶</a></h2>
+<p>There are implementations of the SmartRedis client in
+4 languages: Python, C++, C and Fortran. The Python
+client is installed through <code class="docutils literal notranslate"><span class="pre">pip</span></code> and the compiled
+clients can be built as a static or shared library
+through cmake.</p>
+<p>SmartRedis Python supports the same architectures for
+pre-built wheels that SmartSim does.</p>
+<table class="colwidths-given docutils align-center" id="id3">
+<caption><span class="caption-text">Supported Systems for Pre-built Wheels</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>Python Versions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MacOS</p></td>
+<td><p>3.7 - 3.9</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linux</p></td>
+<td><p>3.7 - 3.9</p></td>
+</tr>
+</tbody>
+</table>
+<p>The Python client for SmartRedis is installed through
+<code class="docutils literal notranslate"><span class="pre">pip</span></code> as follows:</p>
+<p>First, activate your Python virtual environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate &lt;env name&gt;
+</pre></div>
+</div>
+<p>Install SmartRedis Python client from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install smartredis
+</pre></div>
+</div>
+<p>Developers installing the Python client from PyPI
+can install the SmartRedis client with additional
+dependencies for testing and documentation with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install smartredis<span class="o">[</span>dev<span class="o">]</span>
+<span class="c1"># or if using ZSH</span>
+pip install smartredis<span class="se">\[</span>dev<span class="se">\]</span>
+</pre></div>
+</div>
+<p>Now, when inside your virtual environment, you should be able to import
+the <code class="docutils literal notranslate"><span class="pre">Client</span></code> from <code class="docutils literal notranslate"><span class="pre">smartredis</span></code> as follows</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Python</span> <span class="mf">3.7.7</span> <span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">May</span>  <span class="mi">7</span> <span class="mi">2020</span><span class="p">,</span> <span class="mi">21</span><span class="p">:</span><span class="mi">25</span><span class="p">:</span><span class="mi">33</span><span class="p">)</span>
+<span class="p">[</span><span class="n">GCC</span> <span class="mf">7.3.0</span><span class="p">]</span> <span class="p">::</span> <span class="n">Anaconda</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">on</span> <span class="n">linux</span>
+<span class="n">Type</span> <span class="s2">&quot;help&quot;</span><span class="p">,</span> <span class="s2">&quot;copyright&quot;</span><span class="p">,</span> <span class="s2">&quot;credits&quot;</span> <span class="ow">or</span> <span class="s2">&quot;license&quot;</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="o">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="build-smartredis-library-c-c-fortran">
+<h3>Build SmartRedis Library (C++, C, Fortran)<a class="headerlink" href="#build-smartredis-library-c-c-fortran" title="Permalink to this headline">¶</a></h3>
+<p>Clone the SmartRedis repository and checkout the most recent
+release:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/CrayLabs/SmartRedis.git --depth<span class="o">=</span><span class="m">1</span> --branch v0.2.0 smartredis
+</pre></div>
+</div>
+<p>Note that the release tarball can also be used instead of cloning
+the git repository, but the preferred method is a repository
+clone.</p>
+<p>To build the SmartRedis library for the C++, C, and Fortran,
+make sure to be in the top level directory of <code class="docutils literal notranslate"><span class="pre">smartredis-0.2.0</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make lib
+</pre></div>
+</div>
+<p>The SmartRedis library will be installed in
+<code class="docutils literal notranslate"><span class="pre">smartredis-0.2.0/install/lib/</span></code> and the SmartRedis
+header files will be installed in
+<code class="docutils literal notranslate"><span class="pre">smartredis-0.2.0/install/include/</span></code>.
+The library installation can be used to easily include SmartRedis
+capabilities in C++, C, and Fortran applications.
+For example, the CMake instructions below illustrate how to
+compile a C or C++ application with SmartRedis.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>project(Example)
+
+cmake_minimum_required(VERSION 3.10)
+
+set(CMAKE_CXX_STANDARD 17)
+
+find_library(sr_lib smartredis
+             PATHS path/to/smartredis/install/lib
+             NO_DEFAULT_PATH REQUIRED
+)
+
+include_directories(SYSTEM
+    /usr/local/include
+    path/to/smartredis/install/include
+)
+
+# Build executables
+
+add_executable(example
+    example.cpp
+)
+target_link_libraries(example
+    ${sr_lib}
+)
+</pre></div>
+</div>
+<p>Compiling a Fortran application with the SmartRedis
+library is very similar to the instructions above.
+The only difference is that the Fortran SmartRedis
+client source files currently need to be included
+in the compilation. An example CMake file is
+shown below for a Fortran application.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>project(Example)
+
+cmake_minimum_required(VERSION 3.10)
+
+enable_language(Fortran)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 99)
+
+set(ftn_client_src
+    path/to/smartredis/src/fortran/fortran_c_interop.F90
+    path/to/smartredis/src/fortran/dataset.F90
+    path/to/smartredis/src/fortran/client.F90
+)
+
+find_library(sr_lib smartredis
+             PATHS path/to/smartredis/install/lib
+             NO_DEFAULT_PATH REQUIRED
+)
+
+include_directories(SYSTEM
+    /usr/local/include
+    path/to/smartredis/install/include
+)
+
+add_executable(example
+    example.F90
+        ${ftn_client_src}
+)
+
+target_link_libraries(example
+    ${sr_lib}
+)
+</pre></div>
+</div>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="from-source">
+<h2>From Source<a class="headerlink" href="#from-source" title="Permalink to this headline">¶</a></h2>
+<p>This section will be geared towards contributors who want
+to install SmartSim and SmartRedis from source. If you are
+installing from source for other reasons, follow the steps
+below but use the distribution provided hosted on GitHub
+or PyPi.</p>
+<div class="section" id="install-smartsim-from-source">
+<h3>Install SmartSim from Source<a class="headerlink" href="#install-smartsim-from-source" title="Permalink to this headline">¶</a></h3>
+<p>First, clone SmartSim.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/CrayLabs/SmartSim smartsim
+</pre></div>
+</div>
+<p>And then install SmartSim with pip in <em>editable</em> mode. This way,
+SmartSim is installed in your virtual environment and available
+in PYTHONPATH, but the source remains at the site of the clone
+instead of in site-packages.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> smartsim
+pip install -e .<span class="o">[</span>dev,ml<span class="o">]</span>   <span class="c1"># for bash users</span>
+pip install -e .<span class="se">\[</span>dev,ml<span class="se">\]</span> <span class="c1"># for zsh users</span>
+</pre></div>
+</div>
+<p>Use the now installed <code class="docutils literal notranslate"><span class="pre">smart</span></code> cli to install the machine learning
+runtimes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># run one of the following</span>
+smart -v --device cpu          <span class="c1"># verbose install cpu</span>
+smart -v --device gpu          <span class="c1"># verbose install gpu</span>
+smart -v --device gpu --onnx   <span class="c1"># install all backends (PT, TF, ONNX) on gpu</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="install-smartredis-from-source">
+<h3>Install SmartRedis from Source<a class="headerlink" href="#install-smartredis-from-source" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="developer-makefile">
+<h4>Developer Makefile<a class="headerlink" href="#developer-makefile" title="Permalink to this headline">¶</a></h4>
+<p>SmartRedis has a Makefile that automates the build and install process.
+The Makefile is shown below, and in the following sections,
+the process for building and installing the SmartRedis clients from
+source will be described.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>SmartRedis Makefile help
+
+help                           - display this makefile&#39;s help information
+
+Build
+-------
+deps                           - Make SmartRedis dependencies
+lib                            - Build SmartRedis clients into a static library
+test-deps                      - Make SmartRedis testing dependencies
+test-deps-gpu                  - Make SmartRedis GPU testing dependencies
+build-tests                    - build all tests (C, C++, Fortran)
+build-test-cpp                 - build the C++ tests
+build-test-c                   - build the C tests
+build-test-fortran             - build the Fortran tests
+build-examples                 - build all examples (serial, parallel)
+build-example-serial           - buld serial examples
+build-example-parallel         - build parallel examples (requires MPI)
+clean-deps                     - remove third-party deps
+clean                          - remove builds, pyc files, .gitignore rules
+clobber                        - clean, remove deps, builds, (be careful)
+
+Style
+-------
+style                          - Sort imports and format with black
+check-style                    - check code style compliance
+format                         - perform code style format
+check-format                   - check code format compliance
+sort-imports                   - apply import sort ordering
+check-sort-imports             - check imports are sorted
+check-lint                     - run static analysis checks
+
+Documentation
+-------
+docs                           - generate project documentation
+cov                            - generate html coverage report for Python client
+
+Test
+-------
+test                           - Build and run all tests (C, C++, Fortran, Python)
+test-verbose                   - Build and run all tests [verbosely]
+test-c                         - Build and run all C tests
+test-cpp                       - Build and run all C++ tests
+test-py                        - run python tests
+test-fortran                   - run fortran tests
+testpy-cov                     - run python tests with coverage
+</pre></div>
+</div>
+</div>
+<div class="section" id="clone-smartredis">
+<h4>Clone SmartRedis<a class="headerlink" href="#clone-smartredis" title="Permalink to this headline">¶</a></h4>
+<p>First, clone the SmartRedis repo:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/CrayLabs/SmartRedis smartredis
+<span class="nb">cd</span> smartredis
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-the-python-client-from-source">
+<h4>Building the Python Client from Source<a class="headerlink" href="#building-the-python-client-from-source" title="Permalink to this headline">¶</a></h4>
+<p>After cloning the repository, the Python client can be
+installed from source with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install .
+</pre></div>
+</div>
+<p>If installing SmartRedis from source for development,
+it is recommended that the Python client be installed with the
+<code class="docutils literal notranslate"><span class="pre">-e</span></code> and <code class="docutils literal notranslate"><span class="pre">[dev]</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -e .<span class="o">[</span>dev<span class="o">]</span>
+<span class="c1"># or if using ZSH</span>
+pip install -e .<span class="se">\[</span>dev<span class="se">\]</span>
+</pre></div>
+</div>
+<p>Now, when inside your virtual environment, you should be able to import
+the <code class="docutils literal notranslate"><span class="pre">Client</span></code> from <code class="docutils literal notranslate"><span class="pre">smartredis</span></code> as follows</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Python</span> <span class="mf">3.7.7</span> <span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">May</span>  <span class="mi">7</span> <span class="mi">2020</span><span class="p">,</span> <span class="mi">21</span><span class="p">:</span><span class="mi">25</span><span class="p">:</span><span class="mi">33</span><span class="p">)</span>
+<span class="p">[</span><span class="n">GCC</span> <span class="mf">7.3.0</span><span class="p">]</span> <span class="p">::</span> <span class="n">Anaconda</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">on</span> <span class="n">linux</span>
+<span class="n">Type</span> <span class="s2">&quot;help&quot;</span><span class="p">,</span> <span class="s2">&quot;copyright&quot;</span><span class="p">,</span> <span class="s2">&quot;credits&quot;</span> <span class="ow">or</span> <span class="s2">&quot;license&quot;</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="o">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-smartredis-static-library-from-source">
+<h4>Building SmartRedis Static Library from Source<a class="headerlink" href="#building-smartredis-static-library-from-source" title="Permalink to this headline">¶</a></h4>
+<p>Assuming the above steps have already been done, you are now
+ready to build SmartRedis as a static library.</p>
+<p>A static library of the SmartRedis C++, C, and Fortran clients
+can be built with the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make lib
+</pre></div>
+</div>
+<p>The SmartRedis library will be installed in
+<code class="docutils literal notranslate"><span class="pre">smartredis/install/lib/</span></code> and the SmartRedis
+header files will be installed in
+<code class="docutils literal notranslate"><span class="pre">smartredis/install/include/</span></code>.
+The library installation can be used to easily include SmartRedis
+capabilities in C++, C, and Fortran applications.
+For example, the CMake instructions below illustrate how to
+compile a C or C++ application with SmartRedis.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>project(Example)
+
+cmake_minimum_required(VERSION 3.10)
+
+set(CMAKE_CXX_STANDARD 17)
+
+find_library(sr_lib smartredis
+             PATHS path/to/smartredis/install/lib
+             NO_DEFAULT_PATH REQUIRED
+)
+
+include_directories(SYSTEM
+    /usr/local/include
+    path/to/smartredis/install/include
+)
+
+# Build executables
+
+add_executable(example
+    example.cpp
+)
+target_link_libraries(example
+    ${sr_lib}
+)
+</pre></div>
+</div>
+<p>Compiling a Fortran application with the SmartRedis
+library is very similar to the instructions above.
+The only difference is that the Fortran SmartRedis
+client source files currently need to be included
+in the compilation. An example CMake file is
+shown below for a Fortran application.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>project(Example)
+
+cmake_minimum_required(VERSION 3.10)
+
+enable_language(Fortran)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 99)
+
+set(ftn_client_src
+    path/to/smartredis/src/fortran/fortran_c_interop.F90
+    path/to/smartredis/src/fortran/dataset.F90
+    path/to/smartredis/src/fortran/client.F90
+)
+
+find_library(sr_lib smartredis
+             PATHS path/to/smartredis/install/lib
+             NO_DEFAULT_PATH REQUIRED
+)
+
+include_directories(SYSTEM
+    /usr/local/include
+    path/to/smartredis/install/include
+)
+
+add_executable(example
+    example.F90
+        ${ftn_client_src}
+)
+
+target_link_libraries(example
+    ${sr_lib}
+)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="building-the-documentation">
+<h3>Building the Documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this headline">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To build the full documentation, users need to install
+<code class="docutils literal notranslate"><span class="pre">doxygen</span> <span class="pre">1.9.1</span></code>. For Mac OS users, doxygen can be
+installed through <code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">doxygen</span></code></p>
+</div>
+<p>Users can optionally build documentation of SmartSim</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/CrayLabs/SmartRedis.git
+<span class="nb">cd</span> /smartsim      <span class="c1"># top level smartsim dir</span>
+make docs
+</pre></div>
+</div>
+<p>Once the documentation has successfully built, users can open the
+main documents page from <code class="docutils literal notranslate"><span class="pre">doc/_build/html/index.html</span></code></p>
+</div>
+</div>
+<div class="section" id="installation-notes-for-specific-system-types">
+<span id="install-notes"></span><h2>Installation Notes for Specific System Types<a class="headerlink" href="#installation-notes-for-specific-system-types" title="Permalink to this headline">¶</a></h2>
+<p>The following describes installation details for
+various system types that SmartSim may be used on.</p>
+<div class="section" id="smartsim-on-macos">
+<h3>SmartSim on MacOS<a class="headerlink" href="#smartsim-on-macos" title="Permalink to this headline">¶</a></h3>
+<p>We recommend users and contributors install <a class="reference external" href="https://brew.sh/">brew</a> for managing installed packages.
+For contributors, the following brew packages can be helpful</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/open-mpi#default">openmpi</a> for building and running parallel SmartRedis examples</p></li>
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/doxygen#default">doxygen</a> for building the documention</p></li>
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/cmake#default">cmake</a> for building SmartSim and SmartRedis from source</p></li>
+</ul>
+</div></blockquote>
+<p>For Mac OS users, the version of <code class="docutils literal notranslate"><span class="pre">make</span></code> that comes with
+the Mac command line tools is often 3.81 which needs to be updated to install
+SmartSim. Users can <code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">make</span></code> to get <code class="docutils literal notranslate"><span class="pre">make</span></code> &gt; 4.0 but
+brew will install it as <code class="docutils literal notranslate"><span class="pre">gmake</span></code>. An easy way around this
+is to do <code class="docutils literal notranslate"><span class="pre">alias</span> <span class="pre">make=gmake</span></code>.</p>
+</div>
+<div class="section" id="smartsim-on-ubuntu-or-linux-workstations">
+<h3>SmartSim on Ubuntu or Linux Workstations<a class="headerlink" href="#smartsim-on-ubuntu-or-linux-workstations" title="Permalink to this headline">¶</a></h3>
+<p>When building SmartSim for Linux systems where the user
+has root access, many of the needed packages can be installed
+through <code class="docutils literal notranslate"><span class="pre">apt</span></code>.</p>
+<p>If you have a CUDA enabled GPU and want to run SmartSim on GPU
+on a Linux system you have root access to, you can install CUDA
+through <code class="docutils literal notranslate"><span class="pre">apt</span></code> with the <code class="docutils literal notranslate"><span class="pre">cuda</span></code> package.</p>
+<p>In addition, cuDNN can be installed through the <code class="docutils literal notranslate"><span class="pre">libcudnn</span></code>
+and <code class="docutils literal notranslate"><span class="pre">libcudnn-dev</span></code> pacakges.</p>
+<p>If you run into trouble compiling the machine learning runtimes
+on Ubuntu because of cuDNN, it might be due to this <a class="reference external" href="https://github.com/pytorch/pytorch/issues/40965">issue</a></p>
+</div>
+<div class="section" id="smartsim-on-cray-xc-cs-and-ex">
+<h3>SmartSim on Cray XC, CS, and EX<a class="headerlink" href="#smartsim-on-cray-xc-cs-and-ex" title="Permalink to this headline">¶</a></h3>
+<p>If on a Cray system, be sure to set the correct toolchain. SmartSim
+is tested on <code class="docutils literal notranslate"><span class="pre">PrgEnv-GNU</span></code> and <code class="docutils literal notranslate"><span class="pre">PrgEnv-Cray</span></code> modules.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If on a Cray, please note that the intel and PGI compiler
+toolchains are currently not supported by SmartSim.</p>
+</div>
+<p>Before installing the machine learning runtimes with the <code class="docutils literal notranslate"><span class="pre">smart</span></code>
+cli tool, be sure to set the <code class="docutils literal notranslate"><span class="pre">CRAYPE_LINK_TYPE</span></code> to <code class="docutils literal notranslate"><span class="pre">dynamic</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CRAYPE_LINK_TYPE</span><span class="o">=</span>dynamic
+</pre></div>
+</div>
+<p>Keep in mind, the libraries installed above need to be accessible
+by SmartSim at runtime. If using a networked file system (NFS),
+make sure to install these somewhere reachable from head, MOM, and
+compute nodes (network mounted).</p>
+<div class="section" id="cuda-and-cudnn-on-cray">
+<h4>CUDA and CUDNN on Cray<a class="headerlink" href="#cuda-and-cudnn-on-cray" title="Permalink to this headline">¶</a></h4>
+<p>Usually <code class="docutils literal notranslate"><span class="pre">cudatoolkit</span></code> is available as a module and CUDA
+is installed in <code class="docutils literal notranslate"><span class="pre">/usr/local/cuda</span></code>. In this case, prior
+to installation run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module load cudatoolkit
+</pre></div>
+</div>
+<p>If cuDNN libraries and includes are not installed as a module
+or otherwise, you can install them with <code class="docutils literal notranslate"><span class="pre">conda</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install CUDA requirements</span>
+conda install cudatoolkit cudnn
+<span class="nb">export</span> <span class="nv">CUDNN_LIBRARY</span><span class="o">=</span>/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/lib
+<span class="nb">export</span> <span class="nv">CUDNN_INCLUDE_DIR</span><span class="o">=</span>/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/include
+</pre></div>
+</div>
+<p>Be sure to get the cuDNN version that matches your CUDA installation
+The <a class="reference external" href="https://anaconda.org/anaconda/cudnn/files">package</a> names usually specify the versions.</p>
+</div>
+</div>
+<div class="section" id="smartsim-on-summit-at-olcf">
+<h3>SmartSim on Summit at OLCF<a class="headerlink" href="#smartsim-on-summit-at-olcf" title="Permalink to this headline">¶</a></h3>
+<p>Since SmartSim does not have a built PowerPC build, the build steps for
+an IBM system are slightly different than other systems.</p>
+<p>Luckily for us, Summit has an environment with many of the ML dependencies
+that SmartSim needs already built into it. Users can follow these instructions
+to get a working SmartSim build with PyTorch for GPU on Summit.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># setup Python and build environment</span>
+module load open-ce
+conda create -p /ccs/home/&lt;USERNAME&gt;/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
+conda activate smartsim
+module load gcc/8.1.1
+module load cuda/11.2.0
+module unload xalt
+<span class="nb">export</span> <span class="nv">CC</span><span class="o">=</span><span class="k">$(</span>which gcc<span class="k">)</span>
+<span class="nb">export</span> <span class="nv">CXX</span><span class="o">=</span><span class="k">$(</span>which g++<span class="k">)</span>
+<span class="nb">export</span> <span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$LDFLAGS</span><span class="s2"> -pthread&quot;</span>
+<span class="nb">export</span> <span class="nv">CUDNN_LIBRARY</span><span class="o">=</span>/sw/summit/cuda/11.2.0/lib64
+<span class="nb">export</span> <span class="nv">CUDNN_INCLUDE_DIR</span><span class="o">=</span>/sw/summit/cuda/11.2.0/include/
+
+<span class="c1"># clone SmartRedis and build</span>
+git clone https://github.com/SmartRedis.git smartredis
+<span class="nb">pushd</span> smartredis
+make lib <span class="o">&amp;&amp;</span> pip install .
+<span class="nb">popd</span>
+
+<span class="c1"># clone SmartSim and build</span>
+git clone https://github.com/SmartSim.git smartsim
+<span class="nb">pushd</span> smartsim
+pip install .
+
+<span class="nb">export</span> <span class="nv">Torch_DIR</span><span class="o">=</span>/ccs/home/&lt;USERNAME&gt;/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
+<span class="nb">export</span> <span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CFLAGS</span><span class="s2"> -I/ccs/home/&lt;USERNAME&gt;/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include&quot;</span>
+<span class="c1"># install PyTorch backend for the Orchestrator database.</span>
+smart --device<span class="o">=</span>gpu --torch_dir <span class="nv">$Torch_DIR</span> -v
+</pre></div>
+</div>
+</div>
+<div class="section" id="smartsim-on-cheyenne-at-ncar">
+<h3>SmartSim on Cheyenne at NCAR<a class="headerlink" href="#smartsim-on-cheyenne-at-ncar" title="Permalink to this headline">¶</a></h3>
+<p>Since SmartSim does not currently support the Message Passing Toolkit (MPT), Cheyenne
+users of SmartSim will need to utilize OpenMPI.</p>
+<p>The following module commands were utilized to run the examples</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ module purge
+$ module load ncarenv/1.3 gnu/8.3.0 ncarcompilers/0.5.0 netcdf/4.7.4 openmpi/4.0.5
+</pre></div>
+</div>
+<p>With this environment loaded, users will need to build and install both SmartSim and
+SmartRedis through pip. Usually we recommend users installing or loading miniconda and
+using the pip that comes with that installation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ pip install smartsim
+$ smart --device cpu  <span class="o">(</span>Since Cheyenne does not have GPUs<span class="o">)</span>
+</pre></div>
+</div>
+<p>To make the SmartRedis library (C, C++, Fortran clients), follow these steps with
+the same environment loaded.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># clone SmartRedis and build</span>
+$ git clone https://github.com/SmartRedis.git smartredis
+$ <span class="nb">cd</span> smartredis
+$ make lib
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="changing-redis-installation-and-configurations">
+<h2>Changing Redis installation and Configurations<a class="headerlink" href="#changing-redis-installation-and-configurations" title="Permalink to this headline">¶</a></h2>
+<p>If you want to use a pre-existing Redis installation, override
+the configuration, or install the dependencies for SmartSim
+manually, you can do so by specifying a SmartSim configuration
+file in a <code class="docutils literal notranslate"><span class="pre">config.toml</span></code></p>
+<dl class="simple">
+<dt>This can be useful for</dt><dd><ul class="simple">
+<li><p>contributors who want to try bleeding edge features</p></li>
+<li><p>users who want to edit Redis behavior (adding checkpoints)</p></li>
+<li><p>sites who want to package SmartSim in a different manner.</p></li>
+<li><p>sites who want to set intervals for scheduler communication</p></li>
+</ul>
+</dd>
+</dl>
+<div class="section" id="override-pre-packaged-settings">
+<h3>Override Pre-packaged Settings<a class="headerlink" href="#override-pre-packaged-settings" title="Permalink to this headline">¶</a></h3>
+<p>The following fields can be overridden in the SmartSim configuration
+file</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Redis installation location</p></li>
+<li><p>Redis configuration file location</p></li>
+<li><p>RedisAI module installation location</p></li>
+<li><p>Test launcher/device/network interface</p></li>
+<li><p>Log level default</p></li>
+<li><p>Job manager interval default</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you want to override the configuration, you need
+to supply values for each of these.</p>
+</div>
+<p>Install the SmartSim user configuration file.
+Usually this is in your <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> directory under
+<code class="docutils literal notranslate"><span class="pre">~/.smartsim/config.toml</span></code>, but for users of networked filesystems
+where the <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> directory is not mounted, do the following</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># set the configuration directory to somewhere accessible</span>
+<span class="c1"># (e.g. /lustre) for HPC systems</span>
+
+<span class="nb">echo</span> <span class="s2">&quot;export SMARTSIM_HOME=/REPLACE/ME/.smartsim&quot;</span> &gt;&gt; ~/.bashrc
+<span class="nb">cd</span> <span class="o">&amp;&amp;</span> <span class="nb">source</span> .bashrc
+mkdir <span class="nv">$SMARTSIM_HOME</span> <span class="o">&amp;&amp;</span> <span class="nb">cd</span> <span class="nv">$SMARTSIM_HOME</span>
+touch config.toml
+</pre></div>
+</div>
+<p>The configuration file specifies user and developer settings
+for SmartSim as well as the location of third-party libraries.
+If you followed the instructions above, the third-party libraries
+will be installed in <code class="docutils literal notranslate"><span class="pre">smartsim/third-party/</span></code>.</p>
+<p>You can copy paste, the below configuration file into the
+<code class="docutils literal notranslate"><span class="pre">config.toml</span></code> file you just created. The only part that
+should be changed is the path to where you installed
+SmartSim</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[smartsim]</span>
+<span class="c1"># number of seconds per job status update</span>
+<span class="c1"># for jobs on WLM system (e.g. slurm, pbs, etc)</span>
+<span class="n">jm_interval</span> <span class="o">=</span> <span class="mi">15</span>    <span class="c1"># default</span>
+<span class="n">log_level</span> <span class="o">=</span> <span class="s">&quot;info&quot;</span> <span class="c1"># default</span>
+
+<span class="k">[redis]</span>
+<span class="c1"># path to where &quot;redis-server&quot; and &quot;redis-cli&quot; binaries are located</span>
+<span class="n">bin</span> <span class="o">=</span> <span class="s">&quot;/path/to/redis/src/&quot;</span>
+<span class="n">config</span> <span class="o">=</span> <span class="s">&quot;/path/to/redis.conf&quot;</span> <span class="c1"># optional!</span>
+
+  <span class="k">[redis.modules]</span>
+  <span class="n">ai</span> <span class="o">=</span> <span class="s">&quot;/path/to/RedisAI/install-cpu/&quot;</span>
+
+<span class="k">[test]</span>
+<span class="n">launcher</span> <span class="o">=</span> <span class="s">&quot;local&quot;</span> <span class="c1"># default</span>
+<span class="n">interface</span> <span class="o">=</span> <span class="s">&quot;ib0&quot;</span> <span class="c1"># network interface to use in tests</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s">&quot;CPU&quot;</span> <span class="c1"># device to use for tests (CPU/GPU)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="community.html" class="btn btn-neutral float-right" title="Community" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="overview.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,527 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>smartsim.database.cobaltOrchestrator &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.database.cobaltOrchestrator</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.database.cobaltOrchestrator</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">from</span> <span class="nn">..config</span> <span class="kn">import</span> <span class="n">CONFIG</span>
+<span class="kn">from</span> <span class="nn">..entity</span> <span class="kn">import</span> <span class="n">DBNode</span>
+<span class="kn">from</span> <span class="nn">..error</span> <span class="kn">import</span> <span class="n">SmartSimError</span><span class="p">,</span> <span class="n">SSUnsupportedError</span>
+<span class="kn">from</span> <span class="nn">..settings</span> <span class="kn">import</span> <span class="n">AprunSettings</span><span class="p">,</span> <span class="n">CobaltBatchSettings</span><span class="p">,</span> <span class="n">MpirunSettings</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">.orchestrator</span> <span class="kn">import</span> <span class="n">Orchestrator</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CobaltOrchestrator"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.CobaltOrchestrator">[docs]</a><span class="k">class</span> <span class="nc">CobaltOrchestrator</span><span class="p">(</span><span class="n">Orchestrator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span>
+        <span class="n">db_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">batch</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">hosts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">run_command</span><span class="o">=</span><span class="s2">&quot;aprun&quot;</span><span class="p">,</span>
+        <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ipogif0&quot;</span><span class="p">,</span>
+        <span class="n">account</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize an Orchestrator reference for Cobalt based systems</span>
+
+<span class="sd">        The orchestrator launches as a batch by default. If batch=False,</span>
+<span class="sd">        at launch, the orchestrator will look for an interactive</span>
+<span class="sd">        allocation to launch on.</span>
+
+<span class="sd">        The Cobalt orchestrator does not support multiple databases per node.</span>
+
+<span class="sd">        :param port: TCP/IP port, defaults to 6379</span>
+<span class="sd">        :type port: int</span>
+<span class="sd">        :param db_nodes: number of database shards, defaults to 1</span>
+<span class="sd">        :type db_nodes: int, optional</span>
+<span class="sd">        :param batch: Run as a batch workload, defaults to True</span>
+<span class="sd">        :type batch: bool, optional</span>
+<span class="sd">        :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI</span>
+<span class="sd">        :type hosts: list[str]</span>
+<span class="sd">        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``, defaults to &quot;aprun&quot;.</span>
+<span class="sd">        :type run_command: str, optional</span>
+<span class="sd">        :param interface: network interface to use, defaults to &quot;ipogif0&quot;</span>
+<span class="sd">        :type interface: str, optional</span>
+<span class="sd">        :param account: account to run batch on</span>
+<span class="sd">        :type account: str, optional</span>
+<span class="sd">        :param queue: queue to launch batch in</span>
+<span class="sd">        :type queue: str, optional</span>
+<span class="sd">        :param time: walltime for batch &#39;HH:MM:SS&#39; format</span>
+<span class="sd">        :type time: str, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">port</span><span class="p">,</span>
+            <span class="n">interface</span><span class="p">,</span>
+            <span class="n">db_nodes</span><span class="o">=</span><span class="n">db_nodes</span><span class="p">,</span>
+            <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span>
+            <span class="n">run_command</span><span class="o">=</span><span class="n">run_command</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_batch_settings</span><span class="p">(</span>
+            <span class="n">db_nodes</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">time</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">hosts</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_hosts</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">hosts</span> <span class="ow">and</span> <span class="n">run_command</span> <span class="o">==</span> <span class="s2">&quot;mpirun&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                <span class="s2">&quot;hosts argument is required when launching CobaltOrchestrator with OpenMPI&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reserved_run_args</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reserved_batch_args</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fill_reserved</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CobaltOrchestrator.set_cpus"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.CobaltOrchestrator.set_cpus">[docs]</a>    <span class="k">def</span> <span class="nf">set_cpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_cpus</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the number of CPUs available to each database shard</span>
+
+<span class="sd">        This effectively will determine how many cpus can be used for</span>
+<span class="sd">        compute threads, background threads, and network I/O.</span>
+
+<span class="sd">        :param num_cpus: number of cpus to set</span>
+<span class="sd">        :type num_cpus: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="c1"># Supported by MpirunSettings and AprunSettings</span>
+            <span class="n">db</span><span class="o">.</span><span class="n">run_settings</span><span class="o">.</span><span class="n">set_cpus_per_task</span><span class="p">(</span><span class="n">num_cpus</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CobaltOrchestrator.set_walltime"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.CobaltOrchestrator.set_walltime">[docs]</a>    <span class="k">def</span> <span class="nf">set_walltime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walltime</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the batch walltime of the orchestrator</span>
+
+<span class="sd">        Note: This will only effect orchestrators launched as a batch</span>
+
+<span class="sd">        :param walltime: amount of time e.g. 10 hours is 10:00:00</span>
+<span class="sd">        :type walltime: str</span>
+<span class="sd">        :raises SmartSimError: if orchestrator isn&#39;t launching as batch</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Not running in batch, cannot set walltime&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span><span class="o">.</span><span class="n">set_walltime</span><span class="p">(</span><span class="n">walltime</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CobaltOrchestrator.set_hosts"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.CobaltOrchestrator.set_hosts">[docs]</a>    <span class="k">def</span> <span class="nf">set_hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Specify the hosts for the ``CobaltOrchestrator`` to launch on</span>
+
+<span class="sd">        :param host_list: list of hosts (compute node names)</span>
+<span class="sd">        :type host_list: str | list[str]</span>
+<span class="sd">        :raises TypeError: if wrong type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">host_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">host_list</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be a list of strings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">host_list</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;host_list argument must be list of strings&quot;</span><span class="p">)</span>
+        <span class="c1"># TODO check length</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span><span class="o">.</span><span class="n">set_hostlist</span><span class="p">(</span><span class="n">host_list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">host</span><span class="p">,</span> <span class="n">db</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">host_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">):</span>
+            <span class="n">db</span><span class="o">.</span><span class="n">set_host</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+
+            <span class="c1"># Aprun doesn&#39;t like settings hosts in batch launch</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">run_settings</span><span class="p">,</span> <span class="n">AprunSettings</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="p">:</span>
+                    <span class="n">db</span><span class="o">.</span><span class="n">run_settings</span><span class="o">.</span><span class="n">set_hostlist</span><span class="p">([</span><span class="n">host</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">run_settings</span><span class="o">.</span><span class="n">set_hostlist</span><span class="p">([</span><span class="n">host</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="CobaltOrchestrator.set_batch_arg"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.CobaltOrchestrator.set_batch_arg">[docs]</a>    <span class="k">def</span> <span class="nf">set_batch_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set a cobalt ``qsub`` argument</span>
+
+<span class="sd">        Some commonly used arguments are used</span>
+<span class="sd">        by SmartSim and will not be allowed to be set.</span>
+<span class="sd">        For example, &quot;cwd&quot;, &quot;jobname&quot;, etc.</span>
+
+<span class="sd">        :param arg: batch argument to set e.g. &quot;exclusive&quot;</span>
+<span class="sd">        :type arg: str</span>
+<span class="sd">        :param value: batch param - set to None if no param value</span>
+<span class="sd">        :type value: str | None</span>
+<span class="sd">        :raises SmartSimError: if orchestrator not launching as batch</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Not running as batch, cannot set batch_arg&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reserved_batch_args</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Can not set batch argument </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2">: it is a reserved keyword in CobaltOrchestrator&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span><span class="o">.</span><span class="n">batch_args</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="CobaltOrchestrator.set_run_arg"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.database.CobaltOrchestrator.set_run_arg">[docs]</a>    <span class="k">def</span> <span class="nf">set_run_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set a run argument the orchestrator should launch</span>
+<span class="sd">        each node with (it will be passed to `aprun`)</span>
+
+<span class="sd">        Some commonly used arguments are used</span>
+<span class="sd">        by SmartSim and will not be allowed to be set.</span>
+<span class="sd">        For example, &quot;wdir&quot;, &quot;n&quot;, etc.</span>
+
+<span class="sd">        :param arg: run argument to set</span>
+<span class="sd">        :type arg: str</span>
+<span class="sd">        :param value: run parameter - set to None if no parameter value</span>
+<span class="sd">        :type value: str | None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reserved_run_args</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">run_settings</span><span class="p">)]:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Can not set run argument </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2">: it is a reserved keyword in CobaltOrchestrator&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">run_settings</span><span class="o">.</span><span class="n">run_args</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+    <span class="k">def</span> <span class="nf">_build_run_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">run_command</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;run_command&quot;</span><span class="p">,</span> <span class="s2">&quot;aprun&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_command</span> <span class="o">==</span> <span class="s2">&quot;aprun&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_aprun_settings</span><span class="p">(</span><span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_command</span> <span class="o">==</span> <span class="s2">&quot;mpirun&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_mpirun_settings</span><span class="p">(</span><span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;CobaltOrchestrator does not support </span><span class="si">{</span><span class="n">run_command</span><span class="si">}</span><span class="s2"> as a launch binary&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_build_aprun_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">run_args</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;run_args&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">run_settings</span> <span class="o">=</span> <span class="n">AprunSettings</span><span class="p">(</span><span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="p">)</span>
+        <span class="n">run_settings</span><span class="o">.</span><span class="n">set_tasks</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">run_settings</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">run_settings</span>
+
+    <span class="k">def</span> <span class="nf">_build_mpirun_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">run_args</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;run_args&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">run_settings</span> <span class="o">=</span> <span class="n">MpirunSettings</span><span class="p">(</span><span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">,</span> <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="p">)</span>
+        <span class="n">run_settings</span><span class="o">.</span><span class="n">set_tasks</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">run_settings</span>
+
+    <span class="k">def</span> <span class="nf">_build_batch_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_nodes</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">account</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="n">batch_settings</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">batch</span><span class="p">:</span>
+            <span class="n">batch_settings</span> <span class="o">=</span> <span class="n">CobaltBatchSettings</span><span class="p">(</span>
+                <span class="n">nodes</span><span class="o">=</span><span class="n">db_nodes</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="n">queue</span><span class="p">,</span> <span class="n">account</span><span class="o">=</span><span class="n">account</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">batch_settings</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize DBNode instances for the orchestrator.&quot;&quot;&quot;</span>
+        <span class="n">db_nodes</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;db_nodes&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">cluster</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">db_nodes</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">db_nodes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span>
+                <span class="s2">&quot;CobaltOrchestrator does not support clusters of size 2&quot;</span>
+            <span class="p">)</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;port&quot;</span><span class="p">,</span> <span class="mi">6379</span><span class="p">)</span>
+
+        <span class="n">db_conf</span> <span class="o">=</span> <span class="n">CONFIG</span><span class="o">.</span><span class="n">redis_conf</span>
+        <span class="n">redis_exe</span> <span class="o">=</span> <span class="n">CONFIG</span><span class="o">.</span><span class="n">redis_exe</span>
+        <span class="n">ai_module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_AI_module</span><span class="p">()</span>
+        <span class="n">start_script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_redis_start_script</span><span class="p">()</span>
+
+        <span class="c1"># Build DBNode instance for each node listed</span>
+        <span class="k">for</span> <span class="n">db_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">db_nodes</span><span class="p">):</span>
+            <span class="n">db_node_name</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">db_id</span><span class="p">)))</span>
+            <span class="n">start_script_args</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">start_script</span><span class="p">,</span>  <span class="c1"># redis_starter.py</span>
+                <span class="sa">f</span><span class="s2">&quot;+ifname=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># pass interface to start script</span>
+                <span class="s2">&quot;+command&quot;</span><span class="p">,</span>  <span class="c1"># command flag for argparser</span>
+                <span class="n">redis_exe</span><span class="p">,</span>  <span class="c1"># redis-server</span>
+                <span class="n">db_conf</span><span class="p">,</span>  <span class="c1"># redis6.conf file</span>
+                <span class="n">ai_module</span><span class="p">,</span>  <span class="c1"># redisai.so</span>
+                <span class="s2">&quot;--port&quot;</span><span class="p">,</span>  <span class="c1"># redis port</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">),</span>  <span class="c1"># port number</span>
+            <span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">cluster</span><span class="p">:</span>
+                <span class="n">start_script_args</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cluster_args</span><span class="p">(</span><span class="n">db_node_name</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+
+            <span class="c1"># Python because we use redis_starter.py to run redis</span>
+            <span class="n">run_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_run_settings</span><span class="p">(</span>
+                <span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">start_script_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">DBNode</span><span class="p">(</span><span class="n">db_node_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">,</span> <span class="p">[</span><span class="n">port</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports</span> <span class="o">=</span> <span class="p">[</span><span class="n">port</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_fill_reserved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fill the reserved batch and run arguments dictionaries&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reserved_run_args</span><span class="p">[</span><span class="n">MpirunSettings</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;np&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;N&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;c&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;output-filename&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;wdir&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;wd&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;host&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reserved_run_args</span><span class="p">[</span><span class="n">AprunSettings</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;pes&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pes-per-node&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;N&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;l&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pes-per-numa-node&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;S&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;wdir&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reserved_batch_args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;cwd&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;error&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;e&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;output&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;o&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;outputprefix&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;N&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;l&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;jobname&quot;</span><span class="p">,</span>
+        <span class="p">]</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

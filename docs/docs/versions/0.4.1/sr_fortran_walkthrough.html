@@ -1,0 +1,1059 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Fortran &#8212; SmartSim 0.4.1 documentation</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Structures" href="sr_data_structures.html" />
+    <link rel="prev" title="C++" href="sr_cpp_walkthrough.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="community.html">
+   Community
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="contributing_examples.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/sr_fortran_walkthrough.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fsr_fortran_walkthrough.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#tensors">
+   Tensors
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#datasets">
+   Datasets
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#models">
+   Models
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#scripts">
+   Scripts
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#parallel-mpi-execution">
+   Parallel (MPI) execution
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Fortran</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#tensors">
+   Tensors
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#datasets">
+   Datasets
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#models">
+   Models
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#scripts">
+   Scripts
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#parallel-mpi-execution">
+   Parallel (MPI) execution
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <section id="fortran">
+<h1>Fortran<a class="headerlink" href="#fortran" title="Permalink to this headline">¶</a></h1>
+<p id="fortran-client-examples">In this section, examples are presented using the SmartRedis Fortran
+API to interact with the RedisAI tensor, model, and script
+data types.  Additionally, an example of utilizing the
+SmartRedis <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> API is also provided.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Fortran API examples rely on the <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment
+variable being set to the address and port of the Redis database.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Fortran API examples are written
+to connect to a clustered database or clustered SmartSim Orchestrator.
+Update the <code class="docutils literal notranslate"><span class="pre">Client</span></code> constructor <code class="docutils literal notranslate"><span class="pre">cluster</span></code> flag to <cite>.false.</cite>
+to connect to a single shard (single compute host) database.</p>
+</div>
+<section id="tensors">
+<h2>Tensors<a class="headerlink" href="#tensors" title="Permalink to this headline">¶</a></h2>
+<p>The SmartRedis Fortran client is used to communicate between
+a Fortran client and the Redis database. In this example,
+the client will be used to send an array to the database
+and then unpack the data into another Fortran array.</p>
+<p>This example will go step-by-step through the program and
+then present the entirety of the example code at the end.</p>
+<p><strong>Importing and declaring the SmartRedis client</strong></p>
+<p>The SmartRedis client must be declared as the derived type
+<code class="docutils literal notranslate"><span class="pre">client_type</span></code> imported from the <code class="docutils literal notranslate"><span class="pre">smartredis_client</span></code> module.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">example</span><span class="w"></span>
+<span class="w">  </span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">client_type</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">client</span><span class="w"></span>
+<span class="k">end program </span><span class="n">example</span><span class="w"></span>
+</pre></div>
+</div>
+<p><strong>Initializing the SmartRedis client</strong></p>
+<p>The SmartRedis client needs to be initialized before it can be used
+to interact with the database. Within Fortran this is
+done by calling the type-bound procedure
+<code class="docutils literal notranslate"><span class="pre">initialize</span></code> with the input argument <code class="docutils literal notranslate"><span class="pre">.true.</span></code>
+if using a clustered database or <code class="docutils literal notranslate"><span class="pre">.false.</span></code> otherwise.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="k">program </span><span class="n">example</span><span class="w"></span>
+<span class="w">  </span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">client_type</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">client</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">false</span><span class="p">.)</span><span class="w"> </span><span class="c">! Change .false. to true if using a clustered database</span>
+<span class="k">end program </span><span class="n">example</span><span class="w"></span>
+</pre></div>
+</div>
+<p><strong>Putting a Fortran array into the database</strong></p>
+<p>After the SmartRedis client has been initialized,
+a Fortran array of any dimension and shape
+and with a type of either 8, 16, 32, 64 bit
+<code class="docutils literal notranslate"><span class="pre">integer</span></code> or 32 or 64-bit <code class="docutils literal notranslate"><span class="pre">real</span></code> can be
+put into the database using the type-bound
+procedure <code class="docutils literal notranslate"><span class="pre">put_tensor</span></code>.
+In this example, as a proxy for model-generated
+data, the array <code class="docutils literal notranslate"><span class="pre">send_array_real_64</span></code> will be
+filled with random numbers and stored in the
+database using <code class="docutils literal notranslate"><span class="pre">put_tensor</span></code>. This subroutine
+requires the user to specify a string used as the
+‘key’ (here: <code class="docutils literal notranslate"><span class="pre">send_array</span></code>) identifying the tensor
+in the database, the array to be stored, and the
+shape of the array.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c">! BSD 2-Clause License</span>
+<span class="linenos"> 2</span><span class="c">!</span>
+<span class="linenos"> 3</span><span class="c">! Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos"> 4</span><span class="c">! All rights reserved.</span>
+<span class="linenos"> 5</span><span class="c">!</span>
+<span class="linenos"> 6</span><span class="c">! Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos"> 7</span><span class="c">! modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos"> 8</span><span class="c">!</span>
+<span class="linenos"> 9</span><span class="c">! 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos">10</span><span class="c">!    list of conditions and the following disclaimer.</span>
+<span class="linenos">11</span><span class="c">!</span>
+<span class="linenos">12</span><span class="c">!    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos">13</span><span class="c">!    and/or other materials provided with the distribution.</span>
+<span class="linenos">14</span><span class="c">!</span>
+<span class="linenos">15</span><span class="c">! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos">16</span><span class="c">! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos">17</span><span class="c">! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos">18</span><span class="c">! DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos">19</span><span class="c">! FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos">20</span><span class="c">! DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos">21</span><span class="c">! SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos">22</span><span class="c">! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos">23</span><span class="c">! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="k">program </span><span class="n">main</span><span class="w"></span>
+</pre></div>
+</div>
+<p><strong>Unpacking an array stored in the database</strong></p>
+<p>‘Unpacking’ an array in SmartRedis refers to filling
+a Fortran array with the values of a tensor
+stored in the database.  The dimensions and type of
+data of the incoming array and the pre-declared
+array are checked within the client to
+ensure that they match. Unpacking requires
+declaring an array and using the <code class="docutils literal notranslate"><span class="pre">unpack_tensor</span></code>
+procedure.  This example generates an array
+of random numbers, puts that into the database,
+and retrieves the values from the database
+into a different array.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c">! BSD 2-Clause License</span>
+<span class="linenos"> 2</span><span class="c">!</span>
+<span class="linenos"> 3</span><span class="c">! Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos"> 4</span><span class="c">! All rights reserved.</span>
+<span class="linenos"> 5</span><span class="c">!</span>
+<span class="linenos"> 6</span><span class="c">! Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos"> 7</span><span class="c">! modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos"> 8</span><span class="c">!</span>
+<span class="linenos"> 9</span><span class="c">! 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos">10</span><span class="c">!    list of conditions and the following disclaimer.</span>
+<span class="linenos">11</span><span class="c">!</span>
+<span class="linenos">12</span><span class="c">! 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="linenos">13</span><span class="c">!    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos">14</span><span class="c">!    and/or other materials provided with the distribution.</span>
+<span class="linenos">15</span><span class="c">!</span>
+<span class="linenos">16</span><span class="c">! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos">17</span><span class="c">! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos">18</span><span class="c">! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos">19</span><span class="c">! DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos">20</span><span class="c">! FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos">21</span><span class="c">! DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos">22</span><span class="c">! SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos">23</span><span class="c">! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos">24</span><span class="c">! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos">25</span><span class="c">! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="k">program </span><span class="n">main</span><span class="w"></span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="w">  </span><span class="k">use </span><span class="nb">iso_c_binding</span>
+<span class="linenos">30</span><span class="nb">  </span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">client_type</span><span class="w"></span>
+<span class="linenos">31</span>
+<span class="linenos">32</span><span class="w">  </span><span class="k">implicit none</span><span class="w"></span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="cp">#include &quot;enum_fortran.inc&quot;</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"></span>
+<span class="linenos">37</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">dim2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="w"></span>
+<span class="linenos">38</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">dim3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w"></span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="w">  </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span><span class="w">    </span><span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span><span class="w"> </span><span class="n">dim2</span><span class="p">,</span><span class="w"> </span><span class="n">dim3</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">recv_array_real_64</span><span class="w"></span>
+<span class="linenos">41</span><span class="w">  </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_double</span><span class="p">),</span><span class="w">    </span><span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span><span class="w"> </span><span class="n">dim2</span><span class="p">,</span><span class="w"> </span><span class="n">dim3</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">send_array_real_64</span><span class="w"></span>
+<span class="linenos">42</span>
+<span class="linenos">43</span><span class="w">  </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="k">result</span>
+<span class="linenos">44</span><span class="k">  type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">client</span><span class="w"></span>
+<span class="linenos">45</span>
+<span class="linenos">46</span><span class="w">  </span><span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="n">send_array_real_64</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">47</span>
+<span class="linenos">48</span><span class="w">  </span><span class="c">! Initialize a client</span>
+<span class="linenos">49</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">true</span><span class="p">.)</span><span class="w"> </span><span class="c">! Change .false. to .true. if not using a clustered database</span>
+<span class="linenos">50</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%initialize failed&#39;</span><span class="w"></span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="w">  </span><span class="c">! Send a tensor to the database via the client and verify that we can retrieve it</span>
+<span class="linenos">53</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">put_tensor</span><span class="p">(</span><span class="s2">&quot;send_array&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">send_array_real_64</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="n">send_array_real_64</span><span class="p">))</span><span class="w"></span>
+<span class="linenos">54</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%put_tensor failed&#39;</span><span class="w"></span>
+<span class="linenos">55</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="s2">&quot;send_array&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">recv_array_real_64</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="n">recv_array_real_64</span><span class="p">))</span><span class="w"></span>
+<span class="linenos">56</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%unpack_tensor failed&#39;</span><span class="w"></span>
+<span class="linenos">57</span>
+<span class="linenos">58</span><span class="w">  </span><span class="c">! Done</span>
+<span class="linenos">59</span><span class="w">  </span><span class="k">call exit</span><span class="p">()</span><span class="w"></span>
+<span class="linenos">60</span>
+<span class="linenos">61</span><span class="k">end program </span><span class="n">main</span><span class="w"></span>
+</pre></div>
+</div>
+</section>
+<section id="datasets">
+<h2>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h2>
+<p>The following code snippet shows how to use the Fortran
+Client to store and retrieve dataset tensors and
+dataset metadata scalars.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c">! BSD 2-Clause License</span>
+<span class="linenos"> 2</span><span class="c">!</span>
+<span class="linenos"> 3</span><span class="c">! Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos"> 4</span><span class="c">! All rights reserved.</span>
+<span class="linenos"> 5</span><span class="c">!</span>
+<span class="linenos"> 6</span><span class="c">! Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos"> 7</span><span class="c">! modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos"> 8</span><span class="c">!</span>
+<span class="linenos"> 9</span><span class="c">! 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos">10</span><span class="c">!    list of conditions and the following disclaimer.</span>
+<span class="linenos">11</span><span class="c">!</span>
+<span class="linenos">12</span><span class="c">! 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="linenos">13</span><span class="c">!    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos">14</span><span class="c">!    and/or other materials provided with the distribution.</span>
+<span class="linenos">15</span><span class="c">!</span>
+<span class="linenos">16</span><span class="c">! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos">17</span><span class="c">! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos">18</span><span class="c">! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos">19</span><span class="c">! DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos">20</span><span class="c">! FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos">21</span><span class="c">! DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos">22</span><span class="c">! SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos">23</span><span class="c">! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos">24</span><span class="c">! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos">25</span><span class="c">! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="k">program </span><span class="n">main</span><span class="w"></span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="w">  </span><span class="k">use </span><span class="nb">iso_c_binding</span>
+<span class="linenos">30</span><span class="nb">  </span><span class="k">use </span><span class="n">smartredis_dataset</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">dataset_type</span><span class="w"></span>
+<span class="linenos">31</span><span class="w">  </span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">client_type</span><span class="w"></span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="w">  </span><span class="k">implicit none</span><span class="w"></span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="cp">#include &quot;enum_fortran.inc&quot;</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"></span>
+<span class="linenos">38</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">dim2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="w"></span>
+<span class="linenos">39</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">dim3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w"></span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="w">  </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span><span class="w">      </span><span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span><span class="w"> </span><span class="n">dim2</span><span class="p">,</span><span class="w"> </span><span class="n">dim3</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">recv_array_real_32</span><span class="w"></span>
+<span class="linenos">42</span>
+<span class="linenos">43</span><span class="w">  </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span><span class="w">      </span><span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">,</span><span class="w"> </span><span class="n">dim2</span><span class="p">,</span><span class="w"> </span><span class="n">dim3</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">true_array_real_32</span><span class="w"></span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">meta_float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;meta_float&#39;</span><span class="w"></span>
+<span class="linenos">46</span>
+<span class="linenos">47</span><span class="w">  </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span><span class="w">  </span><span class="k">dimension</span><span class="p">(</span><span class="n">dim1</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">meta_flt_vec</span><span class="w"></span>
+<span class="linenos">48</span><span class="w">  </span><span class="kt">real</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_float</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(:),</span><span class="w"> </span><span class="k">pointer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">meta_flt_recv</span><span class="w"></span>
+<span class="linenos">49</span>
+<span class="linenos">50</span><span class="w">  </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="k">result</span>
+<span class="linenos">51</span><span class="k">  type</span><span class="p">(</span><span class="n">dataset_type</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">dataset</span><span class="w"></span>
+<span class="linenos">52</span><span class="w">  </span><span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">client</span><span class="w"></span>
+<span class="linenos">53</span>
+<span class="linenos">54</span><span class="w">  </span><span class="c">! Fill array</span>
+<span class="linenos">55</span><span class="w">  </span><span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="n">true_array_real_32</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">56</span>
+<span class="linenos">57</span><span class="w">  </span><span class="c">! Initialize a dataset</span>
+<span class="linenos">58</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dataset</span><span class="p">%</span><span class="n">initialize</span><span class="p">(</span><span class="s2">&quot;example_fortran_dataset&quot;</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">59</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;dataset initialization failed&#39;</span><span class="w"></span>
+<span class="linenos">60</span>
+<span class="linenos">61</span><span class="w">  </span><span class="c">! Add a tensor to the dataset and verify that we can retrieve it</span>
+<span class="linenos">62</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dataset</span><span class="p">%</span><span class="n">add_tensor</span><span class="p">(</span><span class="s2">&quot;true_array_real_32&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">true_array_real_32</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="n">true_array_real_32</span><span class="p">))</span><span class="w"></span>
+<span class="linenos">63</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;dataset%add_tensor failed&#39;</span><span class="w"></span>
+<span class="linenos">64</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dataset</span><span class="p">%</span><span class="n">unpack_dataset_tensor</span><span class="p">(</span><span class="s2">&quot;true_array_real_32&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">recv_array_real_32</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="n">recv_array_real_32</span><span class="p">))</span><span class="w"></span>
+<span class="linenos">65</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;dataset%unpack_dataset_tensor failed&#39;</span><span class="w"></span>
+<span class="linenos">66</span>
+<span class="linenos">67</span><span class="w">  </span><span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="n">meta_flt_vec</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">68</span>
+<span class="linenos">69</span><span class="w">  </span><span class="c">! Add metascalars to the dataset and verify that we can retrieve them</span>
+<span class="linenos">70</span><span class="w">  </span><span class="k">do </span><span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">dim1</span><span class="w"></span>
+<span class="linenos">71</span><span class="w">    </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dataset</span><span class="p">%</span><span class="n">add_meta_scalar</span><span class="p">(</span><span class="n">meta_float</span><span class="p">,</span><span class="w"> </span><span class="n">meta_flt_vec</span><span class="p">(</span><span class="n">i</span><span class="p">))</span><span class="w"></span>
+<span class="linenos">72</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;dataset%add_meta_scalar failed&#39;</span><span class="w"></span>
+<span class="linenos">73</span><span class="w">  </span><span class="k">enddo</span>
+<span class="linenos">74</span><span class="k">  result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dataset</span><span class="p">%</span><span class="n">get_meta_scalars</span><span class="p">(</span><span class="n">meta_float</span><span class="p">,</span><span class="w"> </span><span class="n">meta_flt_recv</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">75</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;dataset%get_meta_scalars failed&#39;</span><span class="w"></span>
+<span class="linenos">76</span>
+<span class="linenos">77</span><span class="w">  </span><span class="c">! Initialize a client</span>
+<span class="linenos">78</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">true</span><span class="p">.)</span><span class="w"> </span><span class="c">! Change .false. to .true. if not using a clustered database</span>
+<span class="linenos">79</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%initialize failed&#39;</span><span class="w"></span>
+<span class="linenos">80</span>
+<span class="linenos">81</span><span class="w">  </span><span class="c">! Send the dataset to the database via the client</span>
+<span class="linenos">82</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">put_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">83</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%put_dataset failed&#39;</span><span class="w"></span>
+<span class="linenos">84</span>
+<span class="linenos">85</span><span class="w">  </span><span class="c">! Done</span>
+<span class="linenos">86</span><span class="w">  </span><span class="k">call exit</span><span class="p">()</span><span class="w"></span>
+<span class="linenos">87</span>
+<span class="linenos">88</span><span class="k">end program </span><span class="n">main</span><span class="w"></span>
+</pre></div>
+</div>
+</section>
+<section id="models">
+<span id="sr-fortran-models"></span><h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
+<p>For an example of placing a model in the database
+and executing the model using a stored tensor,
+see the <a class="reference internal" href="#sr-parallel-mpi"><span class="std std-ref">Parallel (MPI) execution</span></a> example.  The
+aforementioned example is customized to show how
+key collisions can be avoided in parallel
+applications, but the <code class="docutils literal notranslate"><span class="pre">Client</span></code> API calls
+pertaining to model actions are identical
+to non-parallel applications.</p>
+</section>
+<section id="scripts">
+<span id="sr-fortran-scripts"></span><h2>Scripts<a class="headerlink" href="#scripts" title="Permalink to this headline">¶</a></h2>
+<p>For an example of placing a PyTorch script in the database
+and executing the script using a stored tensor,
+see the <a class="reference internal" href="#sr-parallel-mpi"><span class="std std-ref">Parallel (MPI) execution</span></a> example.  The
+aforementioned example is customized to show how
+key collisions can be avoided in parallel
+applications, but the <code class="docutils literal notranslate"><span class="pre">Client</span></code> API calls
+pertaining to script actions are identical
+to non-parallel applications.</p>
+</section>
+<section id="parallel-mpi-execution">
+<span id="sr-parallel-mpi"></span><h2>Parallel (MPI) execution<a class="headerlink" href="#parallel-mpi-execution" title="Permalink to this headline">¶</a></h2>
+<p>In this example, an MPI program that
+sets a model, sets a script, executes a script,
+executes a model, sends a tensor, and receives
+a tensor is shown.  This example illustrates
+how keys can be prefixed to prevent key
+collisions across MPI ranks.  Note that only one
+model and script are set, which is shared across
+all ranks.  It is important to note that the
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> API calls made in this program are
+equally applicable to non-MPI programs.</p>
+<p>This example will go step-by-step through the program and
+then present the entirety of the example code at the end.</p>
+<p>The MNIST dataset and model typically take images of
+digits and quantifies how likely that number is to be 0, 1, 2,
+etc.. For simplicity here, this example instead
+generates random numbers to represent an image.</p>
+<p><strong>Initialization</strong></p>
+<p>At the top of the program, the SmartRedis Fortran client
+(which is coded as a Fortran module) is imported using</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">client_type</span><span class="w"></span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">client_type</span></code> is a Fortran derived-type containing
+the methods used to communicate with the RedisAI database.
+A particular instance is declared via</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">client</span><span class="w"></span>
+</pre></div>
+</div>
+<p>An initializer routine, implemented as a type-bound
+procedure, must be called before any of the other
+methods are used:</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">true</span><span class="p">.)</span><span class="w"></span>
+</pre></div>
+</div>
+<p>The only optional argument to the initialize
+routine is to determine whether the RedisAI
+database is clustered (i.e. spread over a number
+of nodes, <code class="docutils literal notranslate"><span class="pre">.true.</span></code>) or exists as a single instance.</p>
+<p>If an individual rank is expected to
+send only its local data, a separate client must
+be initialized on every MPI task Furthermore,
+to avoid the collision of key names when running
+on multiple MPI tasks, we store the rank of the
+MPI process which will be used as the suffix for
+all keys in this example.</p>
+<p>On the root MPI task, two additional client methods
+(<code class="docutils literal notranslate"><span class="pre">set_model_from_file</span></code> and <code class="docutils literal notranslate"><span class="pre">set_script_from_file</span></code>)
+are called. <code class="docutils literal notranslate"><span class="pre">set_model_from_file</span></code> loads a saved
+PyTorch model and stores it in the database using the key
+<code class="docutils literal notranslate"><span class="pre">mnist_model</span></code>. Similarly, <code class="docutils literal notranslate"><span class="pre">set_script_from_file</span></code>
+loads a script that can be used to process data on the
+database cluster.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pe_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">then</span>
+<span class="k">  call </span><span class="n">client</span><span class="p">%</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span><span class="w"> </span><span class="n">model_file</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;TORCH&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;CPU&quot;</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;CPU&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">script_file</span><span class="p">)</span><span class="w"></span>
+<span class="k">endif</span><span class="w"></span>
+</pre></div>
+</div>
+<p>This only needs to be done on the root MPI task because
+this example assumes that every rank is using the same model.
+If the model is intended to be rank-specific, a unique
+identifier (like the MPI rank) must be used.</p>
+<p>At this point the initialization of the program is
+complete: each rank has its own SmartRedis client,
+initialized a PyTorch model has been loaded and
+stored into the database with its own identifying
+key, and a preprocessing script has also
+been loaded and stored in the database</p>
+<p><strong>Performing inference on Fortran data</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">run_mnist</span></code> subroutine coordinates the inference
+cycle of generating data (i.e. the synthetic MNIST image) from
+the application and then the use of the client to
+run a preprocessing script on data within the database and to
+perform an inference from the AI model. The local
+variables are declared at the top of the subroutine and are
+instructive to communicate the expected shape of the
+inputs to the various client methods.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">mnist_dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">28</span><span class="w"></span>
+<span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">mnist_dim2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">28</span><span class="w"></span>
+<span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">result_dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"></span>
+</pre></div>
+</div>
+<p>The first two integers <code class="docutils literal notranslate"><span class="pre">mnist_dim1</span></code> and <code class="docutils literal notranslate"><span class="pre">mnist_dim2</span></code>
+specify the shape of the input data. In the case of the
+MNIST dataset, it expects a 4D tensor describing a ‘picture’
+of a number with dimensions [1,1,28,28] representing a
+batch size (of one) and a three dimensional array. <code class="docutils literal notranslate"><span class="pre">result_dim1</span></code>
+specifies what the size of the resulting inference
+will be. In this case, it is a vector of length 10, where
+each element represents the probability that the data
+represents a number from 0-9.</p>
+<p>The next declaration declares the strings that will be
+used to define objects representing inputs/outputs from the
+scripts and inference models.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">in_key</span><span class="w"></span>
+<span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"></span>
+<span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">out_key</span><span class="w"></span>
+</pre></div>
+</div>
+<p>Note that these are standard Fortran strings. However,
+because the model and scripts may require the use of multiple
+inputs/outputs, these will need to be converted into a
+vector of strings.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">inputs</span><span class="w"></span>
+<span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">outputs</span><span class="w"></span>
+</pre></div>
+</div>
+<p>In this case, only one input and output are expected the
+vector of strings only need to be one element long. In the
+case of multiple inputs/outputs, change the <code class="docutils literal notranslate"><span class="pre">dimension</span></code>
+attribute of the <code class="docutils literal notranslate"><span class="pre">inputs</span></code> and <code class="docutils literal notranslate"><span class="pre">outputs</span></code> accordingly,
+e.g. for two inputs this code would be <code class="docutils literal notranslate"><span class="pre">character(len=255),</span>
+<span class="pre">dimension(2)</span> <span class="pre">::</span> <span class="pre">inputs</span></code>.</p>
+<p>Next, the input and output keys for the model and script are
+now constructed</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="n">in_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span><span class="w"></span>
+<span class="n">script_out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span><span class="w"></span>
+<span class="n">out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span><span class="w"></span>
+</pre></div>
+</div>
+<p>As mentioned previously, unique identifying keys are
+constructed by including a suffix based on MPI tasks.</p>
+<p>The subroutine, in place of an actual simulation, next
+generates an array of random numbers and puts this array
+into the Redis database.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="k">array</span><span class="p">)</span><span class="w"></span>
+<span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span><span class="w"> </span><span class="k">array</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="k">array</span><span class="p">))</span><span class="w"></span>
+</pre></div>
+</div>
+<p>The Redis database can now be called to run preprocessing
+scripts on these data.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_key</span><span class="w"></span>
+<span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"></span>
+<span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">run_script</span><span class="p">(</span><span class="n">script_name</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pre_process&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">outputs</span><span class="p">)</span><span class="w"></span>
+</pre></div>
+</div>
+<p>The call to <code class="docutils literal notranslate"><span class="pre">client%run_script</span></code> specifies the
+key used to identify the script loaded during
+initialization, <code class="docutils literal notranslate"><span class="pre">pre_process</span></code> is the name of
+the function to run that is defined in that script,
+and the <code class="docutils literal notranslate"><span class="pre">inputs</span></code>/<code class="docutils literal notranslate"><span class="pre">outputs</span></code> are the vector of
+keys described previously. In this case, the call to
+<code class="docutils literal notranslate"><span class="pre">run_script</span></code> will trigger the RedisAI database
+to execute <code class="docutils literal notranslate"><span class="pre">pre_process</span></code> on the generated data
+(stored using the key <code class="docutils literal notranslate"><span class="pre">mnist_input_rank_XX</span></code> where <code class="docutils literal notranslate"><span class="pre">XX</span></code>
+represents the MPI rank) and storing the result of
+<code class="docutils literal notranslate"><span class="pre">pre_process</span></code> in the database as
+<code class="docutils literal notranslate"><span class="pre">mnist_processed_input_rank_XX</span></code>. One key aspect to
+emphasize, is that the calculations are done within the
+database, not on the application side and the results
+are not immediately available to the application. The retrieval
+of data from the database is demonstrated next.</p>
+<p>The data have been processed and now we can run the
+inference model. The setup of the inputs/outputs
+is the same as before, with the exception that the
+input to the inference model, is stored using the
+key <code class="docutils literal notranslate"><span class="pre">mnist_processed_input_rank_XX</span></code>
+and the output will stored using the same key.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"></span>
+<span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">out_key</span><span class="w"></span>
+<span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">run_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">outputs</span><span class="p">)</span><span class="w"></span>
+</pre></div>
+</div>
+<p>As before the results of running the inference are
+stored within the database and are not available to
+the application immediately. However, we can ‘retrieve’
+the tensor from the database by using the <code class="docutils literal notranslate"><span class="pre">unpack_tensor</span></code> method.</p>
+<div class="highlight-Fortran notranslate"><div class="highlight"><pre><span></span><span class="k">call </span><span class="n">client</span><span class="p">%</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span><span class="w"> </span><span class="k">result</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="k">result</span><span class="p">))</span><span class="w"></span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">result</span></code> array now contains the outcome of the inference.
+It is a 10-element array representing the likelihood that the
+‘image’ (generated using the random numbers) is one of the numbers
+[0-9].</p>
+<p><strong>Key points</strong></p>
+<p>The script, models, and data used here represent the
+coordination of different software stacks (PyTorch, RedisAI, and
+Fortran) however the application code is all written in
+standard Fortran. Any operations that need to be done to
+communicate with the database and exchange data are opaque
+to the application.</p>
+<p><strong>Source Code</strong></p>
+<p>Fortran program:</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="c">! BSD 2-Clause License</span>
+<span class="linenos">  2</span><span class="c">!</span>
+<span class="linenos">  3</span><span class="c">! Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="linenos">  4</span><span class="c">! All rights reserved.</span>
+<span class="linenos">  5</span><span class="c">!</span>
+<span class="linenos">  6</span><span class="c">! Redistribution and use in source and binary forms, with or without</span>
+<span class="linenos">  7</span><span class="c">! modification, are permitted provided that the following conditions are met:</span>
+<span class="linenos">  8</span><span class="c">!</span>
+<span class="linenos">  9</span><span class="c">! 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="linenos"> 10</span><span class="c">!    list of conditions and the following disclaimer.</span>
+<span class="linenos"> 11</span><span class="c">!</span>
+<span class="linenos"> 12</span><span class="c">! 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="linenos"> 13</span><span class="c">!    this list of conditions and the following disclaimer in the documentation</span>
+<span class="linenos"> 14</span><span class="c">!    and/or other materials provided with the distribution.</span>
+<span class="linenos"> 15</span><span class="c">!</span>
+<span class="linenos"> 16</span><span class="c">! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="linenos"> 17</span><span class="c">! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="linenos"> 18</span><span class="c">! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="linenos"> 19</span><span class="c">! DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="linenos"> 20</span><span class="c">! FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="linenos"> 21</span><span class="c">! DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="linenos"> 22</span><span class="c">! SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="linenos"> 23</span><span class="c">! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="linenos"> 24</span><span class="c">! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="linenos"> 25</span><span class="c">! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="linenos"> 26</span>
+<span class="linenos"> 27</span><span class="k">program </span><span class="n">mnist_example</span><span class="w"></span>
+<span class="linenos"> 28</span>
+<span class="linenos"> 29</span><span class="w">  </span><span class="k">use </span><span class="n">mpi</span><span class="w"></span>
+<span class="linenos"> 30</span><span class="w">  </span><span class="k">use </span><span class="nb">iso_c_binding</span>
+<span class="linenos"> 31</span><span class="nb">  </span><span class="k">use </span><span class="n">smartredis_client</span><span class="p">,</span><span class="w"> </span><span class="k">only</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">client_type</span><span class="w"></span>
+<span class="linenos"> 32</span>
+<span class="linenos"> 33</span><span class="w">  </span><span class="k">implicit none</span><span class="w"></span>
+<span class="linenos"> 34</span>
+<span class="linenos"> 35</span><span class="cp">#include &quot;enum_fortran.inc&quot;</span>
+<span class="linenos"> 36</span>
+<span class="linenos"> 37</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">model_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_model&quot;</span><span class="w"></span>
+<span class="linenos"> 38</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">model_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../../common/mnist_data/mnist_cnn.pt&quot;</span><span class="w"></span>
+<span class="linenos"> 39</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">script_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_script&quot;</span><span class="w"></span>
+<span class="linenos"> 40</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">script_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../../common/mnist_data/data_processing_script.txt&quot;</span><span class="w"></span>
+<span class="linenos"> 41</span>
+<span class="linenos"> 42</span><span class="w">  </span><span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">client</span><span class="w"></span>
+<span class="linenos"> 43</span><span class="w">  </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">err_code</span><span class="p">,</span><span class="w"> </span><span class="n">pe_id</span><span class="p">,</span><span class="w"> </span><span class="k">result</span>
+<span class="linenos"> 44</span><span class="k">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">key_suffix</span><span class="w"></span>
+<span class="linenos"> 45</span>
+<span class="linenos"> 46</span><span class="w">  </span><span class="c">! Initialize MPI and get the rank of the processor</span>
+<span class="linenos"> 47</span><span class="w">  </span><span class="k">call </span><span class="n">MPI_init</span><span class="p">(</span><span class="n">err_code</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 48</span><span class="w">  </span><span class="k">call </span><span class="n">MPI_comm_rank</span><span class="p">(</span><span class="w"> </span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="w"> </span><span class="n">pe_id</span><span class="p">,</span><span class="w"> </span><span class="n">err_code</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 49</span>
+<span class="linenos"> 50</span><span class="w">  </span><span class="c">! Format the suffix for a key as a zero-padded version of the rank</span>
+<span class="linenos"> 51</span><span class="w">  </span><span class="k">write</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;(A,I1.1)&quot;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;_&quot;</span><span class="p">,</span><span class="n">pe_id</span><span class="w"></span>
+<span class="linenos"> 52</span>
+<span class="linenos"> 53</span><span class="w">  </span><span class="c">! Initialize a client</span>
+<span class="linenos"> 54</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">initialize</span><span class="p">(.</span><span class="n">true</span><span class="p">.)</span><span class="w"> </span><span class="c">! Change .false. to .true. if not using a clustered database</span>
+<span class="linenos"> 55</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%initialize failed&#39;</span><span class="w"></span>
+<span class="linenos"> 56</span>
+<span class="linenos"> 57</span><span class="w">  </span><span class="c">! Set up model and script for the computation</span>
+<span class="linenos"> 58</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pe_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">then</span>
+<span class="linenos"> 59</span><span class="k">    result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_key</span><span class="p">,</span><span class="w"> </span><span class="n">model_file</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;TORCH&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;CPU&quot;</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 60</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%set_model_from_file failed&#39;</span><span class="w"></span>
+<span class="linenos"> 61</span><span class="w">    </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">set_script_from_file</span><span class="p">(</span><span class="n">script_key</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;CPU&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">script_file</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 62</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%set_script_from_file failed&#39;</span><span class="w"></span>
+<span class="linenos"> 63</span><span class="w">  </span><span class="k">endif</span><span class="w"></span>
+<span class="linenos"> 64</span>
+<span class="linenos"> 65</span><span class="w">  </span><span class="c">! Get all PEs lined up</span>
+<span class="linenos"> 66</span><span class="w">  </span><span class="k">call </span><span class="n">MPI_barrier</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="w"> </span><span class="n">err_code</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 67</span>
+<span class="linenos"> 68</span><span class="w">  </span><span class="c">! Run the main computation</span>
+<span class="linenos"> 69</span><span class="w">  </span><span class="k">call </span><span class="n">run_mnist</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="w"> </span><span class="n">key_suffix</span><span class="p">,</span><span class="w"> </span><span class="n">model_key</span><span class="p">,</span><span class="w"> </span><span class="n">script_key</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 70</span>
+<span class="linenos"> 71</span><span class="w">  </span><span class="c">! Shut down MPI</span>
+<span class="linenos"> 72</span><span class="w">  </span><span class="k">call </span><span class="n">MPI_finalize</span><span class="p">(</span><span class="n">err_code</span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 73</span>
+<span class="linenos"> 74</span><span class="w">  </span><span class="c">! Check final result</span>
+<span class="linenos"> 75</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pe_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">then</span>
+<span class="linenos"> 76</span><span class="k">    print</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;SmartRedis Fortran MPI MNIST example finished without errors.&quot;</span><span class="w"></span>
+<span class="linenos"> 77</span><span class="w">  </span><span class="k">endif</span><span class="w"></span>
+<span class="linenos"> 78</span>
+<span class="linenos"> 79</span><span class="w">  </span><span class="c">! Done</span>
+<span class="linenos"> 80</span><span class="w">  </span><span class="k">call exit</span><span class="p">()</span><span class="w"></span>
+<span class="linenos"> 81</span>
+<span class="linenos"> 82</span><span class="k">contains</span>
+<span class="linenos"> 83</span>
+<span class="linenos"> 84</span><span class="k">subroutine </span><span class="n">run_mnist</span><span class="p">(</span><span class="w"> </span><span class="n">client</span><span class="p">,</span><span class="w"> </span><span class="n">key_suffix</span><span class="p">,</span><span class="w"> </span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="n">script_name</span><span class="w"> </span><span class="p">)</span><span class="w"></span>
+<span class="linenos"> 85</span><span class="w">  </span><span class="k">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">client</span><span class="w"></span>
+<span class="linenos"> 86</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="w">  </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">key_suffix</span><span class="w"></span>
+<span class="linenos"> 87</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="w">  </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">model_name</span><span class="w"></span>
+<span class="linenos"> 88</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span><span class="w">  </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">script_name</span><span class="w"></span>
+<span class="linenos"> 89</span>
+<span class="linenos"> 90</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">mnist_dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">28</span><span class="w"></span>
+<span class="linenos"> 91</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">mnist_dim2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">28</span><span class="w"></span>
+<span class="linenos"> 92</span><span class="w">  </span><span class="kt">integer</span><span class="p">,</span><span class="w"> </span><span class="k">parameter</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">result_dim1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"></span>
+<span class="linenos"> 93</span>
+<span class="linenos"> 94</span><span class="w">  </span><span class="kt">real</span><span class="p">,</span><span class="w"> </span><span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">mnist_dim1</span><span class="p">,</span><span class="n">mnist_dim2</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="k">array</span>
+<span class="linenos"> 95</span><span class="k">  </span><span class="kt">real</span><span class="p">,</span><span class="w"> </span><span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">result_dim1</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">output_result</span><span class="w"></span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">in_key</span><span class="w"></span>
+<span class="linenos"> 98</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"></span>
+<span class="linenos"> 99</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">out_key</span><span class="w"></span>
+<span class="linenos">100</span>
+<span class="linenos">101</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">inputs</span><span class="w"></span>
+<span class="linenos">102</span><span class="w">  </span><span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="k">dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">outputs</span><span class="w"></span>
+<span class="linenos">103</span>
+<span class="linenos">104</span><span class="w">  </span><span class="c">! Construct the keys used for the specifiying inputs and outputs</span>
+<span class="linenos">105</span><span class="w">  </span><span class="n">in_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">106</span><span class="w">  </span><span class="n">script_out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">107</span><span class="w">  </span><span class="n">out_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mnist_processed_input_rank&quot;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">key_suffix</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">108</span>
+<span class="linenos">109</span><span class="w">  </span><span class="c">! Generate some fake data for inference and send it to the database</span>
+<span class="linenos">110</span><span class="w">  </span><span class="k">call </span><span class="nb">random_number</span><span class="p">(</span><span class="k">array</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">111</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">put_tensor</span><span class="p">(</span><span class="n">in_key</span><span class="p">,</span><span class="w"> </span><span class="k">array</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="k">array</span><span class="p">))</span><span class="w"></span>
+<span class="linenos">112</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%put_tensor failed&#39;</span><span class="w"></span>
+<span class="linenos">113</span>
+<span class="linenos">114</span><span class="w">  </span><span class="c">! Prepare the script inputs and outputs</span>
+<span class="linenos">115</span><span class="w">  </span><span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_key</span><span class="w"></span>
+<span class="linenos">116</span><span class="w">  </span><span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"></span>
+<span class="linenos">117</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">run_script</span><span class="p">(</span><span class="n">script_name</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pre_process&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">outputs</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">118</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%run_script failed&#39;</span><span class="w"></span>
+<span class="linenos">119</span><span class="w">  </span><span class="n">inputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">script_out_key</span><span class="w"></span>
+<span class="linenos">120</span><span class="w">  </span><span class="n">outputs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">out_key</span><span class="w"></span>
+<span class="linenos">121</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">run_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="n">inputs</span><span class="p">,</span><span class="w"> </span><span class="n">outputs</span><span class="p">)</span><span class="w"></span>
+<span class="linenos">122</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%run_model failed&#39;</span><span class="w"></span>
+<span class="linenos">123</span><span class="w">  </span><span class="n">output_result</span><span class="p">(:,:)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.</span><span class="w"></span>
+<span class="linenos">124</span><span class="w">  </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">%</span><span class="n">unpack_tensor</span><span class="p">(</span><span class="n">out_key</span><span class="p">,</span><span class="w"> </span><span class="n">output_result</span><span class="p">,</span><span class="w"> </span><span class="nb">shape</span><span class="p">(</span><span class="n">output_result</span><span class="p">))</span><span class="w"></span>
+<span class="linenos">125</span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">result</span><span class="w"> </span><span class="p">.</span><span class="n">ne</span><span class="p">.</span><span class="w"> </span><span class="n">SRNoError</span><span class="p">)</span><span class="w"> </span><span class="k">error stop</span><span class="w"> </span><span class="s1">&#39;client%unpack_tensor failed&#39;</span><span class="w"></span>
+<span class="linenos">126</span>
+<span class="linenos">127</span><span class="k">end subroutine </span><span class="n">run_mnist</span><span class="w"></span>
+<span class="linenos">128</span>
+<span class="linenos">129</span><span class="k">end program </span><span class="n">mnist_example</span><span class="w"></span>
+</pre></div>
+</div>
+<p>Python Pre-Processing:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span> <span class="nf">pre_process</span><span class="p">(</span><span class="n">inp</span><span class="p">):</span>
+<span class="linenos">2</span>    <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inp</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="linenos">3</span>    <span class="n">mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="linenos">4</span>    <span class="n">temp</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">*</span> <span class="n">mean</span>
+<span class="linenos">5</span>    <span class="k">return</span> <span class="n">temp</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="sr_cpp_walkthrough.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">C++</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="sr_data_structures.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Data Structures</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
