@@ -195,11 +195,15 @@ class KeyManager:
                 permission = _KeyPermissions.PUBLIC_DIR
                 logger.debug(f"Creating key dir: {locator.public_dir}, {permission}")
                 locator.public_dir.mkdir(parents=True, mode=permission)
+                # Explicitly chmod to override umask and inherited bits (e.g. setgid)
+                locator.public_dir.chmod(permission)
 
             if not locator.private_dir.exists():
                 permission = _KeyPermissions.PRIVATE_DIR
                 logger.debug(f"Creating key dir: {locator.private_dir}, {permission}")
                 locator.private_dir.mkdir(parents=True, mode=permission)
+                # Explicitly chmod to override umask and inherited bits (e.g. setgid)
+                locator.private_dir.chmod(permission)
 
     @classmethod
     def _load_keypair(cls, locator: _KeyLocator, in_context: bool) -> KeyPair:

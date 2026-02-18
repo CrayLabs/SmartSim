@@ -1301,7 +1301,7 @@ def test_preview_db_script(wlmutils, test_dir):
     test_launcher = wlmutils.get_test_launcher()
     # Initialize the Experiment and set the launcher to auto
 
-    exp = Experiment("getting-started", launcher=test_launcher)
+    exp = Experiment("getting-started", test_dir, launcher=test_launcher)
 
     # Initialize a RunSettings object
     model_settings = exp.create_run_settings(exe="python", exe_args="params.py")

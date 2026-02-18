@@ -225,7 +225,7 @@ def shutdown_db_node(host_ip: str, port: int) -> tuple[int, str, str]:  # cov-wl
     """
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
-    returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False, timeout=10)
+    returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False, timeout=CONFIG.redis_cli_timeout)
 
     if returncode != 0:
         logger.error(out)

@@ -75,6 +75,7 @@ def test_multinode_app(mpi_app_path, test_dir, wlmutils):
 
     settings = exp.create_run_settings(str(mpi_app_path), [])
     settings.set_nodes(3)
+    settings.set_tasks(3)
 
     model = exp.create_model("mpi_app", run_settings=settings)
     exp.generate(model)

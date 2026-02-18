@@ -39,6 +39,9 @@ from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 
+# Disable CPU pinning on Slurm systems where default CPUs (0,1,...) may not be available
+slurm_pinning_override = {"custom_pinning": []} if pytest.test_launcher == "slurm" else {}
+
 should_run_tf = True
 should_run_pt = True
 
@@ -393,7 +396,7 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
     # Create colocated Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.colocate_db_tcp(
-        port=test_port, db_cpus=1, debug=True, ifname=test_interface
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface, **slurm_pinning_override
     )
 
     # Create and save ML model to filesystem
@@ -465,7 +468,7 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.colocate_db_tcp(
-        port=test_port, db_cpus=1, debug=True, ifname=test_interface
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface, **slurm_pinning_override
     )
 
     # Create and save ML model to filesystem
@@ -532,7 +535,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     # Create a third model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.colocate_db_tcp(
-        port=test_port, db_cpus=1, debug=True, ifname=test_interface
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface, **slurm_pinning_override
     )
 
     # Create and save the ML models to the filesystem
@@ -542,7 +545,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     # Colocate a database with the ensemble with two ensemble members
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db_tcp(
-            port=test_port + i + 1, db_cpus=1, debug=True, ifname=test_interface
+            port=test_port + i + 1, db_cpus=1, debug=True, ifname=test_interface, **slurm_pinning_override
         )
         # Add ML model to each ensemble member individual to test that they
         # do not conflict with models add to the Ensemble object
@@ -652,7 +655,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
     # Colocate a database with the first ensemble members
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db_tcp(
-            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface
+            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface, **slurm_pinning_override
         )
         # Add ML models to each ensemble member to make sure they
         # do not conflict with other ML models
@@ -677,6 +680,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
         db_cpus=1,
         debug=True,
         ifname=test_interface,
+        **slurm_pinning_override,
     )
     # Add a ML model to the new ensemble member
     colo_model.add_ml_model(

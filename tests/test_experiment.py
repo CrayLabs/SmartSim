@@ -86,9 +86,9 @@ def test_type_exp_path() -> None:
         exp = Experiment("test", ["this-is-a-list-dummy"])
 
 
-def test_stop_type() -> None:
+def test_stop_type(test_dir) -> None:
     """Wrong argument type given to stop"""
-    exp = Experiment("name")
+    exp = Experiment("name", test_dir)
     with pytest.raises(TypeError):
         exp.stop("model")
 
