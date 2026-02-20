@@ -49,7 +49,7 @@ if launcher not in pytest.wlm_options:
 @pytest.mark.skipif(
     launcher == "slurm",
     reason="Default CPU pinning assumes CPUs 0..N are available, which is not "
-           "guaranteed on SLURM with cgroup restrictions",
+    "guaranteed on SLURM with cgroup restrictions",
 )
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_launch_colocated_model_defaults(fileutils, test_dir, coloutils, db_type):
@@ -104,7 +104,7 @@ def test_colocated_model_disable_pinning(fileutils, test_dir, coloutils, db_type
 @pytest.mark.skipif(
     launcher == "slurm",
     reason="Default CPU pinning assumes CPUs 0..N are available, which is not "
-           "guaranteed on SLURM with cgroup restrictions",
+    "guaranteed on SLURM with cgroup restrictions",
 )
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_auto_2cpu(fileutils, test_dir, coloutils, db_type):

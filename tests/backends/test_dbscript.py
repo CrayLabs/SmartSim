@@ -235,7 +235,10 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     # Create model with colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.colocate_db_tcp(
-        port=test_port, db_cpus=1, debug=True, ifname=test_interface,
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
         custom_pinning=[] if test_launcher == "slurm" else None,
     )
 

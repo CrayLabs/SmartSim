@@ -25,11 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-from collections import defaultdict
 import logging
 import os
 import pathlib
 import typing as t
+from collections import defaultdict
 from contextlib import contextmanager
 
 import pytest

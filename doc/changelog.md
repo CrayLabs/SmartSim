@@ -11,6 +11,7 @@ To be released at some point in the future
 
 Description
 
+- Miscellaneous test fixes
 - Update install patch for PyTorch 2.7.1+rocm6.3
 - Modernize typing syntax to Python 3.10+ standards
 - Removed telemetry functionality, LaunchedManifest tracking
@@ -27,6 +28,10 @@ Description
 
 Detailed Notes
 
+- Updated tests which would create experiment in root directory, patched
+  tests which would not work on some Slurm systems, added an environment variable
+  to control how long to wait for Redis server to be available.
+  ([SmartSim-PR794](https://github.com/CrayLabs/SmartSim/pull/794))
 - Updated the post-install patch which is applied to the Caffe2/PyTorch
   CMakeFind module.
   ([SmartSim-PR793](https://github.com/CrayLabs/SmartSim/pull/793))
