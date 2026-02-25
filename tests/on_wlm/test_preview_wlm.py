@@ -93,6 +93,8 @@ def test_preview_wlm_run_commands_cluster_orc_model(
         "debug": True,
         "db_identifier": "testdb_colo",
     }
+    if wlmutils.get_test_launcher() == "slurm":
+        db_args["custom_pinning"] = []
 
     # Create model with colocated database
     smartsim_model = coloutils.setup_test_colo(
@@ -371,7 +373,7 @@ def test_preview_ensemble_db_script(wlmutils, test_dir):
     """
     # Initialize the Experiment and set the launcher to auto
     test_launcher = wlmutils.get_test_launcher()
-    exp = Experiment("getting-started", launcher=test_launcher)
+    exp = Experiment("getting-started", test_dir, launcher=test_launcher)
 
     orch = exp.create_database(db_identifier="test_db1")
     orch_2 = exp.create_database(db_identifier="test_db2", db_nodes=3)

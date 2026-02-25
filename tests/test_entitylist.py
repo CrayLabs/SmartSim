@@ -42,11 +42,11 @@ def test_entity_list_init():
         ent_list = EntityList("list", getcwd(), perm_strat="all_perm")
 
 
-def test_entity_list_getitem():
+def test_entity_list_getitem(test_dir):
     """EntityList.__getitem__ is overridden in Ensemble, so we had to pass an instance of Ensemble
     to EntityList.__getitem__ in order to add test coverage to EntityList.__getitem__
     """
-    exp = Experiment("name")
+    exp = Experiment("name", test_dir)
     ens_settings = RunSettings("python")
     ensemble = exp.create_ensemble("name", replicas=4, run_settings=ens_settings)
     assert ensemble.__getitem__("name_3") == ensemble["name_3"]

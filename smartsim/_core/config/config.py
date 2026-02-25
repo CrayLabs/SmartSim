@@ -195,6 +195,10 @@ class Config:
         return os.getenv("SMARTSIM_DRAGON_TRANSPORT", "hsta")
 
     @property
+    def redis_cli_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_REDIS_TIMEOUT", "10"))
+
+    @property
     def log_level(self) -> str:
         return os.environ.get("SMARTSIM_LOG_LEVEL", "info")
 

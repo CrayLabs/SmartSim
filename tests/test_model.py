@@ -41,8 +41,8 @@ from smartsim.settings.mpiSettings import _BaseMPISettings
 pytestmark = pytest.mark.slow_tests
 
 
-def test_register_incoming_entity_preexists():
-    exp = Experiment("experiment", launcher="local")
+def test_register_incoming_entity_preexists(test_dir):
+    exp = Experiment("experiment", test_dir, launcher="local")
     rs = RunSettings("python", exe_args="sleep.py")
     ensemble = exp.create_ensemble(name="ensemble", replicas=1, run_settings=rs)
     m = exp.create_model("model", run_settings=rs)
@@ -52,16 +52,16 @@ def test_register_incoming_entity_preexists():
         m.register_incoming_entity(ensemble["ensemble_0"])
 
 
-def test_disable_key_prefixing():
-    exp = Experiment("experiment", launcher="local")
+def test_disable_key_prefixing(test_dir):
+    exp = Experiment("experiment", test_dir, launcher="local")
     rs = RunSettings("python", exe_args="sleep.py")
     m = exp.create_model("model", run_settings=rs)
     m.disable_key_prefixing()
     assert m.query_key_prefixing() == False
 
 
-def test_catch_colo_mpmd_model():
-    exp = Experiment("experiment", launcher="local")
+def test_catch_colo_mpmd_model(test_dir):
+    exp = Experiment("experiment", test_dir, launcher="local")
     rs = _BaseMPISettings("python", exe_args="sleep.py", fail_if_missing_exec=False)
 
     # make it an mpmd model
@@ -75,8 +75,8 @@ def test_catch_colo_mpmd_model():
         model.colocate_db()
 
 
-def test_attach_batch_settings_to_model():
-    exp = Experiment("experiment", launcher="slurm")
+def test_attach_batch_settings_to_model(test_dir):
+    exp = Experiment("experiment", test_dir, launcher="slurm")
     bs = SbatchSettings()
     rs = SrunSettings("python", exe_args="sleep.py")
 

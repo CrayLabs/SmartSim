@@ -29,6 +29,7 @@ import logging
 import os
 import pathlib
 import typing as t
+from collections import defaultdict
 from contextlib import contextmanager
 
 import pytest
@@ -697,6 +698,7 @@ def test_cli_full_site_execute(capsys, monkeypatch):
 
 def test_cli_full_build_execute(capsys, monkeypatch):
     """Ensure that the execute method of build is called"""
+
     exp_retval = 0
     exp_output = "mocked-execute-build utility"
 
@@ -704,10 +706,25 @@ def test_cli_full_build_execute(capsys, monkeypatch):
         print(exp_output)
         return exp_retval
 
-    # mock out the internal get_db_path method so we don't actually do file system ops
+    def mock_noop(*args, **kwargs):
+        pass
+
+    # mock out the internal methods so we don't actually do file system ops or installs
     monkeypatch.setattr(smartsim._core._cli.build, "tabulate", mock_operation)
     monkeypatch.setattr(smartsim._core._cli.build, "build_database", mock_operation)
     monkeypatch.setattr(smartsim._core._cli.build, "build_redis_ai", mock_operation)
+    # Return empty package collection to prevent pip_install calls
+    monkeypatch.setattr(
+        smartsim._core._cli.build,
+        "load_platform_configs",
+        lambda *a, **kw: defaultdict(dict),
+    )
+    monkeypatch.setattr(
+        smartsim._core._cli.build, "installed_redisai_backends", lambda: []
+    )
+    monkeypatch.setattr(
+        smartsim._core._cli.build, "check_ml_python_packages", mock_noop
+    )
 
     command = "build"
     cfg = MenuItemConfig(

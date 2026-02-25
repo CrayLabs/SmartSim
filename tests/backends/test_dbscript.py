@@ -235,7 +235,11 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     # Create model with colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.colocate_db_tcp(
-        port=test_port, db_cpus=1, debug=True, ifname=test_interface
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        custom_pinning=[] if test_launcher == "slurm" else None,
     )
 
     # Create string for script creation
@@ -318,6 +322,7 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
             db_cpus=1,
             debug=True,
             ifname=test_interface,
+            custom_pinning=[] if test_launcher == "slurm" else None,
         )
 
         entity.add_script(
@@ -334,6 +339,7 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
         db_cpus=1,
         debug=True,
         ifname=test_interface,
+        custom_pinning=[] if test_launcher == "slurm" else None,
     )
 
     # Add a script to the non-ensemble model
@@ -427,6 +433,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
             db_cpus=1,
             debug=True,
             ifname=test_interface,
+            custom_pinning=[] if test_launcher == "slurm" else None,
         )
 
         entity.add_script(
@@ -443,6 +450,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
         db_cpus=1,
         debug=True,
         ifname=test_interface,
+        custom_pinning=[] if test_launcher == "slurm" else None,
     )
 
     # Add the non-ensemble SmartSim Model to the Ensemble
@@ -503,6 +511,7 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
         db_cpus=1,
         debug=True,
         ifname=test_interface,
+        custom_pinning=[] if test_launcher == "slurm" else None,
     )
 
     # Check that an error is raised for adding in-memory
@@ -529,6 +538,7 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
             db_cpus=1,
             debug=True,
             ifname=test_interface,
+            custom_pinning=[] if test_launcher == "slurm" else None,
         )
 
     # Check that an exception is raised when adding an in-memory
@@ -567,6 +577,7 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
                 db_cpus=1,
                 debug=True,
                 ifname=test_interface,
+                custom_pinning=[] if test_launcher == "slurm" else None,
             )
 
     # Check that an error is raised when trying to add

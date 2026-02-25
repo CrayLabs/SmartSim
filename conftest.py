@@ -747,7 +747,9 @@ def _cleanup_db(name: str) -> None:
     global database_registry
     db = database_registry[name]
     if db and db.is_active():
-        exp = Experiment("cleanup")
+        cleanup_dir = str(pathlib.Path(test_output_root) / "cleanup")
+        os.makedirs(cleanup_dir, exist_ok=True)
+        exp = Experiment("cleanup", cleanup_dir)
         try:
             db = exp.reconnect_orchestrator(db.checkpoint_file)
             exp.stop(db)
