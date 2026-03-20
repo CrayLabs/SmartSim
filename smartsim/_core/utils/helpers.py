@@ -27,13 +27,13 @@
 """
 A file of helper functions for SmartSim
 """
-import base64
 import collections.abc
 import os
 import signal
 import subprocess
 import typing as t
 import uuid
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -44,10 +44,10 @@ if t.TYPE_CHECKING:
 
 
 _TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime"]
-_TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
+_TSignalHandlerFn = Callable[[int, "FrameType | None"], object]
 
 
-def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
+def unpack_db_identifier(db_id: str, token: str) -> tuple[str, str]:
     """Unpack the unformatted database identifier
     and format for env variable suffix using the token
     :param db_id: the unformatted database identifier eg. identifier_1
@@ -86,7 +86,7 @@ def check_dev_log_level() -> bool:
     return lvl == "developer"
 
 
-def fmt_dict(value: t.Dict[str, t.Any]) -> str:
+def fmt_dict(value: dict[str, t.Any]) -> str:
     fmt_str = ""
     for k, v in value.items():
         fmt_str += "\t" + str(k) + " = " + str(v)
@@ -130,7 +130,7 @@ def expand_exe_path(exe: str) -> str:
     return os.path.abspath(in_path)
 
 
-def is_valid_cmd(command: t.Union[str, None]) -> bool:
+def is_valid_cmd(command: str | None) -> bool:
     try:
         if command:
             expand_exe_path(command)
@@ -173,7 +173,7 @@ def colorize(
     return f"\x1b[{';'.join(attr)}m{string}\x1b[0m"
 
 
-def delete_elements(dictionary: t.Dict[str, t.Any], key_list: t.List[str]) -> None:
+def delete_elements(dictionary: dict[str, t.Any], key_list: list[str]) -> None:
     """Delete elements from a dictionary.
     :param dictionary: the dictionary from which the elements must be deleted.
     :param key_list: the list of keys to delete from the dictionary.
@@ -225,7 +225,7 @@ def _installed(base_path: Path, backend: str) -> bool:
     return backend_so.is_file()
 
 
-def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
+def redis_install_base(backends_path: str | None = None) -> Path:
     # pylint: disable-next=import-outside-toplevel,cyclic-import
     from ..._core.config import CONFIG
 
@@ -236,8 +236,8 @@ def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
 
 
 def installed_redisai_backends(
-    backends_path: t.Optional[str] = None,
-) -> t.Set[_TRedisAIBackendStr]:
+    backends_path: str | None = None,
+) -> set[_TRedisAIBackendStr]:
     """Check which ML backends are available for the RedisAI module.
 
     The optional argument ``backends_path`` is needed if the backends
@@ -252,7 +252,7 @@ def installed_redisai_backends(
     """
     # import here to avoid circular import
     base_path = redis_install_base(backends_path)
-    backends: t.Set[_TRedisAIBackendStr] = {
+    backends: set[_TRedisAIBackendStr] = {
         "tensorflow",
         "torch",
         "onnxruntime",
@@ -265,29 +265,6 @@ def installed_redisai_backends(
 def get_ts_ms() -> int:
     """Return the current timestamp (accurate to milliseconds) cast to an integer"""
     return int(datetime.now().timestamp() * 1000)
-
-
-def encode_cmd(cmd: t.Sequence[str]) -> str:
-    """Transform a standard command list into an encoded string safe for providing as an
-    argument to a proxy entrypoint
-    """
-    if not cmd:
-        raise ValueError("Invalid cmd supplied")
-
-    ascii_cmd = "|".join(cmd).encode("ascii")
-    encoded_cmd = base64.b64encode(ascii_cmd).decode("ascii")
-    return encoded_cmd
-
-
-def decode_cmd(encoded_cmd: str) -> t.List[str]:
-    """Decode an encoded command string to the original command list format"""
-    if not encoded_cmd.strip():
-        raise ValueError("Invalid cmd supplied")
-
-    decoded_cmd = base64.b64decode(encoded_cmd.encode("ascii"))
-    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
-
-    return cleaned_cmd
 
 
 def check_for_utility(util_name: str) -> str:
@@ -305,7 +282,7 @@ def check_for_utility(util_name: str) -> str:
     return utility
 
 
-def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
+def execute_platform_cmd(cmd: str) -> tuple[str, int]:
     """Execute the platform check command as a subprocess
 
     :param cmd: the command to execute
@@ -321,9 +298,9 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
 class CrayExPlatformResult:
     locate_msg = "Unable to locate `{0}`."
 
-    def __init__(self, ldconfig: t.Optional[str], fi_info: t.Optional[str]) -> None:
-        self.ldconfig: t.Optional[str] = ldconfig
-        self.fi_info: t.Optional[str] = fi_info
+    def __init__(self, ldconfig: str | None, fi_info: str | None) -> None:
+        self.ldconfig: str | None = ldconfig
+        self.fi_info: str | None = fi_info
         self.has_pmi: bool = False
         self.has_pmi2: bool = False
         self.has_cxi: bool = False
@@ -349,7 +326,7 @@ class CrayExPlatformResult:
         )
 
     @property
-    def failures(self) -> t.List[str]:
+    def failures(self) -> list[str]:
         """Return a list of messages describing all failed validations"""
         failure_messages = []
 
@@ -421,7 +398,7 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
     def __init__(
         self,
         signalnum: int,
-        callbacks: t.Optional[t.Iterable[_TSignalHandlerFn]] = None,
+        callbacks: Iterable[_TSignalHandlerFn] | None = None,
     ) -> None:
         """Set up a ``SignalInterceptionStack`` for particular signal number.
 
@@ -438,7 +415,7 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         self._callbacks = list(callbacks) if callbacks else []
         self._original = signal.signal(signalnum, self)
 
-    def __call__(self, signalnum: int, frame: t.Optional["FrameType"]) -> None:
+    def __call__(self, signalnum: int, frame: "FrameType | None") -> None:
         """Handle the signal on which the interception stack was registered.
         End by calling the originally registered signal hander (if present).
 

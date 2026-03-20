@@ -58,7 +58,7 @@ if t.TYPE_CHECKING:
 
 class NodeMock(MagicMock):
     def __init__(
-        self, name: t.Optional[str] = None, num_gpus: int = 2, num_cpus: int = 8
+        self, name: str | None = None, num_gpus: int = 2, num_cpus: int = 8
     ) -> None:
         super().__init__()
         self._mock_id = name
@@ -82,7 +82,7 @@ class NodeMock(MagicMock):
     def _set_id(self, value: str) -> None:
         self._mock_id = value
 
-    def gpus(self, parent: t.Any = None) -> t.List[str]:
+    def gpus(self, parent: t.Any = None) -> list[str]:
         if self._num_gpus:
             return [f"{self.hostname}-gpu{i}" for i in range(NodeMock._num_gpus)]
         return []
@@ -161,7 +161,7 @@ def get_mock_backend(
 
 def set_mock_group_infos(
     monkeypatch: pytest.MonkeyPatch, dragon_backend: "DragonBackend"
-) -> t.Dict[str, "ProcessGroupInfo"]:
+) -> dict[str, "ProcessGroupInfo"]:
     dragon_mock = MagicMock()
     process_mock = MagicMock()
     process_mock.configure_mock(**{"returncode": 0})
@@ -445,7 +445,6 @@ def test_shutdown_request(
     kill_jobs: bool,
     frontend_shutdown: bool,
 ) -> None:
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
     dragon_backend = get_mock_backend(monkeypatch)
     monkeypatch.setattr(dragon_backend, "_cooldown_period", 1)
     set_mock_group_infos(monkeypatch, dragon_backend)
@@ -487,22 +486,6 @@ def test_shutdown_request(
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
-@pytest.mark.parametrize("telemetry_flag", ["0", "1"])
-def test_cooldown_is_set(monkeypatch: pytest.MonkeyPatch, telemetry_flag: str) -> None:
-    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", telemetry_flag)
-    dragon_backend = get_mock_backend(monkeypatch)
-
-    expected_cooldown = (
-        2 * CONFIG.telemetry_frequency + 5 if int(telemetry_flag) > 0 else 5
-    )
-
-    if telemetry_flag:
-        assert dragon_backend.cooldown_period == expected_cooldown
-    else:
-        assert dragon_backend.cooldown_period == expected_cooldown
-
-
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_heartbeat_and_time(monkeypatch: pytest.MonkeyPatch) -> None:
     dragon_backend = get_mock_backend(monkeypatch)
     first_heartbeat = dragon_backend.last_heartbeat
@@ -535,7 +518,7 @@ def test_can_honor(monkeypatch: pytest.MonkeyPatch, num_nodes: int) -> None:
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 @pytest.mark.parametrize("affinity", [[0], [0, 1], list(range(8))])
 def test_can_honor_cpu_affinity(
-    monkeypatch: pytest.MonkeyPatch, affinity: t.List[int]
+    monkeypatch: pytest.MonkeyPatch, affinity: list[int]
 ) -> None:
     """Verify that valid CPU affinities are accepted"""
     dragon_backend = get_mock_backend(monkeypatch)
@@ -579,7 +562,7 @@ def test_can_honor_cpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 @pytest.mark.parametrize("affinity", [[0], [0, 1]])
 def test_can_honor_gpu_affinity(
-    monkeypatch: pytest.MonkeyPatch, affinity: t.List[int]
+    monkeypatch: pytest.MonkeyPatch, affinity: list[int]
 ) -> None:
     """Verify that valid GPU affinities are accepted"""
     dragon_backend = get_mock_backend(monkeypatch)

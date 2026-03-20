@@ -64,7 +64,7 @@ class Version_(str):
 
     @staticmethod
     def _convert_to_version(
-        vers: t.Union[str, Iterable[Version], Version],
+        vers: str | Iterable[Version] | Version,
     ) -> t.Any:
         if isinstance(vers, Version):
             return vers
@@ -172,7 +172,7 @@ class Versioner:
     )
     REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
 
-    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
+    def as_dict(self, db_name: DbEngine = "REDIS") -> dict[str, tuple[str, ...]]:
         pkg_map = {
             "SMARTSIM": self.SMARTSIM,
             db_name: self.REDIS,
@@ -259,7 +259,7 @@ class BuildEnv:
             for dep in deps:
                 self.check_build_dependency(dep)
 
-    def __call__(self) -> t.Dict[str, str]:
+    def __call__(self) -> dict[str, str]:
         # return the build env for the build process
         env = os.environ.copy()
         env.update(
@@ -272,8 +272,8 @@ class BuildEnv:
         )
         return env
 
-    def as_dict(self) -> t.Dict[str, t.List[str]]:
-        variables: t.List[str] = [
+    def as_dict(self) -> dict[str, list[str]]:
+        variables: list[str] = [
             "CC",
             "CXX",
             "CFLAGS",
@@ -283,7 +283,7 @@ class BuildEnv:
             "PYTHON_VERSION",
             "PLATFORM",
         ]
-        values: t.List[str] = [
+        values: list[str] = [
             self.CC,
             self.CXX,
             self.CFLAGS,
@@ -316,7 +316,7 @@ class BuildEnv:
         return cls.PLATFORM == "darwin"
 
     @staticmethod
-    def get_cudnn_env() -> t.Optional[t.Dict[str, str]]:
+    def get_cudnn_env() -> dict[str, str] | None:
         """Collect the environment variables needed for Caffe (Pytorch)
         and throw an error if they are not found
 

@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 
 import psutil
 
@@ -36,9 +35,9 @@ class StepInfo:
         self,
         status: SmartSimStatus,
         launcher_status: str = "",
-        returncode: t.Optional[int] = None,
-        output: t.Optional[str] = None,
-        error: t.Optional[str] = None,
+        returncode: int | None = None,
+        output: str | None = None,
+        error: str | None = None,
     ) -> None:
         self.status = status
         self.launcher_status = launcher_status
@@ -53,11 +52,11 @@ class StepInfo:
         return info_str
 
     @property
-    def mapping(self) -> t.Dict[str, SmartSimStatus]:
+    def mapping(self) -> dict[str, SmartSimStatus]:
         raise NotImplementedError
 
     def _get_smartsim_status(
-        self, status: str, returncode: t.Optional[int] = None
+        self, status: str, returncode: int | None = None
     ) -> SmartSimStatus:
         """
         Map the status of the WLM step to a smartsim-specific status
@@ -73,7 +72,7 @@ class StepInfo:
 
 class UnmanagedStepInfo(StepInfo):
     @property
-    def mapping(self) -> t.Dict[str, SmartSimStatus]:
+    def mapping(self) -> dict[str, SmartSimStatus]:
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py
         return {
@@ -96,9 +95,9 @@ class UnmanagedStepInfo(StepInfo):
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[int] = None,
-        output: t.Optional[str] = None,
-        error: t.Optional[str] = None,
+        returncode: int | None = None,
+        output: str | None = None,
+        error: str | None = None,
     ) -> None:
         smartsim_status = self._get_smartsim_status(status)
         super().__init__(
@@ -138,9 +137,9 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[int] = None,
-        output: t.Optional[str] = None,
-        error: t.Optional[str] = None,
+        returncode: int | None = None,
+        output: str | None = None,
+        error: str | None = None,
     ) -> None:
         smartsim_status = self._get_smartsim_status(status)
         super().__init__(
@@ -150,7 +149,7 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
 
 class PBSStepInfo(StepInfo):  # cov-pbs
     @property
-    def mapping(self) -> t.Dict[str, SmartSimStatus]:
+    def mapping(self) -> dict[str, SmartSimStatus]:
         # pylint: disable-next=line-too-long
         # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs/PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
         return {
@@ -176,9 +175,9 @@ class PBSStepInfo(StepInfo):  # cov-pbs
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[int] = None,
-        output: t.Optional[str] = None,
-        error: t.Optional[str] = None,
+        returncode: int | None = None,
+        output: str | None = None,
+        error: str | None = None,
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
@@ -200,7 +199,7 @@ class PBSStepInfo(StepInfo):  # cov-pbs
 
 class SGEStepInfo(StepInfo):  # cov-pbs
     @property
-    def mapping(self) -> t.Dict[str, SmartSimStatus]:
+    def mapping(self) -> dict[str, SmartSimStatus]:
         # pylint: disable-next=line-too-long
         # see https://manpages.ubuntu.com/manpages/jammy/man5/sge_status.5.html
         return {
@@ -250,9 +249,9 @@ class SGEStepInfo(StepInfo):  # cov-pbs
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[int] = None,
-        output: t.Optional[str] = None,
-        error: t.Optional[str] = None,
+        returncode: int | None = None,
+        output: str | None = None,
+        error: str | None = None,
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:

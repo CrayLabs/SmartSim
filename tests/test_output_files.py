@@ -106,10 +106,12 @@ def test_mutated_model_output(test_dir):
 def test_get_output_files_with_create_job_step(test_dir):
     """Testing output files through _create_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    status_dir = exp_dir / CONFIG.telemetry_subdir / model.type
-    step = controller._create_job_step(model, status_dir)
-    expected_out_path = status_dir / model.name / (model.name + ".out")
-    expected_err_path = status_dir / model.name / (model.name + ".err")
+    local_model = Model("test_model", params={}, path=test_dir, run_settings=rs)
+    # Create metadata_dir to simulate consistent metadata structure
+    metadata_dir = exp_dir / CONFIG.metadata_subdir
+    step = controller._create_job_step(local_model, metadata_dir)
+    expected_out_path = metadata_dir / (local_model.name + ".out")
+    expected_err_path = metadata_dir / (local_model.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
@@ -120,17 +122,13 @@ def test_get_output_files_with_create_job_step(test_dir):
 def test_get_output_files_with_create_batch_job_step(entity, test_dir):
     """Testing output files through _create_batch_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
+    status_dir = exp_dir / CONFIG.metadata_subdir / entity.type
     batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
     for step in substeps:
         # example output path for a member of an Ensemble is
-        # .smartsim/telemetry/Ensemble/ens/ens_0/ens_0.out
-        expected_out_path = (
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".out")
-        )
-        expected_err_path = (
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".err")
-        )
+        # {CONFIG.metadata_subdir}/Ensemble/ens_0.out
+        expected_out_path = status_dir / (step.entity_name + ".out")
+        expected_err_path = status_dir / (step.entity_name + ".err")
         assert step.get_output_files() == (
             str(expected_out_path),
             str(expected_err_path),
@@ -141,9 +139,9 @@ def test_model_get_output_files(test_dir):
     """Testing model output files with manual step creation"""
     exp_dir = pathlib.Path(test_dir)
     step = Step(model.name, model.path, model.run_settings)
-    step.meta["status_dir"] = exp_dir / "output_dir"
-    expected_out_path = step.meta["status_dir"] / (model.name + ".out")
-    expected_err_path = step.meta["status_dir"] / (model.name + ".err")
+    step.meta["metadata_dir"] = exp_dir / "output_dir"
+    expected_out_path = step.meta["metadata_dir"] / (model.name + ".out")
+    expected_err_path = step.meta["metadata_dir"] / (model.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
@@ -152,16 +150,16 @@ def test_ensemble_get_output_files(test_dir):
     exp_dir = pathlib.Path(test_dir)
     for member in ens.models:
         step = Step(member.name, member.path, member.run_settings)
-        step.meta["status_dir"] = exp_dir / "output_dir"
-        expected_out_path = step.meta["status_dir"] / (member.name + ".out")
-        expected_err_path = step.meta["status_dir"] / (member.name + ".err")
+        step.meta["metadata_dir"] = exp_dir / "output_dir"
+        expected_out_path = step.meta["metadata_dir"] / (member.name + ".out")
+        expected_err_path = step.meta["metadata_dir"] / (member.name + ".err")
         assert step.get_output_files() == (
             str(expected_out_path),
             str(expected_err_path),
         )
 
 
-def test_get_output_files_no_status_dir(test_dir):
+def test_get_output_files_no_metadata_dir(test_dir):
     """Test that a step not having a status directory throws a KeyError"""
     step_settings = RunSettings("echo")
     step = Step("mock-step", test_dir, step_settings)

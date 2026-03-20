@@ -27,7 +27,6 @@
 import argparse
 import os
 import subprocess
-import typing as t
 
 from smartsim._core.config import CONFIG
 
@@ -66,7 +65,7 @@ def _do_dragon_teardown() -> int:
 
 
 def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+    args: argparse.Namespace, _unparsed_args: list[str] | None = None, /
 ) -> int:
     if args.dragon:
         return _do_dragon_teardown()

@@ -45,7 +45,6 @@ import dragon.native.machine as dragon_machine
 
 # pylint: enable=import-error
 # isort: on
-from ...._core.config import get_config
 from ...._core.schemas import (
     DragonHandshakeRequest,
     DragonHandshakeResponse,
@@ -79,19 +78,19 @@ class DragonStatus(str, Enum):
 class ProcessGroupInfo:
     status: SmartSimStatus
     """Status of step"""
-    process_group: t.Optional[dragon_process_group.ProcessGroup] = None
+    process_group: dragon_process_group.ProcessGroup | None = None
     """Internal Process Group object, None for finished or not started steps"""
-    puids: t.Optional[t.List[t.Optional[int]]] = None  # puids can be None
+    puids: list[int | None] | None = None  # puids can be None
     """List of Process UIDS belonging to the ProcessGroup"""
-    return_codes: t.Optional[t.List[int]] = None
+    return_codes: list[int] | None = None
     """List of return codes of completed processes"""
-    hosts: t.List[str] = field(default_factory=list)
+    hosts: list[str] = field(default_factory=list)
     """List of hosts on which the Process Group """
-    redir_workers: t.Optional[dragon_process_group.ProcessGroup] = None
+    redir_workers: dragon_process_group.ProcessGroup | None = None
     """Workers used to redirect stdout and stderr to file"""
 
     @property
-    def smartsim_info(self) -> t.Tuple[SmartSimStatus, t.Optional[t.List[int]]]:
+    def smartsim_info(self) -> tuple[SmartSimStatus, list[int] | None]:
         """Information needed by SmartSim Launcher and Job Manager"""
         return (self.status, self.return_codes)
 
@@ -146,7 +145,7 @@ class DragonBackend:
     def __init__(self, pid: int) -> None:
         self._pid = pid
         """PID of dragon executable which launched this server"""
-        self._group_infos: t.Dict[str, ProcessGroupInfo] = {}
+        self._group_infos: dict[str, ProcessGroupInfo] = {}
         """ProcessGroup execution state information"""
         self._queue_lock = RLock()
         """Lock that needs to be acquired to access internal queues"""
@@ -160,9 +159,9 @@ class DragonBackend:
         """Steps waiting for execution"""
         self._stop_requests: t.Deque[DragonStopRequest] = collections.deque()
         """Stop requests which have not been processed yet"""
-        self._running_steps: t.List[str] = []
+        self._running_steps: list[str] = []
         """List of currently running steps"""
-        self._completed_steps: t.List[str] = []
+        self._completed_steps: list[str] = []
         """List of completed steps"""
         self._last_beat: float = 0.0
         """Time at which the last heartbeat was set"""
@@ -175,14 +174,9 @@ class DragonBackend:
         """Whether the server can shut down"""
         self._frontend_shutdown: bool = False
         """Whether the server frontend should shut down when the backend does"""
-        self._shutdown_initiation_time: t.Optional[float] = None
+        self._shutdown_initiation_time: float | None = None
         """The time at which the server initiated shutdown"""
-        smartsim_config = get_config()
-        self._cooldown_period = (
-            smartsim_config.telemetry_frequency * 2 + 5
-            if smartsim_config.telemetry_enabled
-            else 5
-        )
+        self._cooldown_period = 5
         """Time in seconds needed to server to complete shutdown"""
 
         self._view = DragonBackendView(self)
@@ -213,14 +207,14 @@ class DragonBackend:
             self._nodes = [
                 dragon_machine.Node(node) for node in dragon_machine.System().nodes
             ]
-            self._hosts: t.List[str] = sorted(node.hostname for node in self._nodes)
+            self._hosts: list[str] = sorted(node.hostname for node in self._nodes)
             self._cpus = [node.num_cpus for node in self._nodes]
             self._gpus = [node.num_gpus for node in self._nodes]
 
             """List of hosts available in allocation"""
             self._free_hosts: t.Deque[str] = collections.deque(self._hosts)
             """List of hosts on which steps can be launched"""
-            self._allocated_hosts: t.Dict[str, str] = {}
+            self._allocated_hosts: dict[str, str] = {}
             """Mapping of hosts on which a step is already running to step ID"""
 
     def __str__(self) -> str:
@@ -288,9 +282,7 @@ class DragonBackend:
         """Current time for DragonBackend object, in seconds since the Epoch"""
         return time.time()
 
-    def _can_honor_policy(
-        self, request: DragonRunRequest
-    ) -> t.Tuple[bool, t.Optional[str]]:
+    def _can_honor_policy(self, request: DragonRunRequest) -> tuple[bool, str | None]:
         """Check if the policy can be honored with resources available
         in the allocation.
         :param request: DragonRunRequest containing policy information
@@ -316,7 +308,7 @@ class DragonBackend:
 
         return True, None
 
-    def _can_honor(self, request: DragonRunRequest) -> t.Tuple[bool, t.Optional[str]]:
+    def _can_honor(self, request: DragonRunRequest) -> tuple[bool, str | None]:
         """Check if request can be honored with resources available in the allocation.
 
         Currently only checks for total number of nodes,
@@ -339,7 +331,7 @@ class DragonBackend:
 
     def _allocate_step(
         self, step_id: str, request: DragonRunRequest
-    ) -> t.Optional[t.List[str]]:
+    ) -> list[str] | None:
 
         num_hosts: int = request.nodes
         with self._queue_lock:
@@ -355,10 +347,10 @@ class DragonBackend:
     @staticmethod
     def _create_redirect_workers(
         global_policy: dragon_policy.Policy,
-        policies: t.List[dragon_policy.Policy],
-        puids: t.List[int],
-        out_file: t.Optional[str],
-        err_file: t.Optional[str],
+        policies: list[dragon_policy.Policy],
+        puids: list[int],
+        out_file: str | None,
+        err_file: str | None,
     ) -> dragon_process_group.ProcessGroup:
         grp_redir = dragon_process_group.ProcessGroup(
             restart=False, policy=global_policy, pmi_enabled=False
@@ -439,8 +431,8 @@ class DragonBackend:
             run_request: DragonRunRequest = request
 
             affinity = dragon_policy.Policy.Affinity.DEFAULT
-            cpu_affinity: t.List[int] = []
-            gpu_affinity: t.List[int] = []
+            cpu_affinity: list[int] = []
+            gpu_affinity: list[int] = []
 
             # Customize policy only if the client requested it, otherwise use default
             if run_request.policy is not None:
@@ -743,7 +735,7 @@ class DragonBackendView:
     @staticmethod
     def _proc_group_info_table_line(
         step_id: str, proc_group_info: ProcessGroupInfo
-    ) -> t.List[str]:
+    ) -> list[str]:
         table_line = [step_id, f"{proc_group_info.status.value}"]
 
         if proc_group_info.hosts is not None:

@@ -58,7 +58,7 @@ def get_gen_file(fileutils, filename):
 
 
 def test_ensemble(fileutils, test_dir):
-    exp = Experiment("gen-test", launcher="local")
+    exp = Experiment("gen-test", test_dir, launcher="local")
 
     gen = Generator(test_dir)
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -75,7 +75,7 @@ def test_ensemble(fileutils, test_dir):
 
 
 def test_ensemble_overwrite(fileutils, test_dir):
-    exp = Experiment("gen-test-overwrite", launcher="local")
+    exp = Experiment("gen-test-overwrite", test_dir, launcher="local")
 
     gen = Generator(test_dir, overwrite=True)
 
@@ -98,7 +98,7 @@ def test_ensemble_overwrite(fileutils, test_dir):
 
 
 def test_ensemble_overwrite_error(fileutils, test_dir):
-    exp = Experiment("gen-test-overwrite-error", launcher="local")
+    exp = Experiment("gen-test-overwrite-error", test_dir, launcher="local")
 
     gen = Generator(test_dir)
 
@@ -306,7 +306,7 @@ def test_config_dir(fileutils, test_dir):
     """Test the generation and configuration of models with
     tagged files that are directories with subdirectories and files
     """
-    exp = Experiment("config-dir", launcher="local")
+    exp = Experiment("config-dir", test_dir, launcher="local")
 
     gen = Generator(test_dir)
 
@@ -339,31 +339,31 @@ def test_config_dir(fileutils, test_dir):
     _check_generated(3, 1, 3)
 
 
-def test_no_gen_if_file_not_exist(fileutils):
+def test_no_gen_if_file_not_exist(fileutils, test_dir):
     """Test that generation of file with non-existant config
     raises a FileNotFound exception
     """
-    exp = Experiment("file-not-found", launcher="local")
+    exp = Experiment("file-not-found", test_dir, launcher="local")
     ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
     config = get_gen_file(fileutils, "path_not_exist")
     with pytest.raises(FileNotFoundError):
         ensemble.attach_generator_files(to_configure=config)
 
 
-def test_no_gen_if_symlink_to_dir(fileutils):
+def test_no_gen_if_symlink_to_dir(fileutils, test_dir):
     """Test that when configuring a directory containing a symlink
     a ValueError exception is raised to prevent circular file
     structure configuration
     """
-    exp = Experiment("circular-config-files", launcher="local")
+    exp = Experiment("circular-config-files", test_dir, launcher="local")
     ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
     config = get_gen_file(fileutils, "circular_config")
     with pytest.raises(ValueError):
         ensemble.attach_generator_files(to_configure=config)
 
 
-def test_no_file_overwrite():
-    exp = Experiment("test_no_file_overwrite", launcher="local")
+def test_no_file_overwrite(test_dir):
+    exp = Experiment("test_no_file_overwrite", test_dir, launcher="local")
     ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
     with pytest.raises(ValueError):
         ensemble.attach_generator_files(

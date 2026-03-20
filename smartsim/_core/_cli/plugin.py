@@ -3,7 +3,7 @@ import importlib.util
 import os
 import subprocess as sp
 import sys
-import typing as t
+from collections.abc import Callable
 
 import smartsim.log
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, MenuItemConfig
@@ -14,10 +14,8 @@ _LOGGER = smartsim.log.get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 def dynamic_execute(
     cmd: str, plugin_name: str
-) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
-    def process_execute(
-        _args: argparse.Namespace, unparsed_args: t.List[str], /
-    ) -> int:
+) -> Callable[[argparse.Namespace, list[str]], int]:
+    def process_execute(_args: argparse.Namespace, unparsed_args: list[str], /) -> int:
         try:
             spec = importlib.util.find_spec(cmd)
             if spec is None:
@@ -38,18 +36,5 @@ def dynamic_execute(
     return process_execute
 
 
-def dashboard() -> MenuItemConfig:
-    return MenuItemConfig(
-        "dashboard",
-        (
-            "Start the SmartSim dashboard to monitor experiment output from a "
-            "graphical user interface. This requires that the SmartSim Dashboard "
-            "Package be installed. For more infromation please visit "
-            "https://github.com/CrayLabs/SmartDashboard"
-        ),
-        dynamic_execute("smartdashboard", "Dashboard"),
-        is_plugin=True,
-    )
-
-
-plugins = (dashboard,)
+# No plugins currently available
+plugins: tuple[Callable[[], MenuItemConfig], ...] = ()

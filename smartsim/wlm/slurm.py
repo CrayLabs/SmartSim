@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import typing as t
 from shutil import which
 
 from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
@@ -45,9 +44,9 @@ logger = get_logger(__name__)
 
 def get_allocation(
     nodes: int = 1,
-    time: t.Optional[str] = None,
-    account: t.Optional[str] = None,
-    options: t.Optional[t.Dict[str, str]] = None,
+    time: str | None = None,
+    account: str | None = None,
+    options: dict[str, str] | None = None,
 ) -> str:
     """Request an allocation
 
@@ -125,7 +124,7 @@ def release_allocation(alloc_id: str) -> None:
     logger.info(f"Successfully freed allocation {alloc_id}")
 
 
-def validate(nodes: int = 1, ppn: int = 1, partition: t.Optional[str] = None) -> bool:
+def validate(nodes: int = 1, ppn: int = 1, partition: str | None = None) -> bool:
     """Check that there are sufficient resources in the provided Slurm partitions.
 
     if no partition is provided, the default partition is found and used.
@@ -191,14 +190,14 @@ def get_default_partition() -> str:
     return default
 
 
-def _get_system_partition_info() -> t.Dict[str, Partition]:
+def _get_system_partition_info() -> dict[str, Partition]:
     """Build a dictionary of slurm partitions
     :returns: dict of Partition objects
     """
 
     sinfo_output, _ = sinfo(["--noheader", "--format", "%R %n %c"])
 
-    partitions: t.Dict[str, Partition] = {}
+    partitions: dict[str, Partition] = {}
     for line in sinfo_output.split("\n"):
         line = line.strip()
         if line == "":
@@ -220,10 +219,10 @@ def _get_system_partition_info() -> t.Dict[str, Partition]:
 
 def _get_alloc_cmd(
     nodes: int,
-    time: t.Optional[str] = None,
-    account: t.Optional[str] = None,
-    options: t.Optional[t.Dict[str, str]] = None,
-) -> t.List[str]:
+    time: str | None = None,
+    account: str | None = None,
+    options: dict[str, str] | None = None,
+) -> list[str]:
     """Return the command to request an allocation from Slurm with
     the class variables as the slurm options.
     """
@@ -278,7 +277,7 @@ def _validate_time_format(time: str) -> str:
     return fmt_walltime(hours, minutes, seconds)
 
 
-def get_hosts() -> t.List[str]:
+def get_hosts() -> list[str]:
     """Get the name of the nodes used in a slurm allocation.
 
     .. note::
@@ -327,7 +326,7 @@ def get_tasks() -> int:
     raise SmartSimError("Could not parse number of requested tasks from SLURM_NTASKS")
 
 
-def get_tasks_per_node() -> t.Dict[str, int]:
+def get_tasks_per_node() -> dict[str, int]:
     """Get the number of tasks per each node in a slurm allocation.
 
     .. note::

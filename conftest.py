@@ -26,7 +26,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 import json
@@ -43,7 +42,6 @@ import typing as t
 import uuid
 import warnings
 from subprocess import run
-import time
 
 import psutil
 import pytest
@@ -51,10 +49,8 @@ import pytest
 import smartsim
 from smartsim import Experiment
 from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
-from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SSConfigError, SSInternalError
@@ -68,6 +64,7 @@ from smartsim.settings import (
     RunSettings,
     SrunSettings,
 )
+from collections.abc import Callable, Collection
 
 logger = get_logger(__name__)
 
@@ -83,7 +80,7 @@ test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_ports = CONFIG.test_ports
 test_account = CONFIG.test_account or ""
-test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
+test_batch_resources: dict[t.Any, t.Any] = CONFIG.test_batch_resources
 test_output_dirs = 0
 mpi_app_exe = None
 built_mpi_app = False
@@ -173,7 +170,7 @@ def pytest_sessionfinish(
         kill_all_test_spawned_processes()
 
 
-def build_mpi_app() -> t.Optional[pathlib.Path]:
+def build_mpi_app() -> pathlib.Path | None:
     global built_mpi_app
     built_mpi_app = True
     cc = shutil.which("cc")
@@ -194,7 +191,7 @@ def build_mpi_app() -> t.Optional[pathlib.Path]:
         return None
 
 @pytest.fixture(scope="session")
-def mpi_app_path() -> t.Optional[pathlib.Path]:
+def mpi_app_path() -> pathlib.Path | None:
     """Return path to MPI app if it was built
 
         return None if it could not or will not be built
@@ -227,7 +224,7 @@ def kill_all_test_spawned_processes() -> None:
 
 
 
-def get_hostlist() -> t.Optional[t.List[str]]:
+def get_hostlist() -> list[str] | None:
     global test_hostlist
     if not test_hostlist:
         if "PBS_NODEFILE" in os.environ and test_launcher == "pals":
@@ -255,14 +252,14 @@ def get_hostlist() -> t.Optional[t.List[str]]:
     return test_hostlist
 
 
-def _parse_hostlist_file(path: str) -> t.List[str]:
+def _parse_hostlist_file(path: str) -> list[str]:
     with open(path, "r", encoding="utf-8") as nodefile:
         return list({line.strip() for line in nodefile.readlines()})
 
 
 @pytest.fixture(scope="session")
-def alloc_specs() -> t.Dict[str, t.Any]:
-    specs: t.Dict[str, t.Any] = {}
+def alloc_specs() -> dict[str, t.Any]:
+    specs: dict[str, t.Any] = {}
     if test_alloc_specs_path:
         try:
             with open(test_alloc_specs_path, encoding="utf-8") as spec_file:
@@ -297,7 +294,7 @@ _reset_signal_interrupt = pytest.fixture(
 )
 
 
-def _find_free_port(ports: t.Collection[int]) -> int:
+def _find_free_port(ports: Collection[int]) -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         for port in ports:
             try:
@@ -314,7 +311,7 @@ def _find_free_port(ports: t.Collection[int]) -> int:
 
 
 @pytest.fixture(scope="session")
-def wlmutils() -> t.Type[WLMUtils]:
+def wlmutils() -> type[WLMUtils]:
     return WLMUtils
 
 
@@ -339,22 +336,22 @@ class WLMUtils:
         return get_account()
 
     @staticmethod
-    def get_test_interface() -> t.List[str]:
+    def get_test_interface() -> list[str]:
         return test_nic
 
     @staticmethod
-    def get_test_hostlist() -> t.Optional[t.List[str]]:
+    def get_test_hostlist() -> list[str] | None:
         return get_hostlist()
 
     @staticmethod
-    def get_batch_resources() -> t.Dict:
+    def get_batch_resources() -> dict:
         return test_batch_resources
 
     @staticmethod
     def get_base_run_settings(
-        exe: str, args: t.List[str], nodes: int = 1, ntasks: int = 1, **kwargs: t.Any
+        exe: str, args: list[str], nodes: int = 1, ntasks: int = 1, **kwargs: t.Any
     ) -> RunSettings:
-        run_args: t.Dict[str, t.Union[int, str, float, None]] = {}
+        run_args: dict[str, int | str | float | None] = {}
 
         if test_launcher == "slurm":
             run_args = {"--nodes": nodes, "--ntasks": ntasks, "--time": "00:10:00"}
@@ -395,9 +392,9 @@ class WLMUtils:
 
     @staticmethod
     def get_run_settings(
-        exe: str, args: t.List[str], nodes: int = 1, ntasks: int = 1, **kwargs: t.Any
+        exe: str, args: list[str], nodes: int = 1, ntasks: int = 1, **kwargs: t.Any
     ) -> RunSettings:
-        run_args: t.Dict[str, t.Union[int, str, float, None]] = {}
+        run_args: dict[str, int | str | float | None] = {}
 
         if test_launcher == "slurm":
             run_args = {"nodes": nodes, "ntasks": ntasks, "time": "00:10:00"}
@@ -427,7 +424,7 @@ class WLMUtils:
         return RunSettings(exe, args)
 
     @staticmethod
-    def choose_host(rs: RunSettings) -> t.Optional[str]:
+    def choose_host(rs: RunSettings) -> str | None:
         if isinstance(rs, (MpirunSettings, MpiexecSettings)):
             hl = get_hostlist()
             if hl is not None:
@@ -454,13 +451,13 @@ def check_output_dir() -> None:
 
 
 @pytest.fixture
-def dbutils() -> t.Type[DBUtils]:
+def dbutils() -> type[DBUtils]:
     return DBUtils
 
 
 class DBUtils:
     @staticmethod
-    def get_db_configs() -> t.Dict[str, t.Any]:
+    def get_db_configs() -> dict[str, t.Any]:
         config_settings = {
             "enable_checkpoints": 1,
             "set_max_memory": "3gb",
@@ -474,7 +471,7 @@ class DBUtils:
         return config_settings
 
     @staticmethod
-    def get_smartsim_error_db_configs() -> t.Dict[str, t.Any]:
+    def get_smartsim_error_db_configs() -> dict[str, t.Any]:
         bad_configs = {
             "save": [
                 "-1",  # frequency must be positive
@@ -501,8 +498,8 @@ class DBUtils:
         return bad_configs
 
     @staticmethod
-    def get_type_error_db_configs() -> t.Dict[t.Union[int, str], t.Any]:
-        bad_configs: t.Dict[t.Union[int, str], t.Any] = {
+    def get_type_error_db_configs() -> dict[int | str, t.Any]:
+        bad_configs: dict[int | str, t.Any] = {
             "save": [2, True, ["2"]],  # frequency must be specified as a string
             "maxmemory": [99, True, ["99"]],  # memory form must be a string
             "maxclients": [3, True, ["3"]],  # number of clients must be a string
@@ -523,9 +520,9 @@ class DBUtils:
     @staticmethod
     def get_config_edit_method(
         db: Orchestrator, config_setting: str
-    ) -> t.Optional[t.Callable[..., None]]:
+    ) -> Callable[..., None] | None:
         """Get a db configuration file edit method from a str"""
-        config_edit_methods: t.Dict[str, t.Callable[..., None]] = {
+        config_edit_methods: dict[str, Callable[..., None]] = {
             "enable_checkpoints": db.enable_checkpoints,
             "set_max_memory": db.set_max_memory,
             "set_eviction_strategy": db.set_eviction_strategy,
@@ -568,7 +565,7 @@ def test_dir(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture
-def fileutils() -> t.Type[FileUtils]:
+def fileutils() -> type[FileUtils]:
     return FileUtils
 
 
@@ -593,7 +590,7 @@ class FileUtils:
 
     @staticmethod
     def make_test_file(
-        file_name: str, file_dir: str, file_content: t.Optional[str] = None
+        file_name: str, file_dir: str, file_content: str | None = None
     ) -> str:
         """Create a dummy file in the test output directory.
 
@@ -613,7 +610,7 @@ class FileUtils:
 
 
 @pytest.fixture
-def mlutils() -> t.Type[MLUtils]:
+def mlutils() -> type[MLUtils]:
     return MLUtils
 
 
@@ -628,21 +625,21 @@ class MLUtils:
 
 
 @pytest.fixture
-def coloutils() -> t.Type[ColoUtils]:
+def coloutils() -> type[ColoUtils]:
     return ColoUtils
 
 
 class ColoUtils:
     @staticmethod
     def setup_test_colo(
-        fileutils: t.Type[FileUtils],
+        fileutils: type[FileUtils],
         db_type: str,
         exp: Experiment,
         application_file: str,
-        db_args: t.Dict[str, t.Any],
-        colo_settings: t.Optional[RunSettings] = None,
+        db_args: dict[str, t.Any],
+        colo_settings: RunSettings | None = None,
         colo_model_name: str = "colocated_model",
-        port: t.Optional[int] = None,
+        port: int | None = None,
         on_wlm: bool = False,
     ) -> Model:
         """Setup database needed for the colo pinning tests"""
@@ -670,7 +667,7 @@ class ColoUtils:
             socket_name = f"{colo_model_name}_{socket_suffix}.socket"
             db_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
 
-        colocate_fun: t.Dict[str, t.Callable[..., None]] = {
+        colocate_fun: dict[str, Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,
             "deprecated": colo_model.colocate_db,
             "uds": colo_model.colocate_db_uds,
@@ -706,149 +703,13 @@ def config() -> Config:
     return CONFIG
 
 
-class MockSink:
-    """Telemetry sink that writes console output for testing purposes"""
 
-    def __init__(self, delay_ms: int = 0) -> None:
-        self._delay_ms = delay_ms
-        self.num_saves = 0
-        self.args: t.Any = None
-
-    async def save(self, *args: t.Any) -> None:
-        """Save all arguments as console logged messages"""
-        self.num_saves += 1
-        if self._delay_ms:
-            # mimic slow collection....
-            delay_s = self._delay_ms / 1000
-            await asyncio.sleep(delay_s)
-        self.args = args
-
-
-@pytest.fixture
-def mock_sink() -> t.Type[MockSink]:
-    return MockSink
-
-
-@pytest.fixture
-def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
-    """Generates mock db connection telemetry"""
-
-    def _mock_con(min: int = 1, max: int = 254) -> t.Iterable[t.Any]:
-        for i in range(min, max):
-            yield [
-                {"addr": f"127.0.0.{i}:1234", "id": f"ABC{i}"},
-                {"addr": f"127.0.0.{i}:2345", "id": f"XYZ{i}"},
-            ]
-
-    return _mock_con
-
-
-@pytest.fixture
-def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
-    """Generates mock db memory usage telemetry"""
-
-    def _mock_mem(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
-        for i in range(min, max):
-            yield {
-                "total_system_memory": 1000 * i,
-                "used_memory": 1111 * i,
-                "used_memory_peak": 1234 * i,
-            }
-
-    return _mock_mem
-
-
-@pytest.fixture
-def mock_redis() -> t.Callable[..., t.Any]:
-    def _mock_redis(
-        conn_side_effect=None,
-        mem_stats=None,
-        client_stats=None,
-        coll_side_effect=None,
-    ):
-        """Generate a mock object for the redis.Redis contract"""
-
-        class MockConn:
-            def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
-                if conn_side_effect is not None:
-                    conn_side_effect()
-
-            async def info(self, *args: t.Any, **kwargs: t.Any) -> t.Dict[str, t.Any]:
-                if coll_side_effect:
-                    await coll_side_effect()
-
-                if mem_stats:
-                    return next(mem_stats)
-                return {
-                    "total_system_memory": "111",
-                    "used_memory": "222",
-                    "used_memory_peak": "333",
-                }
-
-            async def client_list(
-                self, *args: t.Any, **kwargs: t.Any
-            ) -> t.Dict[str, t.Any]:
-                if coll_side_effect:
-                    await coll_side_effect()
-
-                if client_stats:
-                    return next(client_stats)
-                return {"addr": "127.0.0.1", "id": "111"}
-
-            async def ping(self):
-                return True
-
-        return MockConn
-
-    return _mock_redis
-
-
-class MockCollectorEntityFunc(t.Protocol):
-    @staticmethod
-    def __call__(
-        host: str = "127.0.0.1",
-        port: int = 6379,
-        name: str = "",
-        type: str = "",
-        telemetry_on: bool = False,
-    ) -> "JobEntity": ...
-
-
-@pytest.fixture
-def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
-    def _mock_entity(
-        host: str = "127.0.0.1",
-        port: int = 6379,
-        name: str = "",
-        type: str = "",
-        telemetry_on: bool = False,
-    ) -> "JobEntity":
-        test_path = pathlib.Path(test_dir)
-
-        entity = JobEntity()
-        entity.name = name if name else str(uuid.uuid4())
-        entity.status_dir = str(test_path / entity.name)
-        entity.type = type
-        entity.telemetry_on = True
-        entity.collectors = {
-            "client": "",
-            "client_count": "",
-            "memory": "",
-        }
-        entity.config = {
-            "host": host,
-            "port": str(port),
-        }
-        entity.telemetry_on = telemetry_on
-        return entity
-
-    return _mock_entity
 
 
 class CountingCallable:
     def __init__(self) -> None:
         self._num: int = 0
-        self._details: t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]] = []
+        self._details: list[tuple[tuple[t.Any, ...], dict[str, t.Any]]] = []
 
     def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         self._num += 1
@@ -859,12 +720,12 @@ class CountingCallable:
         return self._num
 
     @property
-    def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
+    def details(self) -> list[tuple[tuple[t.Any, ...], dict[str, t.Any]]]:
         return self._details
 
 ## Reuse database across tests
 
-database_registry: t.DefaultDict[str, t.Optional[Orchestrator]] = defaultdict(lambda: None)
+database_registry: defaultdict[str, Orchestrator | None] = defaultdict(lambda: None)
 
 @pytest.fixture(scope="function")
 def local_experiment(test_dir: str) -> smartsim.Experiment:
@@ -886,7 +747,9 @@ def _cleanup_db(name: str) -> None:
     global database_registry
     db = database_registry[name]
     if db and db.is_active():
-        exp = Experiment("cleanup")
+        cleanup_dir = str(pathlib.Path(test_output_root) / "cleanup")
+        os.makedirs(cleanup_dir, exist_ok=True)
+        exp = Experiment("cleanup", cleanup_dir)
         try:
             db = exp.reconnect_orchestrator(db.checkpoint_file)
             exp.stop(db)
@@ -898,13 +761,13 @@ class DBConfiguration:
     name: str
     launcher: str
     num_nodes: int
-    interface: t.Union[str,t.List[str]]
-    hostlist: t.Optional[t.List[str]]
+    interface: str | list[str]
+    hostlist: list[str] | None
     port: int
 
 @dataclass
 class PrepareDatabaseOutput:
-    orchestrator: t.Optional[Orchestrator] # The actual orchestrator object
+    orchestrator: Orchestrator | None # The actual orchestrator object
     new_db: bool     # True if a new database was created when calling prepare_db
 
 # Reuse databases
@@ -957,7 +820,7 @@ def clustered_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]
 
 
 @pytest.fixture
-def register_new_db() -> t.Callable[[DBConfiguration], Orchestrator]:
+def register_new_db() -> Callable[[DBConfiguration], Orchestrator]:
     def _register_new_db(
         config: DBConfiguration
     ) -> Orchestrator:
@@ -985,11 +848,11 @@ def register_new_db() -> t.Callable[[DBConfiguration], Orchestrator]:
 
 @pytest.fixture(scope="function")
 def prepare_db(
-    register_new_db: t.Callable[
+    register_new_db: Callable[
         [DBConfiguration],
         Orchestrator
     ]
-) -> t.Callable[
+) -> Callable[
     [DBConfiguration],
     PrepareDatabaseOutput
 ]:

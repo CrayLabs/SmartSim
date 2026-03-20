@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2025, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ def as_toggle(_eval_ctx: u.F, value: bool) -> str:
 
 
 @pass_eval_context
-def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
+def get_ifname(_eval_ctx: u.F, value: list[str]) -> str:
     """Extract Network Interface from orchestrator run settings."""
     if value:
         for val in value:
@@ -108,11 +108,11 @@ def render_to_file(content: str, filename: str) -> None:
 
 def render(
     exp: "Experiment",
-    manifest: t.Optional[Manifest] = None,
+    manifest: Manifest | None = None,
     verbosity_level: Verbosity = Verbosity.INFO,
     output_format: Format = Format.PLAINTEXT,
-    output_filename: t.Optional[str] = None,
-    active_dbjobs: t.Optional[t.Dict[str, Job]] = None,
+    output_filename: str | None = None,
+    active_dbjobs: dict[str, Job] | None = None,
 ) -> str:
     """
     Render the template from the supplied entities.

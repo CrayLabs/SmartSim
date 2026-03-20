@@ -43,7 +43,7 @@ from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
 from .._core.utils.shell import execute_cmd
-from ..entity import DBNode, EntityList, TelemetryConfiguration
+from ..entity import DBNode, EntityList
 from ..error import (
     SmartSimError,
     SSConfigError,
@@ -68,7 +68,7 @@ from ..wlm import detect_launcher
 
 logger = get_logger(__name__)
 
-by_launcher: t.Dict[str, t.List[str]] = {
+by_launcher: dict[str, list[str]] = {
     "dragon": [""],
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
@@ -93,7 +93,7 @@ def _detect_command(launcher: str) -> str:
     raise SmartSimError(msg)
 
 
-def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
+def _autodetect(launcher: str, run_command: str) -> tuple[str, str]:
     """Automatically detect the launcher and run command to use"""
     if launcher == "auto":
         launcher = detect_launcher()
@@ -163,22 +163,22 @@ class Orchestrator(EntityList[DBNode]):
 
     def __init__(
         self,
-        path: t.Optional[str] = getcwd(),
+        path: str | None = getcwd(),
         port: int = 6379,
-        interface: t.Union[str, t.List[str]] = "lo",
+        interface: str | list[str] = "lo",
         launcher: str = "local",
         run_command: str = "auto",
         db_nodes: int = 1,
         batch: bool = False,
-        hosts: t.Optional[t.Union[t.List[str], str]] = None,
-        account: t.Optional[str] = None,
-        time: t.Optional[str] = None,
-        alloc: t.Optional[str] = None,
+        hosts: list[str] | str | None = None,
+        account: str | None = None,
+        time: str | None = None,
+        alloc: str | None = None,
         single_cmd: bool = False,
         *,
-        threads_per_queue: t.Optional[int] = None,
-        inter_op_threads: t.Optional[int] = None,
-        intra_op_threads: t.Optional[int] = None,
+        threads_per_queue: int | None = None,
+        inter_op_threads: int | None = None,
+        intra_op_threads: int | None = None,
         db_identifier: str = "orchestrator",
         **kwargs: t.Any,
     ) -> None:
@@ -213,9 +213,9 @@ class Orchestrator(EntityList[DBNode]):
         single_cmd = _get_single_command(
             self.run_command, self.launcher, batch, single_cmd
         )
-        self.ports: t.List[int] = []
-        self._hosts: t.List[str] = []
-        self._user_hostlist: t.List[str] = []
+        self.ports: list[int] = []
+        self._hosts: list[str] = []
+        self._user_hostlist: list[str] = []
         if isinstance(interface, str):
             interface = [interface]
         self._interfaces = interface
@@ -223,10 +223,9 @@ class Orchestrator(EntityList[DBNode]):
         self.queue_threads = threads_per_queue
         self.inter_threads = inter_op_threads
         self.intra_threads = intra_op_threads
-        self._telemetry_cfg = TelemetryConfiguration()
 
-        gpus_per_shard: t.Optional[int] = None
-        cpus_per_shard: t.Optional[int] = None
+        gpus_per_shard: int | None = None
+        cpus_per_shard: int | None = None
 
         super().__init__(
             name=db_identifier,
@@ -285,8 +284,8 @@ class Orchestrator(EntityList[DBNode]):
                             "Orchestrator with mpirun",
                         )
                     )
-            self._reserved_run_args: t.Dict[t.Type[RunSettings], t.List[str]] = {}
-            self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
+            self._reserved_run_args: dict[type[RunSettings], list[str]] = {}
+            self._reserved_batch_args: dict[type[BatchSettings], list[str]] = {}
             self._fill_reserved()
 
     def _mpi_has_sge_support(self) -> bool:
@@ -335,7 +334,7 @@ class Orchestrator(EntityList[DBNode]):
         return self.num_shards
 
     @property
-    def hosts(self) -> t.List[str]:
+    def hosts(self) -> list[str]:
         """Return the hostnames of Orchestrator instance hosts
 
         Note that this will only be populated after the orchestrator
@@ -346,14 +345,6 @@ class Orchestrator(EntityList[DBNode]):
         if not self._hosts:
             self._hosts = self._get_db_hosts()
         return self._hosts
-
-    @property
-    def telemetry(self) -> TelemetryConfiguration:
-        """Return the telemetry configuration for this entity.
-
-        :returns: configuration of telemetry for this entity
-        """
-        return self._telemetry_cfg
 
     def reset_hosts(self) -> None:
         """Clear hosts or reset them to last user choice"""
@@ -369,7 +360,7 @@ class Orchestrator(EntityList[DBNode]):
         for db in self.entities:
             db.remove_stale_dbnode_files()
 
-    def get_address(self) -> t.List[str]:
+    def get_address(self) -> list[str]:
         """Return database addresses
 
         :return: addresses
@@ -382,7 +373,7 @@ class Orchestrator(EntityList[DBNode]):
             raise SmartSimError("Database is not active")
         return self._get_address()
 
-    def _get_address(self) -> t.List[str]:
+    def _get_address(self) -> list[str]:
         return [
             f"{host}:{port}"
             for host, port in itertools.product(self._hosts, self.ports)
@@ -400,7 +391,7 @@ class Orchestrator(EntityList[DBNode]):
         return db_is_active(hosts, self.ports, self.num_shards)
 
     @property
-    def _rai_module(self) -> t.Tuple[str, ...]:
+    def _rai_module(self) -> tuple[str, ...]:
         """Get the RedisAI module from third-party installations
 
         :return: Tuple of args to pass to the orchestrator exe
@@ -469,7 +460,7 @@ class Orchestrator(EntityList[DBNode]):
         if hasattr(self, "batch_settings") and self.batch_settings:
             self.batch_settings.set_walltime(walltime)
 
-    def set_hosts(self, host_list: t.Union[t.List[str], str]) -> None:
+    def set_hosts(self, host_list: list[str] | str) -> None:
         """Specify the hosts for the ``Orchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
@@ -505,7 +496,7 @@ class Orchestrator(EntityList[DBNode]):
                     for i, mpmd_runsettings in enumerate(db.run_settings.mpmd, 1):
                         mpmd_runsettings.set_hostlist(host_list[i])
 
-    def set_batch_arg(self, arg: str, value: t.Optional[str] = None) -> None:
+    def set_batch_arg(self, arg: str, value: str | None = None) -> None:
         """Set a batch argument the orchestrator should launch with
 
         Some commonly used arguments such as --job-name are used
@@ -526,7 +517,7 @@ class Orchestrator(EntityList[DBNode]):
         else:
             self.batch_settings.batch_args[arg] = value
 
-    def set_run_arg(self, arg: str, value: t.Optional[str] = None) -> None:
+    def set_run_arg(self, arg: str, value: str | None = None) -> None:
         """Set a run argument the orchestrator should launch
         each node with (it will be passed to `jrun`)
 
@@ -663,9 +654,9 @@ class Orchestrator(EntityList[DBNode]):
         account: str,
         time: str,
         *,
-        launcher: t.Optional[str] = None,
+        launcher: str | None = None,
         **kwargs: t.Any,
-    ) -> t.Optional[BatchSettings]:
+    ) -> BatchSettings | None:
         batch_settings = None
 
         if launcher is None:
@@ -683,9 +674,9 @@ class Orchestrator(EntityList[DBNode]):
     def _build_run_settings(
         self,
         exe: str,
-        exe_args: t.List[t.List[str]],
+        exe_args: list[list[str]],
         *,
-        run_args: t.Optional[t.Dict[str, t.Any]] = None,
+        run_args: dict[str, t.Any] | None = None,
         db_nodes: int = 1,
         single_cmd: bool = True,
         **kwargs: t.Any,
@@ -778,7 +769,7 @@ class Orchestrator(EntityList[DBNode]):
     ) -> None:
         cluster = db_nodes >= 3
         mpmd_node_name = self.name + "_0"
-        exe_args_mpmd: t.List[t.List[str]] = []
+        exe_args_mpmd: list[list[str]] = []
 
         for db_id in range(db_nodes):
             db_shard_name = "_".join((self.name, str(db_id)))
@@ -789,7 +780,7 @@ class Orchestrator(EntityList[DBNode]):
             )
             exe_args = " ".join(start_script_args)
             exe_args_mpmd.append(sh_split(exe_args))
-        run_settings: t.Optional[RunSettings] = None
+        run_settings: RunSettings | None = None
 
         run_settings = self._build_run_settings(
             sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
@@ -808,9 +799,7 @@ class Orchestrator(EntityList[DBNode]):
         self.entities.append(node)
         self.ports = [port]
 
-    def _get_start_script_args(
-        self, name: str, port: int, cluster: bool
-    ) -> t.List[str]:
+    def _get_start_script_args(self, name: str, port: int, cluster: bool) -> list[str]:
         cmd = [
             "-m",
             "smartsim._core.entrypoints.redis",  # entrypoint
@@ -827,7 +816,7 @@ class Orchestrator(EntityList[DBNode]):
 
         return cmd
 
-    def _get_db_hosts(self) -> t.List[str]:
+    def _get_db_hosts(self) -> list[str]:
         hosts = []
         for db in self.entities:
             if not db.is_mpmd:

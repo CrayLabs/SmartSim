@@ -55,9 +55,7 @@ def test_all_config_defaults():
     config.test_device
 
 
-def get_redisai_env(
-    rai_path: t.Optional[str], lib_path: t.Optional[str]
-) -> t.Dict[str, str]:
+def get_redisai_env(rai_path: str | None, lib_path: str | None) -> dict[str, str]:
     """Convenience method to create a set of environment variables
     that include RedisAI-specific variables
     :param rai_path: The path to the RedisAI library
@@ -149,7 +147,7 @@ def test_redisai_valid_lib_path(test_dir, monkeypatch):
 def test_redisai_valid_lib_path_null_rai(test_dir, monkeypatch):
     """Missing RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should succeed"""
 
-    rai_file_path: t.Optional[str] = None
+    rai_file_path: str | None = None
     lib_file_path = os.path.join(test_dir, "lib", "redisai.so")
     make_file(lib_file_path)
     env = get_redisai_env(rai_file_path, test_dir)
@@ -197,64 +195,6 @@ def test_redis_cli():
     os.environ.pop("REDIS_CLI_PATH")
 
 
-@pytest.mark.parametrize(
-    "value, exp_result",
-    [
-        pytest.param("0", False, id="letter zero"),
-        pytest.param("1", True, id="letter one"),
-        pytest.param("-1", False, id="letter negative one"),
-        pytest.param(None, True, id="not in env"),
-    ],
-)
-def test_telemetry_flag(
-    monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: bool
-):
-    if value is not None:
-        monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", value)
-    else:
-        monkeypatch.delenv("SMARTSIM_FLAG_TELEMETRY", raising=False)
-    config = Config()
-    assert config.telemetry_enabled == exp_result
-
-
-@pytest.mark.parametrize(
-    "value, exp_result",
-    [
-        pytest.param("1", 1, id="1"),
-        pytest.param("123", 123, id="123"),
-        pytest.param(None, 5, id="not in env"),
-    ],
-)
-def test_telemetry_frequency(
-    monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: int
-):
-    if value is not None:
-        monkeypatch.setenv("SMARTSIM_TELEMETRY_FREQUENCY", value)
-    else:
-        monkeypatch.delenv("SMARTSIM_TELEMETRY_FREQUENCY", raising=False)
-    config = Config()
-    assert config.telemetry_frequency == exp_result
-
-
-@pytest.mark.parametrize(
-    "value, exp_result",
-    [
-        pytest.param("30", 30, id="30"),
-        pytest.param("123", 123, id="123"),
-        pytest.param(None, 90, id="not in env"),
-    ],
-)
-def test_telemetry_cooldown(
-    monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: bool
-):
-    if value is not None:
-        monkeypatch.setenv("SMARTSIM_TELEMETRY_COOLDOWN", value)
-    else:
-        monkeypatch.delenv("SMARTSIM_TELEMETRY_COOLDOWN", raising=False)
-    config = Config()
-    assert config.telemetry_cooldown == exp_result
-
-
 def test_key_path_unset(monkeypatch: pytest.MonkeyPatch):
     """Ensure that the default value of the key path meets expectations"""
     monkeypatch.delenv("SMARTSIM_KEY_PATH", raising=False)
@@ -281,3 +221,10 @@ def test_key_path_non_default(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("SMARTSIM_KEY_PATH", key_path2)
     actual_value = config.smartsim_key_path
     assert key_path2 == actual_value, "Key path 2 didn't match overridden value"
+
+
+def test_metadata_subdir():
+    """Test that metadata_subdir returns the expected path"""
+    config = Config()
+    expected_path = Path(".smartsim/metadata")
+    assert config.metadata_subdir == expected_path

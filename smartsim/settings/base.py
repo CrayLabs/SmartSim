@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import copy
 import typing as t
+from collections.abc import Iterable
 
 from smartsim.settings.containers import Container
 
@@ -48,11 +49,11 @@ class RunSettings(SettingsBase):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        exe_args: str | list[str] | None = None,
         run_command: str = "",
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
-        container: t.Optional[Container] = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
+        container: Container | None = None,
         **_kwargs: t.Any,
     ) -> None:
         """Run parameters for a ``Model``
@@ -89,26 +90,27 @@ class RunSettings(SettingsBase):
         self.container = container
         self._run_command = run_command
         self.in_batch = False
-        self.colocated_db_settings: t.Optional[
-            t.Dict[
+        self.colocated_db_settings: (
+            dict[
                 str,
-                t.Union[
-                    bool,
-                    int,
-                    str,
-                    None,
-                    t.List[str],
-                    t.Iterable[t.Union[int, t.Iterable[int]]],
-                    t.List[DBModel],
-                    t.List[DBScript],
-                    t.Dict[str, t.Union[int, None]],
-                    t.Dict[str, str],
-                ],
+                (
+                    bool
+                    | int
+                    | str
+                    | None
+                    | list[str]
+                    | Iterable[int | Iterable[int]]
+                    | list[DBModel]
+                    | list[DBScript]
+                    | dict[str, int | None]
+                    | dict[str, str]
+                ),
             ]
-        ] = None
+            | None
+        ) = None
 
     @property
-    def exe_args(self) -> t.Union[str, t.List[str]]:
+    def exe_args(self) -> str | list[str]:
         """Return an immutable list of attached executable arguments.
 
         :returns: attached executable arguments
@@ -116,7 +118,7 @@ class RunSettings(SettingsBase):
         return self._exe_args
 
     @exe_args.setter
-    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
+    def exe_args(self, value: str | list[str] | None) -> None:
         """Set the executable arguments.
 
         :param value: executable arguments
@@ -124,7 +126,7 @@ class RunSettings(SettingsBase):
         self._exe_args = self._build_exe_args(value)
 
     @property
-    def run_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
+    def run_args(self) -> dict[str, int | str | float | None]:
         """Return an immutable list of attached run arguments.
 
         :returns: attached run arguments
@@ -132,7 +134,7 @@ class RunSettings(SettingsBase):
         return self._run_args
 
     @run_args.setter
-    def run_args(self, value: t.Dict[str, t.Union[int, str, float, None]]) -> None:
+    def run_args(self, value: dict[str, int | str | float | None]) -> None:
         """Set the run arguments.
 
         :param value: run arguments
@@ -140,7 +142,7 @@ class RunSettings(SettingsBase):
         self._run_args = copy.deepcopy(value)
 
     @property
-    def env_vars(self) -> t.Dict[str, t.Optional[str]]:
+    def env_vars(self) -> dict[str, str | None]:
         """Return an immutable list of attached environment variables.
 
         :returns: attached environment variables
@@ -148,7 +150,7 @@ class RunSettings(SettingsBase):
         return self._env_vars
 
     @env_vars.setter
-    def env_vars(self, value: t.Dict[str, t.Optional[str]]) -> None:
+    def env_vars(self, value: dict[str, str | None]) -> None:
         """Set the environment variables.
 
         :param value: environment variables
@@ -218,7 +220,7 @@ class RunSettings(SettingsBase):
             )
         )
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -242,7 +244,7 @@ class RunSettings(SettingsBase):
             )
         )
 
-    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_excluded_hosts(self, host_list: str | list[str]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -254,7 +256,7 @@ class RunSettings(SettingsBase):
             )
         )
 
-    def set_cpu_bindings(self, bindings: t.Union[int, t.List[int]]) -> None:
+    def set_cpu_bindings(self, bindings: int | list[int]) -> None:
         """Set the cores to which MPI processes are bound
 
         :param bindings: List specifing the cores to which MPI processes are bound
@@ -302,7 +304,7 @@ class RunSettings(SettingsBase):
             )
         )
 
-    def set_broadcast(self, dest_path: t.Optional[str] = None) -> None:
+    def set_broadcast(self, dest_path: str | None = None) -> None:
         """Copy executable file to allocated compute nodes
 
         :param dest_path: Path to copy an executable file
@@ -325,7 +327,7 @@ class RunSettings(SettingsBase):
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
 
-    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+    def set_node_feature(self, feature_list: str | list[str]) -> None:
         """Specify the node feature for this job
 
         :param feature_list: node feature to launch on
@@ -377,7 +379,7 @@ class RunSettings(SettingsBase):
             )
         )
 
-    def set_mpmd_preamble(self, preamble_lines: t.List[str]) -> None:
+    def set_mpmd_preamble(self, preamble_lines: list[str]) -> None:
         """Set preamble to a file to make a job MPMD
 
         :param preamble_lines: lines to put at the beginning of a file.
@@ -402,7 +404,7 @@ class RunSettings(SettingsBase):
         )
 
     @property
-    def run_command(self) -> t.Optional[str]:
+    def run_command(self) -> str | None:
         """Return the launch binary used to launch the executable
 
         Attempt to expand the path to the executable if possible
@@ -421,7 +423,7 @@ class RunSettings(SettingsBase):
         # run without run command
         return None
 
-    def update_env(self, env_vars: t.Dict[str, t.Union[str, int, float, bool]]) -> None:
+    def update_env(self, env_vars: dict[str, str | int | float | bool]) -> None:
         """Update the job environment variables
 
         To fully inherit the current user environment, add the
@@ -443,7 +445,7 @@ class RunSettings(SettingsBase):
 
             self.env_vars[env] = str(val)
 
-    def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
+    def add_exe_args(self, args: str | list[str]) -> None:
         """Add executable arguments to executable
 
         :param args: executable arguments
@@ -451,9 +453,7 @@ class RunSettings(SettingsBase):
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
-    def set(
-        self, arg: str, value: t.Optional[str] = None, condition: bool = True
-    ) -> None:
+    def set(self, arg: str, value: str | None = None, condition: bool = True) -> None:
         """Allows users to set individual run arguments.
 
         A method that allows users to set run arguments after object
@@ -523,7 +523,7 @@ class RunSettings(SettingsBase):
         self.run_args[arg] = value
 
     @staticmethod
-    def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
+    def _build_exe_args(exe_args: str | list[str] | None) -> list[str]:
         """Check and convert exe_args input to a desired collection format"""
         if not exe_args:
             return []
@@ -545,7 +545,7 @@ class RunSettings(SettingsBase):
 
         return exe_args
 
-    def format_run_args(self) -> t.List[str]:
+    def format_run_args(self) -> list[str]:
         """Return formatted run arguments
 
         For ``RunSettings``, the run arguments are passed
@@ -559,7 +559,7 @@ class RunSettings(SettingsBase):
             formatted.append(str(value))
         return formatted
 
-    def format_env_vars(self) -> t.List[str]:
+    def format_env_vars(self) -> list[str]:
         """Build environment variable string
 
         :returns: formatted list of strings to export variables
@@ -588,12 +588,12 @@ class BatchSettings(SettingsBase):
     def __init__(
         self,
         batch_cmd: str,
-        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        batch_args: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ) -> None:
         self._batch_cmd = batch_cmd
         self.batch_args = batch_args or {}
-        self._preamble: t.List[str] = []
+        self._preamble: list[str] = []
         nodes = kwargs.get("nodes", None)
         if nodes:
             self.set_nodes(nodes)
@@ -623,7 +623,7 @@ class BatchSettings(SettingsBase):
         return self._batch_cmd
 
     @property
-    def batch_args(self) -> t.Dict[str, t.Optional[str]]:
+    def batch_args(self) -> dict[str, str | None]:
         """Retrieve attached batch arguments
 
         :returns: attached batch arguments
@@ -631,7 +631,7 @@ class BatchSettings(SettingsBase):
         return self._batch_args
 
     @batch_args.setter
-    def batch_args(self, value: t.Dict[str, t.Optional[str]]) -> None:
+    def batch_args(self, value: dict[str, str | None]) -> None:
         """Attach batch arguments
 
         :param value: dictionary of batch arguments
@@ -641,7 +641,7 @@ class BatchSettings(SettingsBase):
     def set_nodes(self, num_nodes: int) -> None:
         raise NotImplementedError
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         raise NotImplementedError
 
     def set_queue(self, queue: str) -> None:
@@ -653,7 +653,7 @@ class BatchSettings(SettingsBase):
     def set_account(self, account: str) -> None:
         raise NotImplementedError
 
-    def format_batch_args(self) -> t.List[str]:
+    def format_batch_args(self) -> list[str]:
         raise NotImplementedError
 
     def set_batch_command(self, command: str) -> None:
@@ -663,7 +663,7 @@ class BatchSettings(SettingsBase):
         """
         self._batch_cmd = command
 
-    def add_preamble(self, lines: t.List[str]) -> None:
+    def add_preamble(self, lines: list[str]) -> None:
         """Add lines to the batch file preamble. The lines are just
         written (unmodified) at the beginning of the batch file
         (after the WLM directives) and can be used to e.g.
@@ -679,7 +679,7 @@ class BatchSettings(SettingsBase):
             raise TypeError("Expected str or List[str] for lines argument")
 
     @property
-    def preamble(self) -> t.Iterable[str]:
+    def preamble(self) -> Iterable[str]:
         """Return an iterable of preamble clauses to be prepended to the batch file
 
         :return: attached preamble clauses

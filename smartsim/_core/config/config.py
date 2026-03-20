@@ -27,6 +27,7 @@
 import json
 import os
 import typing as t
+from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
 
@@ -175,7 +176,7 @@ class Config:
         return Path(self.conf_dir / "dragon" / ".env")
 
     @property
-    def dragon_server_path(self) -> t.Optional[str]:
+    def dragon_server_path(self) -> str | None:
         return os.getenv(
             "SMARTSIM_DRAGON_SERVER_PATH",
             os.getenv("SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
@@ -192,6 +193,10 @@ class Config:
     @property
     def dragon_transport(self) -> str:
         return os.getenv("SMARTSIM_DRAGON_TRANSPORT", "hsta")
+
+    @property
+    def redis_cli_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_REDIS_TIMEOUT", "10"))
 
     @property
     def log_level(self) -> str:
@@ -218,7 +223,7 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_NUM_GPUS") or 1)
 
     @property
-    def test_ports(self) -> t.Sequence[int]:  # pragma: no cover
+    def test_ports(self) -> Sequence[int]:  # pragma: no cover
         min_required_ports = 25
         first_port = int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
         num_ports = max(
@@ -228,7 +233,7 @@ class Config:
         return range(first_port, first_port + num_ports)
 
     @property
-    def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover
+    def test_batch_resources(self) -> dict[t.Any, t.Any]:  # pragma: no cover
         resource_str = os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}")
         resources = json.loads(resource_str)
         if not isinstance(resources, dict):
@@ -242,7 +247,7 @@ class Config:
         return resources
 
     @property
-    def test_interface(self) -> t.List[str]:  # pragma: no cover
+    def test_interface(self) -> list[str]:  # pragma: no cover
         if interfaces_cfg := os.environ.get("SMARTSIM_TEST_INTERFACE", None):
             return interfaces_cfg.split(",")
 
@@ -262,7 +267,7 @@ class Config:
         return ["lo"]
 
     @property
-    def test_account(self) -> t.Optional[str]:  # pragma: no cover
+    def test_account(self) -> str | None:  # pragma: no cover
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
 
@@ -272,24 +277,20 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_MPI", "1")) > 0
 
     @property
-    def telemetry_frequency(self) -> int:
-        return int(os.environ.get("SMARTSIM_TELEMETRY_FREQUENCY", 5))
+    def smartsim_base_dir(self) -> Path:
+        return Path(".smartsim")
 
     @property
-    def telemetry_enabled(self) -> bool:
-        return int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", "1")) > 0
+    def dragon_default_subdir(self) -> Path:
+        return self.smartsim_base_dir / "dragon"
 
     @property
-    def telemetry_cooldown(self) -> int:
-        return int(os.environ.get("SMARTSIM_TELEMETRY_COOLDOWN", 90))
+    def dragon_logs_subdir(self) -> Path:
+        return self.dragon_default_subdir / "logs"
 
     @property
-    def telemetry_subdir(self) -> str:
-        return ".smartsim/telemetry"
-
-    @property
-    def dragon_default_subdir(self) -> str:
-        return ".smartsim/dragon"
+    def metadata_subdir(self) -> Path:
+        return self.smartsim_base_dir / "metadata"
 
     @property
     def dragon_log_filename(self) -> str:

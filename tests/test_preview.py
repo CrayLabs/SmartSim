@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2025, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@ def choose_host():
 
 
 @pytest.fixture
-def preview_object(test_dir) -> t.Dict[str, Job]:
+def preview_object(test_dir) -> dict[str, Job]:
     """
     Bare bones orch
     """
@@ -72,12 +72,12 @@ def preview_object(test_dir) -> t.Dict[str, Job]:
     s.ports = [1235]
     s.num_shards = 1
     job = Job("faux-name", "faux-step-id", s, "slurm", True)
-    active_dbjobs: t.Dict[str, Job] = {"mock_job": job}
+    active_dbjobs: dict[str, Job] = {"mock_job": job}
     return active_dbjobs
 
 
 @pytest.fixture
-def preview_object_multidb(test_dir) -> t.Dict[str, Job]:
+def preview_object_multidb(test_dir) -> dict[str, Job]:
     """
     Bare bones orch
     """
@@ -99,7 +99,7 @@ def preview_object_multidb(test_dir) -> t.Dict[str, Job]:
     s2.num_shards = 1
     job2 = Job("faux-name_2", "faux-step-id_2", s2, "slurm", True)
 
-    active_dbjobs: t.Dict[str, Job] = {"mock_job": job, "mock_job2": job2}
+    active_dbjobs: dict[str, Job] = {"mock_job": job, "mock_job2": job2}
     return active_dbjobs
 
 
@@ -1301,7 +1301,7 @@ def test_preview_db_script(wlmutils, test_dir):
     test_launcher = wlmutils.get_test_launcher()
     # Initialize the Experiment and set the launcher to auto
 
-    exp = Experiment("getting-started", launcher=test_launcher)
+    exp = Experiment("getting-started", test_dir, launcher=test_launcher)
 
     # Initialize a RunSettings object
     model_settings = exp.create_run_settings(exe="python", exe_args="params.py")

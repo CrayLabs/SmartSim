@@ -27,7 +27,6 @@
 
 import itertools
 import time
-import typing as t
 from collections import ChainMap
 from threading import RLock, Thread
 from types import FrameType
@@ -39,7 +38,7 @@ from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
-from .job import Job, JobEntity
+from .job import Job
 
 logger = get_logger(__name__)
 
@@ -57,12 +56,12 @@ class JobManager:
     wlm to query information about jobs that the user requests.
     """
 
-    def __init__(self, lock: RLock, launcher: t.Optional[Launcher] = None) -> None:
+    def __init__(self, lock: RLock, launcher: Launcher | None = None) -> None:
         """Initialize a Jobmanager
 
         :param launcher: a Launcher object to manage jobs
         """
-        self.monitor: t.Optional[Thread] = None
+        self.monitor: Thread | None = None
 
         # active jobs
         self.jobs: t.Dict[str, Job] = {}
@@ -70,7 +69,7 @@ class JobManager:
         self.db_jobs: t.Dict[str, Job] = {}
 
         # completed jobs
-        self.completed: t.Dict[str, Job] = {}
+        self.completed: dict[str, Job] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
@@ -148,7 +147,7 @@ class JobManager:
             entities = ChainMap(self.db_jobs, self.jobs, self.completed)
             return entities[entity_name]
 
-    def __call__(self) -> t.Dict[str, Job]:
+    def __call__(self) -> dict[str, Job]:
         """Returns dictionary all jobs for () operator
 
         :returns: Dictionary of all jobs
@@ -166,8 +165,8 @@ class JobManager:
     def add_job(
         self,
         job_name: str,
-        job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
+        job_id: str | None,
+        entity: SmartSimEntity | EntitySequence[SmartSimEntity],
         is_task: bool = True,
         monitor: bool = True,
     ) -> None:
@@ -183,8 +182,6 @@ class JobManager:
         # all operations here should be atomic
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
-            self.db_jobs[entity.name] = job
-        elif isinstance(entity, JobEntity) and entity.is_db:
             self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job
@@ -234,7 +231,7 @@ class JobManager:
 
     def get_status(
         self,
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        entity: SmartSimEntity | EntitySequence[SmartSimEntity],
     ) -> SmartSimStatus:
         """Return the status of a job.
 
@@ -271,7 +268,7 @@ class JobManager:
     def restart_job(
         self,
         job_name: str,
-        job_id: t.Optional[str],
+        job_id: str | None,
         entity_name: str,
         is_task: bool = True,
     ) -> None:
@@ -294,14 +291,14 @@ class JobManager:
             else:
                 self.jobs[entity_name] = job
 
-    def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
+    def get_db_host_addresses(self) -> dict[str, list[str]]:
         """Retrieve the list of hosts for the database
         for corresponding database identifiers
 
         :return: dictionary of host ip addresses
         """
 
-        address_dict: t.Dict[str, t.List[str]] = {}
+        address_dict: dict[str, list[str]] = {}
         for db_job in self.db_jobs.values():
             addresses = []
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
@@ -310,7 +307,7 @@ class JobManager:
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
-                dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
+                dict_entry: list[str] = address_dict.get(db_entity.db_identifier, [])
                 dict_entry.extend(addresses)
                 address_dict[db_entity.db_identifier] = dict_entry
 
@@ -334,7 +331,7 @@ class JobManager:
                     else:
                         self.db_jobs[dbnode.name].hosts = dbnode.hosts
 
-    def signal_interrupt(self, signo: int, _frame: t.Optional[FrameType]) -> None:
+    def signal_interrupt(self, signo: int, _frame: FrameType | None) -> None:
         """Custom handler for whenever SIGINT is received"""
         if not signo:
             logger.warning("Received SIGINT with no signal number")

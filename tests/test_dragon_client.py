@@ -30,6 +30,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from smartsim._core.config import CONFIG
 from smartsim._core.launcher.step.dragonStep import DragonBatchStep, DragonStep
 from smartsim.settings import DragonRunSettings
 from smartsim.settings.slurmSettings import SbatchSettings
@@ -53,9 +54,9 @@ def dragon_batch_step(test_dir: str) -> "DragonBatchStep":
     batch_settings = SbatchSettings(nodes=num_nodes)
     batch_step = DragonBatchStep(batch_step_name, test_dir, batch_settings)
 
-    # ensure the status_dir is set
-    status_dir = (test_path / ".smartsim" / "logs").as_posix()
-    batch_step.meta["status_dir"] = status_dir
+    # ensure the metadata_dir is set
+    metadata_dir = (test_path / CONFIG.dragon_logs_subdir).as_posix()
+    batch_step.meta["metadata_dir"] = metadata_dir
 
     # create some steps to verify the requests file output changes
     rs0 = DragonRunSettings(exe="sleep", exe_args=["1"])
@@ -84,14 +85,14 @@ def dragon_batch_step(test_dir: str) -> "DragonBatchStep":
 
     for index, step in enumerate(steps):
         # ensure meta is configured...
-        step.meta["status_dir"] = status_dir
+        step.meta["metadata_dir"] = metadata_dir
         # ... and put all the steps into the batch
         batch_step.add_to_batch(steps[index])
 
     return batch_step
 
 
-def get_request_path_from_batch_script(launch_cmd: t.List[str]) -> pathlib.Path:
+def get_request_path_from_batch_script(launch_cmd: list[str]) -> pathlib.Path:
     """Helper method for finding the path to a request file from the launch command"""
     script_path = pathlib.Path(launch_cmd[-1])
     batch_script = script_path.read_text(encoding="utf-8")

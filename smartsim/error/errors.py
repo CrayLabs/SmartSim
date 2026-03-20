@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 
 # Exceptions
 
@@ -124,8 +123,8 @@ class ShellError(LauncherError):
     def __init__(
         self,
         message: str,
-        command_list: t.Union[str, t.List[str]],
-        details: t.Optional[t.Union[Exception, str]] = None,
+        command_list: str | list[str],
+        details: Exception | str | None = None,
     ) -> None:
         msg = self.create_message(message, command_list, details=details)
         super().__init__(msg)
@@ -133,8 +132,8 @@ class ShellError(LauncherError):
     @staticmethod
     def create_message(
         message: str,
-        command_list: t.Union[str, t.List[str]],
-        details: t.Optional[t.Union[Exception, str]],
+        command_list: str | list[str],
+        details: Exception | str | None,
     ) -> str:
         if isinstance(command_list, list):
             command_list = " ".join(command_list)
@@ -143,18 +142,6 @@ class ShellError(LauncherError):
         if details:
             msg += f"\nError from shell: {details}"
         return msg
-
-
-class TelemetryError(SSInternalError):
-    """Raised when SmartSim runs into trouble establishing or communicating
-    telemetry information
-    """
-
-
-class UnproxyableStepError(TelemetryError):
-    """Raised when a user attempts to proxy a managed ``Step`` through the
-    unmanaged step proxy entry point
-    """
 
 
 class SmartSimCLIActionCancelled(SmartSimError):

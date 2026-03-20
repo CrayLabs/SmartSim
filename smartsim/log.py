@@ -31,6 +31,7 @@ import socket
 import sys
 import threading
 import typing as t
+from collections.abc import Callable
 from contextvars import ContextVar, copy_context
 
 import coloredlogs
@@ -89,7 +90,7 @@ def _translate_log_level(user_log_level: str = "info") -> str:
     return "info"
 
 
-def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.Path]]:
+def get_exp_log_paths() -> tuple[pathlib.Path | None, pathlib.Path | None]:
     """Returns the output and error file paths to experiment logs.
     Returns None for both paths if experiment context is unavailable.
 
@@ -98,8 +99,8 @@ def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.
     default_paths = None, None
 
     if _path := ctx_exp_path.get():
-        file_out = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.out"
-        file_err = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.err"
+        file_out = pathlib.Path(_path) / "logs/smartsim.out"
+        file_err = pathlib.Path(_path) / "logs/smartsim.err"
         return file_out, file_err
 
     return default_paths
@@ -154,7 +155,7 @@ class ContextAwareLogger(logging.Logger):
     """A logger customized to automatically write experiment logs to a
     dynamic target directory by inspecting the value of a context var"""
 
-    def __init__(self, name: str, level: t.Union[int, str] = 0) -> None:
+    def __init__(self, name: str, level: int | str = 0) -> None:
         super().__init__(name, level)
         self.addFilter(ContextInjectingLogFilter(name="exp-ctx-log-filter"))
 
@@ -163,8 +164,8 @@ class ContextAwareLogger(logging.Logger):
         level: int,
         msg: object,
         args: t.Any,
-        exc_info: t.Optional[t.Any] = None,
-        extra: t.Optional[t.Any] = None,
+        exc_info: t.Any | None = None,
+        extra: t.Any | None = None,
         stack_info: bool = False,
         stacklevel: int = 1,
     ) -> None:
@@ -189,7 +190,7 @@ class ContextAwareLogger(logging.Logger):
 
 
 def get_logger(
-    name: str, log_level: t.Optional[str] = None, fmt: t.Optional[str] = None
+    name: str, log_level: str | None = None, fmt: str | None = None
 ) -> logging.Logger:
     """Return a logger instance
 
@@ -272,8 +273,8 @@ def log_to_exp_file(
     filename: str,
     logger: logging.Logger,
     log_level: str = "warn",
-    fmt: t.Optional[str] = EXPERIMENT_LOG_FORMAT,
-    log_filter: t.Optional[logging.Filter] = None,
+    fmt: str | None = EXPERIMENT_LOG_FORMAT,
+    log_filter: logging.Filter | None = None,
 ) -> logging.Handler:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
@@ -308,10 +309,10 @@ def log_to_exp_file(
 
 def method_contextualizer(
     ctx_var: ContextVar[_ContextT],
-    ctx_map: t.Callable[[_T], _ContextT],
-) -> """t.Callable[
-    [t.Callable[Concatenate[_T, _PR], _RT]],
-    t.Callable[Concatenate[_T, _PR], _RT],
+    ctx_map: Callable[[_T], _ContextT],
+) -> """Callable[
+    [Callable[Concatenate[_T, _PR], _RT]],
+    Callable[Concatenate[_T, _PR], _RT],
 ]""":
     """Parameterized-decorator factory that enables a target value
     to be placed into global context prior to execution of the
@@ -325,8 +326,8 @@ def method_contextualizer(
     """
 
     def _contextualize(
-        fn: "t.Callable[Concatenate[_T, _PR], _RT]", /
-    ) -> "t.Callable[Concatenate[_T, _PR], _RT]":
+        fn: "Callable[Concatenate[_T, _PR], _RT]", /
+    ) -> "Callable[Concatenate[_T, _PR], _RT]":
         """Executes the decorated method in a cloned context and ensures
         `ctx_var` is updated to the value returned by `ctx_map` prior to
         calling the decorated method"""

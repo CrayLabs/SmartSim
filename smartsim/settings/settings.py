@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
+from collections.abc import Callable
 
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
@@ -45,16 +46,16 @@ from ..settings import (
 )
 from ..wlm import detect_launcher
 
-_TRunSettingsSelector = t.Callable[[str], t.Callable[..., RunSettings]]
+_TRunSettingsSelector = Callable[[str], Callable[..., RunSettings]]
 
 
 def create_batch_settings(
     launcher: str,
-    nodes: t.Optional[int] = None,
+    nodes: int | None = None,
     time: str = "",
-    queue: t.Optional[str] = None,
-    account: t.Optional[str] = None,
-    batch_args: t.Optional[t.Dict[str, str]] = None,
+    queue: str | None = None,
+    account: str | None = None,
+    batch_args: dict[str, str] | None = None,
     **kwargs: t.Any,
 ) -> base.BatchSettings:
     """Create a ``BatchSettings`` instance
@@ -72,7 +73,7 @@ def create_batch_settings(
     :raises SmartSimError: if batch creation fails
     """
     # all supported batch class implementations
-    by_launcher: t.Dict[str, t.Callable[..., base.BatchSettings]] = {
+    by_launcher: dict[str, Callable[..., base.BatchSettings]] = {
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
         "pals": QsubBatchSettings,
@@ -110,11 +111,11 @@ def create_batch_settings(
 def create_run_settings(
     launcher: str,
     exe: str,
-    exe_args: t.Optional[t.List[str]] = None,
+    exe_args: list[str] | None = None,
     run_command: str = "auto",
-    run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-    env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
-    container: t.Optional[Container] = None,
+    run_args: dict[str, int | str | float | None] | None = None,
+    env_vars: dict[str, str | None] | None = None,
+    container: Container | None = None,
     **kwargs: t.Any,
 ) -> RunSettings:
     """Create a ``RunSettings`` instance.
@@ -133,7 +134,7 @@ def create_run_settings(
     :raises SmartSimError: if run_command=="auto" and detection fails
     """
     # all supported RunSettings child classes
-    supported: t.Dict[str, _TRunSettingsSelector] = {
+    supported: dict[str, _TRunSettingsSelector] = {
         "aprun": lambda launcher: AprunSettings,
         "srun": lambda launcher: SrunSettings,
         "mpirun": lambda launcher: MpirunSettings,

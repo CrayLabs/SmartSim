@@ -31,7 +31,7 @@ import os
 import re
 import shutil
 import textwrap
-import typing as t
+from collections.abc import Callable, Collection
 from pathlib import Path
 
 from tabulate import tabulate
@@ -139,7 +139,7 @@ def build_redis_ai(
 
 def parse_requirement(
     requirement: str,
-) -> t.Tuple[str, t.Optional[str], t.Callable[[Version_], bool]]:
+) -> tuple[str, str | None, Callable[[Version_], bool]]:
     operators = {
         "==": operator.eq,
         "<=": operator.le,
@@ -199,10 +199,10 @@ def check_ml_python_packages(packages: MLPackageCollection) -> None:
 
 
 def _format_incompatible_python_env_message(
-    missing: t.Collection[str], conflicting: t.Collection[str]
+    missing: Collection[str], conflicting: Collection[str]
 ) -> str:
     indent = "\n\t"
-    fmt_list: t.Callable[[str, t.Collection[str]], str] = lambda n, l: (
+    fmt_list: Callable[[str, Collection[str]], str] = lambda n, l: (
         f"{n}:{indent}{indent.join(l)}" if l else ""
     )
     missing_str = fmt_list("Missing", missing)
@@ -237,7 +237,7 @@ def _configure_keydb_build(versions: Versioner) -> None:
 
 # pylint: disable-next=too-many-statements
 def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+    args: argparse.Namespace, _unparsed_args: list[str] | None = None, /
 ) -> int:
 
     # Unpack various arguments

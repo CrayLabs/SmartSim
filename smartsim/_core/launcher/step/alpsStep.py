@@ -26,13 +26,12 @@
 
 import os
 import shutil
-import typing as t
 from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import AprunSettings, RunSettings, Singularity
-from .step import Step, proxyable_launch_cmd
+from .step import Step
 
 logger = get_logger(__name__)
 
@@ -46,19 +45,18 @@ class AprunStep(Step):
         :param run_settings: run settings for entity
         """
         super().__init__(name, cwd, run_settings)
-        self.alloc: t.Optional[str] = None
+        self.alloc: str | None = None
         if not run_settings.in_batch:
             self._set_alloc()
         self.run_settings = run_settings
 
-    def _get_mpmd(self) -> t.List[RunSettings]:
+    def _get_mpmd(self) -> list[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings
         """
         return self.run_settings.mpmd
 
-    @proxyable_launch_cmd
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -114,7 +112,7 @@ class AprunStep(Step):
                 "No allocation specified or found and not running in batch"
             )
 
-    def _build_exe(self) -> t.List[str]:
+    def _build_exe(self) -> list[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -126,7 +124,7 @@ class AprunStep(Step):
         args = self.run_settings._exe_args  # pylint: disable=protected-access
         return exe + args
 
-    def _make_mpmd(self) -> t.List[str]:
+    def _make_mpmd(self) -> list[str]:
         """Build Aprun (MPMD) executable"""
 
         exe = self.run_settings.exe

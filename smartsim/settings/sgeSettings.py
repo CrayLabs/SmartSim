@@ -36,13 +36,13 @@ logger = get_logger(__name__)
 class SgeQsubBatchSettings(BatchSettings):
     def __init__(
         self,
-        time: t.Optional[str] = None,
-        ncpus: t.Optional[int] = None,
-        pe_type: t.Optional[str] = None,
-        account: t.Optional[str] = None,
+        time: str | None = None,
+        ncpus: int | None = None,
+        pe_type: str | None = None,
+        account: str | None = None,
         shebang: str = "#!/bin/bash -l",
-        resources: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
-        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        resources: dict[str, str | int] | None = None,
+        batch_args: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ):
         """Specify SGE batch parameters for a job
@@ -75,19 +75,19 @@ class SgeQsubBatchSettings(BatchSettings):
             **kwargs,
         )
 
-        self._context_variables: t.List[str] = []
-        self._env_vars: t.Dict[str, str] = {}
+        self._context_variables: list[str] = []
+        self._env_vars: dict[str, str] = {}
 
     @property
-    def resources(self) -> t.Dict[str, t.Union[str, int]]:
+    def resources(self) -> dict[str, str | int]:
         return self._resources.copy()
 
     @resources.setter
-    def resources(self, resources: t.Dict[str, t.Union[str, int]]) -> None:
+    def resources(self, resources: dict[str, str | int]) -> None:
         self._sanity_check_resources(resources)
         self._resources = resources.copy()
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         raise LauncherUnsupportedFeature(
             "SGE does not support requesting specific hosts in batch jobs"
         )
@@ -117,7 +117,7 @@ class SgeQsubBatchSettings(BatchSettings):
         if walltime:
             self.set_resource("h_rt", walltime)
 
-    def set_nodes(self, num_nodes: t.Optional[int]) -> None:
+    def set_nodes(self, num_nodes: int | None) -> None:
         """Set the number of nodes, invalid for SGE
 
         :param nodes: Number of nodes, any integer other than 0 is invalid
@@ -127,14 +127,14 @@ class SgeQsubBatchSettings(BatchSettings):
                 "SGE does not support setting the number of nodes"
             )
 
-    def set_ncpus(self, num_cpus: t.Union[int, str]) -> None:
+    def set_ncpus(self, num_cpus: int | str) -> None:
         """Set the number of cpus obtained in each node.
 
         :param num_cpus: number of cpus per node in select
         """
         self.set_resource("ncpus", int(num_cpus))
 
-    def set_ngpus(self, num_gpus: t.Union[int, str]) -> None:
+    def set_ngpus(self, num_gpus: int | str) -> None:
         """Set the number of GPUs obtained in each node.
 
         :param num_gpus: number of GPUs per node in select
@@ -161,7 +161,7 @@ class SgeQsubBatchSettings(BatchSettings):
         self,
         action: t.Literal["ac", "sc", "dc"],
         var_name: str,
-        value: t.Optional[t.Union[int, str]] = None,
+        value: int | str | None = None,
     ) -> None:
         """
         Add, set, or delete context variables
@@ -214,7 +214,7 @@ class SgeQsubBatchSettings(BatchSettings):
 
         self._env_vars["OMP_NUM_THREADS"] = str(threads_per_core)
 
-    def set_resource(self, resource_name: str, value: t.Union[str, int]) -> None:
+    def set_resource(self, resource_name: str, value: str | int) -> None:
         """Set a resource value for the SGE batch
 
         If a select statement is provided, the nodes and ncpus
@@ -228,7 +228,7 @@ class SgeQsubBatchSettings(BatchSettings):
         self._sanity_check_resources(updated_dict)
         self.resources = updated_dict
 
-    def format_batch_args(self) -> t.List[str]:
+    def format_batch_args(self) -> list[str]:
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for SGE
@@ -243,7 +243,7 @@ class SgeQsubBatchSettings(BatchSettings):
         return opts
 
     def _sanity_check_resources(
-        self, resources: t.Optional[t.Dict[str, t.Union[str, int]]] = None
+        self, resources: dict[str, str | int] | None = None
     ) -> None:
         """Check that resources are correctly formatted"""
         # Note: isinstance check here to avoid collision with default
@@ -261,7 +261,7 @@ class SgeQsubBatchSettings(BatchSettings):
                     "and str are allowed."
                 )
 
-    def _create_resource_list(self) -> t.List[str]:
+    def _create_resource_list(self) -> list[str]:
         self._sanity_check_resources()
         res = []
 

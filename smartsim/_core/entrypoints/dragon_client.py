@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2025, Hewlett Packard Enterpris
+# Copyright (c) 2021-2025, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@ import os
 import signal
 import sys
 import time
-import typing as t
 from pathlib import Path
 from types import FrameType
 
@@ -66,13 +65,13 @@ def cleanup() -> None:
     logger.debug("Cleaning up")
 
 
-def parse_requests(request_filepath: Path) -> t.List[DragonRequest]:
+def parse_requests(request_filepath: Path) -> list[DragonRequest]:
     """Parse serialized requests from file
 
     :param request_filepath: Path to file with serialized requests
     :return: Deserialized requests
     """
-    requests: t.List[DragonRequest] = []
+    requests: list[DragonRequest] = []
     try:
         with open(request_filepath, "r", encoding="utf-8") as request_file:
             req_strings = json.load(fp=request_file)
@@ -91,7 +90,7 @@ def parse_requests(request_filepath: Path) -> t.List[DragonRequest]:
     return requests
 
 
-def parse_arguments(args: t.List[str]) -> DragonClientEntrypointArgs:
+def parse_arguments(args: list[str]) -> DragonClientEntrypointArgs:
     """Parse arguments used to run entrypoint script
 
     :param args: Arguments without name of executable
@@ -111,7 +110,7 @@ def parse_arguments(args: t.List[str]) -> DragonClientEntrypointArgs:
     return DragonClientEntrypointArgs(submit=Path(args_.submit))
 
 
-def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
+def handle_signal(signo: int, _frame: FrameType | None = None) -> None:
     """Handle signals sent to this process
 
     :param signo: Signal number
@@ -176,7 +175,7 @@ def execute_entrypoint(args: DragonClientEntrypointArgs) -> int:
     return os.EX_OK
 
 
-def main(args_: t.List[str]) -> int:
+def main(args_: list[str]) -> int:
     """Execute the dragon client entrypoint as a module"""
 
     os.environ["PYTHONUNBUFFERED"] = "1"

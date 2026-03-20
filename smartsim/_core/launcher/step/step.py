@@ -27,20 +27,16 @@
 from __future__ import annotations
 
 import copy
-import functools
 import os.path as osp
 import pathlib
-import sys
 import time
-import typing as t
 from os import makedirs
 
-from smartsim._core.config import CONFIG
-from smartsim.error.errors import SmartSimError, UnproxyableStepError
+from smartsim.error.errors import SmartSimError
 
 from ....log import get_logger
 from ....settings.base import RunSettings, SettingsBase
-from ...utils.helpers import encode_cmd, get_base_36_repr
+from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
 
 logger = get_logger(__name__)
@@ -53,14 +49,14 @@ class Step:
         self.cwd = cwd
         self.managed = False
         self.step_settings = copy.deepcopy(step_settings)
-        self.meta: t.Dict[str, str] = {}
+        self.meta: dict[str, str] = {}
 
     @property
-    def env(self) -> t.Optional[t.Dict[str, str]]:
+    def env(self) -> dict[str, str] | None:
         """Overridable, read only property for step to specify its environment"""
         return None
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         raise NotImplementedError
 
     @staticmethod
@@ -74,10 +70,10 @@ class Step:
         if not osp.exists(output_dir):
             pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    def get_output_files(self) -> t.Tuple[str, str]:
+    def get_output_files(self) -> tuple[str, str]:
         """Return two paths to error and output files based on metadata directory"""
         try:
-            output_dir = self.meta["status_dir"]
+            output_dir = self.meta["metadata_dir"]
         except KeyError as exc:
             raise KeyError("Status directory for this step has not been set.") from exc
         self._ensure_output_directory_exists(output_dir)
@@ -85,9 +81,7 @@ class Step:
         error = osp.join(output_dir, f"{self.entity_name}.err")
         return output, error
 
-    def get_step_file(
-        self, ending: str = ".sh", script_name: t.Optional[str] = None
-    ) -> str:
+    def get_step_file(self, ending: str = ".sh", script_name: str | None = None) -> str:
         """Get the name for a file/script created by the step class
 
         Used for Batch scripts, mpmd scripts, etc.
@@ -129,61 +123,3 @@ class Step:
         :param step: a job step instance e.g. SrunStep
         """
         raise SmartSimError("add_to_batch not implemented for this step type")
-
-
-_StepT = t.TypeVar("_StepT", bound=Step)
-
-
-def proxyable_launch_cmd(
-    fn: t.Callable[[_StepT], t.List[str]], /
-) -> t.Callable[[_StepT], t.List[str]]:
-    @functools.wraps(fn)
-    def _get_launch_cmd(self: _StepT) -> t.List[str]:
-        """
-        Generate a launch command that executes the `JobStep` with the
-        indirect launching entrypoint instead of directly. The original
-        command is passed to the proxy as a base64 encoded string.
-
-        Steps implementing `get_launch_cmd` and decorated with
-        `proxyable_launch_cmd` will generate status updates that can be consumed
-        by the telemetry monitor and dashboard"""
-        original_cmd_list = fn(self)
-
-        if not CONFIG.telemetry_enabled:
-            return original_cmd_list
-
-        if self.managed:
-            raise UnproxyableStepError(
-                f"Attempting to proxy managed step of type {type(self)} "
-                "through the unmanaged step proxy entry point"
-            )
-
-        proxy_module = "smartsim._core.entrypoints.indirect"
-        entity_type = self.meta["entity_type"]
-        status_dir = self.meta["status_dir"]
-
-        logger.debug(f"Encoding command{' '.join(original_cmd_list)}")
-
-        # encode the original cmd to avoid potential collisions and escaping
-        # errors when passing it using CLI arguments to the indirect entrypoint
-        encoded_cmd = encode_cmd(original_cmd_list)
-
-        # return a new command that executes the proxy and passes
-        # the original command as an argument
-        return [
-            sys.executable,
-            "-m",
-            proxy_module,
-            "+name",
-            self.name,
-            "+command",
-            encoded_cmd,
-            "+entity_type",
-            entity_type,
-            "+telemetry_dir",
-            status_dir,
-            "+working_dir",
-            self.cwd,
-        ]
-
-    return _get_launch_cmd

@@ -29,6 +29,7 @@ from __future__ import annotations
 import datetime
 import os
 import typing as t
+from collections.abc import Iterable
 
 from ..error import SSUnsupportedError
 from ..log import get_logger
@@ -41,10 +42,10 @@ class SrunSettings(RunSettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
-        alloc: t.Optional[str] = None,
+        exe_args: str | list[str] | None = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
+        alloc: str | None = None,
         **kwargs: t.Any,
     ) -> None:
         """Initialize run parameters for a slurm job with ``srun``
@@ -69,7 +70,7 @@ class SrunSettings(RunSettings):
             **kwargs,
         )
         self.alloc = alloc
-        self.mpmd: t.List[RunSettings] = []
+        self.mpmd: list[RunSettings] = []
 
     reserved_run_args = frozenset({"chdir", "D"})
 
@@ -104,7 +105,7 @@ class SrunSettings(RunSettings):
             )
         self.mpmd.append(settings)
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         """Specify the hostlist for this job
 
         This sets ``--nodelist``
@@ -129,7 +130,7 @@ class SrunSettings(RunSettings):
         """
         self.run_args["nodefile"] = file_path
 
-    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_excluded_hosts(self, host_list: str | list[str]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -170,7 +171,7 @@ class SrunSettings(RunSettings):
         """
         self.run_args["ntasks-per-node"] = int(tasks_per_node)
 
-    def set_cpu_bindings(self, bindings: t.Union[int, t.List[int]]) -> None:
+    def set_cpu_bindings(self, bindings: int | list[int]) -> None:
         """Bind by setting CPU masks on tasks
 
         This sets ``--cpu-bind`` using the ``map_cpu:<list>`` option
@@ -216,7 +217,7 @@ class SrunSettings(RunSettings):
         else:
             self.run_args.pop("quiet", None)
 
-    def set_broadcast(self, dest_path: t.Optional[str] = None) -> None:
+    def set_broadcast(self, dest_path: str | None = None) -> None:
         """Copy executable file to allocated compute nodes
 
         This sets ``--bcast``
@@ -225,7 +226,7 @@ class SrunSettings(RunSettings):
         """
         self.run_args["bcast"] = dest_path
 
-    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+    def set_node_feature(self, feature_list: str | list[str]) -> None:
         """Specify the node feature for this job
 
         This sets ``-C``
@@ -261,7 +262,7 @@ class SrunSettings(RunSettings):
         """
         self.run_args["time"] = str(walltime)
 
-    def set_het_group(self, het_group: t.Iterable[int]) -> None:
+    def set_het_group(self, het_group: Iterable[int]) -> None:
         """Set the heterogeneous group for this job
 
         this sets `--het-group`
@@ -291,7 +292,7 @@ class SrunSettings(RunSettings):
         logger.warning(msg)
         self.run_args["het-group"] = ",".join(str(group) for group in het_group)
 
-    def format_run_args(self) -> t.List[str]:
+    def format_run_args(self) -> list[str]:
         """Return a list of slurm formatted run arguments
 
         :return: list of slurm arguments for these settings
@@ -331,7 +332,7 @@ class SrunSettings(RunSettings):
                     )
                     logger.warning(msg)
 
-    def format_env_vars(self) -> t.List[str]:
+    def format_env_vars(self) -> list[str]:
         """Build bash compatible environment variable string for Slurm
 
         :returns: the formatted string of environment variables
@@ -339,7 +340,7 @@ class SrunSettings(RunSettings):
         self.check_env_vars()
         return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
 
-    def format_comma_sep_env_vars(self) -> t.Tuple[str, t.List[str]]:
+    def format_comma_sep_env_vars(self) -> tuple[str, list[str]]:
         """Build environment variable string for Slurm
 
         Slurm takes exports in comma separated lists
@@ -393,10 +394,10 @@ def fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
 class SbatchSettings(BatchSettings):
     def __init__(
         self,
-        nodes: t.Optional[int] = None,
+        nodes: int | None = None,
         time: str = "",
-        account: t.Optional[str] = None,
-        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        account: str | None = None,
+        batch_args: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ) -> None:
         """Specify run parameters for a Slurm batch job
@@ -477,7 +478,7 @@ class SbatchSettings(BatchSettings):
         """
         self.batch_args["cpus-per-task"] = str(int(cpus_per_task))
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -491,7 +492,7 @@ class SbatchSettings(BatchSettings):
             raise TypeError("host_list argument must be list of strings")
         self.batch_args["nodelist"] = ",".join(host_list)
 
-    def format_batch_args(self) -> t.List[str]:
+    def format_batch_args(self) -> list[str]:
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for Sbatch

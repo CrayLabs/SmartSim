@@ -88,7 +88,7 @@ def test_orc_is_active_functions(
 
 
 def test_multiple_interfaces(
-    test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]
+    test_dir: str, wlmutils: type["conftest.WLMUtils"]
 ) -> None:
     exp_name = "test_multiple_interfaces"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
@@ -136,7 +136,7 @@ def test_catch_local_db_errors() -> None:
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_pbs_set_run_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -155,7 +155,7 @@ def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     )
 
 
-def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_pbs_set_batch_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -184,7 +184,7 @@ def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_slurm_set_run_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -199,7 +199,7 @@ def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     )
 
 
-def test_slurm_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_slurm_set_batch_arg(wlmutils: type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -250,24 +250,3 @@ def test_orc_results_in_correct_number_of_shards(single_cmd: bool) -> None:
     assert (
         orc.num_shards == orc.db_nodes == sum(node.num_shards for node in orc.entities)
     )
-
-
-def test_orc_telemetry(test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    """Ensure the default behavior for an orchestrator is to disable telemetry"""
-    db = Orchestrator(port=wlmutils.get_test_port())
-    db.set_path(test_dir)
-
-    # default is disabled
-    assert not db.telemetry.is_enabled
-
-    # ensure updating value works as expected
-    db.telemetry.enable()
-    assert db.telemetry.is_enabled
-
-    # toggle back
-    db.telemetry.disable()
-    assert not db.telemetry.is_enabled
-
-    # toggle one more time
-    db.telemetry.enable()
-    assert db.telemetry.is_enabled

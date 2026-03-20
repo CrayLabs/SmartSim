@@ -26,11 +26,10 @@
 
 import os
 import shutil
-import typing as t
 
 from ....settings import Singularity
 from ....settings.base import RunSettings
-from .step import Step, proxyable_launch_cmd
+from .step import Step
 
 
 class LocalStep(Step):
@@ -40,11 +39,10 @@ class LocalStep(Step):
         self._env = self._set_env()
 
     @property
-    def env(self) -> t.Dict[str, str]:
+    def env(self) -> dict[str, str]:
         return self._env
 
-    @proxyable_launch_cmd
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         cmd = []
 
         # Add run command and args if user specified
@@ -73,7 +71,7 @@ class LocalStep(Step):
             cmd.extend(self.run_settings.exe_args)
         return cmd
 
-    def _set_env(self) -> t.Dict[str, str]:
+    def _set_env(self) -> dict[str, str]:
         env = os.environ.copy()
         if self.run_settings.env_vars:
             for k, v in self.run_settings.env_vars.items():

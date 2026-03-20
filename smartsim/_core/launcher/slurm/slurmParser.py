@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 from shutil import which
 
 """
@@ -32,14 +31,14 @@ Parsers for various slurm functions.
 """
 
 
-def parse_salloc(output: str) -> t.Optional[str]:
+def parse_salloc(output: str) -> str | None:
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):
             return line.split()[-1]
     return None
 
 
-def parse_salloc_error(output: str) -> t.Optional[str]:
+def parse_salloc_error(output: str) -> str | None:
     """Parse and return error output of a failed salloc command
 
     :param output: stderr output of salloc command
@@ -81,14 +80,14 @@ def jobid_exact_match(parsed_id: str, job_id: str) -> bool:
     return parsed_id.split(".")[0] == job_id
 
 
-def parse_sacct(output: str, job_id: str) -> t.Tuple[str, t.Optional[str]]:
+def parse_sacct(output: str, job_id: str) -> tuple[str, str | None]:
     """Parse and return output of the sacct command
 
     :param output: output of the sacct command
     :param job_id: allocation id or job step id
     :return: status and returncode
     """
-    result: t.Tuple[str, t.Optional[str]] = ("PENDING", None)
+    result: tuple[str, str | None] = ("PENDING", None)
     for line in output.split("\n"):
         parts = line.split("|")
         if len(parts) >= 3:
@@ -100,7 +99,7 @@ def parse_sacct(output: str, job_id: str) -> t.Tuple[str, t.Optional[str]]:
     return result
 
 
-def parse_sstat_nodes(output: str, job_id: str) -> t.List[str]:
+def parse_sstat_nodes(output: str, job_id: str) -> list[str]:
     """Parse and return the sstat command
 
     This function parses and returns the nodes of
@@ -121,7 +120,7 @@ def parse_sstat_nodes(output: str, job_id: str) -> t.List[str]:
     return list(set(nodes))
 
 
-def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[str]:
+def parse_step_id_from_sacct(output: str, step_name: str) -> str | None:
     """Parse and return the step id from a sacct command
 
     :param output: output of sacct --noheader -p

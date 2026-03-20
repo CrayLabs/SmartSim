@@ -53,9 +53,9 @@ class PalsMpiexecSettings(_BaseMPISettings):
     def __init__(
         self,
         exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        exe_args: str | list[str] | None = None,
+        run_args: dict[str, int | str | float | None] | None = None,
+        env_vars: dict[str, str | None] | None = None,
         fail_if_missing_exec: bool = True,
         **kwargs: t.Any,
     ) -> None:
@@ -142,7 +142,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
 
         logger.warning("set_quiet_launch not supported under PALS")
 
-    def set_broadcast(self, dest_path: t.Optional[str] = None) -> None:
+    def set_broadcast(self, dest_path: str | None = None) -> None:
         """Copy the specified executable(s) to remote machines
 
         This sets ``--preload-binary``
@@ -184,7 +184,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         for arg in args:
             self.affinity_script.append(str(arg))
 
-    def format_run_args(self) -> t.List[str]:
+    def format_run_args(self) -> list[str]:
         """Return a list of MPI-standard formatted run arguments
 
         :return: list of MPI-standard arguments for these settings
@@ -206,7 +206,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
 
         return args
 
-    def format_env_vars(self) -> t.List[str]:
+    def format_env_vars(self) -> list[str]:
         """Format the environment variables for mpirun
 
         :return: list of env vars
@@ -226,7 +226,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
 
         return formatted
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         """Set the hostlist for the PALS ``mpiexec`` command
 
         This sets ``--hosts``

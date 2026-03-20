@@ -46,7 +46,7 @@ logging.getLogger("rediscluster").setLevel(logging.WARNING)
 logger = get_logger(__name__)
 
 
-def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
+def create_cluster(hosts: list[str], ports: list[int]) -> None:  # cov-wlm
     """Connect launched cluster instances.
 
     Should only be used in the case where cluster initialization
@@ -78,7 +78,7 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
 
 
 def check_cluster_status(
-    hosts: t.List[str], ports: t.List[int], trials: int = 10
+    hosts: list[str], ports: list[int], trials: int = 10
 ) -> None:  # cov-wlm
     """Check that a Redis/KeyDB cluster is up and running
 
@@ -117,7 +117,7 @@ def check_cluster_status(
         raise SSInternalError("Cluster setup could not be verified")
 
 
-def db_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> bool:
+def db_is_active(hosts: list[str], ports: list[int], num_shards: int) -> bool:
     """Check if a DB is running
 
     if the DB is clustered, check cluster status, otherwise
@@ -212,7 +212,7 @@ def set_script(db_script: DBScript, client: Client) -> None:
             raise error
 
 
-def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-wlm
+def shutdown_db_node(host_ip: str, port: int) -> tuple[int, str, str]:  # cov-wlm
     """Send shutdown signal to DB node.
 
     Should only be used in the case where cluster deallocation
@@ -225,7 +225,9 @@ def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
     """
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
-    returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False, timeout=10)
+    returncode, out, err = execute_cmd(
+        cmd, proc_input="yes", shell=False, timeout=CONFIG.redis_cli_timeout
+    )
 
     if returncode != 0:
         logger.error(out)

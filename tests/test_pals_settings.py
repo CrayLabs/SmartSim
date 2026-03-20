@@ -45,12 +45,6 @@ default_exe = sys.executable
 default_kwargs = {"fail_if_missing_exec": False}
 
 
-@pytest.fixture(autouse=True)
-def turn_off_telemetry_indirect(monkeypatch):
-    monkeypatch.setattr(smartsim._core.config.config.Config, "telemetry_enabled", False)
-    yield
-
-
 # Uncomment when
 # @pytest.mark.parametrize(
 #    "function_name",[

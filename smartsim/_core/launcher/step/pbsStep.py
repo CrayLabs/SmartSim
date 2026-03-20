@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 
 from ....log import get_logger
 from ....settings import QsubBatchSettings
@@ -42,11 +41,11 @@ class QsubBatchStep(Step):
         :param batch_settings: batch settings for entity
         """
         super().__init__(name, cwd, batch_settings)
-        self.step_cmds: t.List[t.List[str]] = []
+        self.step_cmds: list[list[str]] = []
         self.managed = True
         self.batch_settings = batch_settings
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_cmd(self) -> list[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch

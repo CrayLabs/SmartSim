@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2025, Hewlett Packard Enterpris
+# Copyright (c) 2021-2025, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ class DragonEntrypointArgs:
     interface: str
 
 
-def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
+def handle_signal(signo: int, _frame: FrameType | None = None) -> None:
     if not signo:
         logger.info("Received signal with no signo")
     else:
@@ -99,7 +99,7 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 
 
 def start_updater(
-    backend: DragonBackend, updater: t.Optional[ContextThread]
+    backend: DragonBackend, updater: ContextThread | None
 ) -> ContextThread:
     """Start the ``DragonBackend`` updater thread.
 
@@ -302,7 +302,7 @@ def register_signal_handlers() -> None:
         signal.signal(sig, handle_signal)
 
 
-def parse_arguments(args: t.List[str]) -> DragonEntrypointArgs:
+def parse_arguments(args: list[str]) -> DragonEntrypointArgs:
     parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Dragon Head Process"
     )
@@ -326,7 +326,7 @@ def parse_arguments(args: t.List[str]) -> DragonEntrypointArgs:
     return DragonEntrypointArgs(args_.launching_address, args_.interface)
 
 
-def main(args_: t.List[str]) -> int:
+def main(args_: list[str]) -> int:
     """Execute the dragon entrypoint as a module"""
     os.environ["PYTHONUNBUFFERED"] = "1"
     logger.info("Dragon server started")

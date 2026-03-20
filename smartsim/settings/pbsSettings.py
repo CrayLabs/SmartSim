@@ -36,13 +36,13 @@ logger = get_logger(__name__)
 class QsubBatchSettings(BatchSettings):
     def __init__(
         self,
-        nodes: t.Optional[int] = None,
-        ncpus: t.Optional[int] = None,
-        time: t.Optional[str] = None,
-        queue: t.Optional[str] = None,
-        account: t.Optional[str] = None,
-        resources: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
-        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        nodes: int | None = None,
+        ncpus: int | None = None,
+        time: str | None = None,
+        queue: str | None = None,
+        account: str | None = None,
+        resources: dict[str, str | int] | None = None,
+        batch_args: dict[str, str | None] | None = None,
         **kwargs: t.Any,
     ):
         """Specify ``qsub`` batch parameters for a job
@@ -84,14 +84,14 @@ class QsubBatchSettings(BatchSettings):
             **kwargs,
         )
 
-        self._hosts: t.List[str] = []
+        self._hosts: list[str] = []
 
     @property
-    def resources(self) -> t.Dict[str, t.Union[str, int]]:
+    def resources(self) -> dict[str, str | int]:
         return self._resources.copy()
 
     @resources.setter
-    def resources(self, resources: t.Dict[str, t.Union[str, int]]) -> None:
+    def resources(self, resources: dict[str, str | int]) -> None:
         self._sanity_check_resources(resources)
         self._resources = resources.copy()
 
@@ -110,7 +110,7 @@ class QsubBatchSettings(BatchSettings):
         if num_nodes:
             self.set_resource("nodes", num_nodes)
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+    def set_hostlist(self, host_list: str | list[str]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -146,7 +146,7 @@ class QsubBatchSettings(BatchSettings):
         if queue:
             self.batch_args["q"] = str(queue)
 
-    def set_ncpus(self, num_cpus: t.Union[int, str]) -> None:
+    def set_ncpus(self, num_cpus: int | str) -> None:
         """Set the number of cpus obtained in each node.
 
         If a select argument is provided in
@@ -165,7 +165,7 @@ class QsubBatchSettings(BatchSettings):
         if account:
             self.batch_args["A"] = str(account)
 
-    def set_resource(self, resource_name: str, value: t.Union[str, int]) -> None:
+    def set_resource(self, resource_name: str, value: str | int) -> None:
         """Set a resource value for the Qsub batch
 
         If a select statement is provided, the nodes and ncpus
@@ -181,7 +181,7 @@ class QsubBatchSettings(BatchSettings):
         self._sanity_check_resources(updated_dict)
         self.resources = updated_dict
 
-    def format_batch_args(self) -> t.List[str]:
+    def format_batch_args(self) -> list[str]:
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for Qsub
@@ -196,7 +196,7 @@ class QsubBatchSettings(BatchSettings):
         return opts
 
     def _sanity_check_resources(
-        self, resources: t.Optional[t.Dict[str, t.Union[str, int]]] = None
+        self, resources: dict[str, str | int] | None = None
     ) -> None:
         """Check that only select or nodes was specified in resources
 
@@ -233,7 +233,7 @@ class QsubBatchSettings(BatchSettings):
                     "and str are allowed."
                 )
 
-    def _create_resource_list(self) -> t.List[str]:
+    def _create_resource_list(self) -> list[str]:
         self._sanity_check_resources()
         res = []
 

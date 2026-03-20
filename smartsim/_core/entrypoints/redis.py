@@ -29,7 +29,6 @@ import json
 import os
 import signal
 import textwrap
-import typing as t
 from subprocess import PIPE, STDOUT
 from types import FrameType
 
@@ -45,19 +44,19 @@ logger = get_logger(__name__)
 Redis/KeyDB entrypoint script
 """
 
-DBPID: t.Optional[int] = None
+DBPID: int | None = None
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 
 
-def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+def handle_signal(signo: int, _frame: FrameType | None) -> None:
     if not signo:
         logger.warning("Received signal with no signo")
     cleanup()
 
 
-def build_bind_args(source_addr: str, *addrs: str) -> t.Tuple[str, ...]:
+def build_bind_args(source_addr: str, *addrs: str) -> tuple[str, ...]:
     return (
         "--bind",
         source_addr,
@@ -68,14 +67,14 @@ def build_bind_args(source_addr: str, *addrs: str) -> t.Tuple[str, ...]:
     )
 
 
-def build_cluster_args(shard_data: LaunchedShardData) -> t.Tuple[str, ...]:
+def build_cluster_args(shard_data: LaunchedShardData) -> tuple[str, ...]:
     if cluster_conf_file := shard_data.cluster_conf_file:
         return ("--cluster-enabled", "yes", "--cluster-config-file", cluster_conf_file)
     return ()
 
 
 def print_summary(
-    cmd: t.List[str], network_interface: str, shard_data: LaunchedShardData
+    cmd: list[str], network_interface: str, shard_data: LaunchedShardData
 ) -> None:
     print(
         textwrap.dedent(f"""\

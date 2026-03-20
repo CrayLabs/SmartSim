@@ -31,7 +31,7 @@ import re
 import subprocess
 import sys
 import typing as t
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass
 
 from tabulate import tabulate
@@ -73,9 +73,9 @@ class MLPackage:
     name: str
     version: str
     pip_index: str
-    python_packages: t.List[str]
+    python_packages: list[str]
     lib_source: PathLike
-    rai_patches: t.Tuple[RAIPatch, ...] = ()
+    rai_patches: tuple[RAIPatch, ...] = ()
 
     def retrieve(self, destination: PathLike) -> None:
         """Retrieve an archive and/or repository for the package
@@ -105,7 +105,7 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
     Define a collection of MLPackages available for a specific platform
     """
 
-    def __init__(self, platform: Platform, ml_packages: t.Sequence[MLPackage]):
+    def __init__(self, platform: Platform, ml_packages: Sequence[MLPackage]):
         self.platform = platform
         self._ml_packages = {pkg.name: pkg for pkg in ml_packages}
 
@@ -173,7 +173,7 @@ class MLPackageCollection(MutableMapping[str, MLPackage]):
 
 def load_platform_configs(
     config_file_path: pathlib.Path,
-) -> t.Dict[Platform, MLPackageCollection]:
+) -> dict[Platform, MLPackageCollection]:
     """Create MLPackageCollections from JSON files in directory
 
     :param config_file_path: Directory with JSON files describing the

@@ -57,7 +57,7 @@ def parse_qsub_error(output: str) -> str:
     return base_err
 
 
-def parse_qstat_jobid(output: str, job_id: str) -> t.Optional[str]:
+def parse_qstat_jobid(output: str, job_id: str) -> str | None:
     """Parse and return output of the qstat command run with options
     to obtain job status.
 
@@ -76,7 +76,7 @@ def parse_qstat_jobid(output: str, job_id: str) -> t.Optional[str]:
     return result
 
 
-def parse_qstat_jobid_json(output: str, job_id: str) -> t.Optional[str]:
+def parse_qstat_jobid_json(output: str, job_id: str) -> str | None:
     """Parse and return output of the qstat command run with JSON options
     to obtain job status.
 
@@ -89,13 +89,13 @@ def parse_qstat_jobid_json(output: str, job_id: str) -> t.Optional[str]:
     if "Jobs" not in out_json:
         return None
     jobs: dict[str, t.Any] = out_json["Jobs"]
-    job: t.Optional[dict[str, t.Any]] = jobs.get(job_id, None)
+    job: dict[str, t.Any] | None = jobs.get(job_id, None)
     if job is None:
         return None
     return str(job.get("job_state", None))
 
 
-def parse_qstat_nodes(output: str) -> t.List[str]:
+def parse_qstat_nodes(output: str) -> list[str]:
     """Parse and return the qstat command run with
     options to obtain node list.
 
@@ -107,7 +107,7 @@ def parse_qstat_nodes(output: str) -> t.List[str]:
     :param output: output of the qstat command in JSON format
     :return: compute nodes of the allocation or job
     """
-    nodes: t.List[str] = []
+    nodes: list[str] = []
     out_json = load_and_clean_json(output)
     if "Jobs" not in out_json:
         return nodes
@@ -122,14 +122,14 @@ def parse_qstat_nodes(output: str) -> t.List[str]:
     return list(sorted(set(nodes)))
 
 
-def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:
+def parse_step_id_from_qstat(output: str, step_name: str) -> str | None:
     """Parse and return the step id from a qstat command
 
     :param output: output qstat
     :param step_name: the name of the step to query
     :return: the step_id
     """
-    step_id: t.Optional[str] = None
+    step_id: str | None = None
     out_json = load_and_clean_json(output)
 
     if "Jobs" not in out_json:
