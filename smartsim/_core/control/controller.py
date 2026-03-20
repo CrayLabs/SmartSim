@@ -536,7 +536,7 @@ class Controller:
     def _launch_step(
         self,
         job_step: Step,
-        entity: SmartSimEntity | EntitySequence[SmartSimEntity]],
+        entity: SmartSimEntity | EntitySequence[SmartSimEntity],
         monitor: bool = True,
     ) -> None:
         """Use the launcher to launch a job step
