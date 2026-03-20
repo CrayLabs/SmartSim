@@ -373,7 +373,7 @@ class Controller:
 
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest, monitor: bool = True
-    ) -> LaunchedManifest[tuple[str, Step]]:
+    ) -> None:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
