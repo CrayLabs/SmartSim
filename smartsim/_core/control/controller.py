@@ -372,7 +372,7 @@ class Controller:
             )
 
     def _launch(
-        self, exp_name: str, exp_path: str, manifest: Manifest, monitor: bool = True
+        self, _exp_name: str, exp_path: str, manifest: Manifest, monitor: bool = True
     ) -> None:
         """Main launching function of the controller
 
