@@ -271,6 +271,7 @@ class JobManager:
         job_id: str | None,
         entity_name: str,
         is_task: bool = True,
+        monitor: bool = True,
     ) -> None:
         """Function to reset a job to record history and be
         ready to launch again.
@@ -279,6 +280,7 @@ class JobManager:
         :param job_id: new job id
         :param entity_name: name of the entity of the job
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
+        :param monitor: boolean to monitor job
 
         """
         with self._lock:
@@ -290,6 +292,8 @@ class JobManager:
                 self.db_jobs[entity_name] = job
             else:
                 self.jobs[entity_name] = job
+                if monitor:
+                    self.monitor_jobs[entity_name] = job
 
     def get_db_host_addresses(self) -> dict[str, list[str]]:
         """Retrieve the list of hosts for the database

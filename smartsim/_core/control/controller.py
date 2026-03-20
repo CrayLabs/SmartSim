@@ -588,7 +588,7 @@ class Controller:
 
         if self._jobs.query_restart(entity.name):
             logger.debug(f"Restarting {entity.name}")
-            self._jobs.restart_job(job_step.name, job_id, entity.name, is_task)
+            self._jobs.restart_job(job_step.name, job_id, entity.name, is_task, monitor)
         else:
             logger.debug(f"Launching {entity.name}")
             self._jobs.add_job(job_step.name, job_id, entity, is_task, monitor)
