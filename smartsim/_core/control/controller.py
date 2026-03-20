@@ -122,7 +122,7 @@ class Controller:
         SignalInterceptionStack.get(signal.SIGINT).push_unique(
             self._jobs.signal_interrupt
         )
-        launched = self._launch(exp_name, exp_path, manifest, monitor)
+        self._launch(exp_name, exp_path, manifest, monitor)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
