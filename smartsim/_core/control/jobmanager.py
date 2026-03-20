@@ -64,9 +64,9 @@ class JobManager:
         self.monitor: Thread | None = None
 
         # active jobs
-        self.jobs: t.Dict[str, Job] = {}
-        self.monitor_jobs: t.Dict[str, Job] = {}
-        self.db_jobs: t.Dict[str, Job] = {}
+        self.jobs: dict[str, Job] = {}
+        self.monitor_jobs: dict[str, Job] = {}
+        self.db_jobs: dict[str, Job] = {}
 
         # completed jobs
         self.completed: dict[str, Job] = {}

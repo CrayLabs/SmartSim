@@ -373,7 +373,7 @@ class Controller:
 
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest, monitor: bool = True
-    ) -> LaunchedManifest[t.Tuple[str, Step]]:
+    ) -> LaunchedManifest[tuple[str, Step]]:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
@@ -536,7 +536,7 @@ class Controller:
     def _launch_step(
         self,
         job_step: Step,
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        entity: SmartSimEntity | EntitySequence[SmartSimEntity]],
         monitor: bool = True,
     ) -> None:
         """Use the launcher to launch a job step
