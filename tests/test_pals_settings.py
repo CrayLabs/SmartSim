@@ -61,6 +61,12 @@ default_kwargs = {"fail_if_missing_exec": False}
 #        func(None)
 
 
+def test_set_launcher_args():
+    settings = PalsMpiexecSettings(default_exe, **default_kwargs)
+    settings.set_launcher_args({"mem-bind": "none", "line-buffer": ""})
+    assert settings.format_run_args() == ["--mem-bind", "none", "--line-buffer"]
+
+
 def test_affinity_script():
     settings = PalsMpiexecSettings(default_exe, **default_kwargs)
     settings.set_gpu_affinity_script("/path/to/set_affinity_gpu.sh", 1, 2)

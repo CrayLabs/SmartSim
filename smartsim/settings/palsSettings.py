@@ -158,6 +158,16 @@ class PalsMpiexecSettings(_BaseMPISettings):
             )
         self.run_args["transfer"] = None
 
+    def set_launcher_args(
+        self, arguments: t.Dict[str, t.Union[int, str, float, None]]
+    ) -> None:
+        """Set any other task launcher argument
+
+        :param arguments: dictionary with string name and value
+        """
+        for name, value in arguments.items():
+            self.run_args[name] = value
+
     def set_walltime(self, walltime: str) -> None:
         """Set the maximum number of seconds that a job will run
 

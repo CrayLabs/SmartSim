@@ -28,6 +28,11 @@ Description
 
 Detailed Notes
 
+- Enable control over monitoring of Models launched with `experiment.start()` by 
+  adding an optional boolean argument determining whether to monitor the particular 
+  model or not. The argument is set to True by default, so no changes are needed for 
+  the default behavior of monitoring all Models launched.
+  ([SmartSim-PR788](https://github.com/CrayLabs/SmartSim/pull/788))
 - Updated tests which would create experiment in root directory, patched
   tests which would not work on some Slurm systems, added an environment variable
   to control how long to wait for Redis server to be available.

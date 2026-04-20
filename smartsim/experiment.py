@@ -165,6 +165,7 @@ class Experiment:
         block: bool = True,
         summary: bool = False,
         kill_on_interrupt: bool = True,
+        monitor: bool = True,
     ) -> None:
         """Start passed instances using Experiment launcher
 
@@ -205,11 +206,16 @@ class Experiment:
         that all jobs launched by this experiment will be killed, and the
         zombie processes will need to be manually killed.
 
+        If `monitor=True`, all the jobs being started will be monitored
+        by the Controller. If `monitor=False`, the jobs will not be
+        monitored, meaning that their status will not be reported.
+
         :param block: block execution until all non-database
                        jobs are finished
         :param summary: print a launch summary prior to launch
         :param kill_on_interrupt: flag for killing jobs when ^C (SIGINT)
                                   signal is received.
+        :param monitor: monitor the jobs being started
         """
         start_manifest = Manifest(*args)
         self._create_entity_dir(start_manifest)
@@ -222,6 +228,7 @@ class Experiment:
                 manifest=start_manifest,
                 block=block,
                 kill_on_interrupt=kill_on_interrupt,
+                monitor=monitor,
             )
         except SmartSimError as e:
             logger.error(e)
