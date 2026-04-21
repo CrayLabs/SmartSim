@@ -30,7 +30,7 @@ import shutil
 import subprocess as sp
 import sys
 from argparse import ArgumentParser, Namespace
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from pathlib import Path
 
 from smartsim._core._install.buildenv import SetupError
@@ -118,12 +118,30 @@ def clean(core_path: Path, _all: bool = False) -> int:
     return os.EX_OK
 
 
-def get_db_path() -> Path | None:
-    bin_path = get_install_path() / "_core" / "bin"
-    for option in bin_path.iterdir():
-        if option.name in ("redis-cli", "keydb-cli"):
-            return option
-    return None
+def get_db_path(
+    *,
+    bin_dir: os.PathLike[str] | None = None,
+    names: Collection[str] = ("redis-cli", "keydb-cli"),
+) -> Path | None:
+    """Returns the path to an installed database CLI if it can find it in a
+    binary directory. If it cannot be found for any reason (binary directory
+    doesn't exist, file does not match expected name, etc.) `None` is returned.
+    If many candidates are found, only the path to the first found is returned.
+
+    :param bin_path: The path to the binary directory to search for CLIs. If
+        none is provided, the default SmartSim binary directory will be
+        searched. Keyword only.
+    :returns: A path to the installed database CLI if found
+    """
+    bin_path = (
+        (get_install_path() / "_core" / "bin") if bin_dir is None else Path(bin_dir)
+    )
+    cli_paths = (
+        path
+        for name in names
+        if (path := bin_path / name).exists() and not path.is_dir()
+    )
+    return next(cli_paths, None)
 
 
 _CliHandler = Callable[[Namespace, list[str]], int]
