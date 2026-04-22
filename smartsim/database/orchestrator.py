@@ -229,7 +229,7 @@ class Orchestrator(EntityList[DBNode]):
 
         super().__init__(
             name=db_identifier,
-            path=str(path),
+            path=path if path is not None else getcwd(),
             port=port,
             interface=interface,
             db_nodes=db_nodes,

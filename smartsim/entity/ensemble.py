@@ -96,7 +96,7 @@ class Ensemble(EntityList[Model]):
         self.run_settings = run_settings
         self.replicas: str
 
-        super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
+        super().__init__(name, path if path is not None else getcwd(), perm_strat=perm_strat, **kwargs)
 
     @property
     def models(self) -> Collection[Model]:
