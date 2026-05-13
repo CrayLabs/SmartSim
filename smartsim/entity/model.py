@@ -460,8 +460,8 @@ class Model(SmartSimEntity):
             return ",".join(_stringify_id(i) for i in range(cpus))
         if not pin_ids:
             return None
-        pin_ids = ((x,) if isinstance(x, int) else x for x in pin_ids)
-        to_fmt = itertools.chain.from_iterable(pin_ids)
+        pin_ids_ = ((x,) if isinstance(x, int) else x for x in pin_ids)
+        to_fmt = itertools.chain.from_iterable(pin_ids_)
         return ",".join(sorted({_stringify_id(x) for x in to_fmt}))
 
     def params_to_args(self) -> None:

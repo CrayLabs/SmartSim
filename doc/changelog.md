@@ -102,6 +102,8 @@ Detailed Notes
   ([SmartSim-PR738](https://github.com/CrayLabs/SmartSim/pull/738))
 - Removes an undocumented and unused dependency from the testing suite.
   ([SmartSim-PR792](https://github.com/CrayLabs/SmartSim/pull/792))
+- Address potential type errors in SmartSim.
+  ([SmartSim-PR798](https://github.com/CrayLabs/SmartSim/pull/798))
 
 
 ### 0.8.0
