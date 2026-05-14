@@ -13,6 +13,8 @@ from smartsim._core.control.manifest import Manifest
 from smartsim.entity import Model
 from smartsim.settings import RunSettings
 
+pytestmark = pytest.mark.group_b
+
 
 class _DummyStep:
     def __init__(self, metadata_dir: pathlib.Path, entity_name: str) -> None:
@@ -42,7 +44,7 @@ def test_controller_uses_run_prefixed_metadata_dir(tmp_path, monkeypatch):
         return _DummyStep(metadata_dir, entity.name)
 
     monkeypatch.setattr(controller, "_create_job_step", fake_create_job_step)
-    monkeypatch.setattr(controller, "_launch_step", lambda step, entity: None)
+    monkeypatch.setattr(controller, "_launch_step", lambda step, entity, monitor: None)
     monkeypatch.setattr(
         controller, "symlink_output_files", lambda *args, **kwargs: None
     )

@@ -179,7 +179,7 @@ setup(
         "pydantic>2",
         "pyzmq>=25.1.2",
         "pygithub>=2.3.0",
-        "numpy<2",
+        "numpy<3.0.0",
         "smartredis>=0.6,<0.7",
     ],
     zip_safe=False,

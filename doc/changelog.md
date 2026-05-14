@@ -20,6 +20,7 @@ Description
 - Python 3.12 is now supported; where available, installed TensorFlow version
   is now 2.16.2, PyTorch is 2.7.1.
 - Drop Python 3.9 support
+- Add Numpy 2.0 support
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
 - Add instructions for installing SmartSim on PML's Scylla
@@ -104,6 +105,9 @@ Detailed Notes
   ([SmartSim-PR792](https://github.com/CrayLabs/SmartSim/pull/792))
 - Address potential type errors in SmartSim.
   ([SmartSim-PR798](https://github.com/CrayLabs/SmartSim/pull/798))
+- Removes an Numpy upper bound in the SmartSim dependency list now that
+  SmartRedis and supported ML backends support Numpy 2.0.
+  ([SmartSim-PR803](https://github.com/CrayLabs/SmartSim/pull/803))
 
 
 ### 0.8.0
