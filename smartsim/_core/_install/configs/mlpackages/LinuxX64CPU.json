@@ -28,7 +28,18 @@
                     "source_file": "src/backends/libtorch_c/CMakeLists.txt",
                     "regex": "set_property\\(TARGET\\storch_c\\sPROPERTY\\sCXX_STANDARD\\s(98|11|14)\\)",
                     "replacement": "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)"
-                },
+                }
+            ]
+        },
+        {
+            "name": "libtensorflow",
+            "version": "2.18.1",
+            "pip_index": "",
+            "python_packages": [
+                "tensorflow==2.18.1"
+            ],
+            "lib_source": "https://storage.googleapis.com/tensorflow/versions/2.18.1/libtensorflow-cpu-linux-x86_64.tar.gz",
+            "rai_patches": [
                 {
                     "description": "Fix the type in a Tensorflow function signature",
                     "source_file": "src/backends/tensorflow.c",
@@ -42,15 +53,6 @@
                     "replacement": "TF_Output port"
                 }
             ]
-        },
-        {
-            "name": "libtensorflow",
-            "version": "2.16.2",
-            "pip_index": "",
-            "python_packages": [
-                "tensorflow==2.16.2"
-            ],
-            "lib_source": "https://storage.googleapis.com/tensorflow/versions/2.16.2/libtensorflow-cpu-linux-x86_64.tar.gz"
         },
         {
             "name": "onnxruntime",
