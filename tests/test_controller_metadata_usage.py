@@ -15,6 +15,7 @@ from smartsim.settings import RunSettings
 
 pytestmark = pytest.mark.group_b
 
+
 class _DummyStep:
     def __init__(self, metadata_dir: pathlib.Path, entity_name: str) -> None:
         self.name = f"{entity_name}-step"
