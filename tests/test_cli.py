@@ -25,9 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import itertools
 import logging
 import os
 import pathlib
+import string
+import textwrap
 import typing as t
 from collections import defaultdict
 from contextlib import contextmanager
@@ -43,7 +46,7 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.site import execute as site_execute
-from smartsim._core._cli.utils import MenuItemConfig
+from smartsim._core._cli.utils import MenuItemConfig, get_db_path
 from smartsim._core._cli.validate import configure_parser as validate_parser
 from smartsim._core._cli.validate import execute as validate_execute
 
@@ -839,3 +842,98 @@ def test_validate_correctly_sets_and_restores_env(monkeypatch):
     assert os.environ["SPAM"] == "EGGS"
     assert "TICK" not in os.environ
     assert "DNE" not in os.environ
+
+
+def test_get_db_path_for_dir_that_dne(test_dir):
+    dne_dir = pathlib.Path(test_dir) / "some/dir/that/dne"
+    assert get_db_path(bin_dir=dne_dir) == None
+
+
+def test_get_db_path_raises_if_not_searching_dir(test_dir):
+    some_file = pathlib.Path(test_dir) / "some-file"
+    some_file.touch()
+    assert get_db_path(bin_dir=some_file) == None
+
+
+def test_get_db_path_for_dir_that_is_empty(test_dir):
+    empty_dir = pathlib.Path(test_dir) / "empty"
+    empty_dir.mkdir()
+    assert get_db_path(bin_dir=empty_dir) == None
+
+
+@pytest.mark.parametrize(
+    "candidate, should_find",
+    itertools.chain(
+        [
+            pytest.param(file, True, id=f"find-{file}")
+            for file in ("redis-cli", "keydb-cli")
+        ],
+        [
+            pytest.param(file, False, id=f"ignore-{file}")
+            for file in (
+                "other-cli",
+                "random-file",
+                "redis-server",  # This method is slightly misnamed, but IT IS SUPPOSED
+                "keydb-server",  # to return the CLI and not the actual server
+            )
+        ],
+    ),
+)
+def test_get_db_path_gets_expected_canidate_path(test_dir, candidate, should_find):
+    bin_dir = pathlib.Path(test_dir) / "bin"
+    bin_dir.mkdir()
+    file_path = bin_dir / candidate
+    file_path.touch()
+    file_path.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        echo 'Hello from the mock exe'
+        """))
+    file_path.chmod(0o766)
+    assert get_db_path(bin_dir=bin_dir) == (file_path if should_find else None)
+
+
+@pytest.mark.parametrize(
+    "target, extras",
+    [
+        pytest.param("redis-cli", ["redis-server"], id="redis install"),
+        pytest.param("keydb-cli", ["keydb-server"], id="keydb install"),
+        pytest.param(
+            "redis-cli",
+            ["redis-server", "keydb-cli", "keydb-server"],
+            id="redis+keydb install",
+        ),
+        pytest.param(
+            "redis-cli", [f"file-{i}" for i in range(10)], id="lots of clutter"
+        ),
+    ],
+)
+def test_get_db_path_finds_file_in_crowded_dir(test_dir, target, extras):
+    bin_dir = pathlib.Path(test_dir) / "bin"
+    bin_dir.mkdir()
+
+    for file in map(lambda name: bin_dir / name, (target, *extras)):
+        file.touch()
+        file.chmod(0o766)
+    assert get_db_path(bin_dir=bin_dir) == bin_dir / target
+
+
+def test_get_db_path_does_not_return_a_directory(test_dir):
+    bin_dir = pathlib.Path(test_dir) / "bin"
+    bin_dir.mkdir()
+    target = bin_dir / "redis-cli"
+    target.mkdir()
+    assert get_db_path(bin_dir=bin_dir) == None
+    target.rmdir()
+    target.touch()
+    assert get_db_path(bin_dir=bin_dir) == target
+
+
+def test_get_db_path_does_not_search_reciursive(test_dir):
+    bin_dir = pathlib.Path(test_dir) / "bin"
+    bin_dir.mkdir()
+    nested_dir = bin_dir / "nested"
+    nested_dir.mkdir()
+    target = nested_dir / "redis-cli"
+    target.touch()
+    assert get_db_path(bin_dir=nested_dir) == target
+    assert get_db_path(bin_dir=bin_dir) == None
