@@ -18,7 +18,7 @@ Description
   classes, and SmartDashboard integration
 - Update copyright headers from 2021-2024 to 2021-2025 across the entire codebase
 - Python 3.12 is now supported; where available, installed TensorFlow version
-  is now 2.16.2, PyTorch is 2.7.1.
+  is now 2.18.1, PyTorch is 2.7.1.
 - Drop Python 3.9 support
 - Add Numpy 2.0 support
 - Terminate LSF and LSB support
@@ -76,10 +76,12 @@ Detailed Notes
   tests, Docker files, shell scripts, and other supporting files to reflect the
   new year.
   ([SmartSim-PR790](https://github.com/CrayLabs/SmartSim/pull/790))
-- Python 3.12 is now supported. TensorFlow 2.16.2 and PyTorch 2.7.1 library
-  files are installed as part of `smart build` process when available. On Mac,
-  ONNX runtime 1.22.0 is now installed, together with ONNX 1.16.
+- Python 3.12 is now supported. TensorFlow 2.18.1 (except on x86 MacOS where
+  the highest suported version is 2.16.2) and PyTorch 2.7.1 library files are
+  installed as part of `smart build` process when available. On Mac, ONNX
+  runtime 1.22.0 is now installed, together with ONNX 1.16.
   ([SmartSim-PR785](https://github.com/CrayLabs/SmartSim/pull/785))
+  ([SmartSim-PR805](https://github.com/CrayLabs/SmartSim/pull/805))
 - Python 3.9 will not be supported anymore, the last stable version of SmartSim
   with support for Python 3.9 will be 0.8.
   ([SmartSim-PR781](https://github.com/CrayLabs/SmartSim/pull/781))
