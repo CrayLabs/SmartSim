@@ -11,6 +11,7 @@ To be released at some point in the future
 
 Description
 
+- Add sunset notice to the documentation
 - Miscellaneous test fixes
 - Update install patch for PyTorch 2.7.1+rocm6.3
 - Modernize typing syntax to Python 3.10+ standards
@@ -29,9 +30,12 @@ Description
 
 Detailed Notes
 
-- Enable control over monitoring of Models launched with `experiment.start()` by 
-  adding an optional boolean argument determining whether to monitor the particular 
-  model or not. The argument is set to True by default, so no changes are needed for 
+- Adds a sunset page to the documentation and a warning banner on the main
+  page noting the move to ROSE/RHAPSODY
+  ([SmartSim-PR804](https://github.com/CrayLabs/SmartSim/pull/804))
+- Enable control over monitoring of Models launched with `experiment.start()` by
+  adding an optional boolean argument determining whether to monitor the particular
+  model or not. The argument is set to True by default, so no changes are needed for
   the default behavior of monitoring all Models launched.
   ([SmartSim-PR788](https://github.com/CrayLabs/SmartSim/pull/788))
 - Updated tests which would create experiment in root directory, patched

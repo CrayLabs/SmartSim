@@ -11,6 +11,7 @@
    :caption: Getting Started
 
    overview
+   sunset_notice
    installation_instructions/basic
    installation_instructions/platform
    contributing

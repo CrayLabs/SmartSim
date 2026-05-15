@@ -1,4 +1,7 @@
+.. warning::
 
+  SmartSim is being sunset as of May 2026. Please see the :ref:`sunset notice page <_sunset_notice_doc>`
+  for more information. Thank you to all of our collaborators!
 
 ************
 Introduction
