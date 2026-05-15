@@ -26,6 +26,7 @@ Description
 - Add instructions for installing SmartSim on PML's Scylla
 - Drop unsued development dependencies
 - Fix typos in documentation
+- Fix `smart info` error on initial install
 
 Detailed Notes
 
@@ -108,6 +109,12 @@ Detailed Notes
 - Removes an Numpy upper bound in the SmartSim dependency list now that
   SmartRedis and supported ML backends support Numpy 2.0.
   ([SmartSim-PR803](https://github.com/CrayLabs/SmartSim/pull/803))
+- SmartSim's `smart info` CLI tool would raise a spurious error on initial
+  install due to a missing build directory that is created as part of `smart
+  build`. Running `smart build` would fix this error. This error has now been
+  suppressed if the build directory is not present and `smart info` works as
+  intended prior to running `smart build`.
+  ([SmartSim-PR806](https://github.com/CrayLabs/SmartSim/pull/806))
 
 
 ### 0.8.0
