@@ -356,7 +356,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--dragon",
         action="store_true",
         default=False,
-        help="Install the dragon runtime",
+        help="[DEPRECATED] Install the dragon runtime",
     )
     parser.add_argument(
         "--skip-python-packages",
