@@ -1,6 +1,7 @@
 import os
 import pathlib
 import sys
+import textwrap
 import typing as t
 from collections.abc import Collection
 
@@ -182,7 +183,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
         logger.info(f"Installing package: {wheel_path.absolute()}")
 
         try:
-            pip("install", "--force-reinstall", str(wheel_path), "numpy<2")
+            pip("install", "--force-reinstall", str(wheel_path))
             wheel_path = next(wheels, None)
         except Exception:
             logger.error(f"Unable to install from {asset_dir}")
@@ -207,6 +208,14 @@ def install_dragon(extraction_dir: str | os.PathLike[str]) -> int:
     and install to the current python environment
     :param extraction_dir: path for download and extraction of assets
     :returns: Integer return code, 0 for success, non-zero on failures"""
+    logger.warning(
+        "Dragon Deprecation Notice:\n%s",
+        textwrap.indent(
+            _DRAGON_DEPRECATION_MESSAGE,
+            "  | ",
+            predicate=lambda line: True,
+        ),
+    )
     if sys.platform == "darwin":
         logger.debug(f"Dragon not supported on platform: {sys.platform}")
         return 1
@@ -226,6 +235,30 @@ def install_dragon(extraction_dir: str | os.PathLike[str]) -> int:
         cleanup(filename)
 
     return 2
+
+
+_DRAGON_DEPRECATION_MESSAGE: t.Final = textwrap.dedent("""\
+    SmartSim has discontinued first class support for launching applications
+    with Dragon. The version of Dragon that will be collected and installed is
+    development build of Dragon and not the most up to date version available
+    on PyPI.
+
+    SmartSim does still ship with the Dragon launcher, but features are limited
+    and requires that users submit driver scripts to the Dragon runtime via the
+    Dragon CLI. The Dragon launcher in SmartSim should be forward compatible
+    with users looking to manually install a newer version of Dragon for more
+    up to date features.
+
+    Many of the design choices made by SmartSim to support launching complex
+    workflows using Dragon have been adopted, continued, and improved upon in
+    the RHAPSODY project. To learn more about that work visit
+    `https://radical-cybertools.github.io/rhapsody/`.
+
+    To learn more about the ongoing development for Dragon visit documentation
+    at `https://dragonhpc.github.io/dragon/doc/_build/html/index.html` or
+    puruse their GitHub page at `https://github.com/DragonHPC/dragon`. To
+    manually install an up to dateversion of the library, check out the
+    `dragonhpc` PyPI page at `https://pypi.org/project/dragonhpc/`.""")
 
 
 if __name__ == "__main__":

@@ -24,8 +24,9 @@ Description
 - Terminate LSF and LSB support
 - Implement workaround for Tensorflow that allows RedisAI to build with GCC-14
 - Add instructions for installing SmartSim on PML's Scylla
-- Drop unsued development dependencies
+- Drop unused development dependencies
 - Fix typos in documentation
+- Raise a deprecation warning when building SmartSim with Dragon support
 
 Detailed Notes
 
@@ -108,6 +109,11 @@ Detailed Notes
 - Removes an Numpy upper bound in the SmartSim dependency list now that
   SmartRedis and supported ML backends support Numpy 2.0.
   ([SmartSim-PR803](https://github.com/CrayLabs/SmartSim/pull/803))
+- SmartSim's `smart build` CLI will attempt to build an out of date version of
+  Dragon when provided with the `--dragon` flag. This is not something the
+  SmartSim team plans to address and as such a deprecation warning is now
+  raised when attempting to build SmartSim with Dragon.
+  ([SmarSim-PR807](https://github.com/CrayLabs/SmartSim/pull/807))
 
 
 ### 0.8.0

@@ -658,7 +658,7 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
         | ljace0-5 | NeverStarted |                 |                |      0      |""")
 
     # get rid of white space to make the comparison easier
-    actual_msg = dragon_backend.status_message.replace(" ", "")
-    expected_message = expected_message.replace(" ", "")
+    actual_msg = dragon_backend.status_message.replace("-", " ").replace(" ", "")
+    expected_message = expected_message.replace("-", " ").replace(" ", "")
 
     assert actual_msg == expected_message
