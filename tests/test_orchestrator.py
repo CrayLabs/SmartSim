@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import contextlib
 import os
 import os.path
 import typing as t
@@ -129,14 +128,15 @@ def test_multiple_interfaces(
         pytest.param({"path": None}, id="Explicit `path=None`"),
     ],
 )
-def test_orchestrator_path_defaults_to_cwd(test_dir, kwargs):
+def test_orchestrator_path_defaults_to_cwd(monkeypatch, test_dir, kwargs):
     test_subdir = os.path.join(test_dir, "subdir")
     os.mkdir(test_subdir)
-    with contextlib.chdir(test_dir):
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_dir)
         db1 = Orchestrator(launcher="local", **kwargs)
-        with contextlib.chdir(test_subdir):
-            db2 = Orchestrator(launcher="local", **kwargs)
-
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_subdir)
+        db2 = Orchestrator(launcher="local", **kwargs)
     assert db1.path == test_dir
     assert db2.path == test_subdir
     assert all(db.path == n.path for db in (db1, db2) for n in db)

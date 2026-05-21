@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import contextlib
 import os
 import os.path
 from uuid import uuid4
@@ -208,13 +207,15 @@ def test_bad_model_params(bad_val):
         pytest.param({"path": None}, id="Explicit `path=None`"),
     ],
 )
-def test_model_path_defaults_to_cwd(test_dir, kwargs):
+def test_model_path_defaults_to_cwd(monkeypatch, test_dir, kwargs):
     rs = RunSettings("echo", exe_args=["spam", "eggs"])
     test_subdir = os.path.join(test_dir, "subdir")
     os.mkdir(test_subdir)
-    with contextlib.chdir(test_dir):
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_dir)
         m1 = Model("root-model", {}, run_settings=rs, **kwargs)
-        with contextlib.chdir(test_subdir):
-            m2 = Model("subdir-model", {}, run_settings=rs, **kwargs)
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_subdir)
+        m2 = Model("subdir-model", {}, run_settings=rs, **kwargs)
     assert m1.path == test_dir
     assert m2.path == test_subdir
