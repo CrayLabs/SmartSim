@@ -74,7 +74,7 @@ class Model(SmartSimEntity):
         name: str,
         params: dict[str, str],
         run_settings: RunSettings,
-        path: str | None = getcwd(),
+        path: str | None = None,
         params_as_args: list[str] | None = None,
         batch_settings: BatchSettings | None = None,
     ):
@@ -91,7 +91,7 @@ class Model(SmartSimEntity):
         :param batch_settings: Launcher settings for running the individual
                                model as a batch job
         """
-        super().__init__(name, str(path), run_settings)
+        super().__init__(name, path if path is not None else getcwd(), run_settings)
         self.params = _parse_model_parameters(params)
         self.params_as_args = params_as_args
         self.incoming_entities: list[SmartSimEntity] = []

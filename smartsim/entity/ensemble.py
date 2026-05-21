@@ -62,7 +62,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         params: dict[str, t.Any],
-        path: str | None = getcwd(),
+        path: str | None = None,
         params_as_args: list[str] | None = None,
         batch_settings: BatchSettings | None = None,
         run_settings: RunSettings | None = None,
@@ -96,7 +96,12 @@ class Ensemble(EntityList[Model]):
         self.run_settings = run_settings
         self.replicas: str
 
-        super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
+        super().__init__(
+            name,
+            path if path is not None else getcwd(),
+            perm_strat=perm_strat,
+            **kwargs,
+        )
 
     @property
     def models(self) -> Collection[Model]:
