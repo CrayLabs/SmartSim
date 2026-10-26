@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
+import os.path
 from copy import deepcopy
 
 import pytest
@@ -303,3 +305,25 @@ def test_ensemble_type(test_dir):
     ens_settings = RunSettings("python")
     ensemble = exp.create_ensemble("name", replicas=4, run_settings=ens_settings)
     assert ensemble.type == "Ensemble"
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({}, id="Default Argument"),
+        pytest.param({"path": None}, id="Explicit `path=None`"),
+    ],
+)
+def test_ensemble_path_defaults_to_cwd(monkeypatch, test_dir, kwargs):
+    rs = RunSettings("echo", exe_args=["spam", "eggs"])
+    test_subdir = os.path.join(test_dir, "subdir")
+    os.mkdir(test_subdir)
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_dir)
+        e1 = Ensemble("root-ens", {}, run_settings=rs, replicas=3, **kwargs)
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_subdir)
+        e2 = Ensemble("subdir-ens", {}, run_settings=rs, replicas=3, **kwargs)
+    assert e1.path == test_dir
+    assert e2.path == test_subdir
+    assert all(os.path.join(e.path, m.name) == m.path for e in (e1, e2) for m in e)

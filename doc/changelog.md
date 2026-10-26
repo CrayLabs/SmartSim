@@ -26,6 +26,8 @@ Description
 - Add instructions for installing SmartSim on PML's Scylla
 - Drop unsued development dependencies
 - Fix typos in documentation
+- Changed default path when manually constructing `Model`s, `Ensemble`s and
+  `Orchestrator`s to the current working directory
 
 Detailed Notes
 
@@ -108,6 +110,14 @@ Detailed Notes
 - Removes an Numpy upper bound in the SmartSim dependency list now that
   SmartRedis and supported ML backends support Numpy 2.0.
   ([SmartSim-PR803](https://github.com/CrayLabs/SmartSim/pull/803))
+- When constructing a `Model`, `Ensemble`, or `Orchestrator`, the `__init__`
+  method was type hinted as able to accept a `None` value. This was supposed to
+  act as a sentinel that would default to the current working directory. There
+  was a bug in how this resolved such that if a `path` argument was not
+  provided it would resolve to the working directory at import time and if
+  `path` was explicitly passed in as `None` it would resolve to the string
+  `"None"` this has since been corrected to the expected behavior.
+  ([SmartSim-PR808](https://github.com/CrayLabs/SmartSim/pull/808))
 
 
 ### 0.8.0

@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+import os.path
 from uuid import uuid4
 
 import numpy as np
@@ -196,3 +198,24 @@ def test_good_model_params(dtype):
 def test_bad_model_params(bad_val):
     with pytest.raises(TypeError):
         _parse_model_parameters({"foo": bad_val})
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({}, id="Default Argument"),
+        pytest.param({"path": None}, id="Explicit `path=None`"),
+    ],
+)
+def test_model_path_defaults_to_cwd(monkeypatch, test_dir, kwargs):
+    rs = RunSettings("echo", exe_args=["spam", "eggs"])
+    test_subdir = os.path.join(test_dir, "subdir")
+    os.mkdir(test_subdir)
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_dir)
+        m1 = Model("root-model", {}, run_settings=rs, **kwargs)
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_subdir)
+        m2 = Model("subdir-model", {}, run_settings=rs, **kwargs)
+    assert m1.path == test_dir
+    assert m2.path == test_subdir

@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
+import os.path
 import typing as t
 
 import psutil
@@ -117,6 +119,27 @@ def test_multiple_interfaces(
         assert False
 
     exp.stop(db)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({}, id="Default Argument"),
+        pytest.param({"path": None}, id="Explicit `path=None`"),
+    ],
+)
+def test_orchestrator_path_defaults_to_cwd(monkeypatch, test_dir, kwargs):
+    test_subdir = os.path.join(test_dir, "subdir")
+    os.mkdir(test_subdir)
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_dir)
+        db1 = Orchestrator(launcher="local", **kwargs)
+    with monkeypatch.context() as ctx:
+        ctx.chdir(test_subdir)
+        db2 = Orchestrator(launcher="local", **kwargs)
+    assert db1.path == test_dir
+    assert db2.path == test_subdir
+    assert all(db.path == n.path for db in (db1, db2) for n in db)
 
 
 def test_catch_local_db_errors() -> None:
